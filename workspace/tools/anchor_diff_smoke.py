@@ -2925,12 +2925,311 @@ class SnapshotLinkHelperRegression(unittest.TestCase):
         self.assertIn("Result variant/outcome failure branch forbidden", out)
 
 
+class HiddenSnapshotRegression(unittest.TestCase):
+    """숨김 뺀 풀기(`snapshot_anchor(drop_hidden=True)` — registry_gate 앵커 · 출처 스냅숏 몫): 숨김 폴더를 지나는 항목
+    (실행 기록)만 빼고 문서 입력 · 그 조상과 마지막 성분 하나만 숨김인 항목(`.gitkeep` 꼴)은 남긴다 · 뺀 항목의 숨김 아닌
+    조상 폴더는 빈 폴더로 둔다(지금 쪽 사본과 같다) · 남길 링크가 사본에 그대로 남지 않는 숨김 칸을 지나면 지금처럼 전체를
+    푼다 · 숨김 뺀 풀기가 실패해도 전체를 푼다 · 직접 실행 검사기(`partition_exit`)는 지금처럼 전체를 푼다."""
+
+    def setUp(self) -> None:
+        self.temp: tempfile.TemporaryDirectory[str] = tempfile.TemporaryDirectory(prefix="anchor-hidden-")
+        self.addCleanup(self.temp.cleanup)
+        self.td: Path = Path(self.temp.name)
+        self.ad: ModuleType = _checker_module(S / "anchor_diff.py")
+
+    @staticmethod
+    def tree(dest: Path) -> "set[str]":
+        """사본 안 폴더(끝에 `/`) · 파일 · 링크(사본 상대 경로) — 링크를 따라 내려가지 않는다."""
+        out: "set[str]" = set()
+        for current, dirs, files in os.walk(dest):
+            for name in dirs + files:
+                path: str = os.path.join(current, name)
+                rel: str = os.path.relpath(path, dest)
+                if os.path.islink(path) or os.path.isfile(path):
+                    out.add(rel)
+                elif os.path.isdir(path):
+                    out.add(rel + "/")
+        return out
+
+    @staticmethod
+    def hidden(paths: "set[str]") -> "set[str]":
+        return {p for p in paths if any(part.startswith(".") for part in p.rstrip("/").split("/"))}
+
+    @staticmethod
+    def entries(paths: "set[str]") -> "set[str]":
+        return {p for p in paths if not p.endswith("/")}
+
+    def snap(self, repo: Path, sha: str, name: str, drop: bool = True) -> "tuple[Path, list[str]]":
+        dest: Path = self.td / "snaps" / name
+        return dest, self.ad.snapshot_anchor(repo, sha, dest, drop_hidden=drop)
+
+    def repo(self, name: str, files: "dict[str, str]", links: "dict[str, str] | None" = None) -> "tuple[Path, str]":
+        root: Path = self.td / name
+        for rel, src in files.items():
+            _write(root, rel, src)
+        for rel, target in (links or {}).items():
+            (root / rel).parent.mkdir(parents=True, exist_ok=True)
+            os.symlink(target, root / rel)
+        self.assertEqual(_git(root, "init", "-q").returncode, 0)
+        return root, _commit_all(root, "tree")
+
+    @staticmethod
+    def index_add(repo: Path, mode: str, path: str, body: bytes) -> None:
+        """작업 트리를 거치지 않고 색인에 바로 넣는다(대소문자만 다른 이름 · UTF-8 아닌 이름 · NFD 이름 그대로)."""
+        blob: str = subprocess.run(["git", "-C", str(repo), "hash-object", "-w", "--stdin"], input=body,
+                                   capture_output=True, check=True).stdout.decode("ascii").strip()
+        subprocess.run(["git", "-C", str(repo), "-c", "core.precomposeunicode=false", "update-index", "--add",
+                        "--cacheinfo", f"{mode},{blob},{path}"], capture_output=True, check=True)
+
+    def commit_index(self, repo: Path, message: str) -> str:
+        proc: "subprocess.CompletedProcess[str]" = _git(repo, "commit", "-q", "-m", message)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        return _git(repo, "rev-parse", "HEAD").stdout.strip()
+
+    def test_A1_records_are_left_out_and_document_inputs_and_dot_files_stay(self) -> None:
+        repo: Path
+        repo, _anchor = _init_repo(self.td, "a1", F / "skeleton" / "good_bc")
+        for rel, src in {".dddjango-web/20261016-run/captures/baseline/application/orders/x.py": "X = 1\n",
+                         ".github/workflows/ci.yml": "on: push\n", ".gitignore": "x\n", "application/orders/.keep": "",
+                         ".pre-commit-config.yaml": "repos: []\n", "deploy/.env.sample": "KEY=\n",
+                         "config/logs/.gitkeep": "", "application/payments/.gitkeep": "",
+                         "application/orders/notes/.cache/f": "cache\n",
+                         ".dddjango/run1/scope.md": "# 범위\n", ".dddjango/run1/design-spec.md": "# 설계\n",
+                         ".dddjango/run1/notes/big.txt": "n\n", ".dddjango/README.md": "r\n"}.items():
+            _write(repo, rel, src)
+        _commit_all(repo, "records")
+        self.index_add(repo, "100644", ".DDDJANGO/run3/DESIGN-SPEC.MD", b"# upper\n")
+        sha: str = self.commit_index(repo, "case variant")
+        full: Path
+        full, _pruned = self.snap(repo, sha, "a1-full", drop=False)
+        dest: Path
+        pruned: "list[str]"
+        dest, pruned = self.snap(repo, sha, "a1")
+        got: "set[str]" = self.tree(dest)
+        whole: "set[str]" = self.tree(full)
+        self.assertEqual(pruned, [])
+        # 숨김 아닌 쪽(폴더 포함)은 2.24.2(전체 풀기)와 같다 — 숨김 폴더만 든 `application/orders/notes/` 도 빈 폴더로 있다
+        self.assertEqual(got - self.hidden(got), whole - self.hidden(whole))
+        self.assertIn("application/orders/notes/", got)
+        self.assertNotIn("application/orders/notes/.cache/", got)
+        # 풀린 항목 = 트리 항목 가운데 `prunable_path` 가 거짓인 것(가름과 실제 풀기가 같다)
+        split: "object" = self.ad.hidden_split(repo, sha)
+        self.assertIsNotNone(split)
+        self.assertEqual(self.entries(got), {p for p in self.entries(whole) if not self.ad.prunable_path(p)})
+        self.assertEqual(split.plain + len(split.kept_hidden), len(self.entries(got)))
+        # 마지막 성분 하나만 숨김인 항목은 남고(2.24.2 와 같다), 숨김 폴더 안은 문서 입력 · `.dddjango` 바로 아래만 남는다
+        for rel in (".gitignore", ".pre-commit-config.yaml", "deploy/.env.sample", "config/logs/.gitkeep",
+                    "application/payments/.gitkeep", "application/orders/.keep"):
+            self.assertIn(rel, got)
+        under_hidden: "set[str]" = {p.casefold() for p in self.entries(got) if p.startswith((".dddjango/", ".DDDJANGO/"))}
+        self.assertEqual(under_hidden, {".dddjango/run1/scope.md", ".dddjango/run1/design-spec.md", ".dddjango/readme.md",
+                                        ".dddjango/run3/design-spec.md"})
+        self.assertTrue(os.path.lexists(dest / ".DDDJANGO" / "run3" / "DESIGN-SPEC.MD"))
+        folded_whole: "set[str]" = {p.casefold() for p in whole}   # 전체 풀기도 `.DDDJANGO` 철자로 한 폴더에 풀 수 있다
+        folded_got: "set[str]" = {p.casefold() for p in got}
+        for rel in (".dddjango-web/20261016-run/captures/baseline/application/orders/x.py", ".github/workflows/ci.yml",
+                    ".dddjango/run1/notes/big.txt", "application/orders/notes/.cache/f"):
+            self.assertIn(rel, folded_whole)
+            self.assertNotIn(rel, folded_got)
+
+    def test_A2_subfolder_root_follows_archive_scope_and_a_missing_folder_is_an_empty_copy(self) -> None:
+        repo: Path
+        with_sub: str
+        repo, with_sub = self.repo("a2", {"proj/app/a.py": "A = 1\n", "proj/.h/x.py": "H = 1\n", "other/o.txt": "o\n"})
+        self.assertEqual(_git(repo, "rm", "-rq", "proj").returncode, 0)
+        without_sub: str = self.commit_index(repo, "proj removed")
+        self.assertEqual(_git(repo, "checkout", "-q", with_sub).returncode, 0)
+        sub: Path = repo / "proj"
+        dest: Path
+        dest, _pruned = self.snap(sub, with_sub, "a2-with")
+        self.assertEqual(self.tree(dest), {"app/", "app/a.py"})
+        full: Path
+        full, _pruned = self.snap(sub, with_sub, "a2-with-full", drop=False)
+        self.assertEqual(self.tree(full), {"app/", "app/a.py", ".h/", ".h/x.py"})
+        for drop in (True, False):
+            with self.subTest(drop=drop):
+                pruned: "list[str]"
+                dest, pruned = self.snap(sub, without_sub, f"a2-without-{drop}", drop=drop)
+                self.assertEqual((self.tree(dest), pruned), (set(), []))
+
+    def test_A3_only_document_inputs_skips_the_first_archive(self) -> None:
+        repo: Path
+        sha: str
+        repo, sha = self.repo("a3", {".dddjango/run/scope.md": "# 범위\n", ".github/x.yml": "x\n"})
+        with patch.object(self.ad, "_untar_archive", wraps=self.ad._untar_archive) as untar:
+            dest: Path
+            dest, _pruned = self.snap(repo, sha, "a3")
+        self.assertEqual(self.tree(dest), {".dddjango/", ".dddjango/run/", ".dddjango/run/scope.md"})
+        self.assertEqual([call.args[1] for call in untar.call_args_list],
+                         [[sha, "--", ":(literal).dddjango/run/scope.md"]])
+
+    def test_A4_non_utf8_names_never_raise_anything_but_a_named_failure(self) -> None:
+        repo: Path
+        repo, _sha = self.repo("a4", {"app/ok.py": "OK = 1\n"})
+        self.index_add(repo, "100644", ".h/\udcff.py", b"H = 1\n")
+        self.index_add(repo, "120000", "app/l", b"\xff-missing")
+        sha: str = self.commit_index(repo, "non-utf8 hidden name + link target")
+        dest: Path
+        pruned: "list[str]"
+        dest, pruned = self.snap(repo, sha, "a4")
+        self.assertEqual((self.tree(dest), pruned), ({"app/", "app/ok.py", "app/l"}, []))
+        self.index_add(repo, "100644", "app/\udcff.py", b"X = 1\n")
+        sha = self.commit_index(repo, "non-utf8 surface name")
+        for drop in (True, False):
+            with self.subTest(drop=drop):
+                try:
+                    self.snap(repo, sha, f"a4-surface-{drop}", drop=drop)
+                except self.ad.AnchorDiffUsage as exc:   # 이 파일 시스템이 그 이름을 못 만들면 이름 붙은 실패(지금 판과 같다)
+                    self.assertIn("실패", str(exc))
+
+    def test_A5_pathspec_environment_does_not_change_the_copy(self) -> None:
+        repo: Path
+        sha: str
+        repo, sha = self.repo("a5", {"app/a.py": "A = 1\n", ".h/x.py": "H = 1\n", "app/.cache/y": "y\n",
+                                     "app/.keep": "", ".dddjango/run/scope.md": "# 범위\n", "lib/B.py": "B = 1\n"})
+        plain: Path
+        plain, _pruned = self.snap(repo, sha, "a5-plain")
+        self.assertEqual(self.tree(plain), {"app/", "app/a.py", "app/.keep", "lib/", "lib/B.py",
+                                            ".dddjango/", ".dddjango/run/", ".dddjango/run/scope.md"})
+        for name, env in (("literal-icase-glob", {"GIT_LITERAL_PATHSPECS": "1", "GIT_ICASE_PATHSPECS": "1",
+                                                  "GIT_GLOB_PATHSPECS": "1"}),
+                          ("noglob", {"GIT_NOGLOB_PATHSPECS": "1"})):
+            with self.subTest(env=name), patch.dict(os.environ, env):
+                dest: Path
+                dest, _pruned = self.snap(repo, sha, "a5-" + name)
+                self.assertEqual(self.tree(dest), self.tree(plain))
+
+    def test_A6_A7_A8_kept_links_through_a_dropped_path_extract_everything(self) -> None:
+        cases: "dict[str, tuple[dict[str, str], dict[str, str]]]" = {
+            "a6": ({".h/x.py": "H = 1\n", "app/b.py": "B = 1\n"}, {"app/x.py": "../.h/x.py"}),
+            "a7": ({".x/keep": "k\n", "application/orders/z.py": "Z = 1\n"},
+                   {"application/orders/y.py": "../../.x/../application/orders/z.py"}),
+            "a8": ({".dddjango/notes/x.md": "# 노트\n", "app/b.py": "B = 1\n"}, {".dddjango/run/scope.md": "../notes/x.md"}),
+        }
+        for name, (files, links) in cases.items():
+            with self.subTest(case=name):
+                repo: Path
+                sha: str
+                repo, sha = self.repo(name, files, links)
+                self.assertIsNone(self.ad.hidden_split(repo, sha))
+                dest: Path
+                pruned: "list[str]"
+                dest, pruned = self.snap(repo, sha, name)
+                full: Path
+                full, _pruned = self.snap(repo, sha, name + "-full", drop=False)
+                self.assertEqual((self.tree(dest), pruned), (self.tree(full), []))
+                self.assertTrue(self.hidden(self.tree(dest)))
+        kept: "frozenset[str]" = frozenset({".dddjango/run/scope.md", ".dddjango/other/scope.md", "config/logs/.gitkeep"})
+        crosses = self.ad.link_crosses_pruned
+        self.assertTrue(crosses("application/orders/y.py", "../../.x/../application/orders/z.py", kept))
+        self.assertTrue(crosses(".dddjango/run/scope.md", "../notes/x.md", kept))
+        self.assertTrue(crosses(".dddjango/run/scope.md", "../other/scope.md", kept))   # `.dddjango` 폴더 자체는 남지 않는다
+        self.assertTrue(crosses("app/k", "../config/logs/.gitkeep", frozenset()))
+        self.assertFalse(crosses("app/k", "../config/logs/.gitkeep", kept))
+        self.assertFalse(crosses("app/y.py", "/abs/.h/y.py", kept))
+
+    def test_A9_a_link_leaving_the_copy_root_stops_the_walk_and_stays_fail_closed(self) -> None:
+        (self.td / "outside" / ".h").mkdir(parents=True)
+        (self.td / "outside" / ".h" / "y.py").write_text("Y = 1\n", encoding="utf-8")
+        repo: Path
+        sha: str
+        repo, sha = self.repo("a9", {"app/b.py": "B = 1\n", ".dddjango-web/r/log.txt": "l\n"},
+                              {"app/y.py": "../../outside/.h/y.py"})
+        self.assertFalse(self.ad.link_crosses_pruned("app/y.py", "../../outside/.h/y.py", frozenset()))
+        dest: Path
+        dest, _pruned = self.snap(repo, sha, "a9")
+        full: Path
+        full, _pruned = self.snap(repo, sha, "a9-full", drop=False)
+        self.assertEqual(self.tree(dest), {"app/", "app/b.py", "app/y.py"})
+        self.assertEqual(self.ad.snapshot_escape(dest), "app/y.py")
+        self.assertEqual(self.ad.snapshot_escape(full), "app/y.py")
+
+    def test_A10_direct_checker_anchor_still_extracts_hidden_records(self) -> None:
+        """직접 실행 검사기는 실제 작업 트리를 재므로 앵커도 숨김 경로까지 푼다 — 숨김 경로 주어 줄은 앵커 기존분 그대로."""
+        repo: Path
+        repo, _anchor = _init_repo(self.td, "a10", F / "skeleton" / "good_bc")
+        copied: Path = repo / ".dddjango-web" / "r" / "baseline" / "application"
+        shutil.copytree(F / "skeleton" / "good_bc" / "application", copied)
+        router: Path = copied / "orders" / "driving_layer" / "api" / "api_router.py"
+        router.write_text(router.read_text(encoding="utf-8") + "import os\n", encoding="utf-8")
+        anchor: str = _commit_all(repo, "record copy of the app")
+        _write(repo, "lane_note.md", "lane\n")
+        _commit_all(repo, "lane")
+        code: int
+        out: str
+        code, out = _run(COMP, repo, ["--anchor", anchor])
+        self.assertEqual(code, 0, out)
+        self.assertIn("신규분(앵커 이후) 0건", out)
+        self.assertIn(".dddjango-web/r/baseline/application/orders/driving_layer/api/api_router.py",
+                      out.split("== 앵커 기존분", 1)[-1])
+
+    def test_A11_links_to_record_folders_or_dddjango_itself_extract_everything(self) -> None:
+        """남길 링크가 사본에 그대로 남지 않는 숨김 칸(`.dddjango` · `.dddjango/<폴더>` 처럼 일부만 남는 폴더 포함)에 닿거나
+        지나면 전체를 푼다 — 지금 쪽 사본은 링크를 따라 내용을 실물로 복사한다. 남는 숨김 항목 자체를 가리키면 그대로 뺀다."""
+        files: "dict[str, str]" = {".dddjango/run1/notes.md": "n\n", ".dddjango/run2/scope.md": "# 범위\n",
+                                   ".dddjango/run2/notes.md": "n\n", "app/b.py": "B = 1\n", ".gitignore": "x\n",
+                                   ".dddjango-web/r/log.txt": "l\n"}
+        for name, target in (("run1", "../.dddjango/run1"), ("run2", "../.dddjango/run2"), ("root", "../.dddjango"),
+                             ("doc", "../.dddjango/run2/scope.md")):
+            with self.subTest(link=name):
+                repo: Path
+                sha: str
+                repo, sha = self.repo("a11-" + name, files, {"app/lnk": target})
+                self.assertIsNone(self.ad.hidden_split(repo, sha))
+                dest: Path
+                dest, _pruned = self.snap(repo, sha, "a11-" + name)
+                full: Path
+                full, _pruned = self.snap(repo, sha, "a11-" + name + "-full", drop=False)
+                self.assertEqual(self.tree(dest), self.tree(full))
+        repo, sha = self.repo("a11-dotfile", files, {"app/lnk": "../.gitignore"})
+        self.assertIsNotNone(self.ad.hidden_split(repo, sha))
+        dest, _pruned = self.snap(repo, sha, "a11-dotfile")
+        self.assertIn("app/lnk", self.tree(dest))
+        self.assertNotIn(".dddjango-web/", self.tree(dest))
+        self.assertTrue((dest / "app" / "lnk").is_file())
+
+    def test_A12_split_extraction_failure_falls_back_to_the_full_copy(self) -> None:
+        """NFD 로 커밋된 문서 입력 이름은 macOS git 의 argv NFC 바꿈 때문에 `:(literal)` 이 맞지 않는다 — 숨김 뺀 풀기가
+        실패하면 사본을 비우고 지금처럼 전체를 푼다(재료 결손 · 측정 무효가 아니다)."""
+        import unicodedata
+        repo: Path
+        repo, _sha = self.repo("a12", {"a.py": "A = 1\n", ".dddjango-web/r/log.txt": "l\n"})
+        self.index_add(repo, "100644", unicodedata.normalize("NFD", ".dddjango/결제/scope.md"), b"# scope\n")
+        sha: str = self.commit_index(repo, "nfd document input")
+        dest: Path
+        pruned: "list[str]"
+        dest, pruned = self.snap(repo, sha, "a12")
+        full: Path
+        full, _pruned = self.snap(repo, sha, "a12-full", drop=False)
+        nfc = lambda paths: {unicodedata.normalize("NFC", p) for p in paths}  # noqa: E731
+        self.assertEqual((nfc(self.tree(dest)), pruned), (nfc(self.tree(full)), []))
+        self.assertIn(".dddjango-web/r/log.txt", self.tree(dest))
+
+
 def main() -> int:
+    """스모크 전체를 이 실행 전용 임시 폴더(TMPDIR)에서 돈다 — 게이트 · 검사기의 임시 사본 뿌리가 실제 임시 폴더의
+    다른 실행 사본과 섞이지 않게."""
+    private: str = tempfile.mkdtemp(prefix="anchor-smoke-tmp-")
+    saved: "str | None" = os.environ.get("TMPDIR")
+    os.environ["TMPDIR"] = private
+    tempfile.tempdir = private
+    try:
+        return _main()
+    finally:
+        tempfile.tempdir = None
+        if saved is None:
+            os.environ.pop("TMPDIR", None)
+        else:
+            os.environ["TMPDIR"] = saved
+        shutil.rmtree(private, ignore_errors=True)
+
+
+def _main() -> int:
     suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case) for case in (
         BaselineBcArgvRegression, EmptyScopeBcRegression, BcSelectorPartitionRegression, SisterAnchorRegression,
         UnnumberedDebtRegression, BaselineSliceRegression, ApprovedInflowPartitionRegression,
         BcRenamePairingRegression, RenamedBcBaselineRegression, AnchorSnapshotEscapeRegression,
-        SnapshotLinkHelperRegression))
+        SnapshotLinkHelperRegression, HiddenSnapshotRegression))
     result = unittest.TextTestRunner(verbosity=2).run(
         suite)
     if not result.wasSuccessful():

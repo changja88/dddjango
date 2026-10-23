@@ -18,6 +18,12 @@ legacy 위반이 상존해 「루트 registry 전체 green」이 문자 그대�
 - **사본 속 링크**(F4-97 · F4-98): 앵커 · 승인 유입 측정 사본에서 사본 밖을 가리키는 링크가 모두 숨김 경로
   (문서 입력 `.dddjango/<폴더>/{scope,design-spec}.md` 와 그 조상은 빼고)에 있으면 그 링크를 걷고 잰다. 하나라도
   그 밖이면 지금처럼 그 사본을 증거로 쓰지 않는다(fail-closed · 판정 줄에 «잴 수 없어 남긴» 수를 따로 적는다).
+- **사본의 숨김 경로**: 현재 쪽 사본이 숨김 경로를 복사하지 않으므로 앵커 · 승인 유입 측정 사본도 숨김 경로(같은 문서
+  입력 · 조상은 남김)를 빼고 푼다(`anchor_diff.snapshot_anchor(drop_hidden=True)`). 남은 링크가 뺀 경로를 지나면
+  그 사본만 지금처럼 전체를 푼다.
+- **임시 사본**: 사본은 `<기본 임시 폴더>/dddjango/` 아래 주인 표식이 붙은 폴더에 둔다. 실행을 시작할 때 주인이 죽은
+  폴더(끊긴 실행이 남긴 사본)를 지우고, 지운 것이 있을 때만 stderr 에 `정리:` 한 줄을 낸다(표준 출력 · sidecar 무변).
+  `--temp-report` 는 판정 없이 남은 사본 · keep 사본 · 옛 판 꼴 사본의 개수 · 크기 한 줄만 낸다(지우지 않는다).
 
 - **앵커는 actor 가 고르지 않는다** — 라운드에선 대장의 앵커 커밋, 파이프라인에선
   Phase 2 진입 직전 기록되는 build-start 앵커(`commands/dddjango.md` 절차 소유)를
@@ -80,6 +86,7 @@ provenance 차분 — 귀속의 분할이지 재정의가 아니다
 
 사용: python3 registry_gate.py <저장소 루트> --anchor <ref> [--legacy-debt-file <path>]
       [--approved-merge-file <path>] [--introduced-json <path>] [--contract-json <path>]
+      python3 registry_gate.py --temp-report
 환경(선택): DJR_REGISTRY_WORKERS=<양의 정수> — 검사기 동시 실행 수. 없으면 빈 코어 수(CPU − 1분 부하 · 1~8)다.
       앵커·현재 두 벌이 한 한도를 나눠 쓴다. 출력·sidecar 는 워커 수와 무관하다(REGISTRY 순서 병합).
 exit 0 = 귀속 0 / exit 2 = 귀속 존재 / exit 1 = 사용 오류·재료 결손·공허 차분·승인 목록 형식/사슬 오류.
@@ -95,10 +102,12 @@ import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
 import threading
+import time
 from concurrent.futures import Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -773,7 +782,7 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
         if t not in snap_cache:
             dest: Path = td / f"snap-{t[:12]}"
             try:
-                pruned: "list[str]" = anchor_diff.snapshot_anchor(root, sha, dest)
+                pruned: "list[str]" = anchor_diff.snapshot_anchor(root, sha, dest, drop_hidden=True)
                 if pruned:
                     res.pruned_snapshots.append(pruned[0])
             except (anchor_diff.AnchorDiffUsage, OSError) as exc:  # git/tar 불능 + mkdir·디스크 오류 — traceback 0
@@ -924,9 +933,73 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
     return res
 
 
+_OLD_COPY_AGE_SECONDS: int = 3600
+_OLD_ANCHOR_ONLY_RE: "re.Pattern[str]" = re.compile(r"anchor|tree-[0-9a-f]{12}")
+
+
+def _old_copy(path: Path) -> bool:
+    """뿌리 이전 판(2.24.2 이하)이 기본 임시 폴더에 남긴 사본 꼴인가 — 그 판들이 실제로 만들던 꼴만 센다.
+
+    registry_gate `tmp*`: `current/` 와 함께 `anchor/` · `records-current.jsonl` · `records-anchor.jsonl` 가운데 하나 ·
+    anchor_diff `tmp*`: `anchor/` 와 `tree-<12자>/` 뿐 · pre-gate `design-pregate-*`: `copy/`. 그리고 마지막 쓰기(그 폴더와
+    바로 아래 항목)가 1시간을 넘었다. 이름이 맞지 않으면 열지 않는다."""
+    name: str = path.name
+    if not (name.startswith("tmp") or name.startswith("design-pregate-")):
+        return False
+    try:
+        st: os.stat_result = os.lstat(path)
+        if not stat.S_ISDIR(st.st_mode):
+            return False
+        children: "list[os.DirEntry[str]]" = list(os.scandir(path))
+        times: "list[float]" = [st.st_mtime] + [c.stat(follow_symlinks=False).st_mtime for c in children]
+    except OSError:
+        return False
+    dirs: "set[str]" = {c.name for c in children if c.is_dir(follow_symlinks=False)}
+    names: "set[str]" = {c.name for c in children}
+    if name.startswith("design-pregate-"):
+        shaped: bool = "copy" in dirs
+    else:
+        shaped = (("current" in dirs and bool({"anchor", "records-current.jsonl", "records-anchor.jsonl"} & names))
+                  or ("anchor" in dirs and all(_OLD_ANCHOR_ONLY_RE.fullmatch(n) for n in names)))
+    return shaped and time.time() - max(times) > _OLD_COPY_AGE_SECONDS
+
+
+def _temp_report_line() -> str:
+    """`--temp-report` 의 한 줄 — 뿌리의 남은 사본(keep 아닌 것 — 다른 실행 몫) · keep 사본 · 기본 임시 폴더의 옛 판 꼴
+    사본의 개수와 크기. 판정 · 지우기 없음(옛 판 꼴은 주인 표식이 없어 사용자가 지운다)."""
+    base: Path = Path(tempfile.gettempdir())
+    root: "Path | None" = anchor_diff.temp_root(create=False)
+    left: int = 0
+    left_size: int = 0
+    keep: int = 0
+    keep_size: int = 0
+    if root is not None:
+        try:
+            names: "list[str]" = sorted(os.listdir(root))
+        except OSError:
+            names = []
+        for name in names:
+            entry: Path = root / name
+            size: int = anchor_diff.tree_size(entry) if entry.is_dir() and not entry.is_symlink() else 0
+            if anchor_diff.temp_state(entry) == "keep":
+                keep, keep_size = keep + 1, keep_size + size
+            else:
+                left, left_size = left + 1, left_size + size
+    try:
+        old: "list[Path]" = [p for p in sorted(base.iterdir()) if _old_copy(p)]
+    except OSError:
+        old = []
+    if not (left or keep or old):
+        return "임시 사본: 남은 것 0"
+    old_size: int = sum(anchor_diff.tree_size(p) for p in old)
+    return (f"임시 사본: 남은 {left}개({left_size / 1048576:.1f} MB — 다른 실행 몫) · "
+            f"keep {keep}개({keep_size / 1048576:.1f} MB) · "
+            f"옛 판 꼴 {len(old)}개({old_size / 1073741824:.1f} GB — 직접 지워도 됨) · {base / anchor_diff.TEMP_ROOT}")
+
+
 def main(argv: "list[str]") -> int:
     ap: _UsageParser = _UsageParser(add_help=True)
-    ap.add_argument("target")
+    ap.add_argument("target", nargs="?")
     ap.add_argument("--anchor", required=False, default=None,
                     help="차분 기준(대장 앵커 또는 build-start 앵커) — actor 가 임의로 고르지 않는다")
     ap.add_argument("--legacy-debt-file", default=None)
@@ -939,7 +1012,14 @@ def main(argv: "list[str]") -> int:
     ap.add_argument("--contract-json", default=None,
                     help="`rule=null`(선행 계약·센티널) 레코드의 계수를 companion sidecar 로 "
                          "쓴다 — 주입 대상이 아니라 «계수 후 유효 유지»(개정 9)의 원자료")
+    ap.add_argument("--temp-report", action="store_true",
+                    help="임시 사본 한 줄 보고만 하고 끝낸다(G2 배너용 — 판정 · 지우기 없음 · TARGET 불요)")
     ns: argparse.Namespace = ap.parse_args(argv)
+    if ns.temp_report:
+        print(_temp_report_line())
+        return 0
+    if ns.target is None:
+        ap.error("the following arguments are required: target")
 
     root: Path = Path(ns.target).resolve()
     if not root.is_dir():
@@ -989,7 +1069,8 @@ def main(argv: "list[str]") -> int:
     chain: "list[anchor_diff.ChainCommit]" = []
     provenance: "_ProvenanceResult | None" = None
 
-    with tempfile.TemporaryDirectory() as td:
+    anchor_diff.sweep_temp_root()
+    with anchor_diff.owned_tempdir("registry-gate") as td:
         cur: Path = Path(td) / "current"
         _snapshot_current(root, cur)
         # L/N 을 **다른 파일**로 받는다 — 한 sink 에 누적하면 legacy 와 신규가 섞인다.
@@ -1058,7 +1139,7 @@ def main(argv: "list[str]") -> int:
                     return 1
             anc: Path = Path(td) / "anchor"
             try:
-                anchor_pruned: "list[str]" = anchor_diff.snapshot_anchor(root, anchor_sha, anc)
+                anchor_pruned: "list[str]" = anchor_diff.snapshot_anchor(root, anchor_sha, anc, drop_hidden=True)
             except anchor_diff.AnchorDiffUsage as exc:
                 print(f"재료 결손: {exc}", file=sys.stderr)
                 return 1

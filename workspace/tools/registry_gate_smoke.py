@@ -69,12 +69,14 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 import contextlib
 import io
 from unittest.mock import patch
 from pathlib import Path
 from types import ModuleType
+from typing import Callable
 from anchor_diff_smoke import ApprovedInflowRepo
 
 ROOT: Path = Path(__file__).resolve().parents[2]
@@ -316,11 +318,24 @@ def _inject(gate: Path, checker: str, body: str) -> None:
                     encoding="utf-8")
 
 
-def _par_run(gate: Path, repo: Path, anchor: str, td: Path, workers: "str | None") -> "dict[str, object]":
-    """게이트 1회 — 사이드카는 고정 경로(출력의 경로 행이 런마다 같다) · `$TMPDIR` 는 빈 전용 폴더(누수 계수)."""
+def _leaked(tmp: Path) -> "list[str]":
+    """임시 폴더 누수 — `$TMPDIR` 바로 아래 항목(옛 판 꼴) + 임시 사본 뿌리 `dddjango/` 안 항목(뿌리 자체는 남는다)."""
+    out: "list[str]" = sorted(p.name for p in tmp.iterdir() if p.name != "dddjango")
+    root: Path = tmp / "dddjango"
+    if root.is_dir() and not root.is_symlink():
+        out += sorted("dddjango/" + p.name for p in root.iterdir())
+    return out
+
+
+def _par_run(gate: Path, repo: Path, anchor: str, td: Path, workers: "str | None",
+             seed: "Callable[[Path], None] | None" = None) -> "dict[str, object]":
+    """게이트 1회 — 사이드카는 고정 경로(출력의 경로 행이 런마다 같다) · `$TMPDIR` 는 빈 전용 폴더(누수 계수).
+    `seed` 는 실행 전에 그 폴더를 채운다(끊긴 실행이 남긴 사본 흉내)."""
     tmp: Path = td / "par-tmp"
     shutil.rmtree(tmp, ignore_errors=True)
     tmp.mkdir()
+    if seed is not None:
+        seed(tmp)
     intro: Path = td / "par-introduced.json"
     contract: Path = td / "par-contract.json"
     intro.unlink(missing_ok=True)
@@ -336,7 +351,7 @@ def _par_run(gate: Path, repo: Path, anchor: str, td: Path, workers: "str | None
         capture_output=True, text=True, env=env)
     return {"exit": proc.returncode, "stdout": _mask(proc.stdout), "stderr": proc.stderr,
             "introduced": _mask_sidecar(intro), "contract": _mask_sidecar(contract),
-            "leaked": sorted(p.name for p in tmp.iterdir())}
+            "leaked": _leaked(tmp)}
 
 
 def _same_output(a: "dict[str, object]", b: "dict[str, object]") -> bool:
@@ -1254,13 +1269,15 @@ class SnapshotLinkRegression(unittest.TestCase):
         code, out = _gate(repo, anchor, ["--approved-merge-file", str(approved)])
         self.assertEqual(code, 0, out)
         self.assertNotIn("측정 무효(스냅숏 실패)", out)
-        self.assertIn("숨김 경로의 사본 밖 심링크를 뺀 스냅숏", out)
+        # 출처 스냅숏은 숨김 경로를 빼고 풀어 기록 링크가 들어오지 않는다(걷을 링크 0 — 알림 없음)
+        self.assertNotIn("숨김 경로의 사본 밖 심링크를 뺀 스냅숏", out)
 
     def test_L3b_anchor_inside_the_link_window_is_a_normal_baseline(self) -> None:
         repo, _anchor, m1, approved = self.chain("l3b", _LINK_DIR)
         code, out = _gate(repo, m1, ["--approved-merge-file", str(approved)])
         self.assertEqual(code, 0, out)
-        self.assertIn(f"정보: 앵커 {m1[:12]} 사본에서 숨김 경로의 사본 밖 심링크 1개를 뺐다", out)
+        # 앵커 사본도 숨김 경로를 빼고 풀어 기록 링크가 들어오지 않는다(걷을 링크 0 — 알림 없음)
+        self.assertNotIn(f"정보: 앵커 {m1[:12]} 사본에서 숨김 경로의 사본 밖 심링크", out)
         self.assertNotIn("기준선 불능", out)
 
     def test_L6_surface_link_stays_unmeasured_and_is_counted_on_the_verdict(self) -> None:
@@ -1386,6 +1403,292 @@ class ListShrinkRegression(unittest.TestCase):
         self.assertEqual(gate._list_shrunk(["c.py :: [#562] f/x.py: 수 [1] — 끝"], ["c.py :: [#562] f/x.py: 수 [1, 2] — 끝"]), {})
 
 
+# 숨김 뺀 앵커 · 임시 사본 뿌리 바로 앞 배포판(dddjango 2.24.2) — «판정이 옛 판과 같음» 대조의 옛 판(HEAD 금지).
+_RELEASED_2242_COMMIT: str = "2119e502"
+
+
+def _released_gate(td: Path, commit: str) -> Path:
+    """배포 커밋의 scripts 트리 사본의 registry_gate.py — 게이트와 공용 모듈(anchor_diff) 모두 그 판이다."""
+    dest: Path = td / f"released-{commit}"
+    if not dest.exists():
+        dest.mkdir()
+        archive: "subprocess.CompletedProcess[bytes]" = subprocess.run(
+            ["git", "-C", str(ROOT), "archive", commit, "dddjango/scripts"], capture_output=True, check=True)
+        subprocess.run(["tar", "-x", "-C", str(dest)], input=archive.stdout, check=True)
+    return dest / "dddjango" / "scripts" / "registry_gate.py"
+
+
+def _anchor_module() -> ModuleType:
+    """시험 대상 scripts 트리의 anchor_diff(게이트가 import 하는 그 모듈)."""
+    _gate_module()
+    import anchor_diff  # noqa: PLC0415 — `_gate_module` 이 scripts 폴더를 sys.path 에 넣은 뒤
+    return anchor_diff
+
+
+class HiddenAnchorGateRegression(unittest.TestCase):
+    """앵커 · 출처 스냅숏이 숨김 경로(실행 기록)를 뺀다 — 지금 쪽 사본과 같은 표면. 숨김 기록이 판정에 닿지 않는 저장소와
+    남길 링크가 뺀 경로를 지나는 저장소(되돌림)에서 exit · 출력 · sidecar 가 2.24.2 와 같다."""
+
+    def setUp(self) -> None:
+        self.temp: tempfile.TemporaryDirectory[str] = tempfile.TemporaryDirectory(prefix="gate-hidden-")
+        self.addCleanup(self.temp.cleanup)
+        self.td: Path = Path(self.temp.name)
+        self.old: Path = _released_gate(self.td, _RELEASED_2242_COMMIT)
+
+    def same_as_released(self, repo: Path, anchor: str, extra: "list[str] | None" = None) -> str:
+        new_side: Path = self.td / "new-introduced.json"
+        old_side: Path = self.td / "old-introduced.json"
+        code: int
+        out: str
+        old_code: int
+        old_out: str
+        code, out = _gate(repo, anchor, [*(extra or []), "--introduced-json", str(new_side)])
+        old_code, old_out = _gate(repo, anchor, [*(extra or []), "--introduced-json", str(old_side)], gate=self.old)
+        self.assertNotIn("Traceback", out)
+        self.assertEqual((code, _mask(out)), (old_code, _mask(old_out)))
+        self.assertEqual(_mask_sidecar(new_side), _mask_sidecar(old_side))
+        return out
+
+    @staticmethod
+    def records(repo: Path) -> None:
+        """커밋된 실행 기록 꼴 — 숨김 폴더(문서 입력 · 그 밖 기록 · CI 설정) + 숨김 항목만 든 숨김 아닌 폴더 셋
+        (`<project>/logs/.gitkeep` · 비계만 만든 BC · 숨김 폴더만 든 폴더 — 지금 쪽 사본에는 빈 폴더로 있다)."""
+        for rel, src in {".dddjango/20261020-run/scope.md": "# 범위\n", ".dddjango/20261020-run/design-spec.md": "# 설계\n",
+                         ".dddjango/20261020-run/notes/log.txt": "log\n",
+                         ".dddjango-web/20261016-run/captures/result.txt": "captured\n",
+                         ".dddjango-web/20261016-run/design-ref/page.html": "<p>ref</p>\n",
+                         ".github/workflows/ci.yml": "on: push\n", "config/logs/.gitkeep": "",
+                         "application/payments/.gitkeep": "", "application/orders/notes/.cache/f": "cache\n"}.items():
+            _write(repo, rel, src)
+
+    def test_A1_committed_records_leave_the_verdict_and_sidecar_unchanged(self) -> None:
+        repo: Path
+        repo, _pre = _make_repo(self.td, "a1")
+        self.records(repo)
+        anchor: str = _commit_all(repo, "anchor with records")
+        _plant_violation(repo)
+        out: str = self.same_as_released(repo, anchor)
+        self.assertIn("schema_smoke", _section(out, "귀속(N∖L)"))
+
+    def test_A1_provenance_snapshots_with_records_prove_the_same_inflow(self) -> None:
+        def main_step(r: Path) -> None:
+            _plant_violation(r)
+            self.records(r)
+        repo: Path
+        anchor: str
+        merge: str
+        repo, anchor, merge = _lane_merge_repo(self.td, "a1p", main_step, anchor_step=self.records)
+        out: str = self.same_as_released(repo, anchor, ["--approved-merge-file", str(_approved(self.td, "a1p", merge))])
+        self.assertIn("귀속(N∖L) 0건", out)
+
+    def test_A6_a_kept_link_through_a_dropped_path_extracts_everything_like_released(self) -> None:
+        repo: Path
+        repo, _pre = _make_repo(self.td, "a6")
+        _write(repo, ".h/shared_constants.py", "LIMIT: int = 3\n")
+        os.symlink("../../.h/shared_constants.py", repo / "application" / "orders" / "shared_constants.py")
+        anchor: str = _commit_all(repo, "anchor with a link into a hidden folder")
+        _plant_violation(repo)
+        self.same_as_released(repo, anchor)
+
+
+class TempRootRegression(unittest.TestCase):
+    """임시 사본 뿌리 `<TMPDIR>/dddjango/` — 시작 때 쓸기(주인 · keep · 이름 판정) · 뿌리 확인 · pre-gate `--keep` ·
+    `--temp-report`. 모두 시험 전용 TMPDIR 에서 돈다(실제 임시 폴더의 사본을 건드리지 않는다)."""
+
+    def setUp(self) -> None:
+        self.temp: tempfile.TemporaryDirectory[str] = tempfile.TemporaryDirectory(prefix="gate-temp-root-")
+        self.addCleanup(self.temp.cleanup)
+        self.td: Path = Path(self.temp.name)
+        self.tmp: Path = self.td / "tmp"
+        self.tmp.mkdir()
+        self.root: Path = self.tmp / "dddjango"
+        self.repo: Path
+        self.anchor: str
+        self.repo, self.anchor = _make_repo(self.td, "repo")
+        _plant_violation(self.repo)
+        self.ad: ModuleType = _anchor_module()
+
+    def env(self) -> "dict[str, str]":
+        return dict(_scrubbed_env(), TMPDIR=str(self.tmp))
+
+    def gate(self, *args: str) -> "subprocess.CompletedProcess[str]":
+        return subprocess.run([sys.executable, str(GATE), *args], capture_output=True, text=True, env=self.env())
+
+    @staticmethod
+    def dead_pid() -> int:
+        proc: "subprocess.Popen[bytes]" = subprocess.Popen([sys.executable, "-c", "pass"])
+        proc.wait()
+        return proc.pid
+
+    def make_root(self, mode: int = 0o700) -> None:
+        self.root.mkdir()
+        self.root.chmod(mode)
+
+    @staticmethod
+    def folder(where: Path, name: str, owner: "dict[str, object] | None", size: int = 1024) -> Path:
+        path: Path = where / name
+        (path / "current").mkdir(parents=True)
+        (path / "current" / "blob").write_bytes(b"x" * size)
+        if owner is not None:
+            (path / "owner.json").write_text(json.dumps(owner), encoding="utf-8")
+        return path
+
+    def test_B1_to_B6_start_sweep_removes_only_folders_whose_owner_is_gone(self) -> None:
+        dead: int = self.dead_pid()
+        self.assertTrue(self.ad._pid_dead(dead))
+        live: int = os.getpid()
+        self.make_root()
+        gone: "list[Path]" = [
+            self.folder(self.root, f"registry-gate-{live}-b1aaaaaa", {"pid": dead, "tool": "registry-gate"}),  # B1 표식 pid 죽음
+            self.folder(self.root, f"anchor-diff-{dead}-b4aaaaaa", None),                                      # B4 표식 없음 · 이름 pid 죽음
+            self.folder(self.root, f"design-pregate-{live}-b6aaaaaa-sweeping-{dead}", None),                    # B6 쓸던 실행이 죽음
+            self.folder(self.root, f"registry-gate-1-b6bbbbbb-sweeping-{live}-sweeping-{dead}", None),          # B6 이름에 둘 — 마지막 pid
+        ]
+        stay: "list[Path]" = [
+            self.folder(self.root, f"registry-gate-{dead}-b2aaaaaa", {"pid": live}),                             # B2 산 주인(표식이 이름보다 먼저)
+            self.folder(self.root, f"design-pregate-{dead}-b3aaaaaa", {"pid": dead, "keep": True}),              # B3 keep
+            self.folder(self.root, "notes", None),                                                              # B5 이름 해석 불가
+            self.folder(self.root, f"other-tool-{dead}-b5aaaaaa", None),                                        # B5 모르는 도구
+            self.folder(self.root, f"registry-gate-{dead}-b5bbbbbb", None),                                     # (표식 깨짐 → 아래)
+            self.folder(self.root, f"registry-gate-{dead}-b6cccccc-sweeping-{live}", None),                     # B6 쓰는 중(산 pid)
+        ]
+        (stay[4] / "owner.json").write_text("{깨진 표식", encoding="utf-8")                                     # B5 읽기 실패
+        locked: Path = gone[0] / "current" / "locked"                                                             # 읽기 전용 하위 폴더도 지운다
+        locked.mkdir()
+        (locked / "x").write_bytes(b"x" * 2048)
+        locked.chmod(0o500)
+        (self.root / "stray.txt").write_text("x", encoding="utf-8")
+        run: "subprocess.CompletedProcess[str]" = self.gate(str(self.repo), "--anchor", self.anchor)
+        self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+        self.assertEqual([p.name for p in gone if os.path.lexists(p)], [])
+        self.assertEqual([p.name for p in stay if not p.is_dir()], [])
+        self.assertTrue((self.root / "stray.txt").is_file())
+        self.assertEqual(sorted(p.name for p in self.root.iterdir()), sorted([p.name for p in stay] + ["stray.txt"]))
+        notes: "list[str]" = [line for line in run.stderr.splitlines() if line.startswith("정리:")]
+        self.assertEqual(len(notes), 1, run.stderr)
+        self.assertRegex(notes[0], rf"^정리: 끊긴 실행이 남긴 임시 사본 4개\([0-9.]+ MB\)를 지웠다 — {re.escape(str(self.root))}$")
+        self.assertNotIn("정리:", run.stdout)
+        # 차지할 때 이름은 «첫 `-sweeping-` 앞 원래 이름 + `-sweeping-<내 pid>`» — 다시 차지해도 길어지지 않는다
+        self.assertEqual(self.ad._claim_name("registry-gate-1-abcdefgh", 77), "registry-gate-1-abcdefgh-sweeping-77")
+        self.assertEqual(self.ad._claim_name("registry-gate-1-abcdefgh-sweeping-5-sweeping-6", 77),
+                         "registry-gate-1-abcdefgh-sweeping-77")
+
+    def test_B7_a_root_that_is_a_link_not_0700_or_not_mine_is_not_used(self) -> None:
+        dead: int = self.dead_pid()
+        elsewhere: Path = self.td / "elsewhere"
+        elsewhere.mkdir(mode=0o700)
+        planted: Path = self.folder(elsewhere, f"registry-gate-{dead}-b7aaaaaa", {"pid": dead})
+        self.root.symlink_to(elsewhere)
+        run: "subprocess.CompletedProcess[str]" = self.gate(str(self.repo), "--anchor", self.anchor)
+        self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+        self.assertTrue(planted.is_dir())
+        self.assertNotIn("정리:", run.stderr)
+        self.assertEqual(sorted(p.name for p in elsewhere.iterdir()), [planted.name])
+        self.root.unlink()
+        self.make_root(0o755)
+        planted = self.folder(self.root, f"registry-gate-{dead}-b7bbbbbb", {"pid": dead})
+        run = self.gate(str(self.repo), "--anchor", self.anchor)
+        self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+        self.assertTrue(planted.is_dir())
+        self.assertEqual(sorted(p.name for p in self.root.iterdir()), [planted.name])
+        self.root.chmod(0o700)
+        with patch.object(tempfile, "tempdir", str(self.tmp)):
+            self.assertEqual(self.ad.temp_root(), self.root)
+            with patch.object(os, "getuid", return_value=os.getuid() + 1):
+                self.assertIsNone(self.ad.temp_root())
+                with self.ad.owned_tempdir("registry-gate") as fallback:
+                    self.assertEqual(Path(fallback).parent, self.tmp)
+                    self.assertFalse((Path(fallback) / "owner.json").exists())
+            with self.ad.owned_tempdir("registry-gate") as owned:
+                self.assertEqual(Path(owned).parent, self.root)
+                self.assertRegex(Path(owned).name, rf"^registry-gate-{os.getpid()}-")
+                self.assertEqual(json.loads((Path(owned) / "owner.json").read_text(encoding="utf-8"))["pid"], os.getpid())
+
+    def test_B9_pregate_keep_copy_survives_the_next_sweep(self) -> None:
+        from pregate_fixture_run import _make_repo as _pregate_repo  # noqa: PLC0415
+        repo: Path = _pregate_repo(self.td, "pregate")
+        spec: Path = ROOT / "workspace" / "eval" / "fixtures" / "pregate" / "green-spec.md"
+        pregate: "list[str]" = [sys.executable, str(GATE.parent / "design_pregate.py"), str(spec), str(repo)]
+        run: "subprocess.CompletedProcess[str]" = subprocess.run(pregate, capture_output=True, text=True, env=self.env())
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertEqual(list(self.root.iterdir()), [])
+        run = subprocess.run(pregate + ["--keep"], capture_output=True, text=True, env=self.env())
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        kept: Path = Path(re.search(r"\(--keep\) 격리 사본 보존: (\S+)", run.stdout).group(1))  # type: ignore[union-attr]
+        self.addCleanup(shutil.rmtree, kept, True)
+        self.assertEqual(kept.parent, self.root)
+        self.assertRegex(kept.name, r"^design-pregate-\d+-")
+        self.assertIs(json.loads((kept / "owner.json").read_text(encoding="utf-8"))["keep"], True)
+        self.assertEqual(self.gate(str(self.repo), "--anchor", self.anchor).returncode, 2)
+        self.assertTrue((kept / "copy").is_dir())
+
+    def test_B10_temp_report_counts_without_target_and_deletes_nothing(self) -> None:
+        run: "subprocess.CompletedProcess[str]" = self.gate("--temp-report")
+        self.assertEqual((run.returncode, run.stdout, run.stderr), (0, "임시 사본: 남은 것 0\n", ""))
+        self.assertFalse(os.path.lexists(self.root))
+        dead: int = self.dead_pid()
+        self.make_root()
+        mib: int = 1024 * 1024
+        planted: "list[Path]" = [
+            self.folder(self.root, f"registry-gate-{os.getpid()}-b10aaaaa", {"pid": os.getpid()}, 2 * mib),
+            self.folder(self.root, f"registry-gate-{dead}-b10bbbbb", {"pid": dead}, mib),
+            self.folder(self.root, f"design-pregate-{dead}-b10ccccc", {"pid": dead, "keep": True}, mib),
+        ]
+        # 2.24.2 가 남기던 꼴 — registry_gate(`current/` + `anchor/` 또는 `records-*.jsonl`) · anchor_diff(`anchor/` · `tree-*`
+        # 뿐) · pre-gate(`design-pregate-*/copy/`). 흔한 이름 하나(`current/` 만 · `copy/` 없는 pre-gate 이름)는 세지 않는다.
+        old_gate: Path = self.folder(self.tmp, "tmpb10old1", None, 3 * mib)
+        (old_gate / "anchor").mkdir()
+        old_records: Path = self.folder(self.tmp, "tmpb10old2", None)
+        (old_records / "records-current.jsonl").write_bytes(b"{}\n" * 10)
+        old_anchor: Path = self.tmp / "tmpb10old3"
+        (old_anchor / "anchor").mkdir(parents=True)
+        (old_anchor / "tree-0123456789ab").mkdir()
+        old_pregate: Path = self.tmp / "design-pregate-b10old4"
+        (old_pregate / "copy").mkdir(parents=True)
+        recent: Path = self.folder(self.tmp, "tmpb10recent", None)
+        (recent / "anchor").mkdir()
+        unrelated: Path = self.folder(self.tmp, "tmpb10other", None)
+        (unrelated / "current").rename(unrelated / "something")
+        current_only: Path = self.folder(self.tmp, "tmpb10current", None)
+        pregate_no_copy: Path = self.tmp / "design-pregate-b10nocopy"
+        pregate_no_copy.mkdir()
+        two_hours_ago: float = time.time() - 7200
+        for folder in (old_gate, old_records, old_anchor, old_pregate, unrelated, current_only, pregate_no_copy):
+            for path in [folder, *folder.iterdir()]:
+                os.utime(path, (two_hours_ago, two_hours_ago), follow_symlinks=False)
+        run = self.gate("--temp-report")
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertEqual(run.stderr, "")
+        self.assertRegex(run.stdout, rf"^임시 사본: 남은 2개\(3\.0 MB — 다른 실행 몫\) · keep 1개\(1\.0 MB\) · "
+                                     rf"옛 판 꼴 4개\(0\.0 GB — 직접 지워도 됨\) · {re.escape(str(self.root))}\n$")
+        for path in [*planted, old_gate, old_records, old_anchor, old_pregate, recent, unrelated, current_only,
+                     pregate_no_copy]:
+            self.assertTrue(path.is_dir(), path)
+
+    def test_B11_stdout_and_sidecars_match_the_released_gate_and_the_note_goes_to_stderr_only(self) -> None:
+        dead: int = self.dead_pid()
+        old: Path = _released_gate(self.td, _RELEASED_2242_COMMIT)
+
+        def leftover(tmp: Path) -> None:
+            root: Path = tmp / "dddjango"
+            root.mkdir(mode=0o700)
+            root.chmod(0o700)
+            self.folder(root, f"registry-gate-{dead}-b11aaaaa", {"pid": dead})
+
+        ref: "dict[str, object]" = _par_run(old, self.repo, self.anchor, self.td, None)
+        swept: "dict[str, object]" = _par_run(GATE, self.repo, self.anchor, self.td, None, seed=leftover)
+        clean: "dict[str, object]" = _par_run(GATE, self.repo, self.anchor, self.td, None)
+        for got in (swept, clean):
+            self.assertEqual([got[k] for k in ("exit", "stdout", "introduced", "contract")],
+                             [ref[k] for k in ("exit", "stdout", "introduced", "contract")])
+            self.assertEqual(got["leaked"], [])
+        self.assertEqual(clean["stderr"], ref["stderr"])
+        extra: "list[str]" = [line for line in str(swept["stderr"]).splitlines()
+                              if line not in str(ref["stderr"]).splitlines()]
+        self.assertEqual(len(extra), 1, swept["stderr"])
+        self.assertTrue(extra[0].startswith("정리: 끊긴 실행이 남긴 임시 사본 1개("), extra[0])
+
+
 def _unnumbered_debt_rows(td: Path, repo: Path, anchor: str, debt: Path,
                           e_out: str) -> "list[tuple[str, int, int, bool, str]]":
     """E3 · E4 — 번호 없는 줄 빚(`= <검사기 파일> :: <줄>`)을 섞은 목록: 새 게이트와 옛 직렬 게이트 사본
@@ -1416,9 +1719,28 @@ def _unnumbered_debt_rows(td: Path, repo: Path, anchor: str, debt: Path,
 
 
 def main() -> int:
+    """스모크 전체를 이 실행 전용 임시 폴더(TMPDIR)에서 돈다 — 게이트의 시작 때 쓸기가 실제 임시 폴더의 다른 실행 사본을
+    건드리거나 그 알림 줄이 옛 판 대조 출력에 섞이지 않게."""
+    private: str = tempfile.mkdtemp(prefix="gate-smoke-tmp-")
+    saved: "str | None" = os.environ.get("TMPDIR")
+    os.environ["TMPDIR"] = private
+    tempfile.tempdir = private
+    try:
+        return _main()
+    finally:
+        tempfile.tempdir = None
+        if saved is None:
+            os.environ.pop("TMPDIR", None)
+        else:
+            os.environ["TMPDIR"] = saved
+        shutil.rmtree(private, ignore_errors=True)
+
+
+def _main() -> int:
     suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case)
                                for case in (CacheSnapshotRegression, IdempotencySnapshotRegression, SisterGateRegression,
-                                            ApprovedInflowGateRegression, SnapshotLinkRegression, ListShrinkRegression))
+                                            ApprovedInflowGateRegression, SnapshotLinkRegression, ListShrinkRegression,
+                                            HiddenAnchorGateRegression, TempRootRegression))
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     if not result.wasSuccessful():
         return 2

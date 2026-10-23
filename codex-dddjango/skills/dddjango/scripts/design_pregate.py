@@ -156,6 +156,13 @@ effects 의 bare `None` · `NONE` 과 짝 맞는 문자열 상수(`'none'`)는 `
 스텁으로 실체화해 already-built 에 «기실현 — 스텁 대체 예보»로 기록한다(커밋된 add 와 같은 예보 —
 같은 ID·같은 exit). 기준선 트리에 실존하는 add 는 여전히 형식 red. 미지정(HEAD 기본)은 종전과 판정
 (exit·귀속·ID) 동일 — 집계 행 문면은 판과 함께 변한다.
+격리 사본의 숨김 경로: 기준선 트리에서 숨김 폴더를 지나는 항목(`anchor_diff.prunable_path` — 실행 기록 폴더 등 · 문서
+입력과 그 조상 · 마지막 성분만 숨김인 `.gitkeep` 꼴은 남김)을 빼고 풀고, 겹침 · 승인 유입도 같은 항목을 건너뛴다(G2 registry
+의 지금 쪽 사본과 같은 표면). 기준선의 남길 링크 · 겹칠 작업 트리 링크 · 유입 링크 가운데 하나라도 사본에 그대로 남지 않는
+숨김 자리를 지나면 그 실행은 지금처럼 기준선 전체를 풀고 숨김 경로를 건너뛰지 않는다 — 사본을 쓰기 «전» 에 한 번 정한다.
+숨김 뺀 풀기가 실패해도 전체로 돌아간다. 사본은 `<기본 임시 폴더>/dddjango/design-pregate-<pid>-<임의>`
+(주인 표식 `owner.json`)에 두고, 실행 시작 때 끊긴 실행이 남긴 사본을 지운다. `--keep` 사본은 표식에 keep 을 적어 쓸기
+밖에 둔다.
 """
 from __future__ import annotations
 
@@ -1219,13 +1226,14 @@ def render_stub(entry: PlanEntry) -> str:
 
 # ── 격리 사본 — archive + dirty overlay + init (D1) ─────────────────────────
 
-def _git(cwd: Path, *args: str, check: bool = True) -> "subprocess.CompletedProcess[bytes]":
+def _git(cwd: Path, *args: str, check: bool = True,
+         env: "dict[str, str] | None" = None) -> "subprocess.CompletedProcess[bytes]":
     """훅·서명·자동 정리를 억제한다 — 단명 사본에 분리 정리 프로세스를 남기지 않는다."""
     argv: "list[str]" = ["git", "-C", str(cwd), "-c", "core.hooksPath=",
                          "-c", "commit.gpgsign=false",
                          "-c", "maintenance.auto=false", "-c", "gc.auto=0",
                          "-c", "user.email=pregate@local", "-c", "user.name=pregate"] + list(args)
-    proc: "subprocess.CompletedProcess[bytes]" = subprocess.run(argv, capture_output=True)
+    proc: "subprocess.CompletedProcess[bytes]" = subprocess.run(argv, capture_output=True, env=env)
     if check and proc.returncode != 0:
         raise RunError(f"git {' '.join(args[:2])} 실패: "
                        f"{proc.stderr.decode('utf-8', 'replace').strip()[:400]}")
@@ -1236,12 +1244,16 @@ _LINK_REFUSALS: "tuple[type, ...]" = tuple(
     getattr(tarfile, name) for name in ("AbsoluteLinkError", "LinkOutsideDestinationError") if hasattr(tarfile, name))
 
 
-def _extract_archive(repo: Path, base_sha: str, copy: Path) -> None:
+def _extract_archive(repo: Path, base_sha: str, copy: Path,
+                     split: "anchor_diff.HiddenSplit | None" = None) -> None:
     """`git archive <BASE>` 를 사본 디렉터리로 푼다(훅 억제·저장소 트리 밖).
 
     빼도 되는 자리(`anchor_diff.prunable_link`)의 링크는 대상 확인 없이 링크 그대로 풀고(뒤의 `_settle_links` 가
-    사본 밖 것을 걷는다), 그 밖 항목은 `data` 필터로 푼다 — 거절은 traceback 이 아니라 이름 붙은 실행 불능이다."""
-    proc: "subprocess.CompletedProcess[bytes]" = _git(repo, "archive", base_sha)
+    사본 밖 것을 걷는다), 그 밖 항목은 `data` 필터로 푼다 — 거절은 traceback 이 아니라 이름 붙은 실행 불능이다.
+    `split` 이 있으면 숨김 경로를 빼고 푼다(숨김 아닌 것 전부 · 남길 숨김 항목 — `_hidden_plan`)."""
+    drop: bool = split is not None and split.dropped > 0      # 뺄 것이 없으면 2.24.2 와 같은 전체 한 번
+    archives: "list[list[str]]" = ([[base_sha, "--", *spec] for spec in split.pathspecs()] if drop and split is not None
+                                   else [[base_sha]])
     data_filter = getattr(tarfile, "data_filter", None)
     tar_filter = getattr(tarfile, "tar_filter", None)
 
@@ -1250,20 +1262,38 @@ def _extract_archive(repo: Path, base_sha: str, copy: Path) -> None:
             return tar_filter(member, dest)
         return data_filter(member, dest)
 
-    with tarfile.open(fileobj=io.BytesIO(proc.stdout), mode="r:") as tf:
+    for args in archives:
+        proc: "subprocess.CompletedProcess[bytes]" = _git(
+            repo, "archive", *args, env=anchor_diff.pathspec_env() if drop else None)
+        with tarfile.open(fileobj=io.BytesIO(proc.stdout), mode="r:") as tf:
+            try:
+                if data_filter is None or tar_filter is None:  # 필터 없는 판 — 같은 규칙은 `_settle_links` 가 건다
+                    tf.extractall(copy)
+                else:
+                    tf.extractall(copy, filter=keep)
+            except _LINK_REFUSALS as exc:
+                name: str = getattr(getattr(exc, "tarinfo", None), "name", "?")
+                kind: str = "절대 경로" if type(exc).__name__ == "AbsoluteLinkError" else "저장소 밖 상대 경로"
+                raise RunError(f"기준선 {base_sha[:12]} 트리의 심링크 {name} 가 사본 밖을 가리킨다({kind}) — "
+                               "검사 표면 안이라 격리 사본을 만들 수 없다(fail-closed)") from exc
+            except tarfile.TarError as exc:
+                raise RunError(f"기준선 {base_sha[:12]} 트리를 격리 사본으로 풀 수 없다 — "
+                               f"{type(exc).__name__}: {exc}") from exc
+
+
+def _extract_baseline(repo: Path, base_sha: str, copy: Path,
+                      split: "anchor_diff.HiddenSplit | None") -> "anchor_diff.HiddenSplit | None":
+    """기준선 풀기 — 숨김 뺀 풀기가 어떤 까닭으로든 실패하면(예: NFD 이름 pathspec 불일치) 사본을 비우고 지금처럼 전체를
+    푼다(그 실행은 겹침 · 유입도 숨김 경로를 건너뛰지 않는다). 실제로 쓴 재료를 돌려준다(전체면 None)."""
+    if split is not None:
         try:
-            if data_filter is None or tar_filter is None:  # 필터 없는 판 — 같은 규칙은 `_settle_links` 가 건다
-                tf.extractall(copy)
-            else:
-                tf.extractall(copy, filter=keep)
-        except _LINK_REFUSALS as exc:
-            name: str = getattr(getattr(exc, "tarinfo", None), "name", "?")
-            kind: str = "절대 경로" if type(exc).__name__ == "AbsoluteLinkError" else "저장소 밖 상대 경로"
-            raise RunError(f"기준선 {base_sha[:12]} 트리의 심링크 {name} 가 사본 밖을 가리킨다({kind}) — "
-                           "검사 표면 안이라 격리 사본을 만들 수 없다(fail-closed)") from exc
-        except tarfile.TarError as exc:
-            raise RunError(f"기준선 {base_sha[:12]} 트리를 격리 사본으로 풀 수 없다 — "
-                           f"{type(exc).__name__}: {exc}") from exc
+            _extract_archive(repo, base_sha, copy, split)
+            return split
+        except (RunError, OSError):
+            shutil.rmtree(copy, ignore_errors=True)
+            copy.mkdir(parents=True)
+    _extract_archive(repo, base_sha, copy)
+    return None
 
 
 def _settle_links(copy: Path, origin: str) -> "list[str]":
@@ -1292,44 +1322,168 @@ def _copy_no_follow(src: str, dst: str) -> str:
     return shutil.copy2(src, dst, follow_symlinks=False)
 
 
-def _overlay_dirty(repo: Path, copy: Path) -> "list[str]":
-    """dirty overlay(D1-1) — non-ignored 미커밋·미추적 실물을 사본 위에 겹친다.
-
-    porcelain v1 -z 기준: 수정·신규는 working tree 실물 복사, 삭제는 사본에서 제거,
-    rename 은 to 복사 + from 제거로 수렴한다(실물 존재 여부가 판정 기준). 조상이 링크인 자리에는 쓰지 않고
-    (실행 불능), 목적지 링크는 따라가지 않고 지운 뒤 쓴다.
-    """
+def _dirty_paths(repo: Path) -> "list[str]":
+    """겹칠 경로 — porcelain v1 -z(`--untracked-files=all`)의 항목 경로(rename/copy 는 to · from 둘)를 차례대로."""
     proc: "subprocess.CompletedProcess[bytes]" = _git(
         repo, "status", "--porcelain=v1", "-z", "--untracked-files=all")
     tokens: "list[str]" = proc.stdout.decode("utf-8", "replace").split("\0")
-    touched: "list[str]" = []
+    out: "list[str]" = []
     idx: int = 0
     while idx < len(tokens):
         token: str = tokens[idx]
         idx += 1
         if len(token) < 4:
             continue
-        status: str = token[:2]
-        rels: "list[str]" = [token[3:]]
-        if status[0] in "RC" and idx < len(tokens) and tokens[idx]:
-            rels.append(tokens[idx])  # rename/copy 의 origin 경로
+        out.append(token[3:])
+        if token[0] in "RC" and idx < len(tokens) and tokens[idx]:
+            out.append(tokens[idx])  # rename/copy 의 origin 경로
             idx += 1
-        for rel in rels:
-            src: Path = repo / rel
-            dst: Path = _inflow_target(copy, rel, "미커밋 작업 트리")
-            if src.is_file() or src.is_symlink():
-                dst.parent.mkdir(parents=True, exist_ok=True)
-                _copy_no_follow(str(src), str(dst))
-                touched.append(rel)
-            elif src.is_dir():
-                if dst.is_symlink():
-                    dst.unlink()
-                shutil.copytree(src, dst, dirs_exist_ok=True, symlinks=True, copy_function=_copy_no_follow)
-                touched.append(rel + "/")
-            elif dst.is_file() or dst.is_symlink():
+    return out
+
+
+def _overlay_dirty(repo: Path, copy: Path, *, paths: "list[str] | None" = None,
+                   drop_hidden: bool = False) -> "list[str]":
+    """dirty overlay(D1-1) — non-ignored 미커밋·미추적 실물을 사본 위에 겹친다.
+
+    porcelain v1 -z 기준: 수정·신규는 working tree 실물 복사, 삭제는 사본에서 제거,
+    rename 은 to 복사 + from 제거로 수렴한다(실물 존재 여부가 판정 기준). 조상이 링크인 자리에는 쓰지 않고
+    (실행 불능), 목적지 링크는 따라가지 않고 지운 뒤 쓴다. `drop_hidden` 이면 숨김 폴더를 지나는 경로
+    (`anchor_diff.prunable_path`)는 건너뛴다(rename 의 to · from 을 따로 본다 · 폴더 복사 안도 같은 규칙 — 문서 입력의
+    조상이 아닌 숨김 폴더는 통째로) — 기준선 사본이 숨김 경로를 뺀 실행이다.
+    """
+    touched: "list[str]" = []
+
+    def hidden_names(directory: str, names: "list[str]") -> "set[str]":
+        return {name for name in names if _overlay_drops(repo, os.path.join(directory, name))}
+
+    for rel in (_dirty_paths(repo) if paths is None else paths):
+        if drop_hidden and anchor_diff.prunable_path(rel):
+            continue
+        src: Path = repo / rel
+        dst: Path = _inflow_target(copy, rel, "미커밋 작업 트리")
+        if src.is_file() or src.is_symlink():
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            _copy_no_follow(str(src), str(dst))
+            touched.append(rel)
+        elif src.is_dir():
+            if dst.is_symlink():
                 dst.unlink()
-                touched.append(f"removed {rel}")
+            shutil.copytree(src, dst, dirs_exist_ok=True, symlinks=True, copy_function=_copy_no_follow,
+                            ignore=hidden_names if drop_hidden else None)
+            touched.append(rel + "/")
+        elif dst.is_file() or dst.is_symlink():
+            dst.unlink()
+            touched.append(f"removed {rel}")
     return touched
+
+
+def _overlay_drops(repo: Path, path: str) -> bool:
+    """폴더 겹침 안의 항목 하나를 숨김 뺀 실행에서 빼는가 — 폴더는 그 아래가 모두 빠지는 숨김 폴더(`prunable_link`)일 때,
+    그 밖 항목은 `prunable_path` 일 때."""
+    rel: str = Path(path).relative_to(repo).as_posix()
+    if os.path.isdir(path) and not os.path.islink(path):
+        return anchor_diff.prunable_link(rel)
+    return anchor_diff.prunable_path(rel)
+
+
+def _worktree_links(repo: Path, rel: str) -> "list[tuple[str, str]]":
+    """겹칠 경로 하나가 사본에 들일 링크(사본 상대 경로 · 대상) — 경로 자신이 링크거나, 폴더면 그 안의 링크(뺄 자리 제외)."""
+    src: Path = repo / rel
+    if src.is_symlink():
+        return [(rel.rstrip("/"), os.readlink(src))]
+    if not src.is_dir():
+        return []
+    out: "list[tuple[str, str]]" = []
+    for current, dirs, files in os.walk(src):
+        dirs[:] = sorted(d for d in dirs if not _overlay_drops(repo, os.path.join(current, d)))
+        for name in sorted(dirs + files):
+            path: str = os.path.join(current, name)
+            if os.path.islink(path) and not _overlay_drops(repo, path):
+                out.append((Path(path).relative_to(repo).as_posix(), os.readlink(path)))
+    return out
+
+
+def _hidden_plan(repo: Path, base_sha: str, overlay: "list[str] | None",
+                 inflow: "ApprovedInflow | None") -> "anchor_diff.HiddenSplit | None":
+    """사본을 쓰기 «전» 에 숨김 경로를 뺄지 정한다 — 뺄 때의 기준선 풀기 재료(`anchor_diff.hidden_split`).
+
+    기준선 트리의 남길 링크 · 겹칠 작업 트리의 링크 · 승인 유입의 링크(120000) 가운데 하나라도 대상이 사본에 그대로 남지
+    않는 숨김 자리를 지나면(`anchor_diff.link_crosses_pruned`) None — 그 실행은 지금처럼 기준선 전체를 풀고 겹침 · 유입도
+    숨김 경로를 건너뛰지 않는다. 뒤에 덮일 링크까지 센다(넓게 세면 지금 동작 쪽이다). 숨김을 빼면 통째로 사라지는 숨김
+    아닌 폴더(`_vanishing_dirs`)가 있어도 None 이다. 겹칠 경로를 읽지 못했으면(`overlay` None) 지금 경로로 둔다 — 그 실패는
+    2.24.2 와 같은 자리(겹침)에서 이름 붙는다."""
+    if overlay is None:
+        return None
+    split: "anchor_diff.HiddenSplit | None" = anchor_diff.hidden_split(repo, base_sha, check_links=True, with_kept=True)
+    if split is None:
+        return None
+    hidden: "set[str]" = set(split.hidden_entries)
+    hidden.update(rel for rel in overlay if not anchor_diff.prunable_path(rel)
+                  and any(part.startswith(".") for part in rel.split("/")))
+    if inflow is not None:
+        hidden.update(path for path, change in inflow.changes.items() if change.blob
+                      and not anchor_diff.prunable_path(path) and any(part.startswith(".") for part in path.split("/")))
+    kept: "frozenset[str]" = frozenset(hidden)
+    for rel in overlay:
+        if anchor_diff.prunable_path(rel):
+            continue
+        if any(anchor_diff.link_crosses_pruned(link, target, kept) for link, target in _worktree_links(repo, rel)):
+            return None
+    if inflow is not None:
+        links: "list[InflowChange]" = [c for c in inflow.changes.values()
+                                       if c.mode == "120000" and not anchor_diff.prunable_path(c.path)]
+        targets: "list[str] | None" = anchor_diff.blob_texts(repo, [c.blob for c in links])
+        if targets is None or any(anchor_diff.link_crosses_pruned(c.path, target, kept)
+                                  for c, target in zip(links, targets)):
+            return None
+    if _vanishing_dirs(repo, split, overlay, inflow):
+        return None
+    return split
+
+
+def _visible_prefix(rel: str) -> str:
+    """첫 숨김 성분 앞까지의 숨김 아닌 조상 폴더(없으면 빈 문자열)."""
+    parts: "list[str]" = rel.split("/")
+    return "/".join(parts[:next((i for i, part in enumerate(parts) if part.startswith(".")), len(parts))])
+
+
+def _vanishing_dirs(repo: Path, split: "anchor_diff.HiddenSplit", overlay: "list[str]",
+                    inflow: "ApprovedInflow | None") -> "list[str]":
+    """숨김 뺀 실행에서 통째로 사라지는 숨김 아닌 폴더 — 뺄 항목(기준선 · 승인 유입 · 겹침)의 숨김 아닌 조상 가운데 최종
+    사본(기준선 + 승인 유입 + 겹침)에서 아래에 남는 항목이 하나도 없는 것. pre-gate 사본은 커밋되므로 빈 폴더는 남지 않고,
+    2.24.2 사본에는 그 폴더가 숨김 폴더째 있었다 — 하나라도 있으면 그 실행은 지금처럼 전체 모드다."""
+    candidates: "set[str]" = set(split.dirs)
+    kept: "set[str]" = set(split.kept)
+    if inflow is not None:
+        for path, change in inflow.changes.items():
+            if anchor_diff.prunable_path(path):
+                if change.blob:
+                    candidates.add(_visible_prefix(path))
+            elif change.blob:
+                kept.add(path)
+            else:
+                kept.discard(path)
+    for rel in overlay:
+        src: Path = repo / rel
+        present: bool = src.is_file() or src.is_symlink() or src.is_dir()
+        if anchor_diff.prunable_path(rel):
+            if present:
+                candidates.add(_visible_prefix(rel))
+        elif src.is_dir() and not src.is_symlink():
+            kept.add(rel.rstrip("/") + "/")        # 폴더째 겹침 — 아래에 남는 것이 있다고 본다
+        elif present:
+            kept.add(rel)
+        else:
+            kept.discard(rel)
+    candidates.discard("")
+    if not candidates:
+        return []
+    covered: "set[str]" = set()
+    for path in kept:
+        parts: "list[str]" = path.split("/")
+        for end in range(1, len(parts)):
+            covered.add("/".join(parts[:end]))
+    return sorted(folder for folder in candidates if folder not in covered)
 
 
 def _dirty_count(repo: Path) -> int:
@@ -4457,29 +4611,50 @@ def _main(argv: "list[str]") -> int:
         print(f"\n요약: 형식 red 1건(블록 공허) · 기준선 {base_sha[:12]} · 모드 차단")
         return 3
 
-    scratch: Path = Path(tempfile.mkdtemp(prefix="design-pregate-"))
+    anchor_diff.sweep_temp_root()
+    scratch: Path = anchor_diff.owned_mkdtemp("design-pregate")
     copy: Path = scratch / "copy"
     try:
         copy.mkdir(parents=True)
-        _extract_archive(repo, base_sha, copy)
+        # 숨김 경로(실행 기록 등)를 뺄지는 사본을 쓰기 «전» 에 한 번 정한다 — 겹칠 경로 · 승인 유입을 먼저 읽는다
+        # (유입 검증 실패는 지금과 같은 자리 · 같은 문구로 아래에서 낸다).
+        list_path: "Path | None" = (Path(ns.approved_merge_file).resolve()
+                                    if ns.approved_merge_file is not None else None)
+        early_inflow: "ApprovedInflow | None" = None
+        inflow_error: "Exception | None" = None
+        if list_path is not None and list_path.is_file():
+            try:
+                early_inflow = approved_inflow(repo, base_sha, head_sha, list_path)
+            except (anchor_diff.AnchorDiffUsage, OSError, RunError) as exc:
+                inflow_error = exc
+        overlay_paths: "list[str] | None" = []
+        if not skip_overlay:
+            try:
+                overlay_paths = _dirty_paths(repo)
+            except RunError:               # 겹침 자리에서 다시 읽어 2.24.2 와 같은 차례로 이름 붙인다
+                overlay_paths = None
+        split: "anchor_diff.HiddenSplit | None" = _hidden_plan(repo, base_sha, overlay_paths, early_inflow)
+        split = _extract_baseline(repo, base_sha, copy, split)
         dropped_links: "list[str]" = _settle_links(copy, "기준선")
         # archive == 기준선 트리 — 오버레이 «전»에 계획 경로의 실존을 재서 «기준선 실존 add»(형식 red 유지)와
         # «오버레이 실존 add»(재발화 판형의 기실현)를 가른다(git 추가 호출 0·결정적).
         in_baseline: "frozenset[str]" = frozenset(
             p for p in plan.entries if (copy / p).exists() or (copy / p).is_symlink())
         inflow: "ApprovedInflow | None" = None
-        if ns.approved_merge_file is not None:
-            list_path: Path = Path(ns.approved_merge_file).resolve()
+        if list_path is not None:
             if not list_path.is_file():
                 print(f"실행 불능: 승인 머지 목록 부재 — {list_path} (발주자 소유 파일 · 발주자 사안 → STOP)",
                       file=sys.stderr)
                 return 1
-            try:
-                inflow = approved_inflow(repo, base_sha, head_sha, list_path)
-            except (anchor_diff.AnchorDiffUsage, OSError) as exc:
-                print(f"실행 불능: 승인 머지 목록 검증 실패 — {exc} (발주자 사안 → STOP · 기준선이 레인 first-parent "
+            if isinstance(inflow_error, RunError):
+                raise inflow_error
+            if inflow_error is not None or early_inflow is None:
+                print(f"실행 불능: 승인 머지 목록 검증 실패 — {inflow_error} (발주자 사안 → STOP · 기준선이 레인 first-parent "
                       f"사슬 밖이면: 우회 기준선이면 G1 기준선으로 · 리베이스면 STOP)", file=sys.stderr)
                 return 1
+            inflow = early_inflow if split is None else replace(early_inflow, changes={
+                path: change for path, change in early_inflow.changes.items()
+                if not anchor_diff.prunable_path(path)})
             in_base_tree: "frozenset[str]" = frozenset(
                 c.path for c in inflow.changes.values() if (copy / c.path).exists() or (copy / c.path).is_symlink())
             apply_inflow(repo, copy, inflow)
@@ -4513,7 +4688,8 @@ def _main(argv: "list[str]") -> int:
             print(f"\n요약: 형식 red {len(form_errors)}건({_error_kinds(form_errors)}) · "
                   f"기준선 {base_sha[:12]} · 모드 차단")
             return 3
-        overlaid: "list[str]" = [] if skip_overlay else _overlay_dirty(repo, copy)
+        overlaid: "list[str]" = [] if skip_overlay else _overlay_dirty(
+            repo, copy, paths=overlay_paths, drop_hidden=split is not None)
         overlay_dropped: "list[str]" = _settle_links(copy, "미커밋 작업 트리") if overlaid else []
         if overlay_dropped:
             dropped_links += overlay_dropped
@@ -4614,6 +4790,7 @@ def _main(argv: "list[str]") -> int:
         return 1
     finally:
         if ns.keep:
+            anchor_diff.mark_keep(scratch)
             print(f"(--keep) 격리 사본 보존: {scratch}")
         else:
             try:

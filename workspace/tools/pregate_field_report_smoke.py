@@ -1108,12 +1108,21 @@ class BookAdmin(TranslatableAdmin):
         self.assertEqual(pg.check_report(text, report)[0], 3)
 
 
+# 숨김 뺀 기준선 바로 앞 배포판(dddjango 2.24.2) — «지금 판과 같은 결과» 대조의 옛 판(HEAD 금지).
+_RELEASED_2242_COMMIT = "2119e502"
+
+
 class SnapshotLinkPregateTest(unittest.TestCase):
     """F4-97(2.23.1) — 격리 사본의 링크: 숨김 경로(문서 입력 제외)의 사본 밖 링크는 걷고 예보하며, 그 밖은 계획 스텁을
-    쓰기 전에 이름 붙은 실행 불능이다. 겹침은 링크를 따라 쓰지 않는다."""
+    쓰기 전에 이름 붙은 실행 불능이다. 겹침은 링크를 따라 쓰지 않는다. 2.25.0 — 기준선 · 겹침 · 승인 유입은 숨김 경로를
+    빼므로 기록 링크는 사본에 들어오지 않는다(알림 없음 · 결과 같음). 남길 링크가 뺀 경로를 지나면 사본을 쓰기 전에
+    지금 경로(전체 · 숨김 건너뛰기 없음)로 정한다."""
 
     SPEC: Path = ROOT / "workspace/eval/fixtures/pregate/green-spec.md"
+    FORM_RED_SPEC: Path = ROOT / "workspace/eval/fixtures/pregate/update-target-spec.md"
     LINK_DIR: str = ".dddjango-web/20261012-0717-x/return1/browser-basetemp-2"
+    NOTE: str = "숨김 경로의 사본 밖 심링크"
+    SHARED: str = "application/orders/domain_layer/shared_value_object/rates.py"
 
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory(prefix="pregate-link-")
@@ -1122,26 +1131,54 @@ class SnapshotLinkPregateTest(unittest.TestCase):
         self.outside = self.td / "outside"
         self.outside.mkdir()
 
-    def run_pregate(self, repo: Path, *extra: str) -> "tuple[subprocess.CompletedProcess[str], Path]":
-        report = self.td / f"{repo.name}-report.md"
+    def run_pregate(self, repo: Path, *extra: str, spec: "Path | None" = None,
+                    scripts: Path = SCRIPTS) -> "tuple[subprocess.CompletedProcess[str], Path]":
+        report = self.td / f"{repo.name}-{'old' if scripts != SCRIPTS else 'new'}-report.md"
         report.write_text("SENTINEL\n", encoding="utf-8")
         env = dict(os.environ)
         env.pop("DJR_FINDINGS_JSON", None)
-        run = subprocess.run([sys.executable, str(SCRIPTS / "design_pregate.py"), str(self.SPEC), str(repo),
+        run = subprocess.run([sys.executable, str(scripts / "design_pregate.py"), str(spec or self.SPEC), str(repo),
                               "--report", str(report), *extra], capture_output=True, text=True, env=env)
         return run, report
+
+    def released(self) -> Path:
+        """2.24.2 배포 커밋의 scripts 사본(HEAD 금지 — 이 고침을 커밋한 뒤에도 옛 판이다)."""
+        old = self.td / "released-2242"
+        if not old.exists():
+            old.mkdir()
+            archive = subprocess.run(["git", "-C", str(ROOT), "archive", _RELEASED_2242_COMMIT, "dddjango/scripts"],
+                                     capture_output=True, check=True)
+            subprocess.run(["tar", "-x", "-C", str(old)], input=archive.stdout, check=True)
+        return old / "dddjango" / "scripts"
+
+    @staticmethod
+    def verdict(run) -> "list[str]":
+        return [line for line in run.stdout.splitlines() if line.startswith(("판정:", "요약:", "형식 red", "  update"))]
+
+    def assert_same_verdict_without_note(self, repo: Path, *extra: str, spec: "Path | None" = None, code: int = 0,
+                                         released: bool = False):
+        """결과 같음(exit — `released` 면 판정 · 요약 줄까지 2.24.2 와 대조) · 알림 없음(stdout · 리포트)."""
+        run, report = self.run_pregate(repo, *extra, spec=spec)
+        self.assertEqual(run.returncode, code, run.stdout + run.stderr)
+        self.assertNotIn("Traceback", run.stderr)
+        self.assertNotIn(self.NOTE, run.stdout)
+        self.assertNotIn(self.NOTE, report.read_text(encoding="utf-8"))
+        if released:
+            old, _old_report = self.run_pregate(repo, *extra, spec=spec, scripts=self.released())
+            self.assertEqual((run.returncode, self.verdict(run)), (old.returncode, self.verdict(old)))
+        return run, report
+
+    def hidden_shared(self, name: str) -> "tuple[Path, str]":
+        """기준선에 숨김 폴더의 실물(`.h/rates.py`) — 숨김 아닌 링크가 그것을 가리키면 되돌림이다."""
+        repo = _make_repo(self.td, name)
+        (repo / ".h").mkdir()
+        (repo / ".h/rates.py").write_text("RATE: int = 3\n", encoding="utf-8")
+        return repo, self.commit(repo, "hidden shared module")
 
     def commit(self, repo: Path, message: str) -> str:
         _git(repo, "add", "-A")
         _git(repo, "commit", "-q", "-m", message)
         return _git(repo, "rev-parse", "HEAD")
-
-    def assert_forecast_with_note(self, run, report: Path, path: str) -> None:
-        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
-        self.assertNotIn("Traceback", run.stderr)
-        note = f"숨김 경로의 사본 밖 심링크 1개는 사본에서 뺐다(사본 밖 내용을 읽지 않게 · 판정 무관): {path}"
-        self.assertIn(note, run.stdout)
-        self.assertIn(note, report.read_text(encoding="utf-8"))
 
     def assert_named_stop(self, run, report: Path, message: str) -> None:
         self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
@@ -1158,8 +1195,7 @@ class SnapshotLinkPregateTest(unittest.TestCase):
                 (repo / self.LINK_DIR).mkdir(parents=True)
                 os.symlink(target, repo / self.LINK_DIR / "test_xcurrent")
                 self.commit(repo, "record link")
-                run, report = self.run_pregate(repo)
-                self.assert_forecast_with_note(run, report, f"{self.LINK_DIR}/test_xcurrent")
+                self.assert_same_verdict_without_note(repo, released=name == "abs-live")
 
     def test_L1c_old_base_holding_the_link(self) -> None:
         repo = _make_repo(self.td, "l1c")
@@ -1168,23 +1204,20 @@ class SnapshotLinkPregateTest(unittest.TestCase):
         linked = self.commit(repo, "record link")
         _git(repo, "rm", "-q", f"{self.LINK_DIR}/test_xcurrent")
         self.commit(repo, "record link removed")
-        run, report = self.run_pregate(repo, "--base", linked)
-        self.assert_forecast_with_note(run, report, f"{self.LINK_DIR}/test_xcurrent")
+        self.assert_same_verdict_without_note(repo, "--base", linked)
 
     def test_L1d_uncommitted_record_link_and_regular_file_replaced_by_link(self) -> None:
         repo = _make_repo(self.td, "l1d")
         (repo / self.LINK_DIR).mkdir(parents=True)
         os.symlink(str(self.td / "gone" / "x1"), repo / self.LINK_DIR / "test_xcurrent")
-        run, report = self.run_pregate(repo)
-        self.assert_forecast_with_note(run, report, f"{self.LINK_DIR}/test_xcurrent")
+        self.assert_same_verdict_without_note(repo)
         replaced = _make_repo(self.td, "l1d-replaced")
         (replaced / ".dddjango-web/x").mkdir(parents=True)
         (replaced / ".dddjango-web/x/current").write_text("regular\n", encoding="utf-8")
         self.commit(replaced, "regular record file")
         (replaced / ".dddjango-web/x/current").unlink()
         os.symlink(str(self.outside / "t.txt"), replaced / ".dddjango-web/x/current")
-        run, report = self.run_pregate(replaced)
-        self.assert_forecast_with_note(run, report, ".dddjango-web/x/current")
+        self.assert_same_verdict_without_note(replaced)
 
     def test_L1e_record_link_arriving_by_approved_merge(self) -> None:
         repo = _make_repo(self.td, "l1e")
@@ -1201,10 +1234,8 @@ class SnapshotLinkPregateTest(unittest.TestCase):
         merge = _git(repo, "rev-parse", "HEAD")
         approved = self.td / "l1e-approved.txt"
         approved.write_text(f"{merge} M\n", encoding="utf-8")
-        run, report = self.run_pregate(repo, "--base", before, "--approved-merge-file", str(approved))
-        self.assert_forecast_with_note(run, report, f"{self.LINK_DIR}/test_xcurrent")
-        run, report = self.run_pregate(repo)
-        self.assert_forecast_with_note(run, report, f"{self.LINK_DIR}/test_xcurrent")
+        self.assert_same_verdict_without_note(repo, "--base", before, "--approved-merge-file", str(approved))
+        self.assert_same_verdict_without_note(repo)
 
     def test_L2_surface_links_stop_by_name_before_any_write(self) -> None:
         repo = _make_repo(self.td, "l2-committed")
@@ -1321,16 +1352,216 @@ class SnapshotLinkPregateTest(unittest.TestCase):
         (repo / self.LINK_DIR).mkdir(parents=True)
         os.symlink(str(self.td / "gone" / "x1"), repo / self.LINK_DIR / "test_xcurrent")
         self.commit(repo, "record link")
-        report = self.td / "l1f-report.md"
+        self.assert_same_verdict_without_note(repo, spec=self.FORM_RED_SPEC, code=3)
+
+    def test_P1_uncommitted_surface_link_into_a_hidden_baseline_folder_extracts_everything(self) -> None:
+        repo, _base = self.hidden_shared("p1")
+        os.symlink("../../../../.h/rates.py", repo / self.SHARED)
+        run, _report = self.assert_same_verdict_without_note(repo, released=True)
+        self.assertNotIn("실행 불능", run.stderr)
+
+    def test_P2_inflow_surface_link_into_a_hidden_baseline_folder_extracts_everything(self) -> None:
+        repo, _base = self.hidden_shared("p2")
+        base = _git(repo, "branch", "--show-current")
+        _git(repo, "checkout", "-q", "-b", "lane")
+        (repo / "lane_note.md").write_text("note\n", encoding="utf-8")
+        before = self.commit(repo, "lane work")
+        _git(repo, "checkout", "-q", base)
+        os.symlink("../../../../.h/rates.py", repo / self.SHARED)
+        self.commit(repo, "main: surface link into the hidden folder")
+        _git(repo, "checkout", "-q", "lane")
+        _git(repo, "merge", "-q", "--no-ff", "-m", "M merge main", base)
+        approved = self.td / "p2-approved.txt"
+        approved.write_text(f"{_git(repo, 'rev-parse', 'HEAD')} M\n", encoding="utf-8")
+        run, _report = self.assert_same_verdict_without_note(repo, "--base", before, "--approved-merge-file", str(approved),
+                                                             released=True)
+        self.assertIn("승인 유입: 1경로(추가 1", run.stdout)
+
+    def test_P3_form_red_run_takes_the_same_decision_as_a_full_run(self) -> None:
+        """되돌림은 사본을 쓰기 전에 정한다 — 겹침 링크만 걸고 형식 red 로 끝나는 실행도 지금 판과 글자까지 같다
+        (전체를 풀어 기록 링크를 걷었다는 알림까지)."""
+        repo, _base = self.hidden_shared("p3")
+        (repo / self.LINK_DIR).mkdir(parents=True)
+        os.symlink(str(self.td / "gone" / "x1"), repo / self.LINK_DIR / "test_xcurrent")
+        self.commit(repo, "record link")
+        os.symlink("../../../../.h/rates.py", repo / self.SHARED)
+        run, report = self.run_pregate(repo, spec=self.FORM_RED_SPEC)
+        old, old_report = self.run_pregate(repo, spec=self.FORM_RED_SPEC, scripts=self.released())
+        self.assertEqual(run.returncode, 3, run.stdout + run.stderr)
+        self.assertEqual((run.returncode, run.stdout, run.stderr), (old.returncode, old.stdout, old.stderr))
+        self.assertIn(f"{self.NOTE} 1개는 사본에서 뺐다(사본 밖 내용을 읽지 않게 · 판정 무관): {self.LINK_DIR}/test_xcurrent",
+                      run.stdout)
+
+    def test_P5_folders_holding_only_hidden_entries_forecast_like_released_and_like_g2(self) -> None:
+        """숨김 항목만 든 숨김 아닌 폴더(`config/logs/.gitkeep` · 비계만 만든 BC · 숨김 폴더만 든 폴더) — pre-gate 예보와
+        G2(registry_gate) 판정이 모두 2.24.2 와 같고, 예보 귀속 0 = G2 귀속 0 이다."""
+        repo = _make_repo(self.td, "p5")
+        for rel, body in (("config/logs/.gitkeep", ""), ("application/payments/.gitkeep", ""),
+                          ("application/orders/notes/.cache/f", "cache\n"), (".dddjango-web/r/log.txt", "log\n")):
+            (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+            (repo / rel).write_text(body, encoding="utf-8")
+        self.commit(repo, "dot-only folders + record")
+        (repo / "notes.txt").write_text("lane\n", encoding="utf-8")
+        run, _report = self.assert_same_verdict_without_note(repo, released=True)
+        self.assertIn("예보 green", run.stdout)
         env = dict(os.environ)
         env.pop("DJR_FINDINGS_JSON", None)
-        run = subprocess.run([sys.executable, str(SCRIPTS / "design_pregate.py"),
-                              str(ROOT / "workspace/eval/fixtures/pregate/update-target-spec.md"), str(repo),
-                              "--report", str(report)], capture_output=True, text=True, env=env)
-        self.assertEqual(run.returncode, 3, run.stdout + run.stderr)
-        note = f"숨김 경로의 사본 밖 심링크 1개는 사본에서 뺐다(사본 밖 내용을 읽지 않게 · 판정 무관): {self.LINK_DIR}/test_xcurrent"
-        self.assertIn(note, run.stdout)
-        self.assertIn(note, report.read_text(encoding="utf-8"))
+        gates = {}
+        for side, scripts in (("new", SCRIPTS), ("old", self.released())):
+            gate = subprocess.run([sys.executable, str(scripts / "registry_gate.py"), str(repo), "--anchor", "HEAD"],
+                                  capture_output=True, text=True, env=env)
+            gates[side] = (gate.returncode, [line for line in gate.stdout.splitlines() if line.startswith("판정:")],
+                           [line for line in gate.stdout.splitlines() if " :: [#" in line and line.startswith("  ")
+                            and gate.stdout.index(line) < gate.stdout.index("== legacy")])
+        self.assertEqual(gates["new"], gates["old"])
+        self.assertEqual(gates["new"][0], 0, gates)
+
+    def test_P8_folders_holding_only_hidden_folders_forecast_like_released_and_like_g2(self) -> None:
+        """숨김 «폴더» 만 든 숨김 아닌 폴더(BC 뿌리 · 층 폴더)는 숨김을 빼면 pre-gate 사본에서 통째로 사라진다(사본을 커밋하므로
+        빈 폴더가 남지 않는다) — 그런 폴더가 최종 사본(기준선 + 승인 유입 + 겹침)에 하나라도 생기면 그 실행은 전체 모드다.
+        pre-gate 예보 = G2(registry_gate) = 2.24.2."""
+        env = dict(os.environ)
+        env.pop("DJR_FINDINGS_JSON", None)
+        cases = {"bc": ("application/billing/.cache/x", None),
+                 "layer": ("application/billing/domain_layer/shared_value_object/.cache/x", None),
+                 "emptied": ("application/billing/.cache/x", "application/billing/keep.py")}
+        for name, (hidden, deleted) in cases.items():
+            with self.subTest(case=name):
+                repo = _make_repo(self.td, "p8-" + name)
+                for rel in (hidden, deleted):
+                    if rel is not None:
+                        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+                        (repo / rel).write_text("x\n", encoding="utf-8")
+                self.commit(repo, "folder holding only a hidden folder")
+                if deleted is not None:
+                    (repo / deleted).unlink()        # 작업 트리에서 지움 — 겹침 뒤 최종 사본에서 그 폴더에는 숨김 폴더만 남는다
+                (repo / "notes.txt").write_text("lane\n", encoding="utf-8")
+                run, _report = self.assert_same_verdict_without_note(repo, released=True, code=2)
+                self.assertIn("예보 red", run.stdout)
+                gates = {}
+                for side, scripts in (("new", SCRIPTS), ("old", self.released())):
+                    gate = subprocess.run([sys.executable, str(scripts / "registry_gate.py"), str(repo), "--anchor", "HEAD"],
+                                          capture_output=True, text=True, env=env)
+                    gates[side] = (gate.returncode, [line for line in gate.stdout.splitlines() if line.startswith("판정:")])
+                self.assertEqual(gates["new"], gates["old"])
+
+    def test_P6_split_extraction_failure_falls_back_to_the_full_baseline(self) -> None:
+        """NFD 로 커밋된 문서 입력 이름은 `:(literal)` 이 맞지 않는다(macOS git 의 argv NFC 바꿈) — 숨김 뺀 기준선 풀기가
+        실패하면 사본을 비우고 지금처럼 전체를 푼다(실행 불능이 아니라 2.24.2 와 같은 예보)."""
+        import unicodedata
+        repo = _make_repo(self.td, "p6")
+        (repo / ".dddjango-web/r").mkdir(parents=True)
+        (repo / ".dddjango-web/r/log.txt").write_text("log\n", encoding="utf-8")
+        self.commit(repo, "record")
+        blob = subprocess.run(["git", "-C", str(repo), "hash-object", "-w", "--stdin"], input=b"# scope\n",
+                              capture_output=True, check=True).stdout.decode("ascii").strip()
+        subprocess.run(["git", "-C", str(repo), "-c", "core.precomposeunicode=false", "update-index", "--add", "--cacheinfo",
+                        f"100644,{blob},{unicodedata.normalize('NFD', '.dddjango/결제/scope.md')}"],
+                       capture_output=True, check=True)
+        _git(repo, "commit", "-q", "-m", "nfd document input")
+        _git(repo, "reset", "-q", "--hard")
+        run, _report = self.assert_same_verdict_without_note(repo, released=True)
+        self.assertNotIn("실행 불능", run.stderr)
+
+    def test_P7_failures_keep_the_released_order(self) -> None:
+        """사본을 쓰기 전에 승인 유입 · 겹칠 경로를 먼저 읽어도, 그 실패(`git diff-tree` · `git status`)는 2.24.2 와 같은
+        자리에서 이름 붙는다 — 기준선 풀기 실패가 먼저면 그것이 먼저 나온다(stderr 글자까지 같음)."""
+        outside = self.td / "outside-p7"
+        outside.mkdir()
+        repo = _make_repo(self.td, "p7")
+        os.symlink(str(outside / "x.py"), repo / "application/orders/x.py")
+        self.commit(repo, "surface link outside")
+        base = _git(repo, "branch", "--show-current")
+        _git(repo, "checkout", "-q", "-b", "lane")
+        (repo / "lane_note.md").write_text("note\n", encoding="utf-8")
+        before = self.commit(repo, "lane work")
+        _git(repo, "checkout", "-q", base)
+        (repo / "docs").mkdir()
+        (repo / "docs/up.md").write_text("up\n", encoding="utf-8")
+        self.commit(repo, "main change")
+        _git(repo, "checkout", "-q", "lane")
+        _git(repo, "merge", "-q", "--no-ff", "-m", "M merge main", base)
+        approved = self.td / "p7-approved.txt"
+        approved.write_text(f"{_git(repo, 'rev-parse', 'HEAD')} M\n", encoding="utf-8")
+        runs = {}
+        for name, word, extra in (("inflow", "diff-tree", ["--base", before, "--approved-merge-file", str(approved)]),
+                                  ("status", "status", [])):
+            shim = self.td / f"p7-shim-{name}"
+            shim.mkdir()
+            (shim / "git").write_text(f'#!/bin/bash\nfor a in "$@"; do if [ "$a" = "{word}" ]; then '
+                                      f'echo "fatal: simulated {word} failure" >&2; exit 128; fi; done\n'
+                                      'exec /usr/bin/git "$@"\n', encoding="utf-8")
+            (shim / "git").chmod(0o755)
+            env = dict(os.environ, PATH=f"{shim}:{os.environ.get('PATH', '')}")
+            env.pop("DJR_FINDINGS_JSON", None)
+            for side, scripts in (("new", SCRIPTS), ("old", self.released())):
+                report = self.td / f"p7-{side}-{name}.md"
+                run = subprocess.run([sys.executable, str(scripts / "design_pregate.py"), str(self.SPEC), str(repo),
+                                      "--report", str(report), *extra], capture_output=True, text=True, env=env)
+                runs[(side, name)] = (run.returncode, run.stderr)
+        for name in ("inflow", "status"):
+            self.assertEqual(runs[("new", name)], runs[("old", name)])
+            self.assertEqual(runs[("new", name)][0], 1)
+            self.assertIn("트리의 심링크 application/orders/x.py 가 사본 밖을 가리킨다(절대 경로)", runs[("new", name)][1])
+
+    def test_P4_hidden_worktree_changes_and_inflow_stay_out_of_the_copy(self) -> None:
+        repo = _make_repo(self.td, "p4")
+        base = _git(repo, "branch", "--show-current")
+        _git(repo, "checkout", "-q", "-b", "lane")
+        (repo / "lane_note.md").write_text("note\n", encoding="utf-8")
+        before = self.commit(repo, "lane work")
+        _git(repo, "checkout", "-q", base)
+        (repo / ".dddjango-web/r").mkdir(parents=True)
+        (repo / ".dddjango-web/r/merged.txt").write_text("record\n", encoding="utf-8")
+        (repo / "docs").mkdir()
+        (repo / "docs/merged.md").write_text("doc\n", encoding="utf-8")
+        self.commit(repo, "main: record + doc")
+        _git(repo, "checkout", "-q", "lane")
+        _git(repo, "merge", "-q", "--no-ff", "-m", "M merge main", base)
+        approved = self.td / "p4-approved.txt"
+        approved.write_text(f"{_git(repo, 'rev-parse', 'HEAD')} M\n", encoding="utf-8")
+        run, report = self.run_pregate(repo, "--base", before, "--approved-merge-file", str(approved), "--keep")
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        kept = Path(run.stdout.rsplit("격리 사본 보존: ", 1)[1].splitlines()[0])
+        self.addCleanup(shutil.rmtree, kept, True)
+        self.assertIn("승인 유입: 1경로(추가 1 · 수정 0 · 삭제 0)", run.stdout)
+        self.assertIn("승인 유입: 1경로(추가 1 · 수정 0 · 삭제 0)", report.read_text(encoding="utf-8"))
+        self.assertTrue((kept / "copy/docs/merged.md").is_file())
+        self.assertFalse(os.path.lexists(kept / "copy/.dddjango-web"))
+        (repo / ".dddjango-web/r/worktree.txt").write_text("lane record\n", encoding="utf-8")
+        (repo / ".dddjango-web/r/merged.txt").write_text("lane edit\n", encoding="utf-8")
+        (repo / "docs/worktree.md").write_text("lane doc\n", encoding="utf-8")
+        run, _report = self.run_pregate(repo, "--keep")
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        kept = Path(run.stdout.rsplit("격리 사본 보존: ", 1)[1].splitlines()[0])
+        self.addCleanup(shutil.rmtree, kept, True)
+        self.assertTrue((kept / "copy/docs/worktree.md").is_file())
+        self.assertFalse(os.path.lexists(kept / "copy/.dddjango-web"))
+        self.assertIn("dirty overlay 1건", run.stdout)
+
+_SAVED_TMPDIR: "list[str | None]" = []
+
+
+def setUpModule() -> None:
+    """이 시험 파일 전체를 전용 임시 폴더(TMPDIR)에서 돈다 — pre-gate · 게이트의 시작 때 쓸기가 실제 임시 폴더의 다른
+    실행 사본을 건드리지 않게."""
+    _SAVED_TMPDIR.append(os.environ.get("TMPDIR"))
+    private = tempfile.mkdtemp(prefix="pregate-smoke-tmp-")
+    os.environ["TMPDIR"] = private
+    tempfile.tempdir = private
+
+
+def tearDownModule() -> None:
+    private = tempfile.tempdir
+    tempfile.tempdir = None
+    saved = _SAVED_TMPDIR.pop()
+    if saved is None:
+        os.environ.pop("TMPDIR", None)
+    else:
+        os.environ["TMPDIR"] = saved
+    if private:
+        shutil.rmtree(private, ignore_errors=True)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

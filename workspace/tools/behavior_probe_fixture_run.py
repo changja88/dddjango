@@ -23,6 +23,13 @@
 상한 사례는 명령 진입 함수 `cmd_support` · `cmd_suite`(support --collect · suite)를 장난감 안 실행 폴더로 거치고, 상수만
 TIMEOUT_CASE_SECONDS 로 바꿔 혼자(병렬 밖) 돈다 — exit · 기록 판정 · 마지막 `요약:` 줄까지 본다. 신호는 러너가 띄운 표지
 프로세스에만 보낸다. 분리 사례는 수집 10초 · suite 40초로 차례 실행한다(기계가 바쁠 때도 서게 넉넉히 — 수집은 보통 1초 안). T3는 지원 안 함 뒤 G1을 만들지 않고 run 엔진만 대조한다.
+상한 · 분리 사례는 멈춤 신호 뒤 기다림(`_STOP_GRACE_SECONDS` — 제품 30초)도 STOP_GRACE_CASE_SECONDS 로 줄인다.
+끊김 확인(D1 ~ D5 · D7 · 구현판 전용 · 사례 칸 밖): 정리 단계(fixture 마무리)에서 표식을 쓰고 자식 하나를 더 띄우는 장난감 시험으로
+`run` 을 직접 돌린다 — D1 상한 초과 → 멈춤 신호로 정리 단계가 돌고 묶음 0 · D2 러너 자신에 SIGINT(KeyboardInterrupt) → 정리
+단계 · 묶음 0 · 실행이 만든 파일 지움 · KeyboardInterrupt 다시 올림 · D3 SIGINT 를 무시하는 시험 → 줄인 기다림 뒤 강제 종료 ·
+D4 기다림 중 두 번째 SIGINT → 강제 종료 단계가 돈다 · D5 정리(`_clean_created`)가 예외를 내도 KeyboardInterrupt 가 올라간다 ·
+D7 상한을 넘긴 뒤 멈춤 기다림 사이에 SIGINT → 묶음 0 · 실행이 만든 파일 지움 · KeyboardInterrupt 다시 올림.
+러너 자신에 보내는 SIGINT 는 그 확인 동안만 받는 처리기로 받는다.
 exit 0 = 전 칸 기대 일치 · 1 = 불일치 · 실행 실패 · 실행 불능.
 """
 from __future__ import annotations
@@ -38,6 +45,7 @@ import json
 import os
 import re
 import shlex
+import signal
 import subprocess
 import sys
 import tempfile
@@ -60,6 +68,10 @@ COMMAND_CAP_SECONDS: int = 180
 TIMEOUT_CASE_SECONDS: int = 5
 LIMIT_COLLECT_SECONDS: int = 10         # 바쁜 기계에서 장난감 수집이 2초를 넘은 실측(2026-10-07) — 넉넉히
 LIMIT_SUITE_SECONDS: int = 40
+PRODUCT_STOP_GRACE_SECONDS: int = 30   # 멈춤 신호 뒤 강제 종료까지(제품 고정값)
+STOP_GRACE_CASE_SECONDS: int = 5       # 상한 · 분리 · 끊김 사례가 줄인 값 — 장난감은 멈춤 신호에 곧 끝난다
+INTERRUPT_SUITE_SECONDS: int = 15      # 끊김 확인 D1 · D3 의 suite 상한(장난감이 시험 본문에 닿을 때까지 넉넉히)
+INTERRUPT_READY_SECONDS: float = 60.0  # 끊김 확인 D2 · D4 · D5 — 장난감이 시험 본문에 닿기를 기다리는 한도
 TIMEOUT_FOLDER: str = ".dddjango/f1-refactor-timeout"          # 상한 사례의 실행 폴더(장난감 안 · `.dddjango/` 는 범위 밖)
 TIMEOUT_SCOPE: str = "# 범위\n\n실행 · G0 승인 20261004T100000Z · 운영 전 픽스처\n"
 TIMEOUT_G1_AT: str = "2026-10-04T10:00:00Z"
@@ -420,10 +432,207 @@ def run_limits(engine: Engine, box: Toolbox, case, work: Path) -> dict:
 RUNNERS = {"pair": run_pair, "env": run_env, "timeout": run_timeout, "limits": run_limits}
 
 
+@contextlib.contextmanager
+def _stop_grace(engine: Engine, seconds: int):
+    """멈춤 신호 뒤 기다림을 잠시 줄인다 — 그 상수가 없는 판(옛 구현판 대역)은 그대로 둔다."""
+    if not hasattr(engine.mod, "_STOP_GRACE_SECONDS"):
+        yield
+        return
+    saved = engine.mod._STOP_GRACE_SECONDS
+    engine.mod._STOP_GRACE_SECONDS = seconds
+    try:
+        yield
+    finally:
+        engine.mod._STOP_GRACE_SECONDS = saved
+
+
+# 끊김 확인 장난감 — fixture 가 자식 하나를 더 띄우고(pid 기록) 마무리에서 표식을 쓴다. 시험 본문은 저장소에 파일 하나를 만들고
+# (실행이 만든 미추적 파일) 준비 표지를 남긴 뒤 오래 잔다. F_INT_IGNORE 면 본문에서 SIGINT 를 무시한다.
+INTERRUPT_TOY: str = (
+    "import os\nimport signal\nimport subprocess\nimport sys\nimport time\n\nimport pytest\n\n\n"
+    "@pytest.fixture\ndef held():\n"
+    "    child = subprocess.Popen([sys.executable, \"-c\", \"import time; time.sleep(120)\"])\n"
+    "    with open(os.environ[\"F_INT_PIDS\"], \"w\", encoding=\"utf-8\") as fh:\n"
+    "        fh.write(f\"{os.getpid()} {child.pid}\")\n"
+    "    yield\n"
+    "    with open(os.environ[\"F_INT_MARK\"], \"w\", encoding=\"utf-8\") as fh:\n"
+    "        fh.write(\"teardown\")\n\n\n"
+    "def test_hold(held):\n"
+    "    if os.environ.get(\"F_INT_IGNORE\"):\n"
+    "        signal.signal(signal.SIGINT, signal.SIG_IGN)\n"
+    "    with open(\"made_by_run.txt\", \"w\", encoding=\"utf-8\") as fh:\n"
+    "        fh.write(\"x\")\n"
+    "    with open(os.environ[\"F_INT_PIDS\"] + \".ready\", \"w\", encoding=\"utf-8\") as fh:\n"
+    "        fh.write(\"ready\")\n"
+    "    time.sleep(60)\n")
+
+
+class _Interrupter:
+    """러너 자신에 SIGINT 를 보내는 쪽 — 장난감이 준비 표지를 남기면 `delays` 간격으로 보낸다. 받는 처리기는 보낸 수만큼만
+    KeyboardInterrupt 를 올린다(늦게 닿은 신호가 확인 밖에서 러너를 끊지 않게)."""
+
+    def __init__(self, ready: Path, delays: "list[float]") -> None:
+        import threading
+        self.ready: Path = ready
+        self.delays: "list[float]" = delays
+        self.armed: int = 0
+        self.stopped: bool = False
+        self.lock = threading.Lock()
+        self.first: "float | None" = None
+        self.start_at: "float | None" = None       # 준비 뒤 이 시각(monotonic)까지 기다렸다가 보낸다(상한 뒤 끊김 — D7)
+        self.thread = threading.Thread(target=self._fire, daemon=True)
+
+    def handler(self, _signum, _frame) -> None:
+        with self.lock:
+            if self.armed <= 0:
+                return
+            self.armed -= 1
+        raise KeyboardInterrupt
+
+    def stop(self) -> None:
+        """확인이 끝났다 — 남은 신호는 보내지 않고, 이미 보낸 것은 받는 처리기가 버린다."""
+        with self.lock:
+            self.stopped = True
+            self.armed = 0
+
+    def _fire(self) -> None:
+        deadline = time.monotonic() + INTERRUPT_READY_SECONDS
+        while not self.ready.exists() and time.monotonic() < deadline and not self.stopped:
+            time.sleep(0.05)
+        while self.start_at is not None and time.monotonic() < self.start_at and not self.stopped:
+            time.sleep(0.05)
+        for delay in self.delays:
+            time.sleep(delay)
+            with self.lock:
+                if self.stopped:
+                    return
+                self.armed += 1
+            if self.first is None:
+                self.first = time.monotonic()
+            os.kill(os.getpid(), signal.SIGINT)
+
+
+def _interrupt_toy(work: Path, name: str, ignore: bool) -> "tuple[Path, dict[str, str], Path, Path]":
+    toy = work / name
+    (toy / "tests").mkdir(parents=True)
+    (toy / "tests" / "test_hold.py").write_text(INTERRUPT_TOY, encoding="utf-8")
+    subprocess.run(["git", "-c", "init.defaultBranch=main", "init", "-q", str(toy)], check=True, capture_output=True)
+    mark, pids = work / f"{name}.mark", work / f"{name}.pids"
+    env = {**base_env(), "F_INT_MARK": str(mark), "F_INT_PIDS": str(pids), **({"F_INT_IGNORE": "1"} if ignore else {})}
+    return toy, env, mark, pids
+
+
+def _toy_gone(pids: Path) -> bool:
+    """장난감 pytest 와 그 자식이 모두 끝났는가(pid 기록이 없으면 확인 못 함 — 거짓)."""
+    try:
+        listed = [int(x) for x in pids.read_text(encoding="utf-8").split()]
+    except (OSError, ValueError):
+        return False
+    return len(listed) == 2 and all(_gone(pid) for pid in listed)
+
+
+def run_interrupt_checks(engine: Engine) -> "list[str]":
+    """D1 ~ D5 · D7 — 다름 줄 목록(빈 목록 = 모두 통과). 러너가 띄운 장난감 묶음에만 신호가 간다(제품 `run` 이 보낸다)."""
+    problems: "list[str]" = []
+    saved = (engine.mod.SUITE_COMMAND_TIMEOUT_SECONDS, engine.mod._clean_created)
+    previous = signal.getsignal(signal.SIGINT)
+    with tempfile.TemporaryDirectory(prefix="bp-interrupt-") as td:
+        work = Path(td)
+
+        def go(name: str, *, ignore: bool, suite_cap: int, grace: int, delays: "list[float] | None" = None,
+               after_cap: "float | None" = None):
+            """(KeyboardInterrupt 가 올라왔나, 사유, 실행 정보, 걸린 초, 장난감, 표식, pid 기록, 첫 신호 뒤 초)"""
+            toy, env, mark, pids = _interrupt_toy(work, name, ignore)
+            probe = work / f"{name}-probe"
+            probe.mkdir()
+            interrupter = _Interrupter(Path(str(pids) + ".ready"), delays) if delays else None
+            engine.mod.SUITE_COMMAND_TIMEOUT_SECONDS = suite_cap
+            t0 = time.monotonic()
+            if interrupter is not None:
+                if after_cap is not None:
+                    interrupter.start_at = t0 + suite_cap + after_cap
+                signal.signal(signal.SIGINT, interrupter.handler)
+                interrupter.thread.start()
+            raised, reasons, info = False, [], {}
+            try:
+                with _stop_grace(engine, grace):
+                    reasons, info = engine.run(toy, engine.definition([[str(PROBE_PY), "-m", "pytest", "tests"]], None),
+                                               "run", env, drop_worker=False, probe_out_root=probe)
+            except KeyboardInterrupt:
+                raised = True
+            finally:
+                end = time.monotonic()
+                if interrupter is not None:
+                    interrupter.stop()
+                    interrupter.thread.join(timeout=INTERRUPT_READY_SECONDS)
+                    signal.signal(signal.SIGINT, previous)
+            after_first = end - interrupter.first if interrupter is not None and interrupter.first is not None else None
+            return raised, reasons, info, end - t0, toy, mark, pids, after_first
+
+        try:
+            raised, reasons, info, secs, toy, mark, pids, _ = go("d1", ignore=False, suite_cap=INTERRUPT_SUITE_SECONDS,
+                                                                 grace=STOP_GRACE_CASE_SECONDS)
+            exits = [c["exit"] for c in info.get("commands", [])]
+            if raised or not mark.is_file() or not _toy_gone(pids) or (toy / "made_by_run.txt").exists() \
+                    or not any(r.startswith("확인 못 함 — 시간 초과") for r in reasons) or exits != [2] \
+                    or secs >= INTERRUPT_SUITE_SECONDS + STOP_GRACE_CASE_SECONDS:
+                problems.append(f"D1 상한 초과 → 멈춤 신호 · 정리 단계 · 묶음 0 — 올라옴 {raised} · 표식 {mark.is_file()} · "
+                                f"묶음 끝 {_toy_gone(pids)} · 만든 파일 남음 {(toy / 'made_by_run.txt').exists()} · exit {exits} · "
+                                f"{secs:.1f}초 · 사유 {reasons}")
+            raised, _r, _i, _s, toy, mark, pids, after = go("d2", ignore=False, suite_cap=INTERRUPT_SUITE_SECONDS * 4,
+                                                             grace=STOP_GRACE_CASE_SECONDS, delays=[0.0])
+            if not raised or not mark.is_file() or not _toy_gone(pids) or (toy / "made_by_run.txt").exists() \
+                    or after is None or after >= STOP_GRACE_CASE_SECONDS:
+                problems.append(f"D2 실행 끊김 → 멈춤 신호 · 정리 단계 · 묶음 0 · 만든 파일 지움 · 다시 올림 — 올라옴 {raised} · "
+                                f"표식 {mark.is_file()} · 묶음 끝 {_toy_gone(pids)} · 만든 파일 남음 "
+                                f"{(toy / 'made_by_run.txt').exists()} · 신호 뒤 {after}초")
+            grace = 3
+            raised, reasons, info, secs, _t, _m, pids, _ = go("d3", ignore=True, suite_cap=INTERRUPT_SUITE_SECONDS,
+                                                               grace=grace)
+            exits = [c["exit"] for c in info.get("commands", [])]
+            if raised or not _toy_gone(pids) or exits != [-9] \
+                    or not INTERRUPT_SUITE_SECONDS + grace - 1 <= secs < INTERRUPT_SUITE_SECONDS + grace + 30:
+                problems.append(f"D3 멈춤 신호 무시 → 기다림 뒤 강제 종료 · 묶음 0 — 올라옴 {raised} · 묶음 끝 {_toy_gone(pids)} · "
+                                f"exit {exits} · {secs:.1f}초(기대 {INTERRUPT_SUITE_SECONDS + grace}초 남짓)")
+            grace = 20
+            raised, _r, _i, _s, _t, _m, pids, after = go("d4", ignore=True, suite_cap=INTERRUPT_SUITE_SECONDS * 4,
+                                                          grace=grace, delays=[0.0, 1.5])
+            if not raised or not _toy_gone(pids) or after is None or after >= grace:
+                problems.append(f"D4 기다림 중 두 번째 끊김 → 강제 종료 단계 · 묶음 0 — 올라옴 {raised} · 묶음 끝 "
+                                f"{_toy_gone(pids)} · 첫 신호 뒤 {after}초(기다림 {grace}초보다 짧아야)")
+
+            def broken_clean(*_args, **_kwargs):
+                raise RuntimeError("정리 실패 주입")
+
+            engine.mod._clean_created = broken_clean
+            raised, _r, _i, _s, _t, mark, pids, _ = go("d5", ignore=False, suite_cap=INTERRUPT_SUITE_SECONDS * 4,
+                                                        grace=STOP_GRACE_CASE_SECONDS, delays=[0.0])
+            if not raised or not mark.is_file() or not _toy_gone(pids):
+                problems.append(f"D5 정리 예외에도 KeyboardInterrupt — 올라옴 {raised} · 표식 {mark.is_file()} · "
+                                f"묶음 끝 {_toy_gone(pids)}")
+            engine.mod._clean_created = saved[1]
+            grace = 20
+            raised, _r, _i, secs, toy, _m, pids, after = go("d7", ignore=True, suite_cap=INTERRUPT_SUITE_SECONDS,
+                                                             grace=grace, delays=[0.0], after_cap=1.5)
+            if not raised or not _toy_gone(pids) or (toy / "made_by_run.txt").exists() \
+                    or secs >= INTERRUPT_SUITE_SECONDS + grace or after is None:
+                problems.append(f"D7 상한 뒤 기다리는 사이 끊김 → 묶음 0 · 만든 파일 지움 · 다시 올림 — 올라옴 {raised} · "
+                                f"묶음 끝 {_toy_gone(pids)} · 만든 파일 남음 {(toy / 'made_by_run.txt').exists()} · "
+                                f"{secs:.1f}초(기대 {INTERRUPT_SUITE_SECONDS + grace}초보다 짧게) · 첫 신호 뒤 {after}초")
+        except Exception:                                  # noqa: BLE001 — 확인 실패를 줄로 남긴다
+            problems.append("끊김 확인 실행 실패\n    " + traceback.format_exc().strip().replace("\n", "\n    "))
+        finally:
+            engine.mod.SUITE_COMMAND_TIMEOUT_SECONDS, engine.mod._clean_created = saved
+            signal.signal(signal.SIGINT, previous)
+    return problems
+
+
 def run_case(engine: Engine, box: Toolbox, case) -> "tuple[dict | None, str, float]":
     t0 = time.monotonic()
+    serial = case.kind in ("timeout", "limits")            # 병렬 밖에서만 돈다 — 제품 상수를 잠시 바꿔도 된다
     try:
-        with tempfile.TemporaryDirectory(prefix="bp-case-") as td:
+        with tempfile.TemporaryDirectory(prefix="bp-case-") as td, \
+                (_stop_grace(engine, STOP_GRACE_CASE_SECONDS) if serial else contextlib.nullcontext()):
             got = RUNNERS[case.kind](engine, box, case, Path(td))
         return got, "", time.monotonic() - t0
     except Exception:                                      # noqa: BLE001 — 사례 하나의 실패를 기록하고 나머지를 돈다
@@ -510,6 +719,8 @@ def main() -> int:
         problems.append(f"구현판 COMMAND_TIMEOUT_SECONDS = {engine.mod.COMMAND_TIMEOUT_SECONDS} ≠ {PRODUCT_TIMEOUT_SECONDS}(정오 2)")
     if not engine.proto and engine.mod.SUITE_COMMAND_TIMEOUT_SECONDS != PRODUCT_SUITE_TIMEOUT_SECONDS:
         problems.append(f"구현판 SUITE_COMMAND_TIMEOUT_SECONDS = {engine.mod.SUITE_COMMAND_TIMEOUT_SECONDS} ≠ {PRODUCT_SUITE_TIMEOUT_SECONDS}(F-B1R-6)")
+    if not engine.proto and getattr(engine.mod, "_STOP_GRACE_SECONDS", PRODUCT_STOP_GRACE_SECONDS) != PRODUCT_STOP_GRACE_SECONDS:
+        problems.append(f"구현판 _STOP_GRACE_SECONDS = {engine.mod._STOP_GRACE_SECONDS} ≠ {PRODUCT_STOP_GRACE_SECONDS}")
     print(f"B0 영구 픽스처 — 엔진 {engine.label} · 사례 {len(pooled) + len(serial)} · 칸 {2 * (len(pooled) + len(serial))} · 병렬 {jobs}",
           flush=True)
     results: "dict[str, tuple[dict | None, str, float]]" = {}
@@ -530,6 +741,11 @@ def main() -> int:
                 engine.mod.COMMAND_TIMEOUT_SECONDS, engine.mod.SUITE_COMMAND_TIMEOUT_SECONDS = saved
         for c in serial:
             results[c.id] = run_case(engine, box, c)
+    interrupt_checks = not engine.proto and hasattr(engine.mod, "_STOP_GRACE_SECONDS") and (not args.only or "D" in args.only)
+    if interrupt_checks:
+        found = run_interrupt_checks(engine)
+        problems += found
+        print(f"끊김 확인 D1 ~ D5 · D7 — 다름 {len(found)}", flush=True)
     wall = time.monotonic() - t0
     mismatches, failures, tracebacks, deviated, filled, added = [], 0, 0, 0, 0, 0
     ok_cells = {"R": 0, "N": 0, "C": 0}

@@ -150,6 +150,7 @@ class ScratchLifecycleTest(unittest.TestCase):
                                                TEMP=str(scratch_root), GIT_TRACE2_EVENT=str(trace)))
                 self.assertEqual(proc.returncode, 4, proc.stdout + proc.stderr)
                 self.assertEqual(list(scratch_root.glob("design-pregate-*")), [])
+                self.assertEqual(list((scratch_root / "dddjango").glob("*")), [])   # 임시 사본 뿌리 안도 비었다
                 events = [json.loads(line) for line in trace.read_text().splitlines()]
                 starts = [event["argv"] for event in events if event["event"] == "start"
                           and any(arg in ("maintenance", "gc", "repack", "pack-objects")
@@ -168,7 +169,9 @@ class ScratchLifecycleTest(unittest.TestCase):
             return real_rmdir(path, *args, **kwargs)
 
         stderr = io.StringIO()
-        with mock.patch.object(pg.tempfile, "mkdtemp", return_value=str(scratch)), \
+        (self.root / "tmp").mkdir()
+        with mock.patch.object(pg.tempfile, "tempdir", str(self.root / "tmp")), \
+                mock.patch.object(pg.tempfile, "mkdtemp", return_value=str(scratch)), \
                 mock.patch.object(os, "rmdir", side_effect=raced_rmdir), \
                 contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(stderr):
             code = pg.main([str(self.spec), str(self.repo)])

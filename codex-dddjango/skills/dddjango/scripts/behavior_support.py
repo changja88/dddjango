@@ -13,7 +13,8 @@
 
 환경: 상속 환경 · 동결 변수 여섯은 동결값으로 덮음(없음이면 지움) · PYTHONDONTWRITEBYTECODE=1 · PYTHONPATH 앞에 탐침 디렉터리 ·
 DDDJANGO_PROBE_OUT=<출력 자리>/<n>/. 명령마다 상한 — 수집 600초 · suite 3,600초(제품 고정 · 스위치 없음).
-넘으면 그 명령이 띄운 프로세스 묶음만 끝낸다.
+넘거나 이 실행이 끊기면(ctrl+c · 묶음 SIGINT) 그 명령이 띄운 프로세스 묶음에만 먼저 멈춤 신호(SIGINT — 시험이 정리 단계를
+돈다)를 보내고, 30초 안에 끝나지 않으면 끝낸다(SIGKILL).
 실행이 만든 미추적 파일은 지운다(`behavior_guard._migrations_dynamic` 과 같은 꼴).
 """
 from __future__ import annotations
@@ -36,6 +37,7 @@ import behavior_guard as bg  # noqa: E402
 
 COMMAND_TIMEOUT_SECONDS: int = 600
 SUITE_COMMAND_TIMEOUT_SECONDS: int = 3600
+_STOP_GRACE_SECONDS: int = 30          # 멈춤 신호 뒤 강제 종료까지 기다리는 시간(제품 고정 — 픽스처만 줄인다)
 PROBE_NAME: str = "dddjango_collect_probe"
 PROBE_DIR: Path = Path(__file__).resolve().parent / "pytest_probe"
 PROBE_FILE: Path = PROBE_DIR / f"{PROBE_NAME}.py"
@@ -357,20 +359,33 @@ def _command_env(definition: dict, inherited: "dict[str, str]") -> "dict[str, st
 
 
 def _end_group(child: "subprocess.Popen[bytes]") -> None:
-    """상한을 넘은 명령 — 그 명령이 띄운 프로세스 묶음(start_new_session 의 그룹)만 끝낸다."""
+    """상한을 넘었거나 실행이 끊긴 명령 — 그 명령이 띄운 프로세스 묶음(start_new_session 의 그룹)만 끝낸다.
+
+    먼저 멈춤 신호(SIGINT — ctrl+c 와 같다)를 보내 시험이 정리 단계(DB 서버 · 브라우저 닫기)를 돌게 하고
+    `_STOP_GRACE_SECONDS` 를 기다린다. 그 뒤(기다림이 다시 끊겨도) 묶음에 남은 프로세스는 SIGKILL 로 끝낸다."""
     try:
-        os.killpg(child.pid, signal.SIGKILL)
-    except ProcessLookupError:
-        pass
-    if child.poll() is None:
-        child.kill()
-    try:
-        child.communicate(timeout=30)
-    except subprocess.TimeoutExpired:   # 묶음 밖으로 나간 자손이 출력 관을 쥐고 있다 — 그 자손에는 신호를 보내지 않는다
-        for pipe in (child.stdout, child.stderr):
-            if pipe is not None:
-                pipe.close()
-        child.wait()
+        try:
+            os.killpg(child.pid, signal.SIGINT)
+        except (ProcessLookupError, PermissionError):   # 묶음이 비었거나 끝난 지도자만 남았다(macOS EPERM)
+            pass
+        try:
+            child.communicate(timeout=_STOP_GRACE_SECONDS)
+        except subprocess.TimeoutExpired:
+            pass
+    finally:
+        try:
+            os.killpg(child.pid, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            pass
+        if child.poll() is None:
+            child.kill()
+        try:
+            child.communicate(timeout=30)
+        except subprocess.TimeoutExpired:   # 묶음 밖으로 나간 자손이 출력 관을 쥐고 있다 — 그 자손에는 신호를 보내지 않는다
+            for pipe in (child.stdout, child.stderr):
+                if pipe is not None:
+                    pipe.close()
+            child.wait()
 
 
 def _clean_created(repo: Path, before: "set[str]") -> "list[str]":
@@ -380,6 +395,14 @@ def _clean_created(repo: Path, before: "set[str]") -> "list[str]":
         if (repo / rel).is_file():
             (repo / rel).unlink()
     return created
+
+
+def _clean_after_interrupt(repo: Path, before: "set[str]") -> None:
+    """끊긴 실행의 정리 — 실행이 만든 미추적 파일을 지우되, 정리 실패가 끊김(KeyboardInterrupt)을 덮지 않게 한다."""
+    try:
+        _clean_created(repo, before)
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def _scope_files(repo: Path) -> "set[str]":
@@ -509,8 +532,18 @@ def run(repo: Path, definition: dict, mode: str, inherited: "dict[str, str]", *,
             child.communicate(timeout=SUITE_COMMAND_TIMEOUT_SECONDS if mode == "run" else COMMAND_TIMEOUT_SECONDS)
             timed_out = False
         except subprocess.TimeoutExpired:
-            _end_group(child)
+            try:
+                _end_group(child)
+            except KeyboardInterrupt:      # 상한 뒤 기다리는 사이 끊겼다 — 묶음 정지는 `_end_group` 의 finally 가 했다
+                _clean_after_interrupt(repo, before)
+                raise
             timed_out = True
+        except KeyboardInterrupt:          # 이 실행이 끊겼다 — 새 세션의 시험 묶음에도 멈춤 신호가 닿게 한 뒤 다시 올린다
+            try:
+                _end_group(child)
+            finally:
+                _clean_after_interrupt(repo, before)
+            raise
         elapsed = time.monotonic() - t0
         rec["seconds"], rec["exit"] = round(elapsed, 3), child.returncode
         info["cleaned"] += _clean_created(repo, before)

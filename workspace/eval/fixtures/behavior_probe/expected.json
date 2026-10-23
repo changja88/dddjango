@@ -10200,7 +10200,7 @@
        "대조 생략 — 시간 초과로 실행 증거가 불완전함"
       ],
       "command_exits": [
-       -9
+       2
       ],
       "outputs": 0,
       "proof": [
@@ -10247,7 +10247,7 @@
       ],
       "command_exits": [
        0,
-       -9
+       2
       ],
       "outputs": 1,
       "proof": [

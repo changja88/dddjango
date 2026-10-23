@@ -38,17 +38,23 @@ G2 를 통과할 수 없었다(같은 게이트를 다른 레인은 «해석»�
   기준선으로 쓰지 않는다(fail-closed).
 - 라인 대조는 registry_gate 와 같은 정규화만 한다: 절대 경로 echo 제거·라인번호
   `:N` 치환 — 경로 «파싱»을 하지 않는다.
+- 앵커 · 승인 유입 측정 사본은 임시 뿌리 `<기본 임시 폴더>/dddjango/` 아래 주인 표식(`owner.json`)이 붙은 폴더에
+  푼다(`owned_tempdir` — 끊긴 실행의 사본은 registry_gate · design_pregate 의 다음 실행이 지운다 · `sweep_temp_root`).
+  이 모듈의 차분은 앵커를 전체로 푼다 — 숨김 뺀 풀기(`snapshot_anchor(drop_hidden=True)`)는 지금 쪽 사본도 숨김
+  경로를 빼는 registry_gate 몫이다.
 """
 from __future__ import annotations
 
 import os
 import ast
+import json
 import re
 import shutil
 import stat
 import subprocess
 import sys
 import tempfile
+import time
 from dataclasses import dataclass, field
 from typing import Callable
 from pathlib import Path
@@ -260,13 +266,182 @@ def prune_hidden_escapes(dest: Path) -> "list[str]":
     return outside
 
 
-def snapshot_anchor(root: Path, sha: str, dest: Path) -> "list[str]":
-    """앵커 커밋의 트리를 dest 에 푼다 — registry_gate 도 이것을 import 한다(복제 금지).
-    풀고 나서 사본 밖 링크가 모두 빼도 되는 자리면 걷고 그 목록을 돌려준다(`prune_hidden_escapes` · 없으면 빈 목록)."""
-    dest.mkdir(parents=True)
+# 숨김 뺀 풀기 — 지금 쪽 사본(`registry_gate._snapshot_current`)이 숨김 경로를 빼는 자리에서만 쓴다(`drop_hidden`).
+# 무엇을 뺄지는 `prunable_path` 하나가 정한다. pathspec 의 뜻을 바꾸는 환경 변수는 이 git 호출들에서 지운다.
+_PATHSPEC_ENV: "tuple[str, ...]" = ("GIT_LITERAL_PATHSPECS", "GIT_GLOB_PATHSPECS", "GIT_NOGLOB_PATHSPECS",
+                                    "GIT_ICASE_PATHSPECS")
+_UNDER_HIDDEN_DIR: str = ":(exclude,glob)**/.*/**"   # 숨김 폴더를 지나는 경로 — 마지막 성분만 숨김인 항목은 남는다
+
+
+def _hidden_text(rel: str) -> bool:
+    """`/` 로 이은 경로에 `.` 으로 시작하는 성분이 있는가 — 문자열 검사만(경로 객체를 만들지 않는다)."""
+    return rel.startswith(".") or "/." in rel
+
+
+def prunable_path(rel: str) -> bool:
+    """숨김 뺀 풀기에서 빼는 항목 — 숨김 폴더를 지나고(마지막 아닌 성분 하나라도 `.` 으로 시작) `prunable_link` 도 참.
+
+    마지막 성분 하나만 숨김인 항목(`.gitkeep` · `.gitignore` · `deploy/.env.sample` · 최상위 `.pre-commit-config.yaml` 꼴)은
+    2.24.2 처럼 남기고, 숨김 폴더 안에서도 문서 입력 · 그 조상(`prunable_link` 거짓)은 남긴다."""
+    head: str = rel.rpartition("/")[0]
+    return bool(head) and _hidden_text(head) and prunable_link(rel)
+
+
+def pathspec_env() -> "dict[str, str]":
+    """pathspec 을 붙이는 git 호출의 환경 — `_PATHSPEC_ENV` 넷을 뺀 지금 환경."""
+    env: "dict[str, str]" = dict(os.environ)
+    for name in _PATHSPEC_ENV:
+        env.pop(name, None)
+    return env
+
+
+def link_crosses_pruned(link: str, target: str, kept: "frozenset[str]") -> bool:
+    """남길 링크(`link` — 사본 상대 경로)의 대상이 숨김 뺀 사본에서 그대로 찾아지지 않는 숨김 자리를 지나는가.
+
+    링크 자리의 부모에서 시작해 대상 성분을 한 칸씩 붙이며(`..` 는 한 칸 위 · normpath 하지 않는다) 매 칸을 본다 —
+    숨김 성분이 있는 칸이 사본에 그대로 남는 항목 그 자체(`kept` — 남는 숨김 항목)가 아니면 참이다(마지막 칸 포함).
+    그래서 `.x/../app/y.py` 는 `.x` 에서, `.dddjango` · `.dddjango/<폴더>`(일부만 남는 폴더)를 가리키거나 지나는 링크도
+    걸린다. 절대 경로 대상과 사본 뿌리 위로 가는 대상은 거기서 멈춘다(뒤의 `snapshot_escape` 가 지금처럼 판정한다)."""
+    if target.startswith("/"):
+        return False
+    parts: "list[str]" = link.split("/")[:-1]
+    for comp in target.split("/"):
+        if comp in ("", "."):
+            continue
+        if comp == "..":
+            if not parts:
+                return False
+            parts.pop()
+        else:
+            parts.append(comp)
+        if any(part.startswith(".") for part in parts) and "/".join(parts) not in kept:
+            return True
+    return False
+
+
+def blob_texts(root: Path, oids: "list[str]") -> "list[str] | None":
+    """blob 내용(링크 대상)을 `git cat-file --batch` 1회로 읽는다(UTF-8 · surrogateescape). 읽지 못하면 None."""
+    if not oids:
+        return []
+    proc: "subprocess.CompletedProcess[bytes]" = subprocess.run(
+        ["git", "-C", str(root), "cat-file", "--batch"],
+        input="".join(f"{oid}\n" for oid in oids).encode("ascii"), capture_output=True)
+    if proc.returncode != 0:
+        return None
+    data: bytes = proc.stdout
+    out: "list[str]" = []
+    pos: int = 0
+    for _oid in oids:
+        end: int = data.find(b"\n", pos)
+        header: "list[bytes]" = data[pos:end].split() if end >= 0 else []
+        if len(header) != 3 or header[1] != b"blob" or not header[2].isdigit():
+            return None
+        size: int = int(header[2])
+        out.append(data[end + 1:end + 1 + size].decode("utf-8", "surrogateescape"))
+        pos = end + 1 + size + 1
+    return out
+
+
+@dataclass(frozen=True)
+class HiddenSplit:
+    """숨김 뺀 풀기의 재료(`hidden_split`).
+
+    plain        숨김 폴더를 지나지 않는 항목 수(첫 archive — 마지막 성분만 숨김인 항목 포함)
+    kept_hidden  숨김 폴더를 지나되 남길 항목(문서 입력 · 그 조상 · 링크 포함 — 둘째 archive `:(literal)`)
+    hidden_entries  사본에 그대로 남는 숨김 성분 항목 전부(링크 한 칸씩 판정의 «그대로 남는 항목»)
+    dirs         뺀 항목마다 첫 숨김 성분 앞까지의 숨김 아닌 조상 폴더 — 지금 쪽 사본(copytree)처럼 빈 폴더로 둔다
+    dropped      뺀 항목 수(0 이면 전체 풀기와 같다)
+    kept         남는 항목 전부(`with_kept` 일 때만 — pre-gate 가 «통째로 사라지는 폴더» 를 가린다)"""
+
+    plain: int
+    kept_hidden: "tuple[str, ...]"
+    hidden_entries: "frozenset[str]" = frozenset()
+    dirs: "tuple[str, ...]" = ()
+    dropped: int = 0
+    kept: "frozenset[str]" = frozenset()
+
+    def pathspecs(self) -> "list[list[str]]":
+        """`git archive <sha> -- …` 의 pathspec 묶음 — 숨김 폴더를 지나지 않는 것 전부(0 개면 건너뜀) · 남길 숨김 항목.
+        뺄 항목이 없으면(`dropped` 0) 부르는 쪽이 pathspec 없는 전체 풀기(2.24.2 와 같은 호출)를 쓴다."""
+        out: "list[list[str]]" = []
+        if self.plain:
+            out.append([".", _UNDER_HIDDEN_DIR])
+        if self.kept_hidden:
+            out.append([":(literal)" + path for path in self.kept_hidden])
+        return out
+
+
+def hidden_split(root: Path, sha: str, *, check_links: bool = False,
+                 with_kept: bool = False) -> "HiddenSplit | None":
+    """커밋 트리(`git ls-tree -r -z` 1회 · 바이트 → surrogateescape)를 «남길 것 · 뺄 것(`prunable_path`)» 으로 가른다.
+
+    남길 링크(숨김 성분이 있는 것 포함) 가운데 하나라도 대상이 사본에 그대로 남지 않는 숨김 자리를 지나면
+    (`link_crosses_pruned`) None — 그 사본은 지금처럼 전체를 푼다(뺀 자리를 가리키는 끊긴 링크 · 반쪽 폴더를 만들지
+    않는다). 뺄 항목이 없으면 링크를 읽지 않는다(사본이 전체와 같다 — `check_links` 면 그래도 읽는다: pre-gate 는 겹침 ·
+    유입이 숨김 경로를 뺄 수 있다). `with_kept` 면 남는 항목 전부를 함께 돌려준다. ls-tree · cat-file 을 읽지 못해도
+    None(지금 경로가 같은 실패를 낸다)."""
+    proc: "subprocess.CompletedProcess[bytes]" = subprocess.run(
+        ["git", "-C", str(root), "ls-tree", "-r", "-z", sha], capture_output=True, env=pathspec_env())
+    if proc.returncode != 0:
+        return None
+    plain: int = 0
+    dropped: int = 0
+    kept_hidden: "list[str]" = []
+    hidden_entries: "set[str]" = set()
+    dirs: "set[str]" = set()
+    links: "list[tuple[str, str]]" = []
+    kept_raw: "list[bytes]" = []
+    for entry in proc.stdout.split(b"\0"):
+        if not entry:
+            continue
+        meta: bytes
+        tab: bytes
+        raw: bytes
+        meta, tab, raw = entry.partition(b"\t")
+        if not tab:
+            return None
+        if not (raw.startswith(b".") or b"/." in raw):    # 숨김 성분 없음 — 첫 archive(대부분의 항목은 여기서 끝난다)
+            plain += 1
+            if with_kept:
+                kept_raw.append(raw)
+            if meta.startswith(b"120000 "):
+                links.append((raw.decode("utf-8", "surrogateescape"), meta.split()[2].decode("ascii", "replace")))
+            continue
+        fields: "list[bytes]" = meta.split()
+        if len(fields) != 3:
+            return None
+        path: str = raw.decode("utf-8", "surrogateescape")
+        if prunable_path(path):
+            parts: "list[str]" = path.split("/")
+            first: int = next(i for i, part in enumerate(parts) if part.startswith("."))
+            if first:
+                dirs.add("/".join(parts[:first]))
+            dropped += 1
+            continue
+        hidden_entries.add(path)
+        if with_kept:
+            kept_raw.append(raw)
+        if _hidden_text(path.rpartition("/")[0]):
+            kept_hidden.append(path)
+        else:
+            plain += 1
+        if fields[0] == b"120000":
+            links.append((path, fields[2].decode("ascii", "replace")))
+    kept: "frozenset[str]" = frozenset(hidden_entries)
+    if not dropped and not check_links:
+        return HiddenSplit(plain, tuple(kept_hidden), kept, (), 0)
+    targets: "list[str] | None" = blob_texts(root, [oid for _path, oid in links])
+    if targets is None or any(link_crosses_pruned(path, target, kept)
+                              for (path, _oid), target in zip(links, targets)):
+        return None
+    return HiddenSplit(plain, tuple(kept_hidden), kept, tuple(sorted(dirs)), dropped,
+                       frozenset(raw.decode("utf-8", "surrogateescape") for raw in kept_raw))
+
+
+def _untar_archive(root: Path, args: "list[str]", dest: Path, env: "dict[str, str] | None") -> None:
     archive: "subprocess.Popen[bytes]" = subprocess.Popen(
-        ["git", "-C", str(root), "archive", sha],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        ["git", "-C", str(root), "archive", *args],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
     )
     untar: "subprocess.CompletedProcess[bytes]" = subprocess.run(
         ["tar", "-x", "-C", str(dest)], stdin=archive.stdout, capture_output=True
@@ -281,7 +456,271 @@ def snapshot_anchor(root: Path, sha: str, dest: Path) -> "list[str]":
         raise AnchorDiffUsage(
             f"tar 실패: {untar.stderr.decode(errors='replace').strip()}"
         )
+
+
+def _make_dirs(dest: Path, rels: "tuple[str, ...]") -> None:
+    """사본 안에 폴더를 만든다(`mkdir -p` 꼴) — 이미 있는 성분이 폴더가 아니면(링크 · 파일) 그 안에는 만들지 않는다."""
+    for rel in rels:
+        current: Path = dest
+        for part in rel.split("/"):
+            current = current / part
+            try:
+                if not stat.S_ISDIR(os.lstat(current).st_mode):
+                    break
+            except FileNotFoundError:
+                os.mkdir(current)
+
+
+def snapshot_anchor(root: Path, sha: str, dest: Path, *, drop_hidden: bool = False) -> "list[str]":
+    """앵커 커밋의 트리를 dest 에 푼다 — registry_gate 도 이것을 import 한다(복제 금지).
+    풀고 나서 사본 밖 링크가 모두 빼도 되는 자리면 걷고 그 목록을 돌려준다(`prune_hidden_escapes` · 없으면 빈 목록).
+
+    `drop_hidden` 이면 숨김 폴더를 지나는 항목(`prunable_path` — 실행 기록 폴더 등)을 빼고 푼다: 숨김 폴더를 지나지 않는
+    것 전부 한 번 + 남길 숨김 항목 한 번(`hidden_split`) 뒤, 뺀 항목의 숨김 아닌 조상 폴더를 빈 폴더로 만든다(지금 쪽
+    사본의 copytree 와 같은 폴더). 지금 쪽 사본도 숨김 경로를 빼는 자리(registry_gate 앵커 · 출처 스냅숏)만 켠다 — 직접
+    실행 검사기(`partition_exit`)는 지금 쪽이 실제 작업 트리라 끄고 둔다. 남길 링크가 뺀 자리를 지나거나 숨김 뺀 풀기가
+    어떤 까닭으로든 실패하면(예: NFD 이름 pathspec 불일치) 사본을 비우고 지금처럼 전체를 푼다."""
+    dest.mkdir(parents=True)
+    split: "HiddenSplit | None" = hidden_split(root, sha) if drop_hidden else None
+    if split is not None and not split.dropped:
+        split = None                               # 뺄 것이 없다 — 2.24.2 와 같은 전체 풀기 한 번
+    if split is not None:
+        try:
+            for spec in split.pathspecs():
+                _untar_archive(root, [sha, "--", *spec], dest, pathspec_env())
+            _make_dirs(dest, split.dirs)
+        except (AnchorDiffUsage, OSError):
+            shutil.rmtree(dest, ignore_errors=True)
+            dest.mkdir(parents=True)
+            split = None
+    if split is None:
+        _untar_archive(root, [sha], dest, None)
     return prune_hidden_escapes(dest)
+
+
+# 임시 사본 뿌리 — 끊긴 실행(TaskStop · SIGTERM · SIGKILL)이 남긴 사본을 다음 게이트 실행이 쓸어 간다. 폴더마다
+# `<도구>-<pid>-<임의>` 이름과 주인 표식(`owner.json` — pid · 시작 시각 · 도구 · keep)을 둔다.
+TEMP_ROOT: str = "dddjango"
+OWNER_FILE: str = "owner.json"
+_TEMP_NAME_RE: "re.Pattern[str]" = re.compile(r"(?:registry-gate|design-pregate|anchor-diff)-(\d+)-[a-z0-9_]+")
+_SWEEPING: str = "-sweeping-"
+
+
+def temp_root(*, create: bool = True) -> "Path | None":
+    """`<기본 임시 폴더>/dddjango/` — 없으면 0700 으로 만든다. 링크 · 내 uid 아님 · 0700 아님(또는 없음)이면 None —
+    그 실행은 지금처럼 기본 임시 폴더를 쓰고 표식을 남기지 않는다."""
+    root: Path = Path(tempfile.gettempdir()) / TEMP_ROOT
+    if create:
+        try:
+            os.mkdir(root, 0o700)
+        except FileExistsError:
+            pass
+        except OSError:
+            return None
+        else:
+            try:
+                os.chmod(root, 0o700)
+            except OSError:
+                return None
+    try:
+        st: os.stat_result = os.lstat(root)
+    except OSError:
+        return None
+    if not stat.S_ISDIR(st.st_mode) or st.st_uid != os.getuid() or stat.S_IMODE(st.st_mode) != 0o700:
+        return None
+    return root
+
+
+def _write_owner(folder: Path, data: "dict[str, object]") -> None:
+    """주인 표식을 임시 이름에 쓰고 rename 한다(원자적) — 실패는 조용히 넘긴다(이름의 pid 가 받친다)."""
+    part: Path = folder / f".{OWNER_FILE}.{os.getpid()}"
+    try:
+        part.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+        os.replace(part, folder / OWNER_FILE)
+    except OSError:
+        try:
+            part.unlink()
+        except OSError:
+            pass
+
+
+def _stamp(folder: Path, tool: str) -> None:
+    _write_owner(folder, {"tool": tool, "pid": os.getpid(),
+                          "started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
+
+
+def owned_tempdir(tool: str) -> "tempfile.TemporaryDirectory[str]":
+    """뿌리 아래 `<도구>-<pid>-<임의>` 임시 폴더(표식 포함 · `with` 를 나가면 지운다). 뿌리를 못 쓰면 지금처럼 기본 임시 폴더."""
+    root: "Path | None" = temp_root()
+    if root is None:
+        return tempfile.TemporaryDirectory()
+    holder: "tempfile.TemporaryDirectory[str]" = tempfile.TemporaryDirectory(
+        prefix=f"{tool}-{os.getpid()}-", dir=str(root))
+    _stamp(Path(holder.name), tool)
+    return holder
+
+
+def owned_mkdtemp(tool: str) -> Path:
+    """`owned_tempdir` 의 mkdtemp 꼴(지우기는 호출자) — 뿌리를 못 쓰면 지금처럼 기본 임시 폴더의 `<도구>-<임의>`."""
+    root: "Path | None" = temp_root()
+    if root is None:
+        return Path(tempfile.mkdtemp(prefix=f"{tool}-"))
+    folder: Path = Path(tempfile.mkdtemp(prefix=f"{tool}-{os.getpid()}-", dir=str(root)))
+    _stamp(folder, tool)
+    return folder
+
+
+def mark_keep(folder: Path) -> None:
+    """보존 사본(`--keep`) — 표식에 keep 을 적어 쓸기 밖에 둔다. 뿌리 밖 사본(표식 없는 꼴)은 할 일이 없다."""
+    if folder.parent.name != TEMP_ROOT or _TEMP_NAME_RE.fullmatch(folder.name) is None:
+        return
+    data: object
+    try:
+        data = json.loads((folder / OWNER_FILE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        data = {}
+    owner: "dict[str, object]" = data if isinstance(data, dict) else {}
+    owner.setdefault("pid", os.getpid())
+    owner["keep"] = True
+    _write_owner(folder, owner)
+
+
+def _pid_dead(pid: int) -> bool:
+    """`os.kill(pid, 0)` 이 ProcessLookupError 일 때만 죽음 — 권한 오류 등은 살아 있다고 본다(안 지우는 쪽)."""
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return True
+    except (OSError, OverflowError, ValueError):
+        return False
+    return False
+
+
+def temp_state(folder: Path) -> str:
+    """뿌리 아래 항목 하나의 상태 — `keep` · `live`(산 주인) · `dead`(주인 죽음 — 쓸 대상) · `unknown`(읽기 · 판정 실패).
+
+    `…-sweeping-<pid>`(쓸던 실행이 차지한 폴더)는 마지막 `-sweeping-` 뒤 pid 로, 나머지는 표식의 pid(표식이 없으면
+    이름의 pid)로 판정한다."""
+    try:
+        if not stat.S_ISDIR(os.lstat(folder).st_mode):
+            return "unknown"
+    except OSError:
+        return "unknown"
+    name: str = folder.name
+    if _SWEEPING in name:
+        tail: str = name.rsplit(_SWEEPING, 1)[1]
+        if re.fullmatch(r"[0-9]+", tail) is None:
+            return "unknown"
+        return "dead" if _pid_dead(int(tail)) else "live"
+    match: "re.Match[str] | None" = _TEMP_NAME_RE.fullmatch(name)
+    if match is None:
+        return "unknown"
+    owner: Path = folder / OWNER_FILE
+    pid: object = int(match.group(1))
+    if os.path.lexists(owner):
+        try:
+            data: object = json.loads(owner.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return "unknown"
+        if not isinstance(data, dict):
+            return "unknown"
+        if data.get("keep"):
+            return "keep"
+        pid = data.get("pid")
+    if type(pid) is not int:
+        return "unknown"
+    return "dead" if _pid_dead(pid) else "live"
+
+
+def tree_size(path: Path) -> int:
+    """폴더 아래 항목 크기 합(lstat — 링크를 따르지 않음 · 읽기 실패는 건너뜀)."""
+    total: int = 0
+    for current, dirs, files in os.walk(path, onerror=lambda _exc: None):
+        for name in dirs + files:
+            try:
+                total += os.lstat(os.path.join(current, name)).st_size
+            except OSError:
+                pass
+    return total
+
+
+def _claim_name(name: str, pid: int) -> str:
+    """쓸 폴더를 차지할 이름 — 첫 `-sweeping-` 앞 원래 이름 + `-sweeping-<pid>`(다시 차지해도 이름이 길어지지 않는다)."""
+    return f"{name.split(_SWEEPING, 1)[0]}{_SWEEPING}{pid}"
+
+
+def _remove_tree(path: Path) -> int:
+    """폴더를 한 번 걸으며 지운다 — 파일 · 링크는 만나는 대로 지우고(크기를 함께 센다 · 링크는 따라가지 않는다), 내려갈
+    하위 폴더의 권한(읽기 전용 등)은 먼저 `u+rwx` 로 고친다(TemporaryDirectory 정리와 같게). 폴더는 걷기가 끝난 뒤 안쪽부터
+    지운다. 지운 파일 · 링크의 크기 합을 돌려준다 — 지우지 못한 것은 남긴다(다음 쓸기가 다시 본다)."""
+
+    def writable(folder: str) -> None:
+        try:
+            mode: int = stat.S_IMODE(os.lstat(folder).st_mode)
+            if mode & 0o700 != 0o700:
+                os.chmod(folder, mode | 0o700)
+        except OSError:
+            pass
+
+    size: int = 0
+    folders: "list[str]" = []
+    writable(str(path))
+    for current, dirs, files in os.walk(path, onerror=lambda _exc: None):
+        folders.append(current)
+        entries: "list[str]" = list(files)
+        for name in list(dirs):
+            if os.path.islink(os.path.join(current, name)):   # 폴더를 가리키는 링크 — 링크만 지운다
+                dirs.remove(name)
+                entries.append(name)
+            else:
+                writable(os.path.join(current, name))
+        for name in entries:
+            target: str = os.path.join(current, name)
+            try:
+                length: int = os.lstat(target).st_size
+                os.unlink(target)
+                size += length
+            except OSError:
+                pass
+    for folder in reversed(folders):
+        try:
+            os.rmdir(folder)
+        except OSError:
+            pass
+    return size
+
+
+def sweep_temp_root() -> None:
+    """끊긴 실행이 뿌리에 남긴 사본을 지운다 — registry_gate · design_pregate 실행 시작 때 한 번(import 때는 안 한다).
+
+    keep · 산 주인 · 판정 못 하는 항목은 둔다. 주인이 죽은 폴더는 `_claim_name` 으로 바꿔 차지한 뒤 지운다(두 실행이
+    같은 폴더를 함께 지우지 않게 · 차지 실패는 넘어간다). 지운 것이 있을 때만 stderr 에 한 줄 — 개수 · 크기는 실제로
+    지운 것만 센다(표준 출력 · sidecar 무변)."""
+    root: "Path | None" = temp_root()
+    if root is None:
+        return
+    try:
+        names: "list[str]" = sorted(os.listdir(root))
+    except OSError:
+        return
+    removed: int = 0
+    size: int = 0
+    for name in names:
+        if temp_state(root / name) != "dead":
+            continue
+        claimed: Path = root / _claim_name(name, os.getpid())
+        try:
+            os.rename(root / name, claimed)
+        except OSError:
+            continue
+        freed: int = _remove_tree(claimed)
+        if not os.path.lexists(claimed):
+            removed += 1
+            size += freed
+    if removed:
+        print(f"정리: 끊긴 실행이 남긴 임시 사본 {removed}개({size / 1048576:.1f} MB)를 지웠다 — {root}", file=sys.stderr)
 
 
 def _bc_root_absent(snapshot: Path, name: str) -> bool:
@@ -1286,7 +1725,7 @@ def partition_exit(
         head_sha = run_git(resolved_target, "rev-parse", "HEAD").stdout.strip()
         merges, chain = load_approved_merges(merge_path, resolved_target, sha, head_sha)
     split: "_InflowSplit | None" = None
-    with tempfile.TemporaryDirectory() as td:
+    with owned_tempdir("anchor-diff") as td:
         snap: Path = Path(td) / "anchor"
         anchor_pruned: "list[str]" = snapshot_anchor(resolved_target, sha, snap)
         anchor_escape: "str | None" = snapshot_escape(snap)
