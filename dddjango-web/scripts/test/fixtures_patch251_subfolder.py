@@ -7,6 +7,7 @@
   ② 같음 — 하위 폴더 출력이 맨 위 출력과 같다(커밋 해시 · 임시 경로 · 시각만 가린다).
   ③ U — 맨 위 출력이 바탕 판(BASELINE — 판마다 바탕 커밋으로 올린다)과 같다(이 판이 맨 위 프로젝트의 출력을 바꾸지
      않았다). 이 판이 일부러 바꾼 맨 위 실행(TOP_CHANGED)은 거꾸로 바탕 판과 «다른지» 본다(BASELINE 을 올리면 비운다).
+     글만 바꾼 자리(TOP_TEXT_CHANGED)는 바탕 판 출력에 그 바꿈을 넣은 뒤 «같음»을 본다(BASELINE 을 올리면 비운다).
   ④ R — 고정 판(RELEASE_250 · 하위 폴더 결함이 있던 2.5.0 — 올리지 않는다)은 하위 폴더에서 맨 위와 다른 출력을 냈다
      (붉음 먼저 — 대조 장면은 그 판도 같아야 한다).
   ⑤ 철자 — 프로젝트 루트를 대소문자만 다른 철자(`…/REPO` · `…/repo/SERVER`)로 넘겨도 두 꼴 모두 정상 철자와 같은 출력이다.
@@ -61,6 +62,10 @@ KOREAN = '한글빚.py'
 # 이 판이 맨 위 출력을 일부러 바꾼 실행(장면 이름 → 실행 이름들) — 2.5.2 는 이 묶음 45 장면의 맨 위 출력을 바꾸지 않는다.
 # BASELINE 을 올리면 비운다.
 TOP_CHANGED = {}
+# 이 판이 바탕 판 맨 위 출력의 글만 바꾼 자리(옛 글, 새 글) — U 는 바탕 판 출력에 이 바꿈을 넣은 뒤 «같음»을 본다.
+# 2.8.0: TG1 교정(안내) 글(판정 · exit 무변). BASELINE 을 올리면 비운다.
+TOP_TEXT_CHANGED = (('명세 행위목록 각 항목마다 그 행위를',
+                     '명세 시험 입장 표의 add 행대로(시험 입장 표가 없는 실행은 명세 행위 목록대로) 그 행위를'),)
 # 고정 판(RELEASE_250)이 맨 위에서 대소문자만 다른 루트 철자에 정상 철자와 다른 출력을 낸 장면(기준점 목록 · 바뀐 파일 ·
 # 승인 유입 가르기를 넘겨받은 루트 글자로 셈했다) — 올리지 않는다.
 CASE_RED = ('G1', 'G2', 'G3', 'G6', 'G7', 'G8', 'G10', 'G11', 'G12', 'T2', 'T3', 'T4')
@@ -1134,6 +1139,16 @@ def case_blind(tmp):
     return (tmp / 'caseprobe').is_dir()
 
 
+def with_text_changes(runs):
+    """바탕 판 실행 기록에 이 판이 일부러 바꾼 글(TOP_TEXT_CHANGED)을 넣는다."""
+    out = []
+    for run_name, code, text in runs:
+        for was, now in TOP_TEXT_CHANGED:
+            text = text.replace(was, now)
+        out.append((run_name, code, text))
+    return out
+
+
 def first_difference(a, b):
     for x, y in zip(a, b):
         if x != y:
@@ -1166,10 +1181,11 @@ def main():
             top_base = play(tmp, index, scene, 'top', base, 'base') if base is not None else None
             if top_base is not None:
                 changed = TOP_CHANGED.get(name, ())
+                base_now = with_text_changes(top_base)
                 check('U %s — 맨 위: 바탕 판(%s)과 같은 출력%s' % (name, BASELINE, ' · 일부러 바꾼 %d 실행 밖' % len(changed)
                                                              if changed else ''),
-                      [r for r in top_base if r[0] not in changed] == [r for r in top if r[0] not in changed],
-                      first_difference(top_base, top))
+                      [r for r in base_now if r[0] not in changed] == [r for r in top if r[0] not in changed],
+                      first_difference(base_now, top))
                 for run_name in changed:
                     was = next((r for r in top_base if r[0] == run_name), None)
                     now = next((r for r in top if r[0] == run_name), None)

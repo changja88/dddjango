@@ -22,14 +22,14 @@ dddjango-web 테스트의 **Django 메커니즘·결정성·더블 표기**가 �
 
 - 실행은 **build-state의 `test_command`** 한 줄(web 시험 경로만 · G0가 settings 지정까지 확정 — 예 `pytest web_test --import-mode=importlib --ds=config.settings`) — G2 한 번은 그대로, coder-web 은 결정적 러너가 낸 좁힌 실행 줄 (§1)
 - **브라우저는 공용 고정물만**: pytest-playwright `page`/`context`(시험마다 새 context) — 하위 프로세스 · 직접 띄우기 · 자체 브라우저 고정물 · 브라우저 실행 파일 · 외부 E2E 러너 금지 · 호스트에 없으면 설치(안 되면 멈추고 보고) · 백스톱 TG4 (§4)
-- 격리 seam은 셋 — **순수 도메인 직접**(판정)·**VM 대체**(view — view 모듈이 부르는 VM 이름을 `monkeypatch`로 바꾼다)·**ApiClient 목**(통합 드물게); repo·usecase 주입 자리는 dddjango-web에 없다(DI 없음) (§2)
+- 격리 seam은 셋 — **순수 도메인 직접**(판정)·**VM 대체**(view — view 모듈이 부르는 VM 이름을 `monkeypatch`로 바꾼다)·**ApiClient 목**(통합 드물게 — 같은 코드 기준에서 VM 이 사본 마디인 사본 시험은 그 «1~2건» 한정 밖); repo·usecase 주입 자리는 dddjango-web에 없다(DI 없음) (§2)
 - VM 단위는 VM을 직접 생성해 `build(...)`가 돌려준 State를 단언한다 — 조회 실패는 `pytest.raises`, 액션 실패는 State의 `error` 필드 (§2)
 - 더블은 **표준 `unittest.mock` + pytest `monkeypatch`**(추가 설치 0): `MagicMock(return_value=…)`·`create_autospec`·`assert_called_once_with`·`ANY` — 바꿀 이름은 «찾는 자리»(쓰는 모듈)에서 바꾼다 (§3)
 - 화면 테스트: Django 테스트 클라이언트로 GET(`reverse(<Bc>Routes.…)`) → `status_code == 200` → `BeautifulSoup(…, "html.parser").select(…)`로 정확 개수 단언 · 조각(HTMX) 요청은 `HX-Request: true` 헤더 · UI JS 동작·지속 셸 root 시험(떠난 화면 보관 · 돌아오면 그대로 · ‹뒤로›는 지나온 차례 — 탭 왕복 · ‹뒤로›·‹앞으로› 뒤 화면 그대로 · 보관 중 폴링 0)·완성 화면 갈무리는 pytest-playwright 브라우저 테스트(`live_server`·`expect` 자동 재시도·고정 대기 금지) (§4)
 - **완성 화면 갈무리**: 명세 `완성 그림:` 행의 State·W×H와 모든 상태 관찰(임베드 채움 포함)을 `expect(…)`로 단언한 뒤 `document.fonts.ready` → 바로 `tmp_path`에 screenshot · case 통과 때만 상태 확인으로 보고 · 이미지 비교 없음 (§4)
 - **날짜 주입**: 도메인 판정은 기준일을 *인자로* 받는 순수 함수·'지금'은 view가 한 번 읽어 VM 인자로 격리·테스트는 고정 `datetime`을 주입한다(실시각 안 읽음·시계 고정 도구 없음) (§5)
 - 외부 주소 이미지를 그리는 화면의 브라우저 테스트는 `page.route`로 그 요청을 고정 응답으로 돌린다 — 테스트 클라이언트 단언은 이미지를 받지 않아 미해당 (§6)
-- 헬퍼 계약(`d()`·`fc()`·`detail_state`/`list_state`·`FakeListVM`/`FakeDetailVM`·`get_page`/`get_fragment`·`get_list`/`get_detail`·`count_text`·`format_date`/`format_temp`·`SCREEN_PROBES`)은 §7 단일 정의 — discipline-test FORM이 이 이름·계약을 쓴다. `SCREEN_PROBES`만 예외로 FORM이 아니라 **별도 render-smoke 테스트(`render_smoke_test.py`·§7)가 소비**하는 화면 진입점 맵이다(view·헬퍼 이름을 맵 안에 가둬 프로브가 BC 이름에 비의존·green 경로 강제) (§7)
+- 헬퍼 계약(`d()`·`fc()`·`detail_state`/`list_state`·`FakeListVM`/`FakeDetailVM`·`get_page`/`get_fragment`·`get_list`/`get_detail`·`count_text`·`format_date`/`format_temp`)은 §7 단일 정의 — discipline-test FORM이 이 이름·계약을 쓴다. 화면이 서는지는 화면 행위 시험과 완성 그림 case 가 함께 본다 — 따로 화면 서기 시험을 두지 않는다(2.8.0 전에 G1 을 받은 실행의 화면 진입점 맵 계약은 §7 «시험 규칙 2.7.1 실행만» 상자) (§4·§7)
 
 - **영구 시험 재현성**: `web_test/`·호스트 시험 트리와 시험 지원 코드(`conftest.py`·`_support.py` 등)는 `.dddjango-web/`를 읽거나 쓰지 않고 프로젝트 루트 밖 머신 고정 고정물·기준판·캐시에 기대지 않는다. 기록 폴더(`.dddjango-web/`·`.dddjango/`)에 둔 시험 원문 사본은 영구 시험이 아니다 — 그 사본을 영구 시험으로 옮겨 오면 새 시험으로 본다. 고정물·기대 자료는 시험 트리에, 실행 기록은 `tmp_path` 등 임시 폴더에 둔다. 시험 실행의 `--basetemp` 는 기록 폴더 밖 임시 폴더로 준다(예외는 G2 «완성 화면 그림»의 `captures/tmp` 하나 — 기록 폴더 안 basetemp 는 `<이름>current` 절대 경로 링크를 커밋하게 만든다). 선택 도구 부재는 호스트 규칙대로 skip하고 설치된 도구의 고장은 실패로 남긴다. 레인 전용 환경 변수 존재 단언으로 실행 전제를 만들지 않는다 — 정상 환경 변수 행위 시험·필수 settings는 허용하며 환경 변수 의미 판정은 TG2 밖, discipline 감수와 G2 표준 실행이 확인한다.
 - **이미지 비교 비채택**: 같은 실행·같은 브라우저의 옛 판 ↔ 지금 판 이미지 비교도 비채택이며, 승인 명세나 시험 목록에 있어도 예외가 아니다. 사람 눈 확인용 갈무리는 그대로 유지한다.

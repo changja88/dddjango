@@ -1121,7 +1121,8 @@ def _test_presence(ctx: BackstopContext) -> List[Finding]:
                 '신규 BC `%s` 행위검증 테스트 부재 — `web_test/%s/`에 `*_test.py` 0건. '
                 'green 빌드가 비-vacuous 검증으로 안 이어진다.' % (s[-1], d),
                 _RULE_TG,
-                '명세 행위목록 각 항목마다 그 행위를 두드리는(깨지면 red) pytest 테스트를 `web_test/%s/<계층>/`에 '
+                '명세 시험 입장 표의 add 행대로(시험 입장 표가 없는 실행은 명세 행위 목록대로) 그 행위를 두드리는(깨지면 red) '
+                'pytest 테스트를 `web_test/%s/<계층>/`에 '
                 '산출한다(페이지·조각 GET 200 스모크만으로는 불충분).' % d))
     return out
 

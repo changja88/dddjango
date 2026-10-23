@@ -1326,7 +1326,7 @@ web에는 해당 없음 — 서버 렌더라 BC 데이터를 브라우저·디�
 
 ## §6. 템플릿·요청 수명·CSRF — 표지·VM 수명·대화 표시·템플릿 표기
 
-**템플릿 표지 — `data-testid`**: 테스트가 집는 슬롯·항목에는 *역할*을 가리키는 고정 `data-testid`를 단다(문구·순번이 아니라 역할 — architecture-ui §3 짝 규약). view 템플릿의 최상위 요소는 `data-testid="<화면>-view"`다(implementation-test §7 render-smoke). 목록 항목의 식별 값(날짜 등)은 부품 안에서 계산하지 않고 **include하는 쪽이 `with`로 넘긴다** — 값 계산이 부품 밖에 있어야 부품이 일관되고, 테스트가 집는 표지와도 양립한다.
+**템플릿 표지 — `data-testid`**: 테스트가 집는 슬롯·항목에는 *역할*을 가리키는 고정 `data-testid`를 단다(문구·순번이 아니라 역할 — architecture-ui §3 짝 규약). view 템플릿의 최상위 요소는 `data-testid="<화면>-view"`다(view 시험·완성 그림 case 가 화면 루트를 이 표지로 집는다 — implementation-test §4). 목록 항목의 식별 값(날짜 등)은 부품 안에서 계산하지 않고 **include하는 쪽이 `with`로 넘긴다** — 값 계산이 부품 밖에 있어야 부품이 일관되고, 테스트가 집는 표지와도 양립한다.
 
 **요청 수명 — VM은 요청마다 새로** — "입력 읽기는 View 소유"(architecture-state §2)의 프레임워크 근거: view 함수가 요청마다 VM을 만들고 응답과 함께 버린다. 요청 사이에 살아야 할 값을 VM·모듈 전역·클래스 속성에 두지 않는다 — Django는 여러 스레드·여러 워커 프로세스에서 요청을 동시에 처리하므로 모듈 전역 값은 요청 사이로 새고 워커마다 갈린다. 화면 그룹 사이 값은 SharedState(세션 — implementation-htmx §3):
 

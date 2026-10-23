@@ -47,7 +47,7 @@ def test_detail_shows_temperatures(client: Client, monkeypatch: pytest.MonkeyPat
 
 바꿀 이름은 **쓰는 자리**(view 모듈)의 이름이다 — VM 정의 모듈의 이름을 바꾸면 view는 import 시점에 받아 둔 원래 클래스를 계속 쓴다(unittest.mock 문서의 «where to patch»). `monkeypatch`는 테스트가 끝나면 원래 이름을 되돌린다. VM의 `build(...)`가 경로 인자(예: 날짜)를 받으면 가짜 VM이 그 인자를 State에 *echo*하게 만들어 "전달된 인자"를 검증한다(discipline-test §3.4 탭 FORM의 날짜-echo — `FakeDetailVM`·§7).
 
-- **(C) ApiClient 목 (seam C·통합·드물게)** — *실제* VM/UseCase/Repo 스택을 통제된 서버 데이터로 끝까지 돌릴 때만. Repo가 `ChannelDataSource(ApiClient())`를 직접 생성하므로(implementation-django §4) seam은 **ApiClient 계층**이다: 테스트가 `ApiClient`의 호출 메서드를 목으로 바꾼다(§3). 무게중심이 아니다(정전 = unit 두텁게) — 판정은 (A), view는 (B)로 덮고 (C)는 정말 필요한 통합 1~2건에 한정한다.
+- **(C) ApiClient 목 (seam C·통합·드물게)** — *실제* VM/UseCase/Repo 스택을 통제된 서버 데이터로 끝까지 돌릴 때만. Repo가 `ChannelDataSource(ApiClient())`를 직접 생성하므로(implementation-django §4) seam은 **ApiClient 계층**이다: 테스트가 `ApiClient`의 호출 메서드를 목으로 바꾼다(§3). 무게중심이 아니다(정전 = unit 두텁게) — 판정은 (A), view는 (B)로 덮고 (C)는 정말 필요한 통합 1~2건에 한정한다. 예외 하나 — 목록·반복 슬롯을 만드는 VM 이 BC·화면마다 사본이면(명세 시험 입장 표의 같은 코드 기준) 사본마다 그 사본 VM 을 진짜로 지나는 시험이 필요하다. 그 시험을 (C)의 view 시험(VM 대체 없이 ApiClient 목)으로 쓰면 «1~2건» 한정 밖이다 — 또는 VM 단위 정확 단언과 (B) view 정확 단언을 짝으로 둔다.
 
 VM을 *단위*로 볼 땐 VM을 직접 생성해 `build(...)`가 돌려준 State를 단언한다(`state: ChannelSummaryState = ChannelSummaryVM().build()`) — 요청 하나에 VM 하나라 정리할 수명이 없다. 조회 실패(채널 ①)는 `with pytest.raises(BadRequestResponse):`로, 액션 실패(채널 ②)는 액션 메서드가 돌려준 State의 `error` 필드로 단언한다(architecture-state §4) — 단 *통제된 입력*이 필요하면 위 (C) ApiClient 목을 함께 쓴다(repo 주입은 불가).
 
@@ -82,7 +82,7 @@ assert fragment_response.status_code == 200
 rows: BeautifulSoup = BeautifulSoup(fragment_response.content, "html.parser")
 ```
 
-- 화면이 서는지 = `status_code == 200` + view 루트(`[data-testid="<화면>-view"]`) 정확히 1(§7 render-smoke).
+- 화면이 서는지 = `status_code == 200` + view 루트(`[data-testid="<화면>-view"]`) 정확히 1 — 화면 행위 시험과 완성 그림 case 가 함께 본다(따로 화면 서기 시험을 두지 않는다).
 - **조용한 빈 렌더**: Django 템플릿은 없는 변수를 빈 문자열로 렌더한다(`string_if_invalid` 기본값) — 상태 필드 이름이 틀려도 200이 난다. 슬롯 단언(discipline-test §3.3)이 그 자리를 막는다 — 200만 보고 green으로 두지 않는다.
 - **CSRF**: 테스트 클라이언트는 CSRF 검사를 하지 않는다(`enforce_csrf_checks=False` 기본) — POST 테스트에 토큰을 넣지 않아도 된다. 토큰 배선 자체는 implementation-django §6 표기로 지킨다.
 - **로그인 화면**: `@login_required` 화면은 `client.force_login(user)`(pytest-django `django_user_model`·`db`) 뒤 요청한다 — 미로그인 GET은 로그인 주소로 302다.
@@ -171,7 +171,7 @@ page.goto(live_server.url + ChannelNavigator.channel_list_href())
 
 영구 시험 헬퍼도 §4의 재현성 계약을 따른다. 호스트 도구 탐색 결과(`shutil.which` 등)는 허용하되 머신 고정 실행파일·캐시 주소를 새로 박지 않는다. G0에서 명령(web 시험 경로만)·settings 지정·호스트 필수 환경 출처·레인 추가 변수 이름을 확정하고 G2 한 번(Coordinator «시험 범위» — 이 실행이 바꾼 web 시험 경로 밖 시험 파일 포함)은 레인 추가 변수만 제거한 꼴로 돈다(`env -i` 아님). skip 수·사유를 실행 통과와 분리해 보고한다.
 
-discipline-test §3 FORM이 쓰는 헬퍼의 *계약*을 여기서 정의한다(이름은 weather 예시 — BC에 맞춰 환언하되 계약은 유지). 같은 헬퍼를 테스트 파일마다 재정의하지 말고 `web_test/application/[<area>/]<bc>/_support.py` 한 곳에 두고 `from web_test.application.[<area>.]<bc>._support import …`로 가져온다 — 실제 BC 경로(area 그루핑이면 area 세그먼트 포함)를 그대로 미러한다(render-smoke 파일도 같은 폴더). `--import-mode=importlib`은 테스트 폴더를 `sys.path`에 넣지 않아 형제 모듈 상대 import가 안 되고, pytest-django가 `manage.py` 폴더를 `sys.path`에 넣으므로 `web_test.` 절대 import가 된다. `_support.py`는 `*_test.py`가 아니라 수집되지 않는다:
+discipline-test §3 FORM이 쓰는 헬퍼의 *계약*을 여기서 정의한다(이름은 weather 예시 — BC에 맞춰 환언하되 계약은 유지). 같은 헬퍼를 테스트 파일마다 재정의하지 말고 `web_test/application/[<area>/]<bc>/_support.py` 한 곳에 두고 `from web_test.application.[<area>.]<bc>._support import …`로 가져온다 — 실제 BC 경로(area 그루핑이면 area 세그먼트 포함)를 그대로 미러한다. `--import-mode=importlib`은 테스트 폴더를 `sys.path`에 넣지 않아 형제 모듈 상대 import가 안 되고, pytest-django가 `manage.py` 폴더를 `sys.path`에 넣으므로 `web_test.` 절대 import가 된다. `_support.py`는 `*_test.py`가 아니라 수집되지 않는다:
 
 | 헬퍼 | 계약(반환·역할) |
 |---|---|
@@ -184,41 +184,13 @@ discipline-test §3 FORM이 쓰는 헬퍼의 *계약*을 여기서 정의한다(
 | `get_detail(client: Client, monkeypatch: pytest.MonkeyPatch, state: ForecastDetailState) -> BeautifulSoup` | 상세 VM 대체(state) 뒤 상세 페이지를 받는다 — 위치 FORM(§3.3). |
 | `count_text(root: Tag, text: str) -> int` | `root` 범위 안에서 앞뒤 공백을 뗀 글자가 `text`와 *정확히 같은* 글자 노드 수 — §3.4 범위 안 정확 개수. |
 | `format_date(day: date) -> str` · `format_temp(celsius: int) -> str` | 화면 표기와 *동일한* 포맷 — §3.4 날짜-echo·§3.3 기온 정확 일치. **SUT 포맷터를 재사용**한다(별도 포맷을 만들면 디코이). |
-| `SCREEN_PROBES: dict[str, ScreenProbe]` (`ScreenProbe: TypeAlias = Callable[[Client, pytest.MonkeyPatch], list[Tag]]`) | **화면 진입점 맵**. role 문자열(`'list'`·`'detail'`…)→그 화면을 *대표 fixture로* 받아 **view 루트 요소 목록**(`[data-testid="<화면>-view"]` 선택 결과)을 반환하는 함수. view·헬퍼·fixture 이름을 전부 *맵 값 안에* 가둬 외부 프로브가 BC 이름에 의존하지 않게 한다 — 화면마다 한 항목, 화면 추가 시 여기 등록. 기존 `get_list`/`get_detail`·`detail_state` 위에 얇게 얹는다(중복 요청 정의 금지). |
 | `TINY_PNG: bytes` | 외부 주소 이미지 고정 응답 바이트(§6 — 브라우저 테스트가 있을 때만). |
 
-`SCREEN_PROBES`는 discipline-test §3 FORM이 직접 부르지는 않지만 **별도 render-smoke 테스트 파일(`render_smoke_test.py`)이 직접 소비한다**(아래) — 그 단언이 맵을 돌므로 `SCREEN_PROBES` 미작성·빈 맵이면 green이 깨진다(coder 필수 산출·green 경로 강제). 이 render-smoke는 *헬퍼(`_support.py`)가 아니라 `*_test.py`*라야 pytest가 수집·실행한다. 평가측 렌더 덤프도 이 한 맵만 import해 산출물의 모든 화면을 *배선 추론 0*으로 일관 덤프한다. "모든 화면이 대표 데이터로 렌더된다"는 render-smoke 시드를 겸한다. 키는 화면 role로 고정하고, 값에서 BC별 view·헬퍼 이름을 환언한다(그 이름들이 밖으로 새지 않는 게 핵심):
+**시험 규칙 2.7.1 실행만**(build-state `test_rule`이 `2.7.1`인 실행 — 2.8.0 전에 G1 을 받고 Phase 2 를 잇는 실행 · 새 실행에는 적용하지 않는다): 명세가 적은 화면 진입점 맵과 render-smoke 시험은 이 계약대로 쓴다.
 
-```python
-ScreenProbe: TypeAlias = Callable[[Client, pytest.MonkeyPatch], list[Tag]]  # typing.TypeAlias — 3.11 문법(`type` 문은 3.12부터)
-
-# role → 대표 fixture로 그 화면을 받아 view 루트 요소 목록을 반환. 화면 추가 시 여기 등록.
-SCREEN_PROBES: dict[str, ScreenProbe] = {
-    "list": lambda client, monkeypatch: get_list(client, monkeypatch, fixture_week()).select('[data-testid="forecast-list-view"]'),
-    "detail": lambda client, monkeypatch: get_detail(client, monkeypatch, detail_state(high=28, low=19)).select('[data-testid="forecast-detail-view"]'),
-}
-```
-
-```python
-# web_test/application/[<area>/]<bc>/render_smoke_test.py — 헬퍼가 아니라 *_test.py라야 pytest가 수집한다.
-# 단언이 SCREEN_PROBES를 소비해 green 경로로 강제(coder 필수 산출).
-import pytest
-from django.test import Client
-
-from web_test.application.weather._support import SCREEN_PROBES, ScreenProbe  # area 그루핑이면 web_test.application.<area>.weather._support
-
-
-def test_screen_probes_registers_screens() -> None:
-    assert SCREEN_PROBES  # 빈 맵 도망 차단(빈 parametrize는 실패가 아니라 건너뜀이라 green이 된다)
-
-
-@pytest.mark.parametrize("role", sorted(SCREEN_PROBES))
-def test_renders(role: str, client: Client, monkeypatch: pytest.MonkeyPatch) -> None:
-    probe: ScreenProbe = SCREEN_PROBES[role]
-    assert len(probe(client, monkeypatch)) == 1
-```
-
-`SCREEN_PROBES`를 `_support.py`(헬퍼·import 대상)에 정의하고 테스트 함수는 별도 `render_smoke_test.py`에 둔다 — `_support.py`의 함수는 pytest가 수집하지 않는다. **render_smoke는 probe 반환 목록을 *소비*하는 형태(`len(probe(client, monkeypatch)) == 1`)라야 한다** — `probe(…)`를 부르기만 하고 반환을 버린 채 다른 선택자로 단언하면 probe가 아무것도 돌려주지 않아도 green이 통과해 화면 진입점 계약을 깬다. 타입 이름 `ScreenProbe`·반환 `list[Tag]` 고정(`ScreenGetter`·`None` 반환 등 변형 금지).
+- **타입 별칭** — `_support.py`에 `ScreenProbe: TypeAlias = Callable[[Client, pytest.MonkeyPatch], list[Tag]]`(`typing.TypeAlias` · 이름·반환 고정 — `ScreenGetter`·`None` 반환 등 변형 금지)와 `SCREEN_PROBES: dict[str, ScreenProbe]`(화면 role → 대표 fixture 로 그 화면을 받아 `[data-testid="<화면>-view"]` 선택 결과를 돌려주는 함수 · 기존 요청 헬퍼 위에 얇게 · 중복 요청 정의 금지).
+- **반환 소비** — 별도 `render_smoke_test.py`(같은 폴더 · `*_test.py`라야 수집된다)가 `@pytest.mark.parametrize("role", sorted(SCREEN_PROBES))` 로 role 마다 `assert len(SCREEN_PROBES[role](client, monkeypatch)) == 1` — probe 를 부르기만 하고 반환을 버린 채 다른 선택자로 단언하지 않는다.
+- **빈 맵 차단** — 같은 파일에 `assert SCREEN_PROBES`(빈 parametrize 는 실패가 아니라 건너뜀이라 green 이 된다).
 
 repo를 갈아끼우는 헬퍼(`FakeRepo` 류)는 만들지 않는다 — dddjango-web엔 repo 주입 자리가 없다(§2). 정렬은 도메인 단위를 직접 호출하므로(discipline-test §3.2) VM 격리 헬퍼가 불요하다.
 
