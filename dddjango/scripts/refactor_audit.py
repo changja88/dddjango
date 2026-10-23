@@ -25,9 +25,9 @@ Coordinator «리팩토링 모드» 절이 이 도구를 부른다. 리뷰어·a
   refactor_audit.py deps <bc> --out <산출물 폴더>/deps/<시각>/
                                                         BC 의존(SCC · 받는 쪽 · HTTP 소비 · 공유 표면 · 레인 겹침 · 보류) —
                                                         다른 작업 트리 옛 사본은 주 작업 트리 HEAD 판 기록으로 읽고(끝 판정은
-                                                        표식만) · 이 실행에 `G1 변경판 확정` 줄이 없으면 G0(web HTTP 소비
-                                                        보류는 예보) · 있으면 파견 직전(G1 확정판 밖 동작 V 0 이면 그 보류 ·
-                                                        겹침을 세지 않음 · 늦게 G0 승인한 앵커 없는 리팩토링 실행은 안 셈)
+                                                        표식만) · 이 실행에 `G1 변경판 확정` 줄이 없으면 G0(web HTTP 소비로만
+                                                        선 겹침 · 보류는 예보) · 있으면 파견 직전(G1 확정판 밖 동작 V 0 이면
+                                                        그 겹침 · 보류를 세지 않음 · 늦게 G0 승인한 앵커 없는 리팩토링 실행은 안 셈)
   refactor_audit.py residual <산출물 폴더> [--candidates <검사기 출력>] [--finalize <시각>]
                                                         G2 의미 항목 잔존(결정적 바닥 → 리뷰어 재확인 묶음) — 리뷰어 확인
                                                         대상이 남은 첫 호출은 exit 0 + `M_m 미정`(판정은 --finalize) ·
@@ -4830,11 +4830,13 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
     overlaps: "list[str]" = []
     holds: "list[str]" = []
     forecasts: "list[str]" = []
+    forecast_overlaps: "list[str]" = []
     dropped: "list[str]" = []
     late: int = 0
     http_dropped: int = 0
     http_blind: bool = bc in scan.http_blind
     forecast_tail: str = "첫 파견 직전 deps 가 다시 본다(G1 확정판 밖 동작 V 0 이면 세지 않고 1 이상이면 보류)"
+    forecast_ov_tail: str = "첫 파견 직전 deps 가 다시 본다(G1 확정판 밖 동작 V 0 이면 세지 않고 1 이상이면 겹침)"
     v0_tail: str = "G1 확정판 밖 동작 V 0 — web HTTP 소비로만 선 겹침 · 보류는 세지 않는다"
     counted: "list[ActiveRun]" = []
     for run in runs:
@@ -4856,11 +4858,14 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
             http_why.append(f"web 단위 {' · '.join(sorted(run.units & our_units))}")
         if run.consumes:
             http_why.append(f"계획된 소비 {run.consumes[0][:80]}")
-        cut: bool = web and http_free and bool(http_why) and not why
-        if cut:
+        http_only: bool = web and (http_free or g1 is None)   # 파견 직전 V 0 이면 뺌 · G0 이면 예보(V 를 아직 모른다)
+        cut: bool = http_only and bool(http_why) and not why
+        if cut and http_free:
             dropped.append(f"{run.label} — {' · '.join(http_why)} · {v0_tail}")
             http_dropped += 1
-        if not (web and http_free):
+        elif cut:                                           # G0 — 정지가 아니라 예보(조정자가 G0 배너 직전에 «밖 b» 로 정한다)
+            forecast_overlaps.append(f"{run.label} — {' · '.join(http_why)} · HTTP 소비로만 선 겹침 · {forecast_ov_tail}")
+        elif not (web and http_free):                       # 경로 · BC 로도 선 겹침이면 지금처럼 까닭을 모두 적는다
             why += http_why
         if why:
             overlaps.append(f"{run.label} — {' · '.join(why)} → 순서: 그 레인 착륙 뒤")
@@ -4888,7 +4893,8 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
                 dropped.append(f"{line} · {v0_tail}")
                 http_dropped += 1
         elif http_hold and g1 is None:                      # G0 — 정지가 아니라 예보(조정자가 G0 배너 직전에 «밖 b» 로 정한다)
-            forecasts.append(f"{line} · {forecast_tail}")
+            if not cut:                                     # 한 실행은 한 번만 예보한다
+                forecasts.append(f"{line} · {forecast_tail}")
         else:
             holds.append(line + rest)
     planned: "list[str]" = [f"{r.label}: {r.consumes[0][:60]}" for r in counted if r.consumes]
@@ -4903,11 +4909,11 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
                   "our_bcs": sorted(our_bcs), "our_units": sorted(our_units), "planned": planned,
                   "overlaps": overlaps, "holds": holds, "worktrees": trees, "web_runs": webs,
                   "stage": "G0" if g1 is None else "파견 직전", "outward_v": outward, "outward_v_why": outward_why,
-                  "forecast_holds": forecasts,
+                  "forecast_holds": forecasts, "forecast_overlaps": forecast_overlaps,
                   "dropped": dropped, "active_runs": seen, "parse_errors": scan.parse_errors}
     runs_note: str = (f"활성 실행 {seen['runs']}(사본 {seen['copies']} · 트리 {trees}) · MH 판으로 판정 {seen['mh']} · "
                       f"MH 에서 지워져 뺌 {seen['gone']}")
-    stage: str = (f"판정 시점 G0 · 예보 보류 {len(forecasts)}" if g1 is None else
+    stage: str = (f"판정 시점 G0 · 예보 보류 {len(forecasts)} · 예보 겹침 {len(forecast_overlaps)}" if g1 is None else
                   f"판정 시점 파견 직전(G1 확정 {g1[0]}) · 밖 동작 V "
                   f"{outward if outward is not None else '모름(web HTTP 소비 겹침 · 보류를 그대로 센다)'}"
                   + (f" · web HTTP 소비로만 선 겹침 · 보류 뺌 {http_dropped}" if http_free else "")
@@ -4926,6 +4932,7 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
     md += ["## 레인 겹침", ""] + ([f"- {o}" for o in overlaps] or ["- 없음"]) + [""]
     md += ["## 보류", ""] + ([f"- {h}" for h in holds] or ["- 없음"]) + [""]
     md += ["## 예보 보류(G0 — 정지 아님)", ""] + ([f"- {f}" for f in forecasts] or ["- 없음"]) + [""]
+    md += ["## 예보 겹침(G0 — 정지 아님)", ""] + ([f"- {f}" for f in forecast_overlaps] or ["- 없음"]) + [""]
     md += ["## 뺀 겹침 · 보류", ""] + ([f"- {d}" for d in dropped] or ["- 없음"]) + [""]
     md += [f"- 본 범위: 작업 트리 {trees} · web 실행 {webs} · 저장소 밖은 보지 않는다", f"- {runs_note} · {stage}"]
     md += [f"- 밖 동작 V 를 모르는 까닭: {outward_why}", ""] if outward_why else [""]
@@ -4936,6 +4943,8 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
         print(f"  보류: {h}")
     for f in forecasts:
         print(f"  예보 보류: {f}")
+    for f in forecast_overlaps:
+        print(f"  예보 겹침: {f}")
     for d in dropped:
         print(f"  뺌: {d}")
     if cyc:

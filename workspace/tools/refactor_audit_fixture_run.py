@@ -2304,8 +2304,9 @@ def review_b4_cases(fails: "list[str]", td: Path) -> None:
     (web / "build-state.json").write_text(json.dumps({"g2_approved": False, "g1_approved": True,
                                                       "slices": [{"files": ["web/other/views.py"]}]}), encoding="utf-8")
     (web / "server-contract.json").write_text('{"paths": {"/v9/thing\\u002fsub/{id}": {}}}\n', encoding="utf-8")
-    expect(fails, "RD-H1b 활성 web 실행 계약의 `\\u002f` 경로(json.loads 값) → 계획된 소비 → 겹침", dp(esc, "h1"), 2,
-           "계획된 소비 server-contract.json /v9/thing/sub/{id}")
+    # 까닭(10-24 조정자 결정): G0 deps 의 web HTTP 소비로만 선 겹침은 «예보 겹침»이다. 앞 기대: exit 2 겹침.
+    expect(fails, "RD-H1b 활성 web 실행 계약의 `\\u002f` 경로(json.loads 값) → 계획된 소비 → G0 예보 겹침", dp(esc, "h1"), 0,
+           "예보 겹침: 이 작업 트리 .dddjango-web/20261005-0200-other — 계획된 소비 server-contract.json /v9/thing/sub/{id}")
     # #2 표면마다
     mixed: Path = proj("h3", {"application/demo/driving_layer/api/legacy/legacy_api.py":
                               "from ninja import Router\n\nrouter = Router()\n\n\n@router.get(\"/x\")\ndef x() -> int:\n    return 1\n"})
@@ -2768,8 +2769,11 @@ def deps_cases(fails: "list[str]", td: Path) -> None:
     (web / "build-state.json").write_text(json.dumps({"g2_approved": False, "g1_approved": True,
                                                       "slices": [{"files": ["web/home/views.py"]}]}), encoding="utf-8")
     (web / "server-contract.json").write_text(json.dumps({"paths": {"/api/thing/{id}": {}}}), encoding="utf-8")
-    expect(fails, "RD-D9 web 실행 계약이 이 BC 접두 operation 을 소비 · 같은 web 단위 → 겹침", dp("d9"), 2, "web 단위 web/home",
-           "server-contract.json /api/thing")
+    # 까닭(10-24 조정자 결정 — 사용자 결정 «가.» 의 대상은 web 실행의 HTTP 소비로만 선 겹침 · 보류 한 갈래): G0 deps 에서는 V 를 아직
+    # 모르므로 이 겹침도 정지가 아니라 «예보 겹침»이다(첫 파견 직전 V 로 판정). 앞 기대: exit 2 겹침.
+    expect(fails, "RD-D9 G0 · web 실행 계약이 이 BC 접두 operation 을 소비 · 같은 web 단위(HTTP 소비로만 선 겹침) → 예보 겹침(exit 0)",
+           dp("d9"), 0, "예보 겹침: 이 작업 트리 .dddjango-web/20261004-0800-home — web 단위 web/home",
+           "server-contract.json /api/thing", "레인 겹침 없음", "예보 겹침 1")
     shutil.rmtree(web)
     # 순환 묶음 — a → b → c → a(운영 import)
     cyc: "dict[str, str]" = {**FILES, "application/a/domain_layer/m.py": "from application.b.domain_layer.m import B\nA = B\n",
@@ -2889,32 +2893,32 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
     x = s1.tree("wt-x", "lane-x")
     L.own(x)
     got = L.dp(x, "s1")
-    expect(fails, "RD-T1 S1 main 직접 실행(커밋 · 미종료) 뒤 레인 → 겹침 · 두 트리 사본은 한 번(묶기)", got, 2,
+    expect(fails, "RD-L1 S1 main 직접 실행(커밋 · 미종료) 뒤 레인 → 겹침 · 두 트리 사본은 한 번(묶기)", got, 2,
            ".dddjango/20261024-0100-stopped-feature — BC demo", "레인 겹침 1 ", "활성 실행 1(사본 2 · 트리 2)")
     s1c = TreeLanes(td, "ts1c")                             # S1c 작업 트리 하나 · 같은 트리 앞 실행
     L.commit(s1c.main, "기능 실행 G0 기록", _feat("20261024-0100-stopped-feature", "demo"))
     L.own(s1c.main)
-    expect(fails, "RD-T2 S1c 작업 트리 하나 · 커밋된 앞 실행 → 겹침", L.dp(s1c.main, "s1c"), 2, "레인 겹침 1 ")
+    expect(fails, "RD-L2 S1c 작업 트리 하나 · 커밋된 앞 실행 → 겹침", L.dp(s1c.main, "s1c"), 2, "레인 겹침 1 ")
     s2 = TreeLanes(td, "ts2")                               # S2 레인이 main 을 받음(머지)
     y = s2.tree("wt-y", "lane-y")
     L.commit(y, "레인 Y 자기 커밋", {"application/zeta/domain_layer/y.py": "Y: int = 1\n"})
     L.commit(s2.main, "main 직접 실행 G0 기록", _feat("20261024-0100-stopped-feature", "demo"))
     _git(y, "merge", "-q", "--no-edit", "main")
     L.own(y)
-    expect(fails, "RD-T3 S2 레인이 main 을 받음 → main 직접 실행 한 번 겹침", L.dp(y, "s2"), 2, "레인 겹침 1 ")
+    expect(fails, "RD-L3 S2 레인이 main 을 받음 → main 직접 실행 한 번 겹침", L.dp(y, "s2"), 2, "레인 겹침 1 ")
     s3 = TreeLanes(td, "ts3")                               # S3 main 직접 실행(zeta) + 레인이 만든 뒤 demo 코드 커밋 → 덧씌우기
     L.commit(s3.main, "main 직접 실행 G0 기록(BC zeta)", _feat("20261024-0100-direct-run", "zeta"))
     x = s3.tree("wt-x", "lane-x")
     L.own(x)
     L.commit(s3.main, "main 직접 실행 Phase 2 코드(demo)", {"application/demo/domain_layer/m.py": "X: int = 9\n"})
-    expect(fails, "RD-T4 S3 main 직접 실행의 main 직접 코드 커밋 경로를 덧씌움 → 경로 겹침", L.dp(x, "s3"), 2,
+    expect(fails, "RD-L4 S3 main 직접 실행의 main 직접 코드 커밋 경로를 덧씌움 → 경로 겹침", L.dp(x, "s3"), 2,
            "경로 application/demo/domain_layer/m.py", "레인 겹침 1 ")
     s4 = TreeLanes(td, "ts4")                               # S4 쌓인 레인(Z 가 Y 위)
     y = s4.tree("wt-y", "lane-y")
     L.commit(y, "Y G0 기록", _feat("20261024-0200-feature-demo", "demo"))
     z = s4.tree("wt-z", "lane-z", "lane-y")
     L.own(z)
-    expect(fails, "RD-T5 S4 쌓인 레인 → Y 실행 한 번 겹침", L.dp(z, "s4"), 2, "레인 겹침 1 ", "(사본 2 · 트리 3)")
+    expect(fails, "RD-L5 S4 쌓인 레인 → Y 실행 한 번 겹침", L.dp(z, "s4"), 2, "레인 겹침 1 ", "(사본 2 · 트리 3)")
     s5 = TreeLanes(td, "ts5")                               # S5 착륙했지만 MH 판에 표식 없음(지금과 같음 — 센다)
     y = s5.tree("wt-y", "lane-y")
     L.commit(y, "Y 실행 · 코드(끝 표식 빠짐)", {**_feat("20261024-0200-feature-demo", "demo"),
@@ -2922,7 +2926,7 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
     _git(s5.main, "merge", "-q", "--no-ff", "lane-y", "-m", "Merge lane-y")
     x = s5.tree("wt-x", "lane-x")
     L.own(x)
-    expect(fails, "RD-T6 S5 착륙했지만 MH 판에 끝 표식 없는 실행 → 센다(한 번)", L.dp(x, "s5"), 2, "레인 겹침 1 ")
+    expect(fails, "RD-L6 S5 착륙했지만 MH 판에 끝 표식 없는 실행 → 센다(한 번)", L.dp(x, "s5"), 2, "레인 겹침 1 ")
     for tag, after in (("m1", "code"), ("m1b", ""), ("m1c", "dirty")):   # M1 · M1b · M1c 중간 착륙 뒤 같은 레인에서 계속
         m = TreeLanes(td, f"t{tag}")
         y = m.tree("wt-y", "lane-y")
@@ -2935,7 +2939,7 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
             L.write(y, {"application/demo/domain_layer/s3.py": "Y3: int = 4\n"})
         x = m.tree("wt-x", "lane-x")
         L.own(x)
-        expect(fails, f"RD-T7 {tag.upper()} 중간 착륙 뒤 계속하는 실행(표식 없음) → 센다(착륙 근거로 빼지 않는다)", L.dp(x, tag), 2,
+        expect(fails, f"RD-L7 {tag.upper()} 중간 착륙 뒤 계속하는 실행(표식 없음) → 센다(착륙 근거로 빼지 않는다)", L.dp(x, tag), 2,
                ".dddjango/20261024-0200-feature-demo", "레인 겹침 1 ")
     w1 = TreeLanes(td, "tw1")                               # W1 web 중간 착륙
     w = w1.tree("wt-w", "lane-w")
@@ -2948,7 +2952,7 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
     L.commit(w, "W S2 코드", {"application/demo/domain_layer/w2.py": "W2: int = 1\n"})
     x = w1.tree("wt-x", "lane-x")
     L.own(x)
-    expect(fails, "RD-T8 W1 web 중간 착륙(g2_approved false) → 센다", L.dp(x, "w1"), 2,
+    expect(fails, "RD-L8 W1 web 중간 착륙(g2_approved false) → 센다", L.dp(x, "w1"), 2,
            ".dddjango-web/20261024-0100-web-demo", "경로 application/demo/domain_layer/w.py", "레인 겹침 1 ")
     r1 = TreeLanes(td, "tr1")                               # R1 착륙 머지를 main 이 되돌린 뒤 레인이 고침 — 이 트리가 만든 폴더
     y = r1.tree("wt-y", "lane-y")
@@ -2959,7 +2963,7 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
     L.commit(y, "Y 고침(다시 착륙 준비)", {"application/demo/domain_layer/m.py": "X: int = 5\n"})
     x = r1.tree("wt-x", "lane-x")
     L.own(x)
-    expect(fails, "RD-T9 R1 착륙 머지 revert 뒤 레인이 고침(MH 에 없음 · 이 트리가 만든 폴더) → 센다", L.dp(x, "r1"), 2,
+    expect(fails, "RD-L9 R1 착륙 머지 revert 뒤 레인이 고침(MH 에 없음 · 이 트리가 만든 폴더) → 센다", L.dp(x, "r1"), 2,
            ".dddjango/20261024-0200-feature-demo", "레인 겹침 1 ", "MH 에서 지워져 뺌 0")
     h1 = TreeLanes(td, "th1")                               # H1 주 작업 트리가 main 이 아님(lane-a 가 lane-b 를 받음)
     b = h1.tree("wt-b", "lane-b")
@@ -2968,16 +2972,16 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
     L.own(x)
     _git(h1.main, "checkout", "-q", "-b", "lane-a")
     _git(h1.main, "merge", "-q", "--no-ff", "lane-b", "-m", "lane-a 가 lane-b 를 받음")
-    expect(fails, "RD-T10 H1 주 작업 트리 HEAD 가 main 이 아님 → 센다(한 번)", L.dp(x, "h1"), 2, "레인 겹침 1 ")
+    expect(fails, "RD-L10 H1 주 작업 트리 HEAD 가 main 이 아님 → 센다(한 번)", L.dp(x, "h1"), 2, "레인 겹침 1 ")
     e1 = TreeLanes(td, "te1")                               # E1 다른 트리 빈 web 폴더(보류) · 다른 트리 미커밋 실행 폴더(센다)
     y = e1.tree("wt-y", "lane-y")
     (y / ".dddjango-web" / "20261024-0000-empty").mkdir(parents=True)
     x = e1.tree("wt-x", "lane-x")
     L.own(x)
-    expect(fails, "RD-T11 E1 다른 트리 빈 web 폴더 → 보류(build-state.json 을 못 읽는다 · G0 에도 예보 아님)", L.dp(x, "e1"), 2,
+    expect(fails, "RD-L11 E1 다른 트리 빈 web 폴더 → 보류(build-state.json 을 못 읽는다 · G0 에도 예보 아님)", L.dp(x, "e1"), 2,
            "보류(build-state.json 을 못 읽는다", "보류 1 ")
     L.write(y, _feat("20261024-0100-feature-other", "other"))
-    expect(fails, "RD-T12 다른 트리 미커밋 실행 폴더(BC other) → 겹침", L.dp(x, "e1b"), 2,
+    expect(fails, "RD-L12 다른 트리 미커밋 실행 폴더(BC other) → 겹침", L.dp(x, "e1b"), 2,
            ".dddjango/20261024-0100-feature-other — BC other", "레인 겹침 1 ")
     # ── 안 센다 ──
     o1 = TreeLanes(td, "to1")                               # MH 판에 표식 있는 실행의 옛 사본(표식 없음 · 깨진 바이트)
@@ -2991,10 +2995,10 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
     x = o1.tree("wt-x", "lane-x")
     L.own(x)
     got = L.dp(x, "o1")
-    expect(fails, "RD-T13 MH 판에 끝 표식 있는 실행의 옛 사본(표식 없음 · 깨진 바이트 — 다른 트리 · 옛 main 커밋) → 안 셈",
+    expect(fails, "RD-L13 MH 판에 끝 표식 있는 실행의 옛 사본(표식 없음 · 깨진 바이트 — 다른 트리 · 옛 main 커밋) → 안 셈",
            got, 0, "레인 겹침 없음", "보류 0 ", "MH 판으로 판정 2")
     L.own(old)
-    expect(fails, "RD-T14 그 옛 사본 트리가 이 트리(THIS)여도 MH 판 기록으로 → 안 셈", L.dp(old, "o1t"), 0, "레인 겹침 없음",
+    expect(fails, "RD-L14 그 옛 사본 트리가 이 트리(THIS)여도 MH 판 기록으로 → 안 셈", L.dp(old, "o1t"), 0, "레인 겹침 없음",
            "보류 0 ")
     o2 = TreeLanes(td, "to2")                               # ㉣ MH 에서 지운 실행의 옛 사본(THIS 포함)
     L.commit(o2.main, "폐기할 실행 기록", _feat("20261001-0100-dropped-demo", "demo"))
@@ -3004,7 +3008,7 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
     _git(o2.main, "commit", "-qm", "폐기한 실행 기록 지움")
     L.commit(y, "레인 Y 자기 커밋(그 폴더는 건드리지 않음)", {"application/zeta/domain_layer/y.py": "Y: int = 1\n"})
     L.own(x)
-    expect(fails, "RD-T15 ㉣ MH 에서 지운 실행의 옛 사본(이 트리 · 미착륙 커밋 있는 다른 트리 — 그 트리가 만든 폴더 아님) → 뺌(THIS 몫 "
+    expect(fails, "RD-L15 ㉣ MH 에서 지운 실행의 옛 사본(이 트리 · 미착륙 커밋 있는 다른 트리 — 그 트리가 만든 폴더 아님) → 뺌(THIS 몫 "
            "절 없음)", L.dp(x, "o2"), 0, "레인 겹침 없음", "MH 에서 지워져 뺌 2")
     for tag, record in (("s6", True), ("s8", False), ("rebase", False)):   # S6 · S8 · rebase — main 직접 커밋은 그 레인 몫이 아니다
         s = TreeLanes(td, f"t{tag}")
@@ -3018,7 +3022,7 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
                                    "실행 · G0 승인 20261024-0200 · 모드 리팩토링 · audit 20261024-0201\n"})
         if tag == "rebase":                                 # main 직접 커밋 앞에서 갈라진 레인이 main 위로 rebase
             _git(y, "rebase", "-q", "main")
-        expect(fails, f"RD-T16 {tag.upper()} 나중에 갈라진(또는 rebase 한) 레인(zeta)에 main 직접 커밋 경로를 덧씌우지 않는다 → 겹침 없음",
+        expect(fails, f"RD-L16 {tag.upper()} 나중에 갈라진(또는 rebase 한) 레인(zeta)에 main 직접 커밋 경로를 덧씌우지 않는다 → 겹침 없음",
                L.dp(x, tag), 0, "레인 겹침 없음")
     k1 = TreeLanes(td, "tk1")                               # 링크 · 끊긴 링크 · 한글 경로 · 무시 파일만 다른 폴더(옛 사본 · 안 셈)
     L.commit(k1.main, "옛 기록", {
@@ -3039,7 +3043,7 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
         **_feat("20261001-0500-ignored", "demo", TREE_DONE), **_feat("20261001-0600-linked", "demo", TREE_DONE)})
     x = k1.tree("wt-x", "lane-x")
     L.own(x)
-    expect(fails, "RD-T17 링크(링크 글자로 견줌) · 끊긴 링크(실패 아님) · 한글 경로 · 무시 파일만 다른 옛 사본 → MH 판 기록 → 안 셈",
+    expect(fails, "RD-L17 링크(링크 글자로 견줌) · 끊긴 링크(실패 아님) · 한글 경로 · 무시 파일만 다른 옛 사본 → MH 판 기록 → 안 셈",
            L.dp(x, "k1"), 0, "레인 겹침 없음", "보류 0 ", "MH 판으로 판정 4")
     z1 = TreeLanes(td, "tz1")                               # 크기 같고 바이트 다른 기록(미커밋) → 자기 변경 → 그 사본
     L.commit(z1.main, "끝난 실행", _feat("20261001-0100-feature-demo", "demo", " · G2 승인 20261001-0900"))
@@ -3050,7 +3054,7 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
     x = z1.tree("wt-x", "lane-x")
     L.own(x)
     got = L.dp(x, "z1")
-    expect(fails, "RD-T18 크기 같고 바이트 다른 기록(미커밋 — 표식 지움) → 자기 변경 → 그 사본 → 센다",
+    expect(fails, "RD-L18 크기 같고 바이트 다른 기록(미커밋 — 표식 지움) → 자기 변경 → 그 사본 → 센다",
            (got[0] if len(scope.read_bytes()) == len(before) else 9, got[1]), 2, "레인 겹침 1 ")
 
 
@@ -3080,39 +3084,53 @@ def deps_stage_cases(fails: "list[str]", td: Path) -> None:
     web: Path = repo / ".dddjango-web" / "20261024-0800-home"
     web.mkdir(parents=True)
     (web / "build-state.json").write_text(json.dumps({"g2_approved": False, "g1_approved": False, "slices": []}), encoding="utf-8")
-    expect(fails, "RD-A1 G0 deps · G1 전 web 실행(계약 · 단위 모름) → 예보 보류(정지 아님 · exit 0)", dp("a1"), 0,
+    expect(fails, "RD-E1 G0 deps · G1 전 web 실행(계약 · 단위 모름) → 예보 보류(정지 아님 · exit 0)", dp("a1"), 0,
            "예보 보류: 이 작업 트리 .dddjango-web/20261024-0800-home — 보류(server-contract.json 이 없다", "보류 0 ",
            "판정 시점 G0 · 예보 보류 1")
     _dispatch_own(repo, own, V1_TEXT)
-    expect(fails, "RD-A2 파견 직전 · G1 확정판 밖 동작 V 0 · G1 전 web 실행 → 세지 않음(exit 0 · 뺌 줄)", dp("a2"), 0,
+    expect(fails, "RD-E2 파견 직전 · G1 확정판 밖 동작 V 0 · G1 전 web 실행 → 세지 않음(exit 0 · 뺌 줄)", dp("a2"), 0,
            "뺌: 이 작업 트리 .dddjango-web/20261024-0800-home", "보류 0 ", "밖 동작 V 0", "web HTTP 소비로만 선 겹침 · 보류 뺌 1")
     _dispatch_own(repo, own, V1_TEXT + V2_TEXT)
-    expect(fails, "RD-A3 파견 직전 · 밖 동작 V 1(복합 « + ») · G1 전 web 실행 → 보류(exit 2)", dp("a3"), 2,
+    expect(fails, "RD-E3 파견 직전 · 밖 동작 V 1(복합 « + ») · G1 전 web 실행 → 보류(exit 2)", dp("a3"), 2,
            "보류: 이 작업 트리 .dddjango-web/20261024-0800-home — 보류(server-contract.json 이 없다", "밖 동작 V 1")
     (web / "build-state.json").write_text(json.dumps({"g2_approved": False, "g1_approved": True,
                                                       "slices": [{"files": ["web/home/views.py"]}]}), encoding="utf-8")
     (web / "server-contract.json").write_text(json.dumps({"paths": {"/api/thing/{id}": {}}}), encoding="utf-8")
+    (own / "refactor-scope.md").write_text(TREE_OWN_LINE, encoding="utf-8")
+    expect(fails, "RD-E1b G0 · web 실행이 이 BC API 를 소비 · 같은 web 단위(HTTP 소비로만 선 겹침) → 예보 겹침(exit 0)", dp("a1b"), 0,
+           "예보 겹침: 이 작업 트리 .dddjango-web/20261024-0800-home — web 단위 web/home", "레인 겹침 없음",
+           "판정 시점 G0 · 예보 보류 0 · 예보 겹침 1")
+    (web / "build-state.json").write_text(json.dumps({"g2_approved": False, "g1_approved": True,
+                                                      "slices": [{"files": ["web/home/client.py"]}]}), encoding="utf-8")
+    expect(fails, "RD-E1c G0 · web 단위 겹침이 경로 겹침과 함께(HTTP 소비로만 선 겹침 아님) → 겹침(exit 2)", dp("a1c"), 2,
+           "겹침: 이 작업 트리 .dddjango-web/20261024-0800-home — 경로 web/home/client.py · web 단위 web/home", "예보 겹침 0")
+    (web / "build-state.json").write_text(json.dumps({"g2_approved": False, "g1_approved": True,
+                                                      "slices": [{"files": ["web/home/views.py"]}]}), encoding="utf-8")
     _dispatch_own(repo, own, V1_TEXT)
-    expect(fails, "RD-A4 파견 직전 · V 0 · web 실행이 이 BC API 를 소비 · 같은 web 단위(HTTP 소비로만 선 겹침) → 세지 않음", dp("a4"), 0,
+    expect(fails, "RD-E4 파견 직전 · V 0 · web 실행이 이 BC API 를 소비 · 같은 web 단위(HTTP 소비로만 선 겹침) → 세지 않음", dp("a4"), 0,
            "레인 겹침 없음", "뺌: 이 작업 트리 .dddjango-web/20261024-0800-home — web 단위 web/home")
+    _dispatch_own(repo, own, V1_TEXT + V2_TEXT)
+    expect(fails, "RD-E4b 파견 직전 · 밖 동작 V 1 · 같은 HTTP 소비로만 선 겹침 → 겹침(exit 2)", dp("a4b"), 2,
+           "겹침: 이 작업 트리 .dddjango-web/20261024-0800-home — web 단위 web/home", "밖 동작 V 1")
+    _dispatch_own(repo, own, V1_TEXT)
     (web / "build-state.json").write_text(json.dumps({"g2_approved": False, "g1_approved": True,
                                                       "slices": [{"files": ["web/home/views.py",
                                                                             "application/demo/domain_layer/big.py"]}]}),
                                           encoding="utf-8")
-    expect(fails, "RD-A5 파견 직전 · V 0 · web 실행이 대상 BC 경로를 고침 → 경로 겹침은 센다", dp("a5"), 2,
+    expect(fails, "RD-E5 파견 직전 · V 0 · web 실행이 대상 BC 경로를 고침 → 경로 겹침은 센다", dp("a5"), 2,
            "경로 application/demo/domain_layer/big.py", "레인 겹침 1 ")
     (web / "build-state.json").write_text("{broken", encoding="utf-8")
-    expect(fails, "RD-A6 파견 직전 · V 0 · web build-state 를 못 읽음(활성 여부 모름 — HTTP 소비 보류 아님) → 보류", dp("a6"), 2,
+    expect(fails, "RD-E6 파견 직전 · V 0 · web build-state 를 못 읽음(활성 여부 모름 — HTTP 소비 보류 아님) → 보류", dp("a6"), 2,
            "보류(build-state.json 을 못 읽는다")
     (web / "build-state.json").write_text(json.dumps({"g2_approved": False, "g1_approved": True,
                                                       "slices": [{"files": ["web/other/views.py"]}]}), encoding="utf-8")
     (web / "server-contract.json").write_text(json.dumps({"paths": {}}), encoding="utf-8")
     urls: Path = repo / "application/demo/urls.py"
     urls.write_text("from django.urls import path\nurlpatterns = [path(\"x/\", None)]\n", encoding="utf-8")
-    expect(fails, "RD-A6b 파견 직전 · V 0 · 이 BC 의 HTTP 소비 관찰 못 함 + web 실행 → 그 보류도 web HTTP 소비 보류라 세지 않음",
+    expect(fails, "RD-E6b 파견 직전 · V 0 · 이 BC 의 HTTP 소비 관찰 못 함 + web 실행 → 그 보류도 web HTTP 소비 보류라 세지 않음",
            dp("a6b"), 0, "뺌: 이 작업 트리 .dddjango-web/20261024-0800-home — 보류(이 BC 의 HTTP 소비 관찰 못 함", "보류 0 ")
     (own / "refactor-scope.md").write_text(TREE_OWN_LINE, encoding="utf-8")
-    expect(fails, "RD-A6c G0 · 이 BC 의 HTTP 소비 관찰 못 함 + web 실행 → 예보 보류", dp("a6c"), 0,
+    expect(fails, "RD-E6c G0 · 이 BC 의 HTTP 소비 관찰 못 함 + web 실행 → 예보 보류", dp("a6c"), 0,
            "예보 보류: 이 작업 트리 .dddjango-web/20261024-0800-home — 보류(이 BC 의 HTTP 소비 관찰 못 함", "보류 0 ")
     urls.unlink()
     _dispatch_own(repo, own, V1_TEXT)
@@ -3122,38 +3140,38 @@ def deps_stage_cases(fails: "list[str]", td: Path) -> None:
     other.mkdir(parents=True)
     other_line: str = "실행 · G0 승인 20261024-0400 · 모드 리팩토링 · audit 20261024-0401\n\n- 대상 BC 경로 필터: application/other/\n"
     (other / "refactor-scope.md").write_text(other_line, encoding="utf-8")
-    expect(fails, "RD-A7 맞물림 — 이른 쪽(파견 직전): 늦게 G0 승인한 앵커 없는 리팩토링 실행의 겹침 · «file-plan 이 아직 없다» 보류 안 셈",
+    expect(fails, "RD-E7 맞물림 — 이른 쪽(파견 직전): 늦게 G0 승인한 앵커 없는 리팩토링 실행의 겹침 · «file-plan 이 아직 없다» 보류 안 셈",
            dp("a7"), 0, "레인 겹침 없음", "보류 0 ", "늦게 G0 승인한 리팩토링 실행 뺌 1")
-    expect(fails, "RD-A8 맞물림 — 늦은 쪽: 이른 실행은 센다(exit 2)",
+    expect(fails, "RD-E8 맞물림 — 늦은 쪽: 이른 실행은 센다(exit 2)",
            run(repo, "deps", "other", "--out", str(other / "deps" / "a8")), 2, f".dddjango/{TREE_OWN} — BC demo")
     (other / "refactor-scope.md").write_text(other_line.replace("audit 20261024-0401", "audit 20261024-0401 · build_anchor abc"),
                                              encoding="utf-8")
-    expect(fails, "RD-A9 맞물림 — 앵커 있는 상대는 늦게 G0 승인했어도 센다", dp("a9"), 2, "20261024-0400-refactor-other — BC ")
+    expect(fails, "RD-E9 맞물림 — 앵커 있는 상대는 늦게 G0 승인했어도 센다", dp("a9"), 2, "20261024-0400-refactor-other — BC ")
     (other / "refactor-scope.md").write_text(other_line.replace("G0 승인 20261024-0400", "G0 승인 20261024-0200")
                                              + "\n## 재개 G0 20261024-0500\n", encoding="utf-8")
-    expect(fails, "RD-A10 맞물림 — 비교 값은 실행 줄 G0 승인(잇기 재개 G0 가 더 늦어도) → 이른 상대 → 센다", dp("a10"), 2,
+    expect(fails, "RD-E10 맞물림 — 비교 값은 실행 줄 G0 승인(잇기 재개 G0 가 더 늦어도) → 이른 상대 → 센다", dp("a10"), 2,
            "20261024-0400-refactor-other — BC ")
     shutil.rmtree(other)
     same: Path = repo / ".dddjango" / "20261024-0300-refactor-alpha"
     same.mkdir(parents=True)
     (same / "refactor-scope.md").write_text(other_line.replace("G0 승인 20261024-0400", "G0 승인 20261024-0300"), encoding="utf-8")
-    expect(fails, "RD-A11 맞물림 — G0 승인 값이 같으면 폴더 이름 사전순(-alpha 가 먼저) → 센다", dp("a11"), 2,
+    expect(fails, "RD-E11 맞물림 — G0 승인 값이 같으면 폴더 이름 사전순(-alpha 가 먼저) → 센다", dp("a11"), 2,
            "20261024-0300-refactor-alpha — BC ")
     shutil.rmtree(same)
     # 기록 해독 실패(F4-108) — 경로를 단 보류 · exit 2(실행 불능 아님)
     bad: Path = repo / ".dddjango" / "20261024-0100-feature-x"
     (bad / "audit" / "20261024-0101").mkdir(parents=True)
     (bad / "refactor-scope.md").write_bytes("실행 · G0 승인 20261024-0100\n".encode("utf-8") + b"\xff\xfe\n")
-    expect(fails, "RD-A12 다른 실행 refactor-scope.md 깨진 바이트 → 보류(경로 · 바이트 위치) · exit 2", dp("a12"), 2,
+    expect(fails, "RD-E12 다른 실행 refactor-scope.md 깨진 바이트 → 보류(경로 · 바이트 위치) · exit 2", dp("a12"), 2,
            "20261024-0100-feature-x/refactor-scope.md 를 UTF-8 로 못 읽는다(바이트 ", "재개 조건: 그 기록을 UTF-8 로 고친 뒤 다시 시작")
     (bad / "refactor-scope.md").write_text("실행 · G0 승인 20261024-0100 · 모드 리팩토링 · audit 20261024-0101\n\n"
                                            "- 대상 BC 경로 필터: application/zeta/\n", encoding="utf-8")
     (bad / "audit" / "20261024-0101" / "plan.md").write_bytes(b"# p\n\n- BC: `zeta`\xc3\n")
-    expect(fails, "RD-A13 다른 실행 audit plan.md 깨진 바이트 → 보류(이웃 아닌 BC 여도) · exit 2", dp("a13"), 2,
+    expect(fails, "RD-E13 다른 실행 audit plan.md 깨진 바이트 → 보류(이웃 아닌 BC 여도) · exit 2", dp("a13"), 2,
            "audit/20261024-0101/plan.md 를 UTF-8 로 못 읽는다(바이트 ")
     (bad / "audit" / "20261024-0101" / "plan.md").write_text("# p\n\n- BC: `zeta`\n", encoding="utf-8")
     (bad / "design-spec.md").write_bytes(b"# spec \x80\n")
-    expect(fails, "RD-A14 다른 실행 design-spec.md 깨진 바이트 → 보류 · exit 2", dp("a14"), 2,
+    expect(fails, "RD-E14 다른 실행 design-spec.md 깨진 바이트 → 보류 · exit 2", dp("a14"), 2,
            "20261024-0100-feature-x/design-spec.md 를 UTF-8 로 못 읽는다(바이트 7)")
     shutil.rmtree(bad)
     wbad: Path = repo / ".dddjango-web" / "20261024-0000-home"
@@ -3162,13 +3180,13 @@ def deps_stage_cases(fails: "list[str]", td: Path) -> None:
                                                        "slices": [{"files": ["web/other/views.py"]}]}), encoding="utf-8")
     (wbad / "server-contract.json").write_text(json.dumps({"paths": {}}), encoding="utf-8")
     (wbad / "design-spec.md").write_bytes(b"# web spec \xe9\n")
-    expect(fails, "RD-A15 web 실행 design-spec.md 깨진 바이트(S9) → 보류(HTTP 소비 보류 아님 — G0 에도) · exit 2", dp("a15"), 2,
+    expect(fails, "RD-E15 web 실행 design-spec.md 깨진 바이트(S9) → 보류(HTTP 소비 보류 아님 — G0 에도) · exit 2", dp("a15"), 2,
            ".dddjango-web/20261024-0000-home/design-spec.md 를 UTF-8 로 못 읽는다")
     shutil.rmtree(wbad)
     sup: Path = repo / ".dddjango" / "20260901-refactor-base"
     sup.mkdir(parents=True)
     (sup / "refactor-scope.md").write_bytes(b"\xff refactor-scope\n")
-    expect(fails, "RD-A16 내주는 쪽 기록 깨진 바이트 → 내주는 쪽 «못 읽음(<경로>)»(실행 불능 아님) · 그 실행 폴더도 해독 보류", dp("a16"), 2,
+    expect(fails, "RD-E16 내주는 쪽 기록 깨진 바이트 → 내주는 쪽 «못 읽음(<경로>)»(실행 불능 아님) · 그 실행 폴더도 해독 보류", dp("a16"), 2,
            "내주는 쪽 base(못 읽음(", "20260901-refactor-base/refactor-scope.md 를 UTF-8 로 못 읽는다(바이트 0)")
 
 
