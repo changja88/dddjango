@@ -41,6 +41,10 @@
 # 판정 입력은 pytest 기록 플러그인(`switch_probe.py` — 빈 임시 폴더에 복사해 `-p` 로 싣는다)이 낸 JSON 줄이다. 화면
 #   출력은 결과 줄(마지막 줄)만 증거에 옮긴다. 시험 명령에는 `-p no:cacheprovider` 도 붙이고 PYTHONDONTWRITEBYTECODE=1 로
 #   돌린다(작업 트리에 캐시를 남기지 않는다).
+# 시험 명령은 새 세션(프로세스 묶음)으로 띄운다. 시간 초과(`--timeout`)나 이 도구의 끊김(SIGINT — ctrl+c · 묶음 SIGINT)
+#   이면 그 묶음에 멈춤 신호(SIGINT)를 먼저 보내 시험이 정리 단계를 돌게 하고, STOP_GRACE_SECONDS 를 기다린 뒤 묶음에
+#   남은 프로세스는 SIGKILL 로 끝낸다(출력 관 기다림도 KILL_WAIT_SECONDS 로 끝이 있다). 그 뒤 임시 변경을 되돌린다 — 끊김은 되돌린 뒤
+#   다시 올린다(요약 줄 없이 끝난다 · 다음 호출은 평소대로).
 # exit 0 = 모두 검증(증거 `<산출물 폴더>/test-switch/evidence.json`) · 2 = 반례 판정 어긋남 · 1 = 실행 불능 · 미검증
 #   (시작 거절 · 복구 불능 포함). 첫 어긋남 · 미검증에서 멈춘다(남은 행은 확인하지 않는다). `[switch] 시작 거절 — …` 줄은
 #   반례 · 임시 파일을 하나도 남기지 않은 입력 거절(명령 · 작업 트리 · 기록 · 행 · 반례 꼴 — 대상 밖 노드는 첫 실행에서
@@ -72,6 +76,8 @@ PROBE_MODULE: str = 'dddjango_web_switch_probe'
 PROBE_ENV: str = 'DDDJANGO_WEB_SWITCH_PROBE'
 OLD_SUFFIX: str = '__dddjango_switch_old.py'
 DEFAULT_TIMEOUT: int = 600
+STOP_GRACE_SECONDS: int = 30   # 시험 묶음에 멈춤 신호(SIGINT)를 보낸 뒤 정리 단계를 기다리는 초 — 그 뒤 남은 묶음은 SIGKILL
+KILL_WAIT_SECONDS: int = 30    # SIGKILL 뒤 출력 관을 기다리는 초 — 넘으면 관을 닫는다(묶음 밖으로 나간 자손이 관을 쥔 꼴)
 ASSERTION: str = 'builtins.AssertionError'
 WORK_PREFIX: str = 'dddjango-web-switch-'
 STATE_VERIFIED: str = 'verified'
@@ -537,6 +543,38 @@ class Target:
         self.spans = spans
 
 
+def _signal_group(proc: 'subprocess.Popen[bytes]', sig: int) -> None:
+    """이 도구가 띄운 시험 명령의 프로세스 묶음(새 세션)에만 신호를 보낸다."""
+    try:
+        os.killpg(proc.pid, sig)
+    except ProcessLookupError:
+        pass
+    except (AttributeError, OSError):
+        if proc.returncode is None:
+            proc.send_signal(sig)
+
+
+def stop_group(proc: 'subprocess.Popen[bytes]') -> None:
+    """시간 초과 · 끊김 때 시험 묶음을 멈춘다 — 멈춤 신호(SIGINT · ctrl+c 와 같다)를 먼저 보내 시험이 정리 단계(DB 서버 ·
+    브라우저 닫기)를 돌게 하고 STOP_GRACE_SECONDS 를 기다린 뒤, 묶음에 남은 프로세스는 SIGKILL 로 끝낸다(지도자가 먼저
+    끝나도 같은 묶음에 남은 자손까지). 그 뒤 출력 관은 KILL_WAIT_SECONDS 만 기다리고 관을 닫는다 — 묶음 밖으로 나간
+    자손에는 신호를 보내지 않는다. 기다림 중 다시 끊겨도 SIGKILL 단계는 돈다."""
+    try:
+        _signal_group(proc, signal.SIGINT)
+        proc.communicate(timeout=STOP_GRACE_SECONDS)
+    except subprocess.TimeoutExpired:
+        pass
+    finally:
+        _signal_group(proc, signal.SIGKILL)
+        try:
+            proc.communicate(timeout=KILL_WAIT_SECONDS)
+        except subprocess.TimeoutExpired:
+            for pipe in (proc.stdout, proc.stderr):
+                if pipe is not None:
+                    pipe.close()
+            proc.wait()
+
+
 class Runner:
     def __init__(self, project: Path, cmd: list, timeout: int, work: Path) -> None:
         self.project = project
@@ -564,12 +602,11 @@ class Runner:
         try:
             raw, _ = proc.communicate(timeout=self.timeout)
         except subprocess.TimeoutExpired:
-            try:
-                os.killpg(proc.pid, signal.SIGKILL)   # 이 도구가 띄운 시험 명령의 프로세스 묶음만
-            except (AttributeError, OSError):
-                proc.kill()
-            proc.communicate()
+            stop_group(proc)
             raise Unverified('시간 초과 %d초 — %s' % (self.timeout, target.node)) from None
+        except KeyboardInterrupt:          # 이 도구가 끊김 — 새 세션의 시험 묶음도 멈춘 뒤 다시 올린다(되돌림은 부르는 쪽 finally)
+            stop_group(proc)
+            raise
         text: str = raw.decode('utf-8', 'replace')
         tail: str = ' | '.join([line.strip() for line in text.splitlines() if line.strip()][-3:])
         records: list = []

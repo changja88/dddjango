@@ -11,7 +11,9 @@ switch-check 가 받는 행이 같다) · J 이어 붙인 흐름(0T → 치환 �
 임시 변경이 남은 채 취소로 적힌 모순 상태) · V 구현 검토 보완(V1 걸러진 case · 대상 밖 노드 · 실행마다 다른 case 집합 ·
 V2 한 줄에 단언 둘 · 반복문 안 단언 · V3 복구가 지워도 되는 파일만 지운다 · 위조된 복구 상태 · 남은 도구 임시 폴더 ·
 V4 «이미 검증됨» 은 행 전체 · T 목록 · 갖춰진 실행 기록 · V5 반례 적용 실패 뒤 적용 전 바이트로) · O `--test-cmd` 의
-고르는 선택지 표.
+고르는 선택지 표 · K 멈춤(2.7.1 — 시간 초과 · 도구 끊김이면 시험 묶음에 SIGINT 먼저 → 정리 단계 표식 · 반례 되돌림 ·
+고아 0 · SIGINT 를 무시하면 기다림 뒤 SIGKILL · 묶음 밖 자손이 출력 관을 쥐어도 기다림에 끝 · 기다림 중 두 번째 끊김 ·
+시험이 먼저 끝나도 같은 묶음에 남은 자손은 SIGKILL).
 고치기 전 판 = BASELINE 커밋의 scripts(`git show <커밋>:<경로>` 로 임시 폴더에 푼다 — 작업 사본을 stash 하지 않는다).
 그 커밋이 이력에 없으면(얕은 clone 등) U 묶음을 건너뛰고 건너뛴 사실을 출력한다(실패로 세지 않는다)."""
 import hashlib
@@ -20,9 +22,11 @@ import json
 import os
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 import traceback
 import types
 from pathlib import Path
@@ -33,7 +37,7 @@ PLUGIN = SCRIPTS.parent
 REPO = SCRIPTS.parents[1]
 BASELINE = 'f349f878'  # 고치기 전 판(배포된 dddjango-web 2.3.0) — 판마다 바탕 커밋으로 올린다
 ENV = dict(os.environ, GIT_OPTIONAL_LOCKS='0', PYTHONDONTWRITEBYTECODE='1')
-for _name in ('FAKE_KILL_WHEN', 'FAKE_COUNTER', 'DDDJANGO_WEB_SWITCH_PROBE'):
+for _name in ('FAKE_KILL_WHEN', 'FAKE_COUNTER', 'FAKE_MARK', 'DDDJANGO_WEB_SWITCH_PROBE'):
     ENV.pop(_name, None)
 RUN = '.dddjango-web/run'
 PASS = FAIL = 0
@@ -167,6 +171,25 @@ def fake_cmd(tmp):
     return '%s -B %s' % (shlex.quote(sys.executable), shlex.quote(str(path)))
 
 
+# 멈춤 기다림 두 모듈 상수를 줄여 도구를 띄우는 작은 입구 — 인자: <scripts> <멈춤 신호 뒤 초> <SIGKILL 뒤 초> <도구 인자…>
+GRACE_WRAPPER = r'''
+import sys
+sys.path.insert(0, sys.argv[1])
+from src import switch_check
+switch_check.STOP_GRACE_SECONDS = int(sys.argv[2])
+switch_check.KILL_WAIT_SECONDS = int(sys.argv[3])
+import refactor_audit
+sys.exit(refactor_audit.main(sys.argv[4:]))
+'''
+
+
+def grace_wrapper(tmp):
+    path = Path(tmp) / 'grace_wrapper.py'
+    if not path.exists():
+        path.write_text(GRACE_WRAPPER, encoding='utf-8')
+    return path
+
+
 # ====================================================================== 장면(작은 web 프로젝트 · 0T 커밋)
 
 VIEW = [
@@ -283,6 +306,20 @@ class Scene:
         scratch.mkdir(exist_ok=True)
         return run_script(SCRIPTS / 'refactor_audit.py', *args, cwd=self.root,
                           env=dict(ENV, TMPDIR=str(scratch), **(env or {})))
+
+    def launch(self, *extra, env=None, grace=None):
+        """끊김 장면 — 도구를 띄워 둔 채 돌려준다(부르는 쪽이 신호를 보내고 기다린다). `grace` = (멈춤 신호 뒤 기다림 ·
+        SIGKILL 뒤 관 기다림) 초 — 주면 그 두 모듈 상수를 줄인 꼴로 도구를 띄운다."""
+        args = ['--project', self.root, 'switch-check', RUN, '--test-cmd', fake_cmd(self.tmp), *extra]
+        scratch = self.tmp / 'tool-tmp'
+        scratch.mkdir(exist_ok=True)
+        head = [sys.executable, '-B']
+        if grace is None:
+            head.append(str(SCRIPTS / 'refactor_audit.py'))
+        else:
+            head += [str(grace_wrapper(self.tmp)), str(SCRIPTS), str(grace[0]), str(grace[1])]
+        return subprocess.Popen(head + [str(a) for a in args], cwd=str(self.root), stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT, text=True, env=dict(ENV, TMPDIR=str(scratch), **(env or {})))
 
     def clean(self):
         return git(self.root, 'status', '--porcelain', '--untracked-files=all', '--', '.', ':(exclude).dddjango-web')
@@ -1649,11 +1686,179 @@ def bundle_options(tmp):
     untouched(s, 'O2')
 
 
+# ====================================================================== K — 멈춤(시간 초과 · 끊김 → 시험 묶음에 SIGINT 먼저)
+
+HOLD = {
+    # SIGINT 를 받으면 정리 단계(finally)에서 표식을 쓴다 · 같은 묶음 자손(DB 서버 · 브라우저 흉내)은 묶음 신호로 끝난다
+    'int': ("    kid = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(20)'])",),
+    # 시험과 같은 묶음 자손이 모두 SIGINT 를 무시한다 — 기다림 뒤 SIGKILL 이어야 끝난다
+    'ignore': ('    signal.signal(signal.SIGINT, signal.SIG_IGN)',
+               "    kid = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(20)'])"),
+    # 묶음 밖(새 세션)으로 나간 자손이 출력 관을 쥔다 — SIGKILL 뒤 관 기다림에도 끝이 있어야 한다
+    'escape': ('    signal.signal(signal.SIGINT, signal.SIG_IGN)',
+               "    kid = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(12)'], start_new_session=True)"),
+    # 시험은 SIGINT 로 정리하고 끝나지만 같은 묶음 자손은 SIGINT 를 무시하고 출력 관도 쥐지 않는다 — 기다림 뒤 묶음 SIGKILL 이 거둔다
+    'linger': ("    kid = subprocess.Popen([sys.executable, '-c', 'import signal, time; signal.signal(signal.SIGINT, signal.SIG_IGN); "
+               "time.sleep(20)'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)",),
+}
+
+
+def hold_test(kind):
+    """반례가 적용된 동안만 오래 도는 새 시험 — 시작 · 자손 pid · 정리 표식을 `FAKE_MARK` 자리에 쓴다(단언 둘은 그대로)."""
+    return ['import os, signal, subprocess, sys, time',
+            'from web.app.view import page_view',
+            '',
+            '',
+            'def _hold():',
+            "    mark = os.environ['FAKE_MARK']",
+            *HOLD[kind],
+            "    open(mark + '.kid', 'w').write(str(kid.pid))",
+            "    open(mark + '.started', 'w').write('1')",
+            '    try:',
+            '        time.sleep(20)',
+            '    finally:',
+            "        open(mark, 'w').write('정리')",
+            '',
+            '',
+            'def test_gate():',
+            "    request = {'context': {'employees': 2, 'selected': None}}",
+            '    response = page_view(request)',
+            "    if \"'/elsewhere/'\" in open('web/app/view.py').read():",
+            '        _hold()',
+            '    assert response.status == 302',
+            "    assert response.location == '/choose/'"]
+
+
+def _wait_file(path, wait=30.0):
+    deadline = time.monotonic() + wait
+    while not Path(path).exists():
+        if time.monotonic() > deadline:
+            return False
+        time.sleep(0.05)
+    return True
+
+
+def _gone(pid_file, wait=5.0):
+    """기록된 자손 pid 가 끝났는가(고아 0) — 끝나 거둬질 때까지 `wait` 초 기다린다."""
+    try:
+        pid = int(Path(pid_file).read_text())
+    except (OSError, ValueError):
+        return False
+    deadline = time.monotonic() + wait
+    while True:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(0.1)
+
+
+def _finish(proc, wait=60):
+    try:
+        out, _ = proc.communicate(timeout=wait)
+    except subprocess.TimeoutExpired:
+        proc.kill()                                     # 이 픽스처가 띄운 도구에만
+        out, _ = proc.communicate()
+    return out
+
+
+def _restored(tmp, s):
+    st = s.state_json() or {}
+    return (s.clean() == '' and st.get('pending') == [] and 'work' not in st
+            and not any((Path(tmp) / 'tool-tmp').glob('dddjango-web-switch-*')))
+
+
+def bundle_stop(tmp):
+    s = Scene(tmp, 'k1', new_test=hold_test('int'))
+    mark = Path(tmp) / 'k1.mark'
+    e, out = s.switch('--timeout', '3', env={'FAKE_MARK': str(mark)})
+    check('K1 시간 초과 — 시험 묶음에 SIGINT 먼저: 정리 표식 있음 · exit 1 · 시간 초과 3초',
+          e == 1 and '시간 초과 3초' in out and '· 미검증' in out and mark.exists(), out[-900:])
+    check('K1 같은 묶음 자손 끝남(고아 0)', _gone(str(mark) + '.kid'))
+    check('K1 반례 되돌림 · 작업 트리 시작 상태 · 도구 임시 폴더 없음', _restored(tmp, s), s.clean())
+
+    s = Scene(tmp, 'k2', new_test=hold_test('int'))
+    mark = Path(tmp) / 'k2.mark'
+    proc = s.launch(env={'FAKE_MARK': str(mark)})
+    started = _wait_file(str(mark) + '.started')
+    if started:
+        proc.send_signal(signal.SIGINT)                 # 이 픽스처가 띄운 도구에만(ctrl+c · 묶음 SIGINT 흉내)
+    out = _finish(proc)
+    check('K2 도구 끊김 — 시험 묶음에 SIGINT: 정리 표식 있음 · 끊김을 다시 올림',
+          started and mark.exists() and proc.returncode != 0 and 'KeyboardInterrupt' in out,
+          'rc=%r %s' % (proc.returncode, out[-900:]))
+    check('K2 같은 묶음 자손 끝남(고아 0)', _gone(str(mark) + '.kid'))
+    check('K2 반례 되돌림 · 작업 트리 시작 상태 · 도구 임시 폴더 없음', _restored(tmp, s), s.clean())
+
+    s = Scene(tmp, 'k3', new_test=hold_test('ignore'))
+    mark = Path(tmp) / 'k3.mark'
+    t0 = time.monotonic()
+    proc = s.launch('--timeout', '3', env={'FAKE_MARK': str(mark)}, grace=(1, 1))
+    out = _finish(proc)
+    took = time.monotonic() - t0
+    check('K3 SIGINT 를 무시하는 시험 — 기다림(1초) 뒤 SIGKILL · exit 1 · 시간 초과 · 정리 표식 없음',
+          proc.returncode == 1 and '시간 초과 3초' in out and '· 미검증' in out and not mark.exists() and took < 20,
+          'rc=%r %.1f초 %s' % (proc.returncode, took, out[-900:]))
+    check('K3 같은 묶음 자손 끝남(고아 0)', _gone(str(mark) + '.kid'))
+    check('K3 반례 되돌림 · 작업 트리 시작 상태', _restored(tmp, s), s.clean())
+
+    s = Scene(tmp, 'k4', new_test=hold_test('escape'))
+    mark = Path(tmp) / 'k4.mark'
+    proc = s.launch('--timeout', '3', env={'FAKE_MARK': str(mark)}, grace=(1, 1))
+    out = _finish(proc)
+    escaped = not _gone(str(mark) + '.kid', wait=0)   # 도구가 끝났을 때 묶음 밖 자손(12초)은 아직 산다
+    check('K4 묶음 밖 자손이 출력 관을 쥠 — SIGKILL 뒤 관 기다림(1초)에 끝 · exit 1 · 시간 초과',
+          proc.returncode == 1 and '시간 초과 3초' in out and escaped,
+          'rc=%r escaped_alive=%r %s' % (proc.returncode, escaped, out[-900:]))
+    check('K4 반례 되돌림 · 작업 트리 시작 상태', _restored(tmp, s), s.clean())
+    if escaped:
+        try:
+            os.kill(int((Path(str(mark) + '.kid')).read_text()), signal.SIGKILL)   # 이 장면이 띄운 자손에만
+        except (OSError, ValueError):
+            pass
+
+    s = Scene(tmp, 'k5', new_test=hold_test('ignore'))
+    mark = Path(tmp) / 'k5.mark'
+    proc = s.launch(env={'FAKE_MARK': str(mark)}, grace=(8, 1))
+    started = _wait_file(str(mark) + '.started')
+    took = None
+    if started:
+        proc.send_signal(signal.SIGINT)
+        time.sleep(1.5)                                   # 멈춤 신호 뒤 기다림(8초) 안
+        t0 = time.monotonic()
+        proc.send_signal(signal.SIGINT)
+    out = _finish(proc)
+    if started:
+        took = time.monotonic() - t0
+    check('K5 기다림 중 두 번째 끊김 — 그래도 SIGKILL 단계가 돈다(곧 끝남 · 끊김을 다시 올림)',
+          started and took is not None and took < 5 and proc.returncode != 0 and 'KeyboardInterrupt' in out,
+          'took=%r rc=%r %s' % (took, proc.returncode, out[-900:]))
+    check('K5 같은 묶음 자손 끝남(고아 0)', _gone(str(mark) + '.kid'))
+    check('K5 반례 되돌림 · 작업 트리 시작 상태', _restored(tmp, s), s.clean())
+
+    s = Scene(tmp, 'k6', new_test=hold_test('linger'))
+    mark = Path(tmp) / 'k6.mark'
+    proc = s.launch('--timeout', '3', env={'FAKE_MARK': str(mark)}, grace=(1, 1))
+    out = _finish(proc)
+    kid_gone = _gone(str(mark) + '.kid')
+    check('K6 시험은 정리하고 먼저 끝남 · 같은 묶음 자손은 SIGINT 무시 — 기다림 뒤 묶음 SIGKILL · exit 1 · 시간 초과',
+          proc.returncode == 1 and '시간 초과 3초' in out and mark.exists(), 'rc=%r %s' % (proc.returncode, out[-900:]))
+    check('K6 같은 묶음 자손 끝남(고아 0)', kid_gone)
+    check('K6 반례 되돌림 · 작업 트리 시작 상태', _restored(tmp, s), s.clean())
+    if not kid_gone:
+        try:
+            os.kill(int((Path(str(mark) + '.kid')).read_text()), signal.SIGKILL)   # 이 장면이 띄운 자손에만
+        except (OSError, ValueError):
+            pass
+
+
 def main():
     bundles = [bundle_unchanged, bundle_normal, bundle_bypass, bundle_reject, bundle_unverified, bundle_mismatch,
                bundle_crash, bundle_after, bundle_dirty, bundle_lifecycle, bundle_probe, bundle_rows, bundle_joined,
                bundle_review_cases, bundle_review_asserts, bundle_review_recover, bundle_review_evidence,
-               bundle_review_apply, bundle_options]
+               bundle_review_apply, bundle_options, bundle_stop]
     only = set(sys.argv[1:])
     for bundle in bundles:
         if only and bundle.__name__[len('bundle_'):] not in only:
