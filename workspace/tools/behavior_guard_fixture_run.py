@@ -1586,6 +1586,11 @@ def verify_checks() -> "list[str]":
                    f"실행 관찰 API 1(실린 범위 2 파일 · 그중 이번 실행이 바꾸지 않은 파일 {unchanged})")
             if ("이번 실행이 바꾸지 않은 파일 1: 레인이 고치지 않는다" in got[1]) != bool(unchanged):
                 fails.append(f"실행 관찰 API {label} — 바꾸지 않은 파일 문구가 갈래와 어긋남\n{got[1]}")
+        _suite(repo, digest, verdict="red", counts={**GOOD_COUNTS, "observer_hits": 1},   # 3.1 S3 — 앵커 없음: 갈래만 판정 불능
+               observer_split="판정 불능 — build_anchor 없음")
+        expect("suite 실행 관찰 API — 갈래 판정 불능 → red", _rguard(repo, "verify"), 2, "suite 실행 관찰 API 1",
+               "suite 실행 관찰 API — 이번 실행 편집 갈래 판정 불능 — build_anchor 없음(레인 편집 여부를 가르지 못했다)",
+               "실행 관찰 API 1(실린 범위 2 파일 · 이번 실행 편집 갈래 판정 불능 — build_anchor 없음)")
         _suite(repo, digest)
         expect("suite 다시 → green", _rguard(repo, "verify"), 0, "요약: 동작 보존 green")
         _write(repo, {"application/core/real.py": "def product():\n    return 9  # 뒤\n"})

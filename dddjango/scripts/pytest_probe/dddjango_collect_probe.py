@@ -18,8 +18,11 @@
 아니면 허용 밖으로 남긴다. 구간이 열린 채 call 단계 훅이 다시 불리면 재진입으로 남긴다.
 실행 기록(기록 판 2 · 설계 3판 §C1): import 때 감사 훅 하나가 사건 «exec» 의 코드 객체 파일 이름(날 글자 — 상대 이름은 그 사건
 때 작업 폴더로 풂 · `<` 로 시작하면 버림)을 모은다. 수집 끝 · 기록 확정 때 그때까지 모은 것과 `sys.modules` 의 `__file__`(날 글자)
-가운데 저장소 뿌리(`DDDJANGO_PROBE_ROOTS` — 날 · 풀린 둘) 아래인 것을 `loaded_collect` · `loaded_end` 로, 수집 끝 `sys.path`
-(상대 항목은 그때 작업 폴더로 풂)를 `sys_path` 로 남긴다. 지원 쪽이 이 기록으로 «실제로 실리고 돈 시험 쪽 코드»를 정한다.
+가운데 저장소 뿌리(`DDDJANGO_PROBE_ROOTS` — 날 · 풀린 둘) 아래인 것을 `loaded_collect` · `loaded_end` 로, 후보 전부를 stat(링크 따라감)
+해 그 정체(st_dev, st_ino)가 지원 쪽 표(`DDDJANGO_PROBE_IDS` — 시험 쪽 .py 정체 → 저장소 경로)에 있으면 그 저장소 경로를
+`ident_collect` · `ident_end` 로(뿌리 앞거름 없음 — 제외 자리 · 저장소 밖 링크 · 유니코드 정규형 · 대소문자 · 굳은 링크로 실어도 같은
+파일), 수집 끝 `sys.path`(상대 항목은 그때 작업 폴더로 풂)를 `sys_path` 로 남긴다. 지원 쪽이 이 기록으로 «실제로 실리고 돈 시험
+쪽 코드»를 정한다.
 """
 from __future__ import annotations
 
@@ -38,7 +41,7 @@ import _pytest.unittest
 import pytest
 
 
-RECORD_VERSION = 2                    # 기록 판 — 2 = 실행 기록(loaded_collect · loaded_end · sys_path) 칸을 더한 판
+RECORD_VERSION = 2                    # 기록 판 — 2 = 실행 기록(loaded_collect · loaded_end · ident_collect · ident_end · sys_path)
 _RAN: set = set()                     # 감사 사건 «exec» 의 코드 객체 파일 이름(날 글자 · 상대 이름은 그때 작업 폴더로 풂)
 _CODE = types.CodeType
 
@@ -55,6 +58,15 @@ def _on_audit(event, args) -> None:
 
 sys.addaudithook(_on_audit)           # -p 로 실리는 import 때 건다 — conftest · 진입점 플러그인보다 먼저(앞선 -p 플러그인은 §12)
 ROOTS = tuple(r.rstrip(os.sep) + os.sep for r in json.loads(os.environ.get("DDDJANGO_PROBE_ROOTS") or "[]"))
+_IDS: dict = {}                       # (st_dev, st_ino) → 저장소 경로들 — 첫 기록 때 지원 쪽 표 파일을 읽는다(못 읽으면 기록이 죽는다)
+
+
+def _ids() -> dict:
+    path = os.environ.get("DDDJANGO_PROBE_IDS")
+    if path and not _IDS:
+        for dev, ino, rel in json.loads(Path(path).read_text(encoding="utf-8", errors="surrogateescape")):
+            _IDS.setdefault((dev, ino), []).append(rel)
+    return _IDS
 
 XUNIT_MODULE = ("setup_module", "teardown_module", "setUpModule", "tearDownModule", "setup_function", "teardown_function")
 PACKAGE_XUNIT = ("setUpModule", "setup_module", "tearDownModule", "teardown_module")
@@ -72,17 +84,25 @@ _S: dict = {"seen_cls": set(), "tool": None, "bound": {}, "watch": None, "owner"
             "skips": set(), "passed": set(), "complete": set(), "workers_ready": set(), "allowed_sourceless": set(), "django": None,
             "hookimpls": {}, "finalized": False, "late": [], "exitstatus": None,
             "failed": 0, "import_skips": [], "packages": set(), "meta": {}, "anchor": [], "names": {}, "flags": {}, "reentry": False,
-            "loaded_collect": [], "sys_path": []}
+            "loaded_collect": [], "ident_collect": [], "sys_path": []}
 
 
-def _loaded() -> "list[str]":
-    """지금까지 실행된 코드의 파일 이름 ∪ `sys.modules` 의 `__file__`(날 글자) — 저장소 뿌리 아래만."""
+def _loaded() -> "tuple[list[str], list[str]]":
+    """지금까지 실행된 코드의 파일 이름 ∪ `sys.modules` 의 `__file__`(날 글자) — (저장소 뿌리 아래 날 글자, 정체가 표에 있는 저장소
+    경로). 정체는 후보 전부를 stat 해 본다(뿌리 앞거름 없음)."""
     files = set(_RAN)
     for m in list(sys.modules.values()):
         f = getattr(m, "__file__", None) if isinstance(m, types.ModuleType) else None
         if isinstance(f, str):
             files.add(f)
-    return sorted(f for f in files if f.startswith(ROOTS))
+    ids, same = _ids(), set()
+    for f in files if ids else ():
+        try:
+            st = os.stat(f)
+        except (OSError, ValueError):
+            continue
+        same.update(ids.get((st.st_dev, st.st_ino), ()))
+    return sorted(f for f in files if f.startswith(ROOTS)), sorted(same)
 
 
 def _code_file(code) -> "str | None":
@@ -224,6 +244,7 @@ def _write() -> None:
     config = _S["config"]
     pm = config.pluginmanager
     role = "worker" if _S.get("workerid") else ("controller" if pm.has_plugin("dsession") else "single")
+    loaded_end, ident_end = _loaded()
     data = {"version": RECORD_VERSION, "role": role, "workerid": _S.get("workerid"), "rootpath": str(config.rootpath),
             "inipath": str(config.inipath) if config.inipath else None, "args": list(config.invocation_params.args),
             "exitstatus": _S["exitstatus"], "initial": _S["initial"], "final": _S["final"],
@@ -233,8 +254,8 @@ def _write() -> None:
             "allowed_sourceless": sorted(_S["allowed_sourceless"]), "workers_ready": sorted(_S["workers_ready"]),
             "finalized": _S["finalized"], "late": _S["late"], "failed": _S["failed"], "import_skips": _S["import_skips"],
             "anchor": _S["anchor"], "optimize": sys.flags.optimize, "flags": _S["flags"],
-            "greenlet_loaded": "greenlet" in sys.modules, "loaded_collect": _S["loaded_collect"], "loaded_end": _loaded(),
-            "sys_path": _S["sys_path"]}
+            "greenlet_loaded": "greenlet" in sys.modules, "loaded_collect": _S["loaded_collect"], "loaded_end": loaded_end,
+            "ident_collect": _S["ident_collect"], "ident_end": ident_end, "sys_path": _S["sys_path"]}
     Path(out).mkdir(parents=True, exist_ok=True)
     Path(out, f"{os.getpid()}.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8",
                                                 errors="surrogateescape")   # OS 가 surrogateescape 로 넘긴 경로도 원래 바이트로
@@ -393,7 +414,7 @@ def pytest_collection_finish(session) -> None:
         for node in item.listchain():
             if isinstance(node, pytest.Package):
                 _S["packages"].add(str((Path(node.path) / "__init__.py").resolve()))
-    _S["loaded_collect"] = _loaded()                  # 수집 끝 실행 기록 — G0 보는 범위의 실린 몫(L0)
+    _S["loaded_collect"], _S["ident_collect"] = _loaded()   # 수집 끝 실행 기록 — G0 보는 범위의 실린 몫(L0)
     _S["sys_path"] = [os.path.abspath(e) for e in sys.path if isinstance(e, str)]   # 시험 쪽 import 닫힘의 이름 해석 기준
 
 

@@ -1,4 +1,4 @@
-"""B0 영구 픽스처 사례 정의 — RD 설계 v15.2 §4-7 · §8 B0 · 계획 T11(608 칸 = R 412 · N 56 · C 140).
+"""B0 영구 픽스처 사례 정의 — RD 설계 v15.2 §4-7 · §8 B0 · 계획 T11(636 칸 = R 412 · N 56 · C 168).
 
 갈래(`Case.group`):
   R  원형 재현 — 원형 B0 사슬(b0_v8 ~ b0_v152 · Claude r11 사례 둘)의 사례 사전을 한 파일로 평평하게 옮겼다. 묶음(`bundle`)과
@@ -8,7 +8,9 @@
      24 칸(읽기 실패 = 시험 쪽 .py 자리의 끊긴 심링크 + 제품 쪽 자리 대조 포함) ② E 갈래가 넘긴 지원 확인 · 증거 실행 빈 조건(설계 §4-5 문면 · 계획 T10 E3) 5 사례 · 10 칸 ③ 수리한 결함의
      반례 1 사례 · 2 칸(지운 추적 파일 · 한글 경로가 있는 커밋된 장난감의 트리 지문) ④ 600 초 상한 1 사례 · 2 칸(support ·
      suite — 구현판에서만 · 정오 2) ⑤ 수집·suite 상한 분리 6 사례 · 12 칸(F-B1R-6 수리 설계 §6) ⑥ 실린 범위 · 허용 목록 3판
-     45 사례 · 90 칸(F4-107 · 2026-10-24 설계 3판 §C5 — 수집 때 · 실행 때 실림 · 범위 밖 예보 · 허용 목록 · 한계 · G2 두 갈래).
+     45 사례 · 90 칸(F4-107 · 2026-10-24 설계 3판 §C5 — 수집 때 · 실행 때 실림 · 범위 밖 예보 · 허용 목록 · 한계 · G2 두 갈래)
+     ⑦ 3.1 고침 14 사례 · 28 칸(구현 검토 B1 파일 정체 · B2 로더 메서드 · I2 다시 쓰인 파일 · S1 TYPE_CHECKING 꼴 · S3 앵커 없음 ·
+     S4 승인 머지 겹침 · S5 find_spec — 대소문자 사례는 그 파일 시스템에서만 · `needs`).
 
 종류(`Case.kind`):
   pair     collect · run 두 칸(원형 run_cases) — `env` = 상속 환경.
@@ -16,7 +18,8 @@
            G2 = 기본 환경 + `env` 로 run · `after` 편집이 있으면 편집 뒤 run 을 다시 · G0 유지 세 단(g0_keep) 위반을 G2 사유에 더함.
   timeout  support(collect) · suite(run) 두 칸 — 상한 상수만 짧게 바꾼 단위 사례(구현판 전용).
   limits   support · suite 두 칸 — 서로 다른 수집·suite 상한(구현판 전용). T3는 지원 안 함 뒤 G1을 만들지 않고 run 엔진만 대조.
-  split    support · suite 두 칸 — 커밋한 장난감(앵커) · 지원 확인 → G1 결속 → `after` 를 레인 편집으로 커밋 → suite(구현판 전용).
+  split    support · suite 두 칸 — 커밋한 장난감(앵커 · `anchor` 거짓이면 없음) · 지원 확인 → G1 결속 → `after` 를 레인 편집으로
+           커밋 → (`upstream` 이면 상류 커밋을 승인 머지) → suite(구현판 전용).
            G2 실행 관찰 API 를 «이번 실행이 바꾼 파일 / 바꾸지 않은 파일»로 가르는 두 갈래.
 
 환경 표지(러너가 실행 때 바꾼다):
@@ -32,6 +35,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import unicodedata
 from dataclasses import dataclass
 
 PY: str = "<PY>"
@@ -71,6 +75,11 @@ class Case:
     after_commit: "dict[str, str | None] | None" = None   # 있으면 장난감을 커밋 1 로 만든 뒤 이 편집을 얹는다(None = 지움)
     symlinks: "dict[str, str] | None" = None              # 장난감에 만들 심링크(경로 → 대상 글자 · 대상이 없으면 끊긴 심링크)
     outside: "dict[str, str] | None" = None               # 장난감 밖(형제 폴더 `outside/`)에 쓸 파일 — 심링크 대상의 `<OUTSIDE>` 가 그 폴더
+    outside_links: "dict[str, str] | None" = None         # 장난감 밖 폴더 안 심링크(경로 → 대상 · `<TOY>` = 장난감 뿌리)
+    hardlinks: "dict[str, str] | None" = None             # 장난감 안 굳은 링크(새 경로 → 있는 파일)
+    needs: "str | None" = None                            # 돌릴 조건(`case-insensitive-fs` — 맞지 않으면 러너가 건너뛴다)
+    anchor: bool = True                                   # split — 지원 확인 전에 build_anchor 를 쓴다(거짓 = 앵커 없는 suite)
+    upstream: "dict[str, str] | None" = None              # split — 앵커에서 갈라진 상류 커밋 파일 · 레인 커밋 뒤 머지(승인 목록에 등재)
 
 
 # ── 원형 b0_v8 ──
@@ -1041,7 +1050,7 @@ def _forge(finalized: bool) -> str:
               "initial": [], "final": [], "calls": [], "skips": [], "passed": [], "meta": {}, "complete": [], "files": [],
               "unresolved": [], "bad": [], "hookimpls": [], "allowed_sourceless": [], "workers_ready": [], "finalized": finalized,
               "late": [], "failed": 0, "import_skips": [], "anchor": [], "optimize": 0, "flags": {}, "greenlet_loaded": False,
-              "loaded_collect": [], "loaded_end": [], "sys_path": []}
+              "loaded_collect": [], "loaded_end": [], "ident_collect": [], "ident_end": [], "sys_path": []}
     return ("import os\n\n\ndef pytest_configure(config):\n    out = os.environ.get('DDDJANGO_PROBE_OUT')\n    if out:\n"
             "        os.makedirs(out, exist_ok=True)\n        with open(os.path.join(out, 'zz-extra.json'), 'w') as f:\n"
             f"            f.write({json.dumps(json.dumps(record))})\n")
@@ -1303,7 +1312,100 @@ SCOPE_CASES: "list[Case]" = [
         after={"application/order/product.py": "def product():\n    return 5  # 레인 편집\n"}, after_commit={}),
 ]
 
-ALL_CASES: "list[Case]" = [*R_CASES, *N_CASES, *C_CASES, *SCOPE_CASES]
+
+# ── (C) ⑥ 3.1 고침(2026-10-24 구현 검토 B1 · B2 · I2 · S1 · S3 · S4 · S5) ──
+# B1 — 같은 파일을 다른 경로 글자(제외 자리 · 저장소 밖 링크 · NFD · 대소문자 · 굳은 링크)로 실어도 파일 정체로 실린 것이다
+SITE: str = ".venv/lib/site"
+VENV_IMPORT: str = ("import sys\nfrom pathlib import Path\n\n"
+                    "sys.path.insert(0, str(Path(__file__).resolve().parents[3] / '.venv' / 'lib' / 'site'))\n"
+                    "import {mod}  # noqa: E402,F401\n\n\n" + OK_TEST)
+NFD_DATA: str = unicodedata.normalize("NFD", "자료")
+FILLER: str = "".join(f"def f{i}(a, b):\n    x = [a, b, {i}]\n    return {{'k': x, 'v': (a + b) * {i}}}\n\n\n" for i in range(60))
+GEN0: str = "".join(f"V{i} = {i}\n" for i in range(30))
+# 시험 본문이 범위 안 도우미를 같은 내용으로 한 줄씩 천천히 다시 쓴다(정적 읽기가 잘린 판을 볼 수 있는 동안) — 끝 내용은 처음과 같다
+RACE_TEST: str = ("import time\nfrom pathlib import Path\n\nimport application.order.test.support.zz_gen  # noqa: F401\n\n\n"
+                  "def test_race():\n    p = Path(__file__).parent / 'support' / 'zz_gen.py'\n    lines = p.read_text().splitlines(keepends=True)\n"
+                  "    end = time.monotonic() + 8\n    while time.monotonic() < end:\n        with open(p, 'w') as f:\n"
+                  "            for ln in lines:\n                f.write(ln)\n                f.flush()\n                time.sleep(0.004)\n    assert True\n")
+LATE_OBS: str = (f"import importlib\n\n\ndef test_late():\n    importlib.import_module({DYN})\n    assert True\n")
+MERGE_BASE: str = "VALUE = 1\n\n\nOTHER = 2\n"
+
+FIX_CASES: "list[Case]" = [
+    _sc("venv-link-body", "B1 — 제외 자리(.venv) 심링크 이름으로 시험 쪽 도우미를 본문에서 import(정체 대조 · G2)", "env",
+        {**INI, **SUP_PKG, SUP + "obs.py": OBS_FN,
+         "application/order/test/test_v.py": ("import sys\nfrom pathlib import Path\n\n\ndef test_v():\n"
+                                              "    sys.path.insert(0, str(Path(__file__).resolve().parents[3] / '.venv' / 'lib' / 'site'))\n"
+                                              "    import obshelp  # noqa: F401\n    sys.path.pop(0)\n    assert True\n")},
+        symlinks={SITE + "/obshelp.py": "<TOY>/" + SUP + "obs.py"}),
+    _sc("venv-link-collect", "B1 — 제외 자리(.venv) 심링크 이름으로 모듈 수준 import(정체 대조 · G0)", "env",
+        {**INI, **SUP_PKG, SUP + "obs.py": OBS_FN, "application/order/test/test_v.py": VENV_IMPORT.format(mod="obshelp")},
+        symlinks={SITE + "/obshelp.py": "<TOY>/" + SUP + "obs.py"}),
+    _sc("hardlink", "B1 — 제외 자리(.venv)의 굳은 링크 이름으로 모듈 수준 import(정체 대조 · G0)", "env",
+        {**INI, **SUP_PKG, SUP + "obs.py": OBS_FN, "application/order/test/test_v.py": VENV_IMPORT.format(mod="obshard")},
+        hardlinks={SITE + "/obshard.py": SUP + "obs.py"}),
+    _sc("outside-alias", "B1 — 저장소 밖 별칭(심링크) 폴더로 시험 쪽 도우미를 본문에서 import(정체 대조 · G2)", "env",
+        {**INI, **SUP_PKG, SUP + "obs_oa.py": OBS_FN,
+         "application/order/test/test_oa.py": ("import sys\nfrom pathlib import Path\n\n\ndef test_oa():\n"
+                                               "    sys.path.insert(0, str(Path(__file__).resolve().parents[4] / 'outside' / 'alias'))\n"
+                                               "    import obs_oa  # noqa: F401\n    sys.path.pop(0)\n    assert True\n")},
+        outside_links={"alias": "<TOY>/" + SUP.rstrip("/")}),
+    _sc("nfd-test", "B1 — NFD 이름 폴더의 시험 파일이 모듈 수준 관찰 API(git 은 NFC · 정체 대조)", "env",
+        {**INI, "application/order/test/" + unicodedata.normalize("NFD", "한글자료") + "/test_nfd.py": OBS_FN + "\n\n" + OK_TEST}),
+    _sc("nfd-import", "B1 — NFD 이름 폴더의 시험 쪽 도우미를 모듈 수준 import(정체 대조)", "env",
+        {**INI, "application/order/test/" + NFD_DATA + "/obs_k.py": OBS_FN,
+         "application/order/test/test_k9.py": ("import sys\nimport unicodedata\nfrom pathlib import Path\n\n"
+                                               "sys.path.insert(0, str(Path(__file__).parent / unicodedata.normalize('NFD', '자료')))\n"
+                                               "import obs_k  # noqa: E402,F401\n\n\n" + OK_TEST)}),
+    _sc("case-path", "B1 — sys.path 글자 크기 다름(Support ↔ support · 모듈 수준 · 대소문자 안 가리는 파일 시스템만)", "env",
+        {**INI, **SUP_PKG, SUP + "obs_cs.py": OBS_FN,
+         "application/order/test/test_cs.py": ("import sys\nfrom pathlib import Path\n\n"
+                                               "sys.path.insert(0, str(Path(__file__).parent / 'Support'))\n"
+                                               "import obs_cs  # noqa: E402,F401\n\n\n" + OK_TEST)},
+        needs="case-insensitive-fs"),
+    # B2 — 로더가 코드를 바꿔 넣는 메서드(get_data · get_code)를 정의하면 정지(T12 무리)
+    _sc("loader-get-data", "B2 — SourceFileLoader 하위 클래스가 get_data 를 바꿔 깨끗한 이름으로 다른 글을 실행", "pair",
+        {**INI, **SUP_PKG, SUP + "obs_script.py": OBS_SET, SUP + "clean.py": "VALUE = 1\n",
+         "application/order/test/test_gd.py": ("import importlib.machinery\nimport importlib.util\nfrom pathlib import Path\n\n"
+                                               "HERE = Path(__file__).parent / 'support'\n\n\n"
+                                               "class _L(importlib.machinery.SourceFileLoader):\n    def get_data(self, path):\n"
+                                               "        if str(path).endswith('.py'):\n            return (HERE / 'obs_script.py').read_bytes()\n"
+                                               "        raise OSError(path)\n\n\n"
+                                               "def test_gd():\n    loader = _L('clean_mod', str(HERE / 'clean.py'))\n"
+                                               "    spec = importlib.util.spec_from_loader('clean_mod', loader)\n"
+                                               "    mod = importlib.util.module_from_spec(spec)\n    loader.exec_module(mod)\n    assert True\n")}),
+    # I2 — 정적 읽기가 명령과 겹친 사이 같은 내용으로 다시 쓰이는 범위 안 파일(지문은 같다) — 명령 뒤 다시 stat 해 다르면 다시 읽는다
+    _sc("rewrite-race", "I2 — 실행 중 같은 내용으로 천천히 다시 쓰이는 범위 안 도우미(정적 읽기와 겹침 · 끝 내용 같음)", "env",
+        {**INI, **SUP_PKG, "application/order/test/data/__init__.py": "",
+         **{f"application/order/test/data/d{i:04d}.py": FILLER for i in range(600)},
+         SUP + "zz_gen.py": GEN0, "application/order/test/test_race.py": RACE_TEST},
+        after={SUP + "zz_gen.py": GEN0 + "import sys\nsys.settrace(None)\n"}),
+    # S1 — TYPE_CHECKING 별칭 · `if not TYPE_CHECKING: … else:` 의 else 몸은 실리지 않는다(닫힘 밖 · 예보)
+    _sc("tc-alias", "S1 — from typing import TYPE_CHECKING as TC · if TC: 안 import 로만 닿는 위반 파일 — 예보", "env",
+        {**INI, **SUP_PKG, SUP + "obs.py": OBS_FN,
+         "application/order/test/test_f2.py": ("from typing import TYPE_CHECKING as TC\n\nif TC:\n"
+                                               "    from application.order.test.support import obs  # noqa: F401\n\n\n" + OK_TEST)}),
+    _sc("tc-not-else", "S1 — if not TYPE_CHECKING: … else: 몸 import 로만 닿는 위반 파일 — 예보", "env",
+        {**INI, **SUP_PKG, SUP + "obs.py": OBS_FN,
+         "application/order/test/test_f1.py": ("from typing import TYPE_CHECKING\n\nif not TYPE_CHECKING:\n    pass\nelse:\n"
+                                               "    from application.order.test.support import obs  # noqa: F401\n\n\n" + OK_TEST)}),
+    # S5 — find_spec + exec_module(등록 없음)로 시험 쪽 파일(→ G2)
+    _sc("find-spec-body", "S5 — 시험 본문 importlib.util.find_spec + exec_module(등록 없음)으로 시험 쪽 파일", "env",
+        {**INI, **SUP_PKG, SUP + "obs_script.py": OBS_FN,
+         "application/order/test/test_fs.py": ("import importlib.util\n\n\ndef test_late():\n"
+                                               "    spec = importlib.util.find_spec('application.order.test.support.obs_script')\n"
+                                               "    mod = importlib.util.module_from_spec(spec)\n    spec.loader.exec_module(mod)\n    assert True\n")}),
+    # S3 — build_anchor 없는 suite 의 위반: 기록을 쓰고 갈래만 «판정 불능» (red 그대로)
+    _sc("split-no-anchor", "S3 — G2 build_anchor 없음 + 실행 관찰 API — suite 기록을 쓰고 갈래만 판정 불능", "split",
+        {**INI, "application/order/test/test_p.py": OK_TEST}, after={"application/order/test/test_p.py": OBS_FN + "\n\n" + OK_TEST},
+        after_commit={}, anchor=False),
+    # S4 — 승인 머지가 들인 파일이라도 이 실행이 자기 커밋으로 바꿨으면 «이번 실행이 바꾼 파일»
+    _sc("split-merge-overlap", "S4 — 레인이 관찰 API 를 넣은 시험 쪽 도우미를 상류도 고쳐 승인 머지가 들임(겹침은 레인 편집)", "split",
+        {**INI, **SUP_PKG, SUP + "obs.py": MERGE_BASE, "application/order/test/test_late.py": LATE_OBS},
+        after={SUP + "obs.py": MERGE_BASE + "\n\n" + OBS_FN}, upstream={SUP + "obs.py": "# 상류 머리 주석\n" + MERGE_BASE},
+        after_commit={}),
+]
+
+ALL_CASES: "list[Case]" = [*R_CASES, *N_CASES, *C_CASES, *SCOPE_CASES, *FIX_CASES]
 
 
 def toy_files(case: Case) -> "dict[str, str | bytes]":
