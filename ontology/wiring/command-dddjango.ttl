@@ -947,3 +947,15 @@ djr:R-3668 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 djr:R-3669 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3671 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3672 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/refactor_audit.py> .
+
+djr:R-3673 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/refactor_audit.py> .
+
+djr:R-3674 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3675 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3676 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
