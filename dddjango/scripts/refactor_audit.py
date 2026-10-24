@@ -4645,6 +4645,31 @@ class _History:
             pos = nl + 1 + size + 1
         return out
 
+    def follow(self, paths: "list[str]") -> "dict[str, bytes | None]":
+        """MH 판 링크 기록 → MH 트리 안에서 푼 대상 blob 내용 · 못 풀면 None(대상이 저장소 밖 · 끊김 · 고리 · 폴더) —
+        `cat-file --batch --follow-symlinks` 한 번."""
+        out: "dict[str, bytes | None]" = {}
+        if not paths:
+            return out
+        raw: bytes = self.git("cat-file", "--batch", "--follow-symlinks",
+                              stdin=b"".join(os.fsencode(f"{self.mh}:{path}\n") for path in paths))
+        pos: int = 0
+        for path in paths:
+            nl: int = raw.index(b"\n", pos)
+            head: "list[bytes]" = raw[pos:nl].split()
+            pos = nl + 1
+            if raw[:nl].endswith((b" missing", b" ambiguous")):    # 글 없는 줄
+                out[path] = None
+                continue
+            if head[0] in (b"symlink", b"dangling", b"loop", b"notdir"):   # `<꼴> <크기>\n<글>\n` — 트리 안에서 못 풂
+                pos += int(head[1]) + 1
+                out[path] = None
+                continue
+            size: int = int(head[2])
+            out[path] = raw[pos:pos + size] if head[1] == b"blob" else None
+            pos += size + 1
+        return out
+
 
 def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan", wanted: "set[str] | None" = None
                  ) -> "tuple[list[ActiveRun], int, int, dict, dict[str, bytes | None]]":
@@ -4683,9 +4708,10 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan", w
         return _judge_run(kind, _disk_reader(d), d.name, str(d), f"{where} {rel}", scan, bc)
 
     def linked_copies(kind: str, rel: str, asks: "list[tuple[str, set[str], Path]]") -> None:
-        """MH 판 기록이 링크(blob = 링크 글자)라 그 판으로 못 읽는 실행 — 그 사본(디스크 · 링크를 따라감)으로 판정 · 표식을 디스크에서도
-        못 읽으면 보류(끝인지 모름)."""
-        for tag, ov, d in asks:
+        """MH 판 링크 기록을 MH 트리 안에서 못 푸는 실행 — 그 사본(디스크 · 링크를 따라감)으로 판정(꼬리표 «(디스크)») · 표식을
+        디스크에서도 못 읽으면 보류(끝인지 모름)."""
+        for where, ov, d in asks:
+            tag: str = f"{where}(디스크)"
             run: "ActiveRun | None" = disk(kind, d, rel, tag)
             if not (d / RUN_RECORDS[kind][0]).exists():
                 run = ActiveRun(f"{tag} {rel}", kind, str(d))
@@ -4787,7 +4813,7 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan", w
                     copies.setdefault((kind, d.name), []).append((where, run, overlay))
                 continue
             seen["mh"] += committed != mh_idx[rel]         # 옛 사본(커밋본 기록이 MH 판과 다름)을 MH 판으로 읽음
-            need_mh.setdefault((kind, rel), []).append((f"{where}(main 판)", overlay, d))
+            need_mh.setdefault((kind, rel), []).append((where, overlay, d))
             this_mh += [rel] if root == me and rel in (wanted or ()) else []
     if main_active and main_root != me:
         try:
@@ -4798,44 +4824,52 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan", w
     scopes: "dict[str, bytes | None]" = dict.fromkeys(this_gone)    # 이 트리 내주는 쪽 폴더를 A1 과 같은 판으로(None = 읽지 않음)
     if need_mh or this_mh:
         mh_idx = hist.index(mh)
+        linked: "list[str]" = sorted(f"{rel}/{n}" for _k, rel in need_mh for n in mh_idx[rel] if f"{rel}/{n}" in hist.links)
+        try:
+            resolved: "dict[str, bytes | None]" = hist.follow(linked)   # MH 판 링크 기록 — MH 트리 안에서 푼 대상
+        except (subprocess.CalledProcessError, OSError, ValueError) as exc:
+            tree_hold("주 작업 트리", main_root, mh, exc)
+            resolved = {}
         fetch: "list[tuple[str, str]]" = []
         for (kind, rel), asks in need_mh.items():
             name: str = rel.split("/", 1)[1]
-            if f"{rel}/{RUN_RECORDS[kind][0]}" in hist.links:     # MH 판 표식이 링크 — 링크 글자 말고 그 사본(디스크)으로
-                linked_copies(kind, rel, asks)
+            links: "list[str]" = [n for n in mh_idx[rel] if f"{rel}/{n}" in hist.links]
+            if f"{rel}/{RUN_RECORDS[kind][0]}" in hist.links and resolved.get(f"{rel}/{RUN_RECORDS[kind][0]}") is None:
+                linked_copies(kind, rel, asks)             # MH 판 표식 링크를 MH 트리 안에서 못 풂 — 그 사본(디스크)으로
                 continue
-            clean: bool = rel in main_judged and all(
+            clean: bool = not links and rel in main_judged and all(
                 _disk_blob(main_root / rel / n)[0] == mh_idx[rel].get(n) for n in _record_names(kind, main_root / rel, mh_idx[rel]))
             if clean:                                      # 주 작업 트리 사본 = MH 판 — 그 판정을 다시 쓴다
                 if main_judged[rel] is not None:
-                    for tag, ov, _d in asks:
-                        copies.setdefault((kind, name), []).append((tag, main_judged[rel], ov))
+                    for where, ov, _d in asks:
+                        copies.setdefault((kind, name), []).append((f"{where}(main 판)", main_judged[rel], ov))
             else:
                 fetch.append((kind, rel))
         this_scope: "dict[str, str]" = {rel: mh_idx[rel][scope_name] for rel in this_mh
                                         if scope_name in mh_idx[rel] and f"{rel}/{scope_name}" not in hist.links}
         try:
-            got: "dict[str, bytes]" = hist.blobs(sorted({sha for _k, rel in fetch for sha in mh_idx[rel].values()}
-                                                        | set(this_scope.values())))
+            got: "dict[str, bytes]" = hist.blobs(sorted({sha for _k, rel in fetch for n, sha in mh_idx[rel].items()
+                                                         if f"{rel}/{n}" not in hist.links} | set(this_scope.values())))
         except (subprocess.CalledProcessError, OSError, ValueError) as exc:
             tree_hold("주 작업 트리", main_root, mh, exc)
             got, this_scope = {}, {}                       # 내주는 쪽은 디스크 사본으로(지금처럼)
             for kind, rel in fetch:                        # MH 판을 못 읽으면 그 사본들을 디스크 사본으로(지금처럼)
-                for tag, ov, d in need_mh.pop((kind, rel)):
-                    run = disk(kind, d, rel, tag)
+                for where, ov, d in need_mh.pop((kind, rel)):
+                    run = disk(kind, d, rel, f"{where}(디스크)")
                     if run is not None:
-                        copies.setdefault((kind, d.name), []).append((tag, run, ov))
+                        copies.setdefault((kind, d.name), []).append((f"{where}(디스크)", run, ov))
         for kind, rel in fetch:
             if (kind, rel) not in need_mh:
                 continue
-            blobs: "dict[str, bytes]" = {n: got[sha] for n, sha in mh_idx[rel].items()}
+            blobs: "dict[str, bytes | None]" = {n: resolved.get(f"{rel}/{n}") if f"{rel}/{n}" in hist.links else got[sha]
+                                                for n, sha in mh_idx[rel].items()}
             name = rel.split("/", 1)[1]
             run = _judge_run(kind, blobs.get, name, f"주 작업 트리 HEAD {mh[:12]} 판 {rel}", rel, scan, bc)
-            if run is not None and any(f"{rel}/{n}" in hist.links for n in mh_idx[rel]):
-                linked_copies(kind, rel, need_mh[(kind, rel)])   # 활성인데 다른 기록이 링크 — 그 기록은 사본(디스크)으로 읽는다
+            if run is not None and any(f"{rel}/{n}" in hist.links and blobs[n] is None for n in blobs):
+                linked_copies(kind, rel, need_mh[(kind, rel)])   # 활성인데 다른 기록 링크를 MH 트리 안에서 못 풂 — 그 사본(디스크)으로
             elif run is not None:
-                for tag, ov, _d in need_mh[(kind, rel)]:
-                    copies.setdefault((kind, name), []).append((tag, run, ov))
+                for where, ov, _d in need_mh[(kind, rel)]:
+                    copies.setdefault((kind, name), []).append((f"{where}(main 판)", run, ov))
         scopes.update({rel: None for rel in this_mh if scope_name not in mh_idx[rel]})   # MH 판에 기록 없음 — 읽지 않음
         scopes.update({rel: got[sha] for rel, sha in this_scope.items()})
     runs: "list[ActiveRun]" = list(holds)

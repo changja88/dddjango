@@ -3209,19 +3209,31 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
     shutil.rmtree(em.main / ".dddjango-web" / "20261001-0100-w")
     expect(fails, "RD-L24 같은 빈 blob — dddjango 표식(끝)과 web 표식(못 읽음 — 보류)을 섞지 않는다 → 보류", L.dp(x, "em"), 2,
            ".dddjango-web/20261001-0100-w — 보류(build-state.json 을 못 읽는다", "보류 1 ")
-    lk = TreeLanes(td, "tlk")                               # MH 판 기록이 링크 — 링크 글자가 아니라 디스크 사본으로
-    L.commit(lk.main, "링크 기록(활성)", {"notes/linked.md": "실행 · G0 승인 20261001-0600\n\n- 대상 BC 경로 필터: application/demo/\n"})
-    (lk.main / ".dddjango" / "20261001-0600-linked").mkdir(parents=True)
-    (lk.main / ".dddjango" / "20261001-0600-linked" / "refactor-scope.md").symlink_to("../../notes/linked.md")
-    L.commit(lk.main, "링크")
+    lk = TreeLanes(td, "tlk")                               # MH 판 기록이 링크 — MH 트리 안에서 풀면 그 대상(MH 판) · 못 풀면 그 사본(디스크)
+    active: str = "실행 · G0 승인 {g}\n\n- 대상 BC 경로 필터: application/demo/\n"
+    (lk.root / "outside-run.md").write_text(active.format(g="20261001-0700"), encoding="utf-8")   # 저장소 밖(MH 트리에서 못 풂)
+    L.commit(lk.main, "링크 대상(활성)", {"notes/linked.md": active.format(g="20261001-0600")})
+    for name, target in (("20261001-0600-linked", "../../notes/linked.md"), ("20261001-0700-outside", "../../../outside-run.md")):
+        (lk.main / ".dddjango" / name).mkdir(parents=True)
+        (lk.main / ".dddjango" / name / "refactor-scope.md").symlink_to(target)
+    L.commit(lk.main, "링크 기록")
     x = lk.tree("wt-x", "lane-x")
     L.own(x)
-    shutil.rmtree(lk.main / ".dddjango" / "20261001-0600-linked")
-    expect(fails, "RD-L25 MH 판 기록이 링크(주 작업 트리 사본 없음) → 그 트리 디스크 사본으로 판정 → 센다", L.dp(x, "lk"), 2,
-           ".dddjango/20261001-0600-linked — BC demo", "레인 겹침 1 ")
-    (x / "notes" / "linked.md").unlink()
-    expect(fails, "RD-L25b 그 링크가 디스크에서 끊김 → 보류(끝으로 읽지 않는다)", L.dp(x, "lk2"), 2,
-           ".dddjango/20261001-0600-linked — 보류(", "보류 1 ")
+    for name in ("20261001-0600-linked", "20261001-0700-outside"):    # 주 작업 트리 사본은 없다(미커밋으로 지움)
+        shutil.rmtree(lk.main / ".dddjango" / name)
+    expect(fails, "RD-L25 MH 판 표식이 링크 — MH 트리 안에서 풀림 → MH 판 대상으로(활성 · 센다) · 저장소 밖이라 못 풂 → 그 사본(디스크 꼬리표)",
+           L.dp(x, "lk"), 2, "이 작업 트리(main 판) .dddjango/20261001-0600-linked — BC demo",
+           "이 작업 트리(디스크) .dddjango/20261001-0700-outside — BC demo", "레인 겹침 2 ")
+    (lk.main / "notes" / "linked.md").write_text(active.format(g="20261001-0600 · build_anchor a · G2 승인 20261002-0100"),
+                                                  encoding="utf-8")
+    _git(lk.main, "add", "notes/linked.md")
+    _git(lk.main, "commit", "-qm", "끝 표식(링크 대상)")
+    got = L.dp(x, "lk1")
+    expect(fails, "RD-L25a MH 판 링크 대상이 끝(G2) · 이 트리 옛 사본은 같은 링크 글자 · 대상 활성 → MH 판으로 → 안 셈(그 사본을 다시 세지 않음)",
+           (got[0] if "20261001-0600-linked" not in got[1] else 9, got[1]), 2, "레인 겹침 1 ")
+    (lk.root / "outside-run.md").unlink()
+    expect(fails, "RD-L25b 못 푸는 링크가 디스크에서도 끊김 → 보류(끝으로 읽지 않는다 · 디스크 꼬리표)", L.dp(x, "lk2"), 2,
+           "이 작업 트리(디스크) .dddjango/20261001-0700-outside — 보류(", "보류 1 ")
 
 
 def _dispatch_own(repo: Path, own: Path, vs: str) -> None:
