@@ -4396,7 +4396,8 @@ class _History:
         self.asks: "list[str]" = [f"{w}/{n}" for w in sorted(webs) for n in RUN_RECORDS["dddjango-web"]]
         self._index: "dict[str, dict[str, dict[str, str]]]" = {}
         self._graph: "dict[str, tuple[list[str], set[str]]] | None" = None
-        self._ended: "dict[str, bool]" = {}
+        self._ended: "dict[tuple[str, str], bool]" = {}     # (종류, 표식 blob) → 끝(같은 빈 blob 이 종류마다 다르게 읽힌다)
+        self.links: "set[str]" = set()                     # MH 판 기록 가운데 링크(mode 120000)인 것 — `<폴더>/<기록>`
         self._fp_mh: "set[str] | None" = None
         self._this_reach: "set[str] | None" = None
 
@@ -4436,6 +4437,8 @@ class _History:
                 names: "dict[str, str]" = idx.setdefault(f"{parts[0]}/{parts[1]}", {})   # tree 줄 = 실행 폴더가 그 커밋에 있다
                 if not tree and len(parts) == 3 and _is_record(kinds[parts[0]], parts[2]):
                     names[parts[2]] = meta.split()[2].decode("ascii")
+                    if meta.startswith(b"120000 "):
+                        self.links.add(f"{parts[0]}/{parts[1]}/{parts[2]}")
             self._index[self.mh] = idx
         if head not in self._index:
             self._patch()
@@ -4534,14 +4537,14 @@ class _History:
                     paths |= changed
         return _run_folders(paths)
 
-    def seed(self, sha: str, ended: bool) -> None:
+    def seed(self, kind: str, sha: str, ended: bool) -> None:
         """주 작업 트리 판정으로 끝 표식 판정을 미리 채운다(같은 표식 내용을 다시 해독하지 않는다)."""
-        self._ended.setdefault(sha, ended)
+        self._ended.setdefault((kind, sha), ended)
 
     def ended(self, kind: str, sha: str, data: bytes) -> bool:
-        if sha not in self._ended:
-            self._ended[sha] = _marker_ended(kind, data)
-        return self._ended[sha]
+        if (kind, sha) not in self._ended:
+            self._ended[(kind, sha)] = _marker_ended(kind, data)
+        return self._ended[(kind, sha)]
 
     def blobs(self, shas: "list[str]") -> "dict[str, bytes]":
         """blob 이름 → 내용(`cat-file --batch` 한 번)."""
@@ -4561,8 +4564,11 @@ class _History:
         return out
 
 
-def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan") -> "tuple[list[ActiveRun], int, int, dict]":
-    """(활성 실행, 본 작업 트리 수, 본 web 실행 수, 가르기 수{사본 · MH 판 · 지움}) — 설계 3판 §A1. 끝 판정은 표식만이다.
+def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan", wanted: "set[str] | None" = None
+                 ) -> "tuple[list[ActiveRun], int, int, dict, dict[str, bytes | None]]":
+    """(활성 실행, 본 작업 트리 수, 본 web 실행 수, 가르기 수{사본 · MH 판 · 지움}, 이 트리 `wanted` 폴더(내주는 쪽)의
+    refactor-scope.md 를 디스크가 아닌 판으로 읽을 것 {폴더: MH 판 바이트 | None(지운 실행 · 기록 없음 — 읽지 않음)} — 없는 폴더는
+    디스크 사본) — 설계 3판 §A1 · §A2. 끝 판정은 표식만이다.
 
     주 작업 트리(`worktree list` 첫 비-bare · HEAD = MH)의 실행 폴더는 디스크 사본으로 판정한다(그 사본은 자기 변경이거나 MH 판과 같다).
     다른 작업 트리 T 의 실행 폴더 d 는 차례로 ① 자기 변경(d 안 경로가 `T ^MH` 머지 아닌 커밋 경로에 있음 · 기록 파일 디스크 바이트가 T
@@ -4583,6 +4589,8 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan") -
     holds: "list[ActiveRun]" = []
     seen: "dict[str, int]" = {"mh": 0, "gone": 0}
     webs: int = 0
+    this_mh: "list[str]" = []                              # 이 트리 내주는 쪽 폴더 가운데 MH 판으로 읽을 것
+    this_gone: "list[str]" = []                            # 이 트리 내주는 쪽 폴더 가운데 MH 에서 지운 실행
 
     def tree_hold(where: str, root: Path, head: str, exc: Exception) -> None:
         r: ActiveRun = ActiveRun(f"{where}(HEAD {head[:12]})", "worktree", str(root))
@@ -4591,6 +4599,17 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan") -
 
     def disk(kind: str, d: Path, rel: str, where: str) -> "ActiveRun | None":
         return _judge_run(kind, _disk_reader(d), d.name, str(d), f"{where} {rel}", scan, bc)
+
+    def linked_copies(kind: str, rel: str, asks: "list[tuple[str, set[str], Path]]") -> None:
+        """MH 판 기록이 링크(blob = 링크 글자)라 그 판으로 못 읽는 실행 — 그 사본(디스크 · 링크를 따라감)으로 판정 · 표식을 디스크에서도
+        못 읽으면 보류(끝인지 모름)."""
+        for tag, ov, d in asks:
+            run: "ActiveRun | None" = disk(kind, d, rel, tag)
+            if not (d / RUN_RECORDS[kind][0]).exists():
+                run = ActiveRun(f"{tag} {rel}", kind, str(d))
+                run.hold = f"MH 판 기록이 링크인데 그 사본 {d / RUN_RECORDS[kind][0]} 를 디스크에서 못 읽는다(끝인지 모름)"
+            if run is not None:
+                copies.setdefault((kind, d.name), []).append((tag, run, ov))
 
     listed: "list[tuple[Path, str, list[tuple[str, Path]]]]" = []    # (트리, HEAD, [(종류, 실행 폴더)])
     for root, head in trees:
@@ -4650,7 +4669,7 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan") -
                     if others:                             # 같은 표식 내용은 다른 트리에서 다시 해독하지 않는다
                         sha, data = _disk_blob(d / RUN_RECORDS[kind][0])
                         if sha is not None and data is not None:
-                            hist.seed(sha, run is None)
+                            hist.seed(kind, sha, run is None)
                 if run is not None:
                     main_active = main_active or is_main
                     copies.setdefault((kind, d.name), []).append((where, run, main_overlay if is_main else overlay))
@@ -4671,12 +4690,13 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan") -
             if not mine and rel not in mh_idx:
                 if authored is None:
                     try:
-                        authored = hist.authored(head) if head in hist.graph() else set()   # 미착륙 커밋이 있을 때만
+                        authored = hist.authored(head)     # 미착륙 커밋이 없어도(revert 직후 고침 커밋 전 · 미커밋으로 고치는 중)
                     except (subprocess.CalledProcessError, OSError, ValueError) as exc:
                         tree_hold(where, root, head, exc)
                         authored, authored_unknown = set(), True    # 모르면 그 사본으로(지금처럼)
                 if rel not in authored and not authored_unknown:
                     seen["gone"] += 1                      # MH 에서 지운 실행의 옛 사본
+                    this_gone += [rel] if root == me and rel in (wanted or ()) else []
                     continue
                 mine = True                                # 이 트리가 만든 폴더(착륙 머지를 main 이 되돌린 레인)
             if mine:
@@ -4686,28 +4706,38 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan") -
                 continue
             seen["mh"] += committed != mh_idx[rel]         # 옛 사본(커밋본 기록이 MH 판과 다름)을 MH 판으로 읽음
             need_mh.setdefault((kind, rel), []).append((f"{where}(main 판)", overlay, d))
+            this_mh += [rel] if root == me and rel in (wanted or ()) else []
     if main_active and main_root != me:
         try:
             main_overlay |= hist.main_overlay()
         except (subprocess.CalledProcessError, OSError, ValueError) as exc:
             tree_hold(f"작업 트리 {main_root}", main_root, mh, exc)
-    if need_mh:
+    scope_name: str = RUN_RECORDS["dddjango"][0]
+    scopes: "dict[str, bytes | None]" = dict.fromkeys(this_gone)    # 이 트리 내주는 쪽 폴더를 A1 과 같은 판으로(None = 읽지 않음)
+    if need_mh or this_mh:
         mh_idx = hist.index(mh)
         fetch: "list[tuple[str, str]]" = []
         for (kind, rel), asks in need_mh.items():
+            name: str = rel.split("/", 1)[1]
+            if f"{rel}/{RUN_RECORDS[kind][0]}" in hist.links:     # MH 판 표식이 링크 — 링크 글자 말고 그 사본(디스크)으로
+                linked_copies(kind, rel, asks)
+                continue
             clean: bool = rel in main_judged and all(
                 _disk_blob(main_root / rel / n)[0] == mh_idx[rel].get(n) for n in _record_names(kind, main_root / rel, mh_idx[rel]))
             if clean:                                      # 주 작업 트리 사본 = MH 판 — 그 판정을 다시 쓴다
                 if main_judged[rel] is not None:
                     for tag, ov, _d in asks:
-                        copies.setdefault((kind, rel.split("/", 1)[1]), []).append((tag, main_judged[rel], ov))
+                        copies.setdefault((kind, name), []).append((tag, main_judged[rel], ov))
             else:
                 fetch.append((kind, rel))
+        this_scope: "dict[str, str]" = {rel: mh_idx[rel][scope_name] for rel in this_mh
+                                        if scope_name in mh_idx[rel] and f"{rel}/{scope_name}" not in hist.links}
         try:
-            got: "dict[str, bytes]" = hist.blobs(sorted({sha for _k, rel in fetch for sha in mh_idx[rel].values()}))
+            got: "dict[str, bytes]" = hist.blobs(sorted({sha for _k, rel in fetch for sha in mh_idx[rel].values()}
+                                                        | set(this_scope.values())))
         except (subprocess.CalledProcessError, OSError, ValueError) as exc:
             tree_hold("주 작업 트리", main_root, mh, exc)
-            got = {}
+            got, this_scope = {}, {}                       # 내주는 쪽은 디스크 사본으로(지금처럼)
             for kind, rel in fetch:                        # MH 판을 못 읽으면 그 사본들을 디스크 사본으로(지금처럼)
                 for tag, ov, d in need_mh.pop((kind, rel)):
                     run = disk(kind, d, rel, tag)
@@ -4717,11 +4747,15 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan") -
             if (kind, rel) not in need_mh:
                 continue
             blobs: "dict[str, bytes]" = {n: got[sha] for n, sha in mh_idx[rel].items()}
-            name: str = rel.split("/", 1)[1]
+            name = rel.split("/", 1)[1]
             run = _judge_run(kind, blobs.get, name, f"주 작업 트리 HEAD {mh[:12]} 판 {rel}", rel, scan, bc)
-            if run is not None:
+            if run is not None and any(f"{rel}/{n}" in hist.links for n in mh_idx[rel]):
+                linked_copies(kind, rel, need_mh[(kind, rel)])   # 활성인데 다른 기록이 링크 — 그 기록은 사본(디스크)으로 읽는다
+            elif run is not None:
                 for tag, ov, _d in need_mh[(kind, rel)]:
                     copies.setdefault((kind, name), []).append((tag, run, ov))
+        scopes.update({rel: None for rel in this_mh if scope_name not in mh_idx[rel]})   # MH 판에 기록 없음 — 읽지 않음
+        scopes.update({rel: got[sha] for rel, sha in this_scope.items()})
     runs: "list[ActiveRun]" = list(holds)
     for (kind, name), items in copies.items():
         first: ActiveRun = items[0][1]
@@ -4743,7 +4777,7 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan") -
         out.refactor_g0 = None if None in g0s else min(g0s)   # type: ignore[type-var]
         runs.append(out)
     seen.update(runs=len(copies), copies=sum(len(v) for v in copies.values()))
-    return runs, len(trees), webs, seen
+    return runs, len(trees), webs, seen, scopes
 
 
 def _path_hit(ours: "set[str]", theirs: "set[str]") -> "list[str]":
@@ -4757,20 +4791,32 @@ def _path_hit(ours: "set[str]", theirs: "set[str]") -> "list[str]":
     return hits
 
 
-def _supplier_state(project: Path, supplier: str) -> str:
-    """직접 공급자의 정리 상태 — `.dddjango/*refactor-<케밥>/refactor-scope.md` 의 G2 승인 리팩토링 실행 · 남은 재상정 수 · 정리 실행이
-    없는데 UTF-8 로 못 읽은 기록이 있으면 «못 읽음(<경로>)»."""
+def _supplier_folders(project: Path, supplier: str) -> "list[Path]":
+    """직접 공급자의 리팩토링 실행 폴더(이 트리 디스크) — `.dddjango/*-refactor-<케밥>` · `.dddjango/refactor-<케밥>`."""
     kebab: str = supplier.replace("_", "-")
     base: Path = project / ".dddjango"
-    folders: "list[Path]" = sorted({*base.glob(f"*-refactor-{kebab}"), *base.glob(f"refactor-{kebab}")}) if base.is_dir() else []
+    return sorted({*base.glob(f"*-refactor-{kebab}"), *base.glob(f"refactor-{kebab}")}) if base.is_dir() else []
+
+
+def _supplier_state(project: Path, folders: "list[Path]", scopes: "dict[str, bytes | None]") -> str:
+    """직접 공급자의 정리 상태 — 그 폴더들 `refactor-scope.md` 의 G2 승인 리팩토링 실행 · 남은 재상정 수. 기록은 A1 과 같은 판으로
+    읽는다(`scopes` 에 있으면 그 판 — None 은 읽지 않음 · 없으면 디스크 사본). 정리 실행이 없는데 UTF-8 로 못 읽은 기록이 있으면
+    «못 읽음(<경로>)»(미정리 공급자로 센다 — 순서 예외 질문이 빠지지 않게)."""
     unread: "list[str]" = []
     for folder in folders:
+        rel: str = f".dddjango/{folder.name}"
         try:
-            text: str = (folder / "refactor-scope.md").read_text(encoding="utf-8")
+            if rel in scopes:
+                data: "bytes | None" = scopes[rel]
+                if data is None:
+                    continue
+                text: str = _decode(data)
+            else:
+                text = (folder / "refactor-scope.md").read_text(encoding="utf-8")
         except OSError:
             continue
         except UnicodeDecodeError:                        # F4-108 — 미정리로 조용히 떨어뜨리지 않는다
-            unread.append(str((folder / "refactor-scope.md").relative_to(project)))
+            unread.append(f"{rel}/refactor-scope.md{'(main 판)' if rel in scopes else ''}")
             continue
         if re.search(r"^.*실행 · G0 승인 .*모드 리팩토링.*G2 승인.*$", text, re.M):
             current: str = re.split(r"(?m)^#+\s*앞 실행", text)[0]
@@ -4806,7 +4852,7 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
     comps: "list[list[str]]" = _tarjan(scan.bcs, prod)
     comp: "list[str]" = next(c for c in comps if bc in c)
     suppliers: "list[str]" = sorted(prod.get(bc, set()) - set(comp))
-    states: "dict[str, str]" = {s: _supplier_state(project, s) for s in suppliers}
+    sup_dirs: "dict[str, list[Path]]" = {s: _supplier_folders(project, s) for s in suppliers}
     lane: "dict[str, tuple[str, ...]]" = _lane_paths_of(scan, bc)
     by_kind: "dict[str, list[str]]" = {k: sorted(p for p, ks in lane.items() if k in ks) for k in DEPS_EDIT_KINDS}
     receiver_bcs: "list[str]" = sorted({p.split("/")[1] for p in by_kind["받는 쪽 어댑터"] + by_kind["받는 쪽 시험"]
@@ -4821,8 +4867,11 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
     our_paths: "set[str]" = {f"application/{bc}/"} | set(lane)
     if own is not None and (own / "design-spec.md").is_file():     # G1 뒤 — 이 실행의 다른 BC 편집 목록도 우리 경로다
         our_paths |= {e["path"] for e in _other_edits(_read(own / "design-spec.md"), set())[0]}
-    runs, trees, webs, seen = _active_runs(project, own, bc, scan)
+    runs, trees, webs, seen, scopes = _active_runs(project, own, bc, scan,
+                                                   {f".dddjango/{d.name}" for ds in sup_dirs.values() for d in ds})
+    states: "dict[str, str]" = {s: _supplier_state(project, sup_dirs[s], scopes) for s in suppliers}
     g1: "tuple[str, str, str] | None" = g1_confirmed(own) if own is not None else None   # 없으면 G0 · 있으면 파견 직전
+    g0: bool = own is not None and g1 is None             # 이 실행 폴더가 없으면 판정 시점을 모른다 — 그대로 센다
     outward, outward_why = _outward_v(own, project, g1[1]) if own is not None and g1 is not None else (None, "")
     http_free: bool = g1 is not None and outward == 0     # 밖 동작 V 0 — web 실행의 HTTP 소비로만 선 겹침 · 보류는 세지 않는다
     own_g0 = re.search(r"실행 · G0 승인 (\S+)", _scope_run_line(own) or "") if own is not None and g1 is not None else None
@@ -4858,7 +4907,7 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
             http_why.append(f"web 단위 {' · '.join(sorted(run.units & our_units))}")
         if run.consumes:
             http_why.append(f"계획된 소비 {run.consumes[0][:80]}")
-        http_only: bool = web and (http_free or g1 is None)   # 파견 직전 V 0 이면 뺌 · G0 이면 예보(V 를 아직 모른다)
+        http_only: bool = web and (http_free or g0)         # 파견 직전 V 0 이면 뺌 · G0 이면 예보(V 를 아직 모른다)
         cut: bool = http_only and bool(http_why) and not why
         if cut and http_free:
             dropped.append(f"{run.label} — {' · '.join(http_why)} · {v0_tail}")
@@ -4892,14 +4941,14 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
             if not cut:                                     # 한 실행은 한 번만 뺀다
                 dropped.append(f"{line} · {v0_tail}")
                 http_dropped += 1
-        elif http_hold and g1 is None:                      # G0 — 정지가 아니라 예보(조정자가 G0 배너 직전에 «밖 b» 로 정한다)
+        elif http_hold and g0:                              # G0 — 정지가 아니라 예보(조정자가 G0 배너 직전에 «밖 b» 로 정한다)
             if not cut:                                     # 한 실행은 한 번만 예보한다
                 forecasts.append(f"{line} · {forecast_tail}")
         else:
             holds.append(line + rest)
     planned: "list[str]" = [f"{r.label}: {r.consumes[0][:60]}" for r in counted if r.consumes]
     cyc: bool = len(comp) > 1
-    unsettled: "list[str]" = [s for s in suppliers if states[s] == "미정리"]
+    unsettled: "list[str]" = [s for s in suppliers if states[s] == "미정리" or states[s].startswith("못 읽음")]
     data: dict = {"version": 1, "bc": bc, "scc": comp, "scc_all": [c for c in comps if len(c) > 1],
                   "suppliers": {s: states[s] for s in suppliers}, "edit_paths": {p: ks[0] for p, ks in lane.items()},
                   "edit_kinds": {p: list(ks) for p, ks in lane.items()},
@@ -4908,12 +4957,13 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
                   "http_unread": scan.unread,
                   "our_bcs": sorted(our_bcs), "our_units": sorted(our_units), "planned": planned,
                   "overlaps": overlaps, "holds": holds, "worktrees": trees, "web_runs": webs,
-                  "stage": "G0" if g1 is None else "파견 직전", "outward_v": outward, "outward_v_why": outward_why,
+                  "stage": "G0" if g0 else "모름" if own is None else "파견 직전", "outward_v": outward, "outward_v_why": outward_why,
                   "forecast_holds": forecasts, "forecast_overlaps": forecast_overlaps,
                   "dropped": dropped, "active_runs": seen, "parse_errors": scan.parse_errors}
     runs_note: str = (f"활성 실행 {seen['runs']}(사본 {seen['copies']} · 트리 {trees}) · MH 판으로 판정 {seen['mh']} · "
                       f"MH 에서 지워져 뺌 {seen['gone']}")
-    stage: str = (f"판정 시점 G0 · 예보 보류 {len(forecasts)} · 예보 겹침 {len(forecast_overlaps)}" if g1 is None else
+    stage: str = ("판정 시점 모름(이 실행 폴더 없음) — web HTTP 소비 겹침 · 보류를 그대로 센다" if own is None else
+                  f"판정 시점 G0 · 예보 보류 {len(forecasts)} · 예보 겹침 {len(forecast_overlaps)}" if g1 is None else
                   f"판정 시점 파견 직전(G1 확정 {g1[0]}) · 밖 동작 V "
                   f"{outward if outward is not None else '모름(web HTTP 소비 겹침 · 보류를 그대로 센다)'}"
                   + (f" · web HTTP 소비로만 선 겹침 · 보류 뺌 {http_dropped}" if http_free else "")

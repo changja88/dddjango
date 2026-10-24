@@ -2840,9 +2840,9 @@ TREE_DONE: str = " · build_anchor a · G2 승인 20261001-0900"
 class TreeLanes:
     """deps 작업 트리 사례 — 합성 저장소(주 작업 트리 = `main` 가지 · BC demo · other(demo 를 import) · zeta(독립)) + 레인 트리."""
 
-    def __init__(self, td: Path, name: str) -> None:
+    def __init__(self, td: Path, name: str, files: "dict[str, str] | None" = None) -> None:
         self.root: Path = td / name
-        self.main: Path = _project(self.root, TREE_FILES)
+        self.main: Path = _project(self.root, files or TREE_FILES)
 
     def tree(self, name: str, branch: str, start: str = "HEAD") -> Path:
         path: Path = self.root / name
@@ -2965,6 +2965,20 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
     L.own(x)
     expect(fails, "RD-L9 R1 착륙 머지 revert 뒤 레인이 고침(MH 에 없음 · 이 트리가 만든 폴더) → 센다", L.dp(x, "r1"), 2,
            ".dddjango/20261024-0200-feature-demo", "레인 겹침 1 ", "MH 에서 지워져 뺌 0")
+    for tag, dirty in (("r1b", False), ("r1c", True)):      # R1b · R1c — revert 직후 고침 커밋 전 · 미커밋으로 고치는 중(미착륙 커밋 없음)
+        r = TreeLanes(td, f"t{tag}")
+        y = r.tree("wt-y", "lane-y")
+        L.commit(y, "Y G0 기록 + S1 코드", {**_feat("20261024-0200-feature-demo", "demo"),
+                                           "application/demo/domain_layer/m.py": "X: int = 2\n"})
+        _git(r.main, "merge", "-q", "--no-ff", "lane-y", "-m", "Merge lane-y")
+        _git(r.main, "revert", "-m", "1", "--no-edit", "HEAD")
+        if dirty:
+            L.write(y, {"application/demo/domain_layer/m.py": "X: int = 7\n"})
+        x = r.tree("wt-x", "lane-x")
+        L.own(x)
+        expect(fails, f"RD-L9{tag[-1]} {tag.upper()} 착륙 머지 revert 뒤 레인 고침 커밋 전{'(미커밋으로 고치는 중)' if dirty else ''} — "
+               f"미착륙 커밋 없어도 이 트리가 만든 폴더 → 센다", L.dp(x, tag), 2, ".dddjango/20261024-0200-feature-demo",
+               "레인 겹침 1 ", "MH 에서 지워져 뺌 0")
     h1 = TreeLanes(td, "th1")                               # H1 주 작업 트리가 main 이 아님(lane-a 가 lane-b 를 받음)
     b = h1.tree("wt-b", "lane-b")
     L.commit(b, "B G0 기록", _feat("20261024-0200-feature-demo", "demo"))
@@ -3056,6 +3070,68 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
     got = L.dp(x, "z1")
     expect(fails, "RD-L18 크기 같고 바이트 다른 기록(미커밋 — 표식 지움) → 자기 변경 → 그 사본 → 센다",
            (got[0] if len(scope.read_bytes()) == len(before) else 9, got[1]), 2, "레인 겹침 1 ")
+    g1 = TreeLanes(td, "tg1")                               # 자기 변경 — 미착륙 커밋 경로(디스크 = 그 트리 커밋본이어도)
+    L.commit(g1.main, "끝난 실행", _feat("20261001-0100-feature-demo", "demo", TREE_DONE))
+    y = g1.tree("wt-y", "lane-y")
+    L.commit(y, "같은 폴더로 새 요청(G0 기록)", _feat("20261001-0100-feature-demo", "demo"))
+    x = g1.tree("wt-x", "lane-x")
+    L.own(x)
+    expect(fails, "RD-L19 MH 에서 끝난 폴더를 레인이 새 요청으로 다시 씀(커밋 · 미착륙) → 미착륙 경로 = 자기 변경 → 그 사본 → 센다",
+           L.dp(x, "g1"), 2, ".dddjango/20261001-0100-feature-demo — BC demo", "레인 겹침 1 ")
+    for tag, landed in (("g4", False), ("g4b", True)):       # 덧씌우기 — 자기 변경 사본 · MH 판 판정 사본 모두
+        g = TreeLanes(td, f"t{tag}")
+        y = g.tree("wt-y", "lane-y")
+        L.commit(y, "Y G0 기록(zeta)", _feat("20261024-0200-feature-zeta", "zeta"))
+        if landed:
+            _git(g.main, "merge", "-q", "--no-ff", "lane-y", "-m", "Merge lane-y — 첫 착륙")
+        L.commit(y, "Y 코드가 demo 를 고침", {"application/demo/domain_layer/m.py": "X: int = 3\n"})
+        x = g.tree("wt-x", "lane-x")
+        L.own(x)
+        expect(fails, f"RD-L20{'b' if landed else ''} {tag.upper()} 레인 실행(zeta · {'중간 착륙 — MH 판 판정' if landed else '미착륙 — 자기 변경'})에 "
+               f"그 트리 `T ^MH ^THIS` 경로(demo 코드)를 덧씌움 → 경로 겹침", L.dp(x, tag), 2,
+               "경로 application/demo/domain_layer/m.py", "레인 겹침 1 ")
+    g6 = TreeLanes(td, "tg6")                               # 표식 밖 기록(design-spec.md)만 미커밋 — 자기 변경
+    y = g6.tree("wt-y", "lane-y")
+    L.commit(y, "Y G0 기록(zeta)", _feat("20261024-0200-feature-zeta", "zeta"))
+    _git(g6.main, "merge", "-q", "--no-ff", "lane-y", "-m", "Merge lane-y — 첫 착륙")
+    L.write(y, {".dddjango/20261024-0200-feature-zeta/design-spec.md":
+                "# 명세\n\n<!-- machine: file-plan -->\n```paths\nedit application/demo/domain_layer/m.py\n```\n"})
+    x = g6.tree("wt-x", "lane-x")
+    L.own(x)
+    expect(fails, "RD-L22 표식 그대로 · design-spec.md 만 미커밋(file-plan 이 demo) → 기록 파일 다름 = 자기 변경 → 그 사본 → 경로 겹침",
+           L.dp(x, "g6"), 2, "경로 application/demo/domain_layer/m.py", "레인 겹침 1 ")
+    sp = TreeLanes(td, "tsup", {**TREE_FILES, "application/base/__init__.py": "", "application/base/domain_layer/__init__.py": "",
+                                "application/base/domain_layer/m.py": "B: int = 1\n",
+                                "application/demo/domain_layer/use.py": "from application.base.domain_layer.m import B\n"})
+    L.commit(sp.main, "base 리팩토링 기록(깨진 바이트)", {".dddjango/20260901-refactor-base/refactor-scope.md":
+                                                     "실행 · G0 승인 20260901-0100 · 모드 리팩토링 · audit 20260901-0101\n\n깨진 ".encode()
+                                                     + b"\xff\xfe" + " 글자\n".encode()})
+    x = sp.tree("wt-x", "lane-x")
+    L.own(x)
+    L.commit(sp.main, "기록 바로잡기", {".dddjango/20260901-refactor-base/refactor-scope.md": "# 옛 기록(실행 줄 없음)\n"})
+    expect(fails, "RD-L23 내주는 쪽 기록도 A1 과 같은 판 — 이 트리 옛 사본(깨진 바이트)이 아니라 MH 판으로 읽음 → 미정리 · 미정리 공급자 1",
+           L.dp(x, "sup"), 0, "내주는 쪽 base(미정리)", "미정리 공급자 1")
+    em = TreeLanes(td, "tem")                               # 끝 표식 판정 캐시는 (종류, blob) — 빈 refactor-scope(끝) ≠ 빈 build-state(보류)
+    L.commit(em.main, "빈 기록 둘", {".dddjango/20261001-0100-x/refactor-scope.md": "",
+                                    ".dddjango-web/20261001-0100-w/build-state.json": ""})
+    x = em.tree("wt-x", "lane-x")
+    L.own(x)
+    shutil.rmtree(em.main / ".dddjango-web" / "20261001-0100-w")
+    expect(fails, "RD-L24 같은 빈 blob — dddjango 표식(끝)과 web 표식(못 읽음 — 보류)을 섞지 않는다 → 보류", L.dp(x, "em"), 2,
+           ".dddjango-web/20261001-0100-w — 보류(build-state.json 을 못 읽는다", "보류 1 ")
+    lk = TreeLanes(td, "tlk")                               # MH 판 기록이 링크 — 링크 글자가 아니라 디스크 사본으로
+    L.commit(lk.main, "링크 기록(활성)", {"notes/linked.md": "실행 · G0 승인 20261001-0600\n\n- 대상 BC 경로 필터: application/demo/\n"})
+    (lk.main / ".dddjango" / "20261001-0600-linked").mkdir(parents=True)
+    (lk.main / ".dddjango" / "20261001-0600-linked" / "refactor-scope.md").symlink_to("../../notes/linked.md")
+    L.commit(lk.main, "링크")
+    x = lk.tree("wt-x", "lane-x")
+    L.own(x)
+    shutil.rmtree(lk.main / ".dddjango" / "20261001-0600-linked")
+    expect(fails, "RD-L25 MH 판 기록이 링크(주 작업 트리 사본 없음) → 그 트리 디스크 사본으로 판정 → 센다", L.dp(x, "lk"), 2,
+           ".dddjango/20261001-0600-linked — BC demo", "레인 겹침 1 ")
+    (x / "notes" / "linked.md").unlink()
+    expect(fails, "RD-L25b 그 링크가 디스크에서 끊김 → 보류(끝으로 읽지 않는다)", L.dp(x, "lk2"), 2,
+           ".dddjango/20261001-0600-linked — 보류(", "보류 1 ")
 
 
 def _dispatch_own(repo: Path, own: Path, vs: str) -> None:
@@ -3112,6 +3188,13 @@ def deps_stage_cases(fails: "list[str]", td: Path) -> None:
     _dispatch_own(repo, own, V1_TEXT + V2_TEXT)
     expect(fails, "RD-E4b 파견 직전 · 밖 동작 V 1 · 같은 HTTP 소비로만 선 겹침 → 겹침(exit 2)", dp("a4b"), 2,
            "겹침: 이 작업 트리 .dddjango-web/20261024-0800-home — web 단위 web/home", "밖 동작 V 1")
+    spec: Path = own / "design-spec.md"
+    spec.write_text(spec.read_text(encoding="utf-8").replace(V2_TEXT, ""), encoding="utf-8")
+    expect(fails, "RD-E4c 파견 직전 · 확정 뒤 명세에서 밖 동작 V 를 지움(지금 스냅숏 ≠ G1 확정 digest — V 모름) → 그대로 셈",
+           dp("a4c"), 2, "겹침: 이 작업 트리 .dddjango-web/20261024-0800-home — web 단위 web/home", "밖 동작 V 모름")
+    spec.unlink()
+    expect(fails, "RD-E4d 파견 직전 · 명세를 못 읽음(스냅숏 실행 불능 — V 모름) → 그대로 셈", dp("a4d"), 2,
+           "겹침: 이 작업 트리 .dddjango-web/20261024-0800-home — web 단위 web/home", "밖 동작 V 모름")
     _dispatch_own(repo, own, V1_TEXT)
     (web / "build-state.json").write_text(json.dumps({"g2_approved": False, "g1_approved": True,
                                                       "slices": [{"files": ["web/home/views.py",
@@ -3158,6 +3241,20 @@ def deps_stage_cases(fails: "list[str]", td: Path) -> None:
     expect(fails, "RD-E11 맞물림 — G0 승인 값이 같으면 폴더 이름 사전순(-alpha 가 먼저) → 센다", dp("a11"), 2,
            "20261024-0300-refactor-alpha — BC ")
     shutil.rmtree(same)
+    after: Path = repo / ".dddjango" / "20261024-0300-refactor-zzz"
+    after.mkdir(parents=True)
+    (after / "refactor-scope.md").write_text(other_line.replace("G0 승인 20261024-0400", "G0 승인 20261024-0300"), encoding="utf-8")
+    expect(fails, "RD-E11b 맞물림 — G0 승인 값이 같고 상대 폴더 이름이 사전순 뒤(-zzz) → 늦은 쪽 → 안 셈", dp("a11b"), 0,
+           "레인 겹침 없음", "늦게 G0 승인한 리팩토링 실행 뺌 1")
+    shutil.rmtree(after)
+    twin: Path = td / "dst-twin"                            # G0 승인 값도 폴더 이름도 같은 다른 실행(실행 줄 다름) — 늦은 쪽 아님 → 센다
+    _git(repo, "worktree", "add", "-q", "-b", "twin", str(twin))
+    (twin / ".dddjango" / TREE_OWN).mkdir(parents=True)
+    (twin / ".dddjango" / TREE_OWN / "refactor-scope.md").write_text(
+        TREE_OWN_LINE.replace("audit 20261024-0301", "audit 20261024-0399"), encoding="utf-8")
+    expect(fails, "RD-E11c 맞물림 — G0 승인 값 · 폴더 이름이 모두 같은 다른 실행(실행 줄 다름) → 늦은 쪽 아님 → 센다", dp("a11c"), 2,
+           f".dddjango/{TREE_OWN} — BC demo")
+    _git(repo, "worktree", "remove", "--force", str(twin))
     # 기록 해독 실패(F4-108) — 경로를 단 보류 · exit 2(실행 불능 아님)
     bad: Path = repo / ".dddjango" / "20261024-0100-feature-x"
     (bad / "audit" / "20261024-0101").mkdir(parents=True)
@@ -3186,8 +3283,14 @@ def deps_stage_cases(fails: "list[str]", td: Path) -> None:
     sup: Path = repo / ".dddjango" / "20260901-refactor-base"
     sup.mkdir(parents=True)
     (sup / "refactor-scope.md").write_bytes(b"\xff refactor-scope\n")
-    expect(fails, "RD-E16 내주는 쪽 기록 깨진 바이트 → 내주는 쪽 «못 읽음(<경로>)»(실행 불능 아님) · 그 실행 폴더도 해독 보류", dp("a16"), 2,
-           "내주는 쪽 base(못 읽음(", "20260901-refactor-base/refactor-scope.md 를 UTF-8 로 못 읽는다(바이트 0)")
+    expect(fails, "RD-E16 내주는 쪽 기록 깨진 바이트 → 내주는 쪽 «못 읽음(<경로>)»(실행 불능 아님 · 미정리 공급자 수에 듦) · 그 실행 폴더도 해독 보류",
+           dp("a16"), 2, "내주는 쪽 base(못 읽음(", "미정리 공급자 1 ", "20260901-refactor-base/refactor-scope.md 를 UTF-8 로 못 읽는다(바이트 0)")
+    shutil.rmtree(sup)
+    web.mkdir(parents=True)
+    (web / "build-state.json").write_text(json.dumps({"g2_approved": False, "g1_approved": False, "slices": []}), encoding="utf-8")
+    expect(fails, "RD-E17 이 실행 폴더가 없음(--out 이 .dddjango 밖) → 판정 시점 모름 — web HTTP 소비 보류도 그대로 셈",
+           run(repo, "deps", "demo", "--out", str(td / "dst-ownless")), 2,
+           "\n  보류: 이 작업 트리 .dddjango-web/20261024-0800-home — 보류(server-contract.json 이 없다", "판정 시점 모름")
 
 
 def map_items_case(fails: "list[str]", td: Path) -> None:
