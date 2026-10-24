@@ -1085,17 +1085,23 @@ def g0_keep(g0: dict, g2: dict, repo: Path, moved: "dict[str, str] | None" = Non
     return sorted(set(out))
 
 
-def renamed_selection(windows: "list[dict]", g2: dict) -> "tuple[list[str], int]":
+def renamed_selection(windows: "list[dict]", g2: dict, g0: dict) -> "tuple[list[str], int]":
     """개명된 새 키(설계 3.1 §D3 G2) — 창 기록의 케이스 개명마다 새 (파일 · 클래스 · 함수)를 뒤 창들로 접어 지금 자리를 구하고, G2
     선택(final)에 그 자리 항목이 없으면 red «개명된 케이스가 G2 에서 선택되지 않았다». 그 자리 항목이 모두 skip · xfail 이면 red 가
-    아니라 보고 수에 든다. 뒤 창에서 지운 키는 대조 밖. (red 사유, skip · xfail 수)."""
+    아니라 보고 수에 든다. 뒤 창에서 지운 키는 대조 밖 · 개명 전 키가 G0 키에서 창 차례 접기(앞 창들 · 그 창의 이동)로 이어져 온
+    개명만 대조한다(G0 에 없던 파일 — 실행 정의 밖 — 의 개명은 대조 밖). (red 사유, skip · xfail 수)."""
     keys: "dict[str, tuple]" = {n: tuple(k) for n, k in g2["keys"].items()}
     selected: "set[tuple]" = {keys[n] for n in g2.get("selected_ids", ()) if n in keys}
     skipped: "set[tuple]" = {keys[n] for n in g2.get("skipped_ids", ()) if n in keys}
+    origins: "set[tuple]" = {tuple(k) for k in g0["keys"].values()}
     reds: "list[str]" = []
     skips: int = 0
     for i, w in enumerate(windows):
+        reach: "set[tuple]" = {(w["moved"].get(k[0], k[0]), *k[1:3]) for k in (_fold_key(o, windows[:i]) for o in origins)
+                               if k is not None}
         for rel, cls, old, new in w["renamed"]:
+            if (rel, cls, old) not in reach:
+                continue                                    # G0 키에서 이어져 오지 않은 개명 — 대조 밖
             now = _fold_key((rel, cls, new, new), windows[i + 1:])
             if now is None:
                 continue
@@ -1342,7 +1348,7 @@ def cmd_suite(folder: Path, repo: Path) -> int:
         else:
             keep = g0_keep({"keys": g0["keys"], "digests": g0["digests"]}, info, repo, windows=windows)
             if any(w["renamed"] for w in windows):        # 개명된 새 키 — 선택 빠짐 red · skip · xfail 은 보고(설계 3.1 §D3 G2)
-                missing, renamed_skip = renamed_selection(windows, info)
+                missing, renamed_skip = renamed_selection(windows, info, g0)
                 keep += missing
                 info["counts"]["renamed_skip"] = renamed_skip
         ended = _utc()

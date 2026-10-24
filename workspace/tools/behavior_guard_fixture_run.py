@@ -1414,10 +1414,10 @@ def rename_rcases() -> "list[dict]":
         post=_renamed(f"{TP}::test_choose → test_choose_tarot", f"{TP}::test_choose[choose_card] → [choose_tarot_card]",
                       keep=(f"{TP}::::test_choose→test_choose_tarot",)))
     upd_rn: str = "from application.core.product import product\n\n\ndef test_a():\n    assert product() == 9\n"
-    add("개명: 0T update 행(새 이름 케이스) D 확정 + 개명 → 개별 감사 · 개명 키만 요구 판정 기대 의미 그대로", "test", {TP: upd_rn},
-        _edit({}, upd_rn.replace("test_a", "test_b").replace("==", ">=")),
-        {TP: ("개별 감사", ["test_b", "개명 test_a → test_b"], {"reason": f"0T update 행 — {_row(f'{TP}::test_b')}"})},
-        snap=_snap(update=((f"{TP}::test_b", None),), renames=(_rn("test_a", "test_b"),)),
+    add("개명: 0T update 행(옛 이름 — G1 트리 이름) D 확정 + 개명 → 개별 감사 · 개명 키만 요구 판정 기대 의미 그대로", "test",
+        {TP: upd_rn}, _edit({}, upd_rn.replace("test_a", "test_b").replace("==", ">=")),
+        {TP: ("개별 감사", ["test_b", "개명 test_a → test_b"], {"reason": f"0T update 행 — {_row(f'{TP}::test_a')}"})},
+        snap=_snap(update=((f"{TP}::test_a", None),), renames=(_rn("test_a", "test_b"),)),
         post=lambda repo, rec, _o: [] if rec["dispositions"][0]["요구 판정"] == ["승인 후와 같음 · 기대 의미 그대로",
                                                                              "기대 의미 그대로"]
         else [f"요구 판정 {rec['dispositions'][0]['요구 판정']}"])
@@ -2031,7 +2031,7 @@ def _support_keep(repo: Path, moved: str, now: "tuple[str, ...]", label: str) ->
         g2 = {"keys": {f"{moved}::{n}": [moved, None, n, n] for n in now}, "ok": {f"{moved}::{n}" for n in now},
               "selected_ids": {f"{moved}::{n}" for n in now}, "skipped_ids": set()}
         keep = bs.g0_keep(g0, g2, repo, windows=windows)
-        chosen = bs.renamed_selection(windows, g2)
+        chosen = bs.renamed_selection(windows, g2, g0)
     except Exception as exc:                                # noqa: BLE001 — 옛 판(창 목록 없음)은 다름으로 선다
         return [f"{label} — behavior_support 창별 접기: {type(exc).__name__}: {exc}"]
     return ([f"{label} — G0 유지 {keep}(기대 [])"] if keep else []) \
