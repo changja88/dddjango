@@ -2111,18 +2111,18 @@ def rename_row_cases(fails: "list[str]", td: Path) -> None:
          "renames": [{"kind": "케이스", "path": POLICY_TEST, "class": "TestBox", "old": "test_m", "new": "test_box_m"}]},
         {"path": POLICY_TEST, "case": "test_choose", "why": "기대 의미 그대로 — 이름만",
          "renames": [{"kind": "ids", "path": POLICY_TEST, "case": "test_choose", "old": "choose_card", "new": "choose_tarot_card"}]}]
-    expect(fails, "RD-R1 개명 행 셋(케이스 · 클래스 메서드 · ids 원소 id) → `retain_rows[].renames` · 개명 아닌 retain 행은 키 없음",
+    expect(fails, "RD-RN1 개명 행 셋(케이스 · 클래스 메서드 · ids 원소 id) → `retain_rows[].renames` · 개명 아닌 retain 행은 키 없음",
            (0 if got == want and all("renames" not in r for r in plain) else 9, json.dumps(got, ensure_ascii=False)), 0)
-    expect(fails, "RD-R2 요약 `retain 재조직 4(개명 3)` · red 0", lane.ch(), 0, "retain 재조직 4(개명 3)", "red 0")
+    expect(fails, "RD-RN2 요약 `retain 재조직 4(개명 3)` · red 0", lane.ch(), 0, "retain 재조직 4(개명 3)", "red 0")
     lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2)
-    expect(fails, "RD-R3 개명 행을 지우면 처음 digest 로(개명 행 없는 명세는 digest 무변)",
+    expect(fails, "RD-RN3 개명 행을 지우면 처음 digest 로(개명 행 없는 명세는 digest 무변)",
            (0 if ra.snapshot_digest(ra.changes_snapshot(f, lane.repo)) == d0 else 9, ""), 0)
     for label, row, needle in (
-            ("RD-R4 새 이름 없음 → red(개명 행 꼴 밖)", _rn_row(f"재조직 — 개명 {POLICY_TEST}::test_rule →"), "개명 행 꼴 밖"),
-            ("RD-R5 한 행에 개명 둘 → red(한 행에 하나)",
+            ("RD-RN4 새 이름 없음 → red(개명 행 꼴 밖)", _rn_row(f"재조직 — 개명 {POLICY_TEST}::test_rule →"), "개명 행 꼴 밖"),
+            ("RD-RN5 한 행에 개명 둘 → red(한 행에 하나)",
              _rn_row(f"재조직 — 개명 {POLICY_TEST}::test_a → test_b · {POLICY_TEST}::test_c → test_d"), "개명 행 꼴 밖"),
-            ("RD-R6 옛 = 새 → red", _rn_row(f"재조직 — 개명 {POLICY_TEST}::test_rule → test_rule"), "옛 = 새"),
-            ("RD-R7 owner/path 파일 ≠ 개명 경로 → red",
+            ("RD-RN6 옛 = 새 → red", _rn_row(f"재조직 — 개명 {POLICY_TEST}::test_rule → test_rule"), "옛 = 새"),
+            ("RD-RN7 owner/path 파일 ≠ 개명 경로 → red",
              _rn_row(f"재조직 — 개명 {POLICY_TEST}::test_rule → test_rule_adds_one", path="application/demo/test/test_big.py"),
              "개명 행 owner/path 파일 `application/demo/test/test_big.py` ≠ 개명 경로")):
         lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2, adm=V_SPEC_ROWS + row)
@@ -2130,9 +2130,34 @@ def rename_row_cases(fails: "list[str]", td: Path) -> None:
     lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2,
               adm=V_SPEC_ROWS + _rn_row("재조직 — 개명 card_b 변수를 summary_confirm_card 로(M47 #3)"))
     got = retained()
-    expect(fails, "RD-R8 «재조직 — 개명» 뒤에 `.py::` 주소가 없는 글 → 보통 재조직 행(renames 키 없음 · red 0)",
+    expect(fails, "RD-RN8 «재조직 — 개명» 뒤에 `.py::` 주소가 없는 글 → 보통 재조직 행(renames 키 없음 · red 0)",
            (lane.ch()[0] if len(got) == 2 and all("renames" not in r for r in got) else 9, json.dumps(got, ensure_ascii=False)),
            0)
+    one: str = _rn_row(f"재조직 — 개명 {POLICY_TEST}::test_rule → test_rule_adds_one")
+    for label, rows, needle in (
+            ("RD-RN9 같은 개명 행 두 번 → red", one + one, "같은 개명 행이 두 번"),
+            ("RD-RN10 한 옛 이름에 개명 행 둘 → red", one + _rn_row(f"재조직 — 개명 {POLICY_TEST}::test_rule → test_rule_other"),
+             "한 옛 이름에 개명 행 둘"),
+            ("RD-RN11 ids 한 옛 id 에 개명 행 둘 → red",
+             _rn_row(f"재조직 — 개명 {POLICY_TEST}::test_choose[a] → [b]") + _rn_row(f"재조직 — 개명 {POLICY_TEST}::test_choose[a] → [c]"),
+             "한 옛 이름에 개명 행 둘")):
+        lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2, adm=V_SPEC_ROWS + rows)
+        expect(fails, label, lane.ch(), 2, needle)
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2,
+              adm=V_SPEC_ROWS + _rn_row(f"정책 시험 재조직 — 개명 {POLICY_TEST}::test_rule → test_rule_adds_one"))
+    got = retained()
+    expect(fails, "RD-RN12 «재조직 — 개명» 이 candidate 맨 앞이 아니면 보통 재조직 행(renames 키 없음)",
+           (lane.ch()[0] if len(got) == 2 and all("renames" not in r for r in got) else 9, json.dumps(got, ensure_ascii=False)),
+           0)
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2,
+              adm=V_SPEC_ROWS + _rn_row(f"재조직 — 개명 ./{POLICY_TEST}::test_rule → test_rule_adds_one"))
+    got = retained()
+    expect(fails, "RD-RN13 `./` 접두 경로 → 정규화(개명 경로 = owner/path 파일) · red 0",
+           (lane.ch()[0] if got[-1].get("renames") == [{"kind": "케이스", "path": POLICY_TEST, "class": None, "old": "test_rule",
+                                                         "new": "test_rule_adds_one"}] else 9, json.dumps(got, ensure_ascii=False)), 0)
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2,
+              adm=V_SPEC_ROWS + _rn_row(f"재조직 — 개명 ../{POLICY_TEST}::test_rule → test_rule_adds_one"))
+    expect(fails, "RD-RN14 저장소 밖 경로(`../`) → red", lane.ch(), 2, "개명 행 꼴 밖")
 
 
 SLICE_PLAN: str = ("\n## 슬라이스 계획\n\n| 슬라이스 | 목적 | 인수 행 | 내부 행 | 완료 조건 |\n|---|---|---|---|---|\n"

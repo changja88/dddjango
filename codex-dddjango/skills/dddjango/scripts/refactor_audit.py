@@ -2222,8 +2222,8 @@ _CASE_ADDR: "re.Pattern[str]" = re.compile(r"(?<![\w./-])([\w./-]+\.py)::([A-Za-
 _ROW_OWNER: "re.Pattern[str]" = re.compile(r"(?<![\w-])(acceptance-tester|coder)(?![\w-])")
 # retain 재조직 행 candidate 칸의 «개명» 꼴(F4-116) — `재조직 — 개명 <경로>::[<클래스>::]<옛> → <새>` ·
 # `재조직 — 개명 <경로>::<케이스>[<옛 id>] → [<새 id>]`(ids 는 원소 id) · 한 행에 하나. «재조직 — 개명» 뒤에 `.py::` 주소가 와야
-# 개명 행이다(그 밖 글은 보통 재조직 행).
-_RENAME_HEAD: "re.Pattern[str]" = re.compile(r"재조직\s*[—–-]\s*개명\s+(?=`?[\w./-]+\.py::)")
+# 개명 행이다(그 밖 글 · 맨 앞이 아닌 «재조직 — 개명»은 보통 재조직 행).
+_RENAME_HEAD: "re.Pattern[str]" = re.compile(r"\s*재조직\s*[—–-]\s*개명\s+(?=`?[\w./-]+\.py::)")
 _RENAME_CASE: "re.Pattern[str]" = re.compile(
     r"([\w./-]+\.py)::([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)\s*(?:→|->)\s*([A-Za-z_]\w*)")
 _RENAME_IDS: "re.Pattern[str]" = re.compile(
@@ -2545,11 +2545,24 @@ def _reorg(row: AdmissionRow) -> bool:
     return row.decision == "retain" and any(mark in low for mark in REORG_MARKS)
 
 
+def _rename_duplicates(items: "list[dict]") -> "list[str]":
+    """같은 개명 행 두 번 · 한 옛 이름(경로 · 클래스 또는 케이스 · 옛)에 개명 행 둘 → red(옛 → 새 가 하나로 정해지지 않는다)."""
+    seen: "dict[tuple, dict]" = {}
+    reds: "list[str]" = []
+    for it in items:
+        key: tuple = (it["kind"], it["path"], it.get("class") or it.get("case"), it["old"])
+        first: "dict | None" = seen.setdefault(key, it)
+        if first is not it:
+            text: str = "같은 개명 행이 두 번" if first == it else "한 옛 이름에 개명 행 둘"
+            reds.append(f"개명 행 꼴 밖 — {text}: `{it['path']}` · 옛 `{it['old']}` → `{first['new']}` · `{it['new']}`")
+    return reds
+
+
 def _rename_item(row: AdmissionRow) -> "tuple[dict | None, str]":
     """retain 재조직 행의 «개명» 항목(G1 스냅숏 `retain_rows[].renames` 원소 — behavior_guard 0T · 0F 가 기준 판에 먼저 적용) —
     (항목, red 사유). 개명 행이 아니면 (None, ""). 케이스 = {kind 케이스, path, class(없으면 None · 중첩은 `A::B`), old, new} ·
     ids = {kind ids, path, case(`[클래스::]케이스`), old, new}. 꼴 밖 · 옛 = 새 · owner/path 파일 ≠ 개명 경로면 red."""
-    head = _RENAME_HEAD.search(row.candidate)
+    head = _RENAME_HEAD.match(row.candidate)
     if head is None:
         return None, ""
     rest: str = row.candidate[head.end():].replace("`", "").strip()
@@ -2568,7 +2581,11 @@ def _rename_item(row: AdmissionRow) -> "tuple[dict | None, str]":
                       "<경로>::<케이스>[<옛 id>] → [<새 id>]` 가 아니다(한 행에 하나)")
     if item["old"] == item["new"]:
         return None, f"개명 행 꼴 밖 — «{row.candidate[:80]}» 옛 = 새"
-    if row.path != item["path"]:
+    norm: str = os.path.normpath(item["path"]).replace(os.sep, "/")
+    if norm == ".." or norm.startswith(("../", "/")):
+        return None, f"개명 행 꼴 밖 — «{row.candidate[:80]}» 경로 `{item['path']}` 가 저장소 상대 경로가 아니다"
+    item["path"] = norm                                  # `./` 접두 · 가운데 `.` 는 정규화
+    if os.path.normpath(row.path or "").replace(os.sep, "/") != norm:
         return None, f"개명 행 owner/path 파일 `{row.path}` ≠ 개명 경로 `{item['path']}`(그 파일이 0F 허용 파일이 된다)"
     return item, ""
 
@@ -2669,6 +2686,7 @@ class SpecChanges:
                 if item is not None:
                     entry["renames"] = [item]               # 키는 개명 행에만 — 개명 행 없는 명세는 digest 무변
                 self.retain.append(entry)
+        self.reds += _rename_duplicates([it for r in self.retain for it in r.get("renames", [])])
 
     def linked(self, tests: "list[VTest]") -> "list[str]":
         """시험 줄이 가리키는 입장 행(원문 표 행) — 처음 나온 차례."""
