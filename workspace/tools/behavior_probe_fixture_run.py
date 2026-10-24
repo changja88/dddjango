@@ -785,15 +785,22 @@ def run_g0_keep_checks(engine: Engine, cases: ModuleType) -> "list[str]":
             problems.append(f"K6 창 기록 → 창 차례 목록(마지막 close · 개명 · 삭제 구조 키) — {got_w} (기대 {want_w})")
         sel = {"keys": keys(("b.py", None, "test_z", "test_z[1]"), ("b.py", None, "test_s", "test_s")),
                "selected_ids": {"b.py::test_z[1]", "b.py::test_s"}, "skipped_ids": {"b.py::test_s"}}
+        g0_sel = {"keys": keys(*((r, None, f, f) for r, f in (("b.py", "test_x"), ("b.py", "test_r"), ("b.py", "test_q"),
+                                                              ("a.py", "test_q")))), "digests": {}}
         for label, windows, want in (
                 ("K7a 개명된 새 키 선택(call) → 사유 0 · skip 0", [win(renamed=[("b.py", None, "test_x", "test_z")])], ([], 0)),
                 ("K7b 개명된 새 키 skip · xfail → 사유 0 · skip 1(보고)", [win(renamed=[("b.py", None, "test_r", "test_s")])], ([], 1)),
                 ("K7c 개명된 새 키 선택 빠짐 → red", [win(renamed=[("b.py", None, "test_q", "test_w")])],
                  (["개명된 케이스가 G2 에서 선택되지 않았다: ('b.py', None, 'test_w')(개명 test_q → test_w)"], 0)),
                 ("K7d 개명 뒤 다른 창에서 삭제 → 대조 밖", [win(renamed=[("b.py", None, "test_q", "test_w")]),
-                                                    win(removed={("b.py", None, "test_w")})], ([], 0))):
+                                                    win(removed={("b.py", None, "test_w")})], ([], 0)),
+                ("K7e G0 에 없던 파일(실행 정의 밖)의 케이스 개명 → 대조 밖", [win(renamed=[("e.py", None, "test_x", "test_y")])],
+                 ([], 0)),
+                ("K7f G0 키가 이동(w1 a→c)으로 이어져 온 자리의 개명(w2) → 대조(선택 빠짐 red)",
+                 [win({"a.py": "c.py"}), win(renamed=[("c.py", None, "test_q", "test_v")])],
+                 (["개명된 케이스가 G2 에서 선택되지 않았다: ('c.py', None, 'test_v')(개명 test_q → test_v)"], 0))):
             try:
-                got_s = mod.renamed_selection(windows, sel)
+                got_s = mod.renamed_selection(windows, sel, g0_sel)
             except Exception as exc:                        # noqa: BLE001
                 got_s = (f"{type(exc).__name__}: {exc}",)
             if got_s != want:
