@@ -1576,6 +1576,20 @@ def rename_review_rcases() -> "list[dict]":
         "새 id 가 새 판 그 케이스에 2번", _rn_ids("test_size", "a", "x"))
     red("0C 모듈 상수 pytest.param(id=) 개명", IDS_CONST, IDS_CONST.replace("choose_card", "choose_tarot_card"),
         "0C 창은 개명 행을 받지 않는다", _rn_ids("test_x", "choose_card", "choose_tarot_card"), kind="code")
+    # 재확인(review-fix) — 하위 클래스가 물려받는 메서드 개명 · 바다코끼리 · match 캡처 · global 이름 가림
+    child = (RV_H + "class TestBase:\n    def test_old(self):\n        assert product() == 9\n\n\nclass TestChild(TestBase):\n"
+             "    def test_new(self):\n        assert product() > 0\n")
+    red("하위 클래스가 이미 새 이름을 가짐(TestBase::test_old → test_new · TestChild(TestBase))", child,
+        child.replace("def test_old(", "def test_new(", 1), "하위 클래스 TestChild 가 물려받는다", _rn("test_old", "test_new", "TestBase"))
+    grand = child.replace("    def test_new(self):\n        assert product() > 0\n", "    pass\n") + "\n\nclass TestGrand(TestChild):\n    pass\n"
+    red("사슬로 물려받는 하위 클래스(TestChild · TestGrand)", grand, grand.replace("def test_old(", "def test_new("),
+        "하위 클래스 TestChild 가 물려받는다", _rn("test_old", "test_new", "TestBase"))
+    for what, extra in (("바다코끼리", "if (test_new := None) is None:\n    pass\n"),
+                        ("match 캡처", "match 1:\n    case test_new:\n        pass\n"),
+                        ("global", "global test_new\n")):
+        base = RV_H + "def test_old():\n    assert product() == 9\n\n\n" + extra
+        red(f"{what} 이름 가림", base, base.replace("def test_old(", "def test_new("), "새 이름이 기준 판 그 자리에 있다(가림)",
+            _rn("test_old", "test_new"))
     return out
 
 
@@ -2103,6 +2117,31 @@ def rename_verify_checks() -> "list[str]":
         _commit(repo)
         expect("w2 0T 옮긴 자리 케이스 삭제(remove 행)", _rguard(repo, "close"), 0, "감사 요청 키", absent=("테스트 케이스 감소",))
         fails += _support_keep(repo, moved, ("test_other",), "이동 뒤 다른 창 remove")
+    with tempfile.TemporaryDirectory(prefix="bg-rn6-") as td:   # 적용된 개명 행(done)은 다음 창에서 다시 판정하지 않는다
+        abc = "from application.core.product import product\n\n\ndef test_a():\n    assert product() == 1\n\n\n" \
+            "def test_c():\n    assert product() == 9\n"
+        repo = _rrepo(Path(td), {TP: abc})
+        _bind(repo, _snap(renames=(_rn("test_a", "test_b"), _rn("test_c", "test_a"))))
+        steps = (("follow", abc.replace("test_a", "test_b")),
+                 ("follow", abc.replace("test_a", "test_b").replace("test_c", "test_a")),
+                 ("test", "from application.core.product import product\n\n\ndef test_b():\n    assert product() == 1\n"))
+        for n, (kind, body) in enumerate(steps, 1):
+            _rguard(repo, "open", "--kind", kind, "--mode", "refactor")
+            _write(repo, {TP: body})
+            _commit(repo)
+            got = _rguard(repo, "close")
+            if n < 3:
+                expect(f"done — w{n} 개명", got, 0, "개명 행 적용 1")
+                _audit(repo, n, _rows(_last_close(repo)))
+            else:
+                expect("done — w3 0T 옛 c(지금 test_a) 삭제 → 케이스 감소 red 만(적용된 a → b 행을 다시 판정하지 않음)", got, 2,
+                       f"테스트 케이스 감소 `{TP}::test_a`", absent=("개명 행 꼴 밖",))
+    bg = STATE["bg"]
+    one = "def test_a():\n    assert 1\n"
+    judged = bg.judge_test_side("follow", {TP: (one.encode(), one.replace("test_a", "test_b").encode())}, {TP}, {TP}, None, None,
+                                {"retain_files": [TP], "approved_cases": {}, "renames": [_rn("test_a", "test_b")]})
+    if [d.disposition for d in judged.dispositions] != ["red"] or "pytest 설정" not in judged.dispositions[0].reason:
+        fails.append(f"judge_test_side(pytest_config=None) + 개명 행 → red 기대 — {[(d.disposition, d.reason) for d in judged.dispositions]}")
     with tempfile.TemporaryDirectory(prefix="bg-rn4-") as td:   # 0T remove 행이 옛 이름(G1 트리) — w1 개명 · w2 새 이름 케이스 삭제
         snap4 = _snap(remove=((f"{TP}::test_check", None),), renames=(_rn("test_check", "test_product_is_nine"),))
         repo = _rrepo(Path(td), {TP: RN})

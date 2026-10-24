@@ -2558,6 +2558,21 @@ def _rename_duplicates(items: "list[dict]") -> "list[str]":
     return reds
 
 
+def _rename_row_clashes(renamed: "list[tuple[dict, str]]", rows: "list[tuple[str, dict]]") -> "list[str]":
+    """개명 새 키(`경로::[클래스::]새` · ids 면 `경로::케이스[새 id]`)가 같은 명세 입장 표 update · remove 행의 케이스 키와 같으면 red —
+    이름으로 묶인 그 행이 개명으로 그 이름을 받은 다른 케이스에 걸린다(행 둘을 든다)."""
+    out: "list[str]" = []
+    for item, text in renamed:
+        scope: str = f"{item['class']}::" if item.get("class") else ""
+        new: str = (f"{item['path']}::{item['case']}[{item['new']}]" if item["kind"] == "ids"
+                    else f"{item['path']}::{scope}{item['new']}")
+        for decision, row in rows:
+            if row["case"] == new:
+                out.append(f"개명 행 꼴 밖 — 개명 새 이름 `{new}` 이 입장 표 {decision} 행 케이스와 같다(그 행이 개명으로 이름을 "
+                           f"받은 다른 케이스에 걸린다) — 개명 행 «{text[:120]}» · {decision} 행 «{row['row'][:120]}»")
+    return out
+
+
 def _rename_item(row: AdmissionRow) -> "tuple[dict | None, str]":
     """retain 재조직 행의 «개명» 항목(G1 스냅숏 `retain_rows[].renames` 원소 — behavior_guard 0T · 0F 가 기준 판에 먼저 적용) —
     (항목, red 사유). 개명 행이 아니면 (None, ""). 케이스 = {kind 케이스, path, class(없으면 None · 중첩은 `A::B`), old, new} ·
@@ -2673,6 +2688,7 @@ class SpecChanges:
         self.reds += edit_reds
         self.rows: "list[AdmissionRow]" = _admission(self.text)
         self.retain: "list[dict]" = []
+        renamed_rows: "list[tuple[dict, str]]" = []          # (개명 항목, 그 행 원문) — 입장 행 이름 겹침 대조
         for r in self.rows:
             if _reorg(r):
                 if r.path is None:
@@ -2685,8 +2701,11 @@ class SpecChanges:
                 entry: dict = {"path": r.path, "case": r.case, "why": r.evidence}
                 if item is not None:
                     entry["renames"] = [item]               # 키는 개명 행에만 — 개명 행 없는 명세는 digest 무변
+                    renamed_rows.append((item, r.text))
                 self.retain.append(entry)
         self.reds += _rename_duplicates([it for r in self.retain for it in r.get("renames", [])])
+        self.reds += _rename_row_clashes(renamed_rows, [(d, it) for d in (UPDATE_DECISION, REMOVE_DECISION)
+                                                        for it in _update_items([r for r in self.rows if r.decision == d], [])])
 
     def linked(self, tests: "list[VTest]") -> "list[str]":
         """시험 줄이 가리키는 입장 행(원문 표 행) — 처음 나온 차례."""

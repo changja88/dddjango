@@ -2158,6 +2158,14 @@ def rename_row_cases(fails: "list[str]", td: Path) -> None:
     lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2,
               adm=V_SPEC_ROWS + _rn_row(f"재조직 — 개명 ../{POLICY_TEST}::test_rule → test_rule_adds_one"))
     expect(fails, "RD-RN14 저장소 밖 경로(`../`) → red", lane.ch(), 2, "개명 행 꼴 밖")
+    upd_row: str = (f"| 규칙 함수 반환 기대 | 규칙 계약 | 규칙 오류 | test_policy | update | coder "
+                    f"`{POLICY_TEST}::test_rule_adds_one` |\n")
+    rm_row: str = f"| 옛 규칙 시험 | — | — | test_policy | remove | coder `{POLICY_TEST}::test_rule_adds_one` |\n"
+    for label, extra, needle in (
+            ("RD-RN15 개명 새 이름 = 입장 표 remove 행 케이스 → red(그 행이 개명된 케이스에 걸린다)", rm_row, "remove 행 케이스와 같다"),
+            ("RD-RN16 개명 새 이름 = 입장 표 update 행 케이스 → red", upd_row, "update 행 케이스와 같다")):
+        lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2, adm=V_SPEC_ROWS + one + extra)
+        expect(fails, label, lane.ch(), 2, "개명 행 꼴 밖 — 개명 새 이름", needle)
 
 
 SLICE_PLAN: str = ("\n## 슬라이스 계획\n\n| 슬라이스 | 목적 | 인수 행 | 내부 행 | 완료 조건 |\n|---|---|---|---|---|\n"

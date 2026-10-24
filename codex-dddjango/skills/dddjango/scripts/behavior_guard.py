@@ -32,7 +32,8 @@ exit 0 = green(해당 없음 · 감사 요청 포함) · 2 = red · 1 = 실행 �
 (AST 가 가리킨 정의 이름 · id 리터럴 자리만 바꾼 원문) 그 창의 지금 규칙(케이스 이름 · D · 0T 개별 감사 · 0F 정규형 비교)을 그대로
 돈다 — 이름 밖 편집은 지금 규칙이 처분한다. 쌍마다 개별 감사 키 «개명 — 이름 뜻»(요구 판정 `기대 의미 그대로` · 감사 요청에 이름 밖
 편집 있음/없음과 옛 이름 · 옛 id 글자가 시험 쪽 문자열 상수에 남은 자리)을 내고, 0C 의 개명 · 행 꼴 밖(수집 케이스 아님 — 픽스처 ·
-도우미 · 중첩 클래스 메서드 · 클래스 개명 · 가림(복합문 몸 · 같은 파일 기반 클래스까지) · 별 import · 파일 밖 기반 클래스 · 맞바꿈 ·
+도우미 · 중첩 클래스 메서드 · 클래스 개명 · 하위 클래스가 물려받는 메서드 · 가림(복합문 몸 · 바다코끼리 · match 캡처 · global ·
+같은 파일 기반 클래스까지) · 별 import · 파일 밖 기반 클래스 · 맞바꿈 ·
 합친 id · 모듈 상수 `pytest.param(id=)`) · 같은 창의 이동과 개명은 red · 어느 창에도 적용되지 않은 개명 행은 verify red 다. 0T 입장
 표 update · remove 행이 개명 행의 옛 이름을 가리키면 개명 뒤 새 이름으로도 읽는다.
 기능 모드는 위 0T · 0C 판정 그대로다.
@@ -1886,7 +1887,35 @@ def _bound(body: "list[ast.stmt]") -> "list[tuple[str, ast.stmt]]":
             out += [(a.asname or a.name.split(".")[0], node) for a in node.names]
         elif isinstance(node, ast.ImportFrom):
             out += [(a.asname or a.name, node) for a in node.names if a.name != "*"]
+        elif isinstance(node, (ast.Global, ast.Nonlocal)):
+            out += [(x, node) for x in node.names]
         out += [(h.name, node) for h in getattr(node, "handlers", None) or [] if h.name]
+        out += [(x, node) for x in _expr_binders(node)]
+    return out
+
+
+def _expr_binders(node: ast.stmt) -> "list[str]":
+    """문장 자신의 식(몸 · 중첩 함수 · 클래스 · lambda 밖)이 묶는 이름 — 바다코끼리(`:=` — 내포 안도 그 자리) · match 캡처 이름."""
+    out: "list[str]" = []
+    stack: "list[ast.AST]" = []
+    for field, value in ast.iter_fields(node):
+        if field in ("body", "orelse", "finalbody", "handlers"):
+            continue
+        stack += value if isinstance(value, list) else [value]
+    while stack:
+        cur = stack.pop()
+        if not isinstance(cur, ast.AST) or isinstance(cur, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+            continue
+        if isinstance(cur, ast.NamedExpr):
+            out += _target_names(cur.target)
+        elif isinstance(cur, (ast.MatchAs, ast.MatchStar)) and cur.name:
+            out.append(cur.name)
+        elif isinstance(cur, ast.MatchMapping) and cur.rest:
+            out.append(cur.rest)
+        if isinstance(cur, ast.match_case):
+            stack += [cur.pattern, *([cur.guard] if cur.guard is not None else [])]   # 몸은 `_statements` 가 걷는다
+            continue
+        stack += list(ast.iter_child_nodes(cur))
     return out
 
 
@@ -1922,6 +1951,20 @@ def _inherited(tree: ast.Module, name: str) -> "tuple[dict[str, str], str]":
                 names.setdefault(x, base.id)
             queue.append(parent)
     return names, ""
+
+
+def _subclasses(tree: ast.Module, name: str) -> "list[str]":
+    """같은 파일 최상위 클래스 가운데 `name` 을 (사슬로) 상속하는 것 — 파일 차례."""
+    found: "set[str]" = {name}
+    grown: bool = True
+    while grown:
+        grown = False
+        for node in tree.body:
+            if isinstance(node, ast.ClassDef) and node.name not in found \
+                    and any(isinstance(b, ast.Name) and b.id in found for b in node.bases):
+                found.add(node.name)
+                grown = True
+    return [n.name for n in tree.body if isinstance(n, ast.ClassDef) and n.name in found - {name}]
 
 
 def _testcase_class(node: ast.ClassDef) -> bool:
@@ -2018,7 +2061,8 @@ def _top_unit(chain: "list[str]", name: str) -> str:
 def _case_pair(t0: ast.Module, t1: ast.Module, owner: "list[str]", old: str, new: str, path: str,
                configs: "tuple[dict[str, str], dict[str, str]]") -> "tuple[str, ast.stmt] | None":
     """케이스 개명 쌍 하나 — None 이면 이 창 몫이 아니다(기준 판에 옛 없음 · 옛이 새 판에 남음) · 아니면 (꼴 밖 사유 — 빈 글이면 받음,
-    옛 정의). 그 자리는 모듈 또는 최상위 클래스이고 이름 묶음은 복합문 몸까지 · 클래스면 같은 파일 기반 클래스가 물려주는 이름까지 본다."""
+    옛 정의). 그 자리는 모듈 또는 최상위 클래스이고 이름 묶음은 복합문 몸까지 · 클래스면 같은 파일 기반 클래스가 물려주는 이름까지 본다.
+    같은 파일에 그 클래스를 (사슬로) 상속하는 클래스가 있으면 꼴 밖이다(하위 클래스의 수집 키도 함께 바뀐다)."""
     s0, s1 = _scope_body(t0, owner), _scope_body(t1, owner)
     if s0 is None or s1 is None:
         return None
@@ -2040,6 +2084,9 @@ def _case_pair(t0: ast.Module, t1: ast.Module, owner: "list[str]", old: str, new
         return "시험 케이스가 아니다(픽스처)", fn
     if not _collected(path, t0, owner, old, configs[0]):
         return "시험 케이스가 아니다(수집 규칙 밖 — python_files · python_functions · python_classes · TestCase)", fn
+    heirs: "list[str]" = (_subclasses(t0, owner[0]) or _subclasses(t1, owner[0])) if owner else []
+    if heirs:
+        return f"하위 클래스 {heirs[0]} 가 물려받는다(하위 클래스의 수집 키도 함께 바뀌어 행이 덮지 못한다)", fn
     if any(x == new for x, _n in b0):
         return "새 이름이 기준 판 그 자리에 있다(가림)", fn
     if not owner and (_star(s0) or _star(s1)):
@@ -2400,8 +2447,12 @@ def judge_test_side(kind: str, changed: "dict[str, tuple[bytes | None, bytes | N
     if items:
         changed = dict(changed)
         for p, (a, b) in sorted(changed.items()):
-            mine: "list[dict]" = [it for it in items if it.get("at", it["path"]) == p]
+            mine: "list[dict]" = [it for it in items if it.get("at", it["path"]) == p and not it.get("done")]
             if not mine or a is None or b is None or not p.endswith(".py") or not is_test(p):
+                continue                                    # 앞 창이 적용한 개명 행(done)은 다시 판정하지 않는다
+            if pytest_config is None:
+                reds_of[p] = [f"개명 행 꼴 밖 — {rename_label(it)}: 수집 규칙(pytest 설정)을 모른다 — judge_test_side 에 "
+                              "pytest_config 를 넘긴다" for it in mine]
                 continue
             uses, reds, renamed = _rename_window(kind, mine, a, b, p, pytest_config)
             if reds:
