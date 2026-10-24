@@ -14,13 +14,13 @@
  "counts": {
   "R": 412,
   "N": 56,
-  "C": 168,
-  "total": 636
+  "C": 176,
+  "total": 644
  },
  "sources": {
   "R": "원형 2차 출력 out/b0_v152_<묶음>.txt(10-04 11:41:15 ~ 11:42:47 · 판 v152 · compare_v152 대 v15.1 판정 · 사유 다름 0) — 경로만 정규화",
   "N": "원형 엔진 실측 사유 · 수(판정은 설계 «자기 시험 묶음» 문면 — 전부 정지) · 3판 N1 이름 넷(__globals__ · f_globals · f_builtins · __builtins__) = 구현판 실측",
-  "C": "빈 갈래 · 빈 조건 · 반례 = 원형 엔진 실측 사유 · 수(판정은 설계 문면 — 사례마다 origin) · 상한 = 설계 :640 · 정오 2 · 상한 분리 = F-B1R-6 수리 설계 §3 · §6(T5a r12-06 · T5c r13-05 재사용) · 실린 범위(C-sc-*) = 설계 3판(2026-10-24 · F4-107) §C5 · 사유 · 수 = 구현판 실측 · 3.1 고침(C-sc-* 14 사례) = 구현 검토(2026-10-24) 처분 · 구현판 실측"
+  "C": "빈 갈래 · 빈 조건 · 반례 = 원형 엔진 실측 사유 · 수(판정은 설계 문면 — 사례마다 origin) · 상한 = 설계 :640 · 정오 2 · 상한 분리 = F-B1R-6 수리 설계 §3 · §6(T5a r12-06 · T5c r13-05 재사용) · 실린 범위(C-sc-*) = 설계 3판(2026-10-24 · F4-107) §C5 · 사유 · 수 = 구현판 실측 · 3.1 고침(C-sc-* 18 사례 — B1 잔여 넷 포함) = 구현 검토(2026-10-24) 처분 · 구현판 실측"
  },
  "cases": {
   "r14-01": {
@@ -13542,6 +13542,162 @@
       ],
       "split": null,
       "line": "실행 관찰 API 1(실린 범위 5 파일 · 그중 이번 실행이 바꾸지 않은 파일 0)"
+     }
+    }
+   }
+  },
+  "C-sc-alias-gone": {
+   "name": "B1 잔여 — tmp_path 별칭 링크로 시험 쪽 도우미를 import 한 뒤 그 링크를 지움(본문)",
+   "group": "C",
+   "bundle": "scope",
+   "kind": "env",
+   "origin": "판정 = 좁은 재확인(2026-10-24 review-fix) 처분 B1 잔여 · 사유 · 수 = 구현판 실측(고치기 전 b4ed506c 판 대조는 구현 기록)",
+   "cells": {
+    "G0": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       3,
+       1,
+       1
+      ]
+     }
+    },
+    "G2": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "실행 관찰 API(증명 지원 밖): application/order/test/support/obs_v.py:5 위험 모듈 허용 밖 sys.settrace[읽기]"
+     ],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       1,
+       5,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-sc-alias-tmp-retention": {
+   "name": "B1 잔여 — tmp_path 별칭 링크 · tmp_path_retention_policy = failed(통과 시험 tmp 를 pytest 가 지움)",
+   "group": "C",
+   "bundle": "scope",
+   "kind": "env",
+   "origin": "판정 = 좁은 재확인(2026-10-24 review-fix) 처분 B1 잔여 · 사유 · 수 = 구현판 실측(고치기 전 b4ed506c 판 대조는 구현 기록)",
+   "cells": {
+    "G0": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       3,
+       1,
+       1
+      ]
+     }
+    },
+    "G2": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "실행 관찰 API(증명 지원 밖): application/order/test/support/obs_v.py:5 위험 모듈 허용 밖 sys.settrace[읽기]"
+     ],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       1,
+       5,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-sc-venv-link-gone": {
+   "name": "B1 잔여 — 제외 자리(.venv) 심링크로 import 한 뒤 그 링크를 지움(본문)",
+   "group": "C",
+   "bundle": "scope",
+   "kind": "env",
+   "origin": "판정 = 좁은 재확인(2026-10-24 review-fix) 처분 B1 잔여 · 사유 · 수 = 구현판 실측(고치기 전 b4ed506c 판 대조는 구현 기록)",
+   "cells": {
+    "G0": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       3,
+       1,
+       1
+      ]
+     }
+    },
+    "G2": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "실행 관찰 API(증명 지원 밖): application/order/test/support/obs.py:5 위험 모듈 허용 밖 sys.settrace[읽기]"
+     ],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       1,
+       5,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-sc-replace-inode": {
+   "name": "B1 잔여 — 같은 내용 원자 바꿔치기(새 inode) 뒤 대소문자 다른 경로로 import(본문 · 대소문자 안 가리는 파일 시스템만)",
+   "group": "C",
+   "bundle": "scope",
+   "kind": "env",
+   "origin": "판정 = 좁은 재확인(2026-10-24 review-fix) 처분 B1 잔여 · 사유 · 수 = 구현판 실측(고치기 전 b4ed506c 판 대조는 구현 기록) · 돌릴 조건 case-insensitive-fs",
+   "cells": {
+    "G0": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       3,
+       1,
+       1
+      ]
+     }
+    },
+    "G2": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "실행 관찰 API(증명 지원 밖): application/order/test/support/obs_cs.py:5 위험 모듈 허용 밖 sys.settrace[읽기]"
+     ],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       1,
+       5,
+       0,
+       0
+      ]
      }
     }
    }

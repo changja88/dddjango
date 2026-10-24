@@ -1,4 +1,4 @@
-"""B0 영구 픽스처 사례 정의 — RD 설계 v15.2 §4-7 · §8 B0 · 계획 T11(636 칸 = R 412 · N 56 · C 168).
+"""B0 영구 픽스처 사례 정의 — RD 설계 v15.2 §4-7 · §8 B0 · 계획 T11(644 칸 = R 412 · N 56 · C 176).
 
 갈래(`Case.group`):
   R  원형 재현 — 원형 B0 사슬(b0_v8 ~ b0_v152 · Claude r11 사례 둘)의 사례 사전을 한 파일로 평평하게 옮겼다. 묶음(`bundle`)과
@@ -9,7 +9,7 @@
      반례 1 사례 · 2 칸(지운 추적 파일 · 한글 경로가 있는 커밋된 장난감의 트리 지문) ④ 600 초 상한 1 사례 · 2 칸(support ·
      suite — 구현판에서만 · 정오 2) ⑤ 수집·suite 상한 분리 6 사례 · 12 칸(F-B1R-6 수리 설계 §6) ⑥ 실린 범위 · 허용 목록 3판
      45 사례 · 90 칸(F4-107 · 2026-10-24 설계 3판 §C5 — 수집 때 · 실행 때 실림 · 범위 밖 예보 · 허용 목록 · 한계 · G2 두 갈래)
-     ⑦ 3.1 고침 14 사례 · 28 칸(구현 검토 B1 파일 정체 · B2 로더 메서드 · I2 다시 쓰인 파일 · S1 TYPE_CHECKING 꼴 · S3 앵커 없음 ·
+     ⑦ 3.1 고침 18 사례 · 36 칸(구현 검토 B1 파일 정체(실은 뒤 별칭이 사라지거나 inode 가 바뀌어도) · B2 로더 메서드 · I2 다시 쓰인 파일 · S1 TYPE_CHECKING 꼴 · S3 앵커 없음 ·
      S4 승인 머지 겹침 · S5 find_spec — 대소문자 사례는 그 파일 시스템에서만 · `needs`).
 
 종류(`Case.kind`):
@@ -1403,6 +1403,34 @@ FIX_CASES: "list[Case]" = [
         {**INI, **SUP_PKG, SUP + "obs.py": MERGE_BASE, "application/order/test/test_late.py": LATE_OBS},
         after={SUP + "obs.py": MERGE_BASE + "\n\n" + OBS_FN}, upstream={SUP + "obs.py": "# 상류 머리 주석\n" + MERGE_BASE},
         after_commit={}),
+]
+
+# B1 잔여(2026-10-24 좁은 재확인) — 실은 뒤 별칭이 사라지거나(링크 지움 · pytest 의 tmp 정리) 같은 내용 바꿔치기로 inode 가
+# 바뀌어도 실린 것이다 — 탐침이 «exec» 때 정체를 잡고 지원 쪽이 명령 뒤 정체 표를 다시 만들어 합친다
+ALIAS_BODY: str = ("import os\nimport sys\nfrom pathlib import Path\n\n\ndef test_v(tmp_path):\n    alias = tmp_path / 'alias'\n"
+                   "    os.symlink(Path(__file__).parent / 'support', alias)\n    sys.path.insert(0, str(alias))\n"
+                   "    import obs_v  # noqa: F401\n    sys.path.remove(str(alias))\n{tail}    assert True\n")
+FIX_CASES += [
+    _sc("alias-gone", "B1 잔여 — tmp_path 별칭 링크로 시험 쪽 도우미를 import 한 뒤 그 링크를 지움(본문)", "env",
+        {**INI, **SUP_PKG, SUP + "obs_v.py": OBS_FN, "application/order/test/test_v5.py": ALIAS_BODY.format(tail="    alias.unlink()\n")}),
+    _sc("alias-tmp-retention", "B1 잔여 — tmp_path 별칭 링크 · tmp_path_retention_policy = failed(통과 시험 tmp 를 pytest 가 지움)", "env",
+        {"pytest.ini": "[pytest]\ntmp_path_retention_policy = failed\n", **SUP_PKG, SUP + "obs_v.py": OBS_FN,
+         "application/order/test/test_v5.py": ALIAS_BODY.format(tail="")}),
+    _sc("venv-link-gone", "B1 잔여 — 제외 자리(.venv) 심링크로 import 한 뒤 그 링크를 지움(본문)", "env",
+        {**INI, **SUP_PKG, SUP + "obs.py": OBS_FN,
+         "application/order/test/test_v.py": ("import sys\nfrom pathlib import Path\n\n"
+                                              "LINK = Path(__file__).resolve().parents[3] / '.venv' / 'lib' / 'site' / 'obshelp.py'\n\n\n"
+                                              "def test_v():\n    sys.path.insert(0, str(LINK.parent))\n    import obshelp  # noqa: F401\n"
+                                              "    sys.path.pop(0)\n    LINK.unlink()\n    assert True\n")},
+        symlinks={SITE + "/obshelp.py": "<TOY>/" + SUP + "obs.py"}),
+    _sc("replace-inode", "B1 잔여 — 같은 내용 원자 바꿔치기(새 inode) 뒤 대소문자 다른 경로로 import(본문 · 대소문자 안 가리는 파일 시스템만)", "env",
+        {**INI, **SUP_PKG, SUP + "obs_cs.py": OBS_FN,
+         "application/order/test/test_r4.py": ("import importlib\nimport os\nimport sys\nfrom pathlib import Path\n\n\ndef test_a():\n"
+                                               "    src = Path(__file__).parent / 'support' / 'obs_cs.py'\n    tmp = src.with_name('obs_cs.tmp')\n"
+                                               "    tmp.write_bytes(src.read_bytes())\n    os.replace(tmp, src)\n"
+                                               "    sys.path.insert(0, str(Path(__file__).parent / 'Support'))\n"
+                                               "    importlib.import_module('obs_cs')\n    sys.path.pop(0)\n    assert True\n")},
+        needs="case-insensitive-fs"),
 ]
 
 ALL_CASES: "list[Case]" = [*R_CASES, *N_CASES, *C_CASES, *SCOPE_CASES, *FIX_CASES]

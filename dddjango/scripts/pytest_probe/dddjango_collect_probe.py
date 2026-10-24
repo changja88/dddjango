@@ -18,11 +18,11 @@
 아니면 허용 밖으로 남긴다. 구간이 열린 채 call 단계 훅이 다시 불리면 재진입으로 남긴다.
 실행 기록(기록 판 2 · 설계 3판 §C1): import 때 감사 훅 하나가 사건 «exec» 의 코드 객체 파일 이름(날 글자 — 상대 이름은 그 사건
 때 작업 폴더로 풂 · `<` 로 시작하면 버림)을 모은다. 수집 끝 · 기록 확정 때 그때까지 모은 것과 `sys.modules` 의 `__file__`(날 글자)
-가운데 저장소 뿌리(`DDDJANGO_PROBE_ROOTS` — 날 · 풀린 둘) 아래인 것을 `loaded_collect` · `loaded_end` 로, 후보 전부를 stat(링크 따라감)
-해 그 정체(st_dev, st_ino)가 지원 쪽 표(`DDDJANGO_PROBE_IDS` — 시험 쪽 .py 정체 → 저장소 경로)에 있으면 그 저장소 경로를
-`ident_collect` · `ident_end` 로(뿌리 앞거름 없음 — 제외 자리 · 저장소 밖 링크 · 유니코드 정규형 · 대소문자 · 굳은 링크로 실어도 같은
-파일), 수집 끝 `sys.path`(상대 항목은 그때 작업 폴더로 풂)를 `sys_path` 로 남긴다. 지원 쪽이 이 기록으로 «실제로 실리고 돈 시험
-쪽 코드»를 정한다.
+가운데 저장소 뿌리(`DDDJANGO_PROBE_ROOTS` — 날 · 풀린 둘) 아래인 것을 `loaded_collect` · `loaded_end` 로, 후보 전부의 파일 정체
+«st_dev:st_ino»(링크 따라감 · 뿌리 앞거름 없음)를 `ident_collect` · `ident_end` 로, 수집 끝 `sys.path`(상대 항목은 그때 작업
+폴더로 풂)를 `sys_path` 로 남긴다. 정체는 감사 훅이 «exec» 때 이름마다 처음 한 번 잡아 둔다(실은 뒤 별칭이 사라지거나 inode 가
+바뀌어도 실린 그 파일) — 그때 못 잡은 후보(훅 앞에 실린 모듈 등)만 기록 때 잰다. 지원 쪽이 시험 쪽 .py 정체 표(명령 앞 ∪ 뒤)로
+저장소 경로에 대어 «실제로 실리고 돈 시험 쪽 코드»를 정한다(제외 자리 · 저장소 밖 링크 · 유니코드 정규형 · 대소문자 · 굳은 링크).
 """
 from __future__ import annotations
 
@@ -42,31 +42,34 @@ import pytest
 
 
 RECORD_VERSION = 2                    # 기록 판 — 2 = 실행 기록(loaded_collect · loaded_end · ident_collect · ident_end · sys_path)
-_RAN: set = set()                     # 감사 사건 «exec» 의 코드 객체 파일 이름(날 글자 · 상대 이름은 그때 작업 폴더로 풂)
+_RAN: dict = {}                       # «exec» 코드 객체 파일 이름(날 글자 · 상대는 그때 작업 폴더로 풂) → 그때 정체 «dev:ino» | None
 _CODE = types.CodeType
 
 
+def _ident(f: str) -> "str | None":
+    try:
+        st = os.stat(f)
+    except (OSError, ValueError):
+        return None
+    return f"{st.st_dev}:{st.st_ino}"
+
+
 def _on_audit(event, args) -> None:
-    """감사 훅 — «exec» 사건만 본다(그 밖 사건은 비교 한 번). 코드 객체의 파일 이름 글자만 읽고 사용자 코드를 부르지 않는다."""
+    """감사 훅 — «exec» 사건만 본다(그 밖 사건은 비교 한 번). 코드 객체의 파일 이름 글자만 읽고, 이름마다 처음 한 번만 stat 해
+    정체를 잡아 둔다(이미 본 이름은 사전 조회 하나 · stat 실패는 None). 사용자 코드를 부르지 않는다."""
     if event == "exec":
         code = args[0]
         if type(code) is _CODE:
             f = code.co_filename
             if f and f[0] != "<":
-                _RAN.add(f if os.path.isabs(f) else os.path.join(os.getcwd(), f))
+                if not os.path.isabs(f):
+                    f = os.path.join(os.getcwd(), f)
+                if f not in _RAN:
+                    _RAN[f] = _ident(f)
 
 
 sys.addaudithook(_on_audit)           # -p 로 실리는 import 때 건다 — conftest · 진입점 플러그인보다 먼저(앞선 -p 플러그인은 §12)
 ROOTS = tuple(r.rstrip(os.sep) + os.sep for r in json.loads(os.environ.get("DDDJANGO_PROBE_ROOTS") or "[]"))
-_IDS: dict = {}                       # (st_dev, st_ino) → 저장소 경로들 — 첫 기록 때 지원 쪽 표 파일을 읽는다(못 읽으면 기록이 죽는다)
-
-
-def _ids() -> dict:
-    path = os.environ.get("DDDJANGO_PROBE_IDS")
-    if path and not _IDS:
-        for dev, ino, rel in json.loads(Path(path).read_text(encoding="utf-8", errors="surrogateescape")):
-            _IDS.setdefault((dev, ino), []).append(rel)
-    return _IDS
 
 XUNIT_MODULE = ("setup_module", "teardown_module", "setUpModule", "tearDownModule", "setup_function", "teardown_function")
 PACKAGE_XUNIT = ("setUpModule", "setup_module", "tearDownModule", "teardown_module")
@@ -88,21 +91,16 @@ _S: dict = {"seen_cls": set(), "tool": None, "bound": {}, "watch": None, "owner"
 
 
 def _loaded() -> "tuple[list[str], list[str]]":
-    """지금까지 실행된 코드의 파일 이름 ∪ `sys.modules` 의 `__file__`(날 글자) — (저장소 뿌리 아래 날 글자, 정체가 표에 있는 저장소
-    경로). 정체는 후보 전부를 stat 해 본다(뿌리 앞거름 없음)."""
+    """지금까지 실행된 코드의 파일 이름 ∪ `sys.modules` 의 `__file__`(날 글자) — (저장소 뿌리 아래 날 글자, 후보 전부의 정체
+    «dev:ino»). 정체는 «exec» 때 잡아 둔 것을 쓰고, 없으면(훅 앞에 실림 · 그때 stat 실패) 지금 잰다(뿌리 앞거름 없음)."""
     files = set(_RAN)
     for m in list(sys.modules.values()):
         f = getattr(m, "__file__", None) if isinstance(m, types.ModuleType) else None
         if isinstance(f, str):
             files.add(f)
-    ids, same = _ids(), set()
-    for f in files if ids else ():
-        try:
-            st = os.stat(f)
-        except (OSError, ValueError):
-            continue
-        same.update(ids.get((st.st_dev, st.st_ino), ()))
-    return sorted(f for f in files if f.startswith(ROOTS)), sorted(same)
+    idents = {_RAN.get(f) or _ident(f) for f in files}
+    idents.discard(None)
+    return sorted(f for f in files if f.startswith(ROOTS)), sorted(idents)
 
 
 def _code_file(code) -> "str | None":
