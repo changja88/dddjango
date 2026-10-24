@@ -1,13 +1,14 @@
-"""B0 영구 픽스처 사례 정의 — RD 설계 v15.2 §4-7 · §8 B0 · 계획 T11(510 칸 = R 412 · N 48 · C 50).
+"""B0 영구 픽스처 사례 정의 — RD 설계 v15.2 §4-7 · §8 B0 · 계획 T11(608 칸 = R 412 · N 56 · C 140).
 
 갈래(`Case.group`):
   R  원형 재현 — 원형 B0 사슬(b0_v8 ~ b0_v152 · Claude r11 사례 둘)의 사례 사전을 한 파일로 평평하게 옮겼다. 묶음(`bundle`)과
      순서는 원형 실행 `b0_v152.py v152 <묶음>` 그대로다(13 묶음 297 줄 · 394 칸 + minor 9 사례 · 18 칸).
-  N  이름별 독립 사례 — inspect 거부 11 이름 · N1 13 이름마다 한 사례 × collect · run(48 칸 · 설계 «자기 시험 묶음»).
+  N  이름별 독립 사례 — inspect 거부 11 이름 · N1 17 이름(3판이 더한 넷 포함)마다 한 사례 × collect · run(56 칸 · 설계 «자기 시험 묶음»).
   C  빈 범주 — ① 원형 사례가 덮지 않던 정적 규칙 갈래(observer_scan 사유 판형 단위 · 설계 §4-1 문면에 판정이 있는 것) 12 사례 ·
      24 칸(읽기 실패 = 시험 쪽 .py 자리의 끊긴 심링크 + 제품 쪽 자리 대조 포함) ② E 갈래가 넘긴 지원 확인 · 증거 실행 빈 조건(설계 §4-5 문면 · 계획 T10 E3) 5 사례 · 10 칸 ③ 수리한 결함의
      반례 1 사례 · 2 칸(지운 추적 파일 · 한글 경로가 있는 커밋된 장난감의 트리 지문) ④ 600 초 상한 1 사례 · 2 칸(support ·
-     suite — 구현판에서만 · 정오 2) ⑤ 수집·suite 상한 분리 6 사례 · 12 칸(F-B1R-6 수리 설계 §6).
+     suite — 구현판에서만 · 정오 2) ⑤ 수집·suite 상한 분리 6 사례 · 12 칸(F-B1R-6 수리 설계 §6) ⑥ 실린 범위 · 허용 목록 3판
+     45 사례 · 90 칸(F4-107 · 2026-10-24 설계 3판 §C5 — 수집 때 · 실행 때 실림 · 범위 밖 예보 · 허용 목록 · 한계 · G2 두 갈래).
 
 종류(`Case.kind`):
   pair     collect · run 두 칸(원형 run_cases) — `env` = 상속 환경.
@@ -15,6 +16,8 @@
            G2 = 기본 환경 + `env` 로 run · `after` 편집이 있으면 편집 뒤 run 을 다시 · G0 유지 세 단(g0_keep) 위반을 G2 사유에 더함.
   timeout  support(collect) · suite(run) 두 칸 — 상한 상수만 짧게 바꾼 단위 사례(구현판 전용).
   limits   support · suite 두 칸 — 서로 다른 수집·suite 상한(구현판 전용). T3는 지원 안 함 뒤 G1을 만들지 않고 run 엔진만 대조.
+  split    support · suite 두 칸 — 커밋한 장난감(앵커) · 지원 확인 → G1 결속 → `after` 를 레인 편집으로 커밋 → suite(구현판 전용).
+           G2 실행 관찰 API 를 «이번 실행이 바꾼 파일 / 바꾸지 않은 파일»로 가르는 두 갈래.
 
 환경 표지(러너가 실행 때 바꾼다):
   PY             픽스처 환경 `.venv-probe` 의 인터프리터(원형은 scratch pyvenv).
@@ -67,6 +70,7 @@ class Case:
     drop_worker: bool = False
     after_commit: "dict[str, str | None] | None" = None   # 있으면 장난감을 커밋 1 로 만든 뒤 이 편집을 얹는다(None = 지움)
     symlinks: "dict[str, str] | None" = None              # 장난감에 만들 심링크(경로 → 대상 글자 · 대상이 없으면 끊긴 심링크)
+    outside: "dict[str, str] | None" = None               # 장난감 밖(형제 폴더 `outside/`)에 쓸 파일 — 심링크 대상의 `<OUTSIDE>` 가 그 폴더
 
 
 # ── 원형 b0_v8 ──
@@ -980,11 +984,14 @@ INSPECT_DENY_NAMES: "tuple[str, ...]" = ("currentframe", "stack", "trace", "getf
 INSPECT_ONE: str = "import inspect\n\n\ndef _helper():\n    return inspect.{name}\n\n\ndef test_i():\n    assert callable(_helper)\n"
 N1_ONE: str = "def _names(o):\n    return (\n        o.{name},\n    )\n\n\ndef test_n():\n    assert callable(_names)\n"
 
+# 3판(2026-10-24 · F4-107 설계 §C3)이 N1 에 더한 이름 — 프레임 · 함수의 전역 사전으로 모듈 값을 다시 얻는 길
+N1_ATTRS_V3: "tuple[str, ...]" = ("__globals__", "f_globals", "f_builtins", "__builtins__")
+
 N_CASES: "list[Case]" = [
     *(Case(f"N-inspect-{a}", "N", "inspect", f"inspect 거부 이름 {a} — import inspect 뒤 부르지 않는 도우미 안 inspect.{a} 읽기", "pair",
            {**INI, f"application/order/test/test_inspect_{a}.py": INSPECT_ONE.format(name=a)}, {}) for a in INSPECT_DENY_NAMES),
     *(Case(f"N-n1-{a}", "N", "n1", f"N1 이름 {a} — 핸들 밖 받는 쪽 o.{a}(부르지 않는 도우미 안 · MN1 꼴)", "pair",
-           {**INI, f"application/order/test/test_n1_{a}.py": N1_ONE.format(name=a)}, {}) for a in _N1_ATTRS),
+           {**INI, f"application/order/test/test_n1_{a}.py": N1_ONE.format(name=a)}, {}) for a in (*_N1_ATTRS, *N1_ATTRS_V3)),
 ]
 
 
@@ -1030,10 +1037,11 @@ def _helper_only(body: str, head: str = "") -> str:
 
 def _forge(finalized: bool) -> str:
     """프로젝트 conftest 가 DDDJANGO_PROBE_OUT 자리에 탐침과 같은 칸의 단일 기록을 하나 더 쓰는 꼴(탐침 이름 언급 없음)."""
-    record = {"role": "single", "workerid": None, "rootpath": "", "inipath": None, "args": [], "exitstatus": 0, "initial": [],
-              "final": [], "calls": [], "skips": [], "passed": [], "meta": {}, "complete": [], "files": [], "unresolved": [], "bad": [],
-              "hookimpls": [], "allowed_sourceless": [], "workers_ready": [], "finalized": finalized, "late": [], "failed": 0,
-              "import_skips": [], "anchor": [], "optimize": 0, "flags": {}, "greenlet_loaded": False}
+    record = {"version": 2, "role": "single", "workerid": None, "rootpath": "", "inipath": None, "args": [], "exitstatus": 0,
+              "initial": [], "final": [], "calls": [], "skips": [], "passed": [], "meta": {}, "complete": [], "files": [],
+              "unresolved": [], "bad": [], "hookimpls": [], "allowed_sourceless": [], "workers_ready": [], "finalized": finalized,
+              "late": [], "failed": 0, "import_skips": [], "anchor": [], "optimize": 0, "flags": {}, "greenlet_loaded": False,
+              "loaded_collect": [], "loaded_end": [], "sys_path": []}
     return ("import os\n\n\ndef pytest_configure(config):\n    out = os.environ.get('DDDJANGO_PROBE_OUT')\n    if out:\n"
             "        os.makedirs(out, exist_ok=True)\n        with open(os.path.join(out, 'zz-extra.json'), 'w') as f:\n"
             f"            f.write({json.dumps(json.dumps(record))})\n")
@@ -1106,7 +1114,196 @@ C_CASES: "list[Case]" = [
     # T5a = 기존 r12-06(exit 1), T5c = 기존 r13-05(exit 0 · 결과 증거 없음) — 독립 red 기대를 재사용한다.
 ]
 
-ALL_CASES: "list[Case]" = [*R_CASES, *N_CASES, *C_CASES]
+
+# ── (C) ⑥ 실린 범위 · 허용 목록 3판(F4-107 · 2026-10-24 설계 3판 §C5) ──
+# 보는 범위 = 이 pytest 프로세스가 실제로 싣고 돈 시험 쪽 코드(G0 = 수집 끝 실행 기록 ∪ 시험 기계 파일 ∪ 시험 쪽 import 닫힘 ∪
+# 조상 __init__ · G2 = 세션 끝 실행 기록 ∪ 시험 기계 파일 ∪ 조상 __init__). 범위 밖 시험 쪽 위반은 G0 예보(정지 아님)다.
+OBS_FN: str = "import sys\n\n\ndef _arm():\n    sys.settrace(None)\n"   # 부르지 않는 도우미 안 관찰 API — 정적 규칙만 걸린다
+OBS_SET: str = ("import sys\n\n\ndef _t(frame, event, arg):\n    return None\n\n\n"
+                "sys.settrace(_t)\nsys.settrace(None)\n")                  # 실릴 때 관찰을 켰다 끈다
+OK_TEST: str = "def test_ok():\n    assert 1 + 1 == 2\n"
+SUP: str = "application/order/test/support/"
+SUP_PKG: "dict[str, str]" = {SUP + "__init__.py": ""}
+DYN: str = "'.'.join(['application', 'order', 'test', 'support', 'obs'])"   # 상수 아닌 import 이름
+BUILTINS_USE: str = "import builtins\n\n\ndef _helper():\n    return builtins.__import__\n\n\ndef test_h():\n    assert callable(_helper)\n"
+DJ_TESTAPP: "dict[str, str]" = {
+    **DJ, "toyproj/settings.py": DJ["toyproj/settings.py"].replace("'application.order']", "'application.order', 'application.order.test.testapp']"),
+    "application/order/test/testapp/__init__.py": "",
+    "application/order/test/testapp/apps.py": ("from django.apps import AppConfig\n\n\nclass TestappConfig(AppConfig):\n"
+                                               "    name = 'application.order.test.testapp'\n\n    def ready(self):\n"
+                                               "        import sys\n        sys.settrace(None)\n"),
+    "application/order/test/test_e.py": "from django.conf import settings\n\n\ndef test_e():\n    assert settings.SECRET_KEY == 'x'\n"}
+
+
+def _sc(cid: str, name: str, kind: str, files: "dict[str, str]", **kw: object) -> Case:
+    return Case(f"C-sc-{cid}", "C", "scope", name, kind, files, {}, **kw)   # type: ignore[arg-type]
+
+
+SCOPE_CASES: "list[Case]" = [
+    # 정지 — 수집 때 실림(G0)
+    _sc("pkg-init", "시험 패키지 __init__ 가 실릴 때 관찰 설치(H1)", "env", {**INI, "application/order/test/__init__.py": OBS_SET}),
+    _sc("zero-case", "케이스 0 시험 모듈이 모듈 수준에서 관찰 설치(H2)", "env", {**INI, "application/order/test/test_obs_setup.py": OBS_SET}),
+    _sc("basedir", "basedir 형제 import — __init__ 없는 tests/ 의 도우미(H3)", "env",
+        {**INI, "tests/test_b.py": "import obs_helper  # noqa: F401\n\n\n" + OK_TEST, "tests/obs_helper.py": OBS_FN}),
+    _sc("importorskip", "모듈 수준 pytest.importorskip(상수)로 실은 시험 쪽 도우미(H4)", "env",
+        {**INI, **SUP_PKG, SUP + "obs.py": OBS_FN,
+         "application/order/test/test_c.py": "import pytest\n\nobs = pytest.importorskip('application.order.test.support.obs')\n\n\n" + OK_TEST}),
+    _sc("syspath-collect", "모듈 수준 sys.path 앞붙임 + 상수 import_module(수집 때 → G0)", "env",
+        {**INI, "application/order/test/fixtures/served/obs_srv.py": OBS_FN,
+         "application/order/test/test_d.py": ("import importlib\nimport sys\nfrom pathlib import Path\n\n"
+                                              "sys.path.insert(0, str(Path(__file__).parent / 'fixtures' / 'served'))\n"
+                                              "importlib.import_module('obs_srv')\n\n\n" + OK_TEST)}),
+    _sc("django-app", "INSTALLED_APPS 의 시험 전용 앱 ready() 가 관찰 설치(H6)", "env", DJ_TESTAPP),
+    _sc("const-import", "모듈 수준 상수 import_module 로 실은 시험 쪽 도우미(H9)", "env",
+        {**INI, **SUP_PKG, SUP + "obs.py": OBS_FN,
+         "application/order/test/test_h.py": "import importlib\n\nimportlib.import_module('application.order.test.support.obs')\n\n\n" + OK_TEST}),
+    _sc("dot-argv", "점 폴더 실행 정의 경로(.ci/tests) — 시험 기계 파일 자체가 점 폴더(H10)", "pair",
+        {**INI, ".ci/tests/test_dot.py": OBS_FN + "\n\n" + OK_TEST}, argvs=[[PY, "-m", "pytest", ".ci/tests"]]),
+    _sc("dot-syspath", "점 폴더를 sys.path 에 넣고 import(H8)", "env",
+        {**INI, ".fixtures/tests/obs_dot.py": OBS_FN,
+         "application/order/test/test_g.py": ("import sys\nfrom pathlib import Path\n\n"
+                                              "sys.path.insert(0, str(Path(__file__).resolve().parents[3] / '.fixtures' / 'tests'))\n"
+                                              "import obs_dot  # noqa: E402,F401\n\n\n" + OK_TEST)}),
+    _sc("link-outside", "저장소 밖 파일로 가는 링크 시험 파일(2판 검토 T1 — 날 경로로 견줌)", "env", {**INI},
+        symlinks={"application/order/test/test_link.py": "<OUTSIDE>/test_obs_outside.py"},
+        outside={"test_obs_outside.py": OBS_FN + "\n\n" + OK_TEST}),
+    _sc("pop-collect", "상수 아닌 import_module 뒤 sys.modules.pop(모듈 수준 · T3)", "env",
+        {**INI, **SUP_PKG, SUP + "obs.py": OBS_FN,
+         "application/order/test/test_b.py": f"import importlib\nimport sys\n\nNAME = {DYN}\nimportlib.import_module(NAME)\nsys.modules.pop(NAME)\n\n\n" + OK_TEST}),
+    _sc("self-replace", "도우미가 sys.modules[__name__] 를 객체로 바꿈(T4)", "env",
+        {**INI, **SUP_PKG, SUP + "obs.py": OBS_FN + "\n\nclass _P:\n    pass\n\n\nsys.modules[__name__] = _P()\n",
+         "application/order/test/test_c.py": f"import importlib\n\nimportlib.import_module({DYN})\n\n\n" + OK_TEST}),
+    _sc("fabfile-del", "등록 fabfile 꼴로 시험 쪽 파일을 싣고 del sys.modules[spec.name](T10)", "env",
+        {**INI, **SUP_PKG, SUP + "obs_script.py": OBS_FN,
+         "application/order/test/test_i.py": ("import importlib.util\nimport sys\nfrom pathlib import Path\n\n"
+                                              "spec = importlib.util.spec_from_file_location('obs_loaded', Path(__file__).parent / 'support' / 'obs_script.py')\n"
+                                              "mod = importlib.util.module_from_spec(spec)\nsys.modules[spec.name] = mod\nspec.loader.exec_module(mod)\n"
+                                              "del sys.modules[spec.name]\n\n\n" + OK_TEST)}),
+    _sc("code-module", "code.InteractiveInterpreter().runsource(파일 글) — N2 code(T11)", "env",
+        {**INI, **SUP_PKG, SUP + "obs_script.py": OBS_FN,
+         "application/order/test/test_j.py": ("import code\nfrom pathlib import Path\n\n"
+                                              "code.InteractiveInterpreter().runsource((Path(__file__).parent / 'support' / 'obs_script.py').read_text(), 'obs', 'exec')\n\n\n"
+                                              + OK_TEST)}),
+    _sc("fake-filename", "SourceLoader 하위 클래스의 get_filename 이 가짜 이름(등록 없음 · T12)", "env",
+        {**INI, **SUP_PKG, SUP + "obs_script.py": OBS_FN + "\n_arm()\n",
+         "application/order/test/test_k.py": ("import importlib.abc\nimport importlib.util\nfrom pathlib import Path\n\n"
+                                              "REAL = Path(__file__).parent / 'support' / 'obs_script.py'\n\n\n"
+                                              "class _Loader(importlib.abc.SourceLoader):\n    def get_filename(self, fullname):\n        return '<helper>'\n\n"
+                                              "    def get_data(self, path):\n        return REAL.read_bytes()\n\n\n"
+                                              "spec = importlib.util.spec_from_loader('obs_hidden', _Loader())\nmod = importlib.util.module_from_spec(spec)\n"
+                                              "spec.loader.exec_module(mod)\n\n\n" + OK_TEST)}),
+    # 정지 — 실행 때 실림(G0 은 예보 · G2 가 멈춘다)
+    _sc("syspath-run", "시험 본문 monkeypatch.syspath_prepend + 상수 import_module(실행 때 → G2 · H5)", "env",
+        {**INI, "application/order/test/fixtures/served/obs_srv.py": OBS_FN,
+         "application/order/test/test_d.py": ("import importlib\nfrom pathlib import Path\n\nHERE = Path(__file__).parent / 'fixtures' / 'served'\n\n\n"
+                                              "def test_srv(monkeypatch):\n    monkeypatch.syspath_prepend(str(HERE))\n"
+                                              "    importlib.import_module('obs_srv')\n    assert True\n")}),
+    _sc("pop-body", "시험 본문 상수 아닌 import 뒤 sys.modules.pop(T6)", "env",
+        {**INI, **SUP_PKG, SUP + "obs.py": OBS_FN,
+         "application/order/test/test_e.py": (f"import importlib\nimport sys\n\n\ndef test_late():\n    name = {DYN}\n"
+                                              "    importlib.import_module(name)\n    sys.modules.pop(name)\n    assert True\n")}),
+    _sc("late-runpy", "늦게 실린 도우미가 runpy 로 다른 시험 쪽 파일을 돌림(T9)", "env",
+        {**INI, **SUP_PKG, SUP + "obs_script.py": OBS_FN,
+         SUP + "launcher.py": "import runpy\nfrom pathlib import Path\n\n\ndef go():\n    runpy.run_path(str(Path(__file__).parent / 'obs_script.py'))\n",
+         "application/order/test/test_h.py": ("import importlib\n\n\ndef test_late():\n"
+                                              "    name = '.'.join(['application', 'order', 'test', 'support', 'launcher'])\n"
+                                              "    importlib.import_module(name).go()\n    assert True\n")}),
+    _sc("rel-runpy", "시험 본문 runpy.run_path(상대 경로) — 실행 기록이 그때 작업 폴더로 풂(T14)", "env",
+        {**INI, **SUP_PKG, SUP + "obs_script.py": OBS_FN,
+         "application/order/test/test_m.py": ("import runpy\n\n\ndef test_late():\n"
+                                              "    runpy.run_path('application/order/test/support/obs_script.py')\n    assert True\n")}),
+    _sc("runpy-body", "시험 본문 runpy.run_path(계산한 절대 경로)로 시험 쪽 파일", "env",
+        {**INI, **SUP_PKG, SUP + "obs_script.py": OBS_FN,
+         "application/order/test/test_g.py": ("import runpy\nfrom pathlib import Path\n\n\ndef test_late():\n"
+                                              "    runpy.run_path(str(Path(__file__).parent / 'support' / 'obs_script.py'))\n    assert True\n")}),
+    _sc("exec-module-body", "시험 본문 spec_from_file_location + exec_module(등록 없음)으로 시험 쪽 파일", "env",
+        {**INI, **SUP_PKG, SUP + "obs_script.py": OBS_FN,
+         "application/order/test/test_x.py": ("import importlib.util\nfrom pathlib import Path\n\n\ndef test_late():\n"
+                                              "    spec = importlib.util.spec_from_file_location('obs_x', Path(__file__).parent / 'support' / 'obs_script.py')\n"
+                                              "    mod = importlib.util.module_from_spec(spec)\n    spec.loader.exec_module(mod)\n    assert True\n")}),
+    _sc("source-loader-body", "시험 본문 SourceFileLoader.exec_module(등록 없음)으로 시험 쪽 파일", "env",
+        {**INI, **SUP_PKG, SUP + "obs_script.py": OBS_FN,
+         "application/order/test/test_y.py": ("import importlib.machinery\nimport importlib.util\nfrom pathlib import Path\n\n\ndef test_late():\n"
+                                              "    path = str(Path(__file__).parent / 'support' / 'obs_script.py')\n"
+                                              "    loader = importlib.machinery.SourceFileLoader('obs_y', path)\n"
+                                              "    spec = importlib.util.spec_from_loader('obs_y', loader)\n"
+                                              "    mod = importlib.util.module_from_spec(spec)\n    loader.exec_module(mod)\n    assert True\n")}),
+    _sc("edit-in-scope", "G0 뒤 범위 안 시험 파일에 관찰 API 를 넣음 — G2 는 지금 내용 전부를 다시 본다(2판 검토 X3)", "env",
+        {**INI, "application/order/test/test_p.py": OK_TEST}, after={"application/order/test/test_p.py": OBS_FN + "\n\n" + OK_TEST}),
+    # 정지 — 허용 목록 3판(모듈 값 재취득 · importlib.metadata 안전 이름 · 도구 모듈)
+    _sc("meta-from-sys", "from importlib.metadata import sys(모듈 값 이름)", "pair",
+        {**INI, "application/order/test/test_meta_sys.py": _helper_only("return s", "from importlib.metadata import sys as s\n\n\n")}),
+    _sc("meta-entry-points", "importlib.metadata.entry_points 읽기(안전 이름 넷 밖)", "pair",
+        {**INI, "application/order/test/test_meta_ep.py": _helper_only("return importlib.metadata.entry_points", "import importlib.metadata\n\n\n")}),
+    _sc("inspect-sys", "inspect.sys 읽기(모듈 값 이름 속성)", "pair",
+        {**INI, "application/order/test/test_inspect_sys.py": _helper_only("return inspect.sys", "import inspect\n\n\n")}),
+    _sc("util-sys", "from importlib import util 뒤 util.sys 읽기", "pair",
+        {**INI, "application/order/test/test_util_sys.py": _helper_only("return util.sys", "from importlib import util\n\n\n")}),
+    _sc("os-sys", "os.sys 읽기 — 위험 모듈 밖 받는 쪽", "pair",
+        {**INI, "application/order/test/test_os_sys.py": _helper_only("return os.sys", "import os\n\n\n")}),
+    _sc("logging-sys", "logging.sys 읽기 — 위험 모듈 밖 받는 쪽", "pair",
+        {**INI, "application/order/test/test_logging_sys.py": _helper_only("return logging.sys", "import logging\n\n\n")}),
+    _sc("frozen-importlib", "import _frozen_importlib(도구 모듈 N2)", "pair",
+        {**INI, "application/order/test/test_frozen.py": _helper_only("return _frozen_importlib", "import _frozen_importlib\n\n\n")}),
+    # 정지 아님
+    _sc("record-copy", "안 실리는 web 기록 사본(.dddjango-web/…_test.py)의 builtins 읽기 — 예보", "pair",
+        {**INI, ".dddjango-web/20990101-0000-copy/before/web_test/root/handler/plant_handler_test.py": BUILTINS_USE}),
+    _sc("outside-definition", "실행 정의(경로 인자 application) 밖 시험 쪽 파일의 builtins 읽기 — 예보", "pair",
+        {**INI, "web_test/root/handler/root_request_handler_test.py": BUILTINS_USE}, argvs=[[PY, "-m", "pytest", "application"]]),
+    _sc("type-checking", "if TYPE_CHECKING: 안 import 로만 닿는 위반 파일 — 예보(2판 검토 V1)", "env",
+        {**INI, **SUP_PKG, SUP + "obs.py": OBS_FN,
+         "application/order/test/test_n.py": ("from typing import TYPE_CHECKING\n\nif TYPE_CHECKING:\n"
+                                              "    from application.order.test.support import obs  # noqa: F401\n\n\n" + OK_TEST)}),
+    _sc("product-runpy", "시험 본문이 제품 쪽 파일을 runpy 로 돌림(관찰 설치 · 제품 쪽은 §12)", "env",
+        {**INI, "application/order/obs_prod.py": OBS_SET,
+         "application/order/test/test_pr.py": ("import runpy\nfrom pathlib import Path\n\n\ndef test_prod():\n"
+                                               "    runpy.run_path(str(Path(__file__).resolve().parents[1] / 'obs_prod.py'))\n    assert True\n")}),
+    _sc("subprocess", "하위 프로세스로 도는 시험 쪽 스크립트(부모 사건을 못 건드림) — 예보", "env",
+        {**INI, **SUP_PKG, SUP + "obs_script.py": OBS_SET,
+         "application/order/test/test_sp.py": ("import subprocess\nimport sys\nfrom pathlib import Path\n\n\ndef test_child():\n"
+                                               "    subprocess.run([sys.executable, str(Path(__file__).parent / 'support' / 'obs_script.py')], check=True)\n"
+                                               "    assert True\n")}),
+    _sc("frametype", "from types import FrameType(주석 · 인스턴스 못 만듦)", "pair",
+        {**INI, "application/order/test/test_ft.py": ("from types import FrameType\n\n\ndef _helper(frame: FrameType) -> None:\n    return None\n\n\n"
+                                                      "def test_h():\n    assert callable(_helper)\n")}),
+    _sc("meta-version-from", "from importlib.metadata import version", "pair",
+        {**INI, "application/order/test/test_meta_v.py": "from importlib.metadata import version\n\n\ndef test_v():\n    assert version('pytest')\n"}),
+    _sc("meta-version-attr", "importlib.metadata.version() 부름", "pair",
+        {**INI, "application/order/test/test_meta_v2.py": "import importlib.metadata\n\n\ndef test_v():\n    assert importlib.metadata.version('pytest')\n"}),
+    _sc("page-reload", "page.reload(...)(위험 모듈 밖 받는 쪽의 reload)", "pair",
+        {**INI, "application/order/test/test_page.py": _helper_only("page.reload(wait_until='load')", "").replace("def _helper():", "def _helper(page):")}),
+    _sc("fabfile-ok", "등록 fabfile 꼴로 깨끗한 시험 쪽 파일을 실음", "env",
+        {**INI, **SUP_PKG, SUP + "fab_helper.py": "VALUE = 7\n",
+         "application/order/test/test_fab.py": ("import importlib.util\nimport sys\nfrom pathlib import Path\n\n"
+                                                "spec = importlib.util.spec_from_file_location('fab_helper_mod', Path(__file__).parent / 'support' / 'fab_helper.py')\n"
+                                                "mod = importlib.util.module_from_spec(spec)\nsys.modules[spec.name] = mod\nspec.loader.exec_module(mod)\n\n\n"
+                                                "def test_fab():\n    assert mod.VALUE == 7\n")}),
+    # 한계 기록(§12) — 탐침보다 먼저 실리는 -p 프로젝트 플러그인이 상수 아닌 import 로 싣고 빼는 시험 쪽 모듈은 실행 기록에 안 남는다
+    _sc("plugin-before-probe", "한계 V2 — 탐침보다 앞선 -p 프로젝트 플러그인이 싣고 sys.modules 에서 뺀 시험 쪽 모듈(정지 아님 · §12)", "pair",
+        {**INI, **SUP_PKG, SUP + "obs.py": OBS_FN,
+         "application/order/test/plugmod.py": f"import importlib\nimport sys\n\nNAME = {DYN}\nimportlib.import_module(NAME)\nsys.modules.pop(NAME)\n"},
+        argvs=[[PY, "-m", "pytest", "-p", "application.order.test.plugmod"]]),
+    # 확인 못 함 — 범위 안이면 정지(밖이면 예보 — C-parse · C-read-fail-symlink)
+    _sc("parse-in", "파싱 실패 — 시험 함수 안 import 로 닿는(시험 쪽 import 닫힘) 파싱 못 하는 .py", "pair",
+        {**INI, "application/order/test/helpers_broken.py": "def broken(:\n    return 1\n",
+         "application/order/test/test_lazy.py": ("def _helper():\n    from application.order.test import helpers_broken  # noqa: F401\n\n\n"
+                                                 "def test_l():\n    assert callable(_helper)\n")}),
+    _sc("read-fail-in", "읽기 실패 — 시험 함수 안 import 로 닿는 끊긴 심링크(.py)", "pair",
+        {**INI, "application/order/test/test_lazy.py": ("def _helper():\n    import application.order.test.support.locked  # noqa: F401\n\n\n"
+                                                         "def test_l():\n    assert callable(_helper)\n")},
+        symlinks={"application/order/test/support/locked.py": "missing_target.py"}),
+    # G2 재개 두 갈래 — 커밋한 장난감(앵커) · 지원 확인 → G1 결속 → 레인 편집 커밋(after) → suite
+    _sc("split-changed", "G2 — 이번 실행이 바꾼 시험 파일의 관찰 API(관련 실패 — 고친 뒤 suite 다시)", "split",
+        {**INI, "application/order/test/test_p.py": OK_TEST}, after={"application/order/test/test_p.py": OBS_FN + "\n\n" + OK_TEST},
+        after_commit={}),
+    _sc("split-unchanged", "G2 — 이번 실행이 바꾸지 않은 시험 쪽 파일이 실행 중 실림(G0 예보 · 정지 보고)", "split",
+        {**INI, **SUP_PKG, SUP + "obs.py": OBS_FN,
+         "application/order/test/test_late.py": (f"import importlib\n\n\ndef test_late():\n    importlib.import_module({DYN})\n"
+                                                 "    assert True\n")},
+        after={"application/order/product.py": "def product():\n    return 5  # 레인 편집\n"}, after_commit={}),
+]
+
+ALL_CASES: "list[Case]" = [*R_CASES, *N_CASES, *C_CASES, *SCOPE_CASES]
 
 
 def toy_files(case: Case) -> "dict[str, str | bytes]":

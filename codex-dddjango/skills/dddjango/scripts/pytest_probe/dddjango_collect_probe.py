@@ -16,6 +16,10 @@
 `PY_START` · `PY_RETURN` 을 켜, 감시 구간을 연 call 실행 맥락(스레드 — greenlet 이 적재돼 있으면 그 greenlet)의 시작 ·
 정상 반환과 맥락 밖 사건을 센다. passed call 보고 때 꺼내 «시작 ≥ 1 · 정상 반환 = 시작 · 맥락 밖 0 · 재진입 없음»이
 아니면 허용 밖으로 남긴다. 구간이 열린 채 call 단계 훅이 다시 불리면 재진입으로 남긴다.
+실행 기록(기록 판 2 · 설계 3판 §C1): import 때 감사 훅 하나가 사건 «exec» 의 코드 객체 파일 이름(날 글자 — 상대 이름은 그 사건
+때 작업 폴더로 풂 · `<` 로 시작하면 버림)을 모은다. 수집 끝 · 기록 확정 때 그때까지 모은 것과 `sys.modules` 의 `__file__`(날 글자)
+가운데 저장소 뿌리(`DDDJANGO_PROBE_ROOTS` — 날 · 풀린 둘) 아래인 것을 `loaded_collect` · `loaded_end` 로, 수집 끝 `sys.path`
+(상대 항목은 그때 작업 폴더로 풂)를 `sys_path` 로 남긴다. 지원 쪽이 이 기록으로 «실제로 실리고 돈 시험 쪽 코드»를 정한다.
 """
 from __future__ import annotations
 
@@ -34,6 +38,24 @@ import _pytest.unittest
 import pytest
 
 
+RECORD_VERSION = 2                    # 기록 판 — 2 = 실행 기록(loaded_collect · loaded_end · sys_path) 칸을 더한 판
+_RAN: set = set()                     # 감사 사건 «exec» 의 코드 객체 파일 이름(날 글자 · 상대 이름은 그때 작업 폴더로 풂)
+_CODE = types.CodeType
+
+
+def _on_audit(event, args) -> None:
+    """감사 훅 — «exec» 사건만 본다(그 밖 사건은 비교 한 번). 코드 객체의 파일 이름 글자만 읽고 사용자 코드를 부르지 않는다."""
+    if event == "exec":
+        code = args[0]
+        if type(code) is _CODE:
+            f = code.co_filename
+            if f and f[0] != "<":
+                _RAN.add(f if os.path.isabs(f) else os.path.join(os.getcwd(), f))
+
+
+sys.addaudithook(_on_audit)           # -p 로 실리는 import 때 건다 — conftest · 진입점 플러그인보다 먼저(앞선 -p 플러그인은 §12)
+ROOTS = tuple(r.rstrip(os.sep) + os.sep for r in json.loads(os.environ.get("DDDJANGO_PROBE_ROOTS") or "[]"))
+
 XUNIT_MODULE = ("setup_module", "teardown_module", "setUpModule", "tearDownModule", "setup_function", "teardown_function")
 PACKAGE_XUNIT = ("setUpModule", "setup_module", "tearDownModule", "teardown_module")
 DJANGO_LOAD = ("setUpClass", "_fixture_setup", "_pre_setup")
@@ -49,7 +71,18 @@ _S: dict = {"seen_cls": set(), "tool": None, "bound": {}, "watch": None, "owner"
             "proof": {}, "suspend": set(), "initial": [], "final": [], "files": set(), "unresolved": [], "bad": [], "calls": set(),
             "skips": set(), "passed": set(), "complete": set(), "workers_ready": set(), "allowed_sourceless": set(), "django": None,
             "hookimpls": {}, "finalized": False, "late": [], "exitstatus": None,
-            "failed": 0, "import_skips": [], "packages": set(), "meta": {}, "anchor": [], "names": {}, "flags": {}, "reentry": False}
+            "failed": 0, "import_skips": [], "packages": set(), "meta": {}, "anchor": [], "names": {}, "flags": {}, "reentry": False,
+            "loaded_collect": [], "sys_path": []}
+
+
+def _loaded() -> "list[str]":
+    """지금까지 실행된 코드의 파일 이름 ∪ `sys.modules` 의 `__file__`(날 글자) — 저장소 뿌리 아래만."""
+    files = set(_RAN)
+    for m in list(sys.modules.values()):
+        f = getattr(m, "__file__", None) if isinstance(m, types.ModuleType) else None
+        if isinstance(f, str):
+            files.add(f)
+    return sorted(f for f in files if f.startswith(ROOTS))
 
 
 def _code_file(code) -> "str | None":
@@ -191,7 +224,7 @@ def _write() -> None:
     config = _S["config"]
     pm = config.pluginmanager
     role = "worker" if _S.get("workerid") else ("controller" if pm.has_plugin("dsession") else "single")
-    data = {"role": role, "workerid": _S.get("workerid"), "rootpath": str(config.rootpath),
+    data = {"version": RECORD_VERSION, "role": role, "workerid": _S.get("workerid"), "rootpath": str(config.rootpath),
             "inipath": str(config.inipath) if config.inipath else None, "args": list(config.invocation_params.args),
             "exitstatus": _S["exitstatus"], "initial": _S["initial"], "final": _S["final"],
             "calls": sorted(_S["calls"]), "skips": sorted(_S["skips"]), "passed": sorted(_S["passed"]), "meta": _S["meta"],
@@ -200,7 +233,8 @@ def _write() -> None:
             "allowed_sourceless": sorted(_S["allowed_sourceless"]), "workers_ready": sorted(_S["workers_ready"]),
             "finalized": _S["finalized"], "late": _S["late"], "failed": _S["failed"], "import_skips": _S["import_skips"],
             "anchor": _S["anchor"], "optimize": sys.flags.optimize, "flags": _S["flags"],
-            "greenlet_loaded": "greenlet" in sys.modules}
+            "greenlet_loaded": "greenlet" in sys.modules, "loaded_collect": _S["loaded_collect"], "loaded_end": _loaded(),
+            "sys_path": _S["sys_path"]}
     Path(out).mkdir(parents=True, exist_ok=True)
     Path(out, f"{os.getpid()}.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8",
                                                 errors="surrogateescape")   # OS 가 surrogateescape 로 넘긴 경로도 원래 바이트로
@@ -359,6 +393,8 @@ def pytest_collection_finish(session) -> None:
         for node in item.listchain():
             if isinstance(node, pytest.Package):
                 _S["packages"].add(str((Path(node.path) / "__init__.py").resolve()))
+    _S["loaded_collect"] = _loaded()                  # 수집 끝 실행 기록 — G0 보는 범위의 실린 몫(L0)
+    _S["sys_path"] = [os.path.abspath(e) for e in sys.path if isinstance(e, str)]   # 시험 쪽 import 닫힘의 이름 해석 기준
 
 
 def _django_load_override(cls, where: str) -> None:
