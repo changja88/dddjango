@@ -2,12 +2,12 @@
 """B0 영구 픽스처 러너 — 지원 확인 · 증거 실행 엔진(`behavior_support.run` · `g0_keep`)을 장난감 저장소 510 칸에 대어
 판정 · 사유 · 사유 수를 기대 표와 대조한다(RD 설계 v15.2 §4-7 · §8 B0 · 계획 T11 · T10 E1 · 실린 범위 = F4-107 설계 3판 §C5).
 
-사례 = `workspace/eval/fixtures/behavior_probe/cases.py`(R 원형 재현 412 · N 이름별 56 · C 빈 범주 · 실린 범위 140) ·
+사례 = `workspace/eval/fixtures/behavior_probe/cases.py`(R 원형 재현 412 · N 이름별 56 · C 빈 범주 · 실린 범위 168) ·
 기대 표 = 같은 폴더 `expected.json`. 장난감은 `tempfile` 안 새 폴더(`git init` 만 — `after_commit` 사례만 픽스처 커밋 1)이고, 장난감 pytest 는
 저장소 루트의 고정 판 픽스처 환경 `.venv-probe` 로 돈다(없으면 «make probe-env 필요»).
 
 엔진:
-  --engine impl              (기본) 구현판 `dddjango/scripts/behavior_support.py`(k0 §4-5 서명) — 608 칸.
+  --engine impl              (기본) 구현판 `dddjango/scripts/behavior_support.py`(k0 §4-5 서명) — 636 칸(돌릴 조건 `needs` 가 이 기계에서 맞지 않는 사례는 건너뛴다).
   --engine impl=<scripts 폴더>  같은 서명의 다른 판(대역 시험용).
   --engine proto=<원형 폴더>   원형 `support_v152.run`(T11 원형 대비 전용) — 상한 14 칸은 원형에 상수가 없어 건너뛴다.
 칸 판정: 사유가 없으면 «통과», 있으면 collect · G0 · support 칸은 «정지», run · G2 · suite 칸은 «red».
@@ -34,7 +34,8 @@ G0 유지 접기 · 개명 G2 확인(K1 ~ K10 · 구현판 전용 · 사례 칸 
 삭제를 창 차례로 접는 `g0_keep` · 창 기록 읽기 `_g0_keep_exceptions` · 개명된 새 키의 G2 선택 `renamed_selection` 을 손으로 만든
 자료에 대고(K1 ~ K7), 장난감 pytest 로 지원 확인 → 레인 개명 커밋 → 창 기록 → suite 를 끝까지 돈다(K8 개명 대응 green · K9
 개명 케이스 skip 보고 · K10 선택 빠짐 red).
-갈래(split) 사례는 커밋한 장난감의 HEAD 를 앵커로 적고 지원 확인 → G1 결속 → 레인 편집 커밋 → suite 를 명령 진입 함수로 돈다(병렬 밖).
+갈래(split) 사례는 커밋한 장난감의 HEAD 를 앵커로 적고 지원 확인 → G1 결속 → 레인 편집 커밋(→ 상류 승인 머지) → suite 를
+명령 진입 함수로 돈다(병렬 밖).
 부가 관측 obs(정적 규칙) = [범위 안 걸린 줄 · 실린 범위 .py 수 · 범위 밖 예보 줄 · 풀지 못한 import 이름]. 3판(2026-10-24 · F4-107)이
 보는 범위를 «실제로 실리고 돈 시험 쪽 코드»로 바꿔 이 칸 판형이 한꺼번에 바뀌었다 — 그때 기대 표는 이름 든 사례(C-parse ·
 C-read-fail-symlink · reobtain-04) 밖의 판정 · 사유 · 사유 수를 그대로 두고(584cb29a 판 실행 덤프와 글자 대조) obs 칸만 바꿨다.
@@ -61,6 +62,7 @@ import time
 import traceback
 from pathlib import Path
 from types import ModuleType
+from typing import Callable
 
 sys.dont_write_bytecode = True   # 구현판 · 사례 모듈을 들여도 저장소에 __pycache__ 를 남기지 않는다
 
@@ -89,7 +91,7 @@ BASE_ENV_DROP: "tuple[str, ...]" = ("R8_SKIP_BAD", "R8_SETUPONLY", "QUICK", "NO_
 CELLS: "dict[str, tuple[str, str]]" = {"pair": ("collect", "run"), "env": ("G0", "G2"), "timeout": ("support", "suite"),
                                        "limits": ("support", "suite"), "split": ("support", "suite")}
 SERIAL_KINDS: "tuple[str, ...]" = ("timeout", "limits", "split")   # 명령 진입 함수를 거쳐 상속 환경(os.environ)을 잠시 바꾸는 사례
-SCOPE_RE: "re.Pattern[str]" = re.compile(r"실린 범위 \d+ 파일 · 범위 밖 예보 \d+ · 풀지 못한 import 이름 \d+")
+SCOPE_RE: "re.Pattern[str]" = re.compile(r"실린 범위 \d+ 파일 · 범위 밖 예보 \d+\(안 본 파일 \d+\) · 풀지 못한 import 이름 \d+")
 OBSERVER_RE: "re.Pattern[str]" = re.compile(r"실행 관찰 API \d+\([^)]*\)")
 STOP_LABEL: "dict[str, str]" = {"collect": "정지", "G0": "정지", "support": "정지", "run": "red", "G2": "red", "suite": "red"}
 SITE_RE: "re.Pattern[str]" = re.compile(r"(?:/[^\s:()'\"]*)?/lib/python3\.\d+/site-packages/")
@@ -202,7 +204,16 @@ def build_toy(cases: ModuleType, case, at: Path) -> Path:
     for rel, target in (case.symlinks or {}).items():
         link = at / rel
         link.parent.mkdir(parents=True, exist_ok=True)
-        os.symlink(target.replace("<OUTSIDE>", str(outside)), link)
+        os.symlink(target.replace("<OUTSIDE>", str(outside)).replace("<TOY>", str(at)), link)
+    for rel, target in (case.outside_links or {}).items():   # 장난감 밖 폴더 안 심링크 — 같은 자리를 다시 만들면 바꾼다
+        link = outside / rel
+        link.parent.mkdir(parents=True, exist_ok=True)
+        if link.is_symlink():
+            link.unlink()
+        os.symlink(target.replace("<TOY>", str(at)), link)
+    for rel, existing in (case.hardlinks or {}).items():
+        (at / rel).parent.mkdir(parents=True, exist_ok=True)
+        os.link(at / existing, at / rel)
     subprocess.run(["git", "-c", "init.defaultBranch=main", "init", "-q", str(at)], check=True, capture_output=True)
     if case.after_commit is not None:                      # tempfile 안 픽스처 커밋 1 뒤 작업 트리 편집(지운 추적 파일 등)
         git = ["git", "-C", str(at), "-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false"]
@@ -455,8 +466,10 @@ def _match(regex: "re.Pattern[str]", said: str) -> str:
 
 def run_split(engine: Engine, box: Toolbox, case, work: Path) -> dict:
     """G2 재개 두 갈래(설계 3판 §C2) — 커밋한 장난감의 HEAD 를 앵커(`build_anchor`)로 적고 지원 확인(«지원») → G1 결속 →
-    레인 편집(`case.after`)을 커밋 → suite. suite 칸은 실행 관찰 API 를 «이번 실행이 바꾼 파일 / 안 바꾼 파일»로 가른 사유 ·
-    계수 · 요약 조각을 본다. 명령 진입 함수가 상속 환경을 쓰므로 병렬 밖에서 기본 환경으로 잠시 바꿔 돈다."""
+    레인 편집(`case.after`)을 커밋 → (case.upstream 이 있으면 앵커에서 갈라진 상류 커밋을 머지하고 approved-merges.txt 에 등재) →
+    suite. suite 칸은 실행 관찰 API 를 «이번 실행이 바꾼 파일 / 안 바꾼 파일»로 가른 사유 · 계수 · 요약 조각을 본다.
+    case.anchor 가 거짓이면 build_anchor 를 쓰지 않는다(갈래 판정 불능 · 기록은 남는다). 명령 진입 함수가 상속 환경을 쓰므로
+    병렬 밖에서 기본 환경으로 잠시 바꿔 돈다."""
     saved_env = dict(os.environ)
     out = {}
     try:
@@ -466,7 +479,8 @@ def run_split(engine: Engine, box: Toolbox, case, work: Path) -> dict:
         git = ["git", "-C", str(toy), "-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false"]
         genv = {**os.environ, **GIT_FIXTURE_ENV}
         head = subprocess.run([*git, "rev-parse", "HEAD"], check=True, capture_output=True, text=True, env=genv).stdout.strip()
-        (folder / "build_anchor").write_text(head + "\n", encoding="utf-8")
+        if case.anchor:
+            (folder / "build_anchor").write_text(head + "\n", encoding="utf-8")
         code, said = _command(engine.mod.cmd_support, folder, toy)
         g0 = json.loads((rec / "g0-collect.json").read_text(encoding="utf-8"))
         out["support"] = cell("support", g0["reasons"], {"exit": code, "summary": _summary(said), "record_verdict": g0["verdict"],
@@ -479,6 +493,16 @@ def run_split(engine: Engine, box: Toolbox, case, work: Path) -> dict:
             (toy / rel).write_text(body, encoding="utf-8")
             subprocess.run([*git, "add", "--", rel], check=True, capture_output=True, env=genv)
         subprocess.run([*git, "commit", "-q", "-m", "레인 편집"], check=True, capture_output=True, env=genv)
+        if case.upstream:
+            subprocess.run([*git, "checkout", "-q", "-b", "upstream", head], check=True, capture_output=True, env=genv)
+            for rel, body in case.upstream.items():
+                (toy / rel).write_text(body, encoding="utf-8")
+                subprocess.run([*git, "add", "--", rel], check=True, capture_output=True, env=genv)
+            subprocess.run([*git, "commit", "-q", "-m", "상류"], check=True, capture_output=True, env=genv)
+            subprocess.run([*git, "checkout", "-q", "main"], check=True, capture_output=True, env=genv)
+            subprocess.run([*git, "merge", "-q", "--no-ff", "--no-edit", "upstream"], check=True, capture_output=True, env=genv)
+            merged = subprocess.run([*git, "rev-parse", "HEAD"], check=True, capture_output=True, text=True, env=genv).stdout.strip()
+            (folder / "approved-merges.txt").write_text(f"{merged} 승인 머지(픽스처 상류)\n", encoding="utf-8")
         code, said = _command(engine.mod.cmd_suite, folder, toy)
         suite = engine.mod.latest_suite_record(folder)
         if suite is None:
@@ -487,6 +511,7 @@ def run_split(engine: Engine, box: Toolbox, case, work: Path) -> dict:
         out["suite"] = cell("suite", suite["reasons"], {"exit": code, "summary": _summary(said), "record_verdict": suite["verdict"],
                                                         "observer": [counts.get(k) for k in ("observer_hits", "observer_files",
                                                                                              "observer_unchanged")],
+                                                        "split": suite.get("observer_split"),
                                                         "line": _match(OBSERVER_RE, said)}, box, (toy, "<TOY>"))
     finally:
         os.environ.clear()
@@ -825,6 +850,16 @@ def run_g0_keep_checks(engine: Engine, cases: ModuleType) -> "list[str]":
     return problems
 
 
+def _case_insensitive_fs() -> bool:
+    """임시 폴더의 파일 시스템이 대소문자를 가리지 않는가(APFS 기본)."""
+    with tempfile.TemporaryDirectory(prefix="bp-fs-") as td:
+        (Path(td) / "Aa").write_text("x", encoding="utf-8")
+        return (Path(td) / "aA").exists()
+
+
+NEEDS: "dict[str, Callable[[], bool]]" = {"case-insensitive-fs": _case_insensitive_fs}
+
+
 def run_case(engine: Engine, box: Toolbox, case) -> "tuple[dict | None, str, float]":
     t0 = time.monotonic()
     serial = case.kind in SERIAL_KINDS                     # 병렬 밖에서만 돈다 — 제품 상수 · 상속 환경을 잠시 바꿔도 된다
@@ -908,6 +943,8 @@ def main() -> int:
     want_all = json.loads(EXPECTED.read_text(encoding="utf-8"))["cases"] if EXPECTED.is_file() else {}
     selected = [c for c in cases.ALL_CASES
                 if not args.only or any(c.id.startswith(o) or c.group == o or c.bundle == o for o in args.only)]
+    unmet = [c for c in selected if c.needs is not None and not NEEDS[c.needs]()]   # 돌릴 조건이 이 기계에서 맞지 않는 사례
+    selected = [c for c in selected if c not in unmet]
     skipped = [c for c in selected if c.kind in SERIAL_KINDS and engine.proto]
     pooled = [c for c in selected if c.kind not in SERIAL_KINDS]
     serial = [c for c in selected if c.kind in SERIAL_KINDS and not engine.proto]
@@ -976,6 +1013,7 @@ def main() -> int:
     slow = sorted(((results[c.id][2], c.id) for c in [*pooled, *serial]), reverse=True)[:3]
     print(f"{'PASS' if matched == total and not problems else 'FAIL'} — 가장 느린 사례 " + " · ".join(f"{i} {s:.1f}초" for s, i in slow))
     skip_note = f"건너뜀 {2 * len(skipped)}(원형에 상한 상수 없음) · " if skipped else ""
+    skip_note += f"조건 밖 건너뜀 {2 * len(unmet)}({' · '.join(f'{c.id} {c.needs}' for c in unmet)}) · " if unmet else ""
     print(f"요약: 칸 {matched}/{total} 일치 · 다름 {len(mismatches)} · 실행 실패 {failures} · traceback {tracebacks} · "
           f"{skip_note}편차 범위 뺀 칸 {deviated} · 환경 값 채운 칸 {filled} · 구현판 사유 더한 칸 {added} · R {ok_cells['R']} · N {ok_cells['N']} · C {ok_cells['C']} · {wall:.1f}초 · 병렬 {jobs}")
     return 0 if matched == total and not problems else 1
