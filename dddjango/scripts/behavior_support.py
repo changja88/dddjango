@@ -393,14 +393,34 @@ def _stat_key(path: Path) -> "tuple[int, int, int] | None":
     return st.st_size, st.st_mtime_ns, st.st_ino
 
 
+def _ident_table(repo: Path, rels: "set[str]") -> "dict[str, set[str]]":
+    """파일 정체 표 — 저장소 파일(링크 따라감)의 «st_dev:st_ino» → 저장소 경로들(stat 못 하는 파일은 뺀다)."""
+    out: "dict[str, set[str]]" = {}
+    for rel in rels:
+        try:
+            st = os.stat(repo / rel)
+        except OSError:
+            continue
+        out.setdefault(f"{st.st_dev}:{st.st_ino}", set()).add(rel)
+    return out
+
+
 def _static_one(repo: Path, rel: str, want_imports: bool) -> dict:
     """시험 쪽 .py 하나의 정적 결과 — {"fail": 확인 못 한 까닭 | None, "hits": 규칙에 걸린 줄, "imports": 닫힘 재료(want_imports
-    — G0 만), "stat": 읽기 전 (크기, mtime_ns, inode)}. 바이트로 파싱해 PEP 263 인코딩 표지를 존중한다."""
+    — G0 만), "stat": 읽은 판의 (크기, mtime_ns, inode)}. 읽기 앞뒤 stat 이 같을 때만 받고 다르면 다시 읽는다(세 번 넘게
+    어긋나면 stat 을 비워 명령 뒤 다시 보게 한다). 바이트로 파싱해 PEP 263 인코딩 표지를 존중한다."""
     stat = _stat_key(repo / rel)
-    try:
-        data = (repo / rel).read_bytes()
-    except OSError:
-        return {"fail": "읽기 실패", "hits": [], "imports": [], "stat": stat}
+    for _attempt in range(3):
+        try:
+            data = (repo / rel).read_bytes()
+        except OSError:
+            return {"fail": "읽기 실패", "hits": [], "imports": [], "stat": stat}
+        after = _stat_key(repo / rel)
+        if after == stat:
+            break
+        stat = after
+    else:
+        stat = None
     try:
         tree = _ast.parse(data)
     except SyntaxError:
@@ -753,21 +773,11 @@ def run(repo: Path, definition: dict, mode: str, inherited: "dict[str, str]", *,
     scanner = threading.Thread(target=_static_all, args=(repo, sorted(test_side), static, want_imports, scan_go, stop_static),
                                name="dddjango-static", daemon=True)
     scanner.start()
-    # 파일 정체 표 — 시험 쪽 .py 의 (st_dev, st_ino) → 저장소 경로. 탐침이 실린 파일을 다른 경로 글자(제외 자리 · 저장소 밖
-    # 링크 · 유니코드 정규형 · 대소문자 · 굳은 링크)로 실었어도 정체로 그 저장소 경로를 남긴다(경로 글자 대조와 둘 중 하나).
-    idents: "list[list[object]]" = []
-    for rel in sorted(test_side):
-        try:
-            st = os.stat(repo / rel)
-        except OSError:
-            continue
-        idents.append([st.st_dev, st.st_ino, rel])
-    out_root.mkdir(parents=True, exist_ok=True)
-    ident_file = out_root / "idents.json"
-    _write_json(ident_file, idents)
+    # 파일 정체 표(명령 앞) — 시험 쪽 .py 의 «st_dev:st_ino» → 저장소 경로. 명령 뒤에 한 번 더 만들어 합친다(실행 중 바뀐 inode).
+    # 탐침이 남긴 정체를 이 표로 저장소 경로에 댄다 — 다른 경로 글자로 실었어도 같은 파일이다(경로 글자 대조와 둘 중 하나).
+    idents: "dict[str, set[str]]" = _ident_table(repo, test_side)
     env = _command_env(definition, inherited)
     env["DDDJANGO_PROBE_ROOTS"] = json.dumps(list(roots))
-    env["DDDJANGO_PROBE_IDS"] = str(ident_file)
     loaded: "set[str]" = set()
     by_ident: "set[str]" = set()
     sys_path: "list[str]" = []
@@ -975,8 +985,11 @@ def run(repo: Path, definition: dict, mode: str, inherited: "dict[str, str]", *,
                 static[rel] = _static_guarded(repo, rel, want_imports)
         return static[rel]
 
+    for key, rels in _ident_table(repo, test_side).items():   # 명령 뒤 표를 합친다(같은 내용 바꿔치기 등으로 바뀐 inode)
+        idents.setdefault(key, set()).update(rels)
     m_py = {r for r in M if r.endswith(".py")}
-    ran = {r for r in _loaded_rels(loaded, roots, scope) | (by_ident & scope) if r.endswith(".py")}
+    ran = {r for r in _loaded_rels(loaded, roots, scope) | {rel for key in by_ident for rel in idents.get(key, ())}
+           if r.endswith(".py")}
     closure, unresolved = (_import_closure(fresh, (m_py | ran) & test_side, test_side, py, _path_roots(sys_path, roots), sys_path)
                            if mode == "collect" else (set(), set()))
     seen = m_py | ran | closure
