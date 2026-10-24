@@ -2220,6 +2220,14 @@ _FILE_ADDR: "re.Pattern[str]" = re.compile(r"(?<![\w./-])([\w./-]+\.\w+)(::[A-Za
 # 입장 표 owner/path 칸의 케이스 주소 `경로.py::케이스`(클래스면 `Class::method` · 매개변수 id `[…]` 는 싣지 않는다).
 _CASE_ADDR: "re.Pattern[str]" = re.compile(r"(?<![\w./-])([\w./-]+\.py)::([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)")
 _ROW_OWNER: "re.Pattern[str]" = re.compile(r"(?<![\w-])(acceptance-tester|coder)(?![\w-])")
+# retain 재조직 행 candidate 칸의 «개명» 꼴(F4-116) — `재조직 — 개명 <경로>::[<클래스>::]<옛> → <새>` ·
+# `재조직 — 개명 <경로>::<케이스>[<옛 id>] → [<새 id>]`(ids 는 원소 id) · 한 행에 하나. «재조직 — 개명» 뒤에 `.py::` 주소가 와야
+# 개명 행이다(그 밖 글은 보통 재조직 행).
+_RENAME_HEAD: "re.Pattern[str]" = re.compile(r"재조직\s*[—–-]\s*개명\s+(?=`?[\w./-]+\.py::)")
+_RENAME_CASE: "re.Pattern[str]" = re.compile(
+    r"([\w./-]+\.py)::([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)\s*(?:→|->)\s*([A-Za-z_]\w*)")
+_RENAME_IDS: "re.Pattern[str]" = re.compile(
+    r"([\w./-]+\.py)::([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)\[([^\[\]|·`]+)\]\s*(?:→|->)\s*\[([^\[\]|·`]+)\]")
 UPDATE_DECISION: str = "update"
 REMOVE_DECISION: str = "remove"
 
@@ -2537,6 +2545,34 @@ def _reorg(row: AdmissionRow) -> bool:
     return row.decision == "retain" and any(mark in low for mark in REORG_MARKS)
 
 
+def _rename_item(row: AdmissionRow) -> "tuple[dict | None, str]":
+    """retain 재조직 행의 «개명» 항목(G1 스냅숏 `retain_rows[].renames` 원소 — behavior_guard 0T · 0F 가 기준 판에 먼저 적용) —
+    (항목, red 사유). 개명 행이 아니면 (None, ""). 케이스 = {kind 케이스, path, class(없으면 None · 중첩은 `A::B`), old, new} ·
+    ids = {kind ids, path, case(`[클래스::]케이스`), old, new}. 꼴 밖 · 옛 = 새 · owner/path 파일 ≠ 개명 경로면 red."""
+    head = _RENAME_HEAD.search(row.candidate)
+    if head is None:
+        return None, ""
+    rest: str = row.candidate[head.end():].replace("`", "").strip()
+    ids = _RENAME_IDS.fullmatch(rest)
+    case = _RENAME_CASE.fullmatch(rest) if ids is None else None
+    item: dict
+    if ids is not None:
+        item = {"kind": "ids", "path": ids.group(1), "case": ids.group(2), "old": ids.group(3).strip(),
+                "new": ids.group(4).strip()}
+    elif case is not None:
+        chain: "list[str]" = case.group(2).split("::")
+        item = {"kind": "케이스", "path": case.group(1), "class": "::".join(chain[:-1]) or None, "old": chain[-1],
+                "new": case.group(3)}
+    else:
+        return None, (f"개명 행 꼴 밖 — «{row.candidate[:80]}» 가 `재조직 — 개명 <경로>::[<클래스>::]<옛> → <새>` · `재조직 — 개명 "
+                      "<경로>::<케이스>[<옛 id>] → [<새 id>]` 가 아니다(한 행에 하나)")
+    if item["old"] == item["new"]:
+        return None, f"개명 행 꼴 밖 — «{row.candidate[:80]}» 옛 = 새"
+    if row.path != item["path"]:
+        return None, f"개명 행 owner/path 파일 `{row.path}` ≠ 개명 경로 `{item['path']}`(그 파일이 0F 허용 파일이 된다)"
+    return item, ""
+
+
 def _row_v(row_text: str, case: str, links: "list[tuple[str, str, str]]") -> "str | None":
     """입장 행(표 행 원문)이 딸린 V — 그 행을 가리키는 `시험:` 줄(V id, 입장 행, 케이스) 가운데 케이스가 같은 것이 먼저,
     없으면 그 행을 가리키는 첫 V · 어느 V 도 가리키지 않으면 None."""
@@ -2609,7 +2645,7 @@ def _support_binding(folder: Path) -> "tuple[str, str]":
 
 
 class SpecChanges:
-    """명세(승인판)에서 읽은 G1 결속 재료 — V · 다른 BC 편집 · 입장 표 · retain 재조직 행 · update 행."""
+    """명세(승인판)에서 읽은 G1 결속 재료 — V · 다른 BC 편집 · 입장 표 · retain 재조직 행(«개명» 행은 `renames`) · update 행."""
 
     def __init__(self, folder: Path) -> None:
         self.spec: Path = folder / "design-spec.md"
@@ -2625,7 +2661,14 @@ class SpecChanges:
                 if r.path is None:
                     self.reds.append(f"retain 재조직 행 «{r.candidate[:40]}» owner/path 에 파일 주소가 없다")
                     continue
-                self.retain.append({"path": r.path, "case": r.case, "why": r.evidence})
+                item, why = _rename_item(r)
+                if why:
+                    self.reds.append(why)
+                    continue
+                entry: dict = {"path": r.path, "case": r.case, "why": r.evidence}
+                if item is not None:
+                    entry["renames"] = [item]               # 키는 개명 행에만 — 개명 행 없는 명세는 digest 무변
+                self.retain.append(entry)
 
     def linked(self, tests: "list[VTest]") -> "list[str]":
         """시험 줄이 가리키는 입장 행(원문 표 행) — 처음 나온 차례."""
@@ -3522,9 +3565,11 @@ def cmd_changes(project: Path, folder: Path, mode: str, applied: "Path | None", 
         base_text += f" · 닫힌 창 기준선 {len(routed)}({', '.join(f'w{n}' for n in sorted(set(routed)))})"
     updates: "list[dict]" = spec.update_rows()
     removes: "list[dict]" = spec.decision_rows(REMOVE_DECISION)
+    renamed: int = sum(1 for r in spec.retain if r.get("renames"))
     print(f"요약: changes V {len(spec.v)}({' · '.join(f'{k} {n}' for k, n in kinds.items())}) · 시험 줄 "
           f"{sum(len(v.tests) for v in spec.v)} · 바뀌는 기대 {expect} · 연산 {ops} · 다른 BC 편집 {len(spec.edits)} · "
-          f"retain 재조직 {len(spec.retain)} · update 케이스 {len(updates)}(V 밖 {sum(1 for u in updates if u['v'] is None)})"
+          f"retain 재조직 {len(spec.retain)}{f'(개명 {renamed})' if renamed else ''} · "
+          f"update 케이스 {len(updates)}(V 밖 {sum(1 for u in updates if u['v'] is None)})"
           f" · remove 케이스 {len(removes)}(V 밖 {sum(1 for u in removes if u['v'] is None)})"
           f"{base_text} · red {len(reds)}{' · ' + mode if mode != 'check' else ''}"
           f"{tail if not reds or mode == 'applied' else ''}")
