@@ -3348,7 +3348,8 @@ def _suite_lines(record: "dict | None", confirmed: "tuple[str, str, str] | None"
         f"허용 목록 밖 {counts['nolist']}(프로젝트 훅 {counts['hooks']} 개 모두 목록 안) · 원본 못 찾음 {counts['unresolved']} · "
         f"확정 뒤 등록 {counts['late']} · 시험 기계 파일 {counts['M']} ⊆ 시험 쪽 · xdist 일꾼 출력 {outputs}/{ready} · "
         f"G0 유지(구조 키 — 파일 · 바이트 같은 항목 · 바뀐 파일 함수마다 처분 수{f' — 어긋남 {len(g0_keep)}' if g0_keep else ''}) · "
-        f"지문 마지막 close {eq(same)} 시작 = 명령 사이 = 끝 = 지금")
+        + (f"개명 케이스 skip {counts['renamed_skip']}(보고 — 개명된 새 키가 G2 에서 skip · xfail) · " if "renamed_skip" in counts else "")
+        + f"지문 마지막 close {eq(same)} 시작 = 명령 사이 = 끝 = 지금")
     return reds, line
 
 

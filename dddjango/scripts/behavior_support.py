@@ -682,7 +682,8 @@ def run(repo: Path, definition: dict, mode: str, inherited: "dict[str, str]", *,
     reasons: "list[str]" = []
     counts = _new_counts()
     info: dict = {"seconds": 0.0, "outputs": 0, "fp": [], "initial": set(), "ok": set(), "meta": {}, "anchor": [], "nolist": [],
-                  "flags": {}, "greenlet_loaded": False, "project_hooks": set(), "commands": [], "cleaned": [], "counts": counts}
+                  "flags": {}, "greenlet_loaded": False, "project_hooks": set(), "commands": [], "cleaned": [], "counts": counts,
+                  "selected_ids": set(), "skipped_ids": set()}
     root = repo.resolve()
     out_root = Path(probe_out_root).resolve()
     if out_root.is_relative_to(root) and not bg._excluded(out_root.relative_to(root).as_posix() + "/"):
@@ -819,6 +820,7 @@ def run(repo: Path, definition: dict, mode: str, inherited: "dict[str, str]", *,
             if not final <= ok or not final <= complete:
                 reasons.append(f"확인 못 함 — 선택 {len(final)} · 처분 {len(final & ok)}(call 보고 {len(final & calls)} · skip {len(final & skips)}) · 완료 {len(final & complete)} · {tag}")
             info["ok"] |= ok
+            info["skipped_ids"] |= final & skips              # G2 선택 가운데 skip · xfail(개명된 새 키 보고 — renamed_selection)
             failed = sum(o["failed"] for o in outs if has(o, "failed"))   # 일꾼까지 모든 출력의 합(일꾼 탐침은 tryfirst — 보고 고치기 전)
             if failed:
                 reasons.append(f"실패 보고 {failed}(모든 출력 합) — exit {rc} 와 무관하게 정지 · {tag}")
@@ -837,6 +839,7 @@ def run(repo: Path, definition: dict, mode: str, inherited: "dict[str, str]", *,
             counts["proof_ok"] += len((final & passed) - proof_viol)
         initial_all |= initial
         selected_all |= final
+        info["selected_ids"] |= final
         for o in outs:
             role = o["role"] if has(o, "role") else "?"
             if has(o, "failed"):
@@ -945,11 +948,33 @@ def _key(meta: list, root: Path) -> tuple:
     return (rel, cls, func, name)
 
 
-def g0_keep(g0: dict, g2: dict, repo: Path, moved: "dict[str, str] | None" = None, removed: "set | None" = None) -> "list[str]":
+def _fold_key(key: tuple, windows: "list[dict]") -> "tuple | None":
+    """구조 키 하나를 창 차례대로 접는다(설계 3.1 §D4) — 창마다 이동(옛 경로 → 새 경로) · 개명(창 당시 경로 · 클래스 · 옛 → 새 —
+    항목 이름의 함수 몫도) · 삭제(구조 키 · 지운 파일)를 그 차례로 · 삭제됐으면 None."""
+    rel, cls, func, name = key
+    for w in windows:
+        rel = w["moved"].get(rel, rel)
+        for r, c, old, new in w["renamed"]:
+            if (r, c, old) == (rel, cls, func):
+                name = new + name[len(func):] if name.startswith(func) else name
+                func = new
+                break
+        removed = w["removed"]
+        if (rel, cls, func, name) in removed or (rel, cls, func) in removed or rel in removed:
+            return None
+    return (rel, cls, func, name)
+
+
+def g0_keep(g0: dict, g2: dict, repo: Path, moved: "dict[str, str] | None" = None, removed: "set | None" = None,
+            windows: "list[dict] | None" = None) -> "list[str]":
     """G0 유지 셋(v11 구조 키): ① 파일 단위 — 지금 있는 G0 수집 파일은 처분 항목이 하나 이상
-    ② 바이트 같은 파일 — G0 항목(파일 · 클래스 · 함수 · 항목 이름) 전부 ③ 바뀐 파일 — (파일 · 클래스 · 함수)마다 처분 수 ≥ G0 수.
-    예외는 감사 · 승인 자료에 있는 것만: removed(`remove` 행의 구조 키 · 지운 파일) · moved(대응표 · retain 재조직이 옮긴 자리)."""
-    moved, removed = moved or {}, {tuple(x) if isinstance(x, list) else x for x in (removed or set())}
+    ② 바이트 같은 파일 — G0 항목(파일 · 클래스 · 함수 · 항목 이름) 전부 ③ 바뀐 파일 — (파일 · 클래스 · 함수)마다 처분 수 ≥ 그
+    자리로 접힌 G0 수.
+    예외는 감사 · 승인 자료에 있는 것만 — 창별 목록 `windows`(창 차례 · `_g0_keep_exceptions`)로 G0 키마다 이동 · 개명 · 삭제를
+    창 차례대로 접는다(개명은 면제가 아니라 대응 — 옛 키 → 새 키). moved · removed 만 주면 창 하나로 본다(옛 부름)."""
+    if windows is None:
+        windows = [{"moved": moved or {}, "renamed": [],
+                    "removed": {tuple(x) if isinstance(x, list) else x for x in (removed or set())}}]
     g0 = {**g0, "keys": {n: tuple(k) for n, k in g0["keys"].items()}}       # JSON 기록(목록)도 받는다
     g2 = {**g2, "keys": {n: tuple(k) for n, k in g2["keys"].items()}}
     ok_keys = {g2["keys"][n] for n in g2["ok"] if n in g2["keys"]}
@@ -958,26 +983,49 @@ def g0_keep(g0: dict, g2: dict, repo: Path, moved: "dict[str, str] | None" = Non
     n_g2: dict = {}
     for k in ok_keys:
         n_g2[k[:3]] = n_g2.get(k[:3], 0) + 1
+    folded: "dict[tuple, tuple | None]" = {k: _fold_key(k, windows) for k in set(g0["keys"].values())}
     n_g0: dict = {}
-    for k in set(g0["keys"].values()):
-        n_g0[k[:3]] = n_g0.get(k[:3], 0) + 1
+    for k2 in folded.values():
+        if k2 is not None:
+            n_g0[k2[:3]] = n_g0.get(k2[:3], 0) + 1
     out = []
-    for k in sorted(set(g0["keys"].values()), key=repr):
-        rel = k[0]
-        new = moved.get(rel, rel)
-        if k in removed or k[:3] in removed or rel in removed or not (repo / new).is_file():
+    for k in sorted(folded, key=repr):
+        k2 = folded[k]
+        if k2 is None or not (repo / k2[0]).is_file():
             continue
-        k2 = (new, *k[1:])
+        new = k2[0]
         if new not in ok_files:
             out.append(f"파일 단위: {new}")
-        elif _file_digest(repo / new) == g0["digests"].get(rel):
+        elif _file_digest(repo / new) == g0["digests"].get(k[0]):
             if k2 not in ok_keys:
                 out.append(f"항목 단위: {k2}")
         elif k2[:3] not in ok_funcs:
             out.append(f"함수 단위(바뀐 파일): {k2[:3]}")
-        elif n_g2[k2[:3]] < n_g0[k[:3]]:                     # v11(Claude r10 m3): 매개변수 축소 — 처분 수 ≥ G0 수
-            out.append(f"함수 단위 처분 수 {n_g2[k2[:3]]} < G0 {n_g0[k[:3]]}(바뀐 파일): {k2[:3]}")
+        elif n_g2[k2[:3]] < n_g0[k2[:3]]:                    # v11(Claude r10 m3): 매개변수 축소 — 처분 수 ≥ G0 수
+            out.append(f"함수 단위 처분 수 {n_g2[k2[:3]]} < G0 {n_g0[k2[:3]]}(바뀐 파일): {k2[:3]}")
     return sorted(set(out))
+
+
+def renamed_selection(windows: "list[dict]", g2: dict) -> "tuple[list[str], int]":
+    """개명된 새 키(설계 3.1 §D3 G2) — 창 기록의 케이스 개명마다 새 (파일 · 클래스 · 함수)를 뒤 창들로 접어 지금 자리를 구하고, G2
+    선택(final)에 그 자리 항목이 없으면 red «개명된 케이스가 G2 에서 선택되지 않았다». 그 자리 항목이 모두 skip · xfail 이면 red 가
+    아니라 보고 수에 든다. 뒤 창에서 지운 키는 대조 밖. (red 사유, skip · xfail 수)."""
+    keys: "dict[str, tuple]" = {n: tuple(k) for n, k in g2["keys"].items()}
+    selected: "set[tuple]" = {keys[n] for n in g2.get("selected_ids", ()) if n in keys}
+    skipped: "set[tuple]" = {keys[n] for n in g2.get("skipped_ids", ()) if n in keys}
+    reds: "list[str]" = []
+    skips: int = 0
+    for i, w in enumerate(windows):
+        for rel, cls, old, new in w["renamed"]:
+            now = _fold_key((rel, cls, new, new), windows[i + 1:])
+            if now is None:
+                continue
+            hits = [k for k in selected if k[:3] == now[:3]]
+            if not hits:
+                reds.append(f"개명된 케이스가 G2 에서 선택되지 않았다: {now[:3]}(개명 {old} → {new})")
+            elif all(k in skipped for k in hits):
+                skips += 1
+    return reds, skips
 
 
 # ── 기록 자리 ─────────────────────────────────────────────────────────────────
@@ -1125,15 +1173,15 @@ def cmd_support(folder: Path, repo: Path) -> int:
 
 # ── suite ────────────────────────────────────────────────────────────────────
 
-def _g0_keep_exceptions(run_dir: Path) -> "tuple[dict[str, str], set]":
-    """그 실행의 모든 창 마지막 close 의 g0_keep_exceptions 합 — moved 는 사슬을 끝까지 따라간다."""
-    moved: "dict[str, str]" = {}
-    removed: set = set()
+def _g0_keep_exceptions(run_dir: Path) -> "list[dict]":
+    """그 실행의 창마다 마지막 close 의 g0_keep_exceptions — 창 차례 목록 [{moved, renamed, removed}](설계 3.1 §D4 · 합치지 않는다:
+    G0 키마다 창 차례대로 이동 · 개명 · 삭제를 접는다 — `g0_keep(windows=)`). renamed = (창 당시 경로 · 클래스 · 옛 → 새)."""
+    windows: "list[dict]" = []
     for _n, _opened, closes in bg._windows(run_dir):
         if not closes:
             continue
         ex = closes[-1].get("g0_keep_exceptions") or {}
-        moved.update(ex.get("moved") or {})
+        removed: set = set()
         for item in ex.get("removed") or []:
             if isinstance(item, str) and "::" in item:
                 parts = item.split("::")
@@ -1143,14 +1191,13 @@ def _g0_keep_exceptions(run_dir: Path) -> "tuple[dict[str, str], set]":
                 removed.add((rel, cls if cls not in ("", "None") else None, func))
             else:
                 removed.add(item)
-    resolved: "dict[str, str]" = {}
-    for old in moved:
-        new, seen = moved[old], {old}
-        while new in moved and new not in seen:
-            seen.add(new)
-            new = moved[new]
-        resolved[old] = new
-    return resolved, removed
+        renamed: "list[tuple]" = []
+        for item in ex.get("renamed") or []:
+            if not (isinstance(item, dict) and all(isinstance(item.get(k), str) for k in ("path", "old", "new"))):
+                raise SupportError(f"g0_keep_exceptions.renamed 판형 밖 — {item!r}(path · class · old · new)")
+            renamed.append((item["path"], item.get("class") or None, item["old"], item["new"]))
+        windows.append({"moved": dict(ex.get("moved") or {}), "renamed": renamed, "removed": removed})
+    return windows
 
 
 def _split_observer(reasons: "list[str]", info: dict, folder: Path, repo: Path) -> "list[str]":
@@ -1195,7 +1242,7 @@ def cmd_suite(folder: Path, repo: Path) -> int:
                                f"(verdict {g0.get('verdict')} · digest {g0.get('run_definition_digest')})")
         run_dir = bg._run_dir(folder)
         run_value = bg._run_value(folder)
-        moved, removed = _g0_keep_exceptions(run_dir)
+        windows = _g0_keep_exceptions(run_dir)
         run_dir.mkdir(parents=True, exist_ok=True)
         stamp = _run_dir_stamp(run_dir)
         started = _utc()
@@ -1206,7 +1253,11 @@ def cmd_suite(folder: Path, repo: Path) -> int:
         if any(r.startswith("확인 못 함 — 시간 초과 · ") for r in reasons):
             keep = ["대조 생략 — 시간 초과로 실행 증거가 불완전함"]
         else:
-            keep = g0_keep({"keys": g0["keys"], "digests": g0["digests"]}, info, repo, moved, removed)
+            keep = g0_keep({"keys": g0["keys"], "digests": g0["digests"]}, info, repo, windows=windows)
+            if any(w["renamed"] for w in windows):        # 개명된 새 키 — 선택 빠짐 red · skip · xfail 은 보고(설계 3.1 §D3 G2)
+                missing, renamed_skip = renamed_selection(windows, info)
+                keep += missing
+                info["counts"]["renamed_skip"] = renamed_skip
         ended = _utc()
     except (SupportError, bg.RunError, ImportError, OSError, ValueError, KeyError, TypeError) as exc:
         _say(f"실행 불능: {type(exc).__name__}: {exc}", err=True)
@@ -1233,7 +1284,8 @@ def cmd_suite(folder: Path, repo: Path) -> int:
           f"결과 증거 {counts['proof_ok']}/{counts['proof_total']} · 실패 보고 {counts['failed']} · 시험 기계 파일 {counts['M']} · "
           f"실행 관찰 API {counts['observer_hits']}(실린 범위 {counts['observer_files']} 파일 · "
           f"그중 이번 실행이 바꾸지 않은 파일 {counts['observer_unchanged']}) · "
-          f"G0 유지 위반 {len(keep)} · 사유 {len(reasons)} · 기록 suite-{stamp}.json")
+          f"G0 유지 위반 {len(keep)}" + (f" · 개명 케이스 skip {counts['renamed_skip']}" if "renamed_skip" in counts else "")
+          + f" · 사유 {len(reasons)} · 기록 suite-{stamp}.json")
     return 0 if verdict == "green" else 2
 
 

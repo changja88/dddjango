@@ -2002,6 +2002,23 @@ def verify_checks() -> "list[str]":
     return fails
 
 
+def _support_keep(repo: Path, moved: str, now: "tuple[str, ...]", label: str) -> "list[str]":
+    """guard close 기록(창별 g0_keep_exceptions) → behavior_support `_g0_keep_exceptions` · `g0_keep` · `renamed_selection` —
+    G0 키(창 기준 TP 의 test_check · test_other)를 창 차례로 접어 G2 키(옮긴 자리 `now`)와 대조(설계 3.1 §D4)."""
+    bs = STATE["bs"]
+    try:
+        windows = bs._g0_keep_exceptions(_run_dir(repo))
+        g0 = {"keys": {f"{TP}::{n}": [TP, None, n, n] for n in ("test_check", "test_other")}, "digests": {TP: "g0"}}
+        g2 = {"keys": {f"{moved}::{n}": [moved, None, n, n] for n in now}, "ok": {f"{moved}::{n}" for n in now},
+              "selected_ids": {f"{moved}::{n}" for n in now}, "skipped_ids": set()}
+        keep = bs.g0_keep(g0, g2, repo, windows=windows)
+        chosen = bs.renamed_selection(windows, g2)
+    except Exception as exc:                                # noqa: BLE001 — 옛 판(창 목록 없음)은 다름으로 선다
+        return [f"{label} — behavior_support 창별 접기: {type(exc).__name__}: {exc}"]
+    return ([f"{label} — G0 유지 {keep}(기대 [])"] if keep else []) \
+        + ([f"{label} — 개명 G2 선택 {chosen}(기대 ([], 0))"] if chosen != ([], 0) else [])
+
+
 def rename_verify_checks() -> "list[str]":
     """F4-116 verify — 개명 키(요구 판정 기대 의미 그대로만) · 어느 창에도 적용되지 않은 개명 행 red · 개명 + 이동 다른 창(행 경로는
     G1 때 경로 — 앞 창 이동을 따라 그 창 기준 판 경로로 읽는다)."""
@@ -2065,6 +2082,27 @@ def rename_verify_checks() -> "list[str]":
         _suite(repo, digest)
         expect("개명 + 이동 다른 창 verify green", _rguard(repo, "verify"), 0, "창 2(0T 1 · 0C 0 · 0F 1 · 변경 0)",
                "개명 행 1 중 적용 1", "요약: 동작 보존 green")
+        fails += _support_keep(repo, moved, ("test_product_is_nine", "test_other"), "개명 + 이동 다른 창")
+        _suite(repo, digest, counts={**GOOD_COUNTS, "renamed_skip": 1})
+        expect("suite 기록 개명 케이스 skip 1 → verify suite 줄 «개명 케이스 skip 1»(보고 · green)", _rguard(repo, "verify"), 0,
+               "개명 케이스 skip 1", "요약: 동작 보존 green")
+        _suite(repo, digest, g0_keep=[f"개명된 케이스가 G2 에서 선택되지 않았다: ('{moved}', None, 'test_product_is_nine')"])
+        expect("suite G0 유지 «개명된 케이스가 G2 에서 선택되지 않았다» → verify red", _rguard(repo, "verify"), 2,
+               "suite G0 유지: 개명된 케이스가 G2 에서 선택되지 않았다")
+    with tempfile.TemporaryDirectory(prefix="bg-rn5-") as td:   # 이동 뒤 다른 창 remove — w1 0T 이동 · w2 0T 옮긴 자리 케이스 삭제
+        moved = "application/core/test/unit/test_check.py"
+        repo = _rrepo(Path(td), {TP: RN})
+        digest = _bind(repo, _snap(remove=((f"{moved}::test_check", None),)))
+        _rguard(repo, "open", "--kind", "test", "--mode", "refactor")
+        _write(repo, {TP: None, moved: RN})
+        _commit(repo)
+        expect("w1 0T 시험 파일 이동", _rguard(repo, "close"), 0, "감사 요청 키")
+        _audit(repo, 1, _rows(_last_close(repo)))
+        _rguard(repo, "open", "--kind", "test", "--mode", "refactor")
+        _write(repo, {moved: "from application.core.product import product\n\n\ndef test_other():\n    assert product() > 0\n"})
+        _commit(repo)
+        expect("w2 0T 옮긴 자리 케이스 삭제(remove 행)", _rguard(repo, "close"), 0, "감사 요청 키", absent=("테스트 케이스 감소",))
+        fails += _support_keep(repo, moved, ("test_other",), "이동 뒤 다른 창 remove")
     with tempfile.TemporaryDirectory(prefix="bg-rn4-") as td:   # 0T remove 행이 옛 이름(G1 트리) — w1 개명 · w2 새 이름 케이스 삭제
         snap4 = _snap(remove=((f"{TP}::test_check", None),), renames=(_rn("test_check", "test_product_is_nine"),))
         repo = _rrepo(Path(td), {TP: RN})

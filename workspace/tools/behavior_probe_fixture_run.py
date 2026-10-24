@@ -30,6 +30,10 @@ TIMEOUT_CASE_SECONDS 로 바꿔 혼자(병렬 밖) 돈다 — exit · 기록 판
 D4 기다림 중 두 번째 SIGINT → 강제 종료 단계가 돈다 · D5 정리(`_clean_created`)가 예외를 내도 KeyboardInterrupt 가 올라간다 ·
 D7 상한을 넘긴 뒤 멈춤 기다림 사이에 SIGINT → 묶음 0 · 실행이 만든 파일 지움 · KeyboardInterrupt 다시 올림.
 러너 자신에 보내는 SIGINT 는 그 확인 동안만 받는 처리기로 받는다.
+G0 유지 접기 · 개명 G2 확인(K1 ~ K10 · 구현판 전용 · 사례 칸 밖 · F4-116 설계 3.1 §D4): 창별 목록으로 G0 키마다 이동 · 개명 ·
+삭제를 창 차례로 접는 `g0_keep` · 창 기록 읽기 `_g0_keep_exceptions` · 개명된 새 키의 G2 선택 `renamed_selection` 을 손으로 만든
+자료에 대고(K1 ~ K7), 장난감 pytest 로 지원 확인 → 레인 개명 커밋 → 창 기록 → suite 를 끝까지 돈다(K8 개명 대응 green · K9
+개명 케이스 skip 보고 · K10 선택 빠짐 red).
 갈래(split) 사례는 커밋한 장난감의 HEAD 를 앵커로 적고 지원 확인 → G1 결속 → 레인 편집 커밋 → suite 를 명령 진입 함수로 돈다(병렬 밖).
 부가 관측 obs(정적 규칙) = [범위 안 걸린 줄 · 실린 범위 .py 수 · 범위 밖 예보 줄 · 풀지 못한 import 이름]. 3판(2026-10-24 · F4-107)이
 보는 범위를 «실제로 실리고 돈 시험 쪽 코드»로 바꿔 이 칸 판형이 한꺼번에 바뀌었다 — 그때 기대 표는 이름 든 사례(C-parse ·
@@ -688,6 +692,139 @@ def run_interrupt_checks(engine: Engine) -> "list[str]":
     return problems
 
 
+RN_TEST: str = "application/order/test/test_rn.py"
+RN_BASE: str = ("import pytest\n\n\ndef test_old():\n    assert True\n\n\n@pytest.mark.skip(reason=\"픽스처\")\n"
+                "def test_skipme():\n    assert True\n")
+
+
+def _rename_suite(engine: Engine, box: Toolbox, work: Path, name: str, lane: str, renamed: "list[dict]") -> "tuple[int, str, dict]":
+    """개명 G2 끝까지 — 커밋한 장난감(앵커) · 지원 확인 → G1 결속 → 레인 편집(개명) 커밋 → 창 기록 하나(close 의
+    `g0_keep_exceptions.renamed` — behavior_guard 가 남기는 판형) → suite. (exit, 출력, suite 기록)."""
+    case = box.cases._sc(f"rename-{name}", "개명 G2", "split", {**box.cases.INI, RN_TEST: RN_BASE}, after_commit={})
+    saved_env = dict(os.environ)
+    try:
+        os.environ.clear()
+        os.environ.update(base_env())
+        toy, folder, rec = _timeout_folder(engine, box, case, work / name)
+        git = ["git", "-C", str(toy), "-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false"]
+        genv = {**os.environ, **GIT_FIXTURE_ENV}
+        head = subprocess.run([*git, "rev-parse", "HEAD"], check=True, capture_output=True, text=True, env=genv).stdout.strip()
+        (folder / "build_anchor").write_text(head + "\n", encoding="utf-8")
+        code, said = _command(engine.mod.cmd_support, folder, toy)
+        if code != 0:
+            raise RuntimeError(f"개명 G2 확인의 지원 확인이 «지원»이 아님: {said}")
+        _bind_g1(folder, rec)
+        (toy / RN_TEST).write_text(lane, encoding="utf-8")
+        subprocess.run([*git, "add", "--", RN_TEST], check=True, capture_output=True, env=genv)
+        subprocess.run([*git, "commit", "-q", "-m", "레인 편집(개명)"], check=True, capture_output=True, env=genv)
+        run_dir = engine.mod.bg._run_dir(folder)
+        run_dir.mkdir(parents=True, exist_ok=True)
+        (run_dir / "w1-open.json").write_text(json.dumps({"window": 1, "kind": "follow", "mode": "refactor"}), encoding="utf-8")
+        (run_dir / "w1-close.json").write_text(json.dumps([{"verdict": "audit", "g0_keep_exceptions": {
+            "moved": {}, "removed": [], "renamed": renamed}}], ensure_ascii=False), encoding="utf-8")
+        code, said = _command(engine.mod.cmd_suite, folder, toy)
+        return code, said, engine.mod.latest_suite_record(folder) or {}
+    finally:
+        os.environ.clear()
+        os.environ.update(saved_env)
+
+
+def run_g0_keep_checks(engine: Engine, cases: ModuleType) -> "list[str]":
+    """K1 ~ K10 — G0 유지 창별 접기 · 개명 대응 · G2 선택(설계 3.1 §D3 G2 · §D4 · F4-116) — 다름 줄 목록(빈 목록 = 모두 통과).
+    K1 ~ K7 은 `g0_keep` · `_g0_keep_exceptions` · `renamed_selection` 을 손으로 만든 G0 · G2 · 창 기록에 대고, K8 ~ K10 은 장난감
+    pytest 로 지원 확인 → 레인 개명 → suite 를 끝까지 돈다(구현판 전용 · 사례 칸 밖)."""
+    problems: "list[str]" = []
+    mod = engine.mod
+
+    def win(moved: "dict | None" = None, renamed: "list | None" = None, removed: "set | None" = None) -> dict:
+        return {"moved": moved or {}, "renamed": renamed or [], "removed": removed or set()}
+
+    def keys(*items: "tuple[str, str | None, str, str]") -> dict:
+        return {f"{r}::{n}": [r, c, f, n] for r, c, f, n in items}
+
+    with tempfile.TemporaryDirectory(prefix="bp-keep-") as td:
+        repo = Path(td)
+        (repo / "b.py").write_text("def test_y():\n    assert True\n", encoding="utf-8")
+        g0 = {"keys": keys(("a.py", None, "test_x", "test_x"), ("a.py", None, "test_y", "test_y")), "digests": {"a.py": "old"}}
+        g2_y = {"keys": keys(("b.py", None, "test_y", "test_y")), "ok": {"b.py::test_y"}}
+        g2_zy = {"keys": keys(("b.py", None, "test_z", "test_z"), ("b.py", None, "test_y", "test_y")),
+                 "ok": {"b.py::test_z", "b.py::test_y"}}
+        checks = (
+            ("K1 이동 a→b(w1) 뒤 w2 b 의 test_x remove → 통과(창 차례로 접음)", g2_y,
+             [win({"a.py": "b.py"}), win(removed={("b.py", None, "test_x")})], []),
+            ("K2 개명 x→z(w1 · a 경로) 뒤 이동 a→b(w2) → 통과", g2_zy,
+             [win(renamed=[("a.py", None, "test_x", "test_z")]), win({"a.py": "b.py"})], []),
+            ("K3 이동 a→b(w1) 뒤 개명 x→z(w2 · b 경로) → 통과", g2_zy,
+             [win({"a.py": "b.py"}), win(renamed=[("b.py", None, "test_x", "test_z")])], []),
+            ("K4 개명 뒤 새 이름이 G2 처분에 없음 → red(함수 단위)", g2_y,
+             [win({"a.py": "b.py"}), win(renamed=[("b.py", None, "test_x", "test_z")])], ["함수 단위(바뀐 파일): ('b.py', None, 'test_z')"]))
+        for label, g2, windows, want in checks:
+            try:
+                got = mod.g0_keep(g0, g2, repo, windows=windows)
+            except Exception as exc:                        # noqa: BLE001 — 옛 판(창 목록 없음)은 다름으로 선다
+                got = [f"{type(exc).__name__}: {exc}"]
+            if got != want:
+                problems.append(f"{label} — {got} (기대 {want})")
+        got = mod.g0_keep(g0, g2_y, repo, {"a.py": "b.py"}, {("b.py", None, "test_x")})
+        if got != []:
+            problems.append(f"K5 옛 부름(moved · removed) = 창 하나로 접음 — {got} (기대 [])")
+        run_dir = repo / "run"
+        run_dir.mkdir()
+        for n, ex in ((1, {"moved": {"a.py": "b.py"}, "removed": []}),
+                      (2, {"moved": {}, "removed": ["b.py::::test_x"],
+                           "renamed": [{"path": "b.py", "class": None, "old": "test_y", "new": "test_w"}]})):
+            (run_dir / f"w{n}-open.json").write_text(json.dumps({"window": n}), encoding="utf-8")
+            (run_dir / f"w{n}-close.json").write_text(json.dumps([{"verdict": "red"}, {"verdict": "audit", "g0_keep_exceptions": ex}]),
+                                                      encoding="utf-8")
+        try:
+            got_w = mod._g0_keep_exceptions(run_dir)
+        except Exception as exc:                            # noqa: BLE001
+            got_w = f"{type(exc).__name__}: {exc}"
+        want_w = [win({"a.py": "b.py"}), win(renamed=[("b.py", None, "test_y", "test_w")], removed={("b.py", None, "test_x")})]
+        if got_w != want_w:
+            problems.append(f"K6 창 기록 → 창 차례 목록(마지막 close · 개명 · 삭제 구조 키) — {got_w} (기대 {want_w})")
+        sel = {"keys": keys(("b.py", None, "test_z", "test_z[1]"), ("b.py", None, "test_s", "test_s")),
+               "selected_ids": {"b.py::test_z[1]", "b.py::test_s"}, "skipped_ids": {"b.py::test_s"}}
+        for label, windows, want in (
+                ("K7a 개명된 새 키 선택(call) → 사유 0 · skip 0", [win(renamed=[("b.py", None, "test_x", "test_z")])], ([], 0)),
+                ("K7b 개명된 새 키 skip · xfail → 사유 0 · skip 1(보고)", [win(renamed=[("b.py", None, "test_r", "test_s")])], ([], 1)),
+                ("K7c 개명된 새 키 선택 빠짐 → red", [win(renamed=[("b.py", None, "test_q", "test_w")])],
+                 (["개명된 케이스가 G2 에서 선택되지 않았다: ('b.py', None, 'test_w')(개명 test_q → test_w)"], 0)),
+                ("K7d 개명 뒤 다른 창에서 삭제 → 대조 밖", [win(renamed=[("b.py", None, "test_q", "test_w")]),
+                                                    win(removed={("b.py", None, "test_w")})], ([], 0))):
+            try:
+                got_s = mod.renamed_selection(windows, sel)
+            except Exception as exc:                        # noqa: BLE001
+                got_s = (f"{type(exc).__name__}: {exc}",)
+            if got_s != want:
+                problems.append(f"{label} — {got_s} (기대 {want})")
+    with tempfile.TemporaryDirectory(prefix="bp-rename-") as td, tempfile.TemporaryDirectory(prefix="bp-rename-shared-") as shared:
+        box = Toolbox(cases, Path(shared))
+        work = Path(td)
+        rn = lambda old, new: [{"path": RN_TEST, "class": None, "old": old, "new": new}]  # noqa: E731
+        try:
+            with _stop_grace(engine, STOP_GRACE_CASE_SECONDS):
+                code, said, suite = _rename_suite(engine, box, work, "k8", RN_BASE.replace("def test_old(", "def test_new("),
+                                                  rn("test_old", "test_new"))
+                if code != 0 or suite.get("g0_keep") or suite.get("counts", {}).get("renamed_skip") != 0 \
+                        or "개명 케이스 skip 0" not in said:
+                    problems.append(f"K8 G2 개명 대응(test_old → test_new) → green · 개명 케이스 skip 0 — exit {code} · "
+                                    f"G0 유지 {suite.get('g0_keep')} · {said.strip().splitlines()[-1:] }")
+                code, said, suite = _rename_suite(engine, box, work, "k9",
+                                                  RN_BASE.replace("def test_skipme(", "def test_skipme_renamed("),
+                                                  rn("test_skipme", "test_skipme_renamed"))
+                if code != 0 or suite.get("counts", {}).get("renamed_skip") != 1 or "개명 케이스 skip 1" not in said:
+                    problems.append(f"K9 개명된 케이스가 G2 skip → red 아님 · suite 줄 «개명 케이스 skip 1» — exit {code} · "
+                                    f"G0 유지 {suite.get('g0_keep')} · {said.strip().splitlines()[-1:]}")
+                code, said, suite = _rename_suite(engine, box, work, "k10", RN_BASE.replace("def test_old(", "def test_new("),
+                                                  rn("test_old", "test_newer"))
+                if code != 2 or not any("개명된 케이스가 G2 에서 선택되지 않았다" in k for k in suite.get("g0_keep", [])):
+                    problems.append(f"K10 개명된 새 키가 G2 선택에 없음 → red — exit {code} · G0 유지 {suite.get('g0_keep')}")
+        except Exception:                                  # noqa: BLE001 — 확인 실패를 줄로 남긴다
+            problems.append("개명 G2 확인 실행 실패\n    " + traceback.format_exc().strip().replace("\n", "\n    "))
+    return problems
+
+
 def run_case(engine: Engine, box: Toolbox, case) -> "tuple[dict | None, str, float]":
     t0 = time.monotonic()
     serial = case.kind in SERIAL_KINDS                     # 병렬 밖에서만 돈다 — 제품 상수 · 상속 환경을 잠시 바꿔도 된다
@@ -807,6 +944,10 @@ def main() -> int:
         found = run_interrupt_checks(engine)
         problems += found
         print(f"끊김 확인 D1 ~ D5 · D7 — 다름 {len(found)}", flush=True)
+    if not engine.proto and (not args.only or "K" in args.only):
+        found = run_g0_keep_checks(engine, cases)
+        problems += found
+        print(f"G0 유지 접기 · 개명 G2 확인 K1 ~ K10 — 다름 {len(found)}", flush=True)
     wall = time.monotonic() - t0
     mismatches, failures, tracebacks, deviated, filled, added = [], 0, 0, 0, 0, 0
     ok_cells = {"R": 0, "N": 0, "C": 0}
