@@ -35,12 +35,18 @@ djr:R-3010 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3011 a djr:Prohibition ;
-    skos:prefLabel "retain 재조직의 새 case·assertion·Red 생성 금지(전후 동일 보호 유지)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3011@2026-08-22> .
+    skos:prefLabel "retain 재조직의 새 case·assertion·Red 생성 금지(전후 동일 보호 유지)(승인 개명 행의 케이스·id 개명은 새 case 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3011@2026-10-24> .
 
 <https://numchida.com/ns/djr#R-3011@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3011 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3011@2026-10-24> a djr:Expression ;
+    prov:specializationOf djr:R-3011 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3011@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3012 a djr:Prohibition ;
     skos:prefLabel "후보·reuse·reject 의 새 test file·case·assertion·helper 의무 전환 금지"@ko ;
@@ -99,12 +105,18 @@ djr:R-3018 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3019 a djr:Prohibition ;
-    skos:prefLabel "retain 재조직의 새 case·assertion·Red 0 과 reuse·reject 의 test artifact write 0"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3019@2026-08-22> .
+    skos:prefLabel "retain 재조직의 새 case·assertion·Red 0 과 reuse·reject 의 test artifact write 0(승인 개명 행의 케이스·id 개명은 새 case 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3019@2026-10-24> .
 
 <https://numchida.com/ns/djr#R-3019@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3019 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3019@2026-10-24> a djr:Expression ;
+    prov:specializationOf djr:R-3019 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3019@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3020 a djr:Prohibition ;
     skos:prefLabel "피라미드·coverage·속도·도구 예시의 add 근거 사용 금지"@ko ;
@@ -415,7 +427,7 @@ djr:R-3052 a djr:Obligation ;
     djr:order 1 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/references/final.md/s001/b1> ;
     djr:statesNorm djr:R-3009, djr:R-3010, djr:R-3011, djr:R-3012 ;
-    djr:text "\n테스트 코드·픽스처·더블·factory·계약 검증·커버리지·Mutation·BDD·동시성 테스트 코드를 작성할 때 로드한다. 이 skill은 `discipline-tdd` §5.5가 영구 테스트 입장 결정을 끝낸 **뒤** `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직의 작성 mechanics만 제공한다. `retain` 재조직은 새 case·assertion·Red를 만들지 않고 전후 같은 보호를 유지한다. 후보나 `reuse`·`reject`를 새 test file·case·assertion·helper 의무로 바꾸지 않는다. 경계:\n\n"@ko .
+    djr:text "\n테스트 코드·픽스처·더블·factory·계약 검증·커버리지·Mutation·BDD·동시성 테스트 코드를 작성할 때 로드한다. 이 skill은 `discipline-tdd` §5.5가 영구 테스트 입장 결정을 끝낸 **뒤** `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직의 작성 mechanics만 제공한다. `retain` 재조직은 새 case·assertion·Red를 만들지 않고 전후 같은 보호를 유지한다(리팩토링 모드의 승인 «개명» 행이 바꾼 케이스 · id 이름은 새 case 가 아니다). 후보나 `reuse`·`reject`를 새 test file·case·assertion·helper 의무로 바꾸지 않는다. 경계:\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003> ;
@@ -456,7 +468,7 @@ djr:R-3052 a djr:Obligation ;
     djr:order 1 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/references/final.md/s001/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/references/final.md/s004-1.1/b7> ;
     djr:statesNorm djr:R-3017, djr:R-3018, djr:R-3019, djr:R-3020 ;
-    djr:text "\n- **먼저 `discipline-tdd` §5.5의 decision row를 확인한다.** `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직에만 아래 recipe를 적용한다. `retain` 재조직은 새 case·assertion·Red가 없고, `reuse`·`reject`에서는 test artifact write가 0이다. 피라미드·coverage·속도·도구 예시는 `add`의 근거가 아니다 (§1)\n"@ko .
+    djr:text "\n- **먼저 `discipline-tdd` §5.5의 decision row를 확인한다.** `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직에만 아래 recipe를 적용한다. `retain` 재조직은 새 case·assertion·Red가 없고(승인 «개명» 행이 바꾼 케이스 · id 이름은 새 case 가 아니다), `reuse`·`reject`에서는 test artifact write가 0이다. 피라미드·coverage·속도·도구 예시는 `add`의 근거가 아니다 (§1)\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b10> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;

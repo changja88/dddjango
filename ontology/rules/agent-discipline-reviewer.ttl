@@ -2822,6 +2822,22 @@ djr:R-3647 a djr:Obligation ;
     prov:specializationOf djr:R-3647 ;
     djr:revision 1 .
 
+djr:R-3685 a djr:Obligation ;
+    skos:prefLabel "리팩토링 모드 케이스·id 개명(retain 개명 행)은 삭제·약화 아님 — 개명 키로 감사"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3685@2026-10-24> .
+
+<https://numchida.com/ns/djr#R-3685@2026-10-24> a djr:Expression ;
+    prov:specializationOf djr:R-3685 ;
+    djr:revision 1 .
+
+djr:R-3686 a djr:Obligation ;
+    skos:prefLabel "개명 키 감사 — 개명 — 이름 뜻(기대 의미 그대로) · 이름 밖 편집 있음/없음·옛 글자 n자리 표지부터 · 옛 이름·옛 id 를 관찰하는 자리로 뜻이 바뀌면 다름"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3686@2026-10-24> .
+
+<https://numchida.com/ns/djr#R-3686@2026-10-24> a djr:Expression ;
+    prov:specializationOf djr:R-3686 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/discipline-reviewer.md> a djr:Document ;
     skos:prefLabel "agent-discipline-reviewer"@ko .
 
@@ -3022,15 +3038,15 @@ djr:R-3647 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
-    djr:statesNorm djr:R-0894, djr:R-0895, djr:R-0896 ;
-    djr:text "- **삭제·약화·재조직**: `remove/weaken`은 명시적 계약 종료 근거와 exact target, 변경 뒤 남는 현행 보호 위치를 요구한다. 명세의 침묵·현재 구현과의 불일치·중복 추정만으로 삭제하지 않는다. 기존 migration 전용 테스트는 절대 규칙으로 제거 대상이다 — `remove` 근거 없이도 삭제를 요구한다(`migrations/`는 생성물·`check-test-config` #637).\n"@ko .
+    djr:statesNorm djr:R-0894, djr:R-0895, djr:R-0896, djr:R-3685 ;
+    djr:text "- **삭제·약화·재조직**: `remove/weaken`은 명시적 계약 종료 근거와 exact target, 변경 뒤 남는 현행 보호 위치를 요구한다. 명세의 침묵·현재 구현과의 불일치·중복 추정만으로 삭제하지 않는다. 기존 migration 전용 테스트는 절대 규칙으로 제거 대상이다 — `remove` 근거 없이도 삭제를 요구한다(`migrations/`는 생성물·`check-test-config` #637). 리팩토링 모드의 케이스 · id 개명(`retain` «개명» 행)은 삭제 · 약화가 아니다 — 아래 개명 키로 감사한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s005/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
-    djr:statesNorm djr:R-0897, djr:R-0898, djr:R-0899, djr:R-0900, djr:R-3507, djr:R-3508, djr:R-3646, djr:R-3647 ;
-    djr:text "- **Phase 2 hunk 대조**: 모든 test diff hunk를 승인 행과 unique production failure에 대조한다. `add/update`만 새·변경 Red와 test edit을 허용하고, `reuse/reject`는 write 0, 일반 `retain`은 무편집, `remove/weaken`은 승인 exact target과 종료 근거를 요구한다. `implementation-test`는 입장 승인 뒤 mechanics·assertion 품질을 판단할 때만 적용하며, 그 recipe로 입장 결정을 새로 만들지 않는다. 슬라이스 0 창의 hunk 는 창 종류로 가른다(기능 모드 · 2026-09-27): 0C 창에서 Coordinator 의 `behavior_guard.py close` 가 green 으로 판정한 테스트 치환 hunk(close 기록의 `green_files` — 옮긴·개명한 코드를 따라간 import·문자열 속 경로·이름)는 일반 `retain` 무편집의 예외다 — 치환이 명세의 이동·개명과 맞는지만 본다. 0T 창의 테스트 편집 hunk 는 ⓐ 항목과 대조해 전후 보호가 같은지 본다(단언 약화·같은 이름 재작성·parametrize 감소·conftest 이동의 범위 변화는 close 가 못 보는 자리다). 창별 close 보고는 Coordinator 가 감사 입력에 붙인다. **리팩토링 모드 창**(0T · 0C · 0F · 변경 — 2026-10-04)의 시험 편집에는 자동 초록이 없다 — close 가 감사로 처분한 요구 키마다(입력 = 감사 요청 파일 `w<n>-audit-request.md`(키 · 처분 · 사유 · 묶음) + 명세(V · `retain` 재조직 행) + 창 대응표) 정확히 한 행으로 판정해 Coordinator 가 준 경로 `<산출물 폴더>/audit-tests-w<n>-<회차>.md` 에 쓴다 — 행 = `<키 그대로> | 판정 = <값> | <근거 한 구>` 이고 값은 감사 요청 파일의 그 키 줄에 적힌 «요구 판정» 가운데 하나 또는 `다름` 을 **하나**만 적는다(승인 원소 단위는 `승인 후와 같음` · 그 밖 단위는 `기대 의미 그대로` · 0T `update` 행 키는 둘 다 · 판형 줄을 베끼거나 값을 둘 이상 적거나 요구 판정 밖이면 verify 가 red · 키 행은 생략할 수 없다 · 묶음 근거는 묶음 머리 아래 한 번 적고 묶음 안 키 행은 근거 칸에 `묶음 B<k> 근거` 를 쓸 수 있다). 다시 close 해서 요구 키가 줄었으면 새 회차 파일을 쓴다(남은 키만 — 다시 볼 키가 없으면 머리만 있는 회차). 묶음은 표시이지 판정이 아니다. 자료는 파일별 전후 unified diff · 바뀐 단위의 전후 원문 전체 · 옛 이름·경로가 문자열로 남은 자리 목록이다(판정에 쓰지 않는 보조 — 동적으로 만든 이름은 빠질 수 있다). 승인 변경 감사는 승인 원소 단위가 «후 = V»(`승인 후와 같음`)인지, 그 밖 단위가 «기대 의미 그대로»인지 본다 — 승인 원소 단위의 뜻이 그대로이면(V 가 바꾼다고 한 기대가 실제로 바뀌지 않았으면) 그 단위는 `기대 의미 그대로` 로 적는다(verify 가 «승인 변경 미검출» red 를 내고 Coordinator 가 V 를 지우는 G1′ 로 처리한다). 0T 의 `update` 행 키(입장 표 `update` 행 — V 에 딸리지 않은 행 — 이 승인한 케이스의 확정 기대 변화)는 그 `update` 행이 어느 ⓐ 항목 때문인지(입장 표 행의 근거 ↔ G0 ⓐ 목록)와 바뀐 단언이 그 행이 승인한 기대 변경 범위 안인지 보고, 맞으면 `승인 후와 같음`(뜻이 그대로면 `기대 의미 그대로`)이다 — 행에 ⓐ 항목 참조가 없으면 «근거 없음»으로 `다름` 이다. 보는 것: ⓐ 개명·이동된 이름이 관찰되는 자리(바뀌지 않은 헬퍼 · `getattr(…, \"…\")` · `repr` · `__name__` · `__qualname__` · `__module__` · 주석을 읽는 소비자 · 문자열 비교 — 옛 이름 자리 목록부터) ⓑ import 바인딩(같은 이름이 파일 안 여러 import(함수 안 지역 import 포함)로 묶이는가 · 대응표 없이 대상이 바뀌었는가) ⓒ 옮긴 파일(conftest · 패키지 자리 변화가 fixture 를 바꾸는가) ⓓ D 사유가 있는 단위(기대식이 바뀌었으면 그 이름·경로 자체가 관찰값인가 — 관찰값이면 `다름` · 맥락(`with patch` 등)이 바뀌었으면 같은 대상을 패치하는가) ⓔ 주어가 명세의 제품 후속 경로를 여전히 부르는가 · fake · factory 의미 · 공유 정의 · 단언 실행 조건 · 호출 인자(기본값 · 수신 객체 필드) · skip/xfail · 같은 이름 재작성 · 약화 · 새 시험은 바뀐 동작만인가 ⓕ `<file>` 키(배치 변화 · 새 파일 · 짝 없는 삭제 — 순서가 의미를 갖는가 · 빈 파일의 생성·삭제가 패키지·import·수집을 바꾸는가). `다름` 은 그 편집의 철회 또는 V 로 G1′ 이다.\n"@ko .
+    djr:statesNorm djr:R-0897, djr:R-0898, djr:R-0899, djr:R-0900, djr:R-3507, djr:R-3508, djr:R-3646, djr:R-3647, djr:R-3686 ;
+    djr:text "- **Phase 2 hunk 대조**: 모든 test diff hunk를 승인 행과 unique production failure에 대조한다. `add/update`만 새·변경 Red와 test edit을 허용하고, `reuse/reject`는 write 0, 일반 `retain`은 무편집, `remove/weaken`은 승인 exact target과 종료 근거를 요구한다. `implementation-test`는 입장 승인 뒤 mechanics·assertion 품질을 판단할 때만 적용하며, 그 recipe로 입장 결정을 새로 만들지 않는다. 슬라이스 0 창의 hunk 는 창 종류로 가른다(기능 모드 · 2026-09-27): 0C 창에서 Coordinator 의 `behavior_guard.py close` 가 green 으로 판정한 테스트 치환 hunk(close 기록의 `green_files` — 옮긴·개명한 코드를 따라간 import·문자열 속 경로·이름)는 일반 `retain` 무편집의 예외다 — 치환이 명세의 이동·개명과 맞는지만 본다. 0T 창의 테스트 편집 hunk 는 ⓐ 항목과 대조해 전후 보호가 같은지 본다(단언 약화·같은 이름 재작성·parametrize 감소·conftest 이동의 범위 변화는 close 가 못 보는 자리다). 창별 close 보고는 Coordinator 가 감사 입력에 붙인다. **리팩토링 모드 창**(0T · 0C · 0F · 변경 — 2026-10-04)의 시험 편집에는 자동 초록이 없다 — close 가 감사로 처분한 요구 키마다(입력 = 감사 요청 파일 `w<n>-audit-request.md`(키 · 처분 · 사유 · 묶음) + 명세(V · `retain` 재조직 행) + 창 대응표) 정확히 한 행으로 판정해 Coordinator 가 준 경로 `<산출물 폴더>/audit-tests-w<n>-<회차>.md` 에 쓴다 — 행 = `<키 그대로> | 판정 = <값> | <근거 한 구>` 이고 값은 감사 요청 파일의 그 키 줄에 적힌 «요구 판정» 가운데 하나 또는 `다름` 을 **하나**만 적는다(승인 원소 단위는 `승인 후와 같음` · 그 밖 단위는 `기대 의미 그대로` · 0T `update` 행 키는 둘 다 · 판형 줄을 베끼거나 값을 둘 이상 적거나 요구 판정 밖이면 verify 가 red · 키 행은 생략할 수 없다 · 묶음 근거는 묶음 머리 아래 한 번 적고 묶음 안 키 행은 근거 칸에 `묶음 B<k> 근거` 를 쓸 수 있다). 다시 close 해서 요구 키가 줄었으면 새 회차 파일을 쓴다(남은 키만 — 다시 볼 키가 없으면 머리만 있는 회차). 묶음은 표시이지 판정이 아니다. 자료는 파일별 전후 unified diff · 바뀐 단위의 전후 원문 전체 · 옛 이름·경로가 문자열로 남은 자리 목록이다(판정에 쓰지 않는 보조 — 동적으로 만든 이름은 빠질 수 있다). 승인 변경 감사는 승인 원소 단위가 «후 = V»(`승인 후와 같음`)인지, 그 밖 단위가 «기대 의미 그대로»인지 본다 — 승인 원소 단위의 뜻이 그대로이면(V 가 바꾼다고 한 기대가 실제로 바뀌지 않았으면) 그 단위는 `기대 의미 그대로` 로 적는다(verify 가 «승인 변경 미검출» red 를 내고 Coordinator 가 V 를 지우는 G1′ 로 처리한다). 0T 의 `update` 행 키(입장 표 `update` 행 — V 에 딸리지 않은 행 — 이 승인한 케이스의 확정 기대 변화)는 그 `update` 행이 어느 ⓐ 항목 때문인지(입장 표 행의 근거 ↔ G0 ⓐ 목록)와 바뀐 단언이 그 행이 승인한 기대 변경 범위 안인지 보고, 맞으면 `승인 후와 같음`(뜻이 그대로면 `기대 의미 그대로`)이다 — 행에 ⓐ 항목 참조가 없으면 «근거 없음»으로 `다름` 이다. 보는 것: ⓐ 개명·이동된 이름이 관찰되는 자리(바뀌지 않은 헬퍼 · `getattr(…, \"…\")` · `repr` · `__name__` · `__qualname__` · `__module__` · 주석을 읽는 소비자 · 문자열 비교 — 옛 이름 자리 목록부터) ⓑ import 바인딩(같은 이름이 파일 안 여러 import(함수 안 지역 import 포함)로 묶이는가 · 대응표 없이 대상이 바뀌었는가) ⓒ 옮긴 파일(conftest · 패키지 자리 변화가 fixture 를 바꾸는가) ⓓ D 사유가 있는 단위(기대식이 바뀌었으면 그 이름·경로 자체가 관찰값인가 — 관찰값이면 `다름` · 맥락(`with patch` 등)이 바뀌었으면 같은 대상을 패치하는가) ⓔ 주어가 명세의 제품 후속 경로를 여전히 부르는가 · fake · factory 의미 · 공유 정의 · 단언 실행 조건 · 호출 인자(기본값 · 수신 객체 필드) · skip/xfail · 같은 이름 재작성 · 약화 · 새 시험은 바뀐 동작만인가 ⓕ `<file>` 키(배치 변화 · 새 파일 · 짝 없는 삭제 — 순서가 의미를 갖는가 · 빈 파일의 생성·삭제가 패키지·import·수집을 바꾸는가). `다름` 은 그 편집의 철회 또는 V 로 G1′ 이다. 개명 키(`개명 …` — «개명 — 이름 뜻» · 요구 판정 `기대 의미 그대로`)는 옛 → 새 가 이름만 바꿨는지 본다 — 감사 요청 글의 «이름 밖 편집 있음 / 없음» 과 «옛 글자 n자리»(옛 이름 · 옛 id 와 같은 문자열 상수 자리 — `request.node.name` · `callspec.id` 비교 · 다른 케이스 안 이름 글자)부터 보고, 그 자리가 옛 이름 · 옛 id 를 관찰해 뜻이 바뀌면 `다름` 이다(2026-10-24).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s005/b6> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s005> ;

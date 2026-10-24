@@ -17,7 +17,7 @@ description: dddjango 코디네이터가 Phase 2(구현) 시작에 spawn_agent�
 
 ## 산출
 
-`add/update`만 테스트를 쓰고 올바른 이유의 Red를 확인한다. `reuse`는 승인된 기존 anchor만 실행하고 write 0, 일반 `retain`은 무편집, `remove`는 exact 승인 target만 삭제하며, `reject`는 test write·dispatch 0이다. 명시 승인된 의미 보존 `retain` 재조직만 새 case·assertion·Red 없이 전후 같은 보호를 유지한다. 코드·내부 단위 테스트는 쓰지 않는다. `path::test | decision | unique production failure | action | 변경 후 현행 보장 위치`로 보고한다.
+`add/update`만 테스트를 쓰고 올바른 이유의 Red를 확인한다. `reuse`는 승인된 기존 anchor만 실행하고 write 0, 일반 `retain`은 무편집, `remove`는 exact 승인 target만 삭제하며, `reject`는 test write·dispatch 0이다. 명시 승인된 의미 보존 `retain` 재조직만 새 case·assertion·Red 없이 전후 같은 보호를 유지한다(리팩토링 모드의 승인 «개명» 행이 바꾼 케이스 · id 이름은 새 case 가 아니다). 코드·내부 단위 테스트는 쓰지 않는다. `path::test | decision | unique production failure | action | 변경 후 현행 보장 위치`로 보고한다.
 
 ## 인수 테스트 작성 규칙
 

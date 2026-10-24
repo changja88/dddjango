@@ -113,12 +113,18 @@ djr:R-3244 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3245 a djr:Exception ;
-    skos:prefLabel "명시 승인된 의미 보존 retain 재조직 한정(새 case·assertion·Red 없이 전후 동일 보호 유지)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3245@2026-08-22> .
+    skos:prefLabel "명시 승인된 의미 보존 retain 재조직 한정(새 case·assertion·Red 없이 전후 동일 보호 유지)(승인 개명 행의 케이스·id 개명은 새 case 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3245@2026-10-24> .
 
 <https://numchida.com/ns/djr#R-3245@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3245 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3245@2026-10-24> a djr:Expression ;
+    prov:specializationOf djr:R-3245 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3245@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3246 a djr:Prohibition ;
     skos:prefLabel "코드·내부 단위 테스트 작성 금지"@ko ;
@@ -869,7 +875,7 @@ djr:R-3652 a djr:Obligation ;
     djr:order 1 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s003/b1>, <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b8> ;
     djr:statesNorm djr:R-3243, djr:R-3244, djr:R-3245, djr:R-3246, djr:R-3247 ;
-    djr:text "\n`add/update`만 테스트를 쓰고 올바른 이유의 Red를 확인한다. `reuse`는 승인된 기존 anchor만 실행하고 write 0, 일반 `retain`은 무편집, `remove`는 exact 승인 target만 삭제하며, `reject`는 test write·dispatch 0이다. 명시 승인된 의미 보존 `retain` 재조직만 새 case·assertion·Red 없이 전후 같은 보호를 유지한다. 코드·내부 단위 테스트는 쓰지 않는다. `path::test | decision | unique production failure | action | 변경 후 현행 보장 위치`로 보고한다.\n\n"@ko .
+    djr:text "\n`add/update`만 테스트를 쓰고 올바른 이유의 Red를 확인한다. `reuse`는 승인된 기존 anchor만 실행하고 write 0, 일반 `retain`은 무편집, `remove`는 exact 승인 target만 삭제하며, `reject`는 test write·dispatch 0이다. 명시 승인된 의미 보존 `retain` 재조직만 새 case·assertion·Red 없이 전후 같은 보호를 유지한다(리팩토링 모드의 승인 «개명» 행이 바꾼 케이스 · id 이름은 새 case 가 아니다). 코드·내부 단위 테스트는 쓰지 않는다. `path::test | decision | unique production failure | action | 변경 후 현행 보장 위치`로 보고한다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004> a djr:Section ;
     djr:headingSnapshot "## 인수 테스트 작성 규칙"@ko ;
