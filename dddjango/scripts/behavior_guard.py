@@ -3307,6 +3307,10 @@ def _suite_lines(record: "dict | None", confirmed: "tuple[str, str, str] | None"
                                   "suspend": "일시 중단 본문", "observer_hits": "실행 관찰 API", "nolist": "허용 목록 밖",
                                   "unresolved": "원본 못 찾음", "late": "확정 뒤 등록"}
         reds += [f"suite {label} {counts[k]}" for k, label in zero.items() if counts[k] != 0]
+        unchanged: int = counts["observer_unchanged"]   # 실행 관찰 API 가운데 이번 실행이 바꾸지 않은 파일(설계 3판 §C2)
+        if unchanged:
+            reds.append(f"suite 실행 관찰 API — 이번 실행이 바꾸지 않은 파일 {unchanged}: 레인이 고치지 않는다(정지 보고 · 재개 = 그 파일을 "
+                        "고친 커밋을 승인 머지로 받음 → 마지막 창 close 다시 → suite → verify)")
         selected, collected = counts["selected"], counts["collected"]
         if selected != collected:
             reds.append(f"suite 선택 합 {selected} ≠ 수집 합 {collected}")
@@ -3339,7 +3343,8 @@ def _suite_lines(record: "dict | None", confirmed: "tuple[str, str, str] | None"
         f"skip {counts['skips']}) · 완료 {counts['complete']} · 결과 증거 {counts['proof_ok']}/{counts['proof_total']}(passed call "
         "마다 call 실행 맥락의 시작 = 정상 반환 ≥ 1 · 맥락 밖 사건 0) · "
         f"감시 구간 재진입 {counts['reentry']}(보고 무관) · 정의 자리 밖 {counts['anchor']} · 일시 중단 본문 {counts['suspend']} · "
-        f"실행 관찰 API {counts['observer_hits']}(정적 · 위험 모듈 허용 목록 · 파일 {counts['observer_files']}) · "
+        f"실행 관찰 API {counts['observer_hits']}(실린 범위 {counts['observer_files']} 파일 · 그중 이번 실행이 바꾸지 않은 파일 "
+        f"{unchanged}) · "
         f"허용 목록 밖 {counts['nolist']}(프로젝트 훅 {counts['hooks']} 개 모두 목록 안) · 원본 못 찾음 {counts['unresolved']} · "
         f"확정 뒤 등록 {counts['late']} · 시험 기계 파일 {counts['M']} ⊆ 시험 쪽 · xdist 일꾼 출력 {outputs}/{ready} · "
         f"G0 유지(구조 키 — 파일 · 바이트 같은 항목 · 바뀐 파일 함수마다 처분 수{f' — 어긋남 {len(g0_keep)}' if g0_keep else ''}) · "

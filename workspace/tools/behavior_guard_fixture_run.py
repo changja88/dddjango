@@ -673,8 +673,8 @@ def _rows(record: dict, verdict: "str | None" = None) -> "list[str]":
 
 GOOD_COUNTS: "dict[str, int]" = {
     "commands": 1, "collected": 3, "selected": 3, "calls": 3, "skips": 0, "complete": 3, "proof_ok": 3, "proof_total": 3,
-    "reentry": 0, "anchor": 0, "suspend": 0, "observer_files": 2, "observer_hits": 0, "nolist": 0, "unresolved": 0, "late": 0,
-    "hooks": 0, "M": 2, "failed": 0, "optimize": 0}
+    "reentry": 0, "anchor": 0, "suspend": 0, "observer_files": 2, "observer_hits": 0, "observer_unchanged": 0, "nolist": 0,
+    "unresolved": 0, "late": 0, "hooks": 0, "M": 2, "failed": 0, "optimize": 0}
 
 
 def _suite(repo: Path, digest: str, **over: object) -> None:
@@ -1878,6 +1878,13 @@ def verify_checks() -> "list[str]":
         expect("suite 의 G1 결속 다름 → red", _rguard(repo, "verify"), 2, "G1 결속", "≠ G1 결속")
         _suite(repo, digest, g0_keep=["파일 단위: application/core/test/test_check.py"])
         expect("suite G0 유지 위반 → red", _rguard(repo, "verify"), 2, "suite G0 유지: 파일 단위")
+        for label, unchanged in (("이번 실행이 바꾼 파일", 0), ("이번 실행이 바꾸지 않은 파일", 1)):   # 설계 3판 §C2 — 두 갈래 문구
+            _suite(repo, digest, verdict="red", counts={**GOOD_COUNTS, "observer_hits": 1, "observer_unchanged": unchanged})
+            got = _rguard(repo, "verify")
+            expect(f"suite 실행 관찰 API — {label} → red", got, 2, "suite 실행 관찰 API 1",
+                   f"실행 관찰 API 1(실린 범위 2 파일 · 그중 이번 실행이 바꾸지 않은 파일 {unchanged})")
+            if ("이번 실행이 바꾸지 않은 파일 1: 레인이 고치지 않는다" in got[1]) != bool(unchanged):
+                fails.append(f"실행 관찰 API {label} — 바꾸지 않은 파일 문구가 갈래와 어긋남\n{got[1]}")
         _suite(repo, digest)
         expect("suite 다시 → green", _rguard(repo, "verify"), 0, "요약: 동작 보존 green")
         _write(repo, {"application/core/real.py": "def product():\n    return 9  # 뒤\n"})

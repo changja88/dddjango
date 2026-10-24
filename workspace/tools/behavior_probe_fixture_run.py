@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """B0 영구 픽스처 러너 — 지원 확인 · 증거 실행 엔진(`behavior_support.run` · `g0_keep`)을 장난감 저장소 510 칸에 대어
-판정 · 사유 · 사유 수를 기대 표와 대조한다(RD 설계 v15.2 §4-7 · §8 B0 · 계획 T11 · T10 E1).
+판정 · 사유 · 사유 수를 기대 표와 대조한다(RD 설계 v15.2 §4-7 · §8 B0 · 계획 T11 · T10 E1 · 실린 범위 = F4-107 설계 3판 §C5).
 
-사례 = `workspace/eval/fixtures/behavior_probe/cases.py`(R 원형 재현 412 · N 이름별 48 · C 빈 범주 50) ·
+사례 = `workspace/eval/fixtures/behavior_probe/cases.py`(R 원형 재현 412 · N 이름별 56 · C 빈 범주 · 실린 범위 140) ·
 기대 표 = 같은 폴더 `expected.json`. 장난감은 `tempfile` 안 새 폴더(`git init` 만 — `after_commit` 사례만 픽스처 커밋 1)이고, 장난감 pytest 는
 저장소 루트의 고정 판 픽스처 환경 `.venv-probe` 로 돈다(없으면 «make probe-env 필요»).
 
 엔진:
-  --engine impl              (기본) 구현판 `dddjango/scripts/behavior_support.py`(k0 §4-5 서명) — 510 칸.
+  --engine impl              (기본) 구현판 `dddjango/scripts/behavior_support.py`(k0 §4-5 서명) — 608 칸.
   --engine impl=<scripts 폴더>  같은 서명의 다른 판(대역 시험용).
   --engine proto=<원형 폴더>   원형 `support_v152.run`(T11 원형 대비 전용) — 상한 14 칸은 원형에 상수가 없어 건너뛴다.
 칸 판정: 사유가 없으면 «통과», 있으면 collect · G0 · support 칸은 «정지», run · G2 · suite 칸은 «red».
@@ -30,6 +30,10 @@ TIMEOUT_CASE_SECONDS 로 바꿔 혼자(병렬 밖) 돈다 — exit · 기록 판
 D4 기다림 중 두 번째 SIGINT → 강제 종료 단계가 돈다 · D5 정리(`_clean_created`)가 예외를 내도 KeyboardInterrupt 가 올라간다 ·
 D7 상한을 넘긴 뒤 멈춤 기다림 사이에 SIGINT → 묶음 0 · 실행이 만든 파일 지움 · KeyboardInterrupt 다시 올림.
 러너 자신에 보내는 SIGINT 는 그 확인 동안만 받는 처리기로 받는다.
+갈래(split) 사례는 커밋한 장난감의 HEAD 를 앵커로 적고 지원 확인 → G1 결속 → 레인 편집 커밋 → suite 를 명령 진입 함수로 돈다(병렬 밖).
+부가 관측 obs(정적 규칙) = [범위 안 걸린 줄 · 실린 범위 .py 수 · 범위 밖 예보 줄 · 풀지 못한 import 이름]. 3판(2026-10-24 · F4-107)이
+보는 범위를 «실제로 실리고 돈 시험 쪽 코드»로 바꿔 이 칸 판형이 한꺼번에 바뀌었다 — 그때 기대 표는 이름 든 사례(C-parse ·
+C-read-fail-symlink · reobtain-04) 밖의 판정 · 사유 · 사유 수를 그대로 두고(584cb29a 판 실행 덤프와 글자 대조) obs 칸만 바꿨다.
 exit 0 = 전 칸 기대 일치 · 1 = 불일치 · 실행 실패 · 실행 불능.
 """
 from __future__ import annotations
@@ -79,7 +83,10 @@ GONE_WAIT_SECONDS: float = 5.0
 BASE_ENV_DROP_PREFIX: "tuple[str, ...]" = ("PYTEST_", "DJANGO_", "DDDJANGO_")
 BASE_ENV_DROP: "tuple[str, ...]" = ("R8_SKIP_BAD", "R8_SETUPONLY", "QUICK", "NO_BODY", "FAST", "PYTHONOPTIMIZE", "PYTHONPATH")
 CELLS: "dict[str, tuple[str, str]]" = {"pair": ("collect", "run"), "env": ("G0", "G2"), "timeout": ("support", "suite"),
-                                       "limits": ("support", "suite")}
+                                       "limits": ("support", "suite"), "split": ("support", "suite")}
+SERIAL_KINDS: "tuple[str, ...]" = ("timeout", "limits", "split")   # 명령 진입 함수를 거쳐 상속 환경(os.environ)을 잠시 바꾸는 사례
+SCOPE_RE: "re.Pattern[str]" = re.compile(r"실린 범위 \d+ 파일 · 범위 밖 예보 \d+ · 풀지 못한 import 이름 \d+")
+OBSERVER_RE: "re.Pattern[str]" = re.compile(r"실행 관찰 API \d+\([^)]*\)")
 STOP_LABEL: "dict[str, str]" = {"collect": "정지", "G0": "정지", "support": "정지", "run": "red", "G2": "red", "suite": "red"}
 SITE_RE: "re.Pattern[str]" = re.compile(r"(?:/[^\s:()'\"]*)?/lib/python3\.\d+/site-packages/")
 HEX12_RE: "re.Pattern[str]" = re.compile(r"\b[0-9a-f]{12}\b")
@@ -184,10 +191,14 @@ def build_toy(cases: ModuleType, case, at: Path) -> Path:
             p.write_bytes(body)
         else:
             p.write_text(body, encoding="utf-8")
+    outside = at.parent / "outside"                       # 장난감 밖 형제 폴더(같은 사례의 장난감 둘이 함께 쓴다 — 글이 같다)
+    for rel, body in (case.outside or {}).items():
+        (outside / rel).parent.mkdir(parents=True, exist_ok=True)
+        (outside / rel).write_text(body, encoding="utf-8")
     for rel, target in (case.symlinks or {}).items():
         link = at / rel
         link.parent.mkdir(parents=True, exist_ok=True)
-        os.symlink(target, link)
+        os.symlink(target.replace("<OUTSIDE>", str(outside)), link)
     subprocess.run(["git", "-c", "init.defaultBranch=main", "init", "-q", str(at)], check=True, capture_output=True)
     if case.after_commit is not None:                      # tempfile 안 픽스처 커밋 1 뒤 작업 트리 편집(지운 추적 파일 등)
         git = ["git", "-C", str(at), "-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false"]
@@ -211,8 +222,12 @@ def normalize(text: str, places: "list[tuple[Path, str]]") -> str:
     return SITE_RE.sub("<SITE>/", text)
 
 
-def _obs(info: dict) -> "list[int]":
-    return [len(info["obs_hits_M"]), info["obs_files_M"], len(info["obs_hits_union"]), info["obs_files_union"]]
+def _obs(info: dict) -> "list[int] | None":
+    """정적 규칙 관측 — [범위 안 걸린 줄 · 실린 범위 .py 수 · 범위 밖 예보 줄 · 풀지 못한 import 이름](예보 · 이름은 collect 만).
+    실린 범위 이전 판(대역 엔진 — 2.25.0 까지)은 이 값이 없다 — None(그 칸은 부가 관측만 다름으로 선다)."""
+    if "obs_hits" not in info:
+        return None
+    return [len(info["obs_hits"]), info["obs_scope"], len(info["obs_forecast"]), len(info["obs_unresolved"])]
 
 
 def cell(label: str, reasons: "list[str]", extras: dict, box: "Toolbox", *places: "tuple[Path, str]") -> dict:
@@ -250,7 +265,7 @@ def run_env(engine: Engine, box: Toolbox, case, work: Path) -> dict:
         r2, i2 = engine.run(toy, d, "run", {**base_env(), **g2env}, drop_worker=False, probe_out_root=probe2)
     lost = engine.g0_keep(i0, i2, toy) if "keys" in i0 and "keys" in i2 else ["구조 키 없음"]
     verdict = list(r2) + ([f"G0 유지 위반 {lost}"] if lost else [])
-    return {"G0": cell("G0", r0, {"selected": i0["selected"]}, box, (toy, "<TOY>"), (probe0, "<PROBE_OUT>")),
+    return {"G0": cell("G0", r0, {"selected": i0["selected"], "obs": _obs(i0)}, box, (toy, "<TOY>"), (probe0, "<PROBE_OUT>")),
             "G2": cell("G2", verdict, {"selected": i2["selected"], "obs": _obs(i2)}, box, (toy, "<TOY>"), (probe2, "<PROBE_OUT>"))}
 
 
@@ -429,7 +444,53 @@ def run_limits(engine: Engine, box: Toolbox, case, work: Path) -> dict:
     return out
 
 
-RUNNERS = {"pair": run_pair, "env": run_env, "timeout": run_timeout, "limits": run_limits}
+def _match(regex: "re.Pattern[str]", said: str) -> str:
+    m = regex.search(said)
+    return m.group(0) if m else "없음"
+
+
+def run_split(engine: Engine, box: Toolbox, case, work: Path) -> dict:
+    """G2 재개 두 갈래(설계 3판 §C2) — 커밋한 장난감의 HEAD 를 앵커(`build_anchor`)로 적고 지원 확인(«지원») → G1 결속 →
+    레인 편집(`case.after`)을 커밋 → suite. suite 칸은 실행 관찰 API 를 «이번 실행이 바꾼 파일 / 안 바꾼 파일»로 가른 사유 ·
+    계수 · 요약 조각을 본다. 명령 진입 함수가 상속 환경을 쓰므로 병렬 밖에서 기본 환경으로 잠시 바꿔 돈다."""
+    saved_env = dict(os.environ)
+    out = {}
+    try:
+        os.environ.clear()
+        os.environ.update(base_env())
+        toy, folder, rec = _timeout_folder(engine, box, case, work / "toy")
+        git = ["git", "-C", str(toy), "-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false"]
+        genv = {**os.environ, **GIT_FIXTURE_ENV}
+        head = subprocess.run([*git, "rev-parse", "HEAD"], check=True, capture_output=True, text=True, env=genv).stdout.strip()
+        (folder / "build_anchor").write_text(head + "\n", encoding="utf-8")
+        code, said = _command(engine.mod.cmd_support, folder, toy)
+        g0 = json.loads((rec / "g0-collect.json").read_text(encoding="utf-8"))
+        out["support"] = cell("support", g0["reasons"], {"exit": code, "summary": _summary(said), "record_verdict": g0["verdict"],
+                                                        "scope": _match(SCOPE_RE, said), "forecast": len(g0.get("forecast", []))},
+                              box, (toy, "<TOY>"))
+        if code != 0:
+            raise RuntimeError(f"갈래 사례의 지원 확인이 «지원»이 아님: {said}")
+        _bind_g1(folder, rec)
+        for rel, body in (case.after or {}).items():
+            (toy / rel).write_text(body, encoding="utf-8")
+            subprocess.run([*git, "add", "--", rel], check=True, capture_output=True, env=genv)
+        subprocess.run([*git, "commit", "-q", "-m", "레인 편집"], check=True, capture_output=True, env=genv)
+        code, said = _command(engine.mod.cmd_suite, folder, toy)
+        suite = engine.mod.latest_suite_record(folder)
+        if suite is None:
+            raise RuntimeError(f"갈래 사례의 suite 기록 없음: {said}")
+        counts = suite["counts"]
+        out["suite"] = cell("suite", suite["reasons"], {"exit": code, "summary": _summary(said), "record_verdict": suite["verdict"],
+                                                        "observer": [counts.get(k) for k in ("observer_hits", "observer_files",
+                                                                                             "observer_unchanged")],
+                                                        "line": _match(OBSERVER_RE, said)}, box, (toy, "<TOY>"))
+    finally:
+        os.environ.clear()
+        os.environ.update(saved_env)
+    return out
+
+
+RUNNERS = {"pair": run_pair, "env": run_env, "timeout": run_timeout, "limits": run_limits, "split": run_split}
 
 
 @contextlib.contextmanager
@@ -629,7 +690,7 @@ def run_interrupt_checks(engine: Engine) -> "list[str]":
 
 def run_case(engine: Engine, box: Toolbox, case) -> "tuple[dict | None, str, float]":
     t0 = time.monotonic()
-    serial = case.kind in ("timeout", "limits")            # 병렬 밖에서만 돈다 — 제품 상수를 잠시 바꿔도 된다
+    serial = case.kind in SERIAL_KINDS                     # 병렬 밖에서만 돈다 — 제품 상수 · 상속 환경을 잠시 바꿔도 된다
     try:
         with tempfile.TemporaryDirectory(prefix="bp-case-") as td, \
                 (_stop_grace(engine, STOP_GRACE_CASE_SECONDS) if serial else contextlib.nullcontext()):
@@ -710,9 +771,9 @@ def main() -> int:
     want_all = json.loads(EXPECTED.read_text(encoding="utf-8"))["cases"] if EXPECTED.is_file() else {}
     selected = [c for c in cases.ALL_CASES
                 if not args.only or any(c.id.startswith(o) or c.group == o or c.bundle == o for o in args.only)]
-    skipped = [c for c in selected if c.kind in ("timeout", "limits") and engine.proto]
-    pooled = [c for c in selected if c.kind not in ("timeout", "limits")]
-    serial = [c for c in selected if c.kind in ("timeout", "limits") and not engine.proto]
+    skipped = [c for c in selected if c.kind in SERIAL_KINDS and engine.proto]
+    pooled = [c for c in selected if c.kind not in SERIAL_KINDS]
+    serial = [c for c in selected if c.kind in SERIAL_KINDS and not engine.proto]
     jobs = max(1, min(MAX_JOBS, args.jobs))
     problems: "list[str]" = []
     if not engine.proto and engine.mod.COMMAND_TIMEOUT_SECONDS != PRODUCT_TIMEOUT_SECONDS:
