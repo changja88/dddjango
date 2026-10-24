@@ -7,7 +7,7 @@ description: 테스트 코드 작성법 종합 지식 — 테스트 전략·피�
 
 ## 언제 쓰나
 
-테스트 코드·픽스처·더블·factory·계약 검증·커버리지·Mutation·BDD·동시성 테스트 코드를 작성할 때 로드한다. 이 skill은 `discipline-tdd` §5.5가 영구 테스트 입장 결정을 끝낸 **뒤** `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직의 작성 mechanics만 제공한다. `retain` 재조직은 새 case·assertion·Red를 만들지 않고 전후 같은 보호를 유지한다. 후보나 `reuse`·`reject`를 새 test file·case·assertion·helper 의무로 바꾸지 않는다. 경계:
+테스트 코드·픽스처·더블·factory·계약 검증·커버리지·Mutation·BDD·동시성 테스트 코드를 작성할 때 로드한다. 이 skill은 `discipline-tdd` §5.5가 영구 테스트 입장 결정을 끝낸 **뒤** `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직의 작성 mechanics만 제공한다. `retain` 재조직은 새 case·assertion·Red를 만들지 않고 전후 같은 보호를 유지한다(리팩토링 모드의 승인 «개명» 행이 바꾼 케이스 · id 이름은 새 case 가 아니다). 후보나 `reuse`·`reject`를 새 test file·case·assertion·helper 의무로 바꾸지 않는다. 경계:
 
 - TDD 방법론과 테스트 수명 주기(무엇을 검증하고 유지·갱신·분리·삭제하는가) → `discipline-tdd`
 - Django 모델·ORM·서비스 레이어 구현 → `implementation-django`
@@ -16,7 +16,7 @@ description: 테스트 코드 작성법 종합 지식 — 테스트 전략·피�
 
 ## 핵심 운영 원칙
 
-- **먼저 `discipline-tdd` §5.5의 decision row를 확인한다.** `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직에만 아래 recipe를 적용한다. `retain` 재조직은 새 case·assertion·Red가 없고, `reuse`·`reject`에서는 test artifact write가 0이다. 피라미드·coverage·속도·도구 예시는 `add`의 근거가 아니다 (§1)
+- **먼저 `discipline-tdd` §5.5의 decision row를 확인한다.** `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직에만 아래 recipe를 적용한다. `retain` 재조직은 새 case·assertion·Red가 없고(승인 «개명» 행이 바꾼 케이스 · id 이름은 새 case 가 아니다), `reuse`·`reject`에서는 test artifact write가 0이다. 피라미드·coverage·속도·도구 예시는 `add`의 근거가 아니다 (§1)
 - 입장된 행동을 증명하는 가장 작은 테스트 범위를 선택한다. 유효한 domain/application/DB/adapter/public contract 테스트를 단순히 상위 계층이라는 이유로 낮추거나 생략하지 않는다 (§1)
 - migration 파일·번호·과거 state·forward/reverse가 오라클이면 migration 전용 테스트이고, 현재 model·ORM·service·API·DB constraint가 오라클이면 DB-backed 현행 동작 테스트다. 이 절은 기술적으로 식별만 하고 수명 주기는 `discipline-tdd`에 넘긴다 (§1.4)
 - 테스트 러너·작성은 **pytest(pytest-django)** 기본 — 함수형 + `assert` + `@pytest.mark.django_db`(DB 접근 명시) + 픽스처 (§3, §4, §19.4)

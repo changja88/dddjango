@@ -2,7 +2,7 @@
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 
-> 이 문서는 `discipline-tdd` §5.5가 영구 테스트 입장 결정을 끝낸 **뒤** 사용하는 테스트 코드 작성 mechanics다. `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직에만 이 문서의 recipe를 적용한다. `retain` 재조직은 새 case·assertion·Red를 만들지 않고 전후 같은 보호를 유지한다. candidate나 `reuse`·`reject`를 새 test file·case·assertion·helper 의무로 바꾸지 않으며, 무엇을 테스트하고 유지·갱신·분리·삭제할지는 `discipline-tdd`가 소유한다.
+> 이 문서는 `discipline-tdd` §5.5가 영구 테스트 입장 결정을 끝낸 **뒤** 사용하는 테스트 코드 작성 mechanics다. `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직에만 이 문서의 recipe를 적용한다. `retain` 재조직은 새 case·assertion·Red를 만들지 않고 전후 같은 보호를 유지한다(리팩토링 모드의 승인 «개명» 행이 바꾼 케이스 · id 이름은 새 case 가 아니다). candidate나 `reuse`·`reject`를 새 test file·case·assertion·helper 의무로 바꾸지 않으며, 무엇을 테스트하고 유지·갱신·분리·삭제할지는 `discipline-tdd`가 소유한다.
 
 ---
 

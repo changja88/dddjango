@@ -19,12 +19,18 @@ djr:R-1762 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-1763 a djr:Prohibition ;
-    skos:prefLabel "retain 재조직의 새 case·assertion·Red 생성 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1763@2026-08-22> .
+    skos:prefLabel "retain 재조직의 새 case·assertion·Red 생성 금지(승인 개명 행의 케이스·id 개명은 새 case 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1763@2026-10-24> .
 
 <https://numchida.com/ns/djr#R-1763@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1763 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1763@2026-10-24> a djr:Expression ;
+    prov:specializationOf djr:R-1763 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1763@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-1764 a djr:Prohibition ;
     skos:prefLabel "candidate·reuse·reject의 테스트 산출물 의무 전환 금지"@ko ;
@@ -1391,7 +1397,7 @@ djr:R-1932 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:statesNorm djr:R-1761, djr:R-1762, djr:R-1763, djr:R-1764 ;
-    djr:text "\n\n> 이 문서는 `discipline-tdd` §5.5가 영구 테스트 입장 결정을 끝낸 **뒤** 사용하는 테스트 코드 작성 mechanics다. `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직에만 이 문서의 recipe를 적용한다. `retain` 재조직은 새 case·assertion·Red를 만들지 않고 전후 같은 보호를 유지한다. candidate나 `reuse`·`reject`를 새 test file·case·assertion·helper 의무로 바꾸지 않으며, 무엇을 테스트하고 유지·갱신·분리·삭제할지는 `discipline-tdd`가 소유한다.\n\n"@ko .
+    djr:text "\n\n> 이 문서는 `discipline-tdd` §5.5가 영구 테스트 입장 결정을 끝낸 **뒤** 사용하는 테스트 코드 작성 mechanics다. `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직에만 이 문서의 recipe를 적용한다. `retain` 재조직은 새 case·assertion·Red를 만들지 않고 전후 같은 보호를 유지한다(리팩토링 모드의 승인 «개명» 행이 바꾼 케이스 · id 이름은 새 case 가 아니다). candidate나 `reuse`·`reject`를 새 test file·case·assertion·helper 의무로 바꾸지 않으며, 무엇을 테스트하고 유지·갱신·분리·삭제할지는 `discipline-tdd`가 소유한다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/references/final.md/s001/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/references/final.md/s001> ;
