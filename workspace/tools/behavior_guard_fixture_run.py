@@ -1292,7 +1292,7 @@ RN: str = ("from application.core.product import product\n\n\ndef test_check():\
            "def test_other():\n    assert product() > 0\n")
 RN_NEW: str = RN.replace("def test_check(", "def test_product_is_nine(")
 RN_UNIT: str = "개명 test_check → test_product_is_nine"
-# M47 #4 꼴(spring test_visit_turn_answer.py 의 모양만 — 긴 케이스 이름 · 단언에 직접 안 쓰이는 지역 card_b 를 다음 호출에 넘김)
+# M47 #4 꼴(현장 시험 한 파일의 모양만 — 긴 케이스 이름 · 단언에 직접 안 쓰이는 지역 card_b 를 다음 호출에 넘김)
 M47: str = ("from application.core.product import product\n\n\ndef _open(card):\n    return card\n\n\ndef _drained(stream):\n"
             "    return stream\n\n\ndef test_card_b_answer_turn_completes_the_spine() -> None:\n    \"\"\"카드 B 답 턴.\"\"\"\n"
             "    card_b: int = product()\n    stream_id: int = _open(card_b)\n    wire: int = _drained(stream_id)\n"
