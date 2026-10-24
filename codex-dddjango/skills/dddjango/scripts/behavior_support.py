@@ -5,6 +5,12 @@
 저장소 파일 목록 · 실행 관찰 API 정적 규칙으로 판정한다(설계 정본: workspace/plan/2026-10-03-refactor-definition/design.md
 §3-1 · §4-1 · §4-5 · 끝 정오 2 · 3).
 
+실행 관찰 API 정적 규칙이 보는 범위(F4-107 · 2026-10-24 설계 3판 §C)는 이 pytest 프로세스가 실제로 싣고 돈 시험 쪽 코드다 —
+G0(수집) = 시험 쪽 ∩ (시험 기계 파일 M ∪ 수집 끝 실행 기록 L0 ∪ 시험 쪽 import 닫힘 K ∪ 조상 `__init__` A),
+G2(suite) = 시험 쪽 ∩ (M ∪ 세션 끝 실행 기록 L2 ∪ A)(지금 내용 전부). G0 범위 밖 시험 쪽 위반은 «범위 밖 예보»로만 적는다.
+시험 쪽 .py 의 읽기 · 파싱 · 규칙 걷기 · import 목록 뽑기는 시험 명령과 겹쳐 따로 도는 스레드가 파일마다 한 번 하고,
+명령이 끝나면 L · K 로 범위와 예보를 가른다.
+
   support <폴더> --collect  승인 전 지원 확인 — `<폴더>/behavior/support/<UTC>/test-commands.md` 의 시험 명령과 동결 변수
                             여섯을 `run-definition.json` 으로 동결하고 수집만 돌려 `g0-collect.json` 을 쓴다.
                             exit 0 지원 · 2 지원 안 함(G0 정지) · 1 실행 불능.
@@ -27,6 +33,7 @@ import shlex
 import signal
 import subprocess
 import sys
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
@@ -52,15 +59,18 @@ COMMAND_LINE_RE: "re.Pattern[str]" = re.compile(r"^시험 명령 (\d+): (.+)$")
 SOURCE_LINE_RE: "re.Pattern[str]" = re.compile(r"^출처: (.+)$")
 MENTION_SKIP_PREFIXES: "tuple[str, ...]" = (".dddjango-web/",)   # `.dddjango/` 는 bg._excluded 가 이미 뺀다
 PROOF_MISSING: str = "passed 인데 결속한 시험 코드의 결과 증거 없음"
+OBSERVER_REASON: str = "실행 관찰 API(증명 지원 밖)"
+OBSERVER_UNCHANGED_REASON: str = "실행 관찰 API(증명 지원 밖 · 이번 실행이 바꾸지 않은 파일)"   # G2 — 레인이 고치지 않는다(정지 보고)
 REENTRY: str = "결과 증거 범위 밖 — 감시 구간 재진입"
 ROLES: "tuple[str, ...]" = ("single", "controller", "worker")
+PROBE_RECORD_VERSION: int = 2   # 탐침 기록 판 — 2 = 실행 기록(loaded_collect · loaded_end · sys_path)
 # 판정 · 계수에 쓰는 탐침 기록 칸과 형식 — 없거나 형식 밖이면 기본값으로 메우지 않고 «확인 못 함» 정지
 PROBE_FIELDS: "dict[str, str]" = {
-    "role": "role", "workerid": "workerid", "exitstatus": "int", "failed": "int", "optimize": "int",
+    "version": "version", "role": "role", "workerid": "workerid", "exitstatus": "int", "failed": "int", "optimize": "int",
     "finalized": "bool", "greenlet_loaded": "bool", "workers_ready": "strs", "initial": "strs", "final": "strs",
     "calls": "strs", "skips": "strs", "passed": "strs", "complete": "strs", "import_skips": "strs", "late": "strs",
     "files": "strs", "meta": "meta", "flags": "dict", "anchor": "anchor", "hookimpls": "hooks", "bad": "pairs",
-    "unresolved": "pairs",
+    "unresolved": "pairs", "loaded_collect": "strs", "loaded_end": "strs", "sys_path": "strs",
 }
 ANCHOR_KEYS: "tuple[str, ...]" = ("nid", "home", "qual", "inner", "inner_qual")
 
@@ -96,7 +106,8 @@ ALLOW = {
               "NoneType", "NotImplementedType", "EllipsisType", "new_class", "prepare_class", "resolve_bases",
               "DynamicClassAttribute", "MethodType", "GetSetDescriptorType", "MemberDescriptorType", "BuiltinFunctionType",
               "BuiltinMethodType", "WrapperDescriptorType", "MethodWrapperType", "ClassMethodDescriptorType",
-              "MethodDescriptorType"},   # v15.2-pre: LambdaType 뺌(= FunctionType · r15b-6)
+              "MethodDescriptorType",
+              "FrameType"},   # v15.2-pre: LambdaType 뺌(= FunctionType · r15b-6) · 3판: FrameType 더함(인스턴스를 못 만든다 — 주석 · isinstance 용)
     "gc": {"collect", "disable", "enable", "isenabled", "freeze", "unfreeze", "get_count", "set_threshold",
            "get_threshold", "get_stats", "set_debug", "get_debug", "callbacks", "garbage", "DEBUG_LEAK", "DEBUG_STATS",
            "DEBUG_COLLECTABLE", "DEBUG_UNCOLLECTABLE", "DEBUG_SAVEALL", "is_tracked", "is_finalized", "freeze"},
@@ -106,11 +117,22 @@ ALLOW = {
 INSPECT_DENY = {"currentframe", "stack", "trace", "getframeinfo", "getouterframes", "getinnerframes",
                 "getgeneratorstate", "getgeneratorlocals", "getcoroutinestate", "getcoroutinelocals", "_getframe"}
 # 관찰 · 디버그 전용 도구 모듈 — import 자체로 정지(안전 읽기 없음 · N2)
+# 3판: 파일 글을 다른 이름으로 실행하는 길(code · codeop · marshal)과 사슬 출발점이 되는 내부 import 모듈을 더함
 TOOL_MODULES = {"bdb", "pdb", "trace", "profile", "cProfile", "_lsprof", "ctypes", "_ctypes",
                 "coverage", "pytest_cov", "hunter", "viztracer", "line_profiler", "yappi", "pyinstrument",
-                "debugpy", "pydevd", "ipdb", "pudb", "snoop", "pysnooper", "birdseye", "pydev", "manhole"}
+                "debugpy", "pydevd", "ipdb", "pudb", "snoop", "pysnooper", "birdseye", "pydev", "manhole",
+                "code", "codeop", "marshal", "_frozen_importlib", "_frozen_importlib_external", "_imp"}
 ALLOW_MODULES = set(ALLOW) | {"inspect"}
 DANGER_ALL = ALLOW_MODULES | TOOL_MODULES
+# 3판 — 모듈 값 이름: 이 이름의 속성은 받는 쪽과 무관하게 정지(os.sys · logging.sys · inspect.sys · util.sys …)
+MODULE_VALUE_ATTRS = {"sys", "builtins", "_sys", "_imp", "_bootstrap", "_bootstrap_external", "_frozen_importlib",
+                      "_frozen_importlib_external"}
+# 위험 모듈에서 시작한 속성 사슬 · `from <위험 모듈>[.하위] import` 로 받으면 정지하는 이름(위험 모듈 이름 전부 + 위 이름)
+MODULE_VALUE_NAMES = DANGER_ALL | MODULE_VALUE_ATTRS
+# importlib.metadata(정확히 그 하위 모듈)의 안전 이름 — from-import 와 속성 읽기 모두(별칭 import 는 지금처럼 정지)
+METADATA_SAFE = {"version", "PackageNotFoundError", "metadata", "requires"}
+IMPORTLIB_SUBMODULES = {"util", "metadata", "resources", "machinery", "abc"}   # from importlib import <이것> 은 모듈 잎
+LOADER_FILENAME = {"get_filename", "source_to_code"}   # 3판 — 로더가 코드 객체 파일 이름을 속이는 길(정의하면 정지)
 # from <위험 모듈> import … 로 받아도 되는 안전 이름(관찰 설치 불가 · 현장 실측 + 자명)
 SAFE_FROM = {
     "sys": set(),   # from sys import 는 전부 정지(settrace 등)
@@ -122,7 +144,8 @@ SAFE_FROM = {
 # N1 — 위험 모듈을 거치지 않고도 쓰는 바로 그 이름(바 Name · 내장 · 어디에 나오든)
 OBS_NAMES = {"settrace", "setprofile", "settrace_all_threads", "setprofile_all_threads",
              "addaudithook", "f_trace", "f_trace_lines", "f_trace_opcodes", "set_trace", "breakpoint",
-             "monitoring", "_getframe", "_current_frames"}   # v15.1: 재취득한 위험 모듈에서 .monitoring · ._getframe 설치 길도 닫음(현장 0)
+             "monitoring", "_getframe", "_current_frames",   # v15.1: 재취득한 위험 모듈에서 .monitoring · ._getframe 설치 길도 닫음(현장 0)
+             "__globals__", "f_globals", "f_builtins", "__builtins__"}   # 3판: 함수 · 프레임의 전역 사전으로 모듈 값을 다시 얻는 길
 CODE_EXEC = {"eval", "exec", "compile"}
 IMPORTERS = {"import_module", "reload", "__import__"}
 
@@ -154,9 +177,20 @@ def _importer_arg(call) -> "tuple[bool, str | None]":
     return (lit is not None), (lit.split(".")[0] if lit else None)
 
 
+def _chain_origin(node, handles: dict, leaves: dict) -> "str | None":
+    """위험 모듈 핸들 · 모듈 잎에서 시작한 속성 사슬이면 그 점 이름(`importlib.metadata` …), 아니면 None."""
+    if isinstance(node, _ast.Name):
+        return handles.get(node.id) or leaves.get(node.id)
+    if isinstance(node, _ast.Attribute):
+        base = _chain_origin(node.value, handles, leaves)
+        return f"{base}.{node.attr}" if base is not None else None
+    return None
+
+
 def _scan_tree(tree, where: str, out: list, depth: int = 0) -> None:
     # 1) 결속 — 평이 import 만 위험 모듈 핸들로 받는다. 별칭 · from(허용 밖) · import * 는 정지.
     handles = {}   # 지역 이름 -> 위험 모듈 canonical(핸들) · 안전 leaf 는 담지 않는다(그 자체로 안전)
+    leaves = {}    # 3판: from importlib import <하위 모듈> 로 받은 지역 이름 -> 그 점 이름(속성 사슬을 본다)
     for n in _ast.walk(tree):
         ln = getattr(n, "lineno", 0)
         if isinstance(n, _ast.Import):
@@ -174,15 +208,27 @@ def _scan_tree(tree, where: str, out: list, depth: int = 0) -> None:
             if top in TOOL_MODULES:
                 out.append(f"{where}:{ln} N2 from {n.module}")
             elif top in ALLOW_MODULES:
-                safe = SAFE_FROM.get(top)
+                metadata = n.module == "importlib.metadata"   # 3판: 정확히 그 하위 모듈은 안전 이름 넷만
+                safe = METADATA_SAFE if metadata else SAFE_FROM.get(top)
                 for a in n.names:
                     if a.name == "*":
                         out.append(f"{where}:{ln} from {n.module} import *({top})")
+                    elif a.name in MODULE_VALUE_NAMES:            # 3판: 모듈 값을 이름으로 받음(from inspect import sys …)
+                        out.append(f"{where}:{ln} from {n.module} import {a.name}(모듈 값)")
                     elif safe is None:                       # inspect — 거부 집합만
                         if a.name in INSPECT_DENY:
                             out.append(f"{where}:{ln} from {n.module} import {a.name}(프레임 접근)")
                     elif a.name not in safe:
-                        out.append(f"{where}:{ln} from {n.module} import {a.name}(허용 밖 · {top})")
+                        out.append(f"{where}:{ln} from {n.module} import {a.name}(허용 밖 · {n.module if metadata else top})")
+                    if n.module == "importlib" and a.name in IMPORTLIB_SUBMODULES:
+                        leaves[a.asname or a.name] = f"importlib.{a.name}"
+        elif isinstance(n, _ast.ClassDef):                    # 3판: 코드 객체 파일 이름을 속이는 로더(get_filename · source_to_code)
+            for b in n.body:
+                names = [b.name] if isinstance(b, (_ast.FunctionDef, _ast.AsyncFunctionDef)) else \
+                    [t.id for t in (b.targets if isinstance(b, _ast.Assign) else [b.target] if isinstance(b, _ast.AnnAssign) else [])
+                     if isinstance(t, _ast.Name)]
+                for name in sorted(set(names) & LOADER_FILENAME):
+                    out.append(f"{where}:{b.lineno} 가짜 파일 이름 로더 — {n.name}.{name} 정의")
     # 1b) fabfile 네 줄 꼴 — 그 모듈을 import 한 것과 같은 수동 적재만 허용(② · v15.1)
     #    spec = <…>.spec_from_file_location(<상수 비위험 이름>, …) · mod = <…>.module_from_spec(spec)
     #    핸들.modules[spec.name] = mod · (그 뒤 loader.exec_module(mod))  —  이 한 묶음만 쓰기 허용.
@@ -217,9 +263,20 @@ def _scan_tree(tree, where: str, out: list, depth: int = 0) -> None:
     attr_values = {id(n.value) for n in _ast.walk(tree) if isinstance(n, _ast.Attribute) and isinstance(n.value, _ast.Name)}
     for n in _ast.walk(tree):
         ln = getattr(n, "lineno", 0)
+        if isinstance(n, _ast.Attribute) and not (isinstance(n.value, _ast.Name) and n.value.id in handles):
+            # 3판 — 핸들 밖 받는 쪽: 모듈 값 이름 속성(받는 쪽 무관) · 위험 모듈에서 시작한 사슬의 모듈 값 · importlib.metadata 안전 이름
+            if n.attr in MODULE_VALUE_ATTRS:
+                out.append(f"{where}:{ln} 모듈 값 이름 속성 .{n.attr}")
+            else:
+                origin = _chain_origin(n.value, handles, leaves)
+                if origin is not None and n.attr in MODULE_VALUE_NAMES:
+                    out.append(f"{where}:{ln} 모듈 값 재취득 사슬 {origin}.{n.attr}")
+                elif origin == "importlib.metadata" and not (isinstance(n.ctx, _ast.Load) and n.attr in METADATA_SAFE):
+                    kind = "읽기" if isinstance(n.ctx, _ast.Load) else type(n.ctx).__name__
+                    out.append(f"{where}:{ln} 위험 모듈 허용 밖 importlib.metadata.{n.attr}[{kind}]")
         if isinstance(n, _ast.Attribute) and isinstance(n.value, _ast.Name) and n.value.id in handles:
             mod = handles[n.value.id]
-            if isinstance(n.ctx, _ast.Load) and _allowed_attr(mod, n.attr):
+            if isinstance(n.ctx, _ast.Load) and _allowed_attr(mod, n.attr) and n.attr not in MODULE_VALUE_NAMES:
                 pass
             else:
                 kind = "읽기" if isinstance(n.ctx, _ast.Load) else type(n.ctx).__name__
@@ -264,37 +321,162 @@ def _scan_tree(tree, where: str, out: list, depth: int = 0) -> None:
         if isinstance(n, _ast.Attribute) and n.attr in OBS_NAMES and not (isinstance(n.value, _ast.Name) and n.value.id in handles):
             out.append(f"{where}:{ln} N1 .{n.attr}")   # 핸들 밖에서 .settrace 등(핸들이면 위에서 이미 잡음)
 
-def observer_scan_sources(sources: "dict[str, bytes]") -> "tuple[list[str], int]":
-    """원문 바이트(rel → bytes · .py 만)의 AST 에 위험 모듈 허용 밖 · N1 · N2 · D3 꼴이 있으면 위반. 바이트로 파싱해
-    PEP 263 인코딩 표지를 존중한다. (위반 목록 · 본 .py 수)."""
-    out: list = []
-    n = 0
-    for rel in sorted(r for r in sources if r.endswith(".py")):
-        n += 1
-        try:
-            tree = _ast.parse(sources[rel])
-        except SyntaxError:
-            ver = ".".join(str(x) for x in sys.version_info[:3])
-            out.append(f"{rel}:0 정적 확인 못 함(파싱 실패 — 파서 판 {ver})")
-            continue
-        except (ValueError, UnicodeError):
-            out.append(f"{rel}:0 정적 확인 못 함(원문 디코딩 실패)")
-            continue
-        _scan_tree(tree, rel, out)
-    return sorted(set(out)), n
+def _is_type_checking(test) -> bool:
+    return (isinstance(test, _ast.Name) and test.id == "TYPE_CHECKING") or \
+        (isinstance(test, _ast.Attribute) and test.attr == "TYPE_CHECKING")
 
 
-def observer_scan(repo: Path, rels: "set[str]") -> "tuple[list[str], int]":
-    """저장소 파일 rels(.py) 를 읽어 observer_scan_sources 와 같은 판정 — 읽지 못한 파일은 «정적 확인 못 함(읽기 실패)»."""
-    sources: "dict[str, bytes]" = {}
-    unread: "list[str]" = []
-    for rel in sorted(r for r in rels if r.endswith(".py")):
+def _import_names(tree) -> "list[tuple[int, str]]":
+    """시험 쪽 import 닫힘의 재료 — (상대 단계, 점 이름) 목록. import · from(상대는 단계 ≥ 1 · 받는 이름도 하위 모듈 후보) ·
+    상수 이름의 import_module · __import__ · importorskip · pytest_plugins 대입. 모듈 수준 · 함수 안 모두 보고,
+    `if TYPE_CHECKING:` 몸통 안은 뺀다(실리지 않는다 — else 쪽은 본다)."""
+    skip: "set[int]" = set()
+    for n in _ast.walk(tree):
+        if isinstance(n, _ast.If) and _is_type_checking(n.test):
+            for b in n.body:
+                skip.update(id(x) for x in _ast.walk(b))
+    out: "list[tuple[int, str]]" = []
+    for n in _ast.walk(tree):
+        if id(n) in skip:
+            continue
+        if isinstance(n, _ast.Import):
+            out += [(0, a.name) for a in n.names]
+        elif isinstance(n, _ast.ImportFrom):
+            mod = n.module or ""
+            out.append((n.level, mod))
+            out += [(n.level, f"{mod}.{a.name}" if mod else a.name) for a in n.names if a.name != "*"]
+        elif isinstance(n, _ast.Call) and _term(n.func) in ("import_module", "__import__", "importorskip"):
+            name = _lit(n.args[0]) if n.args else next((_lit(k.value) for k in n.keywords if k.arg in ("name", "modname")), None)
+            if not name:
+                continue
+            level = len(name) - len(name.lstrip("."))
+            if not level:
+                out.append((0, name))
+                continue
+            pkg = _lit(n.args[1]) if len(n.args) > 1 else next((_lit(k.value) for k in n.keywords if k.arg == "package"), None)
+            base = pkg.split(".")[: len(pkg.split(".")) - (level - 1)] if pkg else []
+            if base:                                        # import_module(".x", "pkg") — 상수 package 로만 푼다
+                out.append((0, ".".join(base + [name.lstrip(".")]) if name.lstrip(".") else ".".join(base)))
+        elif isinstance(n, (_ast.Assign, _ast.AnnAssign, _ast.AugAssign)) and n.value is not None:
+            targets = n.targets if isinstance(n, _ast.Assign) else [n.target]
+            if any(isinstance(t, _ast.Name) and t.id == "pytest_plugins" for t in targets):
+                values = n.value.elts if isinstance(n.value, (_ast.List, _ast.Tuple)) else [n.value]
+                out += [(0, v) for v in map(_lit, values) if v]
+    return out
+
+
+def _static_one(repo: Path, rel: str) -> dict:
+    """시험 쪽 .py 하나의 정적 결과 — {"fail": 확인 못 한 까닭 | None, "hits": 규칙에 걸린 줄, "imports": 닫힘 재료}.
+    바이트로 파싱해 PEP 263 인코딩 표지를 존중한다."""
+    try:
+        data = (repo / rel).read_bytes()
+    except OSError:
+        return {"fail": "읽기 실패", "hits": [], "imports": []}
+    try:
+        tree = _ast.parse(data)
+    except SyntaxError:
+        return {"fail": f"파싱 실패 — 파서 판 {'.'.join(str(x) for x in sys.version_info[:3])}", "hits": [], "imports": []}
+    except (ValueError, UnicodeError):
+        return {"fail": "원문 디코딩 실패", "hits": [], "imports": []}
+    hits: list = []
+    _scan_tree(tree, rel, hits)
+    return {"fail": None, "hits": sorted(set(hits)), "imports": _import_names(tree)}
+
+
+def _static_all(repo: Path, rels: "list[str]", into: "dict[str, dict]") -> None:
+    """시험 명령과 겹쳐 도는 스레드 본체 — 파일마다 한 번 읽고 파싱해 규칙 걸린 줄과 import 목록을 남긴다(판정은 명령 뒤)."""
+    for rel in rels:
         try:
-            sources[rel] = (repo / rel).read_bytes()
+            into[rel] = _static_one(repo, rel)
+        except Exception as exc:  # noqa: BLE001 — 그 파일은 확인 못 한 것이다(범위 안이면 정지 · 밖이면 예보)
+            into[rel] = {"fail": f"정적 처리 실패 — {type(exc).__name__}", "hits": [], "imports": []}
+
+
+def _static_lines(rel: str, result: dict) -> "list[str]":
+    return [f"{rel}:0 정적 확인 못 함({result['fail']})"] if result["fail"] else list(result["hits"])
+
+
+def _under(path: str, roots: "tuple[str, ...]") -> "set[str]":
+    """경로 글자 하나를 뿌리마다 저장소 상대 경로로(뿌리 자신은 빈 글자)."""
+    return {"" if path == r else path[len(r) + 1:] for r in roots if path == r or path.startswith(r + os.sep)}
+
+
+def _loaded_rels(paths: "set[str]", roots: "tuple[str, ...]", scope: "set[str]") -> "set[str]":
+    """탐침 실행 기록(날 글자)을 범위 파일로 — 날 경로 · 풀린 경로를 날 뿌리 · 풀린 뿌리 둘 다에 대어 범위 파일인 것 모두.
+    날 경로가 제외 자리(가상 환경 · `.git/` …) 아래면 풀지 않는다(시험 쪽 범위가 아니다)."""
+    out: "set[str]" = set()
+    for f in paths:
+        rels = _under(os.path.normpath(f), roots)
+        if rels and all(bg._excluded(r) for r in rels):
+            continue
+        out |= (rels | _under(os.path.realpath(f), roots)) & scope
+    return out
+
+
+def _path_roots(entries: "list[str]", roots: "tuple[str, ...]") -> "list[str]":
+    """탐침이 기록한 sys.path 가운데 저장소 안 폴더(저장소 상대 · 차례 유지 · 제외 자리 뺌) — import 이름 해석 기준."""
+    out: "list[str]" = []
+    for e in entries:
+        for rel in sorted(_under(os.path.normpath(e), roots) | _under(os.path.realpath(e), roots)):
+            if not bg._excluded(rel + "/") and rel not in out:
+                out.append(rel)
+    return out
+
+
+def _module_file(parts: "list[str]", base: str, py: "set[str]") -> "str | None":
+    stem = "/".join(([base] if base else []) + parts)
+    for cand in ((stem + ".py") if parts else None, (stem + "/" if stem else "") + "__init__.py"):
+        if cand is not None and cand in py:
+            return cand
+    return None
+
+
+def _import_closure(static: "dict[str, dict]", seeds: "set[str]", test_side: "set[str]", py: "set[str]",
+                    path_roots: "list[str]", sys_path: "list[str]") -> "tuple[set[str], set[str]]":
+    """K — seeds(시험 쪽)에서 정적 import 를 따라간 닫힘. 시험 쪽 모듈만 따라간다(제품 모듈을 거치지 않는다 — 그 몫은 G2).
+    (닫힘, 풀지 못한 import 이름 — 저장소 · 기록한 sys.path 전부 · 표준 라이브러리 어디서도 못 찾은 맨 앞 이름)."""
+    seen: "set[str]" = set(seeds)
+    todo: "list[str]" = sorted(seeds)
+    misses: "set[str]" = set()
+    while todo:
+        rel = todo.pop()
+        pkg = rel.rpartition("/")[0]
+        for level, name in static[rel]["imports"]:
+            parts = name.split(".") if name else []
+            hits: "set[str]" = set()
+            if level == 0:
+                for i in range(1, len(parts) + 1):
+                    hit = next((h for h in (_module_file(parts[:i], root, py) for root in path_roots) if h), None)
+                    if hit:
+                        hits.add(hit)
+                if not hits and parts:
+                    misses.add(parts[0])
+            else:
+                dirs = pkg.split("/") if pkg else []
+                if level - 1 > len(dirs):
+                    continue
+                base = "/".join(dirs[: len(dirs) - (level - 1)])
+                hits = {h for h in (_module_file(parts[:i], base, py) for i in range(len(parts) + 1)) if h}
+            for hit in hits:
+                if hit in test_side and hit not in seen:
+                    seen.add(hit)
+                    todo.append(hit)
+    tops: "set[str]" = set()
+    for e in (sys_path if misses else []):
+        try:
+            names = os.listdir(e)
         except OSError:
-            unread.append(f"{rel}:0 정적 확인 못 함(읽기 실패)")
-    hits, n = observer_scan_sources(sources)
-    return sorted(set(hits) | set(unread)), n + len(unread)
+            continue
+        for nm in names:
+            head, dot, tail = nm.partition(".")
+            if not dot or tail == "py" or tail.endswith(("so", "pyd", "pyc")):
+                tops.add(head)
+    return seen, {m for m in misses if m not in sys.stdlib_module_names and m not in tops}
+
+
+def _ancestor_inits(rel: str, py: "set[str]") -> "set[str]":
+    parts = rel.split("/")[:-1]
+    return {"/".join(parts[:i]) + "/__init__.py" for i in range(1, len(parts) + 1)} & py
 
 
 def is_test_side(path: str, test_dirs: "set[str]") -> bool:
@@ -435,6 +617,8 @@ def _strs(v: object) -> bool:
 
 
 def _field_ok(kind: str, v: object, o: dict) -> bool:
+    if kind == "version":
+        return type(v) is int and v == PROBE_RECORD_VERSION
     if kind == "int":
         return type(v) is int
     if kind == "bool":
@@ -477,8 +661,8 @@ def _field_problems(o: dict) -> "list[tuple[str, str]]":
 
 def _new_counts() -> "dict[str, int]":
     return {k: 0 for k in ("commands", "collected", "selected", "calls", "skips", "complete", "proof_ok", "proof_total",
-                           "reentry", "anchor", "suspend", "observer_files", "observer_hits", "nolist", "unresolved", "late",
-                           "hooks", "M", "failed", "optimize")}
+                           "reentry", "anchor", "suspend", "observer_files", "observer_hits", "observer_unchanged", "nolist",
+                           "unresolved", "late", "hooks", "M", "failed", "optimize")}
 
 
 def run(repo: Path, definition: dict, mode: str, inherited: "dict[str, str]", *,
@@ -489,13 +673,17 @@ def run(repo: Path, definition: dict, mode: str, inherited: "dict[str, str]", *,
     탐침 출력은 `<probe_out_root>/<n>/<pid>.json` 에 남긴다(지우지 않는다 · 자리는 비어 있어야 한다).
     scope 기본 = 저장소 안 파일(_scope_files — git 추적 ∪ 무시되지 않은 미추적 · `.dddjango/` 제외 · 끊긴 심링크 포함).
     drop_worker 는 시험 자리.
-    stop_on_fail = 첫 실패(exit · 상한 초과)에서 남은 명령을 돌지 않는다(suite)."""
+    stop_on_fail = 첫 실패(exit · 상한 초과)에서 남은 명령을 돌지 않는다(suite).
+    실행 관찰 API 정적 규칙은 시험 쪽 .py 전부를 명령과 겹쳐 따로 도는 스레드에서 한 번씩 보고, 명령 뒤 보는 범위
+    (collect = 시험 쪽 ∩ (M ∪ L0 ∪ K ∪ A) · run = 시험 쪽 ∩ (M ∪ L2 ∪ A))의 걸린 줄만 사유로 · collect 의 범위 밖 걸린 줄은
+    예보(info `obs_forecast`)로 낸다. info `obs_hits_by_file` = 범위 안 파일마다 걸린 줄(suite 가 이번 실행 편집 여부로 가른다)."""
     if mode not in ("collect", "run"):
         raise ValueError(f"mode 는 collect | run — {mode!r}")
     reasons: "list[str]" = []
     counts = _new_counts()
     info: dict = {"seconds": 0.0, "outputs": 0, "fp": [], "initial": set(), "ok": set(), "meta": {}, "anchor": [], "nolist": [],
-                  "flags": {}, "greenlet_loaded": False, "project_hooks": set(), "commands": [], "cleaned": [], "counts": counts}
+                  "flags": {}, "greenlet_loaded": False, "project_hooks": set(), "commands": [], "cleaned": [], "counts": counts,
+                  "selected_ids": set(), "skipped_ids": set()}
     root = repo.resolve()
     out_root = Path(probe_out_root).resolve()
     if out_root.is_relative_to(root) and not bg._excluded(out_root.relative_to(root).as_posix() + "/"):
@@ -512,7 +700,17 @@ def run(repo: Path, definition: dict, mode: str, inherited: "dict[str, str]", *,
                 reasons.append(f"탐침을 언급하는 저장소 파일: {rel}")
         except (OSError, RuntimeError):     # 끊긴 · 맴도는 심링크 · 읽을 수 없는 파일 — 언급 확인에서는 넘긴다
             pass
+    # 실행 관찰 API 정적 규칙 — 시험 쪽 .py 전부를 시험 명령과 겹쳐 한 번씩(범위 · 예보는 명령 뒤 실행 기록으로 가른다)
+    roots: "tuple[str, ...]" = tuple(dict.fromkeys((os.path.abspath(repo), str(root))))
+    py: "set[str]" = {r for r in scope if r.endswith(".py")}
+    test_side: "set[str]" = {r for r in py if is_test_side(r, td)}
+    static: "dict[str, dict]" = {}
+    scanner = threading.Thread(target=_static_all, args=(repo, sorted(test_side), static), name="dddjango-static", daemon=True)
+    scanner.start()
     env = _command_env(definition, inherited)
+    env["DDDJANGO_PROBE_ROOTS"] = json.dumps(list(roots))
+    loaded: "set[str]" = set()
+    sys_path: "list[str]" = []
     initial_all, selected_all, M = set(), set(), set()
     info["fp"].append(fingerprint(repo))
     for n, argv in enumerate(definition["argvs"], 1):
@@ -622,6 +820,7 @@ def run(repo: Path, definition: dict, mode: str, inherited: "dict[str, str]", *,
             if not final <= ok or not final <= complete:
                 reasons.append(f"확인 못 함 — 선택 {len(final)} · 처분 {len(final & ok)}(call 보고 {len(final & calls)} · skip {len(final & skips)}) · 완료 {len(final & complete)} · {tag}")
             info["ok"] |= ok
+            info["skipped_ids"] |= final & skips              # G2 선택 가운데 skip · xfail(개명된 새 키 보고 — renamed_selection)
             failed = sum(o["failed"] for o in outs if has(o, "failed"))   # 일꾼까지 모든 출력의 합(일꾼 탐침은 tryfirst — 보고 고치기 전)
             if failed:
                 reasons.append(f"실패 보고 {failed}(모든 출력 합) — exit {rc} 와 무관하게 정지 · {tag}")
@@ -640,6 +839,7 @@ def run(repo: Path, definition: dict, mode: str, inherited: "dict[str, str]", *,
             counts["proof_ok"] += len((final & passed) - proof_viol)
         initial_all |= initial
         selected_all |= final
+        info["selected_ids"] |= final
         for o in outs:
             role = o["role"] if has(o, "role") else "?"
             if has(o, "failed"):
@@ -689,18 +889,31 @@ def run(repo: Path, definition: dict, mode: str, inherited: "dict[str, str]", *,
                     rel = p.relative_to(root).as_posix()
                     if rel in scope:
                         M.add(rel)
+            # 실행 기록 — collect 는 수집 끝(L0) · run 은 세션 끝(L2) · 모든 출력(일꾼) · 모든 명령의 합
+            ran_field = "loaded_collect" if mode == "collect" else "loaded_end"
+            loaded |= set(o[ran_field]) if has(o, ran_field) else set()
+            for e in (o["sys_path"] if mode == "collect" and has(o, "sys_path") else []):
+                if e not in sys_path:
+                    sys_path.append(e)
         if stop_on_fail and failed_cmd:
             break
     if initial_all != selected_all:
         reasons.append(f"확인 못 함 — 선택 합 {len(selected_all)} ≠ 수집 합 {len(initial_all)}")
-    # 실행 관찰 API 정적 규칙 — M ∪ 시험 쪽 분류의 .py(시험 쪽 도우미는 M 밖일 수 있다)
-    test_side_py = {r for r in scope if r.endswith(".py") and is_test_side(r, td)}
+    # 실행 관찰 API 정적 규칙 — 보는 범위 = 시험 쪽 ∩ (M ∪ L ∪ K(collect 만) ∪ 조상 __init__) · collect 의 범위 밖은 예보
+    scanner.join()
     m_py = {r for r in M if r.endswith(".py")}
-    hits_m, n_m = observer_scan(repo, m_py)
-    hits_u, n_u = observer_scan(repo, m_py | test_side_py)
-    info.update({"obs_files_M": n_m, "obs_files_union": n_u, "obs_hits_M": hits_m, "obs_hits_union": hits_u})
-    for h in hits_u:
-        reasons.append(f"실행 관찰 API(증명 지원 밖): {h}")
+    ran = {r for r in _loaded_rels(loaded, roots, scope) if r.endswith(".py")}
+    closure, unresolved = (_import_closure(static, (m_py | ran) & test_side, test_side, py, _path_roots(sys_path, roots), sys_path)
+                           if mode == "collect" else (set(), set()))
+    seen = m_py | ran | closure
+    in_scope = test_side & (seen | {a for r in seen for a in _ancestor_inits(r, py)})
+    hits_by_file = {rel: lines for rel in sorted(in_scope) if (lines := _static_lines(rel, static[rel]))}
+    hits = sorted(h for lines in hits_by_file.values() for h in lines)
+    forecast = [h for rel in sorted(test_side - in_scope) for h in _static_lines(rel, static[rel])] if mode == "collect" else []
+    info.update({"obs_hits": hits, "obs_hits_by_file": hits_by_file, "obs_scope": len(in_scope), "obs_forecast": forecast,
+                 "obs_unresolved": sorted(unresolved)})
+    for h in hits:
+        reasons.append(f"{OBSERVER_REASON}: {h}")
     for rel in sorted(M):
         if not is_test_side(rel, td):
             reasons.append(f"시험 기계 파일이 분류 밖: {rel}")
@@ -716,8 +929,8 @@ def run(repo: Path, definition: dict, mode: str, inherited: "dict[str, str]", *,
     info.update({"M": len(M), "M_files": sorted(M), "selected": len(selected_all), "initial": initial_all, "keys": keys,
                  "digests": {k[0]: _file_digest(repo / k[0]) for k in keys.values()}})
     counts.update({"commands": len(info["commands"]), "collected": len(initial_all), "selected": len(selected_all),
-                   "anchor": len(info["anchor"]), "suspend": len(info["flags"]), "observer_files": n_u,
-                   "observer_hits": len(hits_u), "nolist": len(info["nolist"]), "hooks": len(info["project_hooks"]),
+                   "anchor": len(info["anchor"]), "suspend": len(info["flags"]), "observer_files": len(in_scope),
+                   "observer_hits": len(hits), "nolist": len(info["nolist"]), "hooks": len(info["project_hooks"]),
                    "M": len(M)})
     return sorted(set(reasons)), info
 
@@ -735,11 +948,33 @@ def _key(meta: list, root: Path) -> tuple:
     return (rel, cls, func, name)
 
 
-def g0_keep(g0: dict, g2: dict, repo: Path, moved: "dict[str, str] | None" = None, removed: "set | None" = None) -> "list[str]":
+def _fold_key(key: tuple, windows: "list[dict]") -> "tuple | None":
+    """구조 키 하나를 창 차례대로 접는다(설계 3.1 §D4) — 창마다 이동(옛 경로 → 새 경로) · 개명(창 당시 경로 · 클래스 · 옛 → 새 —
+    항목 이름의 함수 몫도) · 삭제(구조 키 · 지운 파일)를 그 차례로 · 삭제됐으면 None."""
+    rel, cls, func, name = key
+    for w in windows:
+        rel = w["moved"].get(rel, rel)
+        for r, c, old, new in w["renamed"]:
+            if (r, c, old) == (rel, cls, func):
+                name = new + name[len(func):] if name.startswith(func) else name
+                func = new
+                break
+        removed = w["removed"]
+        if (rel, cls, func, name) in removed or (rel, cls, func) in removed or rel in removed:
+            return None
+    return (rel, cls, func, name)
+
+
+def g0_keep(g0: dict, g2: dict, repo: Path, moved: "dict[str, str] | None" = None, removed: "set | None" = None,
+            windows: "list[dict] | None" = None) -> "list[str]":
     """G0 유지 셋(v11 구조 키): ① 파일 단위 — 지금 있는 G0 수집 파일은 처분 항목이 하나 이상
-    ② 바이트 같은 파일 — G0 항목(파일 · 클래스 · 함수 · 항목 이름) 전부 ③ 바뀐 파일 — (파일 · 클래스 · 함수)마다 처분 수 ≥ G0 수.
-    예외는 감사 · 승인 자료에 있는 것만: removed(`remove` 행의 구조 키 · 지운 파일) · moved(대응표 · retain 재조직이 옮긴 자리)."""
-    moved, removed = moved or {}, {tuple(x) if isinstance(x, list) else x for x in (removed or set())}
+    ② 바이트 같은 파일 — G0 항목(파일 · 클래스 · 함수 · 항목 이름) 전부 ③ 바뀐 파일 — (파일 · 클래스 · 함수)마다 처분 수 ≥ 그
+    자리로 접힌 G0 수.
+    예외는 감사 · 승인 자료에 있는 것만 — 창별 목록 `windows`(창 차례 · `_g0_keep_exceptions`)로 G0 키마다 이동 · 개명 · 삭제를
+    창 차례대로 접는다(개명은 면제가 아니라 대응 — 옛 키 → 새 키). moved · removed 만 주면 창 하나로 본다(옛 부름)."""
+    if windows is None:
+        windows = [{"moved": moved or {}, "renamed": [],
+                    "removed": {tuple(x) if isinstance(x, list) else x for x in (removed or set())}}]
     g0 = {**g0, "keys": {n: tuple(k) for n, k in g0["keys"].items()}}       # JSON 기록(목록)도 받는다
     g2 = {**g2, "keys": {n: tuple(k) for n, k in g2["keys"].items()}}
     ok_keys = {g2["keys"][n] for n in g2["ok"] if n in g2["keys"]}
@@ -748,26 +983,49 @@ def g0_keep(g0: dict, g2: dict, repo: Path, moved: "dict[str, str] | None" = Non
     n_g2: dict = {}
     for k in ok_keys:
         n_g2[k[:3]] = n_g2.get(k[:3], 0) + 1
+    folded: "dict[tuple, tuple | None]" = {k: _fold_key(k, windows) for k in set(g0["keys"].values())}
     n_g0: dict = {}
-    for k in set(g0["keys"].values()):
-        n_g0[k[:3]] = n_g0.get(k[:3], 0) + 1
+    for k2 in folded.values():
+        if k2 is not None:
+            n_g0[k2[:3]] = n_g0.get(k2[:3], 0) + 1
     out = []
-    for k in sorted(set(g0["keys"].values()), key=repr):
-        rel = k[0]
-        new = moved.get(rel, rel)
-        if k in removed or k[:3] in removed or rel in removed or not (repo / new).is_file():
+    for k in sorted(folded, key=repr):
+        k2 = folded[k]
+        if k2 is None or not (repo / k2[0]).is_file():
             continue
-        k2 = (new, *k[1:])
+        new = k2[0]
         if new not in ok_files:
             out.append(f"파일 단위: {new}")
-        elif _file_digest(repo / new) == g0["digests"].get(rel):
+        elif _file_digest(repo / new) == g0["digests"].get(k[0]):
             if k2 not in ok_keys:
                 out.append(f"항목 단위: {k2}")
         elif k2[:3] not in ok_funcs:
             out.append(f"함수 단위(바뀐 파일): {k2[:3]}")
-        elif n_g2[k2[:3]] < n_g0[k[:3]]:                     # v11(Claude r10 m3): 매개변수 축소 — 처분 수 ≥ G0 수
-            out.append(f"함수 단위 처분 수 {n_g2[k2[:3]]} < G0 {n_g0[k[:3]]}(바뀐 파일): {k2[:3]}")
+        elif n_g2[k2[:3]] < n_g0[k2[:3]]:                    # v11(Claude r10 m3): 매개변수 축소 — 처분 수 ≥ G0 수
+            out.append(f"함수 단위 처분 수 {n_g2[k2[:3]]} < G0 {n_g0[k2[:3]]}(바뀐 파일): {k2[:3]}")
     return sorted(set(out))
+
+
+def renamed_selection(windows: "list[dict]", g2: dict) -> "tuple[list[str], int]":
+    """개명된 새 키(설계 3.1 §D3 G2) — 창 기록의 케이스 개명마다 새 (파일 · 클래스 · 함수)를 뒤 창들로 접어 지금 자리를 구하고, G2
+    선택(final)에 그 자리 항목이 없으면 red «개명된 케이스가 G2 에서 선택되지 않았다». 그 자리 항목이 모두 skip · xfail 이면 red 가
+    아니라 보고 수에 든다. 뒤 창에서 지운 키는 대조 밖. (red 사유, skip · xfail 수)."""
+    keys: "dict[str, tuple]" = {n: tuple(k) for n, k in g2["keys"].items()}
+    selected: "set[tuple]" = {keys[n] for n in g2.get("selected_ids", ()) if n in keys}
+    skipped: "set[tuple]" = {keys[n] for n in g2.get("skipped_ids", ()) if n in keys}
+    reds: "list[str]" = []
+    skips: int = 0
+    for i, w in enumerate(windows):
+        for rel, cls, old, new in w["renamed"]:
+            now = _fold_key((rel, cls, new, new), windows[i + 1:])
+            if now is None:
+                continue
+            hits = [k for k in selected if k[:3] == now[:3]]
+            if not hits:
+                reds.append(f"개명된 케이스가 G2 에서 선택되지 않았다: {now[:3]}(개명 {old} → {new})")
+            elif all(k in skipped for k in hits):
+                skips += 1
+    return reds, skips
 
 
 # ── 기록 자리 ─────────────────────────────────────────────────────────────────
@@ -898,7 +1156,8 @@ def cmd_support(folder: Path, repo: Path) -> int:
               "outputs": info.get("outputs", 0), "seconds": round(info.get("seconds", 0.0), 3),
               "fingerprints": info.get("fp", []),
               "commands": [{k: c[k] for k in ("argv", "exit", "outputs", "seconds")} for c in info.get("commands", [])],
-              "started": started, "ended": ended}
+              "observer_scope": info.get("obs_scope", 0), "forecast": info.get("obs_forecast", []),
+              "unresolved_imports": info.get("obs_unresolved", []), "started": started, "ended": ended}
     _write_json(rec_dir / "g0-collect.json", record)
     for r in reasons:
         _say(f"  정지: {r}")
@@ -906,21 +1165,23 @@ def cmd_support(folder: Path, repo: Path) -> int:
         _say(f"  프로젝트 훅: {h}")
     _say(f"요약: 지원 확인 {verdict} · 기록 {rec_dir.name} · 실행 정의 {digest} · 시험 명령 {len(argvs)} · "
           f"수집 항목 {record['collected']} · 선택 {record['selected']} · 시험 기계 파일 {len(record['M_files'])} · "
+          f"실린 범위 {record['observer_scope']} 파일 · 범위 밖 예보 {len(record['forecast'])} · "
+          f"풀지 못한 import 이름 {len(record['unresolved_imports'])} · "
           f"분류 밖 {sum(r.startswith('시험 기계 파일이 분류 밖') for r in reasons)} · 프로젝트 훅 {len(hooks)} · 정지 사유 {len(reasons)}")
     return 0 if verdict == "지원" else 2
 
 
 # ── suite ────────────────────────────────────────────────────────────────────
 
-def _g0_keep_exceptions(run_dir: Path) -> "tuple[dict[str, str], set]":
-    """그 실행의 모든 창 마지막 close 의 g0_keep_exceptions 합 — moved 는 사슬을 끝까지 따라간다."""
-    moved: "dict[str, str]" = {}
-    removed: set = set()
+def _g0_keep_exceptions(run_dir: Path) -> "list[dict]":
+    """그 실행의 창마다 마지막 close 의 g0_keep_exceptions — 창 차례 목록 [{moved, renamed, removed}](설계 3.1 §D4 · 합치지 않는다:
+    G0 키마다 창 차례대로 이동 · 개명 · 삭제를 접는다 — `g0_keep(windows=)`). renamed = (창 당시 경로 · 클래스 · 옛 → 새)."""
+    windows: "list[dict]" = []
     for _n, _opened, closes in bg._windows(run_dir):
         if not closes:
             continue
         ex = closes[-1].get("g0_keep_exceptions") or {}
-        moved.update(ex.get("moved") or {})
+        removed: set = set()
         for item in ex.get("removed") or []:
             if isinstance(item, str) and "::" in item:
                 parts = item.split("::")
@@ -930,14 +1191,27 @@ def _g0_keep_exceptions(run_dir: Path) -> "tuple[dict[str, str], set]":
                 removed.add((rel, cls if cls not in ("", "None") else None, func))
             else:
                 removed.add(item)
-    resolved: "dict[str, str]" = {}
-    for old in moved:
-        new, seen = moved[old], {old}
-        while new in moved and new not in seen:
-            seen.add(new)
-            new = moved[new]
-        resolved[old] = new
-    return resolved, removed
+        renamed: "list[tuple]" = []
+        for item in ex.get("renamed") or []:
+            if not (isinstance(item, dict) and all(isinstance(item.get(k), str) for k in ("path", "old", "new"))):
+                raise SupportError(f"g0_keep_exceptions.renamed 판형 밖 — {item!r}(path · class · old · new)")
+            renamed.append((item["path"], item.get("class") or None, item["old"], item["new"]))
+        windows.append({"moved": dict(ex.get("moved") or {}), "renamed": renamed, "removed": removed})
+    return windows
+
+
+def _split_observer(reasons: "list[str]", info: dict, folder: Path, repo: Path) -> "list[str]":
+    """G2 실행 관찰 API 를 «이번 실행이 바꾼 파일 / 바꾸지 않은 파일»로 가른다(설계 3판 §C2). 이번 실행이 바꾼 파일 =
+    `build_anchor` 이후 레인 편집 − 승인 머지 유입(behavior_guard 창 판정 `_merge_paths` 와 같은 정의). 바꾸지 않은 파일의 걸린 줄은
+    사유 머리를 갈라 적는다(레인이 고치지 않는다 — 조정자 정지 보고) · 그 파일 수를 counts `observer_unchanged` 에 남긴다."""
+    by_file: "dict[str, list[str]]" = info.get("obs_hits_by_file", {})
+    if not by_file:
+        return reasons
+    merged, lane, _unapproved = bg._merge_paths(repo, folder, bg._anchor(folder))
+    unchanged = sorted(rel for rel in by_file if rel not in lane - merged)
+    info["counts"]["observer_unchanged"] = len(unchanged)
+    moved = {f"{OBSERVER_REASON}: {h}" for rel in unchanged for h in by_file[rel]}
+    return sorted((set(reasons) - moved) | {f"{OBSERVER_UNCHANGED_REASON}: {h}" for rel in unchanged for h in by_file[rel]})
 
 
 def cmd_suite(folder: Path, repo: Path) -> int:
@@ -968,17 +1242,22 @@ def cmd_suite(folder: Path, repo: Path) -> int:
                                f"(verdict {g0.get('verdict')} · digest {g0.get('run_definition_digest')})")
         run_dir = bg._run_dir(folder)
         run_value = bg._run_value(folder)
-        moved, removed = _g0_keep_exceptions(run_dir)
+        windows = _g0_keep_exceptions(run_dir)
         run_dir.mkdir(parents=True, exist_ok=True)
         stamp = _run_dir_stamp(run_dir)
         started = _utc()
         reasons, info = run(repo, definition, "run", dict(os.environ), probe_out_root=run_dir / "probe" / stamp,
                             stop_on_fail=True)
+        reasons = _split_observer(reasons, info, folder, repo)
         end_fp = fingerprint(repo)
         if any(r.startswith("확인 못 함 — 시간 초과 · ") for r in reasons):
             keep = ["대조 생략 — 시간 초과로 실행 증거가 불완전함"]
         else:
-            keep = g0_keep({"keys": g0["keys"], "digests": g0["digests"]}, info, repo, moved, removed)
+            keep = g0_keep({"keys": g0["keys"], "digests": g0["digests"]}, info, repo, windows=windows)
+            if any(w["renamed"] for w in windows):        # 개명된 새 키 — 선택 빠짐 red · skip · xfail 은 보고(설계 3.1 §D3 G2)
+                missing, renamed_skip = renamed_selection(windows, info)
+                keep += missing
+                info["counts"]["renamed_skip"] = renamed_skip
         ended = _utc()
     except (SupportError, bg.RunError, ImportError, OSError, ValueError, KeyError, TypeError) as exc:
         _say(f"실행 불능: {type(exc).__name__}: {exc}", err=True)
@@ -1003,7 +1282,10 @@ def cmd_suite(folder: Path, repo: Path) -> int:
     _say(f"요약: suite {verdict} · 실행 정의 {digest} = G1 결속 · 명령 {counts['commands']}/{len(definition['argvs'])} · "
           f"선택 {counts['selected']} = 수집 {counts['collected']} · 처분 call {counts['calls']} · skip {counts['skips']} · "
           f"결과 증거 {counts['proof_ok']}/{counts['proof_total']} · 실패 보고 {counts['failed']} · 시험 기계 파일 {counts['M']} · "
-          f"G0 유지 위반 {len(keep)} · 사유 {len(reasons)} · 기록 suite-{stamp}.json")
+          f"실행 관찰 API {counts['observer_hits']}(실린 범위 {counts['observer_files']} 파일 · "
+          f"그중 이번 실행이 바꾸지 않은 파일 {counts['observer_unchanged']}) · "
+          f"G0 유지 위반 {len(keep)}" + (f" · 개명 케이스 skip {counts['renamed_skip']}" if "renamed_skip" in counts else "")
+          + f" · 사유 {len(reasons)} · 기록 suite-{stamp}.json")
     return 0 if verdict == "green" else 2
 
 

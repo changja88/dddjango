@@ -622,10 +622,13 @@ def _row(case: str) -> str:
 
 
 def _snap(*vs: dict, retain: "tuple[str, ...]" = (), other: "tuple[tuple[str, str, str], ...]" = (),
-          update: "tuple[tuple[str, str | None], ...]" = (), remove: "tuple[tuple[str, str | None], ...]" = ()) -> dict:
-    """G1 스냅숏 대역(k0 §4-4 판형) — `update` · `remove` = 입장 표 update · remove 행 (경로::케이스, 딸린 V | None)."""
+          update: "tuple[tuple[str, str | None], ...]" = (), remove: "tuple[tuple[str, str | None], ...]" = (),
+          renames: "tuple[dict, ...]" = ()) -> dict:
+    """G1 스냅숏 대역(k0 §4-4 판형) — `update` · `remove` = 입장 표 update · remove 행 (경로::케이스, 딸린 V | None) ·
+    `renames` = «개명» 행(retain 재조직 — 한 행에 하나 · `retain_rows[].renames`)."""
     return {"version": 1, "V": list(vs), "other_bc_edits": [{"path": p, "kind": k, "ref": r} for p, k, r in other],
-            "linked_rows": [], "retain_rows": [{"path": p, "case": None, "why": "기대 의미 그대로"} for p in retain],
+            "linked_rows": [], "retain_rows": [{"path": p, "case": None, "why": "기대 의미 그대로"} for p in retain]
+            + [{"path": it["path"], "case": None, "why": "기대 의미 그대로", "renames": [it]} for it in renames],
             "update_rows": [{"case": c, "owner": "coder", "row": _row(c), "v": v} for c, v in update],
             "remove_rows": [{"case": c, "owner": "coder", "row": f"| {c} | remove | coder | M1 ⓐ |", "v": v} for c, v in remove],
             "run_definition_digest": RUN_DEF, "support_record": "20261004T020000Z"}
@@ -670,8 +673,8 @@ def _rows(record: dict, verdict: "str | None" = None) -> "list[str]":
 
 GOOD_COUNTS: "dict[str, int]" = {
     "commands": 1, "collected": 3, "selected": 3, "calls": 3, "skips": 0, "complete": 3, "proof_ok": 3, "proof_total": 3,
-    "reentry": 0, "anchor": 0, "suspend": 0, "observer_files": 2, "observer_hits": 0, "nolist": 0, "unresolved": 0, "late": 0,
-    "hooks": 0, "M": 2, "failed": 0, "optimize": 0}
+    "reentry": 0, "anchor": 0, "suspend": 0, "observer_files": 2, "observer_hits": 0, "observer_unchanged": 0, "nolist": 0,
+    "unresolved": 0, "late": 0, "hooks": 0, "M": 2, "failed": 0, "optimize": 0}
 
 
 def _suite(repo: Path, digest: str, **over: object) -> None:
@@ -1280,7 +1283,317 @@ def rcases() -> "list[dict]":
     add("파싱 불가 · follow 허용 파일 → `<file>` 감사(D 계산 불가 · 케이스 규칙은 red)", "follow", {TP: SIMPLE},
         _edit({}, "def test_check(:\n"), {TP: ("개별 감사", ["<file>"], {"file_reason": "파싱 불가", "reason": "D 계산 불가"})},
         snap=_retain(), exit=2, needles=("수집 테스트 케이스 변화",))
+    out += rename_rcases()
     return out
+
+
+# 뜻 보존 시험 개명(설계 3.1 §D — F4-116) — 승인 «개명» 행(retain 재조직)만 0T · 0F 가 받는다(옛 → 새 를 기준 판에 먼저 적용)
+RN: str = ("from application.core.product import product\n\n\ndef test_check():\n    assert product() == 9\n\n\n"
+           "def test_other():\n    assert product() > 0\n")
+RN_NEW: str = RN.replace("def test_check(", "def test_product_is_nine(")
+RN_UNIT: str = "개명 test_check → test_product_is_nine"
+# M47 #4 꼴(spring test_visit_turn_answer.py 의 모양만 — 긴 케이스 이름 · 단언에 직접 안 쓰이는 지역 card_b 를 다음 호출에 넘김)
+M47: str = ("from application.core.product import product\n\n\ndef _open(card):\n    return card\n\n\ndef _drained(stream):\n"
+            "    return stream\n\n\ndef test_card_b_answer_turn_completes_the_spine() -> None:\n    \"\"\"카드 B 답 턴.\"\"\"\n"
+            "    card_b: int = product()\n    stream_id: int = _open(card_b)\n    wire: int = _drained(stream_id)\n"
+            "    assert wire == 9\n")
+M47_CASE: "tuple[str, str]" = ("test_card_b_answer_turn_completes_the_spine",
+                               "test_summary_confirm_card_answer_turn_completes_the_spine")
+M47_NEW: str = (M47.replace(f"def {M47_CASE[0]}(", f"def {M47_CASE[1]}(").replace("card_b: int", "summary_confirm_card: int")
+                .replace("_open(card_b)", "_open(summary_confirm_card)"))
+CANON: str = ("from application.core.product import product\n\n_CARD = 9\n\n\ndef test_issues_card_b():\n"
+              "    assert product() == _CARD\n")
+CANON_NEW: str = CANON.replace("_CARD", "_TAROT_CARD").replace("def test_issues_card_b", "def test_issues_summary_card")
+IDS: str = ("import pytest\n\nfrom application.core.product import product\n\n\n"
+            "@pytest.mark.parametrize(\"name, want\", [(\"choose\", 9), pytest.param(\"decide\", 9, id=\"decide_card\")],\n"
+            "                         ids=[\"choose_card\", \"unused\"])\ndef test_choose(name, want):\n    assert product() == want\n")
+IDS_SWAP: str = ("import pytest\n\nfrom application.core.product import product\n\n\n"
+                 "@pytest.mark.parametrize(\"size\", [1, 2], ids=[\"small\", \"big\"])\ndef test_size(size):\n"
+                 "    assert product() > size\n")
+IDS_STACK: str = ("import pytest\n\nfrom application.core.product import product\n\n\n"
+                  "@pytest.mark.parametrize(\"a\", [1], ids=[\"configuration\"])\n"
+                  "@pytest.mark.parametrize(\"b\", [2], ids=[\"configuration\"])\ndef test_x(a, b):\n    assert product() > a + b\n")
+IDS_CONST: str = ("import pytest\n\nfrom application.core.product import product\n\nCASES = [pytest.param(1, id=\"choose_card\")]\n\n\n"
+                  "@pytest.mark.parametrize(\"a\", CASES)\ndef test_x(a):\n    assert product() > a\n")
+NESTED: str = ("from application.core.product import product\n\n\nclass TestOuter:\n    class TestInner:\n"
+               "        def test_old(self):\n            assert product() == 9\n")
+CLS: str = ("from application.core.product import product\n\n\nclass TestBox:\n    def test_old(self):\n"
+            "        assert product() == 9\n\n    def test_keep(self):\n        assert product() > 0\n")
+
+
+def _rn(old: str, new: str, cls: "str | None" = None, path: str = TP) -> dict:
+    """스냅숏 «개명» 항목 — 케이스(`경로::[클래스::]옛 → 새`)."""
+    return {"kind": "케이스", "path": path, "class": cls, "old": old, "new": new}
+
+
+def _rn_ids(case: str, old: str, new: str, path: str = TP) -> dict:
+    """스냅숏 «개명» 항목 — parametrize 원소 id(`경로::케이스[옛 id] → [새 id]`)."""
+    return {"kind": "ids", "path": path, "case": case, "old": old, "new": new}
+
+
+def _renamed(*labels: str, keep: "tuple[str, ...]" = (), notes: "tuple[str, ...]" = ()) -> "Callable[[Path, dict, str], list[str]]":
+    """close 기록 `renames`(이 창이 적용한 개명 행 글자) · `g0_keep_exceptions.renamed`(케이스 개명 — 창 당시 경로 · 클래스 · 옛 →
+    새) · 감사 요청 글."""
+    def check(repo: Path, rec: dict, _out: str) -> "list[str]":
+        got = [r.get("label") for r in rec.get("renames", [])]
+        kept = [f"{x.get('path')}::{x.get('class') or ''}::{x.get('old')}→{x.get('new')}"
+                for x in (rec.get("g0_keep_exceptions") or {}).get("renamed", [])]
+        text = _request(repo)
+        return ([f"renames {got} (기대 {list(labels)})"] if got != list(labels) else []) \
+            + ([f"g0_keep_exceptions.renamed {kept} (기대 {list(keep)})"] if kept != list(keep) else []) \
+            + [f"감사 요청에 «{n}» 없음" for n in notes if n not in text]
+    return check
+
+
+def rename_rcases() -> "list[dict]":
+    """F4-116 — 개명만(0T · 0F 개별 감사 · 개명 키) · 이름 밖 편집(M47 #4 꼴 · 재료 개명)은 지금 장치대로 · 0C red · 행 없는 개명 ·
+    가림 · 두 번 · 클래스 메서드 · 중첩 클래스 · 클래스 개명 · ids(원소 id · 맞바꿈 · 겹침 · 모듈 상수) · 판정 시점(옛 이름이 남은 창은
+    건너뜀 — 0C 도)."""
+    out: "list[dict]" = []
+
+    def add(label: str, kind: str, files: dict, edit: "Callable[[Path], None]", expect: dict, **kw: object) -> None:
+        out.append({"label": label, "kind": kind, "files": files, "edit": edit, "expect": expect, **kw})
+
+    base_rn = _snap(renames=(_rn("test_check", "test_product_is_nine"),))
+    for kind, label in (("test", "0T"), ("follow", "0F")):
+        add(f"개명: {label} 케이스 개명만 → 개별 감사(개명 키 하나 · 요구 판정 기대 의미 그대로 · 초록 아님)", kind, {TP: RN},
+            _edit({}, RN_NEW), {TP: ("개별 감사", [RN_UNIT], {"reason": "개명 행 — 이름 밖 편집 없음"})}, snap=base_rn,
+            post=_renamed(f"{TP}::test_check → test_product_is_nine", keep=(f"{TP}::::test_check→test_product_is_nine",),
+                          notes=(f"`{RUN}/w1 · {TP} · {RN_UNIT} · ", "요구 판정: 기대 의미 그대로(개명 — 이름 뜻 · 이름 밖 편집 없음 · 옛 글자 0자리)")))
+    m47_label, m47_unit = f"{TP}::{M47_CASE[0]} → {M47_CASE[1]}", f"개명 {M47_CASE[0]} → {M47_CASE[1]}"
+    m47_snap = _snap(renames=(_rn(*M47_CASE),))
+    add("개명: 0T 케이스 개명 + 지역 card_b 개명(M47 #4 꼴) → 개별 감사(개명 키 + 케이스 단위 · 이름 밖 편집 있음)", "test", {TP: M47},
+        _edit({}, M47_NEW), {TP: ("개별 감사", [m47_unit, M47_CASE[1]], {"reason": "0T"})}, snap=m47_snap,
+        post=_renamed(m47_label, keep=(f"{TP}::::{M47_CASE[0]}→{M47_CASE[1]}",),
+                      notes=("(개명 — 이름 뜻 · 이름 밖 편집 있음 · 옛 글자 0자리)",)))
+    add("개명: 0F 케이스 개명 + 지역 card_b 개명(M47 #4 꼴 · 개명 행 파일 = 허용 파일) → 개별 감사(허용 파일)", "follow", {TP: M47},
+        _edit({}, M47_NEW), {TP: ("개별 감사", [m47_unit, M47_CASE[1]], {"reason": "허용 파일"})}, snap=m47_snap,
+        post=_renamed(m47_label, keep=(f"{TP}::::{M47_CASE[0]}→{M47_CASE[1]}",)))
+    add("개명: 0F 재료 개명(대응표 _CARD → _TAROT_CARD) + 케이스 개명 한 창 → 묶음 감사(0C 검사 합격)", "follow", {TP: CANON},
+        _edit({}, CANON_NEW), {TP: ("묶음 감사", None, {"reason": "0C 검사 합격"})},
+        snap=_snap(renames=(_rn("test_issues_card_b", "test_issues_summary_card"),)),
+        post=_renamed(f"{TP}::test_issues_card_b → test_issues_summary_card",
+                      keep=(f"{TP}::::test_issues_card_b→test_issues_summary_card",)))
+    add("개명: 0C 에서 개명 행 케이스 개명 → red(0C 창은 개명 행을 받지 않는다)", "code", {TP: RN}, _edit({}, RN_NEW),
+        {TP: ("red", None, {"reason": "0C 창은 개명 행을 받지 않는다"})}, snap=base_rn, needles=("수집 테스트 케이스 변화",))
+    add("개명: 행 없는 케이스 개명 · 0F → red(D 확정 · 케이스 이름 불변)", "follow", {TP: RN}, _edit({}, RN_NEW),
+        {TP: ("red", None, {"reason": "D 확정"})}, snap=_retain(),
+        needles=("수집 테스트 케이스 변화 −1 ['test_check'] +1 ['test_product_is_nine']",))
+    add("개명: 행 없는 케이스 개명 · 0T → red(감소 + 추가)", "test", {TP: RN}, _edit({}, RN_NEW), {TP: ("red", None)},
+        needles=(f"테스트 케이스 감소 `{TP}::test_check`", f"테스트 케이스 추가 `{TP}::test_product_is_nine`"))
+    for what, base in (("함수", RN + "\n\ndef test_product_is_nine():\n    assert 1\n"),
+                       ("대입", RN + "\ntest_product_is_nine = None\n"),
+                       ("import 묶음", "from application.core.product import product as test_product_is_nine\n" + RN)):
+        add(f"개명: 가림 — 새 이름이 기준 판 그 자리에 있다({what}) → red", "follow", {TP: base},
+            _edit({}, base.replace("def test_check(", "def test_product_is_nine(")),
+            {TP: ("red", None, {"reason": "새 이름이 기준 판 그 자리에 있다(가림)"})}, snap=base_rn)
+    add("개명: 새 이름이 새 판에 두 번 → red", "follow", {TP: RN},
+        _edit({}, RN_NEW + "\n\ndef test_product_is_nine():\n    assert product() == 9\n"),
+        {TP: ("red", None, {"reason": "새 이름이 새 판 그 자리에 2번"})}, snap=base_rn)
+    add("개명: 최상위 클래스 메서드 개명 → 개별 감사(개명 키 하나)", "follow", {TP: CLS},
+        _edit({}, CLS.replace("def test_old(", "def test_box_holds_nine(")),
+        {TP: ("개별 감사", ["개명 TestBox::test_old → test_box_holds_nine"], {"reason": "개명 행 — 이름 밖 편집 없음"})},
+        snap=_snap(renames=(_rn("test_old", "test_box_holds_nine", "TestBox"),)),
+        post=_renamed(f"{TP}::TestBox::test_old → test_box_holds_nine", keep=(f"{TP}::TestBox::test_old→test_box_holds_nine",)))
+    add("개명: 중첩 클래스 메서드 행 → red(개명 행 꼴 밖)", "follow", {TP: NESTED},
+        _edit({}, NESTED.replace("def test_old(", "def test_new(")),
+        {TP: ("red", None, {"reason": "중첩 클래스 메서드 개명은 이번 판 밖"})},
+        snap=_snap(renames=(_rn("test_old", "test_new", "TestOuter::TestInner"),)))
+    add("개명: 클래스 개명 행 → red(개명 행 꼴 밖)", "follow", {TP: CLS}, _edit({}, CLS.replace("class TestBox", "class TestCrate")),
+        {TP: ("red", None, {"reason": "클래스 개명은 이번 판 밖"})}, snap=_snap(renames=(_rn("TestBox", "TestCrate"),)))
+    ids_unit = "개명 test_choose[choose_card] → [choose_tarot_card]"
+    add("개명: ids 원소 id 개명(ids= 목록) → 개별 감사(개명 키)", "follow", {TP: IDS},
+        _edit({}, IDS.replace("\"choose_card\"", "\"choose_tarot_card\"")),
+        {TP: ("개별 감사", [ids_unit], {"reason": "개명 행 — 이름 밖 편집 없음"})},
+        snap=_snap(renames=(_rn_ids("test_choose", "choose_card", "choose_tarot_card"),)),
+        post=_renamed(f"{TP}::test_choose[choose_card] → [choose_tarot_card]"))
+    add("개명: 케이스 개명 + 같은 케이스 ids 개명 한 창(ids 행은 옛 케이스 이름) → 개별 감사(개명 키 둘)", "follow", {TP: IDS},
+        _edit({}, IDS.replace("def test_choose(", "def test_choose_tarot(").replace("\"choose_card\"", "\"choose_tarot_card\"")),
+        {TP: ("개별 감사", ["개명 test_choose → test_choose_tarot", ids_unit], {"reason": "개명 행 — 이름 밖 편집 없음"})},
+        snap=_snap(renames=(_rn("test_choose", "test_choose_tarot"), _rn_ids("test_choose", "choose_card", "choose_tarot_card"))),
+        post=_renamed(f"{TP}::test_choose → test_choose_tarot", f"{TP}::test_choose[choose_card] → [choose_tarot_card]",
+                      keep=(f"{TP}::::test_choose→test_choose_tarot",)))
+    upd_rn: str = "from application.core.product import product\n\n\ndef test_a():\n    assert product() == 9\n"
+    add("개명: 0T update 행(새 이름 케이스) D 확정 + 개명 → 개별 감사 · 개명 키만 요구 판정 기대 의미 그대로", "test", {TP: upd_rn},
+        _edit({}, upd_rn.replace("test_a", "test_b").replace("==", ">=")),
+        {TP: ("개별 감사", ["test_b", "개명 test_a → test_b"], {"reason": f"0T update 행 — {_row(f'{TP}::test_b')}"})},
+        snap=_snap(update=((f"{TP}::test_b", None),), renames=(_rn("test_a", "test_b"),)),
+        post=lambda repo, rec, _o: [] if rec["dispositions"][0]["요구 판정"] == ["승인 후와 같음 · 기대 의미 그대로",
+                                                                             "기대 의미 그대로"]
+        else [f"요구 판정 {rec['dispositions'][0]['요구 판정']}"])
+    add("개명: ids 원소 id 개명(데코레이터 값 목록 안 pytest.param(id=)) · 0T → 개별 감사(개명 키)", "test", {TP: IDS},
+        _edit({}, IDS.replace("id=\"decide_card\"", "id=\"decide_tarot_card\"")),
+        {TP: ("개별 감사", ["개명 test_choose[decide_card] → [decide_tarot_card]"])},
+        snap=_snap(renames=(_rn_ids("test_choose", "decide_card", "decide_tarot_card"),)))
+    add("개명: ids 맞바꿈(두 행 small ↔ big — 옛 id 가 새 판에 남아 어느 행도 이 창 몫 아님) → red(D 확정)", "follow",
+        {TP: IDS_SWAP}, _edit({}, IDS_SWAP.replace("[\"small\", \"big\"]", "[\"big\", \"small\"]")),
+        {TP: ("red", None, {"reason": "D 확정"})},
+        snap=_snap(renames=(_rn_ids("test_size", "small", "big"), _rn_ids("test_size", "big", "small"))), post=_renamed())
+    add("개명: ids 돌려 바꾸기(small → tiny · big → small) → red(새 id 가 그 데코레이터의 옛 ids 에 있다)", "follow",
+        {TP: IDS_SWAP}, _edit({}, IDS_SWAP.replace("[\"small\", \"big\"]", "[\"tiny\", \"small\"]")),
+        {TP: ("red", None, {"reason": "새 id 가 그 데코레이터의 옛 ids 에 있다(맞바꿈)"})},
+        snap=_snap(renames=(_rn_ids("test_size", "small", "tiny"), _rn_ids("test_size", "big", "small"))))
+    add("개명: 겹친 parametrize 원소 id(두 데코레이터에 같은 id) → red(꼴 밖)", "follow", {TP: IDS_STACK},
+        _edit({}, IDS_STACK.replace("\"configuration\"", "\"setup\"")),
+        {TP: ("red", None, {"reason": "옛 id 가 그 케이스 parametrize 데코레이터 원소에 2번"})},
+        snap=_snap(renames=(_rn_ids("test_x", "configuration", "setup"),)))
+    add("개명: 모듈 상수 목록 안 pytest.param(id=) → red(꼴 밖)", "follow", {TP: IDS_CONST},
+        _edit({}, IDS_CONST.replace("choose_card", "choose_tarot_card")),
+        {TP: ("red", None, {"reason": "모듈 상수 목록 안 pytest.param(id=) 는 꼴 밖"})},
+        snap=_snap(renames=(_rn_ids("test_x", "choose_card", "choose_tarot_card"),)))
+    add("개명: 판정 시점 — 개명 행 파일에 다른 편집만(옛 이름이 새 판에 남음) · 0T → 건너뜀(개별 감사 · red 아님)", "test", {TP: RN},
+        _edit({}, RN.replace("    assert product() > 0\n", "    # 설명\n    assert product() > 0\n")),
+        {TP: ("개별 감사", ["test_other"], {"reason": "0T"})}, snap=base_rn, post=_renamed())
+    add("개명: 판정 시점 — 개명 행 파일의 import 가 이동을 따라감(옛 이름 남음) · 0C → 건너뜀(묶음 감사 · red 아님)", "code",
+        {TP: IMPORT_ONLY}, _edit(MOVE, OLD_TO_NEW(IMPORT_ONLY)), {TP: ("묶음 감사", ["<module>"])}, snap=base_rn,
+        post=_renamed())
+    out += rename_review_rcases()
+    return out
+
+
+# 구현 적대 검토(review-impl-d) 고침 — 수집 케이스만 · 넓힌 가림 · 옛 글자 자리 · ids 접두 · 같은 창 이동 + 개명 · 합친 id ·
+# update/remove 행 옛 이름 · 사례 없던 갈래
+RV_H: str = "import pytest\n\nfrom application.core.product import product\n\n\n"
+SHARED: str = "application/core/test/shared.py"
+CONFTEST: str = "application/core/test/conftest.py"
+
+
+def rename_review_rcases() -> "list[dict]":
+    """검토 고침 사례 — 픽스처 · 도우미 · 수집 밖 새 이름 · 수집 밖 ids 케이스 · conftest → red «시험 케이스가 아니다» · 상속 · if 블록 ·
+    try 안 import 가림 · 별 import · 파일 밖 기반 클래스 → red · 같은 파일 기반 클래스(가림 없음)는 받음 · 옛 이름 · 옛 id 글자 자리 ·
+    ids 접두 보존 · 0T update 행 옛 이름 · 같은 창 이동 + 개명 · 합친 id · 함수 정의 아님(옛 · 새) · id 리터럴 여러 줄 · 원문 못 만듦 ·
+    ids 새 판 케이스 없음 · 새 id 두 번 · 0C 모듈 상수 ids."""
+    out: "list[dict]" = []
+
+    def add(label: str, kind: str, files: dict, edit: "Callable[[Path], None]", expect: dict, **kw: object) -> None:
+        out.append({"label": label, "kind": kind, "files": files, "edit": edit, "expect": expect, **kw})
+
+    def red(label: str, base: str, new: str, reason: str, *items: dict, kind: str = "follow",
+            more: "dict[str, str | None] | None" = None, edit_more: "dict[str, str | None] | None" = None) -> None:
+        add(f"개명(검토): {label} → red", kind, {TP: base, **(more or {})}, _edit({}, new, more=edit_more),
+            {TP: ("red", None, {"reason": reason})}, snap=_snap(renames=items), post=_renamed())
+
+    fixture = RV_H + "@pytest.fixture\ndef card():\n    return 9\n\n\ndef test_check(card):\n    assert product() >= card\n"
+    red("픽스처 card → tarot_card(시험은 conftest card 로 떨어짐)", fixture, fixture.replace("def card():", "def tarot_card():"),
+        "시험 케이스가 아니다(픽스처)", _rn("card", "tarot_card"),
+        more={CONFTEST: "import pytest\n\n\n@pytest.fixture\ndef card():\n    return 1\n"})
+    helper = RV_H + "def _want():\n    return 9\n\n\ndef test_check():\n    assert product() == _want()\n"
+    red("도우미 _want → _expected", helper, helper.replace("_want", "_expected"), "시험 케이스가 아니다", _rn("_want", "_expected"))
+    red("새 이름이 수집 꼴 밖(test_check → check_it)", RN, RN.replace("def test_check(", "def check_it("),
+        "새 이름이 수집 케이스 꼴이 아니다", _rn("test_check", "check_it"))
+    plain = RV_H + "@pytest.mark.parametrize(\"n\", [1], ids=[\"one\"])\ndef check_size(n):\n    assert product() > n\n"
+    red("수집 안 되는 함수의 ids 행", plain, plain.replace("\"one\"", "\"single\""), "시험 케이스가 아니다",
+        _rn_ids("check_size", "one", "single"))
+    add("개명(검토): 수집 안 되는 파일(conftest.py)의 test 이름 함수 개명 → red", "follow",
+        {TP: SIMPLE, CONFTEST: RV_H + "def test_helper():\n    return 1\n"},
+        _edit({}, path=CONFTEST, test=RV_H + "def test_helper_value():\n    return 1\n"),
+        {CONFTEST: ("red", None, {"reason": "시험 케이스가 아니다"})},
+        snap=_snap(renames=(_rn("test_helper", "test_helper_value", path=CONFTEST),)), post=_renamed())
+    inherit = (RV_H + "class Base:\n    def test_new(self):\n        assert product() == 9\n\n\nclass TestBox(Base):\n"
+               "    def test_old(self):\n        assert product() > 0\n")
+    red("상속 가림(TestBox::test_old → test_new 가 Base.test_new 를 덮음)", inherit,
+        inherit.replace("def test_old(", "def test_new("), "새 이름이 기준 판 그 자리에 있다(가림 — 같은 파일 기반 클래스 Base)",
+        _rn("test_old", "test_new", "TestBox"))
+    same_file = inherit.replace("def test_new(self):\n        assert product() == 9", "def helper(self):\n        return 9")
+    add("개명(검토): 같은 파일 기반 클래스(가림 없음) → 개별 감사", "follow", {TP: same_file},
+        _edit({}, same_file.replace("def test_old(", "def test_new(")),
+        {TP: ("개별 감사", ["개명 TestBox::test_old → test_new"], {"reason": "개명 행 — 이름 밖 편집 없음"})},
+        snap=_snap(renames=(_rn("test_old", "test_new", "TestBox"),)), post=_renamed(f"{TP}::TestBox::test_old → test_new",
+                                                                                      keep=(f"{TP}::TestBox::test_old→test_new",)))
+    outer = ("from application.core.test.shared import BaseCase\n" + RV_H + "class TestBox(BaseCase):\n"
+             "    def test_old(self):\n        assert product() > 0\n")
+    red("파일 밖 기반 클래스", outer, outer.replace("def test_old(", "def test_new("), "파일 밖 기반 클래스",
+        _rn("test_old", "test_new", "TestBox"), more={SHARED: "class BaseCase:\n    pass\n"})
+    if_block = RV_H + "def test_old():\n    assert product() == 9\n\n\nif True:\n    def test_new():\n        assert product() > 0\n"
+    for kind in ("follow", "test"):
+        red(f"if 블록 안 같은 이름 가림 · {kind}", if_block, if_block.replace("def test_old(", "def test_new("),
+            "새 이름이 기준 판 그 자리에 있다(가림)", _rn("test_old", "test_new"), kind=kind)
+    try_import = (RV_H + "def test_old():\n    assert product() == 9\n\n\ntry:\n    from application.core.test.shared import test_new\n"
+                  "except ImportError:\n    pass\n")
+    red("try 안 import 가림", try_import, try_import.replace("def test_old(", "def test_new("),
+        "새 이름이 기준 판 그 자리에 있다(가림)", _rn("test_old", "test_new"),
+        more={SHARED: RV_H + "def test_new():\n    assert product() > 0\n"})
+    star = "from application.core.test.shared import *  # noqa\n" + RV_H + "def test_old():\n    assert product() > 0\n"
+    red("별 import 가 있는 자리", star, star.replace("def test_old(", "def test_new("), "별 import",
+        _rn("test_old", "test_new"), more={SHARED: RV_H + "def test_new():\n    assert product() == 9\n"})
+    callspec = (RV_H + "@pytest.mark.parametrize(\"n\", [1, 2], ids=[\"small\", \"big\"])\n"
+                "def test_size(n, request):\n    if request.node.callspec.id == \"big\":\n        assert product() > n\n")
+    add("개명(검토): ids big → large(본문 \"big\" 비교 그대로) → 개별 감사 · 옛 글자 1자리 · 그 자리 목록", "follow", {TP: callspec},
+        _edit({}, callspec.replace("ids=[\"small\", \"big\"]", "ids=[\"small\", \"large\"]")),
+        {TP: ("개별 감사", ["개명 test_size[big] → [large]"], {"reason": "개명 행 — 이름 밖 편집 없음"})},
+        snap=_snap(renames=(_rn_ids("test_size", "big", "large"),)),
+        post=_renamed(f"{TP}::test_size[big] → [large]",
+                      notes=("(개명 — 이름 뜻 · 이름 밖 편집 없음 · 옛 글자 1자리)", f"{TP}:8 «big»")))
+    names = (RV_H + "def test_slow():\n    assert product() == 9\n\n\ndef test_names(request):\n"
+             "    names = [i.name for i in request.session.items]\n    assert \"test_slow\" in names\n")
+    add("개명(검토): test_slow → test_slow_path(다른 케이스의 \"test_slow\" 글자) · 0T → 개별 감사 · 옛 글자 1자리", "test",
+        {TP: names}, _edit({}, names.replace("def test_slow(", "def test_slow_path(")),
+        {TP: ("개별 감사", ["개명 test_slow → test_slow_path"])},
+        snap=_snap(renames=(_rn("test_slow", "test_slow_path"),)),
+        post=_renamed(f"{TP}::test_slow → test_slow_path", keep=(f"{TP}::::test_slow→test_slow_path",),
+                      notes=("(개명 — 이름 뜻 · 이름 밖 편집 없음 · 옛 글자 1자리)", f"{TP}:12 «test_slow»")))
+    prefixed = (RV_H + "@pytest.mark.parametrize(\"n\", [1, 2], ids=(r'small', u\"big\"))\ndef test_size(n):\n"
+                "    assert product() > n\n")
+    add("개명(검토): ids 접두 문자열(r'' · u\"\") 보존 → 개별 감사(이름 밖 편집 없음)", "follow", {TP: prefixed},
+        _edit({}, prefixed.replace("u\"big\"", "u\"large\"").replace("r'small'", "r'tiny'")),
+        {TP: ("개별 감사", ["개명 test_size[big] → [large]", "개명 test_size[small] → [tiny]"],
+              {"reason": "개명 행 — 이름 밖 편집 없음"})},
+        snap=_snap(renames=(_rn_ids("test_size", "big", "large"), _rn_ids("test_size", "small", "tiny"))))
+    old_row = "from application.core.product import product\n\n\ndef test_a():\n    assert product() == 9\n"
+    add("개명(검토): 0T update 행이 옛 이름(G1 트리 이름 test_a) + 개명 + 기대 변화 → 개별 감사(update 행 승인)", "test", {TP: old_row},
+        _edit({}, old_row.replace("test_a", "test_b").replace("==", ">=")),
+        {TP: ("개별 감사", ["test_b", "개명 test_a → test_b"], {"reason": f"0T update 행 — {_row(f'{TP}::test_a')}"})},
+        snap=_snap(update=((f"{TP}::test_a", None),), renames=(_rn("test_a", "test_b"),)))
+    moved = "application/core/test/unit/test_check.py"
+    for kind in ("follow", "test"):
+        add(f"개명(검토): 같은 창 이동 + 개명 · {KIND_LABEL[kind]} → red(창을 나눈다)", kind, {TP: old_row},
+            lambda r: _write(r, {TP: None, moved: old_row.replace("test_a", "test_b")}),
+            {TP: ("개별 감사", ["<file>"]), moved: ("개별 감사", ["<file>"])}, exit=2,
+            snap=_snap(renames=(_rn("test_a", "test_b"),)),
+            needles=(f"개명 행 `{TP}::test_a → test_b` — 같은 창의 이동과 개명은 받지 않는다 — 창을 나눈다",))
+    joined = (RV_H + "@pytest.mark.parametrize(\"a\", [1], ids=[\"configuration\"])\n"
+              "@pytest.mark.parametrize(\"b\", [2], ids=[\"choose_card\"])\ndef test_x(a, b):\n    assert product() > a + b\n")
+    red("합친 id 행(configuration-choose_card)", joined, joined.replace("\"choose_card\"", "\"choose_tarot_card\""),
+        "원소 id 를 쓴다", _rn_ids("test_x", "choose_card-configuration", "choose_tarot_card-configuration"))
+    alias = RV_H + "def test_check():\n    assert product() == 9\n\n\ntest_alias = test_check\n"
+    red("옛 이름이 함수 정의가 아님(대입)", alias, alias.replace("test_alias = test_check", "test_other = test_check"),
+        "옛 이름이 함수 정의가 아니다", _rn("test_alias", "test_other"))
+    red("새 이름이 새 판에서 함수 정의가 아님", RN, RN.replace("def test_check():\n    assert product() == 9\n",
+                                                     "test_product_is_nine = None\n"),
+        "새 이름이 새 판에서 함수 정의가 아니다", _rn("test_check", "test_product_is_nine"))
+    multi = RV_H + "@pytest.mark.parametrize(\"n\", [1], ids=[(\"cho\"\n                                         \"ose\")])\n" \
+        "def test_size(n):\n    assert product() > n\n"
+    red("id 리터럴이 여러 줄", multi, multi.replace("(\"cho\"\n                                         \"ose\")", "\"pick\""),
+        "id 리터럴이 여러 줄이다", _rn_ids("test_size", "choose", "pick"))
+    latin = "# -*- coding: latin-1 -*-\n" + RV_H + "@pytest.mark.parametrize(\"n\", [1], ids=[\"choose\"])\n" \
+        "def test_size(n):\n    assert product() > n\n"
+    red("기준 판 인코딩(latin-1)에 못 쓰는 새 id", latin, latin.replace("latin-1", "utf-8").replace("\"choose\"", "\"카드\""),
+        "옛 → 새 를 적용한 기준 판 원문을 만들지 못했다", _rn_ids("test_size", "choose", "카드"))
+    two_ids = RV_H + "@pytest.mark.parametrize(\"n\", [1, 2], ids=[\"a\", \"b\"])\ndef test_size(n):\n    assert product() > n\n"
+    red("ids 새 판에 그 케이스가 없음", two_ids, RV_H + "def test_other():\n    assert product() > 0\n",
+        "새 판에 그 케이스가 없다", _rn_ids("test_size", "a", "x"))
+    red("새 id 가 새 판에 두 번", two_ids, two_ids.replace("ids=[\"a\", \"b\"]", "ids=[\"x\", \"x\"]"),
+        "새 id 가 새 판 그 케이스에 2번", _rn_ids("test_size", "a", "x"))
+    red("0C 모듈 상수 pytest.param(id=) 개명", IDS_CONST, IDS_CONST.replace("choose_card", "choose_tarot_card"),
+        "0C 창은 개명 행을 받지 않는다", _rn_ids("test_x", "choose_card", "choose_tarot_card"), kind="code")
+    # 재확인(review-fix) — 하위 클래스가 물려받는 메서드 개명 · 바다코끼리 · match 캡처 · global 이름 가림
+    child = (RV_H + "class TestBase:\n    def test_old(self):\n        assert product() == 9\n\n\nclass TestChild(TestBase):\n"
+             "    def test_new(self):\n        assert product() > 0\n")
+    red("하위 클래스가 이미 새 이름을 가짐(TestBase::test_old → test_new · TestChild(TestBase))", child,
+        child.replace("def test_old(", "def test_new(", 1), "하위 클래스 TestChild 가 물려받는다", _rn("test_old", "test_new", "TestBase"))
+    grand = child.replace("    def test_new(self):\n        assert product() > 0\n", "    pass\n") + "\n\nclass TestGrand(TestChild):\n    pass\n"
+    red("사슬로 물려받는 하위 클래스(TestChild · TestGrand)", grand, grand.replace("def test_old(", "def test_new("),
+        "하위 클래스 TestChild 가 물려받는다", _rn("test_old", "test_new", "TestBase"))
+    for what, extra in (("바다코끼리", "if (test_new := None) is None:\n    pass\n"),
+                        ("match 캡처", "match 1:\n    case test_new:\n        pass\n"),
+                        ("global", "global test_new\n")):
+        base = RV_H + "def test_old():\n    assert product() == 9\n\n\n" + extra
+        red(f"{what} 이름 가림", base, base.replace("def test_old(", "def test_new("), "새 이름이 기준 판 그 자리에 있다(가림)",
+            _rn("test_old", "test_new"))
+    return out
+
+
+KIND_LABEL: "dict[str, str]" = {"test": "0T", "code": "0C", "follow": "0F", "change": "변경"}
 
 
 def d_checks() -> "list[str]":
@@ -1579,6 +1892,13 @@ def verify_checks() -> "list[str]":
         expect("suite 의 G1 결속 다름 → red", _rguard(repo, "verify"), 2, "G1 결속", "≠ G1 결속")
         _suite(repo, digest, g0_keep=["파일 단위: application/core/test/test_check.py"])
         expect("suite G0 유지 위반 → red", _rguard(repo, "verify"), 2, "suite G0 유지: 파일 단위")
+        for label, unchanged in (("이번 실행이 바꾼 파일", 0), ("이번 실행이 바꾸지 않은 파일", 1)):   # 설계 3판 §C2 — 두 갈래 문구
+            _suite(repo, digest, verdict="red", counts={**GOOD_COUNTS, "observer_hits": 1, "observer_unchanged": unchanged})
+            got = _rguard(repo, "verify")
+            expect(f"suite 실행 관찰 API — {label} → red", got, 2, "suite 실행 관찰 API 1",
+                   f"실행 관찰 API 1(실린 범위 2 파일 · 그중 이번 실행이 바꾸지 않은 파일 {unchanged})")
+            if ("이번 실행이 바꾸지 않은 파일 1: 레인이 고치지 않는다" in got[1]) != bool(unchanged):
+                fails.append(f"실행 관찰 API {label} — 바꾸지 않은 파일 문구가 갈래와 어긋남\n{got[1]}")
         _suite(repo, digest)
         expect("suite 다시 → green", _rguard(repo, "verify"), 0, "요약: 동작 보존 green")
         _write(repo, {"application/core/real.py": "def product():\n    return 9  # 뒤\n"})
@@ -1692,6 +2012,157 @@ def verify_checks() -> "list[str]":
         expect("창 넷 verify green", _rguard(repo, "verify"), 0, "동작 보존: 창 4(0T 1 · 0C 1 · 0F 1 · 변경 1) · 열린 창 0",
                "묶음 감사 1(묶음 1) · 개별 감사 3 · 승인 변경 2 · red 0 · 자동 초록 0 · 감사 키 일치 6/6",
                "승인 V 1건", "승인 기대 원소 1 중 변경 1", "요약: 동작 보존 green")
+    fails += rename_verify_checks()
+    return fails
+
+
+def _support_keep(repo: Path, moved: str, now: "tuple[str, ...]", label: str) -> "list[str]":
+    """guard close 기록(창별 g0_keep_exceptions) → behavior_support `_g0_keep_exceptions` · `g0_keep` · `renamed_selection` —
+    G0 키(창 기준 TP 의 test_check · test_other)를 창 차례로 접어 G2 키(옮긴 자리 `now`)와 대조(설계 3.1 §D4)."""
+    bs = STATE["bs"]
+    try:
+        windows = bs._g0_keep_exceptions(_run_dir(repo))
+        g0 = {"keys": {f"{TP}::{n}": [TP, None, n, n] for n in ("test_check", "test_other")}, "digests": {TP: "g0"}}
+        g2 = {"keys": {f"{moved}::{n}": [moved, None, n, n] for n in now}, "ok": {f"{moved}::{n}" for n in now},
+              "selected_ids": {f"{moved}::{n}" for n in now}, "skipped_ids": set()}
+        keep = bs.g0_keep(g0, g2, repo, windows=windows)
+        chosen = bs.renamed_selection(windows, g2)
+    except Exception as exc:                                # noqa: BLE001 — 옛 판(창 목록 없음)은 다름으로 선다
+        return [f"{label} — behavior_support 창별 접기: {type(exc).__name__}: {exc}"]
+    return ([f"{label} — G0 유지 {keep}(기대 [])"] if keep else []) \
+        + ([f"{label} — 개명 G2 선택 {chosen}(기대 ([], 0))"] if chosen != ([], 0) else [])
+
+
+def rename_verify_checks() -> "list[str]":
+    """F4-116 verify — 개명 키(요구 판정 기대 의미 그대로만) · 어느 창에도 적용되지 않은 개명 행 red · 개명 + 이동 다른 창(행 경로는
+    G1 때 경로 — 앞 창 이동을 따라 그 창 기준 판 경로로 읽는다)."""
+    fails: "list[str]" = []
+
+    def expect(label: str, got: "tuple[int, str]", code: int, *needles: str, absent: "tuple[str, ...]" = ()) -> None:
+        missing = [n for n in needles if n not in got[1]]
+        stray = [n for n in absent if n in got[1]]
+        if got[0] != code or missing or stray:
+            fails.append(f"개명 verify {label}: exit {got[0]} (기대 {code} · 없는 글 {missing} · 있으면 안 되는 글 {stray})\n{got[1]}")
+
+    label = f"{TP}::test_check → test_product_is_nine"
+    snap = _snap(renames=(_rn("test_check", "test_product_is_nine"),))
+    with tempfile.TemporaryDirectory(prefix="bg-rn1-") as td:
+        repo = _rrepo(Path(td), {TP: RN})
+        digest = _bind(repo, snap)
+        _rguard(repo, "open", "--kind", "follow", "--mode", "refactor")
+        _write(repo, {TP: RN_NEW})
+        _commit(repo)
+        expect("0F 개명 close", _rguard(repo, "close"), 0, "감사 요청 키 1", "개명 행 적용 1")
+        record = _last_close(repo)
+        if record["dispositions"][0]["요구 판정"] != ["기대 의미 그대로"]:
+            fails.append(f"개명 키 요구 판정 {record['dispositions'][0]['요구 판정']} (기대 기대 의미 그대로만)")
+        _suite(repo, digest)
+        _audit(repo, 1, _rows(record, "승인 후와 같음"))
+        expect("개명 키에 «승인 후와 같음» → red", _rguard(repo, "verify"), 2, "다름 1")
+        _audit(repo, 1, _rows(record))
+        expect("개명 적용 · 감사 → green(개명 행 1 중 적용 1)", _rguard(repo, "verify"), 0, "개명 행 1 중 적용 1",
+               "요약: 동작 보존 green")
+    with tempfile.TemporaryDirectory(prefix="bg-rn2-") as td:
+        repo = _rrepo(Path(td), {TP: RN})
+        digest = _bind(repo, snap)
+        _rguard(repo, "open", "--kind", "follow", "--mode", "refactor")
+        _write(repo, {TP: RN.replace("    assert product() > 0\n", "    # 설명\n    assert product() > 0\n")})
+        _commit(repo)
+        expect("개명 행 파일에 다른 편집만 → close 건너뜀(red 아님)", _rguard(repo, "close"), 0, "감사 요청 키 1",
+               absent=("개명 행 적용",))
+        _audit(repo, 1, _rows(_last_close(repo)))
+        _suite(repo, digest)
+        expect("어느 창에도 적용되지 않은 개명 행 → verify red", _rguard(repo, "verify"), 2,
+               f"개명 행인데 개명 없음 — {label}", "개명 행 1 중 적용 0")
+    with tempfile.TemporaryDirectory(prefix="bg-rn3-") as td:   # 개명 + 이동 다른 창 — w1 0T 가 시험 파일을 옮기고 w2 0F 가 개명
+        moved = "application/core/test/unit/test_check.py"
+        repo = _rrepo(Path(td), {TP: RN})
+        digest = _bind(repo, snap)
+        _rguard(repo, "open", "--kind", "test", "--mode", "refactor")
+        _write(repo, {TP: None, moved: RN})
+        _commit(repo)
+        expect("w1 0T 시험 파일 이동", _rguard(repo, "close"), 0, "감사 요청 키 1", absent=("개명 행 적용",))
+        _audit(repo, 1, _rows(_last_close(repo)))
+        _rguard(repo, "open", "--kind", "follow", "--mode", "refactor")
+        _write(repo, {moved: RN_NEW})
+        _commit(repo)
+        expect("w2 0F 개명(행 경로 = 옛 경로 · 앞 창 이동을 따라감) → 적용", _rguard(repo, "close"), 0, "감사 요청 키 1",
+               "개명 행 적용 1")
+        record = _last_close(repo)
+        kept = (record.get("g0_keep_exceptions") or {}).get("renamed")
+        if kept != [{"path": moved, "class": None, "old": "test_check", "new": "test_product_is_nine"}]:
+            fails.append(f"개명 + 이동 다른 창 — g0_keep_exceptions.renamed {kept}(창 당시 경로 {moved})")
+        _audit(repo, 2, _rows(record))
+        _suite(repo, digest)
+        expect("개명 + 이동 다른 창 verify green", _rguard(repo, "verify"), 0, "창 2(0T 1 · 0C 0 · 0F 1 · 변경 0)",
+               "개명 행 1 중 적용 1", "요약: 동작 보존 green")
+        fails += _support_keep(repo, moved, ("test_product_is_nine", "test_other"), "개명 + 이동 다른 창")
+        _suite(repo, digest, counts={**GOOD_COUNTS, "renamed_skip": 1})
+        expect("suite 기록 개명 케이스 skip 1 → verify suite 줄 «개명 케이스 skip 1»(보고 · green)", _rguard(repo, "verify"), 0,
+               "개명 케이스 skip 1", "요약: 동작 보존 green")
+        _suite(repo, digest, g0_keep=[f"개명된 케이스가 G2 에서 선택되지 않았다: ('{moved}', None, 'test_product_is_nine')"])
+        expect("suite G0 유지 «개명된 케이스가 G2 에서 선택되지 않았다» → verify red", _rguard(repo, "verify"), 2,
+               "suite G0 유지: 개명된 케이스가 G2 에서 선택되지 않았다")
+    with tempfile.TemporaryDirectory(prefix="bg-rn5-") as td:   # 이동 뒤 다른 창 remove — w1 0T 이동 · w2 0T 옮긴 자리 케이스 삭제
+        moved = "application/core/test/unit/test_check.py"
+        repo = _rrepo(Path(td), {TP: RN})
+        digest = _bind(repo, _snap(remove=((f"{moved}::test_check", None),)))
+        _rguard(repo, "open", "--kind", "test", "--mode", "refactor")
+        _write(repo, {TP: None, moved: RN})
+        _commit(repo)
+        expect("w1 0T 시험 파일 이동", _rguard(repo, "close"), 0, "감사 요청 키")
+        _audit(repo, 1, _rows(_last_close(repo)))
+        _rguard(repo, "open", "--kind", "test", "--mode", "refactor")
+        _write(repo, {moved: "from application.core.product import product\n\n\ndef test_other():\n    assert product() > 0\n"})
+        _commit(repo)
+        expect("w2 0T 옮긴 자리 케이스 삭제(remove 행)", _rguard(repo, "close"), 0, "감사 요청 키", absent=("테스트 케이스 감소",))
+        fails += _support_keep(repo, moved, ("test_other",), "이동 뒤 다른 창 remove")
+    with tempfile.TemporaryDirectory(prefix="bg-rn6-") as td:   # 적용된 개명 행(done)은 다음 창에서 다시 판정하지 않는다
+        abc = "from application.core.product import product\n\n\ndef test_a():\n    assert product() == 1\n\n\n" \
+            "def test_c():\n    assert product() == 9\n"
+        repo = _rrepo(Path(td), {TP: abc})
+        _bind(repo, _snap(renames=(_rn("test_a", "test_b"), _rn("test_c", "test_a"))))
+        steps = (("follow", abc.replace("test_a", "test_b")),
+                 ("follow", abc.replace("test_a", "test_b").replace("test_c", "test_a")),
+                 ("test", "from application.core.product import product\n\n\ndef test_b():\n    assert product() == 1\n"))
+        for n, (kind, body) in enumerate(steps, 1):
+            _rguard(repo, "open", "--kind", kind, "--mode", "refactor")
+            _write(repo, {TP: body})
+            _commit(repo)
+            got = _rguard(repo, "close")
+            if n < 3:
+                expect(f"done — w{n} 개명", got, 0, "개명 행 적용 1")
+                _audit(repo, n, _rows(_last_close(repo)))
+            else:
+                expect("done — w3 0T 옛 c(지금 test_a) 삭제 → 케이스 감소 red 만(적용된 a → b 행을 다시 판정하지 않음)", got, 2,
+                       f"테스트 케이스 감소 `{TP}::test_a`", absent=("개명 행 꼴 밖",))
+    bg = STATE["bg"]
+    one = "def test_a():\n    assert 1\n"
+    judged = bg.judge_test_side("follow", {TP: (one.encode(), one.replace("test_a", "test_b").encode())}, {TP}, {TP}, None, None,
+                                {"retain_files": [TP], "approved_cases": {}, "renames": [_rn("test_a", "test_b")]})
+    if [d.disposition for d in judged.dispositions] != ["red"] or "pytest 설정" not in judged.dispositions[0].reason:
+        fails.append(f"judge_test_side(pytest_config=None) + 개명 행 → red 기대 — {[(d.disposition, d.reason) for d in judged.dispositions]}")
+    with tempfile.TemporaryDirectory(prefix="bg-rn4-") as td:   # 0T remove 행이 옛 이름(G1 트리) — w1 개명 · w2 새 이름 케이스 삭제
+        snap4 = _snap(remove=((f"{TP}::test_check", None),), renames=(_rn("test_check", "test_product_is_nine"),))
+        repo = _rrepo(Path(td), {TP: RN})
+        digest = _bind(repo, snap4)
+        _rguard(repo, "open", "--kind", "test", "--mode", "refactor")
+        _write(repo, {TP: RN_NEW})
+        _commit(repo)
+        expect("w1 0T 개명", _rguard(repo, "close"), 0, "개명 행 적용 1")
+        _audit(repo, 1, _rows(_last_close(repo)))
+        _rguard(repo, "open", "--kind", "test", "--mode", "refactor")
+        _write(repo, {TP: "from application.core.product import product\n\n\ndef test_other():\n    assert product() > 0\n"})
+        _commit(repo)
+        expect("w2 0T 새 이름 케이스 삭제(remove 행은 옛 이름 — 개명 뒤 새 이름으로 읽음)", _rguard(repo, "close"), 0,
+               "감사 요청 키", absent=("테스트 케이스 감소",))
+        record = _last_close(repo)
+        if record["g0_keep_exceptions"]["removed"] != [f"{TP}::::test_product_is_nine"]:
+            fails.append(f"remove 행 옛 이름 — g0_keep_exceptions.removed {record['g0_keep_exceptions']['removed']}")
+        _audit(repo, 2, _rows(record))
+        _suite(repo, digest)
+        expect("remove 행 옛 이름 · 개명 뒤 삭제 verify green", _rguard(repo, "verify"), 0, "개명 행 1 중 적용 1",
+               "요약: 동작 보존 green")
     return fails
 
 
