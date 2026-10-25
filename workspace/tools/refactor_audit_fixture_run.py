@@ -3395,6 +3395,522 @@ def deps_stage_cases(fails: "list[str]", td: Path) -> None:
            "\n  보류: 이 작업 트리 .dddjango-web/20261024-0800-home — 보류(server-contract.json 이 없다", "판정 시점 모름")
 
 
+# 설계 F4-118 2판 + 좁은 확인 N1(dddjango 2.26.1) — deps 레인 겹침을 «실제로 만나는 자리»로 좁힘: 공급 BC(대상이 쓰기만 하는 BC)는
+# BC 가 아니라 공급 면(창구 · 계약 · 이벤트 전부 + 대상 파일이 가리키는 파일 · 이름 사슬 · 대상 운영 코드의 HTTP 호출)과 만날 때만 센다 ·
+# 공급 BC 기능 실행의 고침 목록은 build_anchor + 이번 실행 명세(pregate-report 마지막 실행 경계 뒤 예보 절)일 때만 믿는다 · web 단위는
+# dddjango-web 단위 규칙. 사례 이름(C · B · X · Y · F · W · S5)은 설계 2판 §2 · §6 과 좁은 확인의 이름 그대로다(접두 `RD-F118`).
+FACE_OWN: str = "20261025-0000-refactor-demo"
+FACE_OWN_LINE: str = "실행 · G0 승인 20261025-0000 · 모드 리팩토링 · audit 20261025-0001\n"
+FACE_SUP: str = "20261025-0100-base-feature"
+FACE_OHS: str = "application/base/driving_layer/open_host_service"
+FACE_CONTROLLER: str = ("from ninja_extra import api_controller, route\n\n\n@api_controller(\"{prefix}\")\nclass {name}:\n"
+                        "    @route.get(\"/\")\n    def get(self) -> dict:\n        return {{}}\n")
+FACE_FILES: "dict[str, str]" = {
+    "application/__init__.py": "",
+    "application/demo/__init__.py": "",
+    "application/demo/domain_layer/__init__.py": "",
+    "application/demo/domain_layer/policy.py": "def rule(x: int) -> int:\n    return x\n",
+    "application/demo/driven_layer/__init__.py": "",
+    "application/demo/driven_layer/adapter/anticorruption_layer/base/base_adapter.py": (
+        f"from {FACE_OHS.replace('/', '.')}.base_service import f\n\n\nY = f\n"),
+    "application/demo/driving_layer/api/thing/thing_controller.py": FACE_CONTROLLER.format(prefix="/thing", name="ThingController"),
+    "application/base/__init__.py": "",
+    f"{FACE_OHS}/base_service.py": "from application.base.domain_layer.inner import g\n\n\ndef f() -> int:\n    return g()\n",
+    f"{FACE_OHS}/other_service.py": "def h() -> int:\n    return 4\n",
+    f"{FACE_OHS}/contract/thing_contract.py": "class ThingDto:\n    pass\n",
+    "application/base/domain_layer/inner.py": "def g() -> int:\n    return 2\n",
+    "application/base/domain_layer/unrelated.py": "Z: int = 3\n",
+    "application/base/composition_root/wiring.py": "W: int = 1\n",
+    "application/other/__init__.py": "",
+    "application/other/domain_layer/uses_demo.py": "from application.demo.domain_layer.policy import rule\n\n\nR = rule\n",
+    "application/other/domain_layer/x.py": "X: int = 1\n",
+    "web/__init__.py": "",
+    "web/application/__init__.py": "",
+    "web/application/admin/__init__.py": "",
+    "web/application/admin/op_a/infra_layer/data_source/a_data_source.py": "URL: str = \"/api/thing/1\"\n",
+    "web/application/admin/op_a/presentation_layer/view/a_view.py": "V: int = 1\n",
+    "web/application/client/ad_page/presentation_layer/view/ad_view.py": "V: int = 2\n",
+}
+FACE_V_OUT: str = "- V1 · 밖 동작 · 근거 M1 #1 · 슬라이스 S1\n  - 전 → 후: 없는 thing 200 → 404\n  - 영향: HTTP 소비 1\n"
+FACE_SECTION: str = "## pre-gate 예보 — 2026-10-25T01:00:00Z · design-spec.md\n\n- 기준선 SHA: `new`\n\n"
+FACE_OLD_SECTION: str = "## pre-gate 예보 — 2026-10-20T01:00:00Z · design-spec.md\n\n- 기준선 SHA: `old`\n\n"
+FACE_OLD_BASE: str = "- pre-gate 기준선 — aaaaaaaa · 2026-10-20T02:00:00Z\n"
+FACE_NEW_BASE: str = "- pre-gate 기준선 — bbbbbbbb · 2026-10-25T02:00:00Z\n"
+FACE_TRUST: "dict[str, object]" = {"anchor": True, "report": FACE_SECTION}
+FACE_DROP: str = "· 공급 면과 만남 0 — 세지 않는다(서는 장치: 그 실행의 G2 전체 suite 가 지금 대상 시험을 돈다"
+FACE_MODIFY_PREV: str = ("\n## 앞 실행\n\n- 실행 · G0 승인 20261020-1000 · build_anchor abc · G2 승인 20261021-1000\n")
+
+
+class FaceLane:
+    """공급 면 사례 — 합성 저장소(대상 demo · 공급 base · 받는 쪽 other · web area admin/op_a(소비) · client/ad_page) + 이 실행 폴더."""
+
+    def __init__(self, td: Path, name: str, extra: "dict[str, str] | None" = None) -> None:
+        self.repo: Path = _project(td / name, {**FACE_FILES, **(extra or {})})
+        self.own: Path = self.repo / ".dddjango" / FACE_OWN
+        self.own.mkdir(parents=True)
+        self.to_g0()
+
+    def to_g0(self) -> None:
+        (self.own / "refactor-scope.md").write_text(FACE_OWN_LINE, encoding="utf-8")
+
+    def dispatch(self) -> None:
+        """이 실행을 첫 파견 직전 꼴로(G1 확정 줄 · 밖 동작 V 1)."""
+        self.to_g0()
+        _dispatch_own(self.repo, self.own, FACE_V_OUT)
+
+    def sup(self, plan: "list[str] | None", *, anchor: bool = False, report: "str | bytes | None" = None,
+            g0: str = "20261025-0100", name: str = FACE_SUP, bc: str = "base", prev: str = "", line: "str | None" = None) -> Path:
+        """다른 실행 기록(실행 줄 · 대상 BC 경로 필터 · 명세 file-plan · pregate-report.md) — None 이면 그 파일을 지운다."""
+        folder: Path = self.repo / ".dddjango" / name
+        folder.mkdir(parents=True, exist_ok=True)
+        head: str = line or (f"실행 · G0 승인 {g0}" + (" · build_anchor abc123" if anchor else ""))
+        (folder / "refactor-scope.md").write_text(f"{head}\n\n- 대상 BC 경로 필터: application/{bc}/\n{prev}", encoding="utf-8")
+        spec: Path = folder / "design-spec.md"
+        if plan is None:
+            spec.unlink(missing_ok=True)
+        else:
+            spec.write_text("# s\n\n<!-- machine: file-plan -->\n```paths\n" + "".join(f"update {p}\n" for p in plan) + "```\n",
+                            encoding="utf-8")
+        rep: Path = folder / "pregate-report.md"
+        if report is None:
+            rep.unlink(missing_ok=True)
+        elif isinstance(report, bytes):
+            rep.write_bytes(report)
+        else:
+            rep.write_text(report, encoding="utf-8")
+        return folder
+
+    def web(self, files: "list[str]", contract: "dict | None" = None, name: str = "20261025-0200-web-x") -> Path:
+        folder: Path = self.repo / ".dddjango-web" / name
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / "build-state.json").write_text(json.dumps({"g2_approved": False, "g1_approved": True,
+                                                            "slices": [{"files": files}]}), encoding="utf-8")
+        (folder / "server-contract.json").write_text(json.dumps(contract if contract is not None else {"paths": {}}),
+                                                     encoding="utf-8")
+        return folder
+
+    def dp(self, tag: str) -> "tuple[int, str]":
+        return run(self.repo, "deps", "demo", "--out", str(self.own / "deps" / tag))
+
+    def data(self, tag: str) -> dict:
+        p: Path = self.own / "deps" / tag / "deps.json"
+        return json.loads(p.read_text(encoding="utf-8")) if p.is_file() else {}
+
+
+def deps_face_cases(fails: "list[str]", td: Path) -> None:
+    """설계 2판 §4-2 공급 면 ①~⑤ · §4-4 판정 — 반례 C1 ~ C4 · 1판 목록 F1 ~ F15 · S5 · 면 넓힘(이름 사슬 상한 · 못 읽은 파일)."""
+    sup_ex: str = f"이 작업 트리 .dddjango/{FACE_SUP}"
+    # ── 공급 BC 창구 · 계약 · 대상이 가리키는 파일 ──
+    lane = FaceLane(td, "f-c1")
+    lane.sup([f"{FACE_OHS}/other_service.py"])
+    expect(fails, "RD-F118 C1 공급 BC 의 다른 창구만 고치는 기능 실행 초안(앵커 없음) · G0 → 예보 보류(첫 파견 전 · 면 파일 만남 꼬리) · exit 0",
+           lane.dp("c1"), 0, f"예보 보류: {sup_ex} — 보류(공급 BC base 를 고치는 기능 실행 — 고침 목록 모름: 첫 파견 전 — "
+           "명세가 아직 G1 승인본이 아니다 · 지금 명세 file-plan 이 면 파일 1 과 만남) · 첫 파견 직전 deps 가 다시 본다(",
+           "판정 시점 G0 · 예보 보류 1 · 예보 겹침 0 · 예보 보류 가운데 공급 BC 고침 목록 모름 1", "보류 0 ")
+    lane.sup([f"{FACE_OHS}/other_service.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 C1t 같은 · 이번 실행 승인 명세(앵커 + 이번 실행 pre-gate 절) · G0 → 공급 면 겹침(창구 전부 — B2)", lane.dp("c1t"),
+           2, f"겹침: {sup_ex} — 공급 면 {FACE_OHS}/other_service.py → 순서: 그 레인 착륙 뒤")
+    lane.dispatch()
+    expect(fails, "RD-F118 C1d 같은 · 파견 직전 → 공급 면 겹침", lane.dp("c1d"), 2, f"— 공급 면 {FACE_OHS}/other_service.py")
+    lane.sup(["application/base/domain_layer/unrelated.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 F1 · B1c 승인 명세가 공급 면 밖만 고침 · 파견 직전 → 세지 않음(뺌 줄 · 면 밖 뺌 1) · exit 0", lane.dp("f1"), 0,
+           f"뺌: {sup_ex} — 공급 BC base · 고침 1 파일 {FACE_DROP}", "면 밖 뺌 1", "레인 겹침 없음")
+    got: dict = lane.data("f1")
+    expect(fails, "RD-F118 F1b deps.json face_free 1 · supplier_faces(창구 · 계약 전부) · our_bcs 에 공급 BC 없음",
+           (0 if got.get("face_free") == 1 and f"{FACE_OHS}/contract/thing_contract.py" in got.get("supplier_faces", {}).get("base", [])
+            and "base" not in got.get("our_bcs", []) and "other" in got.get("our_bcs", []) else 9, json.dumps(got, ensure_ascii=False)),
+           0)
+    lane.sup([f"{FACE_OHS}/base_service.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 F2 · B1d 승인 명세가 대상이 import 하는 창구 파일을 고침 → 공급 면 겹침", lane.dp("f2"), 2,
+           f"공급 면 {FACE_OHS}/base_service.py")
+    lane.sup([f"{FACE_OHS}/contract/thing_contract.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 F3 대상은 창구 서비스만 import · 실행이 창구 계약 모듈을 고침 → 공급 면 겹침", lane.dp("f3"), 2,
+           f"공급 면 {FACE_OHS}/contract/thing_contract.py")
+    lane.sup(["application/base/domain_layer/inner.py", "application/base/composition_root/wiring.py"], **FACE_TRUST)
+    # 까닭(설계 2판 §1 (나) · §8-1 — 받아들인 갈래): 창구 뒤 도메인 · 합성만 고친 실행은 세지 않는다 — 서는 장치는 그 실행의 G2 전체
+    # suite(지금 대상 시험)뿐이고 안 센 실행은 뺌 줄로 남는다.
+    expect(fails, "RD-F118 F4 창구 뒤 도메인 · 합성 파일만 고침(받아들인 갈래) → 세지 않음(뺌 줄)", lane.dp("f4"), 0,
+           f"뺌: {sup_ex} — 공급 BC base · 고침 2 파일 {FACE_DROP}")
+    lane.sup(["application/other/domain_layer/x.py"], bc="other", name="20261025-0110-other-feature", **FACE_TRUST)
+    expect(fails, "RD-F118 F8 받는 쪽 BC(other — demo 를 import) 기능 실행이 무관 파일만 → BC 겹침(그대로)", lane.dp("f8"), 2,
+           ".dddjango/20261025-0110-other-feature — BC other")
+    shutil.rmtree(lane.repo / ".dddjango" / "20261025-0110-other-feature")
+    lane.sup(None, line="실행 · G0 승인 20261025-0100 · 모드 리팩토링 · audit 20261025-0101 · build_anchor abc",
+             name="20261025-0100-refactor-base")
+    (lane.repo / ".dddjango" / "20261025-0100-refactor-base" / "audit" / "20261025-0101").mkdir(parents=True)
+    (lane.repo / ".dddjango" / "20261025-0100-refactor-base" / "audit" / "20261025-0101" / "plan.md").write_text(
+        "# p\n\n- BC: `base`\n", encoding="utf-8")
+    expect(fails, "RD-F118 F7 공급 BC 리팩토링 실행(앵커 있음) → BC 겹침(엮인 BC 는 동시에 돌리지 않는다)", lane.dp("f7"), 2,
+           ".dddjango/20261025-0100-refactor-base — BC base (리팩토링 실행 — 엮인 BC)")
+    shutil.rmtree(lane.repo / ".dddjango" / "20261025-0100-refactor-base")
+    lane.sup([f"{FACE_OHS}/other_service.py"], **FACE_TRUST)
+    # ── 다시 내보내기 · 이름 사슬(I2 · 좁은 확인 사소 1) ──
+    re_export: "dict[str, str]" = {
+        "application/demo/domain_layer/uses_thing.py": "from application.base.domain_layer.facade import Thing\n\n\nT = Thing\n",
+        "application/base/domain_layer/impl.py": "class Thing:\n    pass\n"}
+    for tag, facade, label in (
+            ("c2t", "from application.base.domain_layer.impl import Thing\n", "이름 사슬(facade → impl.Thing)"),
+            ("y1", "try:\n    from application.base.domain_layer.impl import Thing\nexcept ImportError:  # pragma: no cover\n"
+                   "    Thing = None\n", "try 블록 안 다시 내보내기"),
+            ("y2", "from application.base.domain_layer import impl\n\nThing = impl.Thing\n", "대입 다시 내보내기(Thing = impl.Thing)")):
+        ln = FaceLane(td, f"f-{tag}", {**re_export, "application/base/domain_layer/facade.py": facade})
+        ln.sup(["application/base/domain_layer/impl.py"], **FACE_TRUST)
+        ln.dispatch()
+        expect(fails, f"RD-F118 {tag.upper()} {label} · 실행이 정의 모듈 impl.py(승인 명세) · 파견 직전 → 공급 면 겹침", ln.dp(tag), 2,
+               "공급 면 application/base/domain_layer/impl.py")
+    ln = FaceLane(td, "f-c2bt", {"application/demo/domain_layer/uses_thing.py":
+                                 "from application.base.domain_layer import facade\n\n\nT = facade\n",
+                                 "application/base/domain_layer/facade.py": "from application.base.domain_layer.impl import Thing\n",
+                                 "application/base/domain_layer/impl.py": "class Thing:\n    pass\n"})
+    ln.sup(["application/base/domain_layer/impl.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 C2bt 모듈째 import 한 파사드(import 만으로 된 파일) · 실행이 impl.py → 공급 면 겹침", ln.dp("c2bt"), 2,
+           "공급 면 application/base/domain_layer/impl.py")
+    scan = ra.DepsScan(ln.repo)
+    saved_cap: int = ra.FACE_CHAIN_CAP
+    try:
+        ra.FACE_CHAIN_CAP = 0
+        cap_faces, cap_why = ra._supplier_faces(ra.DepsScan(lane.repo), "demo", {"base"})
+    finally:
+        ra.FACE_CHAIN_CAP = saved_cap
+    expect(fails, "RD-F118 S-cap 이름 사슬 상한에 닿으면 조용히 멈추지 않고 그 BC 전체를 면으로(까닭 기록)",
+           (0 if cap_faces.get("base") == {"application/base/"} and "이름 사슬 상한 0 걸음" in cap_why.get("base", "") else 9,
+            f"{cap_faces} {cap_why}"), 0)
+    faces, why = ra._supplier_faces(scan, "demo", {"base"})
+    expect(fails, "RD-F118 S-cap2 상한 안이면 넓히지 않는다(파사드 · 정의 모듈만)",
+           (0 if not why and "application/base/domain_layer/impl.py" in faces["base"]
+            and "application/base/domain_layer/unrelated.py" not in faces["base"] else 9, f"{faces} {why}"), 0)
+    import contextlib
+    import io
+    buf = io.StringIO()
+    ln2 = FaceLane(td, "f-cap", {**re_export, "application/base/domain_layer/facade.py":
+                                 "from application.base.domain_layer.impl import Thing\n"})
+    ln2.sup(["application/base/domain_layer/unrelated.py"], **FACE_TRUST)
+    try:
+        ra.FACE_CHAIN_CAP = 1
+        with contextlib.redirect_stdout(buf):
+            code: int = ra.cmd_deps(ln2.repo, "demo", ln2.own / "deps" / "cap")
+    finally:
+        ra.FACE_CHAIN_CAP = saved_cap
+    expect(fails, "RD-F118 S-cap3 상한에 닿은 실행 — 출력에 «면 넓힘:» 한 줄 · 그 BC 의 면 밖 파일을 고친 실행도 공급 면 겹침(안전 쪽)",
+           (code, buf.getvalue()), 2, "  면 넓힘: 공급 BC base — 이름 사슬 상한 1 걸음에 닿음 — 그 BC 전체를 공급 면으로 센다",
+           "공급 면 application/base/domain_layer/unrelated.py")
+    # ── 합성 경로(I1) · 마이그레이션 의존 ──
+    apps: str = ("from django.apps import AppConfig\n\n\nclass BaseConfig(AppConfig):\n    name = \"application.base\"\n"
+                 "    label = \"base\"\n")
+    ln = FaceLane(td, "f-c3", {"application/base/apps.py": apps, "application/base/models.py": "class ThingModel:\n    pass\n",
+                               "application/base/migrations/__init__.py": "",
+                               "application/base/migrations/0001_x.py": "X: int = 1\n",
+                               "application/base/driven_layer/__init__.py": "", "application/base/driven_layer/repo.py": "R: int = 1\n",
+                               "application/demo/driven_layer/django_demo/models.py": "FK: str = \"base.ThingModel\"\n",
+                               "application/demo/driven_layer/django_demo/migrations/0001_initial.py":
+                                   "dependencies = [(\"base\", \"0001_x\")]\n"})
+    ln.sup(["application/base/models.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 C3t 브라운필드 모델(application/base/models.py) · 대상 \"base.ThingModel\" → label 선언 apps.py 폴더의 models · "
+           "공급 면 겹침", ln.dp("c3t"), 2, "공급 면 application/base/models.py")
+    ln.sup(["application/base/migrations/0001_x.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 C3m 브라운필드 마이그레이션 의존(\"base\", \"0001_x\") · 실행이 그 마이그레이션을 고침 → 공급 면 겹침", ln.dp("c3m"),
+           2, "공급 면 application/base/migrations/0001_x.py")
+    ln.sup(["application/base/migrations/0002_y.py", "application/base/driven_layer/repo.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 C3n 브라운필드 — 새 마이그레이션 더하기 · driven_layer 안쪽만 → 세지 않음(뺌 줄)", ln.dp("c3n"), 0,
+           f"뺌: {sup_ex} — 공급 BC base · 고침 2 파일 {FACE_DROP}")
+    std: "dict[str, str]" = {
+        "application/base/apps.py": apps.replace("application.base", "application.base.driven_layer.django_base"),
+        "application/base/driven_layer/django_base/models/thing_model.py": "class ThingModel:\n    pass\n",
+        "application/base/driven_layer/django_base/migrations/0001_x.py": "X: int = 1\n",
+        "application/base/test/factories.py": "def make() -> int:\n    return 1\n",
+        "application/demo/driven_layer/django_demo/models/fk.py": "FK: str = \"base.ThingModel\"\n",
+        "application/demo/driven_layer/django_demo/migrations/0001_initial.py": "dependencies = [(\"base\", \"0001_x\")]\n",
+        "application/demo/test/test_make.py": "from application.base.test.factories import make\n\n\ndef test_make() -> None:\n"
+                                              "    assert make()\n"}
+    ln = FaceLane(td, "f-std", std)
+    ln.sup(["application/base/driven_layer/django_base/models/thing_model.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 F11 모델 라벨 — 대상이 \"base.ThingModel\" · 실행이 base models 고침 → 공급 면 겹침", ln.dp("f11"), 2,
+           "공급 면 application/base/driven_layer/django_base/models/thing_model.py")
+    ln.sup(["application/base/driven_layer/django_base/migrations/0002_y.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 F12 마이그레이션 의존 (\"base\", \"0001_x\") · 실행이 base 0002 를 더함 → 세지 않음", ln.dp("f12"), 0,
+           f"뺌: {sup_ex} — 공급 BC base · 고침 1 파일 {FACE_DROP}")
+    ln.sup(["application/base/driven_layer/django_base/migrations/0001_x.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 F12b 같은 · 실행이 의존한 0001_x 를 고침 → 공급 면 겹침", ln.dp("f12b"), 2,
+           "공급 면 application/base/driven_layer/django_base/migrations/0001_x.py")
+    ln.sup(["application/base/test/factories.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 F13 대상 시험이 base 재료(factory)를 import · 실행이 그 파일 고침 → 공급 면 겹침", ln.dp("f13"), 2,
+           "공급 면 application/base/test/factories.py")
+    (ln.repo / "application/demo/domain_layer/gone.py").write_text("PATH: str = \"application.base.gone_module.thing\"\n",
+                                                                    encoding="utf-8")
+    ln.sup(["application/base/domain_layer/unrelated.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 F15 대상이 가리키는 점 경로 문자열의 모듈이 없음 → 그 BC 전체가 면(모르면 넓게) → 공급 면 겹침", ln.dp("f15"), 2,
+           "공급 면 application/base/domain_layer/unrelated.py")
+    ln = FaceLane(td, "f-auth", {"config/settings.py": "AUTH_USER_MODEL: str = \"base.User\"\n",
+                                 "application/base/apps.py": apps.replace("application.base",
+                                                                          "application.base.driven_layer.django_base"),
+                                 "application/base/driven_layer/django_base/models/user.py": "class User:\n    pass\n",
+                                 "application/demo/domain_layer/owner.py": "from django.conf import settings\n\n\n"
+                                                                            "OWNER = settings.AUTH_USER_MODEL\n"})
+    ln.sup(["application/base/driven_layer/django_base/models/user.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 F11b AUTH_USER_MODEL — 대상이 settings.AUTH_USER_MODEL(base) · 실행이 base models 고침 → 공급 면 겹침",
+           ln.dp("f11b"), 2, "공급 면 application/base/driven_layer/django_base/models/user.py")
+    # ── 패키지 · 같은 이름 파일과 폴더(S5) ──
+    ln = FaceLane(td, "f-pkg", {"application/base/domain_layer/pkg/__init__.py": "P: int = 1\n",
+                                "application/base/domain_layer/dual.py": "class Thing:\n    pass\n",
+                                "application/base/domain_layer/dual/helper.py": "H: int = 1\n",
+                                "application/demo/domain_layer/uses_pkg.py": "import application.base.domain_layer.pkg\n",
+                                "application/demo/domain_layer/uses_dual.py":
+                                    "from application.base.domain_layer.dual import Thing\n\n\nT = Thing\n"})
+    ln.sup(["application/base/domain_layer/pkg/new_module.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 F5 패키지 import(pkg/__init__.py) · 실행이 pkg/ 아래 새 파일을 더함 → 공급 면 겹침(폴더 접두)", ln.dp("f5"), 2,
+           "공급 면 application/base/domain_layer/pkg/new_module.py")
+    ln.sup(["application/base/domain_layer/dual/helper.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 S5 같은 이름의 dual.py 와 dual/ 가 함께 있음 → 둘 다 면 · 실행이 dual/helper.py → 공급 면 겹침", ln.dp("s5"), 2,
+           "공급 면 application/base/domain_layer/dual/helper.py")
+    ln.sup(["application/base/domain_layer/dual.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 S5b 같은 · 실행이 dual.py → 공급 면 겹침", ln.dp("s5b"), 2, "공급 면 application/base/domain_layer/dual.py")
+    # ── HTTP(I3 · D2 · ⑤) ──
+    http: "dict[str, str]" = {
+        "application/base/driving_layer/web_api/thing_controller.py":
+            FACE_CONTROLLER.format(prefix="/basething", name="BaseThingController"),
+        "application/demo/driven_layer/adapter/http_client.py": "URL: str = \"/api/basething/1\"\n"}
+    ln = FaceLane(td, "f-c4", http)
+    ln.sup(["application/base/driving_layer/web_api/thing_controller.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 C4t 공급 BC API 가 driving_layer/api/ 밖(접두 선언 파일) · 대상 운영 코드가 부름 → 공급 면 겹침", ln.dp("c4t"), 2,
+           "공급 면 application/base/driving_layer/web_api/thing_controller.py")
+    ln = FaceLane(td, "f-f14", {"application/base/driving_layer/api/thing/base_controller.py":
+                                FACE_CONTROLLER.format(prefix="/basething", name="BaseThingController"),
+                                "application/demo/driven_layer/adapter/http_client.py": "URL: str = \"/api/basething/1\"\n"})
+    ln.sup(["application/base/driving_layer/api/thing/base_controller.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 F14 대상 운영 코드가 base API 를 URL 문자열로 부름 · 실행이 base driving_layer/api/ 고침 → 공급 면 겹침",
+           ln.dp("f14"), 2, "공급 면 application/base/driving_layer/api/thing/base_controller.py")
+    client: Path = ln.repo / "application/demo/driven_layer/adapter/http_client.py"
+    client.write_text("\"\"\"GET /api/basething/1 을 부른다(문서).\"\"\"\nURL: str = \"\"\n", encoding="utf-8")
+    expect(fails, "RD-F118 F14b 같은 URL 이 대상 운영 코드의 문서 문자열에만 → 세지 않음", ln.dp("f14b"), 0, f"뺌: {sup_ex}")
+    client.unlink()
+    (ln.repo / "application/demo/test/test_http.py").parent.mkdir(parents=True, exist_ok=True)
+    (ln.repo / "application/demo/test/test_http.py").write_text("URL: str = \"/api/basething/1\"\n", encoding="utf-8")
+    expect(fails, "RD-F118 F14c 같은 URL 이 대상 시험에만(준비용 HTTP 호출 — D2 면 밖) → 세지 않음", ln.dp("f14c"), 0, f"뺌: {sup_ex}")
+    (ln.repo / "application/base/urls.py").write_text("from django.urls import path\nurlpatterns = [path(\"x/\", None)]\n",
+                                                       encoding="utf-8")
+    ln.sup(["application/base/domain_layer/unrelated.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 C4b 공급 BC 에 HTTP 표면 관찰 못 함 사유 → 그 BC 전체가 면(면 넓힘 줄) → 공급 면 겹침", ln.dp("c4b"), 2,
+           "공급 면 application/base/domain_layer/unrelated.py", "면 넓힘: 공급 BC base — HTTP 표면 관찰 못 함(")
+    # ── 못 읽은 파일 — 그 파일이 속한 BC 만(좁은 확인 사소 3) ──
+    ln = FaceLane(td, "f-bad", {"application/zeta/__init__.py": "", "application/zeta/domain_layer/bad.py": "def (:\n"})
+    ln.sup(["application/base/domain_layer/unrelated.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 U1 공급 BC 밖(zeta) 파싱 못 한 파일 → 공급 면을 넓히지 않음(뺌 줄 · 면 넓힘 없음)", ln.dp("u1"), 0,
+           f"뺌: {sup_ex}")
+    (ln.repo / "web/application/admin/op_a/presentation_layer/view/broken.js").write_bytes(b"var x = '\xff';\n")
+    ln.dp("u2")
+    got = ln.data("u2")
+    expect(fails, "RD-F118 U2 web 의 UTF-8 아닌 파일(소비 파일 읽기 실패) → 공급 BC 의 면은 넓히지 않는다(face_widened 없음)",
+           (0 if not got.get("face_widened") and "application/base/" not in got.get("supplier_faces", {}).get("base", [])
+            and got.get("http_unread") else 9, json.dumps(got.get("supplier_faces"), ensure_ascii=False)), 0)
+    (ln.repo / "web/application/admin/op_a/presentation_layer/view/broken.js").unlink()
+    (ln.repo / "application/base/domain_layer/bad.py").write_text("def (:\n", encoding="utf-8")
+    expect(fails, "RD-F118 U3 공급 BC 안 파싱 못 한 파일 → 그 BC 전체가 면(면 넓힘 줄) → 공급 면 겹침", ln.dp("u3"), 2,
+           "공급 면 application/base/domain_layer/unrelated.py",
+           "면 넓힘: 공급 BC base — application/base/domain_layer/bad.py 를 읽거나 파싱하지 못함")
+    (ln.repo / "application/base/domain_layer/bad.py").unlink()
+    (ln.repo / "application/demo/domain_layer/bad.py").write_text("def (:\n", encoding="utf-8")
+    expect(fails, "RD-F118 U4 대상 BC 안 파싱 못 한 파일 → 대상이 가리키는 곳을 몰라 모든 공급 BC 전체가 면 → 공급 면 겹침", ln.dp("u4"), 2,
+           "면 넓힘: 공급 BC base — 대상 파일 application/demo/domain_layer/bad.py 를 읽거나 파싱하지 못함")
+
+
+def deps_trust_cases(fails: "list[str]", td: Path) -> None:
+    """설계 2판 §4-3 고침 목록 신뢰(B1) · §4-4 4 공급 BC 기능 실행 고침 목록 모름(D1 = 나) · 좁은 확인 N1(경계 행 꼴 · 빠짐) · 덧씌움
+    (F9 · F10) · 실행 기록 사본 가르기(RD-F16 — pregate-report.md 도 같은 판)."""
+    sup_ex: str = f"이 작업 트리 .dddjango/{FACE_SUP}"
+    resume: str = "재개 조건: 그 레인이 이번 실행 명세로 첫 파견(G1 승인 뒤)하거나 G2 로 끝난 뒤 다시 시작"
+    lane = FaceLane(td, "t-b1")
+    lane.sup(["application/base/domain_layer/unrelated.py"])
+    expect(fails, "RD-F118 B1a 공급 기능 실행 초안(앵커 없음) · 면 밖 계획 · G0 → 예보 보류(exit 0)", lane.dp("b1a"), 0,
+           f"예보 보류: {sup_ex} — 보류(공급 BC base 를 고치는 기능 실행 — 고침 목록 모름: 첫 파견 전 — 명세가 아직 G1 승인본이 아니다)",
+           "예보 보류 가운데 공급 BC 고침 목록 모름 1")
+    lane.web([], name="20261025-0200-home")
+    (lane.repo / ".dddjango-web" / "20261025-0200-home" / "server-contract.json").unlink()
+    expect(fails, "RD-F118 B1a2 G0 · web HTTP 소비 예보 보류 + 공급 예보 보류 → 요약에 공급 수 h 가 따로(조정자 G0 정지 셈 = f + g − h)",
+           lane.dp("b1a2"), 0, "판정 시점 G0 · 예보 보류 2 · 예보 겹침 0 · 예보 보류 가운데 공급 BC 고침 목록 모름 1")
+    shutil.rmtree(lane.repo / ".dddjango-web")
+    lane.dispatch()
+    expect(fails, "RD-F118 B1b 같은 · 파견 직전 → 보류(파견 정지 · 확인할 자료 · 재개 조건)", lane.dp("b1b"), 2,
+           f"보류: {sup_ex} — 보류(공급 BC base 를 고치는 기능 실행 — 고침 목록 모름: 첫 파견 전", "실행 줄(build_anchor) · "
+           "pregate-report.md · 명세 file-plan", resume)
+    lane.sup(None, anchor=True)
+    expect(fails, "RD-F118 B1e 명세 없음 · 파견 직전 → 보류(명세 file-plan 없음)", lane.dp("b1e"), 2,
+           "고침 목록 모름: 명세 file-plan 없음", resume)
+    lane.to_g0()
+    expect(fails, "RD-F118 B2a 명세 없음 · G0 → 예보 보류(exit 0)", lane.dp("b2a"), 0, "예보 보류: ", "고침 목록 모름: 명세 file-plan 없음")
+    lane.dispatch()
+    lane.sup(["application/base/domain_layer/unrelated.py"], anchor=True, report=b"## pre-gate \xff\n")
+    got = lane.dp("b1u")
+    expect(fails, "RD-F118 B1u UTF-8 아닌 pregate-report.md → 해독 보류를 새로 만들지 않고 «고침 목록 모름»(파견 직전 보류)",
+           (got[0] if "그 기록을 UTF-8 로 고친 뒤" not in got[1] else 9, got[1]), 2,
+           "고침 목록 모름: pregate-report.md 를 UTF-8 로 못 읽는다 — 이번 실행 명세인지 모른다")
+    # ── 수정 모드 새 실행 · 실행 경계(C5 · N1) ──
+    c5 = FaceLane(td, "t-c5")
+    old: str = "20261020-1000-base-feature"
+    c5.sup(["application/base/domain_layer/unrelated.py"], g0="20261025-0300", name=old, prev=FACE_MODIFY_PREV)
+    expect(fails, "RD-F118 C5 수정 모드 새 실행(앵커 없음) · 앞 실행 file-plan · G0 → 예보 보류(첫 파견 전)", c5.dp("c5"), 0,
+           f"예보 보류: 이 작업 트리 .dddjango/{old} — 보류(공급 BC base 를 고치는 기능 실행 — 고침 목록 모름: 첫 파견 전")
+    cases: "list[tuple[str, str, int, str]]" = [
+        ("c5g", FACE_OLD_SECTION + FACE_OLD_BASE + "- 실행 경계 — 20261025-0300 · 2026-10-25T00:00:00Z\n" + FACE_NEW_BASE, 2,
+         "이번 실행 pre-gate 예보가 없다 — 명세가 앞 실행 것일 수 있다"),
+        ("c5ok", FACE_OLD_SECTION + FACE_OLD_BASE + "- 실행 경계 — 20261025-0300 · 2026-10-25T00:00:00Z\n" + FACE_SECTION
+         + FACE_NEW_BASE, 0, f"뺌: 이 작업 트리 .dddjango/{old} — 공급 BC base · 고침 1 파일 {FACE_DROP}"),
+        ("c5mm", FACE_OLD_SECTION + "- 실행 경계 — 20261020-1000 · 2026-10-20T00:00:00Z\n" + FACE_SECTION, 2,
+         "pregate-report.md 마지막 실행 경계 값(20261020-1000)이 이 실행 G0 승인 값(20261025-0300)이 아니다"),
+        ("x1", FACE_OLD_SECTION + FACE_OLD_BASE + FACE_NEW_BASE, 2,
+         "pregate-report.md 에 실행 경계 행이 없는데 pre-gate 기준선 행이 2 — 명세가 앞 실행 것일 수 있다"),
+        ("x2", FACE_OLD_SECTION + FACE_OLD_BASE + "- 실행 경계 — 20261025-0300 (2026-10-25T00:00:00Z)\n" + FACE_NEW_BASE, 2,
+         "이번 실행 pre-gate 예보가 없다"),
+        ("x2b", FACE_OLD_SECTION + FACE_OLD_BASE + "- 실행 경계 — 20261025-0300\n" + FACE_NEW_BASE, 2, "이번 실행 pre-gate 예보가 없다"),
+        ("x2ok", FACE_OLD_SECTION + FACE_OLD_BASE + "- 실행 경계 — 20261025-0300 (2026-10-25T00:00:00Z)\n" + FACE_SECTION, 0,
+         f"뺌: 이 작업 트리 .dddjango/{old}"),
+        ("x3", FACE_OLD_SECTION + "- 실행 경계 —\n" + FACE_SECTION, 2, "마지막 실행 경계 값(못 읽음)"),
+        ("x4", FACE_OLD_SECTION + "- 실행 경계 — 20261025-0300 · 2026-10-25T00:00:00Z\n## pre-gate 예보 (손으로 쓴 제목)\n", 2,
+         "이번 실행 pre-gate 예보가 없다")]
+    labels: "dict[str, str]" = {
+        "c5g": "C5gd 첫 파견 뒤(앵커) · G1′ 생략(실행 경계 뒤 예보 절 없음) · 파견 직전 → 보류",
+        "c5ok": "C5ok 실행 경계 뒤 이번 실행 예보 절 있음 · 파견 직전 → 믿음 · 면 밖 → 뺌",
+        "c5mm": "C5mm 마지막 실행 경계 값이 앞 실행 G0 값 · 파견 직전 → 보류",
+        "x1": "X1 경계 행 빠뜨림 · 기준선 행 둘(앞 · 이번) · 앞 실행 예보 절 → 처음부터로 읽지 않음 → 보류(N1)",
+        "x2": "X2 경계 행 꼴 흔들림(`(UTC)` 꼬리) — check-report 와 같은 머리로 경계를 찾음 · 그 뒤 예보 절 없음 → 보류(N1)",
+        "x2b": "X2b 경계 행에 UTC 칸 없음 · 그 뒤 예보 절 없음 → 보류(N1)",
+        "x2ok": "X2ok `(UTC)` 꼬리 경계 · 값 = 이 실행 G0 · 그 뒤 예보 절 있음 → 믿음 → 뺌",
+        "x3": "X3 경계 행 값 없음(못 읽음) → 보류(fail-closed)",
+        "x4": "X4 경계 뒤 예보 절 앵커(`## pre-gate 예보 — <UTC> · `) 아닌 손 제목 → 절로 세지 않음 → 보류"}
+    c5.dispatch()
+    for tag, report, code, needle in cases:
+        c5.sup(["application/base/domain_layer/unrelated.py"], g0="20261025-0300", name=old, prev=FACE_MODIFY_PREV, anchor=True,
+               report=report)
+        expect(fails, f"RD-F118 {labels[tag]}", c5.dp(tag), code, needle)
+    c5.to_g0()
+    c5.sup(["application/base/domain_layer/unrelated.py"], g0="20261025-0300", name=old, prev=FACE_MODIFY_PREV, anchor=True,
+           report=cases[0][1])
+    expect(fails, "RD-F118 C5g 같은 G1′ 생략 실행 · G0 → 예보 보류(정지 아님)", c5.dp("c5g0"), 0,
+           f"예보 보류: 이 작업 트리 .dddjango/{old} — 보류(공급 BC base 를 고치는 기능 실행 — 고침 목록 모름: 이번 실행 pre-gate 예보가 없다")
+    c5.sup(["application/base/domain_layer/unrelated.py"], g0="20261025-0300", name=old, prev=FACE_MODIFY_PREV, anchor=True,
+           report=FACE_SECTION + FACE_NEW_BASE)
+    expect(fails, "RD-F118 B1c2 경계 행 없음 · 기준선 행 하나 · 예보 절 있음(이 실행이 리포트를 처음 만듦) → 믿음 → 뺌", c5.dp("b1c2"), 0,
+           f"뺌: 이 작업 트리 .dddjango/{old}")
+    # ── 덧씌움(그 트리 미착륙 커밋 경로는 언제나 믿는 고침) ──
+    for tag, path, code, needle in (
+            ("f9", f"{FACE_OHS}/base_service.py", 2, f"공급 면 {FACE_OHS}/base_service.py"),
+            ("f10", "application/base/domain_layer/inner.py", 0, "공급 면과 만남 0")):
+        ov = FaceLane(td, f"t-{tag}")
+        y: Path = td / f"t-{tag}-wt"
+        _git(ov.repo, "worktree", "add", "-q", "-b", "lane-y", str(y))
+        TreeLanes.write(y, {f".dddjango/{FACE_SUP}/refactor-scope.md":
+                            "실행 · G0 승인 20261025-0100 · build_anchor abc123\n\n- 대상 BC 경로 필터: application/base/\n",
+                            f".dddjango/{FACE_SUP}/design-spec.md":
+                                "# s\n\n<!-- machine: file-plan -->\n```paths\nupdate application/base/domain_layer/unrelated.py\n```\n",
+                            f".dddjango/{FACE_SUP}/pregate-report.md": FACE_SECTION,
+                            path: "# 레인이 고침\n"})
+        _git(y, "add", "-A")
+        _git(y, "commit", "-qm", "레인 Y 공급 실행 + 코드")
+        expect(fails, f"RD-F118 {tag.upper()} 다른 작업 트리 미착륙 커밋(덧씌움)이 {'공급 면 파일' if code else '면 밖'}을 고침 · file-plan 은 면 밖"
+               f" → {'공급 면 겹침' if code else '세지 않음(뺌)'}", ov.dp(tag), code, needle)
+    # ── 사본 가르기(RD-F16) — pregate-report.md 도 RUN_RECORDS 라 자기 변경 · MH 판 판정이 같은 판으로 읽는다 ──
+    sp = TreeLanes(td, "t-f16", FACE_FILES)
+    untrusted: "dict[str, str]" = {
+        f".dddjango/{FACE_SUP}/refactor-scope.md": "실행 · G0 승인 20261025-0100 · build_anchor abc123\n\n"
+                                                   "- 대상 BC 경로 필터: application/base/\n",
+        f".dddjango/{FACE_SUP}/design-spec.md":
+            "# s\n\n<!-- machine: file-plan -->\n```paths\nupdate application/base/domain_layer/unrelated.py\n```\n",
+        f".dddjango/{FACE_SUP}/pregate-report.md": FACE_OLD_SECTION + "- 실행 경계 — 20261025-0100 · 2026-10-25T00:00:00Z\n"}
+    L = TreeLanes
+    L.commit(sp.main, "공급 실행 기록(이번 실행 예보 절 없음)", untrusted)
+    y = sp.tree("wt-y", "lane-y")
+    x = sp.tree("wt-x", "lane-x")
+    for tree in (sp.main, x):                               # 주 작업 트리 · 이 트리 사본은 없다(미커밋으로 지움)
+        shutil.rmtree(tree / ".dddjango" / FACE_SUP)
+    L.own(x)
+    expect(fails, "RD-F118 F16a 다른 트리 사본 = 커밋본(옛 사본) → MH 판 기록(pregate-report 포함)으로 → 고침 목록 모름 → G0 예보 보류",
+           L.dp(x, "f16a"), 0, f".dddjango/{FACE_SUP} — 보류(공급 BC base 를 고치는 기능 실행 — 고침 목록 모름: 이번 실행 pre-gate 예보가 없다")
+    (y / ".dddjango" / FACE_SUP / "pregate-report.md").write_text(
+        untrusted[f".dddjango/{FACE_SUP}/pregate-report.md"] + FACE_SECTION, encoding="utf-8")
+    expect(fails, "RD-F118 F16b 그 트리에서 pregate-report.md 만 디스크가 커밋본과 다름 → 자기 변경 사본으로 판정 → 믿음 → 뺌",
+           L.dp(x, "f16b"), 0, f".dddjango/{FACE_SUP} — 공급 BC base · 고침 1 파일 {FACE_DROP}")
+    sp2 = TreeLanes(td, "t-f16c", FACE_FILES)
+    L.commit(sp2.main, "공급 실행 기록(이번 실행 예보 절 없음)", untrusted)
+    y = sp2.tree("wt-y", "lane-y")
+    L.commit(sp2.main, "공급 실행 이번 실행 예보 절(main 에서)", {f".dddjango/{FACE_SUP}/pregate-report.md":
+                                                            untrusted[f".dddjango/{FACE_SUP}/pregate-report.md"] + FACE_SECTION})
+    x = sp2.tree("wt-x", "lane-x")
+    L.own(x)
+    expect(fails, "RD-F118 F16c 다른 트리의 옛 사본(예보 절 없음)은 MH 판 pregate-report(예보 절 있음)로 읽는다 → 믿음 → 뺌",
+           L.dp(x, "f16c"), 0, f".dddjango/{FACE_SUP} — 공급 BC base · 고침 1 파일 {FACE_DROP}", "MH 판으로 판정 1")
+
+
+def deps_web_unit_cases(fails: "list[str]", td: Path) -> None:
+    """설계 2판 §4-5 web 단위(dddjango-web 단위 규칙) — W0 core = web 규칙 · W1 ~ W5 · C6(단위 밖 web 파일만 고치는 web 실행 S1)."""
+    probe: str = (
+        "import importlib.util, json, sys\n"
+        "def load(name, path):\n"
+        "    spec = importlib.util.spec_from_file_location(name, path)\n"
+        "    mod = importlib.util.module_from_spec(spec)\n"
+        "    sys.modules[name] = mod\n"
+        "    spec.loader.exec_module(mod)\n"
+        "    return mod\n"
+        "core = load('core_ra', sys.argv[1])\n"
+        "web = load('web_ra', sys.argv[2])\n"
+        "paths = json.loads(sys.argv[3])\n"
+        "ca = core._web_areas(['web/' + p for p in paths])\n"
+        "wa = web.areas_of(paths)\n"
+        "out = {'areas': [sorted(ca), sorted(wa)], 'diff': []}\n"
+        "for p in paths:\n"
+        "    c = core._web_unit('web/' + p, ca)\n"
+        "    w = web.unit_of(p, wa)\n"
+        "    if c != ('web/' + w if w else ''):\n"
+        "        out['diff'].append([p, c, w])\n"
+        "print(json.dumps(out, ensure_ascii=False))\n")
+    paths: "list[str]" = [
+        "application/admin/op_a/infra_layer/data_source/a.py", "application/admin/op_a/presentation_layer/view/v.html",
+        "application/admin/op_b/domain_layer/m.py", "application/client/ad_page/presentation_layer/view/v.py",
+        "application/flat_bc/domain_layer/m.py", "application/flat_bc/presentation_layer/view/v.html",
+        "application/mixed/x.py", "application/mixed/inner/domain_layer/m.py", "application/__init__.py",
+        "application/admin/__init__.py", "static/application/admin/op_a/a.css", "static/application/flat_bc/b.css",
+        "static/root/root.css", "static/css/base.css", "static/js/app.js", "static/vendor/htmx.min.js", "static/x.css",
+        "root/views.py", "common/util.py", "design_system/button.html", "home/views.py", "web_test/test_x.py"]
+    got = subprocess.run([sys.executable, "-c", probe, str(TOOL), str(ROOT / "dddjango-web" / "scripts" / "refactor_audit.py"),
+                          json.dumps(paths)], capture_output=True, text=True)
+    res: dict = json.loads(got.stdout) if got.returncode == 0 and got.stdout.strip() else {}
+    expect(fails, f"RD-F118 W0 core _web_unit · _web_areas = dddjango-web unit_of · areas_of(경로 {len(paths)} · web 바로 밑 파일 뺌)",
+           (0 if res and not res["diff"] and res["areas"][0] == res["areas"][1] == ["admin", "client"] else 9,
+            got.stdout + got.stderr), 0)
+    lane = FaceLane(td, "w-units", {"web/application/client/ad_page/infra_layer/x.py": "X: int = 1\n",
+                                    "web/static/application/admin/op_a/a.css": ".a {}\n",
+                                    "web/static/vendor/htmx.min.js": "/*x*/\n"})
+    lane.dp("w5")
+    md: str = (lane.own / "deps" / "w5" / "deps.md").read_text(encoding="utf-8") if (lane.own / "deps" / "w5" / "deps.md").is_file() \
+        else ""
+    expect(fails, "RD-F118 W5 deps.md «HTTP 소비» · deps.json our_units 의 web 주인이 정밀 단위(web/application/admin/op_a)",
+           (0 if "- HTTP 소비: web/application/admin/op_a" in md and lane.data("w5").get("our_units") == ["web/application/admin/op_a"]
+            else 9, md), 0)
+    expect(fails, "RD-F118 W4 area 아님(web/application/<x>/ 직속 코드 파일) → 단위 web/application/<x>",
+           (0 if ra._web_unit("web/application/client/ad_page/a.py", ra._web_areas(["web/application/client/x.py",
+                                                                                  "web/application/client/ad_page/domain_layer/m.py"]))
+            == "web/application/client" else 9, "단위 값"), 0)
+    lane.web(["web/application/client/ad_page/presentation_layer/view/ad_view.py"])
+    lane.dispatch()
+    expect(fails, "RD-F118 W1 web 실행이 소비 단위 밖(client/ad_page)만 · 파견 직전 V 1 → 안 셈", lane.dp("w1"), 0, "레인 겹침 없음",
+           "보류 0 ")
+    lane.web(["web/application/admin/op_a/presentation_layer/view/a_view.py"])
+    expect(fails, "RD-F118 W2 같은 소비 단위(admin/op_a)의 다른 파일 · V 1 → 겹침(web 단위)", lane.dp("w2"), 2,
+           "— web 단위 web/application/admin/op_a")
+    lane.to_g0()
+    expect(fails, "RD-F118 W2b 같은 · G0 → 예보 겹침", lane.dp("w2b"), 0, "예보 겹침: 이 작업 트리 .dddjango-web/20261025-0200-web-x — web 단위 "
+           "web/application/admin/op_a")
+    lane.web(["web/static/application/admin/op_a/a.css"])
+    lane.dispatch()
+    expect(fails, "RD-F118 W3 BC 미러 CSS(web/static/application/admin/op_a/…) · V 1 → 같은 단위 겹침", lane.dp("w3"), 2,
+           "web 단위 web/application/admin/op_a")
+    lane.web(["web/static/vendor/htmx.min.js"], {"paths": {"/api/ads/{id}": {}}})
+    expect(fails, "RD-F118 C6d web 실행이 web/static/vendor/ 만 고침(단위 밖) · 파견 직전 V 1 → 보류 아님 · 안 셈(S1)", lane.dp("c6d"), 0,
+           "레인 겹침 없음", "보류 0 ")
+    lane.to_g0()
+    got2 = lane.dp("c6")
+    expect(fails, "RD-F118 C6 같은 · G0 → 예보 보류 아님(S1)", (got2[0] if "web 단위를 모른다" not in got2[1] else 9, got2[1]), 0,
+           "예보 보류 0")
+
+
 def map_items_case(fails: "list[str]", td: Path) -> None:
     """설계 §7 `_map_items` — follow · change 창 대응표도 싣는다(test 창은 아니다) · 창 차례는 번호(w2 < w10)."""
     folder: Path = td / "mapf"
@@ -3531,6 +4047,9 @@ def main() -> int:
         deps_cases(fails, td)
         deps_tree_cases(fails, td)
         deps_stage_cases(fails, td)
+        deps_face_cases(fails, td)
+        deps_trust_cases(fails, td)
+        deps_web_unit_cases(fails, td)
         map_items_case(fails, td)
     corpus_cases(fails, nov[0])
     self_test_negative_case(fails)

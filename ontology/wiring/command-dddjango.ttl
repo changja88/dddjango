@@ -977,3 +977,6 @@ djr:R-3681 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
 
 djr:R-3682 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/behavior_guard.py>, <https://numchida.com/ns/djr#c/refactor_audit.py> .
+
+djr:R-3687 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/refactor_audit.py> .

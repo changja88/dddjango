@@ -3732,6 +3732,53 @@ def _module_of(rel: str) -> str:
     return ".".join(p[:-1] if p[-1] == "__init__" else p)
 
 
+WEB_LAYERS: "frozenset[str]" = frozenset({"domain_layer", "application_layer", "infra_layer", "presentation_layer"})
+_WEB_CODE: "tuple[str, ...]" = (".py", ".html", ".css", ".js")
+
+
+def _web_areas(files: "list[str]") -> "frozenset[str]":
+    """`web/application/` 직속 area — dddjango-web `areas_of` 와 같은 규칙(직속 코드 파일 없음 · 자신이 4계층 폴더를 직속 보유하지
+    않음 · 자식 폴더가 1개 이상이고 전부 4계층 폴더를 직속 보유)."""
+    children: "dict[str, set[str]]" = {}
+    layered: "set[tuple[str, str]]" = set()
+    has_file: "set[str]" = set()
+    for f in files:
+        s: "list[str]" = f.split("/")[1:] if f.startswith("web/") else []
+        if not s or s[0] != "application" or len(s) < 3:
+            continue
+        if len(s) == 3:
+            if s[2] != "__init__.py" and s[2].endswith(_WEB_CODE):
+                has_file.add(s[1])
+            continue
+        children.setdefault(s[1], set()).add(s[2])
+        if len(s) >= 5 and s[3] in WEB_LAYERS:
+            layered.add((s[1], s[2]))
+    return frozenset(x for x, ys in children.items() if x not in has_file and x not in WEB_LAYERS
+                     and not (ys & WEB_LAYERS) and all((x, y) in layered for y in ys))
+
+
+def _web_unit(rel: str, areas: "frozenset[str]") -> str:
+    """`web/` 아래 경로 → web 단위(dddjango-web `unit_of` 와 같은 규칙 — `web/application/[<area>/]<bc>` · BC 미러 CSS
+    `web/static/application/…` 는 그 BC · `web/static/root/` 는 `web/root` · `web/<칸>`) · 단위 밖(외부 JS 사본 · 표지 파일)은 빈 글."""
+    parts: "list[str]" = rel.split("/")[1:]
+
+    def bc_unit(rest: "list[str]") -> str:
+        if rest and rest[0] in areas:
+            return f"application/{rest[0]}/{rest[1]}" if len(rest) > 2 else ""
+        return f"application/{rest[0]}" if len(rest) > 1 else ""
+    if len(parts) <= 1:
+        return ""
+    if parts[0] == "application":
+        unit: str = bc_unit(parts[1:])
+    elif parts[0] == "static":
+        if len(parts) < 3 or parts[1] == "vendor":
+            return ""
+        unit = bc_unit(parts[2:]) if parts[1] == "application" else "root" if parts[1] == "root" else f"static/{parts[1]}"
+    else:
+        unit = parts[0]
+    return f"web/{unit}" if unit else ""
+
+
 class DepsScan:
     """저장소 파일(추적 + 미추적 · 무시 제외 · 점 폴더 제외)의 교차 BC 참조 · HTTP 소비 · 그래프."""
 
@@ -3752,6 +3799,7 @@ class DepsScan:
         self.auth_label: "str | None" = self._auth_label()
         self.refs: "list[dict]" = []
         self.parse_errors: "list[str]" = []
+        self.unparsed: "set[str]" = set()                 # 읽기 · 파싱 못 한 .py(parse_errors 의 파일)
         self.imports: "dict[str, set[str]]" = {}           # 파일 → 참조 모듈(같은 주인 포함 — 받는 쪽 시험 계산)
         for f in self.py:
             self._scan(f)
@@ -3764,7 +3812,10 @@ class DepsScan:
             bc: re.compile("(?:" + "|".join(re.escape(p) for p in sorted(ps, key=len, reverse=True)) + ")" + _URL_SEG_END)
             for bc, ps in self.prefixes.items()}
         self.unread: "list[str]" = []                         # 소비 스캔에서 읽기 · 디코딩 · 파싱 못 한 파일
+        self.web_areas: "frozenset[str]" = _web_areas(self.files)
         self.http: "list[dict]" = self._http_consumers()
+        # 공급 면 ⑤ 는 그 BC 자신의 표면 사유만 본다 — 저장소 어디든 못 읽은 소비 파일 하나가 모든 공급 BC 의 좁힘을 끄지 않게
+        self.surface_blind: "dict[str, str]" = {b: " · ".join(ws) for b, ws in reasons.items() if ws}
         if self.unread:
             more: str = " …" if len(self.unread) > 3 else ""
             for bc in self.prefixes:
@@ -3784,6 +3835,7 @@ class DepsScan:
 
     def _labels(self) -> "dict[str, str]":
         labels: "dict[str, str]" = {}
+        self.app_dirs: "dict[str, set[str]]" = {}           # BC → label 을 선언한 apps.py 폴더(합성 경로가 없을 때의 모델 · 마이그레이션 자리)
         for f in self.py:
             if not (f.startswith("application/") and f.endswith("/apps.py")):
                 continue
@@ -3798,6 +3850,7 @@ class DepsScan:
                     if isinstance(tgt, ast.Name) and tgt.id == "label" and isinstance(node.value, ast.Constant) \
                             and isinstance(node.value.value, str):
                         labels[node.value.value] = f.split("/")[1]
+                        self.app_dirs.setdefault(f.split("/")[1], set()).add(f.rsplit("/", 1)[0])
         for bc in self.bcs:
             labels.setdefault(bc, bc)
         return labels
@@ -3823,9 +3876,11 @@ class DepsScan:
             tree = ast.parse(text if text is not None else "")
         except SyntaxError as exc:
             self.parse_errors.append(f"{f}: {exc.msg}")
+            self.unparsed.add(f)
             return
         if text is None:
             self.parse_errors.append(f"{f}: 읽기 실패")
+            self.unparsed.add(f)
             return
         parts: "list[str]" = f.split("/")
         src_bc, src_spot = self._owner(f)
@@ -3838,7 +3893,7 @@ class DepsScan:
                     docs.add(id(st.value))
         mods: "set[str]" = self.imports.setdefault(f, set())
 
-        def emit(node: ast.AST, kind: str, tp: "list[str]") -> None:
+        def emit(node: ast.AST, kind: str, tp: "list[str]", name: "str | None" = None) -> None:
             """다른 BC 를 가리키는 참조만 싣는다(주인이 같으면 버린다) — BC 밖 파일이 부르면 `surface_in`."""
             if not (tp and tp[0] == "application" and len(tp) >= 2 and tp[1] in self.bcs) or tp[1] == src_owner:
                 return
@@ -3846,7 +3901,7 @@ class DepsScan:
             category: str = _classify(src_spot, dst_spot, kind) if src_bc else "surface_in"
             self.refs.append({"file": f, "line": getattr(node, "lineno", 0), "src": src_owner, "src_spot": src_spot,
                               "dst": tp[1], "dst_spot": dst_spot, "kind": kind, "category": category,
-                              "target": ".".join(tp)})
+                              "target": ".".join(tp), "parts": list(tp), "name": name})
 
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
@@ -3866,7 +3921,7 @@ class DepsScan:
                     cand: "list[str]" = base + [a.name]
                     tp = cand if ".".join(cand) in self.modules else base
                     mods.add(".".join(tp))
-                    emit(node, "import", tp)
+                    emit(node, "import", tp, None if tp is cand else a.name)
             elif isinstance(node, ast.Constant) and isinstance(node.value, str) and id(node) not in docs:
                 s: str = node.value
                 for m in _DOTTED.finditer(s):
@@ -3891,7 +3946,7 @@ class DepsScan:
                 lab0, name = node.elts[0].value, node.elts[1].value  # type: ignore[attr-defined]
                 if lab0 in self.labels and _MIGRATION_NAME.match(name):
                     lab = self.labels[lab0]
-                    emit(node, "migration_dep", ["application", lab, "driven_layer", f"django_{lab}", "migrations"])
+                    emit(node, "migration_dep", ["application", lab, "driven_layer", f"django_{lab}", "migrations", name])
             elif self.auth_label and ((isinstance(node, ast.Attribute) and node.attr == "AUTH_USER_MODEL")
                                       or (isinstance(node, ast.Call) and isinstance(node.func, (ast.Name, ast.Attribute))
                                           and getattr(node.func, "id", getattr(node.func, "attr", "")) == "get_user_model")):
@@ -3975,6 +4030,7 @@ class DepsScan:
         """`api_controller("<접두>")` → BC 마다 고정 접두 · 접두를 못 읽거나 비었거나 `/` 뿐인 컨트롤러가 있는 BC → 사유(설계 :1275)."""
         prefixes: "dict[str, set[str]]" = {}
         blind: "dict[str, list[str]]" = {}
+        self.prefix_files: "dict[str, dict[str, set[str]]]" = {}   # BC → 접두 → 그 접두를 선언한 파일
         for f in self.py:
             parts = f.split("/")
             text = self._text(f) or ""
@@ -4000,6 +4056,7 @@ class DepsScan:
                     blind.setdefault(bc, []).append(f"{f}:{node.lineno} api_controller 접두가 비었거나 `/` 뿐(조각 일치가 무의미)")
                     continue
                 prefixes.setdefault(bc, set()).add(prefix)
+                self.prefix_files.setdefault(bc, {}).setdefault(prefix, set()).add(f)
             for node in ast.walk(tree):                      # 맨 데코레이터 `@api_controller` — 기본 접두(빈 글)
                 if isinstance(node, (ast.Name, ast.Attribute)) and _end_name(node) == "api_controller" \
                         and id(node) not in called and isinstance(node.ctx, ast.Load):
@@ -4065,13 +4122,12 @@ class DepsScan:
                 out.append(s)
         return out
 
-    @staticmethod
-    def _http_owner(rel: str) -> str:
+    def _http_owner(self, rel: str) -> str:
         parts: "list[str]" = rel.split("/")
         if parts[0] == "application" and len(parts) >= 3:
             return parts[1]
         if parts[0] == "web" and len(parts) >= 3:
-            return f"web/{parts[1]}"
+            return _web_unit(rel, self.web_areas) or rel
         if parts[0] == ".dddjango-web" and len(parts) >= 3:
             return f".dddjango-web/{parts[1]}"
         return rel
@@ -4216,19 +4272,50 @@ class ActiveRun:
         self.unreadable: str = ""                        # 기록 해독 실패(경로 · 바이트) — 이웃 여부와 무관하게 보류(F4-108)
         self.refactor_g0: "str | None" = None            # 앵커 없는 리팩토링 실행의 실행 줄 G0 승인 값(맞물림 — §A3)
         self.folder: str = ""                            # 실행 폴더 이름(묶기 · 맞물림 사전순)
+        self.refactor: bool = False                      # 리팩토링 모드 실행(엮인 BC 동시 금지 — 공급 BC 도 BC 단위로 센다)
+        self.known: "set[str]" = set()                   # 믿는 고침 목록(이번 실행 승인 명세 file-plan · web 파일 · 미착륙 커밋 경로)
+        self.unknown_why: str = ""                       # 기능 실행의 고침 목록을 못 믿는 까닭(빈 글 = 믿음)
 
 
 # 끝 판정(`_dddjango_run` · `_web_run`)이 읽는 실행 기록 파일 — 다른 작업 트리 사본 가르기(디스크 바이트 대 그 트리 커밋본 · MH 판)도
 # 이 목록 하나를 쓴다(설계 3판 §A1). 첫 이름이 끝 표식 파일이고, `audit/*/plan.md` 는 그 폴더의 audit 계획 전부다(끝 판정은 실행 줄의
 # audit 하나를 읽는다).
 RUN_RECORDS: "dict[str, tuple[str, ...]]" = {
-    "dddjango": ("refactor-scope.md", "audit/*/plan.md", "design-spec.md"),
+    "dddjango": ("refactor-scope.md", "audit/*/plan.md", "design-spec.md", "pregate-report.md"),
     "dddjango-web": ("build-state.json", "design-spec.md", "server-contract.json")}
 RUN_DIRS: "tuple[tuple[str, str], ...]" = (("dddjango", ".dddjango"), ("dddjango-web", ".dddjango-web"))
 # 기계로 읽는 git 출력이 사용자 git 설정(색 · 서명 줄 · 상대 경로)에 흔들리지 않게 — 경로는 모두 `-z` 로 읽는다.
 _GIT_PINS: "tuple[str, ...]" = ("-c", "color.ui=never", "-c", "log.showSignature=false", "-c", "diff.relative=false")
 DEPS_RESUME: str = "그 레인이 G1 명세를 내거나 G2 로 끝난 뒤 다시 시작"
+SUPPLIER_RESUME: str = "그 레인이 이번 실행 명세로 첫 파견(G1 승인 뒤)하거나 G2 로 끝난 뒤 다시 시작"
 DECODE_RESUME: str = "그 기록을 UTF-8 로 고친 뒤 다시 시작"
+# pregate-report.md 의 표지 — `design_pregate.py --check-report` 정본 파서와 같은 머리(RUN_BOUNDARY_PREFIX · PREGATE_BASE_PREFIX ·
+# 절 앵커 `## pre-gate 예보 — <UTC> · `).
+_RUN_BOUNDARY_HEAD: str = "- 실행 경계 —"
+_PREGATE_BASE_HEAD: str = "- pre-gate 기준선 —"
+_PREGATE_SECTION: "re.Pattern[str]" = re.compile(r"^## pre-gate 예보 — \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z · ")
+
+
+def _spec_doubt(report: str, g0: "str | None") -> str:
+    """지금 명세가 이번 실행 것인지 못 믿는 까닭(빈 글 = 이번 실행 것) — pregate-report.md 의 마지막 경계 행(머리 `- 실행 경계 —` ·
+    check-report 와 같은 머리)의 값(머리 뒤 첫 토큰)이 이 실행의 G0 승인 값이고 그 뒤에 `## pre-gate 예보` 절이 있어야 한다. 값을 못
+    읽거나 다르면 못 믿는다(fail-closed). 경계 행이 없으면 `- pre-gate 기준선 —` 행이 하나 이하(이 실행이 그 파일을 처음 만들었다)일
+    때만 처음부터 절을 찾는다 — 둘 이상이면 앞 실행이 있었다는 뜻이라 못 믿는다. pre-gate 는 명세가 바뀔 때마다 · G1 배너 직전 무조건
+    돌고, 앞 실행 예보 뒤에는 캐시 skip 이 안 된다(`dddjango.md` pre-gate 문단)."""
+    lines: "list[str]" = report.split("\n")
+    bounds: "list[int]" = [i for i, ln in enumerate(lines) if ln.startswith(_RUN_BOUNDARY_HEAD)]
+    if bounds:
+        value: "list[str]" = lines[bounds[-1]][len(_RUN_BOUNDARY_HEAD):].split()
+        if g0 is None or not value or value[0] != g0:
+            return (f"pregate-report.md 마지막 실행 경계 값({value[0] if value else '못 읽음'})이 이 실행 G0 승인 값"
+                    f"({g0 or '모름'})이 아니다 — 명세가 앞 실행 것일 수 있다")
+    else:
+        bases: int = sum(1 for ln in lines if ln.startswith(_PREGATE_BASE_HEAD))
+        if bases > 1:
+            return f"pregate-report.md 에 실행 경계 행이 없는데 pre-gate 기준선 행이 {bases} — 명세가 앞 실행 것일 수 있다"
+    if not any(_PREGATE_SECTION.match(ln) for ln in lines[bounds[-1] + 1 if bounds else 0:]):
+        return "이번 실행 pre-gate 예보가 없다 — 명세가 앞 실행 것일 수 있다"
+    return ""
 Reader = Callable[[str], "bytes | None"]                 # 실행 폴더 안 기록 이름 → 바이트(없으면 None · 읽기 실패는 OSError)
 
 
@@ -4300,14 +4387,16 @@ def _scope_run_line(folder: Path) -> "str | None":
 def _dddjango_run(read: Reader, name: str, where: str, label: str, bc: str) -> "ActiveRun | None":
     """dddjango 실행 폴더(디스크 사본 · MH 판 기록) — 실행 줄에 G2 승인이 없을 때만 활성(실행 줄 없음 = 끝난 것). 기록을 UTF-8 로 못
     읽으면 그 경로를 단 보류다(실행 줄을 못 읽으면 끝인지 모르므로 활성으로 센다 — F4-108)."""
-    scope_name, plan_name, spec_name = RUN_RECORDS["dddjango"]
+    scope_name, plan_name, spec_name, report_name = RUN_RECORDS["dddjango"]
     run: ActiveRun = ActiveRun(label, "dddjango", where)
+    report: "str | None" = None
     try:
         text: str = _record_text(read, scope_name, where)
         line: "str | None" = _run_line(text)
         if line is None or _line_ended(line):
             return None
         am = re.search(r"모드 리팩토링 · audit (\S+)", line)
+        run.refactor = bool(am)
         if am and "build_anchor" not in line:              # 앵커 없는 리팩토링 실행 — 맞물림은 실행 줄 G0 승인 값으로 가른다
             g0 = re.search(r"실행 · G0 승인 (\S+)", line)
             run.refactor_g0 = g0.group(1) if g0 else None
@@ -4324,7 +4413,22 @@ def _dddjango_run(read: Reader, name: str, where: str, label: str, bc: str) -> "
     except _Undecodable as exc:
         run.unreadable = str(exc)
         return run
+    try:
+        report = _record_text(read, report_name, where)
+    except _Undecodable:
+        report = None                                     # 못 읽으면 «이번 실행 명세인지 모름»(보류를 새로 만들지 않는다)
     plan: "list[str] | None" = _file_plan(spec_text) if spec_text else None
+    g0v = re.search(r"실행 · G0 승인 (\S+)", line)
+    if not plan:
+        run.unknown_why = "명세 file-plan 없음"
+    elif "build_anchor" not in line:
+        run.unknown_why = "첫 파견 전 — 명세가 아직 G1 승인본이 아니다"
+    elif report is None:
+        run.unknown_why = "pregate-report.md 를 UTF-8 로 못 읽는다 — 이번 실행 명세인지 모른다"
+    else:
+        run.unknown_why = _spec_doubt(report, g0v.group(1) if g0v else None)
+    if plan and not run.unknown_why:
+        run.known |= set(plan)
     if plan:
         run.paths |= set(plan)
         run.bcs |= {p.split("/")[1] for p in plan if p.startswith("application/") and p.count("/") >= 2}
@@ -4359,7 +4463,8 @@ def _web_run(read: Reader, where: str, label: str, scan: "DepsScan", bc: str) ->
     for sl in state.get("slices") or []:
         files += [f for f in (sl.get("files") or []) if isinstance(f, str)] if isinstance(sl, dict) else []
     run.paths |= set(files)
-    run.units |= {"/".join(f.split("/")[:2]) for f in files if f.startswith("web/") and f.count("/") >= 2}
+    run.known |= set(files)
+    run.units |= {u for f in files if f.startswith("web/") for u in [_web_unit(f, scan.web_areas)] if u}
     text: "str | None" = None
     values: "list[str]" = []
     try:
@@ -4374,7 +4479,7 @@ def _web_run(read: Reader, where: str, label: str, scan: "DepsScan", bc: str) ->
         run.hold, run.hold_http = "server-contract.json 이 없다(계약 모름)", True
     for hit in scan.url_hits(text or "", bc, values):
         run.consumes.append(f"server-contract.json {hit}")
-    if not run.units and not run.hold:
+    if not run.units and not run.hold and not any(f.startswith("web/") for f in files):   # web 파일이 단위 밖뿐이면 소비 단위 아님
         run.hold, run.hold_http = "web 단위를 모른다(명세 file-plan · build-state slices 에 web/<단위>/ 경로 없음)", True
     return run
 
@@ -4883,6 +4988,8 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan", w
         for _tag, r, ov in items:
             out.bcs |= r.bcs | _bcs_of(ov)
             out.paths |= r.paths | ov
+            out.known |= r.known | ov
+            out.unknown_why = out.unknown_why or r.unknown_why
             out.units |= r.units
             out.consumes += [c for c in r.consumes if c not in out.consumes]
             notes += [r.hold] if r.hold and r.hold not in notes else []
@@ -4891,9 +4998,202 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan", w
         out.hold_http = all(r.hold_http for _t, r, _o in items if r.hold)
         g0s: "list[str | None]" = [r.refactor_g0 for _t, r, _o in items]
         out.refactor_g0 = None if None in g0s else min(g0s)   # type: ignore[type-var]
+        out.refactor = any(r.refactor for _t, r, _o in items)
         runs.append(out)
     seen.update(runs=len(copies), copies=sum(len(v) for v in copies.values()))
     return runs, len(trees), webs, seen, scopes
+
+
+FACE_CHAIN_CAP: int = 2000                                  # 공급 면 이름 사슬 걸음 상한 — 닿으면 그 BC 전체를 면으로(안전 쪽)
+
+
+def _defines(tree: ast.Module, name: str) -> bool:
+    """모듈 최상위가 그 이름을 정의하는가 — class · def, 또는 이름을 가리키지 않는 값(상수 · 리터럴)을 대입. `X = impl.X` 같은 다시
+    내보내기 대입 · `try` 블록 안 import 는 정의가 아니다."""
+    for st in tree.body:
+        if isinstance(st, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and st.name == name:
+            return True
+        tgts: "list[ast.expr]" = st.targets if isinstance(st, ast.Assign) else [st.target] if isinstance(st, ast.AnnAssign) else []
+        if any(isinstance(t, ast.Name) and t.id == name for t in tgts) and getattr(st, "value", None) is not None \
+                and not any(isinstance(n, (ast.Name, ast.Attribute)) for n in ast.walk(st.value)):  # type: ignore[arg-type]
+            return True
+    return False
+
+
+def _supplier_faces(scan: "DepsScan", bc: str, suppliers: "set[str]") -> "tuple[dict[str, set[str]], dict[str, str]]":
+    """공급 BC(대상이 쓰기만 하는 BC)마다 «쓰는 면» — 리팩토링이 그 BC 를 고치지 않고 기대는 표면의 상위 집합 — 과 그 BC 전체로 넓힌
+    까닭(공급 BC → 까닭).
+
+    ① 그 BC 의 창구 · 창구 계약 · 발행 이벤트 자리 파일 전부(리팩토링이 다른 창구로 옮겨 탈 수 있다 — 설계 2판 B2)
+    ② 대상 파일(운영 · 시험 · 마이그레이션)의 참조가 가리키는 그 BC 파일 — import 경로는 긴 쪽부터 실재 파일 · 폴더(둘 다 있으면 둘 다)
+       · 합성 경로(모델 라벨 · get_model · AUTH_USER_MODEL · 마이그레이션 의존)는 정확히 있을 때만 그 자리, 아니면 그 label 을 선언한
+       apps.py 폴더의 models · migrations, 그것도 없으면 그 BC 전체 · 못 풀면 그 BC 전체
+    ③ 대상이 이름으로 import 한 것은 그 이름을 정의한 모듈까지(합성 루트 제외) — 최상위에 정의(class · def · 상수 대입)가 없으면 그
+       이름을 들인 import(블록 안 포함)를, 그것도 없으면(대입 다시 내보내기 등) 그 모듈의 같은 BC import 를 모두 따라간다 · import 만으로
+       된 파일(파사드)은 그 import 를 모두 따라감
+    ④ 대상 운영 코드(시험 아님)의 HTTP 호출 — 문서 문자열 밖 문자열 상수에 맞은 접두의 선언 파일과 그 폴더 · `driving_layer/api/`
+    ⑤ 그 BC 전체 — 그 BC 자신의 HTTP 표면 관찰 못 함 사유 · 그 BC 의 읽거나 파싱하지 못한 파일(대상 파일이면 모든 공급 BC) · 따라가야
+       할 면 파일을 못 읽음 · 이름 사슬 상한(FACE_CHAIN_CAP)에 닿음."""
+    files: "set[str]" = set(scan.files)
+    dirs: "set[str]" = {"/".join(f.split("/")[:i]) for f in files for i in range(1, f.count("/") + 1)}
+    widened: "dict[str, str]" = {}
+
+    def whole(s: str, why: str) -> None:
+        widened.setdefault(s, why)
+
+    def exact(p: str) -> "list[str]":
+        return ([p + ".py"] if p + ".py" in files else []) + ([p] if p in files else []) + ([p + "/"] if p in dirs else [])
+
+    def resolve(parts: "list[str]") -> "list[str]":
+        for i in range(len(parts), 2, -1):
+            got: "list[str]" = exact("/".join(parts[:i]))
+            if got:
+                return got
+        return [f"application/{parts[1]}/"]
+
+    def synth(r: dict) -> "list[str]":
+        got: "list[str]" = exact("/".join(r["parts"]))
+        if got:
+            return got
+        tail: "list[str]" = r["parts"][4:]
+        for d in sorted(scan.app_dirs.get(r["dst"], set())):
+            if tail and tail[0] == "models":
+                got += exact(f"{d}/models")
+            elif tail:
+                got += (exact(f"{d}/migrations/{tail[1]}") if len(tail) > 1 else []) or exact(f"{d}/migrations")
+        return got or [f"application/{r['dst']}/"]
+
+    def tree_of(f: str) -> "ast.Module | None":
+        """면 파일의 AST — 읽거나 파싱하지 못하면 None(부른 쪽이 그 BC 를 넓힌다)."""
+        text: "str | None" = scan._text(f)
+        try:
+            return ast.parse(text) if text is not None else None
+        except SyntaxError:
+            return None
+
+    def module_parts(f: str, node: ast.ImportFrom) -> "list[str]":
+        if not node.level:
+            return (node.module or "").split(".")
+        pkg: "list[str]" = f.split("/")[:-1]
+        return pkg[:len(pkg) - (node.level - 1)] + (node.module.split(".") if node.module else [])
+
+    def import_targets(f: str, st: ast.AST) -> "list[tuple[list[str], str, str, bool]]":
+        """import 문 하나 → 이름마다 (가리키는 모듈 성분, 들인 원래 이름, 이 모듈에서 묶인 이름, 모듈인가) — `import M` · `import M as A`
+        는 모듈 M · `from M import N` 은 N 이 모듈이면 M.N(모듈) 아니면 M · `*` 는 M."""
+        if isinstance(st, ast.Import):
+            return [(a.name.split("."), a.name, a.asname or a.name.split(".")[0], True) for a in st.names]
+        if not isinstance(st, ast.ImportFrom):
+            return []
+        base: "list[str]" = module_parts(f, st)
+        out: "list[tuple[list[str], str, str, bool]]" = []
+        for a in st.names:
+            sub: bool = a.name != "*" and bool(exact("/".join(base + [a.name])))
+            out.append((base + [a.name] if sub else base, a.name, a.asname or a.name, sub))
+        return out
+
+    def same_bc(parts: "list[str]", s: str) -> bool:
+        return len(parts) >= 3 and parts[0] == "application" and parts[1] == s and _spot(tuple(parts[2:])) != "composition"
+
+    for f in sorted(set(scan.unread) | scan.unparsed):     # ⑤ 못 읽은 파일 — 그 파일이 속한 BC 만(대상 파일이면 모든 공급 BC)
+        p: "list[str]" = f.split("/")
+        if p[0] == "application" and len(p) >= 3 and p[1] in suppliers:
+            whole(p[1], f"{f} 를 읽거나 파싱하지 못함")
+        elif p[0] == "application" and len(p) >= 3 and p[1] == bc:
+            for s in sorted(suppliers):
+                whole(s, f"대상 파일 {f} 를 읽거나 파싱하지 못함(대상이 가리키는 곳을 모름)")
+    faces: "dict[str, set[str]]" = {s: set() for s in suppliers}
+    for s in suppliers:
+        faces[s] |= {f for f in files if f.startswith(f"application/{s}/") and _spot(tuple(f.split("/")[2:])) in WINDOW_SPOTS}
+    names: "list[tuple[str, str, str]]" = []               # (BC, 파일, 이름) — 이름 사슬을 따라갈 것
+    for r in scan.refs:
+        if r["src"] != bc or r["dst"] not in suppliers:
+            continue
+        got = synth(r) if r["kind"] in ("model_label", "migration_dep", "auth_user_model") else resolve(r["parts"])
+        faces[r["dst"]].update(got)
+        if r.get("name"):
+            names += [(r["dst"], g, r["name"]) for g in got if g.endswith(".py")]
+    seen: "set[tuple[str, str]]" = set()
+    while names:                                           # ③ 이름 사슬
+        s, f, name = names.pop()
+        if (f, name) in seen or s in widened:
+            continue
+        if len(seen) >= FACE_CHAIN_CAP:
+            whole(s, f"이름 사슬 상한 {FACE_CHAIN_CAP} 걸음에 닿음")
+            continue
+        seen.add((f, name))
+        tree = tree_of(f)
+        if tree is None:
+            whole(s, f"면 파일 {f} 를 읽거나 파싱하지 못함")
+            continue
+        if _defines(tree, name):
+            continue                                       # 정의 모듈 — 사슬 끝
+        imports: "list[ast.AST]" = [st for st in ast.walk(tree) if isinstance(st, (ast.Import, ast.ImportFrom))]
+        # 그 이름을 들인 import(블록 안 · 별칭 · `*` 포함) → (모듈 성분, 다음 이름 — 모듈을 들였으면 빈 글 = 그 파일이 면 · 사슬 끝)
+        follow: "list[tuple[list[str], str]]" = [(t, "" if mod else name if orig == "*" else orig)
+                                                 for st in imports for t, orig, bound, mod in import_targets(f, st)
+                                                 if orig == "*" or bound == name]
+        if not follow:                                     # 없으면 같은 BC import 모두(대입 다시 내보내기 `X = impl.X` 등)
+            follow = [(t, name) for st in imports for t, _o, _b, _m in import_targets(f, st)]
+        for t, nxt in follow:
+            if not same_bc(t, s):
+                continue
+            for g in resolve(t):
+                faces[s].add(g)
+                if nxt and g.endswith(".py"):
+                    names.append((s, g, nxt))
+                elif nxt and g + "__init__.py" in files:
+                    names.append((s, g + "__init__.py", nxt))
+    frontier: "list[tuple[str, str]]" = [(s, p if not p.endswith("/") else p + "__init__.py") for s in faces for p in faces[s]
+                                         if p.endswith((".py", "/"))]
+    visited: "set[str]" = set()
+    while frontier:                                        # ③ 파사드(import 만으로 된 파일)
+        s, f = frontier.pop()
+        if f in visited or f not in files or s in widened:
+            continue
+        visited.add(f)
+        tree = tree_of(f)
+        if tree is None:
+            whole(s, f"면 파일 {f} 를 읽거나 파싱하지 못함")
+            continue
+        if not tree.body or not all(
+                isinstance(st, (ast.Import, ast.ImportFrom)) or (isinstance(st, ast.Expr) and isinstance(st.value, ast.Constant))
+                or (isinstance(st, ast.Assign) and any(getattr(t, "id", "") == "__all__" for t in st.targets)) for st in tree.body):
+            continue
+        for st in tree.body:
+            for t, _o, _b, _m in import_targets(f, st):
+                if same_bc(t, s):
+                    for g in resolve(t):
+                        faces[s].add(g)
+                        frontier += [(s, g)] if g.endswith(".py") else [(s, g + "__init__.py")]
+
+    def code_url(f: str, pattern: "re.Pattern[str]") -> bool:
+        """`.py` 는 문서 문자열 밖 문자열 상수에 맞을 때만(참조 수집과 같은 규칙) · 그 밖 파일은 줄 일치 그대로."""
+        if not f.endswith(".py"):
+            return bool(pattern.search(scan._text(f) or ""))
+        tree = tree_of(f)
+        if tree is None:
+            return True
+        docs: "set[int]" = set()
+        for holder in ast.walk(tree):
+            body = getattr(holder, "body", None)
+            for st in body if isinstance(body, list) else []:
+                if isinstance(st, ast.Expr) and isinstance(st.value, ast.Constant) and isinstance(st.value.value, str):
+                    docs.add(id(st.value))
+        return any(isinstance(n, ast.Constant) and isinstance(n.value, str) and id(n) not in docs
+                   and (pattern.search(n.value) or pattern.search(n.value.replace("\\/", "/"))) for n in ast.walk(tree))
+    for h in scan.http:                                    # ④ 대상 운영 코드의 HTTP 호출(시험의 준비 호출은 면 밖 — D2)
+        s = h["provider"]
+        if h["owner"] != bc or s not in suppliers or h["test"]:
+            continue
+        for prefix, decl in sorted(scan.prefix_files.get(s, {}).items()):
+            if code_url(h["file"], re.compile(re.escape(prefix) + _URL_SEG_END)):
+                faces[s] |= decl | {d.rsplit("/", 1)[0] + "/" for d in decl}
+                faces[s].add(f"application/{s}/driving_layer/api/")
+    for s in sorted(suppliers & set(scan.surface_blind)):  # ⑤ 그 BC 자신의 HTTP 표면 관찰 못 함
+        whole(s, f"HTTP 표면 관찰 못 함({scan.surface_blind[s]})")
+    for s in widened:
+        faces[s] = {f"application/{s}/"}
+    return faces, widened
 
 
 def _path_hit(ours: "set[str]", theirs: "set[str]") -> "list[str]":
@@ -4974,9 +5274,12 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
     receiver_bcs: "list[str]" = sorted({p.split("/")[1] for p in by_kind["받는 쪽 어댑터"] + by_kind["받는 쪽 시험"]
                                         if p.startswith("application/")})
     http_owners: "list[str]" = sorted({h["owner"] for h in scan.http if h["provider"] == bc})
-    neighbors: "set[str]" = {b for b in full.get(bc, set())} | {a for a, ds in full.items() if bc in ds}
-    neighbors |= {o for o in http_owners if o in scan.bcs}
-    our_bcs: "set[str]" = {bc} | neighbors
+    consumers: "set[str]" = {a for a, ds in full.items() if bc in ds} | {o for o in http_owners if o in scan.bcs}
+    supplier_only: "set[str]" = set(full.get(bc, set())) - consumers - {bc}
+    faces, widened = _supplier_faces(scan, bc, supplier_only)
+    face_paths: "set[str]" = {p for ps in faces.values() for p in ps}
+    our_bcs: "set[str]" = {bc} | consumers                     # BC 단위로 세는 집합(대상 · 받는 쪽 · HTTP 소비 BC)
+    near_bcs: "set[str]" = our_bcs | supplier_only              # 보류(고침 목록 모름)의 이웃 판정 · 리팩토링 실행의 BC 단위
     our_units: "set[str]" = {o for o in http_owners if o.startswith("web/")}
     target: Path = out.resolve()
     own: "Path | None" = next((p for p in [target, *target.parents] if p.parent.name == ".dddjango"), None)
@@ -4999,6 +5302,10 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
     dropped: "list[str]" = []
     late: int = 0
     http_dropped: int = 0
+    sup_forecasts: int = 0
+    face_free: int = 0
+    sup_forecast_tail: str = ("첫 파견 직전 deps 가 다시 본다(그때 이번 실행 명세로 첫 파견했으면 공급 면 만남으로 가르고 · 아직 모르면 "
+                              "파견 정지 — 밖 동작 V 와 무관)")
     http_blind: bool = bc in scan.http_blind
     forecast_tail: str = "첫 파견 직전 deps 가 다시 본다(G1 확정판 밖 동작 V 0 이면 세지 않고 1 이상이면 보류)"
     forecast_ov_tail: str = "첫 파견 직전 deps 가 다시 본다(G1 확정판 밖 동작 V 0 이면 세지 않고 1 이상이면 겹침)"
@@ -5013,8 +5320,13 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
         counted.append(run)
         web: bool = run.kind == "dddjango-web"
         why: "list[str]" = []
-        if run.bcs & our_bcs:
-            why.append(f"BC {' · '.join(sorted(run.bcs & our_bcs))}")
+        bc_hit: "set[str]" = run.bcs & (near_bcs if run.refactor else our_bcs)
+        if bc_hit:
+            why.append(f"BC {' · '.join(sorted(bc_hit))}{' (리팩토링 실행 — 엮인 BC)' if bc_hit - our_bcs else ''}")
+        face_hit: "list[str]" = _path_hit(face_paths, run.known)
+        sup: "set[str]" = set() if run.refactor else run.bcs & supplier_only
+        if face_hit:
+            why.append(f"공급 면 {' · '.join(face_hit[:3])}{' …' if len(face_hit) > 3 else ''}")
         hit: "list[str]" = _path_hit(our_paths, run.paths)
         if hit:
             why.append(f"경로 {' · '.join(hit[:3])}{' …' if len(hit) > 3 else ''}")
@@ -5038,11 +5350,22 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
         if run.unreadable:                                  # 기록 해독 실패 — 이웃 여부와 무관하게 보류(F4-108)
             holds.append(f"{run.label} — 보류({run.unreadable}) · 확인할 자료: {run.where} · 재개 조건: {DECODE_RESUME}")
             continue
+        if sup and run.kind == "dddjango" and run.unknown_why:   # 공급 BC 기능 실행 — 고침 목록 모름(설계 2판 D1 «나»)
+            draft: "list[str]" = _path_hit(face_paths, run.paths - run.known)
+            line = (f"{run.label} — 보류(공급 BC {' · '.join(sorted(sup))} 를 고치는 기능 실행 — 고침 목록 모름: {run.unknown_why}"
+                    + (f" · 지금 명세 file-plan 이 면 파일 {len(draft)} 과 만남" if draft else "") + ")")
+            if g0:                                          # G0 — 정지가 아니라 예보(밖 동작 V 와 무관 — 첫 파견 직전 deps 가 다시 본다)
+                forecasts.append(f"{line} · {sup_forecast_tail}")
+                sup_forecasts += 1
+            else:                                           # 파견 직전 · 판정 시점 모름 — 보류(파견 정지)
+                holds.append(f"{line} · 확인할 자료: {run.where} 의 실행 줄(build_anchor) · pregate-report.md · 명세 file-plan · "
+                             f"재개 조건: {SUPPLIER_RESUME}")
+            continue
         maybe: bool = (run.kind != "dddjango" or not run.bcs
                        or bool((run.bcs | {b for x in run.bcs for b in full.get(x, set())}
-                                | {a for a, ds in full.items() if run.bcs & ds}) & our_bcs))
+                                | {a for a, ds in full.items() if run.bcs & ds}) & near_bcs))
         if run.hold and maybe:
-            line: str = f"{run.label} — 보류({run.hold})"
+            line = f"{run.label} — 보류({run.hold})"
             rest: str = f" · 확인할 자료: {run.where} 의 scope · 명세 file-plan · 재개 조건: {DEPS_RESUME}"
             http_hold: bool = web and run.hold_http
         elif http_blind:                                    # 우리 BC · 경로 집합이 덜 셈일 수 있다 — 관찰 못 한 충돌 후보
@@ -5052,6 +5375,10 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
                     f"file-plan · 재개 조건: 그 표면의 접두를 api_controller 로 읽을 수 있게 되거나 그 레인이 G2 로 끝난 뒤 다시 시작")
             http_hold = web
         else:
+            if sup:                                         # 면 밖이라 안 센 공급 BC 실행 — 흔적을 남긴다(설계 2판 I5)
+                dropped.append(f"{run.label} — 공급 BC {' · '.join(sorted(sup))} · 고침 {len(run.known)} 파일 · 공급 면과 만남 0 — "
+                               f"세지 않는다(서는 장치: 그 실행의 G2 전체 suite 가 지금 대상 시험을 돈다 · 두 레인 조합은 착륙 뒤 처음 돈다)")
+                face_free += 1
             continue
         if http_hold and http_free:
             if not cut:                                     # 한 실행은 한 번만 뺀다
@@ -5072,6 +5399,8 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
                   "http_blind_why": scan.http_blind_reasons.get(bc, []), "http_prefixes": sorted(scan.prefixes.get(bc, set())),
                   "http_unread": scan.unread,
                   "our_bcs": sorted(our_bcs), "our_units": sorted(our_units), "planned": planned,
+                  "supplier_faces": {s: sorted(ps) for s, ps in sorted(faces.items())},
+                  "forecast_supplier": sup_forecasts, "face_free": face_free, "face_widened": dict(sorted(widened.items())),
                   "overlaps": overlaps, "holds": holds, "worktrees": trees, "web_runs": webs,
                   "stage": "G0" if g0 else "모름" if own is None else "파견 직전", "outward_v": outward, "outward_v_why": outward_why,
                   "forecast_holds": forecasts, "forecast_overlaps": forecast_overlaps,
@@ -5079,7 +5408,8 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
     runs_note: str = (f"활성 실행 {seen['runs']}(사본 {seen['copies']} · 트리 {trees}) · MH 판으로 판정 {seen['mh']} · "
                       f"MH 에서 지워져 뺌 {seen['gone']}")
     stage: str = ("판정 시점 모름(이 실행 폴더 없음) — web HTTP 소비 겹침 · 보류를 그대로 센다" if own is None else
-                  f"판정 시점 G0 · 예보 보류 {len(forecasts)} · 예보 겹침 {len(forecast_overlaps)}" if g1 is None else
+                  f"판정 시점 G0 · 예보 보류 {len(forecasts)} · 예보 겹침 {len(forecast_overlaps)} · "
+                  f"예보 보류 가운데 공급 BC 고침 목록 모름 {sup_forecasts}" if g1 is None else
                   f"판정 시점 파견 직전(G1 확정 {g1[0]}) · 밖 동작 V "
                   f"{outward if outward is not None else '모름(web HTTP 소비 겹침 · 보류를 그대로 센다)'}"
                   + (f" · web HTTP 소비로만 선 겹침 · 보류 뺌 {http_dropped}" if http_free else "")
@@ -5090,6 +5420,9 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
                        f"- 순환 성분(운영): {' · '.join(comp)}{' — 지원 안 함(순환 묶음 · 묶음 계획을 먼저)' if cyc else ' (단독)'}",
                        "- 내주는 쪽: " + (" · ".join(f"{s}({states[s]})" for s in suppliers) or "없음"),
                        "- 받는 쪽: " + (" · ".join(receiver_bcs) or "없음"),
+                       "- 공급 면(대상이 쓰는 공급 BC 파일 · 이 면과 만날 때만 겹침): "
+                       + (" · ".join(f"{x}({len(ps)}{' — 전체: ' + widened[x] if x in widened else ''})"
+                                     for x, ps in sorted(faces.items())) or "없음"),
                        "- HTTP 소비: " + (" · ".join(http_owners) or "없음")
                        + (f" · 관찰 못 함({scan.http_blind_why.get(bc, '')})" if http_blind else ""),
                        "- 계획된 소비: " + (" · ".join(planned) or "없음"), ""]
@@ -5113,13 +5446,16 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
         print(f"  예보 겹침: {f}")
     for d in dropped:
         print(f"  뺌: {d}")
+    for x, why in sorted(widened.items()):
+        print(f"  면 넓힘: 공급 BC {x} — {why} — 그 BC 전체를 공급 면으로 센다")
     if cyc:
         print(f"  지원 안 함: 순환 묶음 {' · '.join(comp)} — 묶음 계획을 먼저(운영자 의존 지도)")
     print(f"요약: deps {bc} · 순환 성분 {'크기 ' + str(len(comp)) if cyc else '단독'} · 내주는 쪽 "
           f"{' · '.join(f'{s}({states[s]})' for s in suppliers) or '없음'} · 미정리 공급자 {len(unsettled)} · 받는 쪽 "
           f"{' · '.join(receiver_bcs) or '없음'} · 직접 import 자리 {len(by_kind['직접 import 자리'])} · HTTP 소비 "
           f"{' · '.join(http_owners) or '없음'}{' · HTTP 소비 관찰 못 함' if http_blind else ''} · 공유 표면 "
-          f"{len(by_kind['공유 표면'])} · 계획된 소비 {len(planned) or '없음'} · 레인 겹침 {len(overlaps) or '없음'} · "
+          f"{len(by_kind['공유 표면'])} · 계획된 소비 {len(planned) or '없음'} · 공급 면 {len(faces)} BC · "
+          f"{len({p for ps in faces.values() for p in ps})} 자리 · 면 밖 뺌 {face_free} · 레인 겹침 {len(overlaps) or '없음'} · "
           f"보류 {len(holds)} · 본 범위: 작업 트리 {trees} · web 실행 {webs} · 관찰 못 한 활성 실행 {len(holds)} · {runs_note} · "
           f"{stage}{' · 파싱 못 한 파일 ' + str(len(scan.parse_errors)) if scan.parse_errors else ''} → {out}")
     return DEPS_STOP_EXIT if cyc or overlaps or holds else EXIT_OK
