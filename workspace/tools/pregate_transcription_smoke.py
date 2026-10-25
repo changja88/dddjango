@@ -3,6 +3,8 @@
 
 삭제 정리 제거, decorator 유실, TYPE_CHECKING 평탄화가 각각 이 검증을 red로 만든다.
 반대 대조군은 전역 빈 폴더 정리와 무조건 dataclass/admin 면제를 잡는다.
+F4-115 — update 도메인 서비스 서명(#304 · #305 · #307 · #308)과 OHS 번역 출처 칸(#474 · #62)의 선언 예보를 실검사기 판정 ·
+후상태 줄 수와 대조한다(`DomainServiceForecastTest` · `CatchForecastTest`).
 """
 from __future__ import annotations
 
@@ -645,6 +647,8 @@ class RepositoryForecastTest(unittest.TestCase):
                 self.assertEqual([(f.rule, f.confirmed) for f in found], [("#355", expected)])
 
     def test_baseline_debt_of_another_class_does_not_hide_a_new_method(self) -> None:
+        # F4-115 검토 반례 K11 꼴 — G2 registry 집합 차분은 이 줄을 기존으로 보지만(귀속 0) 실검사기 줄은 1 → 2 다. 저장소 예보는
+        # 그대로 엄격하게 확정한다(F4-73 차단 A · 도메인 서비스 예보의 «다른 소유자» 셋 가름과 기준이 다르다 — S5 사각 문구).
         self.write(ORDER_REPOSITORY, LEGACY_ORDER_BASELINE)
 
         def order_lines() -> int:
@@ -1012,6 +1016,451 @@ class RepositoryForecastTest(unittest.TestCase):
                 mock.patch.object(pg, "_TRANSACTION_CHECKER_MODULE", None):
             with self.assertRaises(pg.RunError):
                 pg.check_repository_forecast(plan, self.repo, self.scratch, pg.repository_baseline(self.repo, plan))
+
+
+# F4-115 — update 도메인 서비스 칸 서명(#304 · #305 · #307 · #308)과 OHS 창구 번역 출처 칸(#474 · #62)의 선언 예보. 가짜 이름(정원 · 식물).
+GARDEN = "application/garden"
+PLANT_IMPORT = "from application.garden.domain_layer.plant.plant import Plant\n"
+REPOSITORY_IMPORT = "from application.garden.domain_layer.plant.plant_repository import PlantRepository\n"
+POLICY = f"{GARDEN}/domain_layer/domain_service/watering.py"
+POLICY_HEAD = '"""Which plants need water."""\nfrom __future__ import annotations\n\n' + PLANT_IMPORT
+DUE = "    def due(self, plants: tuple[Plant, ...]) -> tuple[Plant, ...]:\n        return plants\n"
+LEGACY = "    def is_legacy(self, plant: Plant) -> bool:\n        return False\n"
+POLICY_BASELINE = POLICY_HEAD + "\n\nclass WateringPolicy:\n" + DUE + "\n" + LEGACY
+DUE_ROW = f"{POLICY}::WateringPolicy.due(plants: tuple[Plant, ...]) -> tuple[Plant, ...]"
+CATALOG = f"{GARDEN}/driving_layer/open_host_service/catalog"
+CATALOG_SERVICE = f"{CATALOG}/catalog_service.py"
+UNREADABLE_IMPORT = "from application.garden.domain_layer.plant.exception.plant_unreadable import PlantUnreadable"
+CATALOG_BASELINE = ('"""Garden catalog open host service."""\nfrom __future__ import annotations\n\n'
+                    f"{UNREADABLE_IMPORT}\n"
+                    "from application.garden.driving_layer.open_host_service.catalog.contract.exception."
+                    "plant_unavailable_exception import PlantUnavailableException\n\n\n"
+                    "def read_plant_query(name: str) -> str:\n    try:\n        return _read(name)\n"
+                    "    except PlantUnreadable:\n        raise PlantUnavailableException() from None\n\n\n"
+                    "def _read(name: str) -> str:\n    raise PlantUnreadable(name)\n")
+CATALOG_LOGGED = CATALOG_BASELINE.replace(
+    "    except PlantUnreadable:\n",
+    "    except PlantUnreadable as unreadable:\n        print(unreadable)\n")
+CAUGHT_DETAIL = "도메인 예외를 `as _caught` 로 묶어 참조했다 — 입구 파일은 도메인 예외를 «타입»으로만 쓴다"
+STALE_MEMO = "S5 입구 catch 확인(출처 칸 `as` 없음 — OHS 는 잡은 도메인 예외 값을 쓰지 않는다(R-3690)"
+BLANK_MEMO = "S5 입구 catch 미검증(번역 출처 칸 무기재"
+OUTSIDE_MEMO = "번역 출처 칸 판정 밖(검사기 OHS 창구 아님 — 판정 0)"
+
+
+def bool_detail(name: str) -> str:
+    return f"`{name}` 이 bool 을 돌려준다 — 규칙 위반의 알림은 «도메인 예외»다"
+
+
+def catch_spec(paths: list[str], rows: list[str], symbols: list[str] = (), imports: list[str] = ()) -> str:
+    return (spec_text(paths, symbols, imports)
+            + "<!-- machine: exception-map -->\n```exceptions\n" + "\n".join(rows) + "\n```\n")
+
+
+class GardenFixture(unittest.TestCase):
+    """정원 BC(애그리거트 plant · 도메인 서비스 · OHS 창구) — 선언 예보는 사본 실물을 바꾸지 않고 칸마다 빈 폴더를 지운다."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="pregate-garden-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.repo = self.root / "repo"
+        self.scratch = self.root / "scratch"
+        self.scratch.mkdir()
+        self.env = dict(os.environ, DJR_FINDINGS_JSON=str(self.root / "findings.jsonl"),
+                        DJR_VIOLATIONS_DIR=str(self.root / "violations"), PYTHONDONTWRITEBYTECODE="1")
+        for path, content in {
+            f"{GARDEN}/__init__.py": "", f"{GARDEN}/domain_layer/__init__.py": "",
+            f"{GARDEN}/domain_layer/plant/__init__.py": "",
+            f"{GARDEN}/domain_layer/plant/plant.py": "class Plant:\n    pass\n",
+            f"{GARDEN}/domain_layer/plant/plant_repository.py": "class PlantRepository:\n    pass\n",
+            f"{GARDEN}/domain_layer/plant/exception/__init__.py": "",
+            f"{GARDEN}/domain_layer/plant/exception/plant_unreadable.py": "class PlantUnreadable(Exception):\n    pass\n",
+            f"{GARDEN}/domain_layer/domain_service/__init__.py": "",
+            POLICY: POLICY_BASELINE,
+            f"{CATALOG}/contract/exception/plant_unavailable_exception.py": "class PlantUnavailableException(Exception):\n    pass\n",
+            CATALOG_SERVICE: CATALOG_BASELINE,
+        }.items():
+            self.write(path, content)
+
+    def write(self, path: str, content: str) -> None:
+        target = self.repo / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+
+    def snapshot(self) -> dict[str, bytes]:
+        return {p.relative_to(self.repo).as_posix(): p.read_bytes() for p in sorted(self.repo.rglob("*")) if p.is_file()}
+
+    def assert_cells_removed(self) -> None:
+        for folder in ("domain-service", "catch"):
+            if (self.scratch / folder).exists():
+                self.assertEqual(list((self.scratch / folder).iterdir()), [], f"칸 폴더가 남았다: {folder}")
+
+    def checker_lines(self, checker: str, rule: str, path: str) -> list[str]:
+        """실검사기를 사본째 돌려 그 파일 · 규칙의 줄(줄 번호 지움)을 센다 — 후상태 대조."""
+        extra = ["--error-profile", "auto"] if checker == "check-api-error-controller-contract.py" else []  # registry 의 auto 호출
+        result = subprocess.run([sys.executable, str(SCRIPTS / checker), str(self.repo), *extra], env=self.env,
+                                capture_output=True, text=True)
+        self.assertIn(result.returncode, (0, 2), result.stdout + result.stderr)
+        return [re.sub(rf"{re.escape(path)}:\d+", f"{path}:N", line.strip()) for line in result.stdout.splitlines()
+                if line.strip().startswith(f"[{rule}] {path}:")]
+
+
+class DomainServiceForecastTest(GardenFixture):
+    """F4-115 A1 — update 도메인 서비스 칸의 symbols 서명이 실검사기 #304 · #305 · #307 · #308 판정으로 선언 예보된다(물리 전사 없이)."""
+
+    def forecast(self, rows: list[str], *, paths: "list[str] | None" = None, imports: list[str] = ()):
+        plan, errors = pg.parse_spec(spec_text([f"update {p}" for p in (paths or [POLICY])], rows,
+                                               [f"{(paths or [POLICY])[0]}  {i}" for i in imports]))
+        self.assertEqual(errors, [], " | ".join(errors))
+        baseline = pg.forecast_baseline(self.repo, plan)
+        before = self.snapshot()
+        found = pg.check_domain_service_forecast(plan, self.repo, self.scratch, baseline)
+        self.assertEqual(self.snapshot(), before, "분석 투영 밖 실물이 바뀌었다")
+        self.assert_cells_removed()
+        return found
+
+    def outcome(self, rows: list[str], **kwargs) -> list[tuple[str, str, bool]]:
+        return sorted((f.rule, f.owner, f.confirmed) for f in self.forecast(rows, **kwargs))
+
+    def test_new_public_bool_is_confirmed_with_checker_text(self) -> None:
+        found = self.forecast([f"{POLICY}::WateringPolicy", DUE_ROW, f"{POLICY}::WateringPolicy.is_due(plant: Plant) -> bool"])
+        self.assertEqual([(f.rule, f.path, f.owner, f.detail, f.confirmed) for f in found],
+                         [("#308", POLICY, "WateringPolicy.is_due", bool_detail("is_due"), True)])
+        # 같은 서명을 실물에 넣으면 실검사기가 같은 진단문을 낸다(판정 · 문면 복제 0).
+        self.write(POLICY, POLICY_BASELINE + "\n    def is_due(self, plant: Plant) -> bool:\n        return True\n")
+        self.assertIn(f"[#308] {POLICY}:N: {bool_detail('is_due')}", self.checker_lines("check-domain-model.py", "#308", POLICY))
+
+    def test_unchanged_signatures_and_same_owner_debt_are_not_forecast(self) -> None:
+        legacy = f"{POLICY}::WateringPolicy.is_legacy"
+        for label, rows in [
+            ("같은 서명 다시 적음", [f"{legacy}(plant: Plant) -> bool"]),
+            ("문자열 주석", [f"{legacy}(plant: 'Plant') -> 'bool'"]),
+            ("인자만 바뀐 기존 bool(같은 소유자 · 같은 판정문)", [f"{legacy}(plant: Plant, strict: bool) -> bool"]),
+            ("기존 공개 메서드 서명 그대로", [DUE_ROW]),
+        ]:
+            with self.subTest(label=label):
+                self.assertEqual(self.outcome([f"{POLICY}::WateringPolicy", *rows]), [])
+
+    def test_existing_method_changed_to_bool_is_confirmed(self) -> None:
+        self.assertEqual(self.outcome([f"{POLICY}::WateringPolicy",
+                                       f"{POLICY}::WateringPolicy.due(plants: tuple[Plant, ...]) -> bool"]),
+                         [("#308", "WateringPolicy.due", True)])
+
+    def test_other_owner_of_the_same_verdict_splits_three_ways(self) -> None:
+        # 기존 빚 열쇠 = G2 와 같은 «파일 · 규칙 · 판정문». 다른 소유자는 (가) 기존 줄이 이 명세로 사라짐 · (나) 함수 이름이
+        # 다름(#304 · #305 의 같은 인자 이름) → 확정, (다) 같은 함수 이름의 다른 자리(옮김 · 개명 · 다시 적기) → 후보.
+        due_repo = "    def due(self, plants: tuple[Plant, ...], repository: PlantRepository) -> tuple[Plant, ...]:\n        return plants\n"
+        for label, baseline, rows, expected, why in [
+            ("K1 클래스 이름만 바꿈", POLICY_BASELINE,
+             [f"{POLICY}::WateringRule", f"{POLICY}::WateringRule.is_legacy(plant: Plant) -> bool"],
+             [("#308", "WateringRule.is_legacy", False)], "`WateringPolicy.is_legacy`"),
+            ("K3 모듈 함수 → 메서드", POLICY_HEAD + "\n\ndef is_legacy(plant: Plant) -> bool:\n    return False\n"
+             "\n\nclass WateringPolicy:\n" + DUE,
+             [f"{POLICY}::WateringPolicy", f"{POLICY}::WateringPolicy.is_legacy(plant: Plant) -> bool"],
+             [("#308", "WateringPolicy.is_legacy", False)], "`is_legacy`"),
+            ("K4 조상 정의 다시 적음", POLICY_HEAD + "\n\nclass _Base:\n" + LEGACY + "\n\nclass WateringPolicy(_Base):\n" + DUE,
+             [f"{POLICY}::WateringPolicy(_Base)", f"{POLICY}::WateringPolicy.is_legacy(plant: Plant) -> bool"],
+             [("#308", "WateringPolicy.is_legacy", False)], "`_Base.is_legacy`"),
+            ("중첩 함수의 같은 이름", POLICY_HEAD + "\n\nclass WateringPolicy:\n" + DUE.replace(
+                "        return plants\n", "        def is_legacy(plant: Plant) -> bool:\n            return False\n"
+                "        return plants\n"),
+             [f"{POLICY}::WateringPolicy", f"{POLICY}::WateringPolicy.is_legacy(plant: Plant) -> bool"],
+             [("#308", "WateringPolicy.is_legacy", False)], "`WateringPolicy.due().is_legacy`"),
+            ("두 소유자 가운데 하나만 고침", POLICY_BASELINE + "\n\nclass DrainPolicy:\n" + LEGACY,
+             [f"{POLICY}::WateringPolicy", f"{POLICY}::WateringPolicy.is_legacy(plant: Plant) -> int",
+              f"{POLICY}::_Gauge", f"{POLICY}::_Gauge.is_legacy(plant: Plant) -> bool"],
+             [("#308", "_Gauge.is_legacy", False)], "`DrainPolicy.is_legacy`, `WateringPolicy.is_legacy`"),
+            ("K2 같은 인자 이름의 새 정의(나)", POLICY_HEAD + REPOSITORY_IMPORT + "\n\nclass WateringPolicy:\n" + due_repo,
+             [f"{POLICY}::WateringPolicy",
+              f"{POLICY}::WateringPolicy.drain(plants: tuple[Plant, ...], repository: PlantRepository) -> tuple[Plant, ...]"],
+             [("#304", "WateringPolicy.drain", True)], "함수 이름이 다르다"),
+            ("바꿔치기 — 기존 소유자를 고치고 다른 소유자에 같은 판정문(가)", POLICY_BASELINE,
+             [f"{POLICY}::WateringPolicy", f"{POLICY}::WateringPolicy.is_legacy(plant: Plant) -> int",
+              f"{POLICY}::_Gauge {{level: int = 0}}", f"{POLICY}::_Gauge.is_legacy(plant: Plant) -> bool"],
+             [("#308", "_Gauge.is_legacy", True)], "이 명세가 고쳐 사라진다"),
+        ]:
+            with self.subTest(label=label):
+                self.write(POLICY, baseline)
+                found = self.forecast(rows)
+                self.assertEqual(sorted((f.rule, f.owner, f.confirmed) for f in found), expected)
+                for item in found:
+                    self.assertIn(why, item.detail)
+                    self.assertEqual("예보 불확정" in item.detail, not item.confirmed, item.detail)
+                    if not item.confirmed:
+                        self.assertIn("G2 registry 는 같은 파일 · 같은 판정문을 기존으로 본다", item.detail)
+                        self.assertIn("물음: 이 자리에서 새로 들이는 위반인가", item.detail)
+
+    def test_other_owner_split_matches_the_real_checker_line_counts(self) -> None:
+        # 후상태 대조 — (나) K2 · (가) 바꿔치기는 실검사기에 새 줄이 서고(G2 집합 차분은 지운다), (다) K1 은 줄 수가 그대로다.
+        due_repo = ("    def due(self, plants: tuple[Plant, ...], repository: PlantRepository) -> tuple[Plant, ...]:\n"
+                    "        return plants\n")
+        base_k2 = POLICY_HEAD + REPOSITORY_IMPORT + "\n\nclass WateringPolicy:\n" + due_repo
+        for label, baseline, implemented, rule, expected in [
+            ("K2 — 1 → 2", base_k2, base_k2 + "\n" + due_repo.replace("def due", "def drain"), "#304", (1, 2)),
+            ("바꿔치기 — 줄 하나가 다른 자리로(옛 줄은 사라짐)", POLICY_BASELINE,
+             POLICY_BASELINE.replace(LEGACY, LEGACY.replace("-> bool", "-> int").replace("False", "0"))
+             + "\n\nclass _Gauge:\n" + LEGACY, "#308", (1, 1)),
+            ("K1 — 클래스 이름만 바꿈", POLICY_BASELINE, POLICY_BASELINE.replace("WateringPolicy", "WateringRule"),
+             "#308", (1, 1)),
+        ]:
+            with self.subTest(label=label):
+                self.write(POLICY, baseline)
+                before = len(self.checker_lines("check-domain-model.py", rule, POLICY))
+                self.write(POLICY, implemented)
+                self.assertEqual((before, len(self.checker_lines("check-domain-model.py", rule, POLICY))), expected)
+
+    def test_repository_port_and_primitive_arguments_are_confirmed(self) -> None:
+        found = self.forecast([
+            f"{POLICY}::WateringPolicy",
+            f"{POLICY}::WateringPolicy.drain(plants: tuple[Plant, ...], store: PlantRepository) -> tuple[Plant, ...]",
+            f"{POLICY}::WateringPolicy.ping(plants: tuple[Plant, ...], clock: ClockPort) -> tuple[Plant, ...]",
+            f"{POLICY}::WateringPolicy.score(level: int, name: str) -> Plant"])
+        self.assertEqual(sorted((f.rule, f.owner, f.confirmed) for f in found),
+                         [("#304", "WateringPolicy.drain", True), ("#305", "WateringPolicy.ping", True),
+                          ("#307", "WateringPolicy.score", True)])
+        self.assertFalse([f.detail for f in found if "기존 줄" in f.detail or "예보 불확정" in f.detail])
+
+    def test_private_names_are_skipped_and_private_class_public_methods_are_judged(self) -> None:
+        self.assertEqual(self.outcome([f"{POLICY}::WateringPolicy", f"{POLICY}::WateringPolicy._is_dry(plant: Plant) -> bool",
+                                       f"{POLICY}::_hidden(plant: Plant) -> bool"]), [])
+        self.assertEqual(self.outcome([f"{POLICY}::_Gauge {{level: int = 0}}", f"{POLICY}::_Gauge.is_low(plant: Plant) -> bool"]),
+                         [("#308", "_Gauge.is_low", True)])
+
+    def test_module_function_rows_are_judged(self) -> None:
+        self.write(POLICY, POLICY_HEAD + "\n\ndef watered(plant: Plant) -> Plant:\n    return plant\n")
+        self.assertEqual(self.outcome([f"{POLICY}::is_ready(plant: Plant) -> bool", f"{POLICY}::watered(plant: Plant) -> Plant"]),
+                         [("#308", "is_ready", True)])
+        self.assertEqual(self.outcome([f"{POLICY}::watered(plant: Plant) -> bool"]), [("#308", "watered", True)])
+
+    def test_unreadable_or_ambiguous_baseline_never_confirms_and_names_the_checker_rule(self) -> None:
+        drain = f"{POLICY}::WateringPolicy.drain(plants: tuple[Plant, ...], store: PlantRepository) -> tuple[Plant, ...]"
+        for label, baseline, rows, expected, why in [
+            ("기준선 파싱 불능", "class WateringPolicy(:\n", [f"{POLICY}::WateringPolicy", drain],
+             [("#304", "WateringPolicy.drain", False)], "기준선 실물을 읽거나 파싱하지 못했다"),
+            ("기준선 파싱 불능 · 위반 없는 선언", "class WateringPolicy(:\n", [f"{POLICY}::WateringPolicy", DUE_ROW], [], ""),
+            ("기준선 클래스 중복", POLICY_BASELINE + "\n\nclass WateringPolicy:\n    pass\n",
+             [f"{POLICY}::WateringPolicy", f"{POLICY}::WateringPolicy.is_legacy(plant: Plant) -> bool"],
+             [("#308", "WateringPolicy.is_legacy", False)], "기준선 클래스 `WateringPolicy` 중복"),
+            ("기준선 메서드 중복", POLICY_BASELINE + "\n" + LEGACY,
+             [f"{POLICY}::WateringPolicy", f"{POLICY}::WateringPolicy.is_legacy(plant: Plant) -> bool"],
+             [("#308", "WateringPolicy.is_legacy", False)], "기준선 메서드 `WateringPolicy.is_legacy` 중복"),
+            ("기준선 함수 중복", POLICY_HEAD + "\n\ndef ready(plant: Plant) -> Plant:\n    return plant\n"
+             "\n\ndef ready(plant: Plant) -> Plant:\n    return plant\n",
+             [f"{POLICY}::ready(plant: Plant) -> bool"], [("#308", "ready", False)], "기준선 함수 `ready` 중복"),
+        ]:
+            with self.subTest(label=label):
+                self.write(POLICY, baseline)
+                found = self.forecast(rows)
+                self.assertEqual(sorted((f.rule, f.owner, f.confirmed) for f in found), expected)
+                for item in found:
+                    self.assertIn(f"예보 불확정: {why}", item.detail)
+
+    def test_two_cells_of_one_bc_are_judged_in_their_own_folders(self) -> None:
+        rule_a, rule_b = (f"{GARDEN}/domain_layer/domain_service/{n}.py" for n in ("rule_a", "rule_b"))
+        for path, name in ((rule_a, "RuleA"), (rule_b, "RuleB")):
+            self.write(path, POLICY_HEAD + f"\n\nclass {name}:\n    def keep(self, plant: Plant) -> Plant:\n        return plant\n")
+        found = self.forecast([f"{rule_a}::RuleA", f"{rule_a}::RuleA.is_x(plant: Plant) -> bool",
+                               f"{rule_b}::RuleB", f"{rule_b}::RuleB.calc(plant: Plant) -> Plant"], paths=[rule_a, rule_b])
+        self.assertEqual([(f.rule, f.path, f.owner, f.confirmed) for f in found], [("#308", rule_a, "RuleA.is_x", True)])
+
+    def test_promoted_body_and_plan_path_spelling_are_matched(self) -> None:
+        body = f"{GARDEN}/domain_layer/domain_service/watering/watering.py"
+        (self.repo / POLICY).unlink()
+        self.write(f"{GARDEN}/domain_layer/domain_service/watering/__init__.py", "")
+        self.write(body, POLICY_BASELINE)
+        for spelled in (POLICY, f"./{POLICY}"):
+            with self.subTest(path=spelled):
+                found = self.forecast([f"{spelled}::WateringPolicy", f"{spelled}::WateringPolicy.is_due(plant: Plant) -> bool"],
+                                      paths=[spelled])
+                self.assertEqual([(f.rule, f.path, f.owner, f.confirmed) for f in found],
+                                 [("#308", POLICY, "WateringPolicy.is_due", True)])
+        # 기준선 실물(본체)의 기존 빚은 그대로 빠진다.
+        self.assertEqual(self.outcome([f"{POLICY}::WateringPolicy", f"{POLICY}::WateringPolicy.is_legacy(plant: Plant) -> bool"]),
+                         [])
+
+    def test_targets_follow_checker_selection_and_add_is_left_to_the_registry(self) -> None:
+        for path in (f"{GARDEN}/domain_layer/plant/watering.py", f"{GARDEN}/domain_layer/domain_service/sub/watering.py",
+                     f"{GARDEN}/domain_layer/domain_service/__init__.py"):
+            with self.subTest(path=path):
+                self.write(path, POLICY_HEAD)
+                self.assertEqual(self.outcome([f"{path}::WateringPolicy", f"{path}::WateringPolicy.is_due(plant: Plant) -> bool"],
+                                              paths=[path]), [])
+        added = f"{GARDEN}/domain_layer/domain_service/feeding.py"
+        plan, errors = pg.parse_spec(spec_text([f"add {added}"], [f"{added}::FeedingPolicy",
+                                                                   f"{added}::FeedingPolicy.is_due(plant: Plant) -> bool"]))
+        self.assertEqual(errors, [])
+        self.assertEqual(pg.check_domain_service_forecast(plan, self.repo, self.scratch, pg.forecast_baseline(self.repo, plan)), [])
+
+    def test_bundled_checker_is_loaded_only_for_target_cells_and_load_failure_is_run_error(self) -> None:
+        rows = [f"{POLICY}::WateringPolicy", f"{POLICY}::WateringPolicy.is_due(plant: Plant) -> bool"]
+        with mock.patch.object(pg, "DOMAIN_MODEL_CHECKER", self.root / "missing-checker.py"), \
+                mock.patch.dict(pg._BUNDLED_CHECKERS, clear=True):
+            self.assertEqual(self.outcome([f"{CATALOG_SERVICE}::read_plant_query(name: str) -> str"],
+                                          paths=[CATALOG_SERVICE]), [])
+            with self.assertRaises(pg.RunError):
+                self.forecast(rows)
+
+    def test_forecast_leaves_no_records_or_violation_history(self) -> None:
+        records = self.root / "records.jsonl"
+        history = self.root / "history"
+        base = {key: value for key, value in os.environ.items() if key not in ("DJR_FINDINGS_JSON", "DJR_VIOLATIONS_DIR")}
+        rows = [f"{POLICY}::WateringPolicy", f"{POLICY}::WateringPolicy.is_due(plant: Plant) -> bool",
+                f"{POLICY}::WateringPolicy.is_legacy(plant: Plant, strict: bool) -> bool"]
+        with mock.patch.dict(os.environ, dict(base, DJR_FINDINGS_JSON=str(records), DJR_VIOLATIONS_DIR=str(history)),
+                             clear=True), contextlib.redirect_stdout(io.StringIO()) as out:
+            self.assertEqual(self.outcome(rows), [("#308", "WateringPolicy.is_due", True)])
+        self.assertEqual(out.getvalue(), "")
+        self.assertFalse(records.exists())
+        self.assertFalse(history.exists())
+
+    def test_two_hundred_cells_are_all_forecast_without_leftovers(self) -> None:
+        # 칸 수에 선형(칸마다 빈 폴더 둘) — 시간은 단언하지 않고 결과만 본다.
+        paths = [f"{GARDEN}/domain_layer/domain_service/rule_{n:03d}.py" for n in range(200)]
+        rows: list[str] = []
+        for n, path in enumerate(paths):
+            self.write(path, POLICY_HEAD + f"\n\nclass Rule{n:03d}:\n    def keep(self, plant: Plant) -> Plant:\n        return plant\n")
+            rows += [f"{path}::Rule{n:03d}", f"{path}::Rule{n:03d}.is_x(plant: Plant) -> bool",
+                     f"{path}::Rule{n:03d}.keep(plant: Plant) -> Plant"]
+        found = self.forecast(rows, paths=paths)
+        self.assertEqual(sorted((f.path, f.owner, f.confirmed) for f in found),
+                         [(path, f"Rule{n:03d}.is_x", True) for n, path in enumerate(paths)])
+
+
+class CatchForecastTest(GardenFixture):
+    """F4-115 A2 — 예외 번역표 행의 선택 «번역 출처» 칸이 실검사기 트리 슬라이스 #474 · #62 판정으로 선언 예보된다."""
+
+    def forecast(self, rows: list[str], *, paths: "list[str] | None" = None, symbols: list[str] = (),
+                 imports: list[str] = ()):
+        plan, errors = pg.parse_spec(catch_spec(paths or [f"update {CATALOG_SERVICE}"], rows, symbols, imports))
+        self.assertEqual(errors, [], " | ".join(errors))
+        baseline = pg.forecast_baseline(self.repo, plan)
+        before = self.snapshot()
+        found, memos = pg.check_catch_forecast(plan, self.scratch, baseline)
+        self.assertEqual(self.snapshot(), before, "분석 투영 밖 실물이 바뀌었다")
+        self.assert_cells_removed()
+        return found, memos
+
+    def test_baseline_domain_origin_with_as_is_confirmed_like_the_real_checker(self) -> None:
+        found, memos = self.forecast([f"PlantUnavailableException  {CATALOG_SERVICE}  <= PlantUnreadable as"])
+        self.assertEqual([(f.rule, f.path, f.owner, f.confirmed) for f in found],
+                         [("#474", CATALOG_SERVICE, "PlantUnavailableException ← PlantUnreadable", True)])
+        self.assertTrue(found[0].detail.startswith(f"{CAUGHT_DETAIL} — 번역 출처 칸 `<= PlantUnreadable as`(출처 기준선 "
+                                                   f"`{UNREADABLE_IMPORT}`)"), found[0].detail)
+        self.assertEqual(memos, [])
+        # 후상태 대조 — 잡은 값을 로그에 쓰는 구현은 실검사기가 #474 를 낸다(타입으로만 쓰면 0).
+        self.assertEqual(self.checker_lines("check-api-error-controller-contract.py", "#474", CATALOG_SERVICE), [])
+        self.write(CATALOG_SERVICE, CATALOG_LOGGED)
+        self.assertEqual(len(self.checker_lines("check-api-error-controller-contract.py", "#474", CATALOG_SERVICE)), 1)
+
+    def test_origin_is_resolved_by_the_first_source_found(self) -> None:
+        withered = f"{GARDEN}/domain_layer/plant/exception/plant_withered.py"
+        app_error = f"{GARDEN}/application_layer/plant_reading/plant_unreadable_error.py"
+        app_import = "from application.garden.application_layer.plant_reading.plant_unreadable_error import PlantUnreadableError"
+        for label, paths, row, symbols, imports, expected in [
+            ("symbols 의 같은 이름 domain 클래스", [f"update {CATALOG_SERVICE}", f"add {withered}"], "<= PlantWithered as",
+             [f"{withered}::PlantWithered(Exception)"], [], [("#474", True)]),
+            ("boundary-imports 의 응용 예외", [f"update {CATALOG_SERVICE}"], "<= PlantUnreadableError as", [],
+             [app_import], []),
+            ("K10 — boundary-imports 응용 · symbols domain 같은 이름(처음 찾은 출처)",
+             [f"update {CATALOG_SERVICE}", f"add {GARDEN}/domain_layer/plant/exception/plant_unreadable_error.py"],
+             "<= PlantUnreadableError as", [f"{GARDEN}/domain_layer/plant/exception/plant_unreadable_error.py::"
+                                            "PlantUnreadableError(Exception)"], [app_import], []),
+            ("boundary-imports 의 domain 별칭", [f"update {CATALOG_SERVICE}"], "<= Unreadable as", [],
+             [f"{UNREADABLE_IMPORT} as Unreadable"], [("#474", True)]),
+            ("boundary-imports 소비 경로 표기 `./`", [f"update {CATALOG_SERVICE}"], "<= Unreadable as", [],
+             [f"{UNREADABLE_IMPORT} as Unreadable"], [("#474", True)]),
+            ("상대 import 는 domain 이 아니다", [f"update {CATALOG_SERVICE}"], "<= Local as", [],
+             ["from .errors import Local"], []),
+            ("출처를 가를 수 없음", [f"update {CATALOG_SERVICE}"], "<= PlantGone as", [], [], [("#474", False)]),
+            ("symbols 에 같은 이름 클래스 둘", [f"update {CATALOG_SERVICE}", f"add {withered}", f"add {app_error}"],
+             "<= PlantWithered as", [f"{withered}::PlantWithered(Exception)", f"{app_error}::PlantWithered(Exception)"], [],
+             [("#474", False)]),
+            ("내장 예외", [f"update {CATALOG_SERVICE}"], "<= ValueError as", [], [], []),
+        ]:
+            with self.subTest(label=label):
+                consumer = f"./{CATALOG_SERVICE}" if "`./`" in label else CATALOG_SERVICE
+                plan_imports = [f"{consumer}  {i}" for i in imports]
+                found, memos = self.forecast([f"PlantUnavailableException  {CATALOG_SERVICE}  {row}"], paths=paths,
+                                             symbols=symbols, imports=plan_imports)
+                self.assertEqual(sorted((f.rule, f.confirmed) for f in found), expected)
+                for item in found:
+                    self.assertEqual("예보 불확정" in item.detail, not item.confirmed, item.detail)
+                self.assertEqual(memos, [])
+
+    def test_catch_all_source_is_62_regardless_of_as(self) -> None:
+        for source in ("Exception", "Exception as", "BaseException", "BaseException as"):
+            with self.subTest(source=source):
+                found, memos = self.forecast([f"PlantUnavailableException  {CATALOG_SERVICE}  <= {source}"])
+                self.assertEqual([(f.rule, f.confirmed) for f in found], [("#62", True)])
+                self.assertIn("`except Exception`/bare", found[0].detail)
+                self.assertEqual(memos, [])
+
+    def test_rows_without_as_or_source_leave_row_memos(self) -> None:
+        found, memos = self.forecast([f"PlantUnavailableException  {CATALOG_SERVICE}  <= PlantUnreadable",
+                                      f"PlantGoneException  {CATALOG_SERVICE}  <= PlantGone",
+                                      f"PlantDryException  {CATALOG_SERVICE}  <= ValueError",
+                                      f"PlantLostException  {CATALOG_SERVICE}",
+                                      f"PlantSoldException  {CATALOG_SERVICE}"])
+        self.assertEqual(found, [])
+        self.assertEqual([next(kind for kind, head in (("stale", STALE_MEMO), ("blank", BLANK_MEMO)) if m.startswith(head))
+                          for m in memos], ["stale", "stale", "blank", "blank"])
+        self.assertTrue(memos[0].startswith(STALE_MEMO) and memos[0].endswith(
+            f"PlantUnavailableException ← PlantUnreadable · {CATALOG_SERVICE}"), memos[0])
+        self.assertTrue(memos[2].startswith(BLANK_MEMO) and memos[2].endswith(f"PlantLostException · {CATALOG_SERVICE}"))
+        # add 창구의 출처 칸 없는 행은 메모를 남기지 않는다(본문 전부가 스텁이다).
+        added = f"{CATALOG}/sale_service.py"
+        self.assertEqual(self.forecast([f"PlantSoldException  {added}"], paths=[f"add {added}"]), ([], []))
+
+    def test_only_rows_of_checker_selected_ohs_files_are_judged(self) -> None:
+        nested = f"{CATALOG}/a/b/x_service.py"
+        helper = f"{CATALOG}/x_helper.py"
+        value_object = f"{GARDEN}/domain_layer/plant/value_object/water_level.py"
+        self.write(value_object, "class WaterLevel:\n    pass\n")
+        found, memos = self.forecast([f"PlantUnavailableException  {nested}  <= Unreadable as",
+                                      f"PlantUnavailableException  {helper}  <= Unreadable as",
+                                      f"WaterLevelInvalid  {value_object}  <= PlantUnreadable as",
+                                      f"WaterLevelGone  {value_object}"],
+                                     paths=[f"add {nested}", f"add {helper}", f"update {value_object}"],
+                                     imports=[f"{p}  {UNREADABLE_IMPORT} as Unreadable" for p in (nested, helper)])
+        self.assertEqual([(f.rule, f.path, f.confirmed) for f in found], [("#474", nested, True)])
+        self.assertEqual(memos, [f"{OUTSIDE_MEMO}: PlantUnavailableException ← Unreadable · {helper}",
+                                 f"{OUTSIDE_MEMO}: WaterLevelInvalid ← PlantUnreadable · {value_object}"])
+
+    def test_promoted_service_body_is_the_baseline(self) -> None:
+        body = f"{CATALOG}/catalog_service/catalog_service.py"
+        (self.repo / CATALOG_SERVICE).unlink()
+        self.write(f"{CATALOG}/catalog_service/__init__.py", "")
+        self.write(body, CATALOG_BASELINE)
+        found, _ = self.forecast([f"PlantUnavailableException  {CATALOG_SERVICE}  <= PlantUnreadable as"])
+        self.assertEqual([(f.rule, f.path, f.confirmed) for f in found], [("#474", CATALOG_SERVICE, True)])
+
+    def test_grammar_and_unchanged_rows(self) -> None:
+        for bad in ("<- PlantUnreadable", "<= PlantUnreadable as unreadable", "<= plant.PlantUnreadable", "<= PlantUnreadable AS",
+                    "<=PlantUnreadable as", "<= (PlantUnreadable, PlantGone)", "<= PlantUnreadable  # 주석"):
+            with self.subTest(row=bad):
+                _, errors = pg.parse_spec(catch_spec([f"update {CATALOG_SERVICE}"], [f"PlantUnavailableException  {CATALOG_SERVICE}  {bad}"]))
+                self.assertEqual(len(errors), 1, errors)
+                self.assertIn("[<탭|2+공백><= <잡는 예외 맨 이름>[ as]]", errors[0])
+        for good, source, bound in (("<= PlantUnreadable", "PlantUnreadable", False), ("<=\tPlantUnreadable  as", "PlantUnreadable", True),
+                                    ("", "", False)):
+            with self.subTest(row=good):
+                plan, errors = pg.parse_spec(catch_spec([f"update {CATALOG_SERVICE}"],
+                                                        [f"PlantUnavailableException\t{CATALOG_SERVICE}\t{good}".rstrip()]))
+                self.assertEqual(errors, [])
+                self.assertEqual([(t.published, t.source, t.bound) for t in plan.entries[CATALOG_SERVICE].translations],
+                                 [("PlantUnavailableException", source, bound)])
+                self.assertEqual(plan.entries[CATALOG_SERVICE].raises, ["PlantUnavailableException"])
+
+    def test_api_checker_is_loaded_only_for_projected_rows_and_load_failure_is_run_error(self) -> None:
+        with mock.patch.object(pg, "API_ERROR_CHECKER", self.root / "missing-checker.py"), \
+                mock.patch.dict(pg._BUNDLED_CHECKERS, clear=True):
+            found, memos = self.forecast([f"PlantUnavailableException  {CATALOG_SERVICE}  <= PlantUnreadable",
+                                          f"PlantGoneException  {CATALOG_SERVICE}  <= PlantGone as"])
+            self.assertEqual([(f.rule, f.confirmed) for f in found], [("#474", False)])
+            self.assertEqual(len(memos), 1)
+            with self.assertRaises(pg.RunError):
+                self.forecast([f"PlantUnavailableException  {CATALOG_SERVICE}  <= PlantUnreadable as"])
+            self.assert_cells_removed()
 
 
 if __name__ == "__main__":

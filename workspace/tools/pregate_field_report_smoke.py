@@ -2,6 +2,7 @@
 """실제 전사·checker 회귀: OHS update의 명시 새 함수와 입장 표 첫 Python artifact.
 
 update 전사 유실, 기존 바인딩 덮기, 무명시 raise 추론, support로 marker 전파를 잡는다.
+F4-115 — update 도메인 서비스 서명 · OHS 번역 출처 칸의 선언 예보를 CLI · `--check-report` 처분과 2.26.1 배포판 대조로 고정한다.
 """
 from __future__ import annotations
 
@@ -43,6 +44,23 @@ ORDER_DOMAIN = "application/orders/domain_layer/order"
 ORDER_REPOSITORY = f"{ORDER_DOMAIN}/order_repository.py"
 ORDER_ORIGINAL = ('from abc import ABC, abstractmethod\nfrom support.read_models import Summary\n\n\n'
                   'class OrderRepository(ABC):\n    pass\n')
+# F4-115 — 현장 꼴 둘(update 도메인 서비스의 새 공개 `-> bool` · update OHS 창구가 잡은 도메인 예외 값을 로그에 씀)과 낡은 출처 칸.
+# «옛 판» 은 2.26.1 배포 커밋 고정(HEAD 금지 — 이 고침을 커밋한 뒤에도 옛 판이다).
+_RELEASED_2261_COMMIT = "55ab56e5"
+POLICY = "application/garden/domain_layer/domain_service/watering.py"
+POLICY_ORIGINAL = ('"""Which plants need water."""\nfrom __future__ import annotations\n\n'
+                   'from application.garden.domain_layer.plant.plant import Plant\n\n\n'
+                   'class WateringPolicy:\n    def due(self, plants: tuple[Plant, ...]) -> tuple[Plant, ...]:\n'
+                   '        return tuple(p for p in plants if self._dry(p))\n\n'
+                   '    def _dry(self, plant: Plant) -> bool:\n        return True\n')
+UNREADABLE = "application/garden/domain_layer/plant/exception/plant_unreadable.py"
+CATCHING = ('"""Existing service."""\nfrom __future__ import annotations\n\n'
+            'from application.garden.domain_layer.plant.exception.plant_unreadable import PlantUnreadable\n'
+            'from application.garden.driving_layer.open_host_service.catalog.contract.exception.plant_unavailable_exception '
+            'import PlantUnavailableException\n\n\n'
+            'def read_plant_query(name: str) -> str:\n    try:\n        return _read(name)\n'
+            '    except PlantUnreadable:\n        raise PlantUnavailableException() from None\n\n\n'
+            'def _read(name: str) -> str:\n    raise PlantUnreadable(name)\n')
 
 
 def spec_text(paths, symbols=(), imports=(), exceptions=(), owner="") -> str:
@@ -422,12 +440,12 @@ class FieldReportTest(unittest.TestCase):
             self.assertEqual(errors, [])
             self.assertEqual([(x.rule, x.confirmed) for x in pg.check_declarations(plan, self.source)], [('#202', False)])
 
-    def cli(self, text):
+    def cli(self, text, scripts=SCRIPTS):
         spec = self.root / 'design.md'
         spec.write_text(text)
         report = self.root / 'report.md'
         if report.exists(): report.unlink()
-        run = subprocess.run([sys.executable, '-B', str(SCRIPTS / 'design_pregate.py'), str(spec),
+        run = subprocess.run([sys.executable, '-B', str(scripts / 'design_pregate.py'), str(spec),
                               str(self.source), '--report', str(report)], capture_output=True, text=True, env=self.env)
         return run, report.read_text() if report.exists() else ''
 
@@ -1106,6 +1124,117 @@ class BookAdmin(TranslatableAdmin):
                       '`recorded_character_ids` 반환 `UUID.frozenset` 이 애그리거트도 값 객체도 아니다',
                       pg._subsection(report, '선언 확정'))
         self.assertEqual(pg.check_report(text, report)[0], 3)
+
+    def garden_fixture(self) -> None:
+        self.write(self.source, 'application/garden/domain_layer/plant/plant.py', 'class Plant:\n    pass\n')
+        self.write(self.source, UNREADABLE, 'class PlantUnreadable(Exception):\n    pass\n')
+        self.write(self.source, 'application/garden/domain_layer/domain_service/__init__.py', '')
+        self.write(self.source, POLICY, POLICY_ORIGINAL)
+        self.write(self.source, f'{SERVICE_DIR}/contract/exception/plant_unavailable_exception.py',
+                   'class PlantUnavailableException(Exception):\n    pass\n')
+        self.write(self.source, SERVICE, CATCHING)
+        _git(self.source, 'add', '-A')
+        _git(self.source, 'commit', '-qm', 'garden fixture')
+
+    def released_2261(self) -> Path:
+        """2.26.1 배포 커밋의 scripts 사본(HEAD 금지)."""
+        old = self.root / 'released-2261'
+        if not old.exists():
+            old.mkdir()
+            archive = subprocess.run(['git', '-C', str(ROOT), 'archive', _RELEASED_2261_COMMIT, 'dddjango/scripts'],
+                                     capture_output=True, check=True)
+            subprocess.run(['tar', '-x', '-C', str(old)], input=archive.stdout, check=True)
+        return old / 'dddjango' / 'scripts'
+
+    def test_f115_domain_service_bool_declaration_blocks_without_materialization(self):
+        # 현장 꼴 1 — update 도메인 서비스에 공개 `-> bool` 을 더한 symbols(2.26.1 은 귀속 0 · G2 에서야 #308).
+        self.garden_fixture()
+        text = spec_text([f'update {POLICY}'], [f'{POLICY}::WateringPolicy',
+                         f'{POLICY}::WateringPolicy.due(plants: tuple[Plant, ...]) -> tuple[Plant, ...]',
+                         f'{POLICY}::WateringPolicy.is_asked(plant: Plant, names: tuple[str, ...]) -> bool'])
+        old, _ = self.cli(text, scripts=self.released_2261())
+        self.assertEqual(old.returncode, 4, old.stdout + old.stderr)
+        run, report = self.cli(text)
+        self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+        self.assertIn('실체화 0', run.stdout)
+        self.assertIn('선언 확정 1건', run.stdout)
+        stable = pg._stable_id(f'[#308] {POLICY}')
+        self.assertIn(f'- `{stable}` [#308] {POLICY} — WateringPolicy.is_asked: `is_asked` 이 bool 을 돌려준다 — '
+                      '규칙 위반의 알림은 «도메인 예외»다\n', pg._subsection(report, '선언 확정') + '\n')
+        self.assertIn(f'S5 update(OHS 서비스 본체 밖; marker 후상태 무기재 — 유지; 선언한 서명만 예보 · 본문 미검증): {POLICY}', report)
+        self.assertEqual(pg.check_report(text, report)[0], 3)
+        for label in ('ignored', 'filtered'):
+            with self.subTest(disposition=label):
+                code, problems, info = pg.check_report(text, report + f'\n- `{stable}` **{label}** 처분 검토\n')
+                self.assertEqual(code, 0, problems)
+                self.assertEqual((info['declarations'], info['candidates']), ('1', '0'))
+        self.assertEqual((self.source / POLICY).read_text(), POLICY_ORIGINAL)
+        self.assertFalse(Path(self.env['DJR_FINDINGS_JSON']).exists())
+
+    def test_f115_ohs_catch_reading_the_caught_value_and_catch_all_block(self):
+        # 현장 꼴 2 — update OHS 창구가 잡은 도메인 예외 값을 쓴다고 출처 칸에 적은 번역 행 둘 · `Exception` 출처 · 출처 칸 없는 행.
+        self.garden_fixture()
+        rows = [f'PlantUnavailableException  {SERVICE}  <= PlantUnreadable as',
+                f'PlantGoneException  {SERVICE}  <= PlantUnreadable as',
+                f'PlantSoldException  {SERVICE}  <= Exception',
+                f'PlantLostException  {SERVICE}']
+        text = spec_text([f'update {SERVICE}'], exceptions=rows)
+        old, _ = self.cli(text, scripts=self.released_2261())
+        self.assertEqual(old.returncode, 3, old.stdout + old.stderr)
+        self.assertIn('exception-map 행 파싱 불가', old.stdout)
+        run, report = self.cli(text)
+        self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+        confirmed = pg._subsection(report, '선언 확정')
+        stable474, stable62 = pg._stable_id(f'[#474] {SERVICE}'), pg._stable_id(f'[#62] {SERVICE}')
+        self.assertEqual(sorted(set(pg._REPORT_ID_RE.findall(confirmed))), sorted({stable474, stable62}))
+        self.assertIn('PlantUnavailableException ← PlantUnreadable: 도메인 예외를 `as _caught` 로 묶어 참조했다', confirmed)
+        self.assertIn('PlantGoneException ← PlantUnreadable:', confirmed)
+        self.assertIn('PlantSoldException ← Exception: `except Exception`/bare', confirmed)
+        self.assertIn(f'채널 메모: S5 입구 catch 미검증(번역 출처 칸 무기재 — 이 행의 catch 꼴을 더하거나 바꾸면 '
+                      f'`<= <잡는 예외>[ as]`): PlantLostException · {SERVICE}', report)
+        self.assertIn('번역 출처 칸만 예보 · catch 본문 미검증', report)
+        self.assertEqual(pg.check_report(text, report)[0], 3)
+        self.assertEqual(pg.check_report(text, report + f'\n- `{stable474}` **filtered** S2 인용\n')[0], 3)
+        code, problems, info = pg.check_report(text, report + f'\n- `{stable474}` **filtered** S2 인용\n'
+                                               f'- `{stable62}` **ignored** 빚 매칭 검토\n')
+        self.assertEqual(code, 0, problems)
+        self.assertEqual(info['declarations'], '2')
+        self.assertEqual((self.source / SERVICE).read_text(), CATCHING)
+
+    def test_f115_old_form_rows_keep_the_released_block_hash(self):
+        # 셋째 칸이 없는 번역표 행은 2.26.1 과 블록 해시가 같다(캐시 skip 대조 무변) — 칸을 적으면 해시가 바뀐다.
+        rows = [f'PlantUnavailableException  {SERVICE}', f'PlantGoneException\t{SERVICE}']
+        text = spec_text([f'update {SERVICE}', f'add {RESPONSE}'], [f'{RESPONSE}::ListBooksResponse {{count: int}}'],
+                         exceptions=rows)
+        spec = self.root / 'hash.md'
+
+        def block_hash(scripts, body):
+            spec.write_text(body)
+            run = subprocess.run([sys.executable, '-B', str(scripts / 'design_pregate.py'), str(spec), str(self.source),
+                                  '--block-hash'], capture_output=True, text=True, env=self.env)
+            self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+            return run.stdout.splitlines()[0]
+
+        self.assertEqual(block_hash(SCRIPTS, text), block_hash(self.released_2261(), text))
+        self.assertNotEqual(block_hash(SCRIPTS, text.replace(rows[0], rows[0] + '  <= PlantUnreadable')), block_hash(SCRIPTS, text))
+
+    def test_f115_stale_source_cell_without_as_is_only_a_row_memo(self):
+        # K8 — 출처 칸이 `as` 없이 남은 채 구현이 잡은 값을 쓰면 예보는 서지 않고(자기 신고 칸) 메모만 남는다 — G2 가 잡는다.
+        self.garden_fixture()
+        text = spec_text([f'update {SERVICE}'], exceptions=[f'PlantUnavailableException  {SERVICE}  <= PlantUnreadable'])
+        run, report = self.cli(text)
+        self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
+        self.assertIn('- (없음)', pg._subsection(report, '선언 확정'))
+        self.assertIn('채널 메모: S5 입구 catch 확인(출처 칸 `as` 없음 — OHS 는 잡은 도메인 예외 값을 쓰지 않는다(R-3690) · 이 '
+                      'catch 가 잡은 값을 쓰면(로그 · 메시지 · `from` · 속성) 출처 칸에 `as` 를 적는다 — #474): '
+                      f'PlantUnavailableException ← PlantUnreadable · {SERVICE}', report)
+        self.assertEqual(pg.check_report(text, report)[0], 0)
+        self.write(self.source, SERVICE, CATCHING.replace('    except PlantUnreadable:\n',
+                                                          '    except PlantUnreadable as unreadable:\n        print(unreadable)\n'))
+        result = subprocess.run([sys.executable, str(SCRIPTS / 'check-api-error-controller-contract.py'), str(self.source),
+                                 '--error-profile', 'auto'], capture_output=True, text=True, env=self.env)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn(f'[#474] {SERVICE}:', result.stdout)
 
 
 # 숨김 뺀 기준선 바로 앞 배포판(dddjango 2.24.2) — «지금 판과 같은 결과» 대조의 옛 판(HEAD 금지).

@@ -537,3 +537,12 @@ djr:R-3657 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3683 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/refactor_audit.py> .
+
+djr:R-3688 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .
+
+djr:R-3689 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .
+
+djr:R-3690 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .

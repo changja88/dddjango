@@ -83,6 +83,9 @@
                    1행 = `<예외 이름><탭|2+공백><raise 창구 파일 경로>` — 창구 스텁에
                    `raise <예외>()` 파일 수준 helper 합성(#456 — 번역표에 없는 예외 = 죽은 계약 = 진탐 보존).
                    update는 새 함수가 실제 전사되는 OHS 서비스만 해당하며 함수별 raise 위치는 추론하지 않는다.
+                   선택 셋째 칸 `<탭|2+공백><= <잡는 예외 맨 이름>[ as]`(번역 출처 — F4-115): 창구가 그 예외를 잡아 이
+                   published 예외로 바꾼다 · `as` = 잡은 값을 쓴다(로그 인자 · 메시지 · `from <이름>` · 속성). 점 이름 ·
+                   `as <이름>` · `AS` · `<-` 는 형식 red. 셋째 칸이 없는 행은 종전과 같다(블록 해시 무변).
 
 무엇이 아닌가: 예보는 Phase 2 step 6(G2 registry 게이트)의 실행·증거 요구를 어떤
 형태로도 대체·축약하지 않는다(D4 대체 금지). green 은 «설계 검증됨»이 아니라
@@ -140,6 +143,22 @@ first-parent 사슬의 참여 머지가 들여온 verbatim 변경(추가·수정
 이 확정 근거의 한계: 표준 라이브러리 이름을 가리는 프로젝트 모듈은 source root(저장소 루트 · 검사기가 고른 `application`
 폴더의 부모)의 폴더·모듈로만 찾는다 — 네임스페이스 패키지·`.pth`·finder 로 바꾼 import 경로는 못 본다. 소문자 내장 이름
 (`type`·`set` 류)과 같은 이름의 domain 값 객체도 가르지 못한다(확정으로 선다).
+도메인 서비스 서명(F4-115 · #304 · #305 · #307 · #308): 검사기 선택(채택 BC `domain_layer/domain_service/*.py` · 승격 본체 포함) ∩
+file-plan update 칸에서 symbols 의 공개 메서드 · 모듈 함수 가운데 기준선 실물과 서명(인자 이름 · 주석 · 반환 주석)이 다르거나 새로
+생긴 것만 선언 투영(기준선 전 깊이 import + 명시 import + 그 서명)으로 써서 번들 `check-domain-model.py` 의 `_check_domain_services()`
+를 칸마다 빈 폴더(`domain-service/<n>/{base,decl}/` — 기준선 실물도 같은 판정)에서 부르고 «경로 + 줄» 로 투영 행에 맞춘다. 기존 빚
+열쇠는 G2 registry 차분과 같은 «파일 · 규칙 · 판정문» 이다 — 기준선에 없으면 선언 확정 · 같은 소유자면 뺀다 · 다른 소유자면 (가) 그
+판정문의 기준선 소유자를 이 명세가 모두 고쳐 다시 적어 그 줄이 사라지면 확정 (나) 기준선 소유자들과 함수 이름이 다르면(같은 인자
+이름의 #304 · #305 — 새 정의) 확정 (다) 같은 함수 이름이 다른 자리에 있으면(옮김 · 개명 · 다시 적기) 후보다((가)(나)는 G2 집합 차분이
+지우는 실검사기 새 줄 — F4-73 의 소유자 열쇠처럼 G2 보다 엄격한 구석). 기준선 읽기 · 파싱 불능과 같은 이름 클래스 · 메서드 · 함수
+중복은 후보다. #301 · #302 · #303 · #310 · #311 은 싣지 않는다. add 칸은 스텁이 registry 에 실려 귀속된다.
+번역 출처 칸(F4-115 · #474 · #62): 창구 경로가 검사기 OHS 선택(`…/application/<bc>/driving_layer/open_host_service/**/*_service.py`)과
+같은 행만 판정한다. `Exception` · `BaseException` 출처는 `as` 와 무관하게 최소 catch 투영을 검사기 트리 슬라이스(`_slice_check_controller_ast`)
+에 돌려 #62 선언 확정이다. 그 밖 출처는 검사기 조건 그대로(절대 ImportFrom · 모듈 마디 `domain_layer` · 전 깊이 · 지역 이름 =
+asname|name) ① 그 창구 boundary-imports ② update 면 기준선 실물 ③ 이 명세 symbols 의 같은 이름 클래스(하나뿐) ④ 내장 예외 순서로
+처음 찾은 출처에서 멈춰 가른다 — `as` ∧ 도메인 = 최소 투영의 #474 선언 확정 · `as` ∧ 가를 수 없음 = 선언 후보 · 비도메인 · 내장 ·
+`as` 없음 = 0. update 창구 행마다 채널 메모(출처 칸 없음 = S5 입구 catch 미검증 · `as` 없음 ∧ 도메인 · 해소 불가 = 확인)를 남기고 OHS
+밖 행의 출처 칸은 판정 0 + 메모다. 낡은 출처 칸(`as` 없이 값을 씀) · 번역 없는 catch · 그 밖 catch 본문은 G2 몫이다.
 사실 발행의 길(F4-93 · #541): 검사기 #541 의 진입점 칸(`application/<bc>/application_layer/<area>/<uc>/<uc>_use_case.py` · 승격
 본체) add/update 에서 symbols 가 그 유스케이스의 `__init__` 행을 인자 타입까지 모두 적었고, 그 인자에 framework 브로커 포트가
 있고, 저장 경계(`…UnitOfWork` — 별칭 · 신원 포함)가 없다고 선언으로 정해지면(effects `uow=none`, 없으면 그 `__init__` 에 저장 경계
@@ -260,7 +279,9 @@ _ALIAS_RE: "re.Pattern[str]" = re.compile(
     r"^alias(?:\[(TYPE_CHECKING|else)\]\s+|\s+(?=[A-Za-z_]\w*\s*[:=]))(.+)$")
 _IMPORT_ROW_RE: "re.Pattern[str]" = re.compile(
     r"^(\S+)(?:\t+| {2,})((?:from\s+\S+\s+import\s+.+|import\s+\S.*))$")
-_EXC_ROW_RE: "re.Pattern[str]" = re.compile(r"^([A-Za-z_]\w*)(?:\t+| {2,})(\S+)\s*$")
+# 셋째 칸(선택 · F4-115) = 번역 출처 `<= <잡는 예외 맨 이름>[ as]` — 점 이름 · `as <이름>` · `AS` · `<-` 는 형식 red.
+_EXC_ROW_RE: "re.Pattern[str]" = re.compile(
+    r"^([A-Za-z_]\w*)(?:\t+| {2,})(\S+)(?:(?:\t+| {2,})<=[ \t]+([A-Za-z_]\w*)([ \t]+as)?)?\s*$")
 _ANN_MARKERS_RE: "re.Pattern[str]" = re.compile(r"\[markers:\s*([^\]]*)\]")
 _ANN_BASE_RE: "re.Pattern[str]" = re.compile(r"\[base:\s*([^\]]*)\]")
 _ANN_CLIENT_RE: "re.Pattern[str]" = re.compile(r"\[client:\s*(yes|no)\s*\]")
@@ -341,6 +362,14 @@ class Signals:
 
 
 @dataclass
+class Translation:
+    """예외 번역표 1행 — published 예외와 선택 번역 출처 칸(`<= <잡는 예외>[ as]` · F4-115). `source` 가 "" 면 출처 칸 없음."""
+    published: str
+    source: str
+    bound: bool  # `as` — 창구가 잡은 예외 값을 쓴다(로그 인자 · 메시지 · `from <이름>` · 속성)
+
+
+@dataclass
 class PlanEntry:
     """[신규 1] 파일 계획 1행 + 타 채널에서 결합된 실체화 재료."""
     path: str
@@ -356,6 +385,7 @@ class PlanEntry:
     aliases: "list[ModuleAlias]" = field(default_factory=list)
     declarations: list[Symbol] = field(default_factory=list)
     declaration_aliases: list[ModuleAlias] = field(default_factory=list)
+    translations: "list[Translation]" = field(default_factory=list)  # 예외 번역표 행(add/update 창구 — 번역 출처 칸 보존)
 
 
 @dataclass
@@ -760,7 +790,7 @@ def _parse_imports(rows: "list[str]", plan: Plan, errors: "list[str]") -> None:
 
 
 def _parse_exception_map(rows: "list[str]", plan: Plan, errors: "list[str]") -> None:
-    """```exceptions 펜스 → raise 창구 스텁에 `raise <예외>()` 1줄 합성 재료(#456 처분)."""
+    """```exceptions 펜스 → raise 창구 스텁에 `raise <예외>()` 1줄 합성 재료(#456 처분) + 번역 출처 칸(선언 예보 재료 · F4-115)."""
     for raw in rows:
         line: str = raw.strip()
         if not line or line.startswith("#"):
@@ -768,7 +798,7 @@ def _parse_exception_map(rows: "list[str]", plan: Plan, errors: "list[str]") -> 
         m: "re.Match[str] | None" = _EXC_ROW_RE.match(line)
         if m is None:
             errors.append(f"exception-map 행 파싱 불가: `{line}` — "
-                          "`<예외 이름><탭|2+공백><창구 파일 경로>` 형식이어야 한다")
+                          "`<예외 이름><탭|2+공백><창구 파일 경로>[<탭|2+공백><= <잡는 예외 맨 이름>[ as]]` 형식이어야 한다")
             continue
         exc: str = m.group(1)
         path: str = m.group(2)
@@ -781,6 +811,7 @@ def _parse_exception_map(rows: "list[str]", plan: Plan, errors: "list[str]") -> 
             continue
         if exc not in entry.raises:
             entry.raises.append(exc)
+        entry.translations.append(Translation(published=exc, source=m.group(3) or "", bound=m.group(4) is not None))
 
 
 def _cells(row: str) -> "list[str]":
@@ -2972,6 +3003,442 @@ def check_repository_forecast(plan: Plan, copy: Path, scratch: Path,
     return out
 
 
+# ── #304 · #305 · #307 · #308 · #474 · #62 예보(F4-115) — update 도메인 서비스 서명 · 예외 번역 출처 칸 ─────────────────────
+# 대상 선택 · 판정 · 진단문은 번들 검사기(`check-domain-model.py` · `check-api-error-controller-contract.py`)를 그대로 부른다(검사기
+# 무변 · 판정 · 진단문 복제 0 · 사본 실물 무접촉). 두 검사기 함수는 폴더 · 파일 단위라 칸마다 빈 폴더에 투영하고 폴더째 지운다 —
+# 같은 BC 다른 칸의 판정이 줄 번호로 섞이지 않게 결과는 «경로 + 줄»로 투영 행에 맞춘다.
+DOMAIN_MODEL_CHECKER: Path = SCRIPTS_DIR / "check-domain-model.py"
+API_ERROR_CHECKER: Path = SCRIPTS_DIR / "check-api-error-controller-contract.py"
+_BUNDLED_CHECKERS: "dict[str, ModuleType]" = {}
+_DOMAIN_SERVICE_RULES: "frozenset[str]" = frozenset({"#304", "#305", "#307", "#308"})
+_CATCH_ALL_NAMES: "frozenset[str]" = frozenset({"Exception", "BaseException"})
+# 검사기 #474 · #62 의 OHS 선택(`_tree_bcs2` → `<bc>/driving_layer/open_host_service` → `rglob("*_service.py")`)과 같은 경로.
+_OHS_CATCH_RE: "re.Pattern[str]" = re.compile(
+    r"(?:^|/)application/[^/]+/driving_layer/open_host_service/(?:[^/]+/)*[^/]*_service\.py$")
+_DOMAIN_SERVICE_NEW_QUESTION: str = "이 서명이 새로 들이거나 바꾸는 위반인가"
+_DOMAIN_SERVICE_MOVED_QUESTION: str = ("이 자리에서 새로 들이는 위반인가(기존 줄이 그대로 남으면 실검사기 줄이 하나 늘고, 옮김 · 개명 · "
+                                       "다시 적기면 기존 빚이다)")
+
+
+def _bundled_checker(path: Path, module_name: str) -> ModuleType:
+    """번들 검사기를 한 번 로드한다(main 가드라 import 만으로 검사를 돌리지 않는다). 로드 실패는 실행 불능(RunError)이다."""
+    key: str = str(path)
+    if key not in _BUNDLED_CHECKERS:
+        try:
+            spec = importlib.util.spec_from_file_location(module_name, path)
+            if spec is None or spec.loader is None:
+                raise ImportError("모듈 명세를 만들지 못했다")
+            module: ModuleType = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+        except (Exception, SystemExit) as exc:
+            raise RunError(f"번들 검사기 로드 실패 — {path.name}: {exc}") from exc
+        _BUNDLED_CHECKERS[key] = module
+    return _BUNDLED_CHECKERS[key]
+
+
+def _domain_service_slot_shape(parts: "tuple[str, ...]") -> bool:
+    """`…/domain_layer/domain_service/<칸>.py` 또는 승격 본체 `…/domain_service/<칸>/<칸>.py` 꼴 — 검사기 선택 앞의 거름."""
+    for i in range(len(parts) - 2):
+        if parts[i:i + 2] == ("domain_layer", "domain_service"):
+            rest: "tuple[str, ...]" = parts[i + 2:]
+            return rest[-1].endswith(".py") and (len(rest) == 1 or (len(rest) == 2 and rest[1] == f"{rest[0]}.py"))
+    return False
+
+
+def _ohs_catch_slot(parts: "tuple[str, ...]") -> bool:
+    """검사기 #474 · #62 가 판정하는 OHS 창구 파일 꼴(하위 폴더 · 승격 본체 포함 — `*_helper.py` 류는 밖)."""
+    return _OHS_CATCH_RE.search("/".join(parts)) is not None
+
+
+def _s5_declared_scope(path: str) -> str:
+    """update 칸 미시뮬레이션 사유에 붙는 선언 예보 범위(F4-115) — 리포트 문면 전용(판정 무접촉)."""
+    parts: "tuple[str, ...]" = _plan_parts(path)
+    if _domain_service_slot_shape(parts):
+        return "; 선언한 서명만 예보 · 본문 미검증"
+    if _ohs_catch_slot(parts):
+        return "; 번역 출처 칸만 예보 · catch 본문 미검증"
+    return ""
+
+
+def forecast_baseline(copy: Path, plan: Plan) -> "dict[str, bytes | None]":
+    """F4-115 선언 예보의 비교 기준선 — 명세 전사(`materialize`) «전» 사본(기준선 트리 ⊕ 승인 유입 ⊕ dirty overlay)에서 update
+    도메인 서비스 · OHS 창구 칸의 실물 bytes(승격 칸은 본체)를 한 번에 잡는다. 읽기 불능 · 부재 · 링크는 None 이다. 키 = 계획
+    원문 경로."""
+    baseline: "dict[str, bytes | None]" = {}
+    for entry in plan.entries.values():
+        parts: "tuple[str, ...]" = _plan_parts(entry.path)
+        if entry.tag != "update" or not (_domain_service_slot_shape(parts) or _ohs_catch_slot(parts)):
+            continue
+        real: "Path | None" = ct.slot_file(copy.joinpath(*parts))
+        try:
+            baseline[entry.path] = real.read_bytes() if real is not None and not real.is_symlink() else None
+        except OSError:
+            baseline[entry.path] = None
+    return baseline
+
+
+def _signature_key(fn: "ast.FunctionDef | ast.AsyncFunctionDef") -> str:
+    """검사기 #304 · #305 · #307 · #308 의 판정 재료로 견준 서명 — 수신자(`self` · `cls`) 뺀 위치 · 키워드 인자의 이름과 주석,
+    반환 주석(`_norm_annotation` — 문자열 주석은 식으로 펼친다)."""
+    args = [a for a in (*fn.args.posonlyargs, *fn.args.args, *fn.args.kwonlyargs) if a.arg not in ("self", "cls")]
+    parts: "list[str]" = [f"{a.arg}:{_norm_annotation(a.annotation) if a.annotation is not None else '-'}" for a in args]
+    return "|".join(parts) + "->" + (_norm_annotation(fn.returns) if fn.returns is not None else "-")
+
+
+def _def_owners(module: ast.Module) -> "dict[int, tuple[str, str]]":
+    """함수 정의 줄 → (둘러싼 자리, 이름) — 검사기는 전 깊이의 함수를 판정한다. 자리는 클래스 직계 = 클래스 이름 · 모듈 직계 = "" ·
+    그 밖(복합문 아래 · 중첩 함수 · 중첩 클래스)은 자리 경로(`C<안>` · `C.f()` · `C.D`)다. 명세 행(클래스 직계 메서드 · 모듈 함수)과
+    같은 자리는 앞의 둘뿐이다."""
+    owners: "dict[int, tuple[str, str]]" = {}
+
+    def walk(node: ast.AST, scope: str, direct: bool) -> None:
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                owners[child.lineno] = (scope if direct else f"{scope}<안>", child.name)
+                walk(child, f"{scope}.{child.name}()" if scope else f"{child.name}()", True)
+            elif isinstance(child, ast.ClassDef):
+                walk(child, f"{scope}.{child.name}" if scope else child.name, True)
+            else:
+                walk(child, scope, False)
+
+    walk(module, "", True)
+    return owners
+
+
+def _owner_label(owner: "tuple[str, str]") -> str:
+    return f"{owner[0]}.{owner[1]}" if owner[0] else owner[1]
+
+
+def _domain_service_entry_forecast(ck: ModuleType, entry: PlanEntry, path: str, real: str, cell: Path,
+                                   prior: "bytes | None") -> list[DeclarationFinding]:
+    """한 update 도메인 서비스 칸(`path` = 정규화한 계획 경로 · `real` = 검사기가 고른 실물 상대 경로 — 승격 칸이면 본체).
+
+    투영 = 기준선 전 깊이 import + 명시 import + symbols 의 공개 메서드 · 모듈 함수 가운데 기준선 실물과 서명이 다르거나 새로 생긴
+    것(본문 `...`). `cell/decl/` 과 `cell/base/`(기준선 실물) 두 빈 폴더에서 검사기 `_check_domain_services()` 를 부르고 `cell` 을
+    지운다. 기존 빚 열쇠는 G2 registry 차분과 같은 «파일 · 규칙 · 판정문»이다 — 기준선에 없으면 확정 · 같은 소유자(그 자리 · 그
+    이름)면 뺀다 · 다른 소유자면 (가) 기준선 소유자를 이 명세가 모두 고쳐 다시 적어 그 줄이 사라지면 확정 (나) 기준선 소유자들과
+    함수 이름이 다르면(같은 인자 이름의 #304 · #305 — 새 정의) 확정 (다) 같은 함수 이름이 다른 자리에 있으면(옮김 · 개명 · 다시
+    적기) 후보다. (가)(나)는 G2 집합 차분이 지우는 실검사기 새 줄이다. 기준선 읽기 · 파싱 불능, 같은 이름 클래스 · 메서드 · 함수
+    중복이면 새 서명으로 단정하지 않고(후보) 기존 빚으로 빼지도 않는다."""
+    unclear: str = ""
+    module: "ast.Module | None" = None
+    try:
+        module = ast.parse(prior.decode("utf-8")) if prior is not None else None
+    except (UnicodeError, SyntaxError, ValueError, RecursionError):
+        module = None
+    if module is None:
+        unclear = "기준선 실물을 읽거나 파싱하지 못했다(기존 빚인지 가를 수 없다)"
+    classes: "dict[str, list[ast.ClassDef]]" = {}
+    functions: "dict[str, list[ast.FunctionDef | ast.AsyncFunctionDef]]" = {}
+    imports: "list[str]" = []
+    if module is not None:
+        for node in module.body:
+            if isinstance(node, ast.ClassDef):
+                classes.setdefault(node.name, []).append(node)
+            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                functions.setdefault(node.name, []).append(node)
+        imports += [ast.unparse(n) for n in ast.walk(module) if isinstance(n, (ast.Import, ast.ImportFrom))]
+    imports += [ast.unparse(n) for n in _import_nodes(entry.imports) if isinstance(n, (ast.Import, ast.ImportFrom))]
+    imports = [stmt for stmt in dict.fromkeys(imports) if not stmt.startswith("from __future__ ")]
+
+    def compare(olds: "list[ast.FunctionDef | ast.AsyncFunctionDef]", fn: ast.FunctionDef, what: str) -> "tuple[bool, str]":
+        """(투영하는가, 비교 불능 사유) — 기준선과 서명이 같으면 투영하지 않는다(새 줄을 만들지 않는다)."""
+        if unclear:
+            return True, unclear
+        if len(olds) > 1:
+            return True, f"기준선 {what} 중복"
+        if olds and _signature_key(olds[0]) == _signature_key(fn):
+            return False, ""
+        return True, ""
+
+    lines: "list[str]" = imports + [""]
+    rows: "dict[int, tuple[str, str, str]]" = {}  # 투영 줄 → (클래스 — 모듈 함수는 "", 이름, 비교 불능 사유)
+    for symbol in entry.declarations:
+        if symbol.kind == "class":
+            same: "list[ast.ClassDef]" = classes.get(symbol.name, [])
+            members: "list[tuple[Method, str]]" = []
+            for method in symbol.methods:
+                fn: "ast.FunctionDef | None" = _method_def(method.name, method.params, method.ret)
+                if fn is None or method.name.startswith("_"):
+                    continue  # 검사기는 `_` 로 시작하는 이름을 판정하지 않는다(클래스 이름은 보지 않는다)
+                project: bool
+                reason: str
+                if len(same) > 1 and not unclear:
+                    project, reason = True, f"기준선 클래스 `{symbol.name}` 중복"
+                else:
+                    olds = [n for n in (same[0].body if same else [])
+                            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == method.name]
+                    project, reason = compare(olds, fn, f"메서드 `{symbol.name}.{method.name}`")
+                if project:
+                    members.append((method, reason))
+            if members:
+                lines.append(f"class {symbol.name}:")
+                for method, reason in members:
+                    rows[len(lines) + 1] = (symbol.name, method.name, reason)
+                    lines.append(f"    def {method.name}(self{', ' if method.params else ''}{method.params})"
+                                 f"{' -> ' + method.ret if method.ret else ''}: ...")
+                lines.append("")
+        elif symbol.kind == "function" and not symbol.name.startswith("_"):
+            text: str = f"def {symbol.name}({symbol.params}){' -> ' + symbol.ret if symbol.ret else ''}: ..."
+            try:
+                parsed: ast.stmt = ast.parse(text).body[0]
+            except SyntaxError:
+                continue
+            if not isinstance(parsed, ast.FunctionDef):
+                continue
+            project, reason = compare(functions.get(symbol.name, []), parsed, f"함수 `{symbol.name}`")
+            if project:
+                rows[len(lines) + 1] = ("", symbol.name, reason)
+                lines += [text, ""]
+    if not rows:
+        return []
+    projection: str = "\n".join(lines) + "\n"
+    try:
+        ast.parse(projection)
+    except SyntaxError as exc:
+        raise RunError(f"도메인 서비스 선언 분석 투영 파싱 불능 — {path}: {exc}") from exc
+    parts: "tuple[str, ...]" = PurePosixPath(real).parts
+    at_layer: int = next(i for i in range(len(parts) - 1) if parts[i:i + 2] == ("domain_layer", "domain_service"))
+
+    def judged(folder: str, body: bytes) -> list:
+        """분석 파일을 `cell/<folder>/` 아래 실물 상대 경로로 쓰고 그 칸 하나만 든 폴더로 검사기 판정(위반)을 받는다(방출 0)."""
+        base: Path = cell / folder
+        target: Path = base.joinpath(*parts)
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(body)
+            if target.read_bytes() != body:
+                raise OSError("되읽은 내용이 다르다")
+        except OSError as exc:
+            raise RunError(f"도메인 서비스 선언 분석 파일 쓰기·읽기 불능 — {folder}/{real}: {exc}") from exc
+        found = ck.Findings(defer=True)
+        cand = ck.Candidates(defer=True)
+        bc: Path = base.joinpath(*parts[:at_layer])
+        ck._check_domain_services(base, bc, bc / "domain_layer" / "domain_service", found, cand)
+        return [e for e in found.entries if e.rule in _DOMAIN_SERVICE_RULES and e.where.rsplit(":", 1)[0] == real]
+
+    # 기준선 실물의 판정 줄을 (규칙, 판정문) → 그 줄의 소유자(자리 · 이름)로 묶는다 — 판정문에는 클래스 이름이 없다.
+    known: "dict[tuple[str, str], set[tuple[str, str]]]" = {}
+    produced: "dict[tuple[str, str], set[tuple[str, str]]]" = {}  # 투영 소유자 → 그 투영이 낸 (규칙, 판정문)
+    hits: list = []
+    try:
+        if module is not None and prior is not None:
+            owners: "dict[int, tuple[str, str]]" = _def_owners(module)
+            for item in judged("base", prior):
+                at: str = item.where.rsplit(":", 1)[-1]
+                known.setdefault((item.rule, item.msg), set()).add(
+                    owners.get(int(at), ("?", "?")) if at.isdigit() else ("?", "?"))
+        for item in judged("decl", projection.encode("utf-8")):
+            at = item.where.rsplit(":", 1)[-1]
+            row: "tuple[str, str, str] | None" = rows.get(int(at)) if at.isdigit() else None
+            if row is None:
+                continue
+            produced.setdefault(row[:2], set()).add((item.rule, item.msg))
+            hits.append((item, row))
+    finally:
+        shutil.rmtree(cell, ignore_errors=True)
+    redeclared: "set[tuple[str, str]]" = {row[:2] for row in rows.values()}
+    out: list[DeclarationFinding] = []
+    for item, (owner_class, name, reason) in hits:
+        key: "tuple[str, str]" = (item.rule, item.msg)
+        owner: "tuple[str, str]" = (owner_class, name)
+        earlier: "set[tuple[str, str]]" = known.get(key, set())
+        others: str = ", ".join(f"`{_owner_label(o)}`" for o in sorted(earlier))
+        detail: str = item.msg
+        confirmed: bool = False
+        if reason:
+            detail = f"{item.msg} — 예보 불확정: {reason} — 물음: {_DOMAIN_SERVICE_NEW_QUESTION}"
+        elif not earlier:
+            confirmed = True
+        elif owner in earlier:
+            continue  # 같은 자리 · 같은 이름의 기존 빚을 다시 적었다(G2 도 기존으로 본다)
+        elif all(o in redeclared and key not in produced.get(o, set()) for o in earlier):
+            confirmed = True  # (가) 기존 줄의 소유자를 이 명세가 모두 고쳐 그 줄이 사라진다 — 새 자리의 줄은 새 위반이다
+            detail = (f"{item.msg} — 같은 판정문의 기존 줄({others})은 이 명세가 고쳐 사라진다(새 자리의 새 위반 — G2 registry "
+                      "집합 차분은 이 줄을 기존으로 볼 수 있다)")
+        elif name not in {o[1] for o in earlier}:
+            confirmed = True  # (나) 함수 이름이 다르다 — 같은 인자 이름의 새 정의다
+            detail = (f"{item.msg} — 같은 판정문의 기존 줄({others})과 함수 이름이 다르다(새 정의의 새 위반 — G2 registry "
+                      "집합 차분은 이 줄을 기존으로 볼 수 있다)")
+        else:
+            detail = (f"{item.msg} — 예보 불확정: 같은 파일에 같은 판정문의 기존 줄({others})이 있다(G2 registry 는 같은 파일 · "
+                      f"같은 판정문을 기존으로 본다) — 물음: {_DOMAIN_SERVICE_MOVED_QUESTION}")
+        finding: DeclarationFinding = DeclarationFinding(item.rule, path, _owner_label(owner), detail, confirmed)
+        if finding not in out:
+            out.append(finding)
+    return out
+
+
+def check_domain_service_forecast(plan: Plan, copy: Path, scratch: Path,
+                                  baseline: "dict[str, bytes | None]") -> list[DeclarationFinding]:
+    """F4-115 A1 — update 도메인 서비스 칸의 symbols 공개 메서드 · 모듈 함수 서명을 번들 `check-domain-model.py` 의 #304(인자
+    `*Repository`) · #305(인자 `*Port`) · #307(원시 인자만) · #308(반환 `bool`) 판정으로 선언 예보한다.
+
+    대상 = 검사기 선택(`vocab.bc_dirs` → `_has_adoption_signal` → `<bc>/domain_layer/domain_service` → `slot_glob(…, "*.py")`,
+    `__init__.py` 뺌)을 사본에 그대로 돌린 경로 ∩ file-plan update(계획 경로는 `_plan_parts` 로 정규화 · 승격 칸은 `slot_file` 로
+    본체에 맞춤). add 칸은 스텁이 registry 에 실려 이미 귀속되므로 넣지 않는다. `baseline` = `forecast_baseline`(materialize 전
+    실물). 대상 칸이 없으면 검사기를 적재하지 않는다. #301 · #302 · #303 · #310 · #311 은 싣지 않는다(투영이 파일 일부다)."""
+    planned: "list[tuple[str, str]]" = sorted(
+        ("/".join(_plan_parts(e.path)), e.path) for e in plan.entries.values()
+        if e.tag == "update" and e.declarations and _domain_service_slot_shape(_plan_parts(e.path)))
+    if not planned:
+        return []
+    ck: ModuleType = _bundled_checker(DOMAIN_MODEL_CHECKER, "_pregate_domain_model")
+    selected: "set[str]" = set()
+    for bc in ck.vocab.bc_dirs(copy):
+        if not ck._has_adoption_signal(bc):
+            continue
+        ds: Path = bc / "domain_layer" / "domain_service"
+        if ds.is_dir():
+            selected |= {p.relative_to(copy).as_posix() for p in ct.slot_glob(ds, "*.py") if p.name != "__init__.py"}
+    out: list[DeclarationFinding] = []
+    for n, (path, written) in enumerate(planned):
+        slot: "Path | None" = ct.slot_file(copy.joinpath(*_plan_parts(path)))
+        real: str = slot.relative_to(copy).as_posix() if slot is not None else path
+        if real not in selected:
+            continue
+        out += _domain_service_entry_forecast(ck, plan.entries[written], path, real, scratch / "domain-service" / str(n),
+                                              baseline.get(written))
+    return out
+
+
+def _import_binding(nodes: "list[ast.AST]", name: str) -> "tuple[str, str] | None":
+    """지역 이름 `name` 을 묶는 import(전 깊이 — 검사기 `domain_names` 와 같은 조건) → (판정, import 원문). 판정 = `domain`(절대
+    `from …domain_layer… import` — 그런 바인딩이 하나라도 있으면) · `other`(상대 import · `import x as N` · 다른 층). 없으면 None."""
+    found: "list[tuple[str, str]]" = []
+    for root in nodes:
+        for node in ast.walk(root):
+            if isinstance(node, ast.ImportFrom):
+                for alias in node.names:
+                    if (alias.asname or alias.name) == name:
+                        domain: bool = (node.level == 0 and bool(node.module)
+                                        and "domain_layer" in (node.module or "").split("."))
+                        found.append(("domain" if domain else "other", ast.unparse(node)))
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    if (alias.asname or alias.name.split(".")[0]) == name:
+                        found.append(("other", ast.unparse(node)))
+    domain_hits: "list[tuple[str, str]]" = [hit for hit in found if hit[0] == "domain"]
+    return (domain_hits or found or [None])[0]
+
+
+def _catch_origin(plan: Plan, entry: PlanEntry, name: str, prior: "bytes | None") -> "tuple[str, str, str]":
+    """잡는 예외 이름의 출처 — (판정, 근거, 투영에 쓸 import 문). 판정 = domain | other | builtin | unresolved. 검사기 조건 그대로이고
+    처음 찾은 출처에서 멈춘다: ① 그 창구 칸의 boundary-imports(소비 경로는 정규화해 견준다) ② update 면 기준선 실물(전 깊이)
+    ③ 이 명세 symbols 의 같은 이름 클래스(하나뿐일 때 — 경로에 `domain_layer` 마디가 있으면 도메인) ④ 내장 예외."""
+    parts: "tuple[str, ...]" = _plan_parts(entry.path)
+    stated: "list[ast.stmt]" = _import_nodes([row.stmt for row in plan.import_rows if _plan_parts(row.consumer) == parts])
+    hit: "tuple[str, str] | None" = _import_binding(list(stated), name)
+    if hit is not None:
+        return hit[0], f"boundary-imports `{hit[1]}`", hit[1]
+    if entry.tag == "update" and prior is not None:
+        module: "ast.Module | None"
+        try:
+            module = ast.parse(prior.decode("utf-8"))
+        except (UnicodeError, SyntaxError, ValueError, RecursionError):
+            module = None
+        hit = _import_binding([module], name) if module is not None else None
+        if hit is not None:
+            return hit[0], f"기준선 `{hit[1]}`", hit[1]
+    declared: "list[str]" = sorted({"/".join(_plan_parts(e.path)) for e in plan.entries.values() if e.tag in ("add", "update")
+                                    and any(s.kind == "class" and s.name == name for s in e.declarations)})
+    if len(declared) == 1:
+        dotted: str = (declared[0][:-3] if declared[0].endswith(".py") else declared[0]).replace("/", ".")
+        dotted = dotted[: -len(".__init__")] if dotted.endswith(".__init__") else dotted
+        stmt: str = f"from {dotted} import {name}"
+        return ("domain" if "domain_layer" in dotted.split(".") else "other"), f"symbols `{stmt}`", stmt
+    if declared:
+        return "unresolved", f"symbols 에 같은 이름 클래스 {len(declared)}개", ""
+    builtin: object = getattr(builtins, name, None)
+    if isinstance(builtin, type) and issubclass(builtin, BaseException):
+        return "builtin", "내장 예외", ""
+    return "unresolved", "출처 import 를 찾지 못했다", ""
+
+
+def check_catch_forecast(plan: Plan, scratch: Path,
+                         baseline: "dict[str, bytes | None]") -> "tuple[list[DeclarationFinding], list[str]]":
+    """F4-115 A2 — 예외 번역표 행의 선택 «번역 출처» 칸(`<= <잡는 예외>[ as]`)을 번들 `check-api-error-controller-contract.py` 의
+    트리 슬라이스 판정(`_slice_check_controller_ast` — #474 «입구 파일은 도메인 예외를 타입으로만» · #62 «except Exception»)으로
+    선언 예보한다. 반환: (선언 확정 · 후보, 채널 메모).
+
+    판정 대상 = 창구 경로가 검사기 OHS 선택과 같은 행뿐이다(그 밖 행의 출처 칸은 판정 0 + 메모). `Exception` · `BaseException`
+    출처는 `as` 와 무관하게 최소 catch 투영 → #62 확정. 그 밖은 `_catch_origin` 으로 가른다 — `as` ∧ 도메인 = 최소 투영(그 import +
+    `except X as _caught: _caught`) → #474 확정 · `as` ∧ 해소 불가 = 후보 · 비도메인 · 내장 · `as` 없음 = 0. update 창구 행마다
+    메모: 출처 칸 없음(S5 입구 catch 미검증) · `as` 없음 ∧ 도메인 · 해소 불가(확인 — 낡은 출처 칸과 올바른 «타입으로만»을 가르지
+    못한다). 투영은 칸마다 빈 폴더(`scratch/catch/<n>/`)에 쓰고 지운다. 판정할 행이 없으면 검사기를 적재하지 않는다. 창구 실물은
+    `baseline`(materialize 전 실물)으로만 읽는다."""
+    out: list[DeclarationFinding] = []
+    memos: "list[str]" = []
+    cells: int = 0
+
+    def judged(path: str, body: str, rule: str) -> list:
+        """최소 catch 투영을 `scratch/catch/<n>/<창구 경로>` 에 쓰고 검사기 트리 슬라이스 판정(위반) 가운데 `rule` 만 받는다."""
+        nonlocal cells
+        cells += 1
+        cell: Path = scratch / "catch" / str(cells)
+        target: Path = cell.joinpath(*_plan_parts(path))
+        try:
+            try:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(body, encoding="utf-8")
+            except OSError as exc:
+                raise RunError(f"번역 출처 분석 파일 쓰기 불능 — catch/{cells}/{path}: {exc}") from exc
+            ck: ModuleType = _bundled_checker(API_ERROR_CHECKER, "_pregate_api_error_contract")
+            found = ck.Findings(defer=True)
+            cand = ck.Candidates(defer=True)
+            ck._slice_check_controller_ast(target, Path(path), found, cand, [], [], True, None)
+        finally:
+            shutil.rmtree(cell, ignore_errors=True)
+        return [e for e in found.entries if e.rule == rule]
+
+    for entry in plan.entries.values():
+        if not entry.translations:
+            continue
+        parts: "tuple[str, ...]" = _plan_parts(entry.path)
+        path: str = "/".join(parts)
+        ohs: bool = _ohs_catch_slot(parts)
+        for row in entry.translations:
+            written: str = f"`<= {row.source}{' as' if row.bound else ''}`"
+            if not ohs:
+                if row.source:
+                    memos.append(f"번역 출처 칸 판정 밖(검사기 OHS 창구 아님 — 판정 0): {row.published} ← {row.source} · {path}")
+                continue
+            if not row.source:
+                if entry.tag == "update":
+                    memos.append(f"S5 입구 catch 미검증(번역 출처 칸 무기재 — 이 행의 catch 꼴을 더하거나 바꾸면 "
+                                 f"`<= <잡는 예외>[ as]`): {row.published} · {path}")
+                continue
+            owner: str = f"{row.published} ← {row.source}"
+            if row.source in _CATCH_ALL_NAMES:
+                body: str = f"def _pregate_catch() -> None:\n    try:\n        pass\n    except {row.source}:\n        pass\n"
+                for item in judged(path, body, "#62"):
+                    out.append(DeclarationFinding("#62", path, owner, f"{item.msg} — 번역 출처 칸 {written}", True))
+                continue
+            kind, why, stmt = _catch_origin(plan, entry, row.source, baseline.get(entry.path))
+            if not row.bound:
+                if entry.tag == "update" and kind in ("domain", "unresolved"):
+                    memos.append(f"S5 입구 catch 확인(출처 칸 `as` 없음 — OHS 는 잡은 도메인 예외 값을 쓰지 않는다(R-3690) · 이 "
+                                 "catch 가 잡은 값을 쓰면(로그 · 메시지 · `from` · 속성) 출처 칸에 `as` 를 적는다 — #474): "
+                                 f"{owner} · {path}")
+                continue
+            if kind == "domain":
+                body = (f"{stmt}\n\n\ndef _pregate_catch() -> None:\n    try:\n        pass\n"
+                        f"    except {row.source} as _caught:\n        _caught\n")
+                for item in judged(path, body, "#474"):
+                    out.append(DeclarationFinding("#474", path, owner, f"{item.msg} — 번역 출처 칸 {written}(출처 {why})", True))
+            elif kind == "unresolved":
+                out.append(DeclarationFinding(
+                    "#474", path, owner,
+                    f"번역 출처 칸 {written} 은 잡은 예외 값을 쓴다 — 예보 불확정: 잡는 예외의 출처를 가를 수 없다({why}) — 물음: "
+                    "이 예외가 domain_layer 것인가(그러면 그 import 를 boundary-imports 에 적는다 · OHS 는 잡은 도메인 예외 값을 "
+                    "쓰지 않는다 — #474)", False))
+    deduped: list[DeclarationFinding] = []
+    for finding in out:
+        if finding not in deduped:
+            deduped.append(finding)
+    return deduped, memos
+
+
 # ── #541 예보(F4-93) — 브로커 포트를 주입받는 유스케이스의 저장 경계 ────────────────────────────────────────────
 # 사실 발행의 길은 하나다: 유스케이스가 저장 구간 안에서 `uow.after_commit(<이름 있는 함수>)` 로 등록한다(#539~#541 · R-0533 ·
 # architecture-ddd §3.7). 확정은 «명세가 스스로 선언한 사실» 로만 선다 — symbols 가 그 유스케이스의 `__init__` 행을 인자 타입까지
@@ -3408,7 +3875,7 @@ def materialize(copy: Path, plan: Plan, *, realized: "frozenset[str]" = frozense
             marker_update, marker_detail = _render_marker_update(copy, entry)
             if marker_update is not None:
                 updated = marker_update
-            detail += "; " + marker_detail
+            detail += "; " + marker_detail + _s5_declared_scope(entry.path)
             if updated is not None:
                 target.write_bytes(updated)
                 if generated_identities:
@@ -4061,8 +4528,14 @@ BLIND_SPOTS: "tuple[str, ...]" = (
     "스냅숏에 실리므로 «기준선의 레인 실물 × 유입» 상호작용 위반은 L∩N 으로 사라진다 — 그 판정자는 G2 registry 의 "
     "provenance 차분이다.",
     "S5 미시뮬레이션: update는 실존 OHS 서비스의 명시 새 모듈 함수·안전한 import·파일 수준 raise helper만 "
-    "전사하고, 정적으로 해소된 module pytestmark 최종 목록을 반영한다. add/update 명시 선언 후상태는 별도 검사하며(도메인 저장소 메서드 서명의 #355·#597 은 "
-    "선언 예보 — update 는 기준선 대비 새·반환 변경 메서드만) 기존 signature/body·decorator/alias/class 본문 변경, 효과 무기재, 지원 밖 marker/base/client와 후행 remove(@Ln)는 미검증으로 위 목록 병기.",
+    "전사하고, 정적으로 해소된 module pytestmark 최종 목록을 반영한다. add/update 명시 선언 후상태는 별도 검사하며 선언 예보 — 도메인 저장소 "
+    "메서드 서명의 #355·#597(update 는 기준선 대비 새·반환 변경 메서드만) · 도메인 서비스 공개 메서드·함수 서명의 #304·#305·#307·#308(update "
+    "는 기준선 대비 새·서명 변경만 · 기존 빚 열쇠 = 파일·규칙·판정문) · OHS 창구 번역 출처 칸의 #474(`as`)·#62(`Exception`) — 은 S5 가 아니다. "
+    "두 채널(pre-gate 선언 예보 · G2 registry)의 기존 빚 기준이 다르다: G2 는 줄 번호만 지운 «파일·규칙·판정문» 집합 차분이고, 선언 예보는 그보다 "
+    "엄격한 구석이 있다(저장소는 다른 클래스의 같은 판정문도 새 위반 · 도메인 서비스는 기존 줄의 소유자를 이 명세가 고쳐 그 줄이 사라지거나 함수 "
+    "이름이 다르면 새 위반 — 같은 함수 이름이 다른 자리에 있으면 후보). 번역 출처 칸 무기재·낡은 출처 칸·번역 없는 catch·그 밖 본문 규칙, 기존 "
+    "signature/body·decorator/alias/class 본문 변경, 효과 무기재, 지원 밖 marker/base/client와 후행 remove(@Ln)는 미검증으로 위 목록 병기 · update "
+    "칸 import 규칙(#288·#303 등)은 S3.",
     "S6 정형 보충(apps.py name/label·모델 Meta.db_table·마이그레이션 칸): 결손 시 규약 유도값을 합성한다 — 기계 블록 "
     "전사가 있으면 전사 우선이지만, «산문»으로만 규약 밖 값을 계획한 일탈은 예보 표면 밖이다.",
     "S7 기실현 add(`--base` 명시 ∧ 기준선 = HEAD — 명시 `--base HEAD` 포함): 사본 = 기준선 트리 + (worktree−HEAD) "
@@ -4704,6 +5177,8 @@ def _main(argv: "list[str]") -> int:
         _git(copy, "commit", "-q", "-m", "pregate-anchor", "--allow-empty")
         # 저장소 선언 예보(#355·#597)의 비교 기준선 — 명세 전사 «전» 실물(F4-73).
         repository_material: "dict[str, bytes | None]" = repository_baseline(copy, plan)
+        # 도메인 서비스 서명(#304·#305·#307·#308) · 번역 출처 칸(#474·#62) 선언 예보의 비교 기준선 — 같은 자리(F4-115).
+        forecast_material: "dict[str, bytes | None]" = forecast_baseline(copy, plan)
 
         try:
             mat: MaterializationReport = materialize(copy, plan, realized=realized, base_short=base_sha[:12],
@@ -4715,8 +5190,12 @@ def _main(argv: "list[str]") -> int:
             return 3
 
         # 계약 실존 — materialize(+골격·`__init__` 체인) 뒤 · 실체화-0 분기 앞(update 소비자만의 명세도 판정한다).
+        catch_findings, catch_notes = check_catch_forecast(plan, scratch, forecast_material)
+        plan.notes.extend(catch_notes)
         declarations = (check_declarations(plan, copy) + check_in_argument_forecast(plan, copy)
                         + check_repository_forecast(plan, copy, scratch, repository_material)
+                        + check_domain_service_forecast(plan, copy, scratch, forecast_material)
+                        + catch_findings
                         + check_publish_path_forecast(plan, copy))
         declaration_count = len({(item.rule, item.path) for item in declarations if item.confirmed})
         for line in _declaration_lines(declarations):
