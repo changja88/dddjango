@@ -4001,6 +4001,49 @@ def deps_face_review_cases(fails: "list[str]", td: Path) -> None:
         ln.dispatch()
         expect(fails, f"RD-F118 {tag.upper()} {label} · models.py 가 다른 모듈에서 모델을 다시 내보냄(파사드 아님) · 실행이 정의 모듈만 고침 → "
                f"모델 이름 사슬 · 공급 면 겹침", ln.dp(tag), 2, f"공급 면 {drv}/django_base/thing_model.py")
+    # 재확인 N-1 — label 앱 폴더에 models · migrations 가 없으면 앱 폴더 전체로 좁히지 않고 예전 대체(지어낸 경로 → BC 의 apps.py 폴더
+    # 몫 → 그 BC 전체)로 내려간다
+    one_app: "dict[str, str]" = {f"{drv}/django_base/__init__.py": "",
+                                 f"{drv}/django_base/apps.py": apps.format(name=f"{drv.replace('/', '.')}.django_base", label="base")}
+    for tag, extra, plan, label in (
+            ("r1", {f"{drv}/orm/__init__.py": "", f"{drv}/orm/thing.py":
+                    "class ThingModel:\n    class Meta:\n        app_label = \"base\"\n",
+                    "application/demo/driven_layer/django_demo/models.py": "FK: str = \"base.ThingModel\"\n"},
+             f"{drv}/orm/thing.py", "모델이 label 앱 폴더 밖(`Meta.app_label`) · 대상이 \"base.ThingModel\""),
+            ("r2", {f"{drv}/django_base/models.py": "class ThingModel:\n    pass\n",
+                    f"{drv}/schema_migrations/__init__.py": "", f"{drv}/schema_migrations/0001_x.py": "X: int = 1\n",
+                    "config/settings.py": "MIGRATION_MODULES = {\"base\": \"application.base.driven_layer.schema_migrations\"}\n",
+                    "application/demo/driven_layer/django_demo/migrations/0001_initial.py": "dependencies = [(\"base\", \"0001_x\")]\n"},
+             f"{drv}/schema_migrations/0001_x.py", "`MIGRATION_MODULES` 로 옮긴 마이그레이션 · 대상 마이그레이션이 (\"base\", \"0001_x\") 에 의존")):
+        ln = FaceLane(td, f"r-{tag}", {**one_app, **extra})
+        ln.sup([plan], **FACE_TRUST)
+        ln.dispatch()
+        expect(fails, f"RD-F118 {tag.upper()} {label} · 실행이 그 파일을 고침 → label 앱 폴더에 없으니 예전 대체(그 BC 전체) → 공급 면 겹침",
+               ln.dp(tag), 2, f"공급 면 {plan}")
+    # 재확인 N-2 — 모델 이름 씨앗(대소문자 무시)은 그 이름을 정의하거나 들인 import 만 따라간다 · 지운 모델 이름은 BC 를 걷지 않는다
+    mdl: str = f"{drv}/django_base/models"
+    walk: "dict[str, str]" = {
+        **one_app,
+        f"{mdl}/__init__.py": "from .thing import ThingModel\nfrom .order import OrderModel\n",
+        f"{mdl}/thing.py": "from application.base.domain_layer.thing import Thing\n\n\nclass ThingModel:\n    pass\n",
+        f"{mdl}/order.py": "from application.base.domain_layer.order import Order\n\n\nclass OrderModel:\n    pass\n",
+        "application/base/domain_layer/__init__.py": "",
+        "application/base/domain_layer/thing.py": "from application.base.domain_layer.policy import p\n\n\nclass Thing:\n    pass\n",
+        "application/base/domain_layer/order.py": "from application.base.application_layer.pricing import price\n\n\nclass Order:\n    pass\n",
+        "application/base/domain_layer/policy.py": "def p() -> int:\n    return 1\n",
+        "application/base/application_layer/__init__.py": "",
+        "application/base/application_layer/pricing.py": "def price() -> int:\n    return 1\n",
+        "application/demo/driven_layer/django_demo/migrations/0003_x.py":
+            "from django.apps import apps\n\nOPS = [\"base.thingmodel\"]\nOLD = apps.get_model(\"base\", \"RemovedModel\")\n"}
+    ln = FaceLane(td, "r-ce4", walk)
+    ln.sup(["application/base/application_layer/pricing.py"], **FACE_TRUST)
+    ln.dispatch()
+    expect(fails, "RD-F118 CE4 대상 마이그레이션이 지운 모델 apps.get_model(\"base\", \"RemovedModel\") · 실행이 창구 뒤 다른 파일만 고침 → 모델 "
+           "이름 사슬이 «import 모두» 로 번지지 않음 → 뺌", ln.dp("ce4"), 0, f"뺌: 이 작업 트리 .dddjango/{FACE_SUP}")
+    got = ln.data("ce4").get("supplier_faces", {}).get("base", [])
+    expect(fails, "RD-F118 CE4b 같은 · 면에 모델 자리(models/ · 정의 모듈 thing.py)는 남고 도메인 · 응용 층은 없음",
+           (0 if f"{mdl}/" in got and f"{mdl}/thing.py" in got and not any("domain_layer" in g or "application_layer" in g for g in got)
+            else 9, json.dumps(got, ensure_ascii=False)), 0)
 
 
 def map_items_case(fails: "list[str]", td: Path) -> None:
