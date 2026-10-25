@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import importlib.util
 import json
 import re
 import shutil
@@ -4057,6 +4058,192 @@ def deps_face_review_cases(fails: "list[str]", td: Path) -> None:
            f"공급 면 {drv}/audit_orm/audit.py")
 
 
+F121_OLD_SHA: str = "55ab56e52371d3f8f264f4c77792dc56da1a0673"   # dddjango 2.26.1 배포 커밋 — 옛 판 대조는 HEAD 가 아니라 이 판에
+F121_URL: str = "/api/other-api/1"
+F121_SCHEMA: str = "application/demo/driving_layer/api/thing/schema/schema_out.py"
+F121_PAGE: str = "application/demo/driven_layer/django_demo/templates/admin/demo/page.html"
+F121_JS: str = "application/demo/driven_layer/django_demo/static/demo/page.js"
+F121_OWN: str = "20261026-0100-refactor-demo"
+F121_FILES: "dict[str, str]" = {      # DEPS_FILES + other 의 API(`/other-api`) — other → demo 실제 변(받는 쪽 어댑터)은 이미 있다
+    **DEPS_FILES,
+    "application/other/driving_layer/api/o/o_controller.py": FACE_CONTROLLER.format(prefix="/other-api", name="OtherController"),
+}
+
+
+def _f121_schema(doc: str = "결과지 칸.", head: str = "", tail: str = "") -> str:
+    return f'{head}class ThingOut:\n    """{doc}"""\n\n    key: str = "k"\n{tail}'
+
+
+def deps_http_text_cases(fails: "list[str]", td: Path) -> None:
+    """F4-121 — HTTP 소비 셈은 부를 수 있는 글만: `.py` 문서 문자열 · 주석 밖 문자열 · 바이트 상수(+ doctest docstring) · `.html` 은
+    HTML · Django 주석 밖(태그 · 날 글 요소 · 템플릿 태그 안 `<!--` 는 주석 아님 · verbatim 안 Django 주석은 글자) · `.js` · 계약 ·
+    파싱 못 한 `.py` 는 원문 줄(JS 주석은 받아들인 한계로 지금처럼 셈). 대상 demo 의 한 자리에 other API 주소를 꼴만 바꿔 넣는다
+    (other → demo 실제 변이 있어 demo → other 변이 서면 순환 묶음). 옛 판 = F121_OLD_SHA(HEAD 아님)."""
+    old_tool: Path = td / "f121-old" / "refactor_audit.py"
+    old_tool.parent.mkdir(parents=True)
+    old_tool.write_text(_git(ROOT, "show", f"{F121_OLD_SHA}:dddjango/scripts/refactor_audit.py"), encoding="utf-8")
+    repo: Path = _project(td / "f121", F121_FILES)
+    own: Path = repo / ".dddjango" / F121_OWN
+    own.mkdir(parents=True)
+    (own / "refactor-scope.md").write_text("실행 · G0 승인 20261026-0100 · 모드 리팩토링 · audit 20261026-0050\n", encoding="utf-8")
+    single: str = "순환 성분 단독"
+    cycle: str = "지원 안 함: 순환 묶음 demo · other"
+
+    def dp(tag: str, files: "dict[str, str]", tool: Path = TOOL) -> "tuple[int, str]":
+        """그 파일들을 미추적으로 써 deps demo 를 돌리고 지운다(같은 저장소를 사례마다 다시 쓴다)."""
+        for rel, body in files.items():
+            (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+            (repo / rel).write_text(body, encoding="utf-8")
+        try:
+            return run(repo, "deps", "demo", "--out", str(own / "deps" / tag), tool=tool)
+        finally:
+            for rel in files:
+                (repo / rel).unlink()
+    doc_line: str = f"key = 카드 묶음 창구 `GET {F121_URL}` 를 부를 열쇠"
+    # ── 세지 않을 글(새 판 단독) ──
+    t1: "dict[str, str]" = {F121_SCHEMA: _f121_schema(doc_line)}
+    expect(fails, "RD-F121 T1 클래스 docstring 의 다른 BC 주소 → HTTP 소비 아님 · 순환 성분 단독 · exit 0", dp("t1", t1), 0, single)
+    expect(fails, "RD-F121 T1o 같은 · 옛 판(2.26.1 배포 커밋) → 순환 묶음 exit 2(이 판이 고친 것)", dp("t1o", t1, old_tool), 2, cycle)
+    for tag, label, files in (
+            ("t2", "모듈 docstring", {F121_SCHEMA: _f121_schema(head=f'"""{doc_line}"""\n')}),
+            ("t3", "함수 docstring", {F121_SCHEMA: _f121_schema(tail=f'\n\ndef key_of(r: ThingOut) -> str:\n    """{doc_line}"""\n'
+                                                                    "    return r.key\n")}),
+            ("t4", "`#` 주석 줄", {F121_SCHEMA: _f121_schema(tail=f"\n\n# GET {F121_URL}\n")}),
+            ("t5", "코드 줄 끝 `#` 주석", {F121_SCHEMA: _f121_schema(tail=f"\n\nKEY_MAX: int = 40  # GET {F121_URL}\n")}),
+            ("t6", "함수 몸 가운데 문자열 식 문장", {F121_SCHEMA: _f121_schema(
+                tail=f'\n\ndef key_of(r: ThingOut) -> str:\n    x: str = r.key\n    "{doc_line}"\n    return x\n')}),
+            ("t7", "BC 템플릿 `<!-- -->`", {F121_PAGE: f"<p>카드</p>\n<!-- GET {F121_URL} -->\n"}),
+            ("t8", "BC 템플릿 `{# #}`", {F121_PAGE: f"<p>카드</p> {{# GET {F121_URL} #}}\n"}),
+            ("t9", "BC 템플릿 `{% comment %}` 여러 줄", {F121_PAGE: f"{{% comment %}}\nGET {F121_URL}\n{{% endcomment %}}\n<p>카드</p>\n"}),
+            ("t10", "HTML 주석 · `\\r` 줄 끝 · 조건부 주석", {F121_PAGE: f"<p>a</p>\r<!-- {F121_URL} -->\r"
+                                                                     f"<!--[if IE]><script src=\"{F121_URL}\"></script><![endif]-->\r"})):
+        expect(fails, f"RD-F121 {tag.upper()} {label} → HTTP 소비 아님 · 순환 성분 단독 · exit 0", dp(tag, files), 0, single)
+    # ── 그대로 셀 글(새 판 순환 묶음) ──
+    lit: "dict[str, str]" = {F121_SCHEMA: _f121_schema(tail=f'\n\nDECK_URL: str = "{F121_URL}"\n')}
+    expect(fails, "RD-F121 C1 문자열 리터럴 → HTTP 소비 · 순환 묶음 exit 2", dp("c1", lit), 2, cycle)
+    expect(fails, "RD-F121 C1o 같은 · 옛 판 → 순환 묶음 exit 2(리터럴은 두 판 같음)", dp("c1o", lit, old_tool), 2, cycle)
+    for tag, label, files in (
+            ("c2", "f-string 조각", {F121_SCHEMA: _f121_schema(tail='\n\ndef url(k: str) -> str:\n    return f"/api/other-api/{k}/deck"\n')}),
+            ("c3", "같은 줄 리터럴 + `#` 주석", {F121_SCHEMA: _f121_schema(tail=f'\n\nU: str = "{F121_URL}"  # 손님 화면용\n')}),
+            ("c4", "한 파일 docstring + 리터럴", {F121_SCHEMA: _f121_schema(doc_line, tail=f'\n\nU: str = "{F121_URL}"\n')}),
+            ("c5", "`hx-get` 속성", {F121_PAGE: f'<a hx-get="{F121_URL}">카드</a>\n'}),
+            ("c6", "같은 줄 속성 + `<!-- -->`", {F121_PAGE: f'<a hx-get="{F121_URL}">카드</a> <!-- 카드 그림 -->\n'}),
+            ("c7", "JS `fetch` + 같은 줄 `//`", {F121_JS: f'fetch("{F121_URL}"); // 카드 그림\n'}),
+            ("c8", "바이트 리터럴", {F121_SCHEMA: _f121_schema(tail=f'\n\nRAW: bytes = b"{F121_URL}"\n')}),
+            ("c9", "doctest docstring(`>>>` — 실행되는 글)", {F121_SCHEMA: _f121_schema(
+                tail=f'\n\ndef load() -> None:\n    """\n    >>> client.get("{F121_URL}")\n    """\n')}),
+            ("j1", "JS `//` 주석 줄(받아들인 한계 — 원문 줄)", {F121_JS: f"// GET {F121_URL}\nconst n = 1;\n"}),
+            ("j2", "JS 여러 줄 `/* */`(받아들인 한계)", {F121_JS: f"/*\n * GET {F121_URL}\n */\nconst n = 1;\n"}),
+            ("j3", "JS 코드 줄 끝 `//`(받아들인 한계)", {F121_JS: f"const n = 1; // GET {F121_URL}\n"}),
+            ("f1", "파싱 못 한 `.py` 의 `#` 주석(원문 줄)", {F121_SCHEMA: _f121_schema(tail=f"\n\ndef broken(:\n    pass  # GET {F121_URL}\n")}),
+            ("f3", "닫히지 않은 `<!--` 뒤 속성(모를 때 원문)", {F121_PAGE: f'<!-- 메모\n<a hx-get="{F121_URL}">카드</a>\n'}),
+            ("f6", "`<script>` 안 옛 숨김 `<!--` · 그 안 `fetch`", {F121_PAGE: f'<script>\n<!--\nfetch("{F121_URL}");\n//-->\n</script>\n'}),
+            ("f7", "`<script>` 문자열 속 `<!--` 뒤 다른 줄 속성 · 뒤 주석", {F121_PAGE: f'<script>const s = "<!--";</script>\n'
+                                                                             f'<div hx-get="{F121_URL}"></div>\n<!-- 메모 -->\n'}),
+            ("f8", "속성 값 속 `<!--`(placeholder) 뒤 속성", {F121_PAGE: f'<input placeholder="<!--">\n<div hx-get="{F121_URL}"></div>\n'
+                                                                    "<p>--></p>\n"}),
+            ("f9", "`{% verbatim %}` 안 `{# #}`(글자로 나감)", {F121_PAGE: f'{{% verbatim %}}{{# <div hx-get="{F121_URL}"></div> #}}'
+                                                                     "{% endverbatim %}\n"}),
+            ("f10", "템플릿 태그 문자열 속 `<!--` 뒤 속성 · 뒤 주석", {F121_PAGE: '{% include "x.html" with a="<!--" %}\n'
+                                                                       f'<div hx-get="{F121_URL}"></div>\n<!-- 메모 -->\n'})):
+        got = dp(tag, files)
+        expect(fails, f"RD-F121 {tag.upper()} {label} → HTTP 소비 · 순환 묶음 exit 2", got, 2, cycle,
+               *(("파싱 못 한 파일 1",) if tag == "f1" else ()))
+    c10: "dict[str, str]" = {F121_SCHEMA: _f121_schema(tail='\n\nU: str = "/api/" "other-api/1"\n')}
+    expect(fails, "RD-F121 C10 이어 쓴 리터럴(값 = 주소) → 새 판은 셈 · 순환 묶음", dp("c10", c10), 2, cycle)
+    expect(fails, "RD-F121 C10o 같은 · 옛 판은 줄 글자에 주소가 없어 못 봄 → 단독(새로 세는 꼴 — 릴리즈 노트)", dp("c10o", c10, old_tool), 0,
+           single)
+    # ── 쓰는 곳마다 같은 셈(대상 = 소비되는 쪽 · web 단위 · 시험 포함 그래프 · 공급 면 ④ · 계약) ──
+    side: Path = _project(td / "f121-side", {
+        **F121_FILES,
+        F121_SCHEMA: _f121_schema(doc_line),                               # docstring 만 — 호출 아님
+        "application/demo/test/test_schema.py": ("from application.demo.driving_layer.api.thing.schema.schema_out import ThingOut\n\n\n"
+                                                 "def test_key() -> None:\n    assert ThingOut.key\n"),
+        "application/zeta/__init__.py": "",
+        "application/zeta/domain_layer/z.py": "Z: int = 1\n",
+        "application/zeta/test/test_z.py": '"""시험 설명 — 손님 화면은 GET /api/thing/1 을 부른다."""\n\n\ndef test_z() -> None:\n    assert True\n',
+        "web/away/templates/away.html": "<p>x</p>\n<!-- /api/thing/1 -->\n",
+        "web/far/static/far.js": "// GET /api/thing/1\nconst n = 1;\n",
+        ".dddjango-web/20261026-0300-x/server-contract.json": '{"paths": {}, "info": {"description": "see /api/thing/1"}}\n',
+    })
+
+    def side_deps(tag: str, bc: str, tool: Path = TOOL) -> dict:
+        out: Path = td / "f121-side-out" / tag
+        run(side, "deps", bc, "--out", str(out), tool=tool)
+        p: Path = out / "deps.json"
+        return json.loads(p.read_text(encoding="utf-8")) if p.is_file() else {}
+    test_rel: str = "application/demo/test/test_schema.py"
+    for tag, tool, want in (("e1", TOOL, False), ("e1o", old_tool, True)):
+        got = side_deps(tag, "other", tool)
+        kinds: dict = got.get("edit_kinds", {})
+        seen: "set[bool]" = {F121_SCHEMA in kinds, test_rel in kinds, "demo" in got.get("http_owners", [])}
+        expect(fails, f"RD-F121 {tag.upper()} deps other — docstring 만 가진 demo 파일 · 그 모듈을 import 하는 시험 → «HTTP 소비자» 갈래 · "
+               f"http_owners {'에 있음(옛 판)' if want else '에 없음'}", (0 if seen == {want} else 9, json.dumps(got, ensure_ascii=False)), 0)
+    for tag, tool, want in (("e3", TOOL, False), ("e3o", old_tool, True)):
+        got = side_deps(tag, "demo", tool)
+        owners: "list[str]" = got.get("http_owners", [])
+        ok: bool = (("web/away" in owners) == want and ("zeta" in got.get("our_bcs", [])) == want and "web/far" in owners
+                    and ".dddjango-web/20261026-0300-x" in owners)
+        expect(fails, f"RD-F121 {tag.upper()} deps demo — web 단위 HTML 주석만 · 시험 docstring 만(시험 포함 그래프) → 소비 주인 · our_bcs "
+               f"{'에 있음(옛 판)' if want else '에 없음'} · JS 주석 web 단위 · 계약 description 은 두 판 모두 셈",
+               (0 if ok else 9, json.dumps({k: got.get(k) for k in ("http_owners", "our_bcs")}, ensure_ascii=False)), 0)
+    face: Path = _project(td / "f121-face", {
+        **F121_FILES,
+        "application/base/driving_layer/api/a/a_controller.py": FACE_CONTROLLER.format(prefix="/base-a", name="AController"),
+        "application/base/driving_layer/api/b/b_controller.py": FACE_CONTROLLER.format(prefix="/base-b", name="BController"),
+        F121_PAGE: "".join(f'<a hx-get="/api/base-a/items/{i}">{i}</a> <!-- 옛 /api/base-b/{i} -->\n' for i in range(300)),
+    })
+    for tag, tool, want in (("e2", TOOL, False), ("e2o", old_tool, True)):
+        out = td / "f121-face-out" / tag
+        run(face, "deps", "demo", "--out", str(out), tool=tool)
+        faces: "list[str]" = (json.loads((out / "deps.json").read_text(encoding="utf-8")).get("supplier_faces", {}).get("base", [])
+                              if (out / "deps.json").is_file() else [])
+        ok = ("application/base/driving_layer/api/a/a_controller.py" in faces
+              and ("application/base/driving_layer/api/b/b_controller.py" in faces) == want)
+        expect(fails, f"RD-F121 {tag.upper()} 공급 면 ④ — 대상 BC 템플릿이 /base-a 를 부르고 주석에만 /base-b → 면에 b 선언 파일 "
+               f"{'있음(옛 판)' if want else '없음'}", (0 if ok else 9, str(faces)), 0)
+    calls: "list[str]" = []
+    real_mask = ra._mask_html
+
+    def counting(text: str) -> str:
+        calls.append(text[:20])
+        return real_mask(text)
+    ra._mask_html = counting
+    try:
+        scan = ra.DepsScan(face)
+        ra._supplier_faces(scan, "demo", {"base"})
+    finally:
+        ra._mask_html = real_mask
+    expect(fails, "RD-F121 P1 대상 BC 템플릿 hit 300 줄 → 주석 지우기는 파일당 한 번(소비 셈 · 공급 면 ④ 가 같은 결과를 씀)",
+           (0 if len(calls) == 1 else 9, f"_mask_html 호출 {len(calls)}"), 0)
+    big: Path = _project(td / "f121-big", {
+        **F121_FILES,
+        "web/big/client.py": "".join(f'U{i}: str = "/api/thing/{i}"\n' for i in range(3000))
+                             + 'PAIR: tuple[str, str] = ("/api/thing/a", "/api/thing/b")\n',
+    })
+    old_spec = importlib.util.spec_from_file_location("ra_f121_old", old_tool)
+    old_mod = importlib.util.module_from_spec(old_spec)
+    old_spec.loader.exec_module(old_mod)                                   # type: ignore[union-attr]
+    new_hits: "set[tuple[str, int, str]]" = {(h["file"], h["line"], h["provider"]) for h in ra.DepsScan(big).http
+                                             if h["file"] == "web/big/client.py"}
+    old_hits: "set[tuple[str, int, str]]" = {(h["file"], h["line"], h["provider"]) for h in old_mod.DepsScan(big).http
+                                             if h["file"] == "web/big/client.py"}
+    expect(fails, "RD-F121 I1 리터럴 3002 조각(한 줄에 둘) 파일 → (줄, 공급 BC) 한 번씩 · 옛 판과 같은 3001 줄",
+           (0 if new_hits == old_hits and len(new_hits) == 3001 else 9, f"새 {len(new_hits)} · 옛 {len(old_hits)}"), 0)
+    for tag, text, want in (
+            ("u1", "<p>a</p>\r<!-- x -->\u2028<a hx-get=\"/x\"></a>\x85<!-- y -->\n", "\r\u2028\x85\n"),
+            ("u2", '<TITLE><!--</Title><a hx-get="/x"></a>-->\n', None),
+            ("u3", '<!--><a hx-get="/x"></a><!-- y -->\n', None)):
+        masked: str = ra._mask_html(text)
+        kept: bool = len(masked) == len(text) and len(masked.splitlines()) == len(text.splitlines())
+        if want is not None:
+            kept = kept and "".join(c for c in masked if c in ra._LINE_ENDS) == want and 'hx-get="/x"' in masked
+        else:
+            kept = kept and 'hx-get="/x"' in masked
+        expect(fails, f"RD-F121 {tag.upper()} _mask_html — 줄 끝 글자 · 글자 자리 그대로 · 날 글 요소 닫는 태그(대소문자) · `<!-->` 빈 주석",
+               (0 if kept else 9, repr(masked)), 0)
+
+
 def map_items_case(fails: "list[str]", td: Path) -> None:
     """설계 §7 `_map_items` — follow · change 창 대응표도 싣는다(test 창은 아니다) · 창 차례는 번호(w2 < w10)."""
     folder: Path = td / "mapf"
@@ -4197,6 +4384,7 @@ def main() -> int:
         deps_trust_cases(fails, td)
         deps_web_unit_cases(fails, td)
         deps_face_review_cases(fails, td)
+        deps_http_text_cases(fails, td)
         map_items_case(fails, td)
     corpus_cases(fails, nov[0])
     self_test_negative_case(fails)

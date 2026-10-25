@@ -51,7 +51,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Iterable
 
 _QUOTE_HEAD: "re.Pattern[str]" = re.compile(r"^[ \t]*>[ \t]?", re.M)
 _SPACE: "re.Pattern[str]" = re.compile(r"\s+")
@@ -3654,6 +3654,70 @@ def _function_routes(tree: ast.Module) -> "list[int]":
             and any(isinstance(d, ast.Call) and _end_name(d.func) in _ROUTE_DECORATORS for d in st.decorator_list)]
 
 
+def _doc_ids(tree: ast.AST) -> "set[int]":
+    """문장 자리의 문자열(docstring · 주석 대용 문자열 식) 노드 id — 참조도 HTTP 소비도 아니다."""
+    docs: "set[int]" = set()
+    for holder in ast.walk(tree):
+        body = getattr(holder, "body", None)
+        for st in body if isinstance(body, list) else []:
+            if isinstance(st, ast.Expr) and isinstance(st.value, ast.Constant) and isinstance(st.value.value, str):
+                docs.add(id(st.value))
+    return docs
+
+
+_LINE_ENDS: str = "\n\r\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029"      # str.splitlines 의 줄 끝 — 지운 글도 줄 번호가 같게
+# 주석 지우기 정규식은 글로만 두고 `re` 캐시로 처음 쓸 때 만든다(HTML 을 안 지우는 실행은 만들지 않는다).
+# Django 주석(엔진이 먼저 지운다) — `{# #}` 한 줄 · `{% comment %}` 닫는 태그까지 · `{% verbatim %}` 안은 글자 그대로(지우지 않음).
+_DJANGO_COMMENT: str = (
+    r"(?P<keep>\{%\s*verbatim\b[^%]*%\}(?:.*?\{%\s*endverbatim\b[^%]*%\}|.*))"
+    r"|\{#[^\n]*?#\}|\{%\s*comment(?:\s[^%]*)?%\}.*?\{%\s*endcomment\s*%\}")
+# HTML 낱말(왼쪽부터) — 닫힌 주석 · 날 글 요소(script · style · textarea · title — 닫는 태그까지) · 글 · 태그(따옴표 존중) · 템플릿 태그
+# 줄기 · 닫히지 않은 것(`stop`) — 날 글 요소 · 태그 · 템플릿 태그 안의 `<!--` 는 주석이 아니다.
+_HTML_TOKEN: str = (
+    r"(?P<comment><!--(?:-?>|.*?-->))"
+    r"|<(?P<raw>script|style|textarea|title)(?![\w:-])[^\"'>]*(?:(?:\"[^\"]*\"|'[^']*')[^\"'>]*)*>.*?</(?P=raw)(?![\w:-])"
+    r"|(?P<stop><!--|<(?:script|style|textarea|title)(?![\w:-]))"
+    r"|(?:[^<{]+|<(?![A-Za-z/!?])|\{(?![%{])|\{%.*?%\}|\{\{.*?\}\}"
+    r"|<(?!!--)(?!(?:script|style|textarea|title)(?![\w:-]))[A-Za-z/!?][^\"'>]*(?:(?:\"[^\"]*\"|'[^']*')[^\"'>]*)*>)+"
+    r"|(?P<stop2><[A-Za-z/!?]|\{[%{])")
+
+
+def _blank(span: str) -> str:
+    """줄 끝 글자만 남기고 공백으로(줄 끝 글자는 모두 인쇄 불가라 인쇄 가능한 글은 통째로)."""
+    if span.isprintable():
+        return " " * len(span)
+    return "".join(" " * len(core) + line[len(core):] for line in span.splitlines(keepends=True)
+                   for core in (line.rstrip(_LINE_ENDS),))
+
+
+def _line_starts(text: str) -> "list[int]":
+    """줄마다 시작 자리(str.splitlines 의 줄과 같은 차례)."""
+    starts: "list[int]" = [0]
+    for line in text.splitlines(keepends=True):
+        starts.append(starts[-1] + len(line))
+    return starts[:-1] or [0]
+
+
+def _mask_html(text: str) -> str:
+    """HTML · Django 주석을 공백으로 지운 글(줄 끝 · 글자 자리 그대로) — Django 주석 먼저 · HTML 주석은 `_HTML_TOKEN` 낱말로 가린다 ·
+    닫히지 않은 것을 만나면 그 뒤는 지우지 않는다(모를 때 원문)."""
+    if "{#" in text or "{%" in text:
+        text = re.sub(_DJANGO_COMMENT, lambda m: m.group(0) if m.group("keep") else _blank(m.group(0)), text, flags=re.S)
+    if "<!--" not in text:
+        return text
+    out: "list[str]" = []
+    last: int = 0
+    for m in re.finditer(_HTML_TOKEN, text, re.S | re.I):
+        kind: "str | None" = m.lastgroup                   # comment · raw(날 글 요소) · stop · stop2 · None(글 · 태그 · 템플릿 태그 줄기)
+        if kind == "comment":
+            out += [text[last:m.start()], _blank(m.group(0))]
+            last = m.end()
+        elif kind is not None and kind != "raw":
+            break
+    out.append(text[last:])
+    return "".join(out)
+
+
 def _json_strings(obj: object) -> "list[str]":
     """파싱한 JSON 값의 문자열 전부(키 · 값 · 재귀)."""
     out: "list[str]" = []
@@ -3803,6 +3867,9 @@ class DepsScan:
         self.parse_errors: "list[str]" = []
         self.unparsed: "set[str]" = set()                 # 읽기 · 파싱 못 한 .py(parse_errors 의 파일)
         self.imports: "dict[str, set[str]]" = {}           # 파일 → 참조 모듈(같은 주인 포함 — 받는 쪽 시험 계산)
+        # 파싱한 .py → `/` 를 품은 문장 자리 밖 문자열 · 바이트 상수와 `>>>`(doctest) 를 품은 docstring (시작 줄, 값) — HTTP 소비 셈
+        self.literals: "dict[str, list[tuple[int, str]]]" = {}
+        self._masked: "dict[str, str]" = {}                # `.html` → 주석을 지운 글(`_body` — 파일마다 한 번)
         for f in self.py:
             self._scan(f)
         self.prefixes: "dict[str, set[str]]"                  # BC → api_controller 고정 접두(`/thing`) — 마운트는 결속하지 않는다
@@ -3899,13 +3966,9 @@ class DepsScan:
         parts: "list[str]" = f.split("/")
         src_bc, src_spot = self._owner(f)
         src_owner: str = src_bc or f"@{src_spot}"
-        docs: "set[int]" = set()                           # 문장 자리의 문자열(docstring · 주석 대용)은 참조가 아니다
-        for holder in ast.walk(tree):
-            body = getattr(holder, "body", None)
-            for st in body if isinstance(body, list) else []:
-                if isinstance(st, ast.Expr) and isinstance(st.value, ast.Constant) and isinstance(st.value.value, str):
-                    docs.add(id(st.value))
+        docs: "set[int]" = _doc_ids(tree)                  # 문장 자리의 문자열(docstring · 주석 대용)은 참조가 아니다
         mods: "set[str]" = self.imports.setdefault(f, set())
+        lits: "list[tuple[int, str]]" = self.literals.setdefault(f, [])
 
         def emit(node: ast.AST, kind: str, tp: "list[str]", name: "str | None" = None, label: "str | None" = None) -> None:
             """다른 BC 를 가리키는 참조만 싣는다(주인이 같으면 버린다) — BC 밖 파일이 부르면 `surface_in`. `name` 은 그 모듈에서 들인
@@ -3939,6 +4002,8 @@ class DepsScan:
                     emit(node, "import", tp, None if tp is cand else a.name)
             elif isinstance(node, ast.Constant) and isinstance(node.value, str) and id(node) not in docs:
                 s: str = node.value
+                if "/" in s:
+                    lits.append((node.lineno, s))
                 for m in _DOTTED.finditer(s):
                     if m.group(1) in self.bcs:
                         tp = ["application", m.group(1)] + [x for x in m.group(2).split(".") if x]
@@ -3973,6 +4038,10 @@ class DepsScan:
                 lab = self.labels.get(self.auth_label, self.auth_label)
                 emit(node, "auth_user_model", ["application", lab, "driven_layer", f"django_{lab}", "models"], self.auth_model,
                      self.auth_label)
+            elif isinstance(node, ast.Constant) and isinstance(node.value, (str, bytes)):   # 바이트 상수 · doctest docstring
+                v: str = node.value.decode("latin-1") if isinstance(node.value, bytes) else node.value
+                if "/" in v and (isinstance(node.value, bytes) or ">>>" in v):
+                    lits.append((node.lineno, v))
 
     def _surface_blind(self) -> "dict[str, list[str]]":
         """API 표면마다(설계 :1275) — api_controller 밖 API 표면(urls.py path() · Router() · NinjaAPI · add_router · 함수형 경로
@@ -4086,9 +4155,11 @@ class DepsScan:
 
     def _http_consumers(self) -> "list[dict]":
         """URL 문자열(.py · .js · .html · 공급 BC 밖) + 추적된 `.dddjango-web/*/server-contract.json` 가운데 경로 조각 경계에서
-        `/<api_controller 접두>` 로 시작하는 조각을 품은 줄 — 앞에 어떤 마운트 접두가 와도 센다(마운트를 결속하지 않는 상위 집합).
-        소스는 원문 줄과 `\\/` → `/` 로 푼 줄 둘 다 · 계약은 원문 줄 + `json.loads` 결과의 문자열 전부(키 · 값 · 재귀). 읽기 ·
-        디코딩 · 계약 파싱을 못 한 파일은 건너뛰지 않고 `self.unread` 에 올린다(→ 관찰 못 함)."""
+        `/<api_controller 접두>` 로 시작하는 조각을 품은 글 — 앞에 어떤 마운트 접두가 와도 센다(마운트를 결속하지 않는 상위 집합).
+        글은 부를 수 있는 글만 — 파싱한 `.py` 는 문서 문자열 · 주석 밖 문자열 · 바이트 상수와 doctest docstring(`literals`) ·
+        `.html` 은 HTML · Django 주석을 지운 글(`_body`) · `.js` · 계약 · 파싱 못 한 `.py` 는 원문. 원문과 `\\/` → `/` 로 푼 글 둘 다 ·
+        계약은 원문 + `json.loads` 결과의 문자열 전부(키 · 값 · 재귀). 읽기 · 디코딩 · 계약 파싱을 못 한 파일은 건너뛰지 않고
+        `self.unread` 에 올린다(→ 관찰 못 함)."""
         out: "list[dict]" = []
         if not self.url_patterns:
             return out
@@ -4103,14 +4174,16 @@ class DepsScan:
             owner: str = self._http_owner(f)
             contract: bool = f.endswith("server-contract.json")
             found: "set[str]" = set()
-            for i, line in enumerate(text.splitlines(), 1):
-                alt: str = line.replace("\\/", "/")
-                for provider, pattern in sorted(self.url_patterns.items()):
-                    if owner == provider or not (pattern.search(line) or pattern.search(alt)):
-                        continue
-                    found.add(provider)
-                    out.append({"file": f, "line": i, "provider": provider, "owner": owner,
-                                "test": _is_test_path(f), "contract": contract})
+            pieces: "list[tuple[int, str]] | None" = self.literals.get(f)
+            if pieces is not None:
+                hits: "list[tuple[int, str]]" = self._url_lines(pieces, owner)
+            else:                                           # 원문에 접두가 있는 HTML 만 주석을 지운다(속도)
+                html: bool = f.endswith(".html") and self._mentions(text, owner)
+                hits = self._text_hits(self._body(f, text) if html else text, owner)
+            test: bool = _is_test_path(f)
+            for i, provider in hits:
+                found.add(provider)
+                out.append({"file": f, "line": i, "provider": provider, "owner": owner, "test": test, "contract": contract})
             if not contract:
                 continue
             try:
@@ -4122,6 +4195,48 @@ class DepsScan:
                 if owner != provider and provider not in found and any(pattern.search(s) for s in values):
                     out.append({"file": f, "line": 0, "provider": provider, "owner": owner, "test": False, "contract": True})
         return out
+
+    def _mentions(self, text: str, owner: str) -> bool:
+        """글 전체(원문 · `\\/` 를 푼 글)에 주인 밖 공급 BC 접두 조각이 하나라도 있는가."""
+        alt: "str | None" = text.replace("\\/", "/") if "\\/" in text else None
+        return any(pat.search(text) or (alt is not None and pat.search(alt)) for p, pat in self.url_patterns.items() if p != owner)
+
+    def _body(self, rel: str, text: str) -> str:
+        """HTTP 소비로 셀 글(원문 꼴) — `.html` 은 HTML · Django 주석을 지운 글(파일마다 한 번 · `_mask_html`) · 그 밖은 원문."""
+        if not rel.endswith(".html"):
+            return text
+        got: "str | None" = self._masked.get(rel)
+        if got is None:
+            got = self._masked[rel] = _mask_html(text)
+        return got
+
+    def _text_hits(self, body: str, owner: str) -> "list[tuple[int, str]]":
+        """글 전체(원문 · `\\/` 를 푼 글)에서 주인 밖 공급 BC 접두 조각이 맞은 (줄, 공급 BC) — 줄 · 공급 BC 차례 · 한 번씩. 접두 조각은 줄을
+        넘지 않으므로 줄마다 맞춰 보는 것과 같은 결과다(글 전체를 한 번에 훑어 빠르다)."""
+        found: "set[tuple[int, str]]" = set()
+        for src in (body, body.replace("\\/", "/")) if "\\/" in body else (body,):
+            starts: "list[int] | None" = None
+            for provider, pattern in self.url_patterns.items():
+                k: int = 0                                  # 맞은 자리는 차례로 온다 — 줄 시작 목록을 앞으로만 걷는다
+                for m in pattern.finditer(src) if provider != owner else ():
+                    starts = starts if starts is not None else _line_starts(src)
+                    while k + 1 < len(starts) and starts[k + 1] <= m.start():
+                        k += 1
+                    found.add((k + 1, provider))
+        return sorted(found)
+
+    def _url_lines(self, pieces: "Iterable[tuple[int, str]]", owner: str) -> "list[tuple[int, str]]":
+        """글 조각 (줄, 글) 가운데 주인 밖 공급 BC 접두 조각을 품은 것 → (줄, 공급 BC) — 차례 · 한 번씩."""
+        providers: "list[tuple[str, re.Pattern[str]]]" = [(p, pat) for p, pat in sorted(self.url_patterns.items()) if p != owner]
+        got: "list[tuple[int, str]]" = []
+        seen: "set[tuple[int, str]]" = set()
+        for i, piece in pieces:
+            alt: "str | None" = piece.replace("\\/", "/") if "\\/" in piece else None   # 푼 글이 같으면 다시 맞추지 않는다
+            for provider, pattern in providers:
+                if (i, provider) not in seen and (pattern.search(piece) or (alt is not None and pattern.search(alt))):
+                    seen.add((i, provider))
+                    got.append((i, provider))
+        return got
 
     def url_hits(self, text: str, bc: str, values: "list[str] | tuple[str, ...]" = ()) -> "list[str]":
         """글 속(원문 · `\\/` 를 푼 글)에서 이 BC 접두 조각을 품은 URL 문자열(앞뒤 경계까지) + 그 조각을 품은 파싱된 값 — 차례 · 한 번씩."""
@@ -5060,7 +5175,9 @@ def _supplier_faces(scan: "DepsScan", bc: str, suppliers: "set[str]") -> "tuple[
        정의(class · def · 상수 대입)가 없으면 그 이름을 들인 import(블록 안 포함)를, 그것도 없으면(대입 다시 내보내기 등) 그 모듈의
        같은 BC import 를 모두 따라간다(모델 이름은 여기서 멈춘다 — 지운 모델 이름이 BC 를 걷지 않게) · import 만으로 된 파일(파사드)은
        그 import 를 모두 따라감
-    ④ 대상 운영 코드(시험 아님)의 HTTP 호출 — 문서 문자열 밖 문자열 상수에 맞은 접두의 선언 파일과 그 폴더 · `driving_layer/api/`
+    ④ 대상 운영 코드(시험 아님)의 HTTP 호출 — 부를 수 있는 글(HTTP 소비 셈과 같은 글 — `.py` 는 문서 문자열 · 주석 밖
+       문자열 · 바이트 상수와 doctest docstring · `.html` 은 HTML · Django 주석 밖 · `.js` 와 파싱 못 한 `.py` 는 원문 줄)에 맞은
+       접두의 선언 파일과 그 폴더 · `driving_layer/api/`
     ⑤ 그 BC 전체 — 그 BC 자신의 HTTP 표면 관찰 못 함 사유 · 그 BC 의 읽거나 파싱하지 못한 파일(대상 파일이면 모든 공급 BC) · 따라가야
        할 면 파일을 못 읽음 · 이름 사슬 상한(FACE_CHAIN_CAP)에 닿음."""
     files: "set[str]" = set(scan.files)
@@ -5215,24 +5332,16 @@ def _supplier_faces(scan: "DepsScan", bc: str, suppliers: "set[str]") -> "tuple[
                         frontier += [(s, g)] if g.endswith(".py") else [(s, g + "__init__.py")]
 
     def code_url(f: str, pattern: "re.Pattern[str]") -> bool:
-        """`.py` 는 문서 문자열 밖 문자열 상수에 맞을 때만(참조 수집과 같은 규칙) · 그 밖 파일은 줄 일치 그대로."""
-        if not f.endswith(".py"):
-            return bool(pattern.search(scan._text(f) or ""))
-        tree = tree_of(f)
-        if tree is None:
-            return True
-        docs: "set[int]" = set()
-        for holder in ast.walk(tree):
-            body = getattr(holder, "body", None)
-            for st in body if isinstance(body, list) else []:
-                if isinstance(st, ast.Expr) and isinstance(st.value, ast.Constant) and isinstance(st.value.value, str):
-                    docs.add(id(st.value))
-        return any(isinstance(n, ast.Constant) and isinstance(n.value, str) and id(n) not in docs
-                   and (pattern.search(n.value) or pattern.search(n.value.replace("\\/", "/"))) for n in ast.walk(tree))
+        """그 접두를 부를 수 있는 글(HTTP 소비 셈과 같은 글 — `.py` 는 `literals` · 그 밖은 `_body` · 파일마다 한 번 만든 것)에 맞는가."""
+        lits: "list[tuple[int, str]] | None" = scan.literals.get(f)
+        pieces: "list[str]" = [p for _i, p in lits] if lits is not None else [scan._body(f, scan._text(f) or "")]
+        return any(pattern.search(p) or ("\\/" in p and pattern.search(p.replace("\\/", "/"))) for p in pieces)
+    judged: "set[tuple[str, str]]" = set()                 # (파일, 공급 BC) 짝마다 한 번 — hit 줄마다 다시 보지 않는다
     for h in scan.http:                                    # ④ 대상 운영 코드의 HTTP 호출(시험의 준비 호출은 면 밖 — D2)
         s = h["provider"]
-        if h["owner"] != bc or s not in suppliers or h["test"]:
+        if h["owner"] != bc or s not in suppliers or h["test"] or (h["file"], s) in judged:
             continue
+        judged.add((h["file"], s))
         for prefix, decl in sorted(scan.prefix_files.get(s, {}).items()):
             if code_url(h["file"], re.compile(re.escape(prefix) + _URL_SEG_END)):
                 faces[s] |= decl | {d.rsplit("/", 1)[0] + "/" for d in decl}
