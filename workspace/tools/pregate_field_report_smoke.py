@@ -1201,6 +1201,22 @@ class BookAdmin(TranslatableAdmin):
         self.assertEqual(info['declarations'], '2')
         self.assertEqual((self.source / SERVICE).read_text(), CATCHING)
 
+    def test_f115_existing_catch_debt_is_a_nonblocking_candidate(self):
+        # 구현 검토 I1 — 기준선 창구 catch 가 이미 잡은 값을 쓰는(기존 #474 빚) 꼴에 R-3689 대로 출처 칸을 적으면 후보(비차단)다.
+        self.garden_fixture()
+        debt = CATCHING.replace('    except PlantUnreadable:\n', '    except PlantUnreadable as unreadable:\n        print(unreadable)\n')
+        self.write(self.source, SERVICE, debt)
+        _git(self.source, 'add', '-A')
+        _git(self.source, 'commit', '-qm', 'existing catch debt')
+        text = spec_text([f'update {SERVICE}'], exceptions=[f'PlantUnavailableException  {SERVICE}  <= PlantUnreadable as'])
+        run, report = self.cli(text)
+        self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
+        self.assertIn('- (없음)', pg._subsection(report, '선언 확정'))
+        self.assertIn('예보 불확정: 기준선 창구에 `PlantUnreadable` 를 잡는 catch 의 #474 줄이 이미 있다(기존 빚',
+                      pg._subsection(report, '선언 후보'))
+        self.assertEqual(pg.check_report(text, report)[0], 0)
+        self.assertEqual((self.source / SERVICE).read_text(), debt)
+
     def test_f115_old_form_rows_keep_the_released_block_hash(self):
         # 셋째 칸이 없는 번역표 행은 2.26.1 과 블록 해시가 같다(캐시 skip 대조 무변) — 칸을 적으면 해시가 바뀐다.
         rows = [f'PlantUnavailableException  {SERVICE}', f'PlantGoneException\t{SERVICE}']

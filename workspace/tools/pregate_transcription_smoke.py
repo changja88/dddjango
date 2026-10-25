@@ -14,6 +14,7 @@ import errno
 import io
 import json
 import os
+import random
 import re
 import subprocess
 import sys
@@ -1335,7 +1336,7 @@ class CatchForecastTest(GardenFixture):
         self.assertEqual(errors, [], " | ".join(errors))
         baseline = pg.forecast_baseline(self.repo, plan)
         before = self.snapshot()
-        found, memos = pg.check_catch_forecast(plan, self.scratch, baseline)
+        found, memos = pg.check_catch_forecast(plan, self.repo, self.scratch, baseline)
         self.assertEqual(self.snapshot(), before, "분석 투영 밖 실물이 바뀌었다")
         self.assert_cells_removed()
         return found, memos
@@ -1416,6 +1417,8 @@ class CatchForecastTest(GardenFixture):
         helper = f"{CATALOG}/x_helper.py"
         value_object = f"{GARDEN}/domain_layer/plant/value_object/water_level.py"
         self.write(value_object, "class WaterLevel:\n    pass\n")
+        for stub in (nested, helper):  # add 창구는 실체화(스텁) 뒤에 판정한다
+            self.write(stub, "")
         found, memos = self.forecast([f"PlantUnavailableException  {nested}  <= Unreadable as",
                                       f"PlantUnavailableException  {helper}  <= Unreadable as",
                                       f"WaterLevelInvalid  {value_object}  <= PlantUnreadable as",
@@ -1451,16 +1454,225 @@ class CatchForecastTest(GardenFixture):
                                  [("PlantUnavailableException", source, bound)])
                 self.assertEqual(plan.entries[CATALOG_SERVICE].raises, ["PlantUnavailableException"])
 
-    def test_api_checker_is_loaded_only_for_projected_rows_and_load_failure_is_run_error(self) -> None:
+    def test_api_checker_is_loaded_only_for_ohs_shaped_rows_and_load_failure_is_run_error(self) -> None:
+        value_object = f"{GARDEN}/domain_layer/plant/value_object/water_level.py"
+        self.write(value_object, "class WaterLevel:\n    pass\n")
         with mock.patch.object(pg, "API_ERROR_CHECKER", self.root / "missing-checker.py"), \
                 mock.patch.dict(pg._BUNDLED_CHECKERS, clear=True):
-            found, memos = self.forecast([f"PlantUnavailableException  {CATALOG_SERVICE}  <= PlantUnreadable",
-                                          f"PlantGoneException  {CATALOG_SERVICE}  <= PlantGone as"])
-            self.assertEqual([(f.rule, f.confirmed) for f in found], [("#474", False)])
-            self.assertEqual(len(memos), 1)
-            with self.assertRaises(pg.RunError):
-                self.forecast([f"PlantUnavailableException  {CATALOG_SERVICE}  <= PlantUnreadable as"])
+            found, memos = self.forecast([f"WaterLevelInvalid  {value_object}  <= PlantUnreadable as"],
+                                         paths=[f"update {value_object}"])
+            self.assertEqual((found, [m.split(":", 1)[0] for m in memos]), ([], [OUTSIDE_MEMO]))
+            for row in ("<= PlantUnreadable as", "<= PlantUnreadable", ""):
+                with self.subTest(row=row), self.assertRaises(pg.RunError):
+                    self.forecast([f"PlantUnavailableException  {CATALOG_SERVICE}  {row}".rstrip()])
             self.assert_cells_removed()
+
+    def test_existing_catch_debt_of_the_same_rule_is_a_candidate(self) -> None:
+        # 구현 검토 I1 — 기준선 창구의 그 출처를 잡는 catch 에 같은 규칙 줄(#474 · #62)이 이미 있으면 확정이 아니라 후보다(G2 도
+        # 같은 규칙 · 판정문의 기존 줄로 본다 · 실검사기 줄 1 → 1). 다른 예외를 잡는 catch 의 빚은 낮추지 않는다.
+        debt_474 = CATALOG_LOGGED
+        debt_62 = CATALOG_BASELINE.replace("    except PlantUnreadable:\n", "    except Exception:\n")
+        debt_bare = CATALOG_BASELINE.replace("    except PlantUnreadable:\n", "    except:\n")
+        other_474 = CATALOG_BASELINE + ("\n\ndef peek_plant_query(name: str) -> str:\n    try:\n        return _read(name)\n"
+                                        "    except PlantUnreadable as unreadable:\n        print(unreadable)\n        return ''\n")
+        gone_474 = CATALOG_BASELINE.replace(f"{UNREADABLE_IMPORT}\n", f"{UNREADABLE_IMPORT}\n{UNREADABLE_IMPORT.replace('plant_unreadable import PlantUnreadable', 'plant_gone import PlantGone')}\n") + (
+            "\n\ndef gone_query(name: str) -> str:\n    try:\n        return _read(name)\n"
+            "    except PlantGone as gone:\n        print(gone)\n        return ''\n")
+        gone = f"{GARDEN}/domain_layer/plant/exception/plant_gone.py"
+        for label, baseline, paths, row, symbols, expected in [
+            ("C1b 기존 #474 catch 의 본문만 바꿈", debt_474, None, "PlantUnavailableException  {s}  <= PlantUnreadable as", [],
+             [("#474", False)]),
+            ("C1 기존 #474 catch 의 번역 대상만 바꿈", debt_474, [f"update {CATALOG_SERVICE}", f"add {CATALOG}/contract/exception/plant_gone_exception.py"],
+             "PlantGoneException  {s}  <= PlantUnreadable as", [f"{CATALOG}/contract/exception/plant_gone_exception.py::PlantGoneException(Exception)"],
+             [("#474", False)]),
+            ("C2 기존 #62 catch 의 본문만 바꿈", debt_62, None, "PlantUnavailableException  {s}  <= Exception", [], [("#62", False)]),
+            ("bare except 는 Exception 출처와 같은 catch", debt_bare, None, "PlantUnavailableException  {s}  <= BaseException as", [],
+             [("#62", False)]),
+            ("C3 다른 함수의 같은 출처 catch 빚(줄 1 → 2 · G2 0)도 후보", other_474, None,
+             "PlantUnavailableException  {s}  <= PlantUnreadable as", [], [("#474", False)]),
+            ("다른 예외를 잡는 catch 의 빚은 낮추지 않음", gone_474, None, "PlantUnavailableException  {s}  <= PlantUnreadable as", [],
+             [("#474", True)]),
+            ("#474 빚은 #62 행을 낮추지 않음", debt_474, None, "PlantUnavailableException  {s}  <= Exception", [], [("#62", True)]),
+        ]:
+            with self.subTest(label=label):
+                self.write(gone, "class PlantGone(Exception):\n    pass\n")
+                self.write(CATALOG_SERVICE, baseline)
+                found, _ = self.forecast([row.format(s=CATALOG_SERVICE)], paths=paths, symbols=symbols)
+                self.assertEqual([(f.rule, f.confirmed) for f in found], expected)
+                for item in found:
+                    self.assertEqual("기존 빚" in item.detail, not item.confirmed, item.detail)
+                    if not item.confirmed:
+                        self.assertIn("물음: 기존 catch 의 기존 빚인가 · 이번에 고치는가", item.detail)
+        # 후상태 대조 — C1b 꼴 구현(같은 catch 본문에 줄을 더함)은 실검사기 #474 줄이 1 → 1 이다.
+        self.write(CATALOG_SERVICE, debt_474)
+        before = self.checker_lines("check-api-error-controller-contract.py", "#474", CATALOG_SERVICE)
+        self.write(CATALOG_SERVICE, debt_474.replace("        print(unreadable)\n", "        print(unreadable)\n        print('again')\n"))
+        self.assertEqual((len(before), self.checker_lines("check-api-error-controller-contract.py", "#474", CATALOG_SERVICE)),
+                         (1, before))
+        # add 창구는 기준선이 없다 — 빚으로 낮추지 않는다.
+        added = f"{CATALOG}/sale_service.py"
+        self.write(added, debt_474)
+        found, _ = self.forecast([f"PlantUnavailableException  {added}  <= PlantUnreadable as"], paths=[f"add {added}"],
+                                 imports=[f"{added}  {UNREADABLE_IMPORT}"])
+        self.assertEqual([(f.rule, f.confirmed) for f in found], [("#474", True)])
+
+
+
+class ForecastScopeTest(GardenFixture):
+    """F4-115 구현 검토 S3 — update 칸 미시뮬레이션 사유의 «… 만 예보» 꼬리는 실제 예보 대상 칸에만 붙는다(검사기 선택 안 ∧
+    선언한 서명 · 번역 출처 칸이 있음)."""
+
+    def test_scope_follows_selection_and_declarations(self) -> None:
+        outside = "lib/garden/domain_layer/domain_service/watering.py"
+        self.write(outside, POLICY_BASELINE)
+        sale = f"{CATALOG}/sale_service.py"
+        self.write(sale, CATALOG_BASELINE)
+        rows = [f"{POLICY}::WateringPolicy", f"{POLICY}::WateringPolicy.is_due(plant: Plant) -> bool",
+                f"{outside}::WateringPolicy", f"{outside}::WateringPolicy.is_due(plant: Plant) -> bool"]
+        plan, errors = pg.parse_spec(catch_spec(
+            [f"update {POLICY}", f"update {outside}", f"update {GARDEN}/domain_layer/domain_service/__init__.py",
+             f"update {CATALOG_SERVICE}", f"update {sale}"], [f"PlantUnavailableException  {CATALOG_SERVICE}  <= PlantUnreadable",
+                                                                f"PlantSoldException  {sale}"], rows))
+        self.assertEqual(errors, [])
+        self.assertEqual(pg.forecast_scope(plan, self.repo), {
+            POLICY: "; 선언한 서명만 예보 · 본문 미검증", CATALOG_SERVICE: "; 번역 출처 칸만 예보 · catch 본문 미검증"})
+        bare, _ = pg.parse_spec(catch_spec([f"update {POLICY}", f"update {sale}"], [f"PlantSoldException  {sale}"]))
+        self.assertEqual(pg.forecast_scope(bare, self.repo), {})
+        report = pg.materialize(self.repo, plan, declared_scope=pg.forecast_scope(plan, self.repo))
+        notes = {line.rsplit(": ", 1)[1]: line for line in report["unsimulated"]}
+        self.assertTrue(notes[POLICY].endswith(f"; 선언한 서명만 예보 · 본문 미검증): {POLICY}"), notes[POLICY])
+        self.assertNotIn("예보", notes[outside])
+        self.assertNotIn("예보", notes[sale])
+
+
+def _equivalence_tree(root: Path, rnd: "random.Random") -> None:
+    """선택 같음 대조용 가짜 사본 — 훑기 선택과 바로 맞추기가 갈릴 수 있는 꼴을 섞는다: `src/` · `build/` · `dist/` · `__pycache__/` ·
+    `.hidden/` · `generated/` · `migrations/` 조상 · 점 이름 BC · BC 안의 `application` · 승격 본체와 부품 · 하위 폴더 · 대소문자
+    `Application` · 조상 링크 폴더 · `application` 링크 · BC 링크 · 창구 아래 링크 폴더 · 저장소 칸 밖 이름."""
+    def put(rel: str) -> None:
+        target = root / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("class R:\n    def ok(self, x: int) -> bool:\n        return True\n", encoding="utf-8")
+
+    for top in ("", "src/", "build/", "a/b/", ".hidden/", "__pycache__/", "dist/x/", "generated/", "x/migrations/"):
+        for bc in ("garden", ".dot", "plant_bc"):
+            if rnd.random() >= 0.6:
+                continue
+            base = f"{top}application/{bc}"
+            put(f"{base}/domain_layer/domain_service/rule.py")
+            put(f"{base}/domain_layer/domain_service/__init__.py")
+            put(f"{base}/domain_layer/plant/plant_repository.py")
+            put(f"{base}/domain_layer/plant/other_repository.py")
+            put(f"{base}/driving_layer/open_host_service/catalog/catalog_service.py")
+            put(f"{base}/driving_layer/open_host_service/catalog/catalog_helper.py")
+            if rnd.random() < 0.5:
+                put(f"{base}/domain_layer/domain_service/body/body.py")
+                put(f"{base}/domain_layer/domain_service/body/part.py")
+                put(f"{base}/driving_layer/open_host_service/sale/sale_service/sale_service.py")
+            if rnd.random() < 0.3:
+                put(f"{base}/domain_layer/domain_service/sub/deep.py")
+                put(f"{base}/domain_layer/domain_service/x_repository.py")
+                put(f"{base}/domain_layer/shared_value_object/y_repository.py")
+                put(f"{base}/driving_layer/open_host_service/a/b/deep_service.py")
+            if rnd.random() < 0.3:
+                put(f"{base}/application/inner/domain_layer/domain_service/nested.py")
+                put(f"{base}/application/inner/domain_layer/leaf/leaf_repository.py")
+                put(f"{base}/application/inner/driving_layer/open_host_service/inner_service.py")
+    if rnd.random() < 0.7:
+        put("Application/garden/domain_layer/domain_service/caps.py")
+        put("Application/garden/domain_layer/plant/plant_repository.py")
+    if rnd.random() < 0.7 and (root / "src").is_dir():
+        (root / "linked").symlink_to("src", target_is_directory=True)
+    if rnd.random() < 0.5 and (root / "application").is_dir():
+        (root / "alias_app").mkdir()
+        (root / "alias_app" / "application").symlink_to("../application", target_is_directory=True)
+    if rnd.random() < 0.5 and (root / "application" / "garden").is_dir():
+        (root / "application" / "garden_link").symlink_to("garden", target_is_directory=True)
+    ohs = root / "application" / "garden" / "driving_layer" / "open_host_service"
+    if rnd.random() < 0.5 and ohs.is_dir() and (root / "src").is_dir():
+        (ohs / "via_link").symlink_to(root / "src", target_is_directory=True)
+
+
+class SelectionEquivalenceTest(unittest.TestCase):
+    """F4-115 구현 검토 I2 · S2 — 선언 예보의 대상 선택(계획 경로로 BC 를 바로 맞춤)이 검사기 선택(사본 전체 훑기)과 같다:
+    도메인 서비스(`check-domain-model.py`) · 저장소(`check-transaction-boundary.py` — F4-73) · OHS 창구(`check-api-error-controller-contract.py`
+    트리 슬라이스). 시드 고정 무작위 트리에서 후보 꼴마다 다름 0 을 단언한다."""
+
+    SEEDS: "range" = range(30)
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.dm = pg._bundled_checker(pg.DOMAIN_MODEL_CHECKER, "_pregate_domain_model")
+        cls.tx = pg._transaction_checker()
+        cls.api = pg._bundled_checker(pg.API_ERROR_CHECKER, "_pregate_api_error_contract")
+
+    def walked(self, root: Path) -> "dict[str, set[tuple[str, ...]]]":
+        """검사기 선택 그대로(사본 전체 훑기)."""
+        sel: "dict[str, set[tuple[str, ...]]]" = {"ds": set(), "repo": set(), "ohs": set()}
+        for bc in self.dm.vocab.bc_dirs(root):
+            ds = bc / "domain_layer" / "domain_service"
+            if self.dm._has_adoption_signal(bc) and ds.is_dir():
+                sel["ds"] |= {p.relative_to(root).parts for p in self.dm.checker_target.slot_glob(ds, "*.py")
+                              if p.name != "__init__.py"}
+        sink = self.tx.Findings(defer=True)
+        for bc in self.tx._find_bcs(root):
+            if self.tx._has_adoption_signal(bc):
+                sel["repo"] |= {p.relative_to(root).parts for p in self.tx._check_repository_files(root, bc, sink)}
+        for bc in self.api._tree_bcs2(root):
+            ohs = bc / "driving_layer" / "open_host_service"
+            if ohs.is_dir():
+                sel["ohs"] |= {p.relative_to(root).parts for p in ohs.rglob("*_service.py")}
+        return sel
+
+    def test_direct_selection_equals_the_checker_walk(self) -> None:
+        sink = self.tx.Findings(defer=True)
+        counts = {"ds": 0, "repo": 0, "ohs": 0}
+        with tempfile.TemporaryDirectory(prefix="pregate-equiv-") as tmp:
+            for seed in self.SEEDS:
+                root = Path(tmp) / f"t{seed}"
+                root.mkdir()
+                _equivalence_tree(root, random.Random(seed))
+                walked = self.walked(root)
+                for dirpath, _dirs, files in os.walk(root, followlinks=True):
+                    for name in files:
+                        parts = (Path(dirpath) / name).relative_to(root).parts
+                        for kind, shaped, direct in (
+                                ("ds", pg._domain_service_slot_shape(parts),
+                                 lambda: pg._domain_service_selected(self.dm, root, parts)),
+                                ("repo", name.endswith("_repository.py"),
+                                 lambda: pg._repository_selected(self.tx, root, parts, sink)),
+                                ("ohs", pg._ohs_catch_slot(parts), lambda: pg._ohs_selected(self.api, root, parts))):
+                            if not shaped:
+                                continue
+                            counts[kind] += 1
+                            with self.subTest(seed=seed, kind=kind, path="/".join(parts)):
+                                self.assertEqual(direct(), parts in walked[kind])
+        self.assertTrue(all(n > 200 for n in counts.values()), counts)
+
+    def test_selection_does_not_walk_the_copy(self) -> None:
+        # 대상 칸이 있어도 사본 전체 훑기(`bc_dirs` · `_find_bcs` · `_tree_bcs2`)를 부르지 않는다 — 저장소 예보의 표준 라이브러리
+        # 가림 판단만 그것을 물을 때 한 번 훑는다(결과는 미리 잰 집합과 같다).
+        with tempfile.TemporaryDirectory(prefix="pregate-nowalk-") as tmp:
+            root = Path(tmp)
+            _equivalence_tree(root, random.Random(7))
+            walk = mock.Mock(side_effect=AssertionError("사본 전체 훑기"))
+            with mock.patch.object(self.dm.vocab, "bc_dirs", walk), mock.patch.object(self.tx, "_find_bcs", walk), \
+                    mock.patch.object(self.api, "_tree_bcs2", walk):
+                self.assertTrue(pg._domain_service_selected(self.dm, root, ("application", "garden", "domain_layer",
+                                                                            "domain_service", "rule.py"))
+                                or not (root / "application/garden").is_dir())
+                pg._repository_selected(self.tx, root, ("application", "garden", "domain_layer", "plant",
+                                                        "plant_repository.py"), self.tx.Findings(defer=True))
+                pg._ohs_selected(self.api, root, ("application", "garden", "driving_layer", "open_host_service", "catalog",
+                                                  "catalog_service.py"))
+            calls: list[int] = []
+            real_find = self.tx._find_bcs
+            with mock.patch.object(self.tx, "_find_bcs", side_effect=lambda r: calls.append(1) or real_find(r)):
+                stdlib = pg._ShadowAwareStdlib(self.tx, root)
+                self.assertEqual(calls, [])
+                self.assertIn("uuid", stdlib)
+                self.assertIn("json", stdlib)
+                self.assertEqual(calls, [1])
 
 
 if __name__ == "__main__":
