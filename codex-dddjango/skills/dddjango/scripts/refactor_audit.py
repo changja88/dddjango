@@ -3796,7 +3796,9 @@ class DepsScan:
             for i in range(1, len(parts) + 1):
                 self.modules.add(".".join(parts[:i]))
         self.labels: "dict[str, str]" = self._labels()
-        self.auth_label: "str | None" = self._auth_label()
+        self.auth_label: "str | None"
+        self.auth_model: "str | None"
+        self.auth_label, self.auth_model = self._auth_user_model()
         self.refs: "list[dict]" = []
         self.parse_errors: "list[str]" = []
         self.unparsed: "set[str]" = set()                 # 읽기 · 파싱 못 한 .py(parse_errors 의 파일)
@@ -3834,8 +3836,13 @@ class DepsScan:
         return self._texts[rel]
 
     def _labels(self) -> "dict[str, str]":
+        """label → BC · 곁에 `app_dirs`(BC → label 을 선언한 apps.py 폴더)와 `label_dirs`(label → 그 앱 폴더 — 그 label 을 선언한
+        apps.py 폴더와, 같은 파일 AppConfig `name` 이 가리키는 폴더가 실재하면 그것도)를 모은다(합성 경로의 모델 · 마이그레이션 자리)."""
         labels: "dict[str, str]" = {}
-        self.app_dirs: "dict[str, set[str]]" = {}           # BC → label 을 선언한 apps.py 폴더(합성 경로가 없을 때의 모델 · 마이그레이션 자리)
+        self.app_dirs: "dict[str, set[str]]" = {}
+        self.label_dirs: "dict[str, set[str]]" = {}
+        dirs: "set[str]" = {"/".join(f.split("/")[:i]) for f in self.files if f.startswith("application/")
+                            for i in range(2, f.count("/") + 1)}
         for f in self.py:
             if not (f.startswith("application/") and f.endswith("/apps.py")):
                 continue
@@ -3844,25 +3851,32 @@ class DepsScan:
                 tree = ast.parse(text or "")
             except SyntaxError:
                 continue
+            found: "dict[str, list[str]]" = {"label": [], "name": []}
             for node in ast.walk(tree):
                 if isinstance(node, (ast.Assign, ast.AnnAssign)):
                     tgt = node.targets[0] if isinstance(node, ast.Assign) else node.target
-                    if isinstance(tgt, ast.Name) and tgt.id == "label" and isinstance(node.value, ast.Constant) \
+                    if isinstance(tgt, ast.Name) and tgt.id in found and isinstance(node.value, ast.Constant) \
                             and isinstance(node.value.value, str):
-                        labels[node.value.value] = f.split("/")[1]
-                        self.app_dirs.setdefault(f.split("/")[1], set()).add(f.rsplit("/", 1)[0])
+                        found[tgt.id].append(node.value.value)
+            folder: str = f.rsplit("/", 1)[0]
+            named: "set[str]" = {n.replace(".", "/") for n in found["name"]} & dirs
+            for label in found["label"]:
+                labels[label] = f.split("/")[1]
+                self.app_dirs.setdefault(f.split("/")[1], set()).add(folder)
+                self.label_dirs.setdefault(label, set()).update({folder} | named)
         for bc in self.bcs:
             labels.setdefault(bc, bc)
         return labels
 
-    def _auth_label(self) -> "str | None":
+    def _auth_user_model(self) -> "tuple[str | None, str | None]":
+        """설정 파일의 AUTH_USER_MODEL `"<label>.<모델>"` → (label, 모델 이름)."""
         for f in self.py:
             if f.startswith("application/") or "settings" not in f:
                 continue
-            m = re.search(r"AUTH_USER_MODEL[^=\n]*=\s*[\"']([a-z_]+)\.", self._text(f) or "")
+            m = re.search(r"AUTH_USER_MODEL[^=\n]*=\s*[\"']([a-z_]+)\.([A-Za-z_][A-Za-z0-9_]*)", self._text(f) or "")
             if m:
-                return m.group(1)
-        return None
+                return m.group(1), m.group(2)
+        return None, None
 
     def _owner(self, rel: str) -> "tuple[str | None, str]":
         parts: "list[str]" = rel.split("/")
@@ -3893,15 +3907,16 @@ class DepsScan:
                     docs.add(id(st.value))
         mods: "set[str]" = self.imports.setdefault(f, set())
 
-        def emit(node: ast.AST, kind: str, tp: "list[str]", name: "str | None" = None) -> None:
-            """다른 BC 를 가리키는 참조만 싣는다(주인이 같으면 버린다) — BC 밖 파일이 부르면 `surface_in`."""
+        def emit(node: ast.AST, kind: str, tp: "list[str]", name: "str | None" = None, label: "str | None" = None) -> None:
+            """다른 BC 를 가리키는 참조만 싣는다(주인이 같으면 버린다) — BC 밖 파일이 부르면 `surface_in`. `name` 은 그 모듈에서 들인
+            이름(이름 사슬의 씨앗) · `label` 은 합성 경로(모델 라벨 · 마이그레이션 의존 · AUTH_USER_MODEL)의 Django 앱 label."""
             if not (tp and tp[0] == "application" and len(tp) >= 2 and tp[1] in self.bcs) or tp[1] == src_owner:
                 return
             dst_spot: str = _spot(tuple(tp[2:]))
             category: str = _classify(src_spot, dst_spot, kind) if src_bc else "surface_in"
             self.refs.append({"file": f, "line": getattr(node, "lineno", 0), "src": src_owner, "src_spot": src_spot,
                               "dst": tp[1], "dst_spot": dst_spot, "kind": kind, "category": category,
-                              "target": ".".join(tp), "parts": list(tp), "name": name})
+                              "target": ".".join(tp), "parts": list(tp), "name": name, "label": label})
 
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
@@ -3928,7 +3943,8 @@ class DepsScan:
                     if m.group(1) in self.bcs:
                         tp = ["application", m.group(1)] + [x for x in m.group(2).split(".") if x]
                         mods.add(".".join(tp))
-                        emit(node, "string_dotted", tp)
+                        cut: int = next((i for i in range(len(tp), 1, -1) if ".".join(tp[:i]) in self.modules), 0)
+                        emit(node, "string_dotted", tp, tp[cut] if 2 <= cut < len(tp) else None)   # 가장 긴 모듈 뒤 첫 성분 = 이름
                 for m in _SLASH.finditer(s):
                     if m.group(1) in self.bcs:
                         emit(node, "string_path", ["application", m.group(1)]
@@ -3936,22 +3952,27 @@ class DepsScan:
                 lm = _LABEL_MODEL.match(s)
                 if lm and lm.group(1) in self.labels and (src_spot == "migration" or lm.group(2)[0].isupper()):
                     lab: str = self.labels[lm.group(1)]
-                    emit(node, "model_label", ["application", lab, "driven_layer", f"django_{lab}", "models"])
+                    emit(node, "model_label", ["application", lab, "driven_layer", f"django_{lab}", "models"], lm.group(2),
+                         lm.group(1))
             elif isinstance(node, ast.Call) and getattr(node.func, "attr", getattr(node.func, "id", "")) == "get_model" \
                     and len(node.args) >= 2 and isinstance(node.args[0], ast.Constant) and node.args[0].value in self.labels:
                 lab = self.labels[node.args[0].value]
-                emit(node, "model_label", ["application", lab, "driven_layer", f"django_{lab}", "models"])
+                model = node.args[1].value if isinstance(node.args[1], ast.Constant) and isinstance(node.args[1].value, str) else None
+                emit(node, "model_label", ["application", lab, "driven_layer", f"django_{lab}", "models"], model,
+                     node.args[0].value)
             elif isinstance(node, ast.Tuple) and len(node.elts) == 2 and all(
                     isinstance(e, ast.Constant) and isinstance(e.value, str) for e in node.elts):
                 lab0, name = node.elts[0].value, node.elts[1].value  # type: ignore[attr-defined]
                 if lab0 in self.labels and _MIGRATION_NAME.match(name):
                     lab = self.labels[lab0]
-                    emit(node, "migration_dep", ["application", lab, "driven_layer", f"django_{lab}", "migrations", name])
+                    emit(node, "migration_dep", ["application", lab, "driven_layer", f"django_{lab}", "migrations", name],
+                         label=lab0)
             elif self.auth_label and ((isinstance(node, ast.Attribute) and node.attr == "AUTH_USER_MODEL")
                                       or (isinstance(node, ast.Call) and isinstance(node.func, (ast.Name, ast.Attribute))
                                           and getattr(node.func, "id", getattr(node.func, "attr", "")) == "get_user_model")):
                 lab = self.labels.get(self.auth_label, self.auth_label)
-                emit(node, "auth_user_model", ["application", lab, "driven_layer", f"django_{lab}", "models"])
+                emit(node, "auth_user_model", ["application", lab, "driven_layer", f"django_{lab}", "models"], self.auth_model,
+                     self.auth_label)
 
     def _surface_blind(self) -> "dict[str, list[str]]":
         """API 표면마다(설계 :1275) — api_controller 밖 API 표면(urls.py path() · Router() · NinjaAPI · add_router · 함수형 경로
@@ -5007,14 +5028,19 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan", w
 FACE_CHAIN_CAP: int = 2000                                  # 공급 면 이름 사슬 걸음 상한 — 닿으면 그 BC 전체를 면으로(안전 쪽)
 
 
-def _defines(tree: ast.Module, name: str) -> bool:
+def _same_name(a: str, b: str, fold: bool) -> bool:
+    """이름이 같은가 — `fold` 면 대소문자 무시(Django 모델 이름은 지연 참조 `"<label>.<모델>"` 에서 대소문자를 가리지 않는다)."""
+    return a == b or (fold and a.lower() == b.lower())
+
+
+def _defines(tree: ast.Module, name: str, fold: bool = False) -> bool:
     """모듈 최상위가 그 이름을 정의하는가 — class · def, 또는 이름을 가리키지 않는 값(상수 · 리터럴)을 대입. `X = impl.X` 같은 다시
     내보내기 대입 · `try` 블록 안 import 는 정의가 아니다."""
     for st in tree.body:
-        if isinstance(st, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and st.name == name:
+        if isinstance(st, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and _same_name(st.name, name, fold):
             return True
         tgts: "list[ast.expr]" = st.targets if isinstance(st, ast.Assign) else [st.target] if isinstance(st, ast.AnnAssign) else []
-        if any(isinstance(t, ast.Name) and t.id == name for t in tgts) and getattr(st, "value", None) is not None \
+        if any(isinstance(t, ast.Name) and _same_name(t.id, name, fold) for t in tgts) and getattr(st, "value", None) is not None \
                 and not any(isinstance(n, (ast.Name, ast.Attribute)) for n in ast.walk(st.value)):  # type: ignore[arg-type]
             return True
     return False
@@ -5026,11 +5052,13 @@ def _supplier_faces(scan: "DepsScan", bc: str, suppliers: "set[str]") -> "tuple[
 
     ① 그 BC 의 창구 · 창구 계약 · 발행 이벤트 자리 파일 전부(리팩토링이 다른 창구로 옮겨 탈 수 있다 — 설계 2판 B2)
     ② 대상 파일(운영 · 시험 · 마이그레이션)의 참조가 가리키는 그 BC 파일 — import 경로는 긴 쪽부터 실재 파일 · 폴더(둘 다 있으면 둘 다)
-       · 합성 경로(모델 라벨 · get_model · AUTH_USER_MODEL · 마이그레이션 의존)는 정확히 있을 때만 그 자리, 아니면 그 label 을 선언한
-       apps.py 폴더의 models · migrations, 그것도 없으면 그 BC 전체 · 못 풀면 그 BC 전체
-    ③ 대상이 이름으로 import 한 것은 그 이름을 정의한 모듈까지(합성 루트 제외) — 최상위에 정의(class · def · 상수 대입)가 없으면 그
-       이름을 들인 import(블록 안 포함)를, 그것도 없으면(대입 다시 내보내기 등) 그 모듈의 같은 BC import 를 모두 따라간다 · import 만으로
-       된 파일(파사드)은 그 import 를 모두 따라감
+       · 합성 경로(모델 라벨 · get_model · AUTH_USER_MODEL · 마이그레이션 의존)는 그 label 의 앱 폴더(label 을 선언한 apps.py 폴더 ·
+       AppConfig `name` 폴더)의 models · migrations(없으면 그 앱 폴더 전체), label 의 앱 폴더를 모르면 지어낸 경로가 정확히 있을 때만
+       그 자리 · 아니면 그 BC 의 apps.py 폴더 몫 · 그것도 없으면 그 BC 전체 · 못 풀면 그 BC 전체
+    ③ 대상이 이름으로 들인 것(from-import 이름 · 점 경로 문자열의 가장 긴 모듈 뒤 첫 성분 · 모델 이름)은 그 이름을 정의한 모듈까지
+       (면이 폴더면 그 `__init__.py` 에서 시작 · BC 뿌리 패키지 `application.<bc>` 는 그 `__init__.py` · 합성 루트 제외) — 최상위에
+       정의(class · def · 상수 대입)가 없으면 그 이름을 들인 import(블록 안 포함)를, 그것도 없으면(대입 다시 내보내기 등) 그 모듈의
+       같은 BC import 를 모두 따라간다 · import 만으로 된 파일(파사드)은 그 import 를 모두 따라감
     ④ 대상 운영 코드(시험 아님)의 HTTP 호출 — 문서 문자열 밖 문자열 상수에 맞은 접두의 선언 파일과 그 폴더 · `driving_layer/api/`
     ⑤ 그 BC 전체 — 그 BC 자신의 HTTP 표면 관찰 못 함 사유 · 그 BC 의 읽거나 파싱하지 못한 파일(대상 파일이면 모든 공급 BC) · 따라가야
        할 면 파일을 못 읽음 · 이름 사슬 상한(FACE_CHAIN_CAP)에 닿음."""
@@ -5052,15 +5080,22 @@ def _supplier_faces(scan: "DepsScan", bc: str, suppliers: "set[str]") -> "tuple[
         return [f"application/{parts[1]}/"]
 
     def synth(r: dict) -> "list[str]":
+        """합성 경로 → 그 label 의 앱 폴더(label 을 선언한 apps.py 폴더 · AppConfig `name` 폴더)의 `models` · `migrations/<이름>` —
+        거기 없으면 그 앱 폴더 전체. label 의 앱 폴더를 모르면(apps.py 에 label 없음) 지어낸 경로가 정확히 있을 때만 그 자리 · 아니면
+        그 BC 의 apps.py 폴더 몫 · 그것도 없으면 그 BC 전체."""
+        tail: "list[str]" = r["parts"][4:]
+
+        def at(d: str) -> "list[str]":
+            if tail and tail[0] == "models":
+                return exact(f"{d}/models")
+            return ((exact(f"{d}/migrations/{tail[1]}") if len(tail) > 1 else []) or exact(f"{d}/migrations")) if tail else []
+        own: "list[str]" = sorted(scan.label_dirs.get(r.get("label") or "", set()))
+        if own:
+            return [x for d in own for x in at(d)] or [f"{d}/" for d in own]
         got: "list[str]" = exact("/".join(r["parts"]))
         if got:
             return got
-        tail: "list[str]" = r["parts"][4:]
-        for d in sorted(scan.app_dirs.get(r["dst"], set())):
-            if tail and tail[0] == "models":
-                got += exact(f"{d}/models")
-            elif tail:
-                got += (exact(f"{d}/migrations/{tail[1]}") if len(tail) > 1 else []) or exact(f"{d}/migrations")
+        got = [x for d in sorted(scan.app_dirs.get(r["dst"], set())) for x in at(d)]
         return got or [f"application/{r['dst']}/"]
 
     def tree_of(f: str) -> "ast.Module | None":
@@ -5092,7 +5127,21 @@ def _supplier_faces(scan: "DepsScan", bc: str, suppliers: "set[str]") -> "tuple[
         return out
 
     def same_bc(parts: "list[str]", s: str) -> bool:
-        return len(parts) >= 3 and parts[0] == "application" and parts[1] == s and _spot(tuple(parts[2:])) != "composition"
+        """같은 공급 BC 의 모듈(BC 뿌리 패키지 `application.<bc>` 포함 · 합성 루트 제외)."""
+        return len(parts) >= 2 and parts[0] == "application" and parts[1] == s and (
+            len(parts) == 2 or _spot(tuple(parts[2:])) != "composition")
+
+    def resolve_in(parts: "list[str]") -> "list[str]":
+        """사슬 · 파사드가 따라간 같은 BC 모듈 → 면 자리 — BC 뿌리 패키지는 그 `__init__.py`(없으면 그 BC 전체)."""
+        if len(parts) == 2:
+            root: str = f"application/{parts[1]}/__init__.py"
+            return [root] if root in files else [f"application/{parts[1]}/"]
+        return resolve(parts)
+
+    def seeds(s: str, got: "list[str]", name: str, fold: bool) -> "list[tuple[str, str, str, bool]]":
+        """이름 사슬 씨앗 — 면 파일(.py)이면 그 파일 · 면 폴더면 그 `__init__.py` 에서 시작한다."""
+        return [(s, g if g.endswith(".py") else g + "__init__.py", name, fold) for g in got
+                if g.endswith(".py") or g + "__init__.py" in files]
 
     for f in sorted(set(scan.unread) | scan.unparsed):     # ⑤ 못 읽은 파일 — 그 파일이 속한 BC 만(대상 파일이면 모든 공급 BC)
         p: "list[str]" = f.split("/")
@@ -5104,17 +5153,17 @@ def _supplier_faces(scan: "DepsScan", bc: str, suppliers: "set[str]") -> "tuple[
     faces: "dict[str, set[str]]" = {s: set() for s in suppliers}
     for s in suppliers:
         faces[s] |= {f for f in files if f.startswith(f"application/{s}/") and _spot(tuple(f.split("/")[2:])) in WINDOW_SPOTS}
-    names: "list[tuple[str, str, str]]" = []               # (BC, 파일, 이름) — 이름 사슬을 따라갈 것
+    names: "list[tuple[str, str, str, bool]]" = []         # (BC, 파일, 이름, 대소문자 무시) — 이름 사슬을 따라갈 것
     for r in scan.refs:
         if r["src"] != bc or r["dst"] not in suppliers:
             continue
         got = synth(r) if r["kind"] in ("model_label", "migration_dep", "auth_user_model") else resolve(r["parts"])
         faces[r["dst"]].update(got)
         if r.get("name"):
-            names += [(r["dst"], g, r["name"]) for g in got if g.endswith(".py")]
+            names += seeds(r["dst"], got, r["name"], r["kind"] in ("model_label", "auth_user_model"))
     seen: "set[tuple[str, str]]" = set()
     while names:                                           # ③ 이름 사슬
-        s, f, name = names.pop()
+        s, f, name, fold = names.pop()
         if (f, name) in seen or s in widened:
             continue
         if len(seen) >= FACE_CHAIN_CAP:
@@ -5125,24 +5174,21 @@ def _supplier_faces(scan: "DepsScan", bc: str, suppliers: "set[str]") -> "tuple[
         if tree is None:
             whole(s, f"면 파일 {f} 를 읽거나 파싱하지 못함")
             continue
-        if _defines(tree, name):
+        if _defines(tree, name, fold):
             continue                                       # 정의 모듈 — 사슬 끝
         imports: "list[ast.AST]" = [st for st in ast.walk(tree) if isinstance(st, (ast.Import, ast.ImportFrom))]
         # 그 이름을 들인 import(블록 안 · 별칭 · `*` 포함) → (모듈 성분, 다음 이름 — 모듈을 들였으면 빈 글 = 그 파일이 면 · 사슬 끝)
         follow: "list[tuple[list[str], str]]" = [(t, "" if mod else name if orig == "*" else orig)
                                                  for st in imports for t, orig, bound, mod in import_targets(f, st)
-                                                 if orig == "*" or bound == name]
+                                                 if orig == "*" or _same_name(bound, name, fold)]
         if not follow:                                     # 없으면 같은 BC import 모두(대입 다시 내보내기 `X = impl.X` 등)
             follow = [(t, name) for st in imports for t, _o, _b, _m in import_targets(f, st)]
         for t, nxt in follow:
             if not same_bc(t, s):
                 continue
-            for g in resolve(t):
-                faces[s].add(g)
-                if nxt and g.endswith(".py"):
-                    names.append((s, g, nxt))
-                elif nxt and g + "__init__.py" in files:
-                    names.append((s, g + "__init__.py", nxt))
+            got = resolve_in(t)
+            faces[s].update(got)
+            names += seeds(s, got, nxt, fold) if nxt else []
     frontier: "list[tuple[str, str]]" = [(s, p if not p.endswith("/") else p + "__init__.py") for s in faces for p in faces[s]
                                          if p.endswith((".py", "/"))]
     visited: "set[str]" = set()
@@ -5162,7 +5208,7 @@ def _supplier_faces(scan: "DepsScan", bc: str, suppliers: "set[str]") -> "tuple[
         for st in tree.body:
             for t, _o, _b, _m in import_targets(f, st):
                 if same_bc(t, s):
-                    for g in resolve(t):
+                    for g in resolve_in(t):
                         faces[s].add(g)
                         frontier += [(s, g)] if g.endswith(".py") else [(s, g + "__init__.py")]
 

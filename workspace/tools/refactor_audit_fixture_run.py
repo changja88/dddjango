@@ -3911,6 +3911,98 @@ def deps_web_unit_cases(fails: "list[str]", td: Path) -> None:
            "예보 보류 0")
 
 
+def deps_face_review_cases(fails: "list[str]", td: Path) -> None:
+    """구현 검토(F4-118) 중요 I-1 · I-2 — 이름 사슬은 폴더 면(그 `__init__.py`) · 점 경로 문자열(가장 긴 모듈 뒤 첫 성분) · BC 뿌리
+    패키지(`from .. import X`)에서도 정의 모듈까지 · 모델 이름도 · 합성 경로는 지어낸 `django_<BC>` 가 아니라 그 label 의 앱 폴더."""
+    impl: str = "application/base/application_layer/thing_impl.py"
+    app_layer: "dict[str, str]" = {"application/base/application_layer/__init__.py": "",
+                                   impl: "class ThingService:\n    pass\n\n\nclass Thing:\n    pass\n"}
+    ohs_dot: str = FACE_OHS.replace("/", ".")
+    uses_svc: str = f"from {ohs_dot} import ThingService\n\n\nS = ThingService\n"
+    for tag, init, label in (
+            ("ce1", "import logging\n\nfrom application.base.application_layer.thing_impl import ThingService\n\n"
+                    "logger = logging.getLogger(__name__)\n", "창구 패키지 __init__ 이 다른 층에서 다시 내보냄(파사드 아님 — 대입 있음)"),
+            ("ce1b", "from application.base.application_layer.thing_impl import ThingService\n",
+             "대조 — 창구 패키지 __init__ 이 import 만(파사드)")):
+        ln = FaceLane(td, f"r-{tag}", {**app_layer, f"{FACE_OHS}/__init__.py": init,
+                                       "application/demo/domain_layer/uses_svc.py": uses_svc})
+        ln.sup([impl], **FACE_TRUST)
+        ln.dispatch()
+        expect(fails, f"RD-F118 {tag.upper()} 대상이 창구 «패키지»에서 이름을 들임 · {label} · 실행이 정의 모듈만 고침 → 공급 면 겹침(이름 사슬은 "
+               f"폴더 면의 __init__.py 에서 시작)", ln.dp(tag), 2, f"공급 면 {impl}")
+    ln = FaceLane(td, "r-ce1c", {**app_layer, "application/base/domain_layer/__init__.py":
+                                 "from application.base.application_layer.thing_impl import Thing\n\nVERSION = 1\n",
+                                 "application/demo/domain_layer/uses_thing.py":
+                                     "from application.base.domain_layer import Thing\n\n\nT = Thing\n"})
+    ln.sup([impl], **FACE_TRUST)
+    ln.dispatch()
+    expect(fails, "RD-F118 CE1C 대상이 domain_layer 패키지에서 이름을 들임 · __init__ 이 다른 층에서 다시 내보냄 → 공급 면 겹침", ln.dp("ce1c"),
+           2, f"공급 면 {impl}")
+    ln = FaceLane(td, "r-ce1d", {**app_layer, "application/base/__init__.py":
+                                 "from application.base.application_layer.thing_impl import Thing\n",
+                                 "application/base/domain_layer/__init__.py": "",
+                                 "application/base/domain_layer/facade.py": "from .. import Thing\n\nX = 1\n",
+                                 "application/demo/domain_layer/uses.py":
+                                     "from application.base.domain_layer.facade import Thing\n\n\nT = Thing\n"})
+    ln.sup([impl], **FACE_TRUST)
+    ln.dispatch()
+    expect(fails, "RD-F118 CE1D `from .. import Thing`(BC 뿌리 패키지 application.base 가 다시 내보냄) → 사슬이 그 __init__.py 로 이어짐 → "
+           "공급 면 겹침", ln.dp("ce1d"), 2, f"공급 면 {impl}")
+    window: "dict[str, str]" = {**app_layer, f"{FACE_OHS}/svc_window.py":
+                                "from application.base.application_layer.thing_impl import ThingService\n\nX = 1\n"}
+    for tag, wiring, label in (
+            ("ce6", f"SERVICE: str = \"{ohs_dot}.svc_window.ThingService\"\n", "점 경로 문자열(import_string 류)"),
+            ("ce6b", f"from {ohs_dot}.svc_window import ThingService\n\n\nSERVICE = ThingService\n", "대조 — 같은 것을 from-import ")):
+        ln = FaceLane(td, f"r-{tag}", {**window, "application/demo/composition_root/wiring.py": wiring})
+        ln.sup([impl], **FACE_TRUST)
+        ln.dispatch()
+        expect(fails, f"RD-F118 {tag.upper()} 대상 합성 루트가 {label}로 창구 모듈의 이름을 가리킴 · 그 모듈이 다른 층에서 다시 내보냄 → "
+               f"공급 면 겹침(가장 긴 모듈 뒤 첫 성분이 이름)", ln.dp(tag), 2, f"공급 면 {impl}")
+    apps: str = "from django.apps import AppConfig\n\n\nclass C(AppConfig):\n    name = \"{name}\"\n    label = \"{label}\"\n"
+    drv: str = "application/base/driven_layer"
+    two_apps: "dict[str, str]" = {
+        f"{drv}/django_base/__init__.py": "",
+        f"{drv}/django_base/apps.py": apps.format(name=f"{drv.replace('/', '.')}.django_base", label="base"),
+        f"{drv}/django_base/models.py": "class ThingModel:\n    pass\n",
+        f"{drv}/django_base/migrations/0001_initial.py": "X: int = 1\n",
+        f"{drv}/django_base_audit/__init__.py": "",
+        f"{drv}/django_base_audit/apps.py": apps.format(name=f"{drv.replace('/', '.')}.django_base_audit", label="base_audit"),
+        f"{drv}/django_base_audit/models.py": "class AuditModel:\n    pass\n",
+        f"{drv}/django_base_audit/migrations/0001_initial.py": "Y: int = 1\n"}
+    ln = FaceLane(td, "r-ce2", {**two_apps, "application/demo/driven_layer/django_demo/models.py": "FK: str = \"base_audit.AuditModel\"\n"})
+    ln.sup([f"{drv}/django_base_audit/models.py"], **FACE_TRUST)
+    ln.dispatch()
+    expect(fails, "RD-F118 CE2 한 BC 에 Django 앱 둘(label base · base_audit) · 대상이 \"base_audit.AuditModel\" · 실행이 그 앱 모델만 고침 → "
+           "그 label 의 앱 폴더 · 공급 면 겹침", ln.dp("ce2"), 2, f"공급 면 {drv}/django_base_audit/models.py")
+    ln.sup([f"{drv}/django_base/models.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 CE2n 같은 · 실행이 다른 앱(label base) 모델만 고침 → 면 밖(지어낸 django_<BC> 경로를 면으로 세지 않음) → 뺌",
+           ln.dp("ce2n"), 0, f"뺌: 이 작업 트리 .dddjango/{FACE_SUP} — 공급 BC base · 고침 1 파일 {FACE_DROP}")
+    ln = FaceLane(td, "r-ce2b", {**two_apps, "application/demo/driven_layer/django_demo/migrations/0001_initial.py":
+                                 "dependencies = [(\"base_audit\", \"0001_initial\")]\n"})
+    ln.sup([f"{drv}/django_base_audit/migrations/0001_initial.py"], **FACE_TRUST)
+    ln.dispatch()
+    expect(fails, "RD-F118 CE2B 대상 마이그레이션이 (\"base_audit\", \"0001_initial\") 에 의존 · 두 앱 다 0001_initial · 실행이 그 앱 것을 고침 → "
+           "공급 면 겹침", ln.dp("ce2b"), 2, f"공급 면 {drv}/django_base_audit/migrations/0001_initial.py")
+    ln.sup([f"{drv}/django_base/migrations/0001_initial.py"], **FACE_TRUST)
+    expect(fails, "RD-F118 CE2Bn 같은 · 실행이 다른 앱의 같은 이름 마이그레이션만 고침 → 면 밖 → 뺌", ln.dp("ce2bn"), 0,
+           f"뺌: 이 작업 트리 .dddjango/{FACE_SUP}")
+    model_split: "dict[str, str]" = {
+        f"{drv}/django_base/__init__.py": "",
+        f"{drv}/django_base/apps.py": apps.format(name=f"{drv.replace('/', '.')}.django_base", label="base"),
+        f"{drv}/django_base/models.py": "from .thing_model import ThingModel\n\nALL_MODELS = [ThingModel]\n",
+        f"{drv}/django_base/thing_model.py": "class ThingModel:\n    pass\n"}
+    for tag, src, label in (
+            ("m1", {"application/demo/driven_layer/django_demo/models.py": "FK: str = \"base.ThingModel\"\n"},
+             "대상이 \"base.ThingModel\""),
+            ("m2", {"application/demo/driven_layer/django_demo/migrations/0002_fk.py": "TO: str = \"base.thingmodel\"\n"},
+             "대상 마이그레이션이 소문자 \"base.thingmodel\"(모델 이름 대소문자 무시)")):
+        ln = FaceLane(td, f"r-{tag}", {**model_split, **src})
+        ln.sup([f"{drv}/django_base/thing_model.py"], **FACE_TRUST)
+        ln.dispatch()
+        expect(fails, f"RD-F118 {tag.upper()} {label} · models.py 가 다른 모듈에서 모델을 다시 내보냄(파사드 아님) · 실행이 정의 모듈만 고침 → "
+               f"모델 이름 사슬 · 공급 면 겹침", ln.dp(tag), 2, f"공급 면 {drv}/django_base/thing_model.py")
+
+
 def map_items_case(fails: "list[str]", td: Path) -> None:
     """설계 §7 `_map_items` — follow · change 창 대응표도 싣는다(test 창은 아니다) · 창 차례는 번호(w2 < w10)."""
     folder: Path = td / "mapf"
@@ -4050,6 +4142,7 @@ def main() -> int:
         deps_face_cases(fails, td)
         deps_trust_cases(fails, td)
         deps_web_unit_cases(fails, td)
+        deps_face_review_cases(fails, td)
         map_items_case(fails, td)
     corpus_cases(fails, nov[0])
     self_test_negative_case(fails)

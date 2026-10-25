@@ -4202,7 +4202,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s012/b1": {
-      "h": "2789f5749f2845cd",
+      "h": "3979ccf0290c5a7b",
       "n": 9,
       "works": [
         "R-3514",
@@ -4356,7 +4356,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s012/b9": {
-      "h": "9e71e22a3807a497",
+      "h": "e172f73035bd3045",
       "n": 2,
       "works": [
         "R-3527",
@@ -14892,7 +14892,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "b2d6224072d81073bfbfdedd4115d5bdddb5ca6bc91f0294648367c7e0bcd91e"
+      "sha256": "628ee4341985a8e8fa460c1cbab3cdfedef1f7bf18aead6f37888179d2e59c5c"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -84443,7 +84443,7 @@
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
       "expression": "https://numchida.com/ns/djr#R-3527@2026-10-25",
-      "label": "리팩토링 모드 G0 배너 — 계수 1행(다른 BC 몫)·바뀌는 것 동반 1행·슬라이스 0 규모 1행·운영 단계·지원 확인 1행(실린 범위 s 파일·범위 밖 예보 k(안 본 파일 u))·BC 의존 1행(다른 작업 트리 옛 사본 main 판 읽음 b·지워진 실행 c 뺌·예보 겹침 g·예보 보류 f(공급 BC 고침 목록 모름 h)·공급 면 밖 뺌 k)·문서 층 변경 1행(차단 아님) · 출처 = check-verdict 요약 행(① 계수 · ② 바뀌는 것 동반 안·밖·DB·다른 BC)·support 요약 행(④ — 순환 성분 단독만 deps)·deps 요약 행(⑤ — MH 판으로 판정·MH 에서 지워져 뺌·예보 보류·예보 겹침·예보 보류 가운데 공급 BC 고침 목록 모름·면 밖 뺌)",
+      "label": "리팩토링 모드 G0 배너 — 계수 1행(다른 BC 몫)·바뀌는 것 동반 1행·슬라이스 0 규모 1행·운영 단계·지원 확인 1행(실린 범위 s 파일·범위 밖 예보 k(안 본 파일 u))·BC 의존 1행(다른 작업 트리 옛 사본 main 판 읽음 b·지워진 실행 c 뺌·예보 겹침 g·예보 보류 f(공급 BC 고침 목록 모름 h)·공급 면 밖 뺌 p)·문서 층 변경 1행(차단 아님) · 출처 = check-verdict 요약 행(① 계수 · ② 바뀌는 것 동반 안·밖·DB·다른 BC)·support 요약 행(④ — 순환 성분 단독만 deps)·deps 요약 행(⑤ — MH 판으로 판정·MH 에서 지워져 뺌·예보 보류·예보 겹침·예보 보류 가운데 공급 BC 고침 목록 모름·면 밖 뺌)",
       "norm_kind": "Obligation",
       "order_rank": 1442,
       "overrides": [],
@@ -87321,7 +87321,7 @@
       ],
       "document": "dddjango/commands/dddjango.md",
       "expression": "https://numchida.com/ns/djr#R-3687@2026-10-25",
-      "label": "deps 레인 겹침 단위 — BC(대상 · 대상을 쓰는 BC · 상대가 리팩토링 실행이면 대상이 쓰는 공급 BC 도) · 우리 경로 · 공급 면(공급 BC 창구 · 계약 · 발행 이벤트 파일 전부 + 대상 파일이 가리키는 그 BC 파일 · 그 이름을 정의한 모듈 · 대상 운영 코드가 HTTP 로 부르는 API · 표면 관찰 못 함 · 못 읽은 파일이면 그 BC 전체(면 넓힘 줄)) · web 단위(web/application/[<area>/]<bc>) · 계획된 소비 · 공급 BC 기능 실행의 고침 목록은 build_anchor + 이번 실행 명세(pregate-report 마지막 실행 경계(머리 뒤 첫 토큰 = G0 값 · 없으면 기준선 행 하나 이하일 때 처음부터) 뒤 예보 절)일 때만 · 모르면 G0 예보 보류 · 파견 직전 보류(밖 동작 V 무관) · 면 밖 공급 실행은 뺌 줄 · 그 줄들은 web HTTP 소비 줄이 아님",
+      "label": "deps 레인 겹침 단위 — BC(대상 · 대상을 쓰는 BC · 상대가 리팩토링 실행이면 대상이 쓰는 공급 BC 도) · 우리 경로 · 공급 면(공급 BC 창구 · 계약 · 발행 이벤트 파일 전부 + 대상 파일이 가리키는 그 BC 파일 · 그 이름을 정의한 모듈 · 대상 운영 코드가 HTTP 로 부르는 API · 표면 관찰 못 함 · 못 읽은 파일 · 이름 사슬 상한이면 그 BC 전체(면 넓힘 줄)) · web 단위(web/application/[<area>/]<bc>) · 계획된 소비 · 공급 BC 기능 실행의 고침 목록은 build_anchor + 이번 실행 명세(pregate-report 마지막 실행 경계(머리 뒤 첫 토큰 = G0 값 · 없으면 기준선 행 하나 이하일 때 처음부터) 뒤 예보 절)일 때만 · 모르면 G0 예보 보류 · 파견 직전 보류(밖 동작 V 무관) · 면 밖 공급 실행은 뺌 줄 · 그 줄들은 web HTTP 소비 줄이 아님",
       "norm_kind": "Obligation",
       "order_rank": 1427,
       "overrides": [],
