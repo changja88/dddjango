@@ -5,6 +5,11 @@
 # 참조 = Python import(절대 `web.`·상대는 web/ 루트 클램핑 · 함수 안 import 포함) + 템플릿 `{% extends %}`·
 # `{% include %}`·`{% static %}`(TEMPLATES DIRS = web/ 뿌리) + CSS `@import`·`url()`. 조각 CSS
 # (`static/application/…`·`static/root/…`)는 소유자의 presentation 자리로 센다(houserules §5).
+# IM5 교차 BC 정적 참조(템플릿 `{% static %}` · CSS `@import`·`url()`)의 예외는 하나 — 문서 셸을 글자로 extends 한 페이지가
+#   셸 `<head>` 안 block 에서 `{% static %}` link 로, 그 페이지가 채널 ④ 로 실제로 임베드한 자식 view 가 그리는 템플릿의 짝
+#   조각 CSS 를 싣는 줄(임베드 받는 페이지 머리 link 예외 · 증거 네 고리는 src/embed.py · 2.8.2). 위반 줄은 그 참조와 그 파일
+#   만으로 정한다(승인 유입 · 검사기 이의 대조의 키) — 첫 빈 고리는 교정 줄에만, 교정 줄은 셸 방식(문서 이동 · 지속)으로 가른다.
+#   허용 대조만 꼬리 뗀 실제 파일(common.loaded_file)로 한다 — 분류(대상 BC) · 빚 키는 지금처럼 참조 원문의 대상 그대로.
 # 거짓양성 게이트 = added 줄 한정(레거시 파일의 기존 위반 참조에 불발화) + 표준 트리 밖 옛 배치 파일은 층 판정 불가
 # 레거시라 층 무관 IM(IM24·IM25·IM27)만 건다 — 옛 배치에서는 *_data_source.py 를 DataSource 로 본다.
 # + 주석·문자열 마스킹(교정 주석의 토큰이 재차 blocker가 되는 루프 차단).
@@ -35,10 +40,11 @@ from typing import Callable, Dict, Iterator, List, Optional, Set, Tuple, Union
 
 from .common import (
     API_CLIENT, BACKEND_TOP_PKGS, ENTRY_FILES, JSON_FIELD, ROOT_VIEW_TEMPLATE, STDLIB, BackstopContext, Finding,
-    MaskedSource, base_name_of, bc_of, ext_of, has_seg, is_bc_root_path, is_standard_path, parent_dir_of, ref_path,
-    scan_tokens, segs_of,
+    ImportEdge, MaskedSource, base_name_of, bc_dir_of, bc_of, ext_of, has_seg, is_bc_root_path, is_standard_path, loaded_file,
+    parent_dir_of, ref_path, scan_tokens, segs_of,
 )
-from .products import Products, products_state
+from .embed import embed_css, explain, head_lines, page_shell
+from .products import Products, persistent_shells, products_state
 
 # 층과 상관없는 IM — 표준 트리 밖 옛 배치 파일(층 판정 불가 레거시)에도 건다. 나머지 IM 은 전부 층(경로 마디)
 # 의존이라 옛 배치 파일에는 걸지 않는다(houserules §7·§8 — 레거시 불발화 · 이동 요구 없음). 옛 배치에서는
@@ -559,6 +565,56 @@ def _http_surface(module: str, names: List[str]) -> Optional[str]:
     return None
 
 
+def _cross_static_fix(ctx: BackstopContext, products: Products, f: str, target: str, kind: str, is_page: bool,
+                      spot: bool, real: Optional[str]) -> str:
+    """교차 BC 정적 참조 IM5 의 교정 줄(한 줄 · 키 밖) — 셸 방식으로 가르고, 받는 페이지 머리 자리면 첫 빈 고리를 적는다.
+    그 문서의 셸 = 페이지면 extends 한 문서 셸, 그 밖은 그 파일 제품의 셸."""
+    doc_shell: Optional[str] = page_shell(ctx, f) if is_page else None
+    shell: str = doc_shell or products.shell_of(products.product_of(f, ctx.areas))
+    promote: str = '여러 BC 가 같이 쓰는 모양은 design_system 부품으로 승격한다'
+    if shell in persistent_shells(ctx):
+        other: str = ''
+        if products.declared and products.product_of(target, ctx.areas) != products.product_of_shell(shell):
+            other = (' · 다른 제품 BC 를 임베드했으면 그 자식 조각 CSS 는 SH4 필요 집합 밖이라 셸 <head> 의 theme 뒤 덧줄로 싣는다')
+        return ('지속 셸이면 셸 <head> 가 그 제품 BC 조각 CSS 를 모두 싣는다(SH4) — 페이지 · 조각 · CSS 에서 다른 BC CSS · 자산을 '
+                '싣지 않는다(페이지 {% block head %} 는 SH3 금지)' + other + ' · ' + promote)
+    if spot:
+        rings: str = ('임베드라면 네 고리를 맞춘다(자리 hx-get="{{ …칸 }}" · 짝 VM 이 자식 navigator 호출을 그 칸에 바로 · 그 라우트가 '
+                      '<화면>_embed_fragment · 그 함수가 그리는 템플릿의 짝 CSS — discipline-houserules §5 «교차 BC CSS»)')
+        return ('%s — %s · 자식 화면이 뒤 슬라이스면 그 슬라이스 끝에 선다 · %s · 셸 머리에 한 화면의 임베드 CSS 를 올리지 않는다'
+                % (explain(ctx, f, real or ''), rings, promote))
+    place: str = ('CSS @import · url()' if kind == 'css' else '조각 템플릿' if not is_page
+                  else '문서 셸을 글자로 extends 하지 않은 view' if doc_shell is None
+                  else '셸 <head> 안 block 밖' if (real or '').endswith('.css') else '정적 자산 참조')
+    return ('이 자리(%s)는 예외가 아니다 — 임베드한 자식 CSS 는 받는 페이지(문서 셸을 extends 한 view)의 {%% block head %%} 에서 '
+            '{%% static %%} link 로 싣는다 · %s' % (place, promote))
+
+
+def _cross_static(ctx: BackstopContext, products: Products, f: str, e: ImportEdge, t: str, tbc: str,
+                  is_page: bool) -> Optional[Tuple[str, str]]:
+    """교차 BC 정적 참조 하나의 IM5 판정 — 예외(임베드 받는 페이지 머리 link)면 None, 아니면 (위반 문장, 교정 줄).
+    자리 = 문서 셸을 글자로 extends 한 페이지 · 셸 `<head>` 안 block 을 채운 줄 · `{% static %}` 의 BC 조각 CSS.
+    허용 = 그 페이지가 채널 ④ 로 실제로 임베드한 자식 view 가 그리는 템플릿의 짝 CSS(src/embed.py — 꼬리 · 앞머리 `/` 를 뗀
+    실제 파일로 대조한다 · parse_template_loads 와 같은 술어). 위반 문장은 그 참조와 그 파일만으로 정한다(승인 유입 · 검사기
+    이의 대조의 키 — 증거 파일이 바뀌어도 글자 같다) · 첫 빈 고리와 셸 방식 갈래는 교정 줄에만."""
+    real: Optional[str] = loaded_file(e.uri.strip().lstrip('/')) if e.kind == 'static' else None
+    spot: bool = (e.kind == 'static' and is_page and page_shell(ctx, f) is not None
+                  and (real or '').startswith('static/application/') and (real or '').endswith('.css')
+                  and e.line in head_lines(ctx, f))
+    if spot and real in embed_css(ctx, f):
+        return None
+    target: str = e.target or ''
+    cdir: str = bc_dir_of(t, ctx.areas) or 'application/%s' % tbc
+    what: str = '조각 CSS' if target.split('?')[0].split('#')[0].endswith('.css') else '정적 자산'
+    if spot:
+        message: str = ('타 BC `%s` %s `%s` 참조 — 타 BC `%s/` 임베드 증거가 없다'
+                        '(교차 BC 조각 CSS 는 그 BC view 를 채널 ④ 로 임베드한 페이지의 머리 link 만)' % (tbc, what, target, cdir))
+    else:
+        message = ('타 BC `%s` %s `%s` 참조 — 교차 BC 정적 참조는 이 자리에서 받지 않는다(문서 이동 셸이면 타 BC `%s/` 조각 CSS 는 '
+                   '그 BC view 를 채널 ④ 로 임베드한 문서 셸 페이지의 머리 static link 만)' % (tbc, what, target, cdir))
+    return message, _cross_static_fix(ctx, products, f, target, e.kind, is_page, spot, real)
+
+
 def run_imports(ctx: BackstopContext) -> List[Finding]:
     out: List[Finding] = []
     backend: Set[str] = BACKEND_TOP_PKGS | ctx.project_pkgs
@@ -650,7 +706,14 @@ def run_imports(ctx: BackstopContext) -> List[Finding]:
                     ok: bool = (domain_type or has_seg(t, 'use_case')
                                 or (is_bc_root_path(t, ctx.areas) and base_name_of(t) == '%s_navigator.py' % tbc)
                                 or (has_seg(t, 'presentation_layer') and has_seg(t, 'view')))
-                    if not ok:
+                    if not ok and e.kind in ('static', 'css'):
+                        # 교차 BC 정적 참조(템플릿 {% static %} · CSS @import · url()) — 채널 ④ 임베드 받는 페이지 머리 link 예외 하나
+                        #   (discipline-houserules §5 «교차 BC CSS» · src/embed.py). 증거는 판정할 새 줄에서만 읽는다(그 밖은 add 가 버린다).
+                        if not legacy and ctx.line_is_added(f, e.line):
+                            found5: Optional[Tuple[str, str]] = _cross_static(ctx, products, f, e, t, tbc, is_page)
+                            if found5 is not None:
+                                add('IM5', e.line, found5[0], '제1 규약 §9-3', found5[1])
+                    elif not ok:
                         reason: str = ('domain_service·specification은 도메인 로직 — 채널①은 타입(엔티티·VO·enum)만, 행위는 UseCase 관문'
                                        if in_t_domain else
                                        'infra·VM·SharedState·state·section·widget·ui_extension은 채널 밖')

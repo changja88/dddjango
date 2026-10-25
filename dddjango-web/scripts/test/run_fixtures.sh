@@ -771,6 +771,8 @@ OUT=$(python3 "$(dirname "$0")/fixtures_patch260_sh5.py" 2>&1) || SUB=1; echo "$
 # 2.7.0 시험 범위(--test-scope) · 브라우저 시험 꼴(TG4)
 OUT=$(python3 "$(dirname "$0")/fixtures_patch270_scope.py" 2>&1) || SUB=1; echo "$OUT" | tail -1
 OUT=$(python3 "$(dirname "$0")/fixtures_patch270_browser.py" 2>&1) || SUB=1; echo "$OUT" | tail -1
+# 2.8.2 임베드 받는 페이지 머리의 자식 조각 CSS(IM5 예외 하나 — 증거 네 고리 · 위반 줄 키 고정 · 셸 갈래 · 2.8.1 대조)
+OUT=$(python3 "$(dirname "$0")/fixtures_patch282_embed_css.py" 2>&1) || SUB=1; echo "$OUT" | tail -1
 
 for SUBFIX in fixtures_debt.sh fixtures_subst.sh fixtures_sdk.sh fixtures_refactor_audit.sh; do
   OUT=$(bash "$(dirname "$0")/$SUBFIX" 2>&1) || SUB=1; echo "$SUBFIX: $(echo "$OUT" | tail -1)"

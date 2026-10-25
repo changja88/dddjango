@@ -258,6 +258,7 @@ def channel_summary_embed_fragment(request: HttpRequest) -> HttpResponse:
 
 - 자리 요소는 `outerHTML`로 자식 section 루트와 통째로 바뀐다 — 그 뒤의 재조회·재시도·액션은 자식 section의 루트 id를 대상으로 한다. 임베드 응답은 root_view를 extends하지 않는다(셸 없음).
 - 자리 요소는 비어 있거나 로딩 부품 하나만 둔다 — 자식 화면 내용을 부모가 미리 그리지 않는다.
+- 자식 BC 조각 CSS 는 받는 문서가 싣는다(문서 이동 셸 = 받는 페이지 머리 · 지속 셸 = 셸 머리) — 자리 칸 값은 부모 VM 이 자식 navigator 호출을 State 의 그 칸 이름 키워드(또는 같은 이름 대입)로 바로 넘긴 것이다(러너 증거 — discipline-houserules §5 «교차 BC CSS»).
 
 - 페이지 view는 페이지 템플릿을, 조각 응답 함수는 section 템플릿을 render한다 — 조각 응답은 HTML이다(JSON 응답을 만들지 않는다). 조각 전용 라우트로 받고, 한 함수 안에서 `HX-Request` 헤더로 페이지·조각을 갈라 쓰지 않는다. 지속 셸의 부스트 이동 · 복원도 같은 페이지 view 의 전체 문서를 받는다 — 페이지 view 는 부스트를 모르고, 본문만 고르는 것은 `RootRequestHandler` 의 응답 머리다.
 - `outerHTML` 교체 응답의 section은 **같은 id 루트를 다시 포함**한다 — 교체 뒤에도 다음 요청의 대상이 살아 있다.

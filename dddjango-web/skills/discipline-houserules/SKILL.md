@@ -42,7 +42,7 @@ dddjango-web이 만드는 코드에 한정된 집안 규칙이다. **표준 파�
 - 화면 삼총사 접두 불일치(VM 기준 — `<화면>_view`↔`_vm`↔`_state`), UseCase가 화면명, section에 화면 접두 없음, widget이 화면 State를 받음.
 - navigator가 presentation_layer에, URL path·name 리터럴이 `<bc>_router.py` 밖에(템플릿의 URL name 직접 사용 포함).
 - BC 코드가 `root_` 파일을 참조(`root/`를 아는 곳은 `web/apps.py`·`web/urls.py`뿐 — 페이지 템플릿의 문서 셸 extends만 예외 — 제품 선언이 있으면 자기 제품 셸), `common/`·`design_system/`이 `application/`·`root/`를 참조, `common/`에 상태 동작(시그널 수신·세션 쓰기)·BC 어휘·비표준 종류 폴더.
-- domain_layer에 `django` import·`common/util/json_field.py` 밖의 common import, VM·UseCase·State가 design_system을 참조(component 템플릿 경로·CSS 변수 이름 보유 — 허용 위치는 닫힌 열거 — final.md §5), 타 BC의 Repo·DataSource·VM·SharedState 직접 접근(4채널 밖 — final.md §5).
+- domain_layer에 `django` import·`common/util/json_field.py` 밖의 common import, VM·UseCase·State가 design_system을 참조(component 템플릿 경로·CSS 변수 이름 보유 — 허용 위치는 닫힌 열거 — final.md §5), 타 BC의 Repo·DataSource·VM·SharedState 직접 접근(4채널 밖 — final.md §5), 타 BC 조각 CSS·정적 자산 참조(문서 이동 셸의 임베드 받는 페이지 머리 link만 예외 — final.md §5 «교차 BC CSS»).
 - 상태 동작(State 조립·세션 보관·시그널 수신 연결)이 VM·SharedState·Service·root 2변종 밖에(UseCase·Repo·DataSource는 무상태 plain class 직접 생성).
 - shared_state에 과거형 사건명(`*_added` 류), component 직속 파일·정크드로어 군, 색 리터럴(`#…`)·생 글자 스타일 리터럴(foundation 토큰만).
 - `apps.py`·`urls.py` 비대(시동 로직·URL 분기 조립·전역 인스턴스).

@@ -16,6 +16,8 @@
 # 게이트: 구조·명명=added, import=touched의 added 줄, 골격=신규 단위, 순환=전역+베이스라인
 # (.dddjango-web/backstop-baseline.json). 참조 = Python import(함수 안 포함) + 템플릿 extends·include·static
 # + CSS @import·url() — 조각 CSS(static/application/·static/root/)는 소유자의 presentation 자리로 센다.
+# 교차 BC 조각 CSS 는 IM5 — 예외는 채널 ④ 로 임베드한 자식 view 가 그리는 템플릿의 짝 CSS 를 받는 페이지 머리 static link
+# 하나다(문서 셸을 글자로 extends 한 페이지 · 셸 <head> 안 block · 증거 네 고리 src/embed.py · 2.8.2 · 새 검사 ID 없음).
 # 게이트 출력 직전 승인 유입(W·F1·L · TG2·TG3 은 수신 증명)을 분할한다(src/inflow.py) — 종료 코드 밖 발견도 G2 보고 의무다.
 # TG4 는 기준판이 승인 병합을 흡수한다(파일마다 상류판 그대로 들인 마지막 승인 병합의 판) — 승인 유입 가름 밖.
 # 산출물은 --design-build 또는 git_snapshot 일치 자동 탐색으로 읽는다(승인 목록은 발주자 소유 · 상태를 쓰지 않는다).

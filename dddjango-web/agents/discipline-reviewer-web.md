@@ -82,6 +82,7 @@ Coordinator가 감사 범위와 시점을 정해 호출한다 — 너는 받은 
 
 - **골격 위장**: 폴더는 완비됐는데 코드가 틀린 자리에 산다 — 판정이 `use_case/`에, 변환이 `view/`에, 부품 템플릿이 `view_model/`에.
 - **import는 합법인데 책임이 월경**: 합법 채널(ID 참조·UseCase 조합·SharedState 구독·root 딥링크)을 *형태*로는 지켰지만 실질이 타 BC 내부 지식에 결합(타 BC의 필드 구조를 알고 분해·재조립)하면 important.
+- **교차 BC CSS는 실림만**: 부모 템플릿이 임베드한 자식 BC의 section·widget을 include하거나 그 CSS 클래스를 직접 쓰지 않는다(자식 CSS는 실림만 — 재사용은 design_system 승격 · houserules §5 «교차 BC CSS»).
 - 같은 개념이 두 철자로 존재(`channel`·`chanel`, 단수·복수 혼용)하거나 "두 번째 개념"이 종류 폴더에 평면 누적됐는가 — 1차 결정은 architect·2차 발견은 coder-web이었고, 너는 최종 검증자다.
 - **area 규칙 위반**(feedback-031): 스코프 판정 없이 신설된 `application/<area>/` 그루핑·판정과 어긋난 경로, 또는 area 이름이 클래스명·URL name·파일명 등 식별자에 등장(area는 순수 시각 네임스페이스 — 경로에만 존재한다. 규칙 본문은 houserules final.md §1 area 핵심 사실·판별 배정은 undecidable.md §13. 백스톱은 area 형상만 보고 "판정 유무"는 못 보므로 네가 본다).
 - `web/apps.py`·`web/urls.py`가 "최소형"을 지켰는가 — `WebConfig.ready()`의 root_initializer 호출·root_router urlpatterns 내보내기 밖의 로직(비즈니스 분기·상태 보유)이 들어오면 important. 역으로 **전역 에러 처리(`handler404`/`handler500`·`RootRequestHandler`의 예외 처리)가 빈 바디(`except Exception: pass`)로 침묵 삼키면**(`root_error_handler` 미위임)도 important — 빈 catch 위생(Q-6)의 부트스트랩 변종이다.
