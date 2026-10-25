@@ -5053,8 +5053,8 @@ def _supplier_faces(scan: "DepsScan", bc: str, suppliers: "set[str]") -> "tuple[
     ① 그 BC 의 창구 · 창구 계약 · 발행 이벤트 자리 파일 전부(리팩토링이 다른 창구로 옮겨 탈 수 있다 — 설계 2판 B2)
     ② 대상 파일(운영 · 시험 · 마이그레이션)의 참조가 가리키는 그 BC 파일 — import 경로는 긴 쪽부터 실재 파일 · 폴더(둘 다 있으면 둘 다)
        · 합성 경로(모델 라벨 · get_model · AUTH_USER_MODEL · 마이그레이션 의존)는 그 label 의 앱 폴더(label 을 선언한 apps.py 폴더 ·
-       AppConfig `name` 폴더)의 models · migrations, 거기 없거나 label 의 앱 폴더를 모르면 지어낸 경로가 정확히 있을 때만 그 자리 ·
-       아니면 그 BC 의 apps.py 폴더 몫 · 그것도 없으면 그 BC 전체 · 못 풀면 그 BC 전체
+       AppConfig `name` 폴더)의 models · migrations(거기 없으면 그 BC 전체), label 의 앱 폴더를 모르면 지어낸 경로가 정확히 있을 때만
+       그 자리 · 아니면 그 BC 의 apps.py 폴더 몫 · 그것도 없으면 그 BC 전체 · 못 풀면 그 BC 전체
     ③ 대상이 이름으로 들인 것(from-import 이름 · 점 경로 문자열의 가장 긴 모듈 뒤 첫 성분 · 모델 이름)은 그 이름을 정의한 모듈까지
        (면이 폴더면 그 `__init__.py` 에서 시작 · BC 뿌리 패키지 `application.<bc>` 는 그 `__init__.py` · 합성 루트 제외) — 최상위에
        정의(class · def · 상수 대입)가 없으면 그 이름을 들인 import(블록 안 포함)를, 그것도 없으면(대입 다시 내보내기 등) 그 모듈의
@@ -5082,18 +5082,19 @@ def _supplier_faces(scan: "DepsScan", bc: str, suppliers: "set[str]") -> "tuple[
 
     def synth(r: dict) -> "list[str]":
         """합성 경로 → 그 label 의 앱 폴더(label 을 선언한 apps.py 폴더 · AppConfig `name` 폴더)의 `models` · `migrations/<이름>` —
-        거기 없거나(모델이 앱 폴더 밖 · `Meta.app_label` · `MIGRATION_MODULES` 로 옮긴 마이그레이션) label 의 앱 폴더를 모르면 지어낸
-        경로가 정확히 있을 때만 그 자리 · 아니면 그 BC 의 apps.py 폴더 몫 · 그것도 없으면 그 BC 전체."""
+        label 의 앱 폴더를 아는데 거기 없으면(모델이 앱 폴더 밖 · `Meta.app_label` · `MIGRATION_MODULES` 로 옮긴 마이그레이션) 그 BC
+        전체(다른 앱의 자리 — 지어낸 `django_<BC>` 경로 · 다른 apps.py 폴더 — 로 떨어지지 않는다). label 의 앱 폴더를 모르면 지어낸 경로가
+        정확히 있을 때만 그 자리 · 아니면 그 BC 의 apps.py 폴더 몫 · 그것도 없으면 그 BC 전체."""
         tail: "list[str]" = r["parts"][4:]
 
         def at(d: str) -> "list[str]":
             if tail and tail[0] == "models":
                 return exact(f"{d}/models")
             return ((exact(f"{d}/migrations/{tail[1]}") if len(tail) > 1 else []) or exact(f"{d}/migrations")) if tail else []
-        got: "list[str]" = [x for d in sorted(scan.label_dirs.get(r.get("label") or "", set())) for x in at(d)]
-        if got:
-            return got
-        got = exact("/".join(r["parts"]))
+        own: "list[str]" = sorted(scan.label_dirs.get(r.get("label") or "", set()))
+        if own:
+            return [x for d in own for x in at(d)] or [f"application/{r['dst']}/"]
+        got: "list[str]" = exact("/".join(r["parts"]))
         if got:
             return got
         got = [x for d in sorted(scan.app_dirs.get(r["dst"], set())) for x in at(d)]

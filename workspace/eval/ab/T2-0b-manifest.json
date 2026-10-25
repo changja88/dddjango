@@ -717,7 +717,7 @@
         "dddjango/scripts/behavior_support.py": "4e550aad57a7e5e0265c1a25f982f441b459c331fcb3b95b694940d5ae8635f8",
         "dddjango/scripts/design_pregate.py": "5e6fac272059828d17b25a5aca4069eaac20857ec0ef5937530d88f1358a1a68",
         "dddjango/scripts/pytest_probe/dddjango_collect_probe.py": "9e1f6a227314060304e0f50512dde7ff69a903e83f82c67461e24319176615f2",
-        "dddjango/scripts/refactor_audit.py": "567f4d759e7f731270ffa42ad4231aebcea19a8d65b3cb47220c7dc15db14dfe",
+        "dddjango/scripts/refactor_audit.py": "76db5e3f144b1799e2bd3d36700caf4b33900777f1784f96a761a6e2bb202ee0",
         "dddjango/scripts/regen_core.py": "48181a610743fce534ea4d327d34878863da22b207a08ecc2a88ebbdcb05b763",
         "dddjango/scripts/registry_gate.py": "f302e45506ce033bf8c3d4d3388e174da41aec3b417bcba4ab2862d57b6d4bb2",
         "dddjango/scripts/rulepack.py": "f2144bc50f99cda8bc259a6250b642f605ffa7d1d5c1f8ebb57564cabce4abd3"
@@ -736,7 +736,7 @@
         "codex-dddjango/skills/dddjango/SKILL.md"
       ],
       "n_files": 11,
-      "tree_sha256": "fef0af8f4c1edef0f484e79a995aa6b58e42e048b143159e7df2174ad28247ea",
+      "tree_sha256": "e419662c44c7e7472c0e1e4be6fd24c283fc147593aa820b806be1283ae17634",
       "why": "3암이 공유하는 실행 경로. 암 사이 차이는 스위치 둘뿐이어야 하고, 그 «둘뿐»을 성립시키는 것이 이 파일들의 동일성이다."
     },
     "plugin_payload": {
@@ -978,11 +978,11 @@
     "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.26.0/scripts",
     "cache-codex": "3b77f189945967aecb95c8edec45807b6c319c735ab7fb04191a3c7941984020",
     "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.26.0/skills/dddjango/scripts",
-    "source-claude": "f24c157d5a0da2f7d94228d27ee2b6d91c21c0709bd1c468b33d8561af228e0c",
-    "source-codex": "f24c157d5a0da2f7d94228d27ee2b6d91c21c0709bd1c468b33d8561af228e0c"
+    "source-claude": "85eb396ffef2f9b19408b1312ea1a7ff2d3b2d3ad29224609ec95d33d31b2891",
+    "source-codex": "85eb396ffef2f9b19408b1312ea1a7ff2d3b2d3ad29224609ec95d33d31b2891"
   },
-  "sealed_commit": "c4887d2731676f6f7cbf4a825c9c026890ed56b1",
-  "self_sha256": "3b8098995be3aeb6618eaf539abb67b4daad30d394eea133ac32ef07c220721f",
+  "sealed_commit": "ed05e2c39c1bf637fd602bd0f7e94f8263b0626a",
+  "self_sha256": "00706c632aa484e1be1c1b1c4c27eacfcf38ddab410a1d57c3681e447a831049",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [

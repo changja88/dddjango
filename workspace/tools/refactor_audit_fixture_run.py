@@ -4044,6 +4044,17 @@ def deps_face_review_cases(fails: "list[str]", td: Path) -> None:
     expect(fails, "RD-F118 CE4b 같은 · 면에 모델 자리(models/ · 정의 모듈 thing.py)는 남고 도메인 · 응용 층은 없음",
            (0 if f"{mdl}/" in got and f"{mdl}/thing.py" in got and not any("domain_layer" in g or "application_layer" in g for g in got)
             else 9, json.dumps(got, ensure_ascii=False)), 0)
+    # 재확인 3 r3 — 두 앱 BC · 대상 label(base_audit)의 앱 폴더를 아는데 거기 models 가 없음(모델은 Meta.app_label 로 다른 폴더) ·
+    # 다른 앱의 지어낸 경로 django_base/models.py 는 있음 → 다른 앱 자리로 떨어지지 않고 그 BC 전체
+    r3: "dict[str, str]" = {k: v for k, v in two_apps.items() if not k.endswith("django_base_audit/models.py")}
+    ln = FaceLane(td, "r-r3", {**r3, f"{drv}/audit_orm/__init__.py": "",
+                               f"{drv}/audit_orm/audit.py": "class AuditModel:\n    class Meta:\n        app_label = \"base_audit\"\n",
+                               "application/demo/driven_layer/django_demo/models.py": "FK: str = \"base_audit.AuditModel\"\n"})
+    ln.sup([f"{drv}/audit_orm/audit.py"], **FACE_TRUST)
+    ln.dispatch()
+    expect(fails, "RD-F118 R3 두 앱 BC · 대상 label(base_audit) 앱 폴더에 models 없음 · 다른 앱 django_base/models.py 는 있음 · 실행이 "
+           "Meta.app_label 모델 파일을 고침 → 다른 앱 자리로 떨어지지 않고 그 BC 전체 → 공급 면 겹침", ln.dp("r3"), 2,
+           f"공급 면 {drv}/audit_orm/audit.py")
 
 
 def map_items_case(fails: "list[str]", td: Path) -> None:
