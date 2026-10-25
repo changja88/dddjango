@@ -1454,7 +1454,8 @@ class CatchForecastTest(GardenFixture):
                                  [("PlantUnavailableException", source, bound)])
                 self.assertEqual(plan.entries[CATALOG_SERVICE].raises, ["PlantUnavailableException"])
 
-    def test_api_checker_is_loaded_only_for_ohs_shaped_rows_and_load_failure_is_run_error(self) -> None:
+    def test_api_checker_is_loaded_only_for_sourced_rows_and_load_failure_is_run_error(self) -> None:
+        # 검사기는 출처 칸이 있는 행이 있을 때만 적재한다 — 출처 칸 없는 행의 메모 (a) 는 앞 거름 꼴로만 낸다(2.26.1 과 같은 비용).
         value_object = f"{GARDEN}/domain_layer/plant/value_object/water_level.py"
         self.write(value_object, "class WaterLevel:\n    pass\n")
         with mock.patch.object(pg, "API_ERROR_CHECKER", self.root / "missing-checker.py"), \
@@ -1462,60 +1463,82 @@ class CatchForecastTest(GardenFixture):
             found, memos = self.forecast([f"WaterLevelInvalid  {value_object}  <= PlantUnreadable as"],
                                          paths=[f"update {value_object}"])
             self.assertEqual((found, [m.split(":", 1)[0] for m in memos]), ([], [OUTSIDE_MEMO]))
-            for row in ("<= PlantUnreadable as", "<= PlantUnreadable", ""):
+            found, memos = self.forecast([f"PlantUnavailableException  {CATALOG_SERVICE}",
+                                          f"PlantGoneException  {CATALOG_SERVICE}"])
+            self.assertEqual(found, [])
+            self.assertEqual([m.split("(", 1)[0] for m in memos], [BLANK_MEMO.split("(", 1)[0]] * 2)
+            self.assertEqual(pg._BUNDLED_CHECKERS, {})
+            for row in ("<= PlantUnreadable as", "<= PlantUnreadable"):
                 with self.subTest(row=row), self.assertRaises(pg.RunError):
-                    self.forecast([f"PlantUnavailableException  {CATALOG_SERVICE}  {row}".rstrip()])
+                    self.forecast([f"PlantUnavailableException  {CATALOG_SERVICE}  {row}"])
             self.assert_cells_removed()
 
-    def test_existing_catch_debt_of_the_same_rule_is_a_candidate(self) -> None:
-        # 구현 검토 I1 — 기준선 창구의 그 출처를 잡는 catch 에 같은 규칙 줄(#474 · #62)이 이미 있으면 확정이 아니라 후보다(G2 도
-        # 같은 규칙 · 판정문의 기존 줄로 본다 · 실검사기 줄 1 → 1). 다른 예외를 잡는 catch 의 빚은 낮추지 않는다.
-        debt_474 = CATALOG_LOGGED
-        debt_62 = CATALOG_BASELINE.replace("    except PlantUnreadable:\n", "    except Exception:\n")
-        debt_bare = CATALOG_BASELINE.replace("    except PlantUnreadable:\n", "    except:\n")
-        other_474 = CATALOG_BASELINE + ("\n\ndef peek_plant_query(name: str) -> str:\n    try:\n        return _read(name)\n"
-                                        "    except PlantUnreadable as unreadable:\n        print(unreadable)\n        return ''\n")
-        gone_474 = CATALOG_BASELINE.replace(f"{UNREADABLE_IMPORT}\n", f"{UNREADABLE_IMPORT}\n{UNREADABLE_IMPORT.replace('plant_unreadable import PlantUnreadable', 'plant_gone import PlantGone')}\n") + (
-            "\n\ndef gone_query(name: str) -> str:\n    try:\n        return _read(name)\n"
-            "    except PlantGone as gone:\n        print(gone)\n        return ''\n")
-        gone = f"{GARDEN}/domain_layer/plant/exception/plant_gone.py"
-        for label, baseline, paths, row, symbols, expected in [
-            ("C1b 기존 #474 catch 의 본문만 바꿈", debt_474, None, "PlantUnavailableException  {s}  <= PlantUnreadable as", [],
-             [("#474", False)]),
-            ("C1 기존 #474 catch 의 번역 대상만 바꿈", debt_474, [f"update {CATALOG_SERVICE}", f"add {CATALOG}/contract/exception/plant_gone_exception.py"],
-             "PlantGoneException  {s}  <= PlantUnreadable as", [f"{CATALOG}/contract/exception/plant_gone_exception.py::PlantGoneException(Exception)"],
-             [("#474", False)]),
-            ("C2 기존 #62 catch 의 본문만 바꿈", debt_62, None, "PlantUnavailableException  {s}  <= Exception", [], [("#62", False)]),
-            ("bare except 는 Exception 출처와 같은 catch", debt_bare, None, "PlantUnavailableException  {s}  <= BaseException as", [],
-             [("#62", False)]),
-            ("C3 다른 함수의 같은 출처 catch 빚(줄 1 → 2 · G2 0)도 후보", other_474, None,
-             "PlantUnavailableException  {s}  <= PlantUnreadable as", [], [("#474", False)]),
-            ("다른 예외를 잡는 catch 의 빚은 낮추지 않음", gone_474, None, "PlantUnavailableException  {s}  <= PlantUnreadable as", [],
-             [("#474", True)]),
-            ("#474 빚은 #62 행을 낮추지 않음", debt_474, None, "PlantUnavailableException  {s}  <= Exception", [], [("#62", True)]),
+    def test_existing_catch_debt_is_keyed_by_the_catch_that_raises_the_published_exception(self) -> None:
+        # 구현 검토 I1 · I1′ — 기존 빚 열쇠: 기준선 창구에 그 규칙 줄을 낸 catch(빚 catch)가 있으면 행의 published 예외를 누가 내는지로
+        # 그 행이 고칠 catch 를 가린다. #474 는 같은 출처를 잡는 catch 만 · #62 는 어느 catch-all 빚이든(이름 무관). ① 빚 catch 가 냄 →
+        # 후보 ② 빚 없는 catch 가 냄 → 확정 ③ 둘 다 아님 → 후보. 여덟 꼴과 실검사기 줄 수(기준선 → 구현 뒤).
+        peek = ("\n\ndef peek_plant_query(name: str) -> str:\n    try:\n        return _read(name)\n"
+                "    except PlantUnreadable as {bound}:\n        print({bound})\n        return ''\n")
+        clean_catch = "    except PlantUnreadable:\n"
+        logged = "    except PlantUnreadable as unreadable:\n        print(unreadable)\n"
+        debt_474 = CATALOG_BASELINE.replace(clean_catch, logged)
+        other_same, other_named = (CATALOG_BASELINE + peek.format(bound=b) for b in ("unreadable", "error"))
+        catch_all = CATALOG_BASELINE.replace(clean_catch, "    except BaseException:\n")
+        other_62 = CATALOG_BASELINE + ("\n\ndef peek_plant_query(name: str) -> str:\n    try:\n        return _read(name)\n"
+                                       "    except BaseException:\n        return ''\n")
+        gone_exc = f"{CATALOG}/contract/exception/plant_gone_exception.py"
+        row_474 = f"PlantUnavailableException  {CATALOG_SERVICE}  <= PlantUnreadable as"
+        for label, baseline, implemented, row, paths, symbols, confirmed, why, rule, lines in [
+            ("C1b 빚 catch 의 본문만 바꿈 — ①", debt_474, debt_474.replace("        print(unreadable)\n",
+                                                                       "        print(unreadable)\n        print('again')\n"),
+             row_474, None, [], False, "#474 빚 catch(`read_plant_query` 의 `except PlantUnreadable as unreadable`)가 이 행의 "
+             "published 예외 `PlantUnavailableException` 를 낸다", "#474", (1, 1)),
+            ("C1 빚 catch 의 번역 대상만 바꿈 — ③", debt_474,
+             debt_474.replace("raise PlantUnavailableException()", "raise PlantGoneException()"),
+             f"PlantGoneException  {CATALOG_SERVICE}  <= PlantUnreadable as", [f"update {CATALOG_SERVICE}", f"add {gone_exc}"],
+             [f"{gone_exc}::PlantGoneException(Exception)"], False, "published 예외 `PlantGoneException` 를 내는 같은 출처를 잡는 catch "
+             "는 없다", "#474", (1, 1)),
+            ("C2 기존 `except Exception` 의 본문만 바꿈 — ①", CATALOG_BASELINE.replace(clean_catch, "    except Exception:\n"),
+             CATALOG_BASELINE.replace(clean_catch, "    except Exception:\n        print('fail')\n"),
+             f"PlantUnavailableException  {CATALOG_SERVICE}  <= Exception", None, [], False,
+             "#62 빚 catch(`read_plant_query` 의 `except Exception`)가 이 행의 published 예외", "#62", (1, 1)),
+            ("C3 다른 함수의 같은 묶음 이름 빚 · 빚 없는 catch 가 값을 읽음 — ②", other_same,
+             other_same.replace(clean_catch, logged, 1), row_474, None, [], True,
+             "빚 없는 같은 출처를 잡는 catch(`read_plant_query` 의 `except PlantUnreadable`)가 낸다", "#474", (1, 2)),
+            ("C4 다른 함수의 다른 묶음 이름 빚 — ②", other_named, other_named.replace(clean_catch, logged, 1), row_474, None, [],
+             True, "묶음 이름이 `error` 와 다르면 G2 registry 가 새 줄로 막고", "#474", (1, 2)),
+            ("C5 빚 없는 창구의 새 #474", CATALOG_BASELINE, CATALOG_LOGGED, row_474, None, [], True, "", "#474", (0, 1)),
+            ("C6 다른 함수의 catch-all 빚 · 빚 없는 catch 를 `except Exception` 으로 — ②", other_62,
+             other_62.replace(clean_catch, "    except Exception:\n", 1), f"PlantUnavailableException  {CATALOG_SERVICE}  <= Exception",
+             None, [], True, "빚 없는 catch(`read_plant_query` 의 `except PlantUnreadable`)가 낸다", "#62", (1, 2)),
+            ("C7 기존 `except BaseException` 을 `except Exception` 으로 좁힘 — ①(이름 무관)", catch_all,
+             catch_all.replace("    except BaseException:\n", "    except Exception:\n"),
+             f"PlantUnavailableException  {CATALOG_SERVICE}  <= Exception", None, [], False,
+             "#62 빚 catch(`read_plant_query` 의 `except BaseException`)가 이 행의 published 예외", "#62", (1, 1)),
         ]:
             with self.subTest(label=label):
-                self.write(gone, "class PlantGone(Exception):\n    pass\n")
+                self.write(gone_exc, "class PlantGoneException(Exception):\n    pass\n")
                 self.write(CATALOG_SERVICE, baseline)
-                found, _ = self.forecast([row.format(s=CATALOG_SERVICE)], paths=paths, symbols=symbols)
-                self.assertEqual([(f.rule, f.confirmed) for f in found], expected)
-                for item in found:
-                    self.assertEqual("기존 빚" in item.detail, not item.confirmed, item.detail)
-                    if not item.confirmed:
-                        self.assertIn("물음: 기존 catch 의 기존 빚인가 · 이번에 고치는가", item.detail)
-        # 후상태 대조 — C1b 꼴 구현(같은 catch 본문에 줄을 더함)은 실검사기 #474 줄이 1 → 1 이다.
-        self.write(CATALOG_SERVICE, debt_474)
-        before = self.checker_lines("check-api-error-controller-contract.py", "#474", CATALOG_SERVICE)
-        self.write(CATALOG_SERVICE, debt_474.replace("        print(unreadable)\n", "        print(unreadable)\n        print('again')\n"))
-        self.assertEqual((len(before), self.checker_lines("check-api-error-controller-contract.py", "#474", CATALOG_SERVICE)),
-                         (1, before))
+                found, _ = self.forecast([row], paths=paths, symbols=symbols)
+                self.assertEqual([(f.rule, f.confirmed) for f in found], [(rule, confirmed)])
+                self.assertIn(why, found[0].detail)
+                self.assertNotIn("G2 도 0", found[0].detail)
+                self.assertNotIn("기존 줄로 본다", found[0].detail)
+                if not confirmed:
+                    self.assertIn("물음: 이 행이 고치는 catch 는 어느 것인가", found[0].detail)
+                    self.assertIn("이 행이 그 catch 를 고치는 것이면 기존 빚이다 · 새 catch 이거나 다른 catch 면 실검사기 새 줄이다",
+                                  found[0].detail)
+                # 후상태 대조 — 명세대로 구현한 실검사기 줄 수(기준선 → 구현 뒤).
+                before = len(self.checker_lines("check-api-error-controller-contract.py", rule, CATALOG_SERVICE))
+                self.write(CATALOG_SERVICE, implemented)
+                self.assertEqual((before, len(self.checker_lines("check-api-error-controller-contract.py", rule, CATALOG_SERVICE))),
+                                 lines)
         # add 창구는 기준선이 없다 — 빚으로 낮추지 않는다.
         added = f"{CATALOG}/sale_service.py"
         self.write(added, debt_474)
         found, _ = self.forecast([f"PlantUnavailableException  {added}  <= PlantUnreadable as"], paths=[f"add {added}"],
                                  imports=[f"{added}  {UNREADABLE_IMPORT}"])
         self.assertEqual([(f.rule, f.confirmed) for f in found], [("#474", True)])
-
 
 
 class ForecastScopeTest(GardenFixture):

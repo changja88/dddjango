@@ -159,9 +159,11 @@ file-plan update 칸에서 symbols 의 공개 메서드 · 모듈 함수 가운�
 에 돌려 #62 선언 확정이다. 그 밖 출처는 검사기 조건 그대로(절대 ImportFrom · 모듈 마디 `domain_layer` · 전 깊이 · 지역 이름 =
 asname|name) ① 그 창구 boundary-imports ② update 면 기준선 실물 ③ 이 명세 symbols 의 같은 이름 클래스(하나뿐) ④ 내장 예외 순서로
 처음 찾은 출처에서 멈춰 가른다 — `as` ∧ 도메인 = 최소 투영의 #474 선언 확정 · `as` ∧ 가를 수 없음 = 선언 후보 · 비도메인 · 내장 ·
-`as` 없음 = 0. 기존 빚 열쇠: update 창구 기준선 실물을 같은 슬라이스로 판정해 그 출처를 잡는 catch 에 같은 규칙 줄(#474 ·
-#62)이 이미 있으면 확정이 아니라 선언 후보다(G2 도 0 — 그 빚은 빚 스캔 몫). update 창구 행마다 채널 메모(출처 칸 없음 = S5 입구 catch 미검증 · `as` 없음 ∧ 도메인 · 해소 불가 = 확인)를 남기고 OHS
-밖 행의 출처 칸은 판정 0 + 메모다. 낡은 출처 칸(`as` 없이 값을 씀) · 번역 없는 catch · 그 밖 catch 본문은 G2 몫이다.
+`as` 없음 = 0. 기존 빚 열쇠: update 창구 기준선 실물을 같은 슬라이스로 판정해 그 규칙 줄을 낸 catch(빚 catch — #474 는 같은
+출처를 잡는 것 · #62 는 이름 무관 catch-all)가 있으면 행의 published 예외를 기준선에서 누가 내는지로 가른다 — 빚 catch 가 냄 = 선언
+후보(그 catch 를 고치는 행) · 빚 없는 catch 가 냄 = 선언 확정(새 줄) · 둘 다 아님 = 선언 후보(빚 catch 의 자리 · 묶음 이름을 적는다).
+검사기는 출처 칸이 있는 행이 있을 때만 적재한다. update 창구 행마다 채널 메모(출처 칸 없음 = S5 입구 catch 미검증 — 앞 거름 꼴로만 ·
+`as` 없음 ∧ 도메인 · 해소 불가 = 확인)를 남기고 OHS 밖 행의 출처 칸은 판정 0 + 메모다. 낡은 출처 칸(`as` 없이 값을 씀) · 번역 없는 catch · 그 밖 catch 본문은 G2 몫이다.
 사실 발행의 길(F4-93 · #541): 검사기 #541 의 진입점 칸(`application/<bc>/application_layer/<area>/<uc>/<uc>_use_case.py` · 승격
 본체) add/update 에서 symbols 가 그 유스케이스의 `__init__` 행을 인자 타입까지 모두 적었고, 그 인자에 framework 브로커 포트가
 있고, 저장 경계(`…UnitOfWork` — 별칭 · 신원 포함)가 없다고 선언으로 정해지면(effects `uow=none`, 없으면 그 `__init__` 에 저장 경계
@@ -3476,25 +3478,67 @@ def _caught_names(handler: ast.ExceptHandler) -> "set[str]":
     return {getattr(e, "id", getattr(e, "attr", "")) for e in elts}
 
 
+@dataclass
+class _BaselineCatch:
+    """기준선 창구 실물의 catch 하나 — 기존 빚 열쇠(F4-115 A2)의 재료."""
+    lineno: int
+    site: str          # 둘러싼 함수(`클래스.메서드` · `함수` · «모듈 수준»)
+    clause: str        # `except <잡는 식>[ as <이름>]` 원문 꼴
+    bound: str         # 묶음 이름(없으면 "")
+    caught: "set[str]"
+    raised: "set[str]"  # catch 본문이 내는 예외 이름(`raise X(...)` · `raise X` · `raise m.X(...)`)
+
+
+def _baseline_catches(module: ast.Module) -> "list[_BaselineCatch]":
+    """기준선 창구의 catch 전부와 그 자리 · 내는 예외."""
+    found: "list[_BaselineCatch]" = []
+
+    def raised_names(handler: ast.ExceptHandler) -> "set[str]":
+        names: "set[str]" = set()
+        for node in ast.walk(handler):
+            if isinstance(node, ast.Raise) and node.exc is not None:
+                target: ast.expr = node.exc.func if isinstance(node.exc, ast.Call) else node.exc
+                names.add(getattr(target, "id", getattr(target, "attr", "")))
+        return names
+
+    def visit(node: ast.AST, site: str) -> None:
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                visit(child, f"{site}.{child.name}" if site else child.name)
+                continue
+            if isinstance(child, ast.ExceptHandler):
+                clause: str = "except" + (f" {ast.unparse(child.type)}" if child.type is not None else "")
+                found.append(_BaselineCatch(child.lineno, site or "모듈 수준", clause + (f" as {child.name}" if child.name else ""),
+                                            child.name or "", _caught_names(child), raised_names(child)))
+            visit(child, site)
+
+    visit(module, "")
+    return found
+
+
 def check_catch_forecast(plan: Plan, copy: Path, scratch: Path,
                          baseline: "dict[str, bytes | None]") -> "tuple[list[DeclarationFinding], list[str]]":
     """F4-115 A2 — 예외 번역표 행의 선택 «번역 출처» 칸(`<= <잡는 예외>[ as]`)을 번들 `check-api-error-controller-contract.py` 의
     트리 슬라이스 판정(`_slice_check_controller_ast` — #474 «입구 파일은 도메인 예외를 타입으로만» · #62 «except Exception»)으로
     선언 예보한다. 반환: (선언 확정 · 후보, 채널 메모).
 
-    판정 대상 = 창구가 검사기 OHS 선택(`_ohs_selected` — 계획 경로로 BC 를 바로 맞춤 · `_tree_bcs2` 와 같은 조건)인 행뿐이다(그 밖
-    행의 출처 칸은 판정 0 + 메모). `Exception` · `BaseException` 출처는 `as` 와 무관하게 최소 catch 투영 → #62. 그 밖은
-    `_catch_origin` 으로 가른다 — `as` ∧ 도메인 = 최소 투영(그 import + `except X as _caught: _caught`) → #474 · `as` ∧ 해소 불가
-    = 후보 · 비도메인 · 내장 · `as` 없음 = 0. 기존 빚 열쇠: update 창구면 기준선 실물을 같은 슬라이스로 판정해, 그 출처를 잡는
-    catch(bare `except:` 는 `Exception` · `BaseException` 출처와 같다)에 같은 규칙(#474 · #62) 줄이 이미 있으면 확정이 아니라
-    후보로 낮춘다(G2 도 같은 규칙 · 판정문의 기존 줄로 본다 — 그 빚은 빚 스캔 몫). update 창구 행마다 메모: 출처 칸 없음(S5 입구
-    catch 미검증) · `as` 없음 ∧ 도메인 · 해소 불가(확인 — 낡은 출처 칸과 올바른 «타입으로만»을 가르지 못한다). 투영은 칸마다 빈
-    폴더(`scratch/catch/<n>/`)에 쓰고 지운다. OHS 꼴 창구 행이 없으면 검사기를 적재하지 않는다. 창구 실물은 `copy`(선택)와
-    `baseline`(materialize 전 실물 — 출처 해소 · 기존 빚)으로만 읽는다."""
+    판정 대상 = 출처 칸이 있는 행 가운데 창구가 검사기 OHS 선택(`_ohs_selected` — 계획 경로로 BC 를 바로 맞춤 · `_tree_bcs2` 와 같은
+    조건)인 행뿐이다(그 밖 행의 출처 칸은 판정 0 + 메모). 검사기는 그런 행이 있을 때만 적재한다. `Exception` · `BaseException` 출처는
+    `as` 와 무관하게 최소 catch 투영 → #62. 그 밖은 `_catch_origin` 으로 가른다 — `as` ∧ 도메인 = 최소 투영(그 import +
+    `except X as _caught: _caught`) → #474 · `as` ∧ 해소 불가 = 후보 · 비도메인 · 내장 · `as` 없음 = 0.
+    기존 빚 열쇠(update 창구): 기준선 실물을 같은 슬라이스로 판정해 그 규칙 줄을 낸 catch(빚 catch)를 찾는다. 빚 catch 가 없으면 확정
+    그대로다. 있으면 행의 published 예외를 기준선에서 누가 내는지로 그 행이 고칠 catch 를 가린다 — #474 는 같은 출처를 잡는 catch 만,
+    #62 는 판정문이 고정이라 어느 catch-all 빚이든(이름 무관) 본다: ① 빚 catch 가 그 예외를 냄 → 후보(그 catch 를 고치는 행 —
+    기존 빚) ② 빚 없는 catch(#474 는 같은 출처 · #62 는 어느 catch 든)가 냄 → 확정(그 catch 가 이제 값을 읽거나 catch-all 이 되는 새
+    줄 — G2 집합 차분은 지울 수 있다) ③ 둘 다 아님 → 후보(대상을 바꾼 기존 catch 인지 새 catch 인지 가를 수 없다). 후보 글은 빚 catch
+    의 자리와 묶음 이름을 적는다. update 창구 행마다 메모: 출처 칸 없음(S5 입구 catch 미검증 — 앞 거름 꼴로만 고른다) · `as` 없음 ∧
+    도메인 · 해소 불가(확인 — 낡은 출처 칸과 올바른 «타입으로만»을 가르지 못한다). 투영은 칸마다 빈 폴더(`scratch/catch/<n>/`)에
+    쓰고 지운다. 창구 실물은 `copy`(선택)와 `baseline`(materialize 전 실물 — 출처 해소 · 기존 빚)으로만 읽는다."""
     out: list[DeclarationFinding] = []
     memos: "list[str]" = []
     cells: int = 0
-    debts: "dict[str, dict[str, set[str]]]" = {}  # 창구 경로 → 규칙 → 그 규칙 줄을 낸 기준선 catch 의 잡는 이름들
+    # 창구 경로 → (기준선 catch 들, 규칙 → 그 규칙 줄을 낸 catch 줄 번호, catch 에 맞추지 못한 규칙)
+    debts: "dict[str, tuple[list[_BaselineCatch], dict[str, set[int]], set[str]]]" = {}
 
     def judged(path: str, body: bytes) -> "list[tuple[object, tuple[str, str, int] | None]]":
         """분석 파일을 `scratch/catch/<n>/<창구 경로>` 에 쓰고 검사기 트리 슬라이스 판정(위반 · 사건 좌표)을 받는다(방출 0)."""
@@ -3519,10 +3563,12 @@ def check_catch_forecast(plan: Plan, copy: Path, scratch: Path,
             keys = [None] * len(found.entries)
         return list(zip(found.entries, keys))
 
-    def debt_of(entry: PlanEntry, path: str) -> "dict[str, set[str]]":
-        """update 창구 기준선 실물의 #474 · #62 줄 → 그 catch 가 잡는 이름들(좌표를 모르면 «*» = 어느 출처든)."""
+    def debt_of(entry: PlanEntry, path: str) -> "tuple[list[_BaselineCatch], dict[str, set[int]], set[str]]":
+        """update 창구 기준선 실물의 catch 들 · #474 · #62 줄을 낸 catch 줄 번호 · 좌표를 맞추지 못한 규칙."""
         if path not in debts:
-            found: "dict[str, set[str]]" = {}
+            catches: "list[_BaselineCatch]" = []
+            lines: "dict[str, set[int]]" = {}
+            unknown: "set[str]" = set()
             prior: "bytes | None" = baseline.get(entry.path) if entry.tag == "update" else None
             module: "ast.Module | None" = None
             if prior is not None:
@@ -3531,44 +3577,77 @@ def check_catch_forecast(plan: Plan, copy: Path, scratch: Path,
                 except (UnicodeError, SyntaxError, ValueError, RecursionError):
                     module = None
             if module is not None and prior is not None:
-                handlers: "dict[int, ast.ExceptHandler]" = {
-                    h.lineno: h for h in ast.walk(module) if isinstance(h, ast.ExceptHandler)}
+                catches = _baseline_catches(module)
+                known_lines: "set[int]" = {c.lineno for c in catches}
                 for item, key in judged(path, prior):
                     if item.rule not in ("#474", "#62"):
                         continue
-                    handler: "ast.ExceptHandler | None" = handlers.get(key[2]) if key is not None else None
-                    found.setdefault(item.rule, set()).update(_caught_names(handler) if handler is not None else {"*"})
-            debts[path] = found
+                    if key is None or key[2] not in known_lines:
+                        unknown.add(item.rule)
+                    else:
+                        lines.setdefault(item.rule, set()).add(key[2])
+            debts[path] = (catches, lines, unknown)
         return debts[path]
 
-    def is_debt(entry: PlanEntry, path: str, rule: str, source: str) -> bool:
-        names: "set[str]" = debt_of(entry, path).get(rule, set())
-        return "*" in names or source in names or (source in _CATCH_ALL_NAMES and "" in names)
+    def sites(catches: "list[_BaselineCatch]") -> str:
+        return ", ".join(f"`{c.site}` 의 `{c.clause}`" for c in catches)
 
-    def debt_detail(rule: str, source: str) -> str:
-        what: str = f"`{source}` 를 잡는 catch" if rule == "#474" else f"`except {source}`(또는 bare) catch"
-        return (f" — 예보 불확정: 기준선 창구에 {what} 의 {rule} 줄이 이미 있다(기존 빚 — G2 registry 는 같은 규칙 · 판정문의 기존 "
-                "줄로 본다 · 빚 스캔 몫) — 물음: 기존 catch 의 기존 빚인가 · 이번에 고치는가(OHS 는 잡은 도메인 예외 값을 쓰지 "
-                "않는다 — R-3690)")
+    def debt_judgement(entry: PlanEntry, path: str, rule: str, source: str, published: str) -> "tuple[bool, str]":
+        """(확정인가, 덧붙일 글) — 기존 빚 열쇠. 빚 catch 가 없으면 (True, "")."""
+        catches, lines, unknown = debt_of(entry, path)
+        if rule in unknown:
+            return False, (f" — 예보 불확정: 기준선 창구의 {rule} 줄을 catch 에 맞추지 못했다(기존 빚인지 가를 수 없다) — 물음: 이 행이 "
+                           "고치는 catch 는 기존 빚인가 · 이번에 고치는가")
+        if rule == "#474":
+            pool: "list[_BaselineCatch]" = [c for c in catches if source in c.caught]
+        else:
+            pool = catches
+        debt: "list[_BaselineCatch]" = [c for c in pool if c.lineno in lines.get(rule, set())]
+        if not debt:
+            return True, ""
+        clean: "list[_BaselineCatch]" = [c for c in pool if c.lineno not in lines.get(rule, set())]
+        if rule == "#474":
+            bound: str = ", ".join(sorted({f"`{c.bound}`" for c in debt if c.bound})) or "(없음)"
+            g2: str = f"묶음 이름이 {bound} 와 다르면 G2 registry 가 새 줄로 막고 같으면 집합 차분이 지울 수 있다"
+            fix: str = "기존 빚이면 이번에 고치는가(OHS 는 잡은 도메인 예외 값을 쓰지 않는다 — R-3690)"
+            pool_word: str = "같은 출처를 잡는 "
+        else:
+            g2 = "#62 판정문은 고정이라 G2 registry 집합 차분이 새 줄도 지울 수 있다"
+            fix = "기존 빚이면 이번에 고치는가"
+            pool_word = ""
+        tail: str = (f" — 이 행이 그 catch 를 고치는 것이면 기존 빚이다 · 새 catch 이거나 다른 catch 면 실검사기 새 줄이다({g2}) — "
+                     f"물음: 이 행이 고치는 catch 는 어느 것인가 · {fix}")
+        if any(published in c.raised for c in debt):
+            hit: "list[_BaselineCatch]" = [c for c in debt if published in c.raised]
+            return False, f" — 예보 불확정: 기준선 창구의 {rule} 빚 catch({sites(hit)})가 이 행의 published 예외 `{published}` 를 낸다{tail}"
+        if any(published in c.raised for c in clean):
+            hit = [c for c in clean if published in c.raised]
+            what: str = "잡은 값을 쓰면" if rule == "#474" else "catch-all 로 바뀌면"
+            return True, (f" — 기준선 창구에 {rule} 빚 catch({sites(debt)})가 있지만 이 행의 published 예외 `{published}` 는 빚 없는 "
+                          f"{pool_word}catch({sites(hit)})가 낸다 — 그 catch 가 {what} 실검사기 새 줄이다({g2})")
+        return False, (f" — 예보 불확정: 기준선 창구에 {pool_word}{rule} 빚 catch({sites(debt)})가 있고 이 행의 published 예외 "
+                       f"`{published}` 를 내는 {pool_word}catch 는 없다(대상을 바꾼 기존 catch 인지 새 catch 인지 가를 수 없다){tail}")
 
-    sourced: "list[PlanEntry]" = [e for e in plan.entries.values() if e.translations and _ohs_catch_slot(_plan_parts(e.path))]
-    api: "ModuleType | None" = _bundled_checker(API_ERROR_CHECKER, "_pregate_api_error_contract") if sourced else None
+    api: "ModuleType | None" = None  # 출처 칸이 있는 OHS 꼴 행이 있을 때만 적재한다
     for entry in plan.entries.values():
         if not entry.translations:
             continue
         parts: "tuple[str, ...]" = _plan_parts(entry.path)
         path: str = "/".join(parts)
-        ohs: bool = api is not None and _ohs_catch_slot(parts) and _ohs_selected(api, copy, _real_parts(copy, parts))
+        shaped: bool = _ohs_catch_slot(parts)
+        selected: bool = False
+        if shaped and any(row.source for row in entry.translations):
+            api = api or _bundled_checker(API_ERROR_CHECKER, "_pregate_api_error_contract")
+            selected = _ohs_selected(api, copy, _real_parts(copy, parts))
         for row in entry.translations:
             written: str = f"`<= {row.source}{' as' if row.bound else ''}`"
-            if not ohs:
-                if row.source:
-                    memos.append(f"번역 출처 칸 판정 밖(검사기 OHS 창구 아님 — 판정 0): {row.published} ← {row.source} · {path}")
-                continue
             if not row.source:
-                if entry.tag == "update":
+                if entry.tag == "update" and shaped:
                     memos.append(f"S5 입구 catch 미검증(번역 출처 칸 무기재 — 이 행의 catch 꼴을 더하거나 바꾸면 "
                                  f"`<= <잡는 예외>[ as]`): {row.published} · {path}")
+                continue
+            if not selected:
+                memos.append(f"번역 출처 칸 판정 밖(검사기 OHS 창구 아님 — 판정 0): {row.published} ← {row.source} · {path}")
                 continue
             owner: str = f"{row.published} ← {row.source}"
             if row.source in _CATCH_ALL_NAMES:
@@ -3576,9 +3655,8 @@ def check_catch_forecast(plan: Plan, copy: Path, scratch: Path,
                 for item, _key in judged(path, body.encode("utf-8")):
                     if item.rule != "#62":
                         continue
-                    debt: bool = is_debt(entry, path, "#62", row.source)
-                    out.append(DeclarationFinding("#62", path, owner, f"{item.msg} — 번역 출처 칸 {written}"
-                                                  + (debt_detail("#62", row.source) if debt else ""), not debt))
+                    confirmed, note = debt_judgement(entry, path, "#62", row.source, row.published)
+                    out.append(DeclarationFinding("#62", path, owner, f"{item.msg} — 번역 출처 칸 {written}{note}", confirmed))
                 continue
             kind, why, stmt = _catch_origin(plan, entry, row.source, baseline.get(entry.path))
             if not row.bound:
@@ -3593,9 +3671,9 @@ def check_catch_forecast(plan: Plan, copy: Path, scratch: Path,
                 for item, _key in judged(path, body.encode("utf-8")):
                     if item.rule != "#474":
                         continue
-                    debt = is_debt(entry, path, "#474", row.source)
-                    out.append(DeclarationFinding("#474", path, owner, f"{item.msg} — 번역 출처 칸 {written}(출처 {why})"
-                                                  + (debt_detail("#474", row.source) if debt else ""), not debt))
+                    confirmed, note = debt_judgement(entry, path, "#474", row.source, row.published)
+                    out.append(DeclarationFinding("#474", path, owner, f"{item.msg} — 번역 출처 칸 {written}(출처 {why}){note}",
+                                                  confirmed))
             elif kind == "unresolved":
                 out.append(DeclarationFinding(
                     "#474", path, owner,
@@ -4706,7 +4784,8 @@ BLIND_SPOTS: "tuple[str, ...]" = (
     "두 채널(pre-gate 선언 예보 · G2 registry)의 기존 빚 기준이 다르다: G2 는 줄 번호만 지운 «파일·규칙·판정문» 집합 차분이고, 선언 예보는 그보다 "
     "엄격한 구석이 있다(저장소는 다른 클래스의 같은 판정문도 새 위반 · 도메인 서비스는 기존 줄의 소유자를 이 명세가 고쳐 그 줄이 사라지거나 함수 "
     "이름이 다르면 대개 새 위반 — #304·#305 기존 빚 메서드의 개명은 G2 0 인 거짓 확정이 될 수 있다 · 같은 함수 이름이 다른 자리에 있으면 후보 · "
-    "번역 출처 칸은 기준선 창구의 그 출처를 잡는 catch 에 같은 규칙 줄이 이미 있으면 후보 — G2 도 0 · 빚 스캔 몫). 번역 출처 칸 무기재·낡은 출처 칸·"
+    "번역 출처 칸은 기준선 창구의 같은 규칙 빚 catch 가 그 행의 published 예외를 내거나 그 예외를 내는 catch 를 가를 수 없으면 후보 — "
+    "빚 catch 를 고치는 것이면 기존 빚이고 새 catch 나 다른 catch 면 새 줄이다(#474 는 묶음 이름이 다르면 G2 가 막는다)). 번역 출처 칸 무기재·낡은 출처 칸·"
     "번역 없는 catch·그 밖 본문 규칙, 기존 "
     "signature/body·decorator/alias/class 본문 변경, 효과 무기재, 지원 밖 marker/base/client와 후행 remove(@Ln)는 미검증으로 위 목록 병기 · update "
     "칸 import 규칙(#288·#303 등)은 S3.",

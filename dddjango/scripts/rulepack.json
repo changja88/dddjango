@@ -1103,7 +1103,7 @@
       ]
     },
     "dddjango/agents/design-architect.md/s005/b38": {
-      "h": "8f3df9835ca66a69",
+      "h": "8f195aedd0514fef",
       "n": 2,
       "works": [
         "R-3430",
@@ -14851,7 +14851,7 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "9cf4194e6355f300574a8a1ce127606fe097e815ab80a1814d2988f77ec75ae7"
+      "sha256": "d5e1afe8f19d198f475819ddc464424a09724df11de04d85f6e0211c3b37bbf1"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
@@ -87368,7 +87368,7 @@
       ],
       "document": "dddjango/agents/design-architect.md",
       "expression": "https://numchida.com/ns/djr#R-3689@2026-10-25",
-      "label": "OHS 창구 catch 꼴을 더하거나 바꾸면(번역 대상이 같아도 · 본문만 바뀌어도) 번역 출처 칸을 지금 꼴로 · 기존 published 예외로 가는 번역도 · `as` = 잡은 값을 씀 · 무기재 = S5 · 도메인 출처 `as` = #474 확정 · `Exception`/`BaseException` = #62 확정 · 기준선 catch 의 같은 규칙 기존 줄 = 후보 · OHS 밖 행 = 판정 0",
+      "label": "OHS 창구 catch 꼴을 더하거나 바꾸면(번역 대상이 같아도 · 본문만 바뀌어도) 번역 출처 칸을 지금 꼴로 · 기존 published 예외로 가는 번역도 · `as` = 잡은 값을 씀 · 무기재 = S5 · 도메인 출처 `as` = #474 확정 · `Exception`/`BaseException` = #62 확정 · 기준선 빚 catch 가 그 published 예외를 내거나 가를 수 없으면 후보 · OHS 밖 행 = 판정 0",
       "norm_kind": "Obligation",
       "order_rank": 441,
       "overrides": [],

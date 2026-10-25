@@ -47,6 +47,8 @@ ORDER_ORIGINAL = ('from abc import ABC, abstractmethod\nfrom support.read_models
 # F4-115 — 현장 꼴 둘(update 도메인 서비스의 새 공개 `-> bool` · update OHS 창구가 잡은 도메인 예외 값을 로그에 씀)과 낡은 출처 칸.
 # «옛 판» 은 2.26.1 배포 커밋 고정(HEAD 금지 — 이 고침을 커밋한 뒤에도 옛 판이다).
 _RELEASED_2261_COMMIT = "55ab56e5"
+# F4-115 1차 고침 판(번역 출처 칸 기존 빚 열쇠가 «같은 출처 · 파일 어디든») — 좁힘(published 예외로 catch 를 가림) 대조의 옛 판(HEAD 금지).
+_F115_FIRST_FIX_COMMIT = "437e37d2"
 POLICY = "application/garden/domain_layer/domain_service/watering.py"
 POLICY_ORIGINAL = ('"""Which plants need water."""\nfrom __future__ import annotations\n\n'
                    'from application.garden.domain_layer.plant.plant import Plant\n\n\n'
@@ -1212,10 +1214,53 @@ class BookAdmin(TranslatableAdmin):
         run, report = self.cli(text)
         self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
         self.assertIn('- (없음)', pg._subsection(report, '선언 확정'))
-        self.assertIn('예보 불확정: 기준선 창구에 `PlantUnreadable` 를 잡는 catch 의 #474 줄이 이미 있다(기존 빚',
-                      pg._subsection(report, '선언 후보'))
+        self.assertIn('예보 불확정: 기준선 창구의 #474 빚 catch(`read_plant_query` 의 `except PlantUnreadable as unreadable`)가 '
+                      '이 행의 published 예외 `PlantUnavailableException` 를 낸다', pg._subsection(report, '선언 후보'))
         self.assertEqual(pg.check_report(text, report)[0], 0)
         self.assertEqual((self.source / SERVICE).read_text(), debt)
+
+    def scripts_at(self, commit: str) -> Path:
+        """커밋 고정 scripts 사본(HEAD 금지)."""
+        old = self.root / f'scripts-{commit}'
+        if not old.exists():
+            old.mkdir()
+            archive = subprocess.run(['git', '-C', str(ROOT), 'archive', commit, 'dddjango/scripts'], capture_output=True, check=True)
+            subprocess.run(['tar', '-x', '-C', str(old)], input=archive.stdout, check=True)
+        return old / 'dddjango' / 'scripts'
+
+    def test_f115_existing_catch_debt_key_follows_the_catch_that_raises_the_published_exception(self):
+        # 구현 검토 I1′ — 기존 빚 열쇠를 행의 published 예외를 내는 catch 로 좁힌다. 1차 고침 판(파일 어디든 같은 출처면 후보)은
+        # C3 · C4(다른 함수의 빚 · 빚 없는 catch 가 값을 읽는 진짜 새 줄)를 후보로 낮췄고 C7(같은 catch-all 을 좁힘)을 확정했다.
+        self.garden_fixture()
+        clean = '    except PlantUnreadable:\n'
+        logged = '    except PlantUnreadable as unreadable:\n        print(unreadable)\n'
+        peek = ('\n\ndef peek_plant_query(name: str) -> str:\n    try:\n        return _read(name)\n'
+                '    except PlantUnreadable as {bound}:\n        print({bound})\n        return \'\'\n')
+        other_62 = CATCHING + ('\n\ndef peek_plant_query(name: str) -> str:\n    try:\n        return _read(name)\n'
+                               '    except BaseException:\n        return \'\'\n')
+        row_474 = f'PlantUnavailableException  {SERVICE}  <= PlantUnreadable as'
+        row_62 = f'PlantUnavailableException  {SERVICE}  <= Exception'
+        first_fix = self.scripts_at(_F115_FIRST_FIX_COMMIT)
+        for label, baseline, row, now, before in [
+            ('C1b', CATCHING.replace(clean, logged), row_474, 4, 4),
+            ('C1', CATCHING.replace(clean, logged), f'PlantGoneException  {SERVICE}  <= PlantUnreadable as', 4, 4),
+            ('C2', CATCHING.replace(clean, '    except Exception:\n'), row_62, 4, 4),
+            ('C3', CATCHING + peek.format(bound='unreadable'), row_474, 2, 4),
+            ('C4', CATCHING + peek.format(bound='error'), row_474, 2, 4),
+            ('C5', CATCHING, row_474, 2, 2),
+            ('C6', other_62, row_62, 2, 2),
+            ('C7', CATCHING.replace(clean, '    except BaseException:\n'), row_62, 4, 2),
+        ]:
+            with self.subTest(form=label):
+                self.write(self.source, SERVICE, baseline)
+                _git(self.source, 'add', '-A')
+                _git(self.source, 'commit', '-qm', f'form {label}', '--allow-empty')
+                text = spec_text([f'update {SERVICE}'], exceptions=[row])
+                runs = [self.cli(text, scripts=scripts) for scripts in (SCRIPTS, first_fix)]
+                self.assertEqual([run.returncode for run, _ in runs], [now, before], [r.stdout for r, _ in runs])
+                confirmed = pg._subsection(runs[0][1], '선언 확정')
+                self.assertEqual('- (없음)' in confirmed, now == 4, confirmed)
+                self.assertEqual(pg.check_report(text, runs[0][1])[0], 0 if now == 4 else 3)
 
     def test_f115_old_form_rows_keep_the_released_block_hash(self):
         # 셋째 칸이 없는 번역표 행은 2.26.1 과 블록 해시가 같다(캐시 skip 대조 무변) — 칸을 적으면 해시가 바뀐다.
