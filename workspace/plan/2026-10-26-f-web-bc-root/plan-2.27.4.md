@@ -27,6 +27,8 @@
   폴더 이름으로 둔다 — 서버 BC 파일이 web 구역을 import 하는 것(#12)을 계속 잡고, 점 폴더를 빼서 직접 실행과 G2 · pre-gate 사본이 같은 이름을 쓴다.
   점 폴더 · SKIP_DIRS 는 걸을 때 들어가기 전에 잘라 낸다.
 - `design_pregate._checker_bc`: 계획 경로가 사본 뿌리 직계 `application/<bc>/…` 일 때만 고른다(조상 링크 확인은 뿌리 직계라 지움) · docstring 셋을 새 뜻으로.
+  저장소 예보의 표준 라이브러리 가림을 볼 source root 설명 셋도 «저장소 루트(BC 는 뿌리 `application/` 에만)» 로 — 중첩 컨테이너의 부모(`src/` 등)는
+  더는 source root 가 아니다(그 아래 계획 경로는 예보 대상이 아니다).
 - Codex byte 미러 · `pregate_symbol_kinds.json` 재소성(검사기 소스가 바뀜).
 - 그대로 둔 것: 채택 여부만 묻고 저장소 전체를 훑는 검사기 7종 · 8 자리의 `rglob("application")`(BC 고르기가 아님 · idempotency-scope-creep 에 둘) · `registry_gate._snapshot_cache_instances` · `container_bc_names` ·
   메시지 글 · SKIP_DIRS.
@@ -98,12 +100,21 @@
     `application/<재료>_<bc>` 로 옮기고 나머지는 `fx_<재료>/` 에 두게 바꿈(중첩 BC 를 안 재면 레코드가 300 아래로 떨어져 전제가 깨진다 · 바꾼 뒤 레코드 477).
   - `anchor_diff_smoke.HiddenSnapshotRegression.test_A10`(직접 실행 앵커는 숨김 경로까지 푼다): 숨김 경로 줄의 출처를 기록 사본 BC(이제 BC 아님)에서 뿌리 BC 안
     숨김 폴더(`driving_layer/.old/api_router.py` → context-isolation #113)로 바꿈 — 지키는 성질은 그대로(앵커 기존분 · 신규분 0).
+  - `pregate_transcription_smoke.RepositoryForecastTest` 의 source root 가림 시험(통합 사본 verify 가 잡음): 계획 경로 `src/application/…` · 가리는 패키지
+    `src/calendar/` 를 뿌리 `application/…` · 저장소 루트 `calendar/` 로 옮김 — 지키는 뜻 그대로(가리는 프로젝트 패키지 → 기준선에만 있으면 후보 · 가림 없는
+    표준 import → 확정 · 표준 패키지의 하위 모듈 → 확정 · `fractions` 꼴 · 후상태 대조는 같은 이름 domain 값 객체를 들이면 실검사기가 그 메서드를 통과).
+    가림 판정을 지운 변이를 이 시험과 뿌리 모듈 가림 시험이 함께 잡는다. 중첩 계획 경로의 예보 0 은 `SelectionEquivalenceTest` 가 지킨다.
+  - `pregate_field_report_smoke.FieldReportTest` 의 같은 꼴 보고서 시험(source root 패키지는 표준 라이브러리 출처가 아님)도 같은 방법으로 옮김 —
+    `선언 후보` 에 «출처 미해소(기준선에만 있는 출처» 줄 · `선언 확정` 에 없음 · 보고서 점검 0 그대로.
 - 좁은 실행(구현 사본 · 봉인 전): field_report_checker_smoke 98 OK · registry_gate_smoke 48 OK + 케이스 45/45 · anchor_diff_smoke 121 OK + 케이스 14/14 ·
   pregate_transcription_smoke `SelectionEquivalenceTest` 2 OK · fixture_matrix 114/114 · findings_count_matrix 73/73 · checker_baseline_matrix 73/73 · checker_lint 위반 0 ·
   gen_pregate_symbol_kinds `--check` in-sync · Codex 미러 scripts 폴더 전체 byte 같음. 봉인 · `make verify` 는 통합 때.
 - 덧커밋 뒤 좁은 실행: `RootBcSelectionRegression` 8 OK · field_report_checker_smoke 101 OK · registry_gate_smoke 48 OK + 케이스 45/45 ·
   anchor_diff_smoke 121 OK + 케이스 14/14 · fixture_matrix 114/114 · findings_count_matrix 73/73 · checker_lint 위반 0 · gen_pregate_symbol_kinds `--check` in-sync ·
   Codex 미러 `diff -rq` 차이 없음.
+- source root 시험 옮긴 뒤 전체 실행(verify 의 base-regen · cross · backstop 묶음에서 이 판이 닿는 여섯): pregate_transcription_smoke 67 OK ·
+  pregate_field_report_smoke 69 OK · field_report_checker_smoke 101 OK · pregate_fixture_run PASS · registry_gate_smoke 48 OK + 케이스 45/45 ·
+  anchor_diff_smoke 121 OK + 케이스 14/14.
 
 ## 현장 사본 대조(읽기만 — 서비스 저장소의 `.py` · 폴더 모양만 옮긴 사본)
 - 서버 주어 지적 줄: 직접 실행 2,853 → 2,850(빠진 3 = #331 거짓) · 숨김 폴더를 뺀 G2 꼴 사본 2,850 → 2,850(글자까지 같음).
