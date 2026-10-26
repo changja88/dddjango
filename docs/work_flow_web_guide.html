@@ -90,7 +90,7 @@
       <article class="card"><p class="number">01 · G0 범위</p><h3>범위와 출발 점검</h3><p>정리한 범위 · 진행 방식과 근거 · Django 연결 점검 결과 · API 와 디자인 출처를 봅니다. 시안이면 «이 화면이 맞나요?»를 묻고, 손댈 파일 쪽 기존 위반(빚)이 있으면 정리할지 묻습니다.</p></article>
       <article class="card"><p class="number">02 · G1 설계</p><h3>설계 승인</h3><p>설계 문서 경로와 요지, 기본으로 빼 둔 항목, 설계가 혼자 못 정한 선택지, 가정한 API 목록을 확인합니다. 외부 JS(공식 SDK)가 필요하면 <b>따로 한 문항</b>으로 묻습니다. 승인한 설계가 코드의 유일한 근거가 됩니다.</p></article>
       <article class="card"><p class="number">03 · G2 구현</p><h3>직접 띄워 확인</h3><p>화면 동작 목록(위험 항목 별표) · 시안(또는 토큰)과의 비교 · 빚 한 줄을 봅니다. <code>python manage.py runserver</code> 로 직접 띄워 브라우저에서 확인한 뒤 승인합니다. API 를 가정했으면 첫 줄기 직후 한 번 더 묻습니다.</p></article>
-      <article class="card"><p class="number">04 · 끝</p><h3>검증 보고 · 한 묶음</h3><p>실제로 돌린 검증만 보고합니다. 깨끗한 상태에서 시작했으면 작업 중 커밋을 <b>스테이징된 미커밋 한 묶음</b>으로 모아 둡니다 — <code>git diff --staged</code> 로 보고 직접 커밋합니다.</p></article>
+      <article class="card"><p class="number">04 · 끝</p><h3>검증 보고 · 커밋 그대로</h3><p>실제로 돌린 검증만 보고합니다. 작업 중 만든 커밋은 합치지 않고 그대로 둡니다.</p></article>
     </div>
     <p class="caption">요청에 적지 않을 것: 진행 방식 · 폴더 · 파일 · 클래스 이름 · 화면 쪼개기 · 라이브러리 · 테스트 명령 · 단계 미리 승인 · 빚 정리 미루기 — 플러그인 단계가 정하고 게이트에서 확인받습니다. 한 번 준 API 위치와 시안 출처는 <code>.dddjango-web/config.json</code> 에 남아 다음 요청에서 다시 묻지 않습니다.</p>
   </section>
@@ -137,7 +137,7 @@
 
   <section id="owners" aria-labelledby="owners-title">
     <h2 id="owners-title">역할마다 입력과 산출물의 주인이 있습니다</h2>
-    <div class="notice"><strong>Coordinator — 진행의 주인</strong><br>요청을 받아 진행 방식을 가르고, Django 연결 설정을 점검해 승인받은 줄만 넣고, OpenAPI 문서와 시안을 <b>동결</b>합니다(시안 토큰 · 이미지 · 계약은 스크립트로 기계 절단 — 사람이 손으로 베끼지 않습니다). 빚 스캔 · 게이트 · 에이전트 호출 · 슬라이스 도출 · 백스톱 · 전수 테스트 · 반송 · 최종 보고 · 미커밋 합치기를 맡습니다. 직접 쓰는 것은 스코프 메모 · 동결 스냅샷 · 연결 설정 · <code>build-state.json</code> · 빚 기록 · 공식 SDK 설치(격리 커밋)뿐이고, <b>명세는 설계자에게, 코드는 구현자에게</b> 맡깁니다.</div>
+    <div class="notice"><strong>Coordinator — 진행의 주인</strong><br>요청을 받아 진행 방식을 가르고, Django 연결 설정을 점검해 승인받은 줄만 넣고, OpenAPI 문서와 시안을 <b>동결</b>합니다(시안 토큰 · 이미지 · 계약은 스크립트로 기계 절단 — 사람이 손으로 베끼지 않습니다). 빚 스캔 · 게이트 · 에이전트 호출 · 슬라이스 도출 · 백스톱 · 전수 테스트 · 반송 · 최종 보고를 맡습니다. 직접 쓰는 것은 스코프 메모 · 동결 스냅샷 · 연결 설정 · <code>build-state.json</code> · 빚 기록 · 공식 SDK 설치(격리 커밋)뿐이고, <b>명세는 설계자에게, 코드는 구현자에게</b> 맡깁니다.</div>
     <div class="grid">
       <article class="card"><p class="number">AGENT 01 · PHASE 1</p><h3>화면 설계자</h3><p><code>design-architect-web</code></p><p><strong>입력:</strong> 승인된 스코프 메모 · 동결 OpenAPI · 시안(design-ref) · 디자인 토큰 · 이미지 매니페스트 · (있으면) BC 배치 · area 판정 · 빚 정리 목록.</p><p><strong>산출:</strong> 통합 설계 명세 <code>design-spec.md</code> 하나 — 도메인 · 화면 · 상태 · 데이터 네 관점, 외부 관찰 가능 행위 목록, 판정 소유 라벨, 계약 위험 표기, 파일 목록 · 구조 결정, (빚 정리가 있으면) <code>## 슬라이스 0</code> 절, (필요하면) SDK 사용 표. 리뷰 노트를 반영 · 중재하는 <b>유일한 명세 작성자</b>이고 코드는 쓰지 않습니다.</p></article>
       <article class="card"><p class="number">AGENT 02~05 · PHASE 1</p><h3>설계 리뷰어 넷</h3><p><code>design-review-{ddd,ui,state,data}-web</code></p><ul><li><b>ddd</b> — 애그리거트 경계 · 판정 소유 · BC 배치 · 교차 BC 채널</li><li><b>ui</b> — 화면 분해 · design_system 재사용 · 내비게이션 · view 수동성 · 시안 대조</li><li><b>state</b> — SharedState 채택 · 갱신 채널 · 수명 · 일회성 이벤트 · State 계약</li><li><b>data</b> — 서버 계약 대조 · Either 계약 · DataSource 분해 · 공식 SDK</li></ul><p><strong>산출:</strong> 축별 리뷰 노트. 서로의 노트를 보지 않고(편향 방지), 관심사가 없으면 «해당 없음 + 근거 한 줄»을 반드시 냅니다. 명세 · 코드는 고치지 않습니다.</p></article>

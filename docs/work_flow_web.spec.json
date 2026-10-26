@@ -290,7 +290,7 @@
       "id": "finish",
       "type": "cloud",
       "label": "마무리",
-      "sublabel": "검증 보고 · 미커밋 합치기",
+      "sublabel": "검증 보고 · 커밋 그대로",
       "tag": "Coordinator",
       "pos": [
         1170,
