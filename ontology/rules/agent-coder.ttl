@@ -541,8 +541,8 @@ djr:R-2543 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2544 a djr:Obligation ;
-    skos:prefLabel "승인 tree/module/scope/profile 과 관찰 tree 불일치 시 조용한 적응·파일 생성 금지와 TREE_CONTRACT_MISMATCH 4열 반송"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2544@2026-09-01> .
+    skos:prefLabel "승인 tree/module/scope/profile 과 관찰 tree 불일치 시 조용한 적응·파일 생성 금지와 TREE_CONTRACT_MISMATCH 4열 반송(동명 폴더 승격 본체 · 묶음 칸만 다른 경로는 일치)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2544@2026-10-27> .
 
 <https://numchida.com/ns/djr#R-2544@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2544 ;
@@ -552,6 +552,12 @@ djr:R-2544 a djr:Obligation ;
     prov:specializationOf djr:R-2544 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-2544@2026-08-22> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-2544@2026-10-27> a djr:Expression ;
+    prov:specializationOf djr:R-2544 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2544@2026-09-01> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-2545 a djr:Obligation ;
@@ -815,8 +821,8 @@ djr:R-2572 a djr:Exception ;
     djr:revision 1 .
 
 djr:R-2573 a djr:Prohibition ;
-    skos:prefLabel "승인 스코프 밖 기존 배선·배치의 이동 금지(강제 전파 금지 — 이동 권한은 G0 사용자 빚 결정→리팩토링 슬라이스(슬라이스 0·리팩토링 모드 변경 슬라이스))"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2573@2026-10-04> .
+    skos:prefLabel "승인 스코프 밖 기존 배선·배치의 이동 금지(강제 전파 금지 — 이동 권한은 G0 사용자 빚 결정→리팩토링 슬라이스(슬라이스 0·리팩토링 모드 변경 슬라이스)와 이 실행이 부른 묶음 이동(묶음 창))"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2573@2026-10-27> .
 
 <https://numchida.com/ns/djr#R-2573@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2573 ;
@@ -826,6 +832,12 @@ djr:R-2573 a djr:Prohibition ;
     prov:specializationOf djr:R-2573 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-2573@2026-08-22> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-2573@2026-10-27> a djr:Expression ;
+    prov:specializationOf djr:R-2573 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2573@2026-10-04> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-2574 a djr:Obligation ;
@@ -949,12 +961,18 @@ djr:R-2588 a djr:Override ;
     djr:revision 1 .
 
 djr:R-2589 a djr:Override ;
-    skos:prefLabel "명세의 승인 스코프 산출물 목록 밖 기존 파일 이동·재배선 결정에 대한 집행 금지와 TREE_CONTRACT_MISMATCH 반송"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2589@2026-08-22> .
+    skos:prefLabel "명세의 승인 스코프 산출물 목록 밖 기존 파일 이동·재배선 결정에 대한 집행 금지와 TREE_CONTRACT_MISMATCH 반송(folder_group apply 의 묶음 이동은 대상 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2589@2026-10-27> .
 
 <https://numchida.com/ns/djr#R-2589@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2589 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2589@2026-10-27> a djr:Expression ;
+    prov:specializationOf djr:R-2589 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2589@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2590 a djr:Obligation ;
     skos:prefLabel "인수 테스트 시도 예산 소진·예산 부재 시 즉시 중단과 명세 가정 오류/구현 난점 구분 보고"@ko ;
@@ -1184,6 +1202,22 @@ djr:R-3684 a djr:Obligation ;
     prov:specializationOf djr:R-3684 ;
     djr:revision 1 .
 
+djr:R-3708 a djr:Prohibition ;
+    skos:prefLabel "묶음 창 — 준 folder_group apply 명령 하나만(--debt|--run-moves) · 손 이동·개명·다른 편집 금지 · 창 밖 묶음 이동 금지 · 새 파일은 file-plan 경로 그대로"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3708@2026-10-27> .
+
+<https://numchida.com/ns/djr#R-3708@2026-10-27> a djr:Expression ;
+    prov:specializationOf djr:R-3708 ;
+    djr:revision 1 .
+
+djr:R-3709 a djr:Obligation ;
+    skos:prefLabel "folder_group apply 멈춤(기계 이동 불가)이면 아무것도 고치지 않고 출력 그대로 보고"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3709@2026-10-27> .
+
+<https://numchida.com/ns/djr#R-3709@2026-10-27> a djr:Expression ;
+    prov:specializationOf djr:R-3709 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/coder.md> a djr:Document ;
     skos:prefLabel "agent-coder"@ko .
 
@@ -1336,7 +1370,7 @@ djr:R-3684 a djr:Obligation ;
     djr:order 15 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004/b13> ;
     djr:statesNorm djr:R-2544, djr:R-2545, djr:R-2546, djr:R-2547 ;
-    djr:text "- 승인된 tree/module/scope/profile과 관찰 tree가 다르면 조용히 적응하거나 파일을 만들지 않고 `TREE_CONTRACT_MISMATCH`로 `expected slot | observed path/contract | mismatch | required decision`을 반송한다. 경로 대조에서 승인 `…/<칸>.py` 와 관찰 `…/<칸>/<칸>.py`(유효한 동명 폴더 승격의 본체)는 일치로 읽는다 — 그 외 폴더 관찰은 여전히 mismatch 다. 그리고 반송한다. common `ErrorSchema`의 `reuse`는 관찰된 exact baseline과 일치해야 한다. `create`와 `approved-change`는 field/type/required/default/nullability/모든 `Field` metadata/model config·legacy `Config`/validator/serializer/computed field/Pydantic hook inventory와 effective semantics/wire 직렬화/field 의미 전체에 대해 일반 G1 승인과 분리된 명시적 사용자 승인 evidence가 없으면 구현 전에 `STOP_FOR_USER_APPROVAL`로 반송한다. 12-slot/profile이 빠지거나 모순돼도 추측하지 않고 설계로 반송한다.\n"@ko .
+    djr:text "- 승인된 tree/module/scope/profile과 관찰 tree가 다르면 조용히 적응하거나 파일을 만들지 않고 `TREE_CONTRACT_MISMATCH`로 `expected slot | observed path/contract | mismatch | required decision`을 반송한다. 경로 대조에서 승인 `…/<칸>.py` 와 관찰 `…/<칸>/<칸>.py`(유효한 동명 폴더 승격의 본체)는 일치로 읽고, 묶음 허용 칸에서 같은 묶음 부모 · 같은 파일 이름이고 묶음 칸만 다른 승인 경로와 관찰 경로(부모 ↔ 묶음 · 묶음 ↔ 묶음 — 묶음 창이 옮긴 자리)도 일치로 읽는다 — 그 외 폴더 관찰은 여전히 mismatch 다. 그리고 반송한다. common `ErrorSchema`의 `reuse`는 관찰된 exact baseline과 일치해야 한다. `create`와 `approved-change`는 field/type/required/default/nullability/모든 `Field` metadata/model config·legacy `Config`/validator/serializer/computed field/Pydantic hook inventory와 effective semantics/wire 직렬화/field 의미 전체에 대해 일반 G1 승인과 분리된 명시적 사용자 승인 evidence가 없으면 구현 전에 `STOP_FOR_USER_APPROVAL`로 반송한다. 12-slot/profile이 빠지거나 모순돼도 추측하지 않고 설계로 반송한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b16> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
@@ -1390,7 +1424,7 @@ djr:R-3684 a djr:Obligation ;
     djr:order 21 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b17>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b2> ;
     djr:statesNorm djr:R-2567, djr:R-2568, djr:R-2569, djr:R-2570, djr:R-2571, djr:R-2572, djr:R-2573 ;
-    djr:text "- **배선·등록 형태는 profile 무관 표준이다**(2026-08-12 라운드 1′): 승인 scope마다 API 하나, `auto_import=False` controller, side-effect-free BC registrar(`register_<bc>_api`), registrar를 명시적으로 호출해 API를 mount하는 root URL composition. import-time registration을 금지하며 BC `composition_root/`(`dependency_wiring.py` — final.md §1 트리 2~4행)가 dependency injection만 소유한다. framework 오류를 위해 함수형 `Router`를 발명하거나 강제하지 않는다. `preserve-established`가 유지하는 native 는 오류 wire 산출물(schema/handler/body)이지 registration/composition 이 아니다 — **기존 BC 의 배선 실물(`*_api_router.py` 동형)은 배선 결정의 입력이 아니다.** 이 표준의 관할은 승인 스코프가 낳는 산출물(신규 파일·기존 파일에 추가되는 줄)이다 — 승인 스코프 밖 기존 배선·배치는 어떤 위반 판정을 근거로도 이 작업에서 옮기지 않는다(강제 전파 금지 — 이동 권한은 G0 사용자 빚 결정→리팩토링 슬라이스(슬라이스 0 · 리팩토링 모드 변경 슬라이스) 뿐 · `discipline-houserules` SKILL §1.1 판정 물음 · 2026-08-13).\n"@ko .
+    djr:text "- **배선·등록 형태는 profile 무관 표준이다**(2026-08-12 라운드 1′): 승인 scope마다 API 하나, `auto_import=False` controller, side-effect-free BC registrar(`register_<bc>_api`), registrar를 명시적으로 호출해 API를 mount하는 root URL composition. import-time registration을 금지하며 BC `composition_root/`(`dependency_wiring.py` — final.md §1 트리 2~4행)가 dependency injection만 소유한다. framework 오류를 위해 함수형 `Router`를 발명하거나 강제하지 않는다. `preserve-established`가 유지하는 native 는 오류 wire 산출물(schema/handler/body)이지 registration/composition 이 아니다 — **기존 BC 의 배선 실물(`*_api_router.py` 동형)은 배선 결정의 입력이 아니다.** 이 표준의 관할은 승인 스코프가 낳는 산출물(신규 파일·기존 파일에 추가되는 줄)이다 — 승인 스코프 밖 기존 배선·배치는 어떤 위반 판정을 근거로도 이 작업에서 옮기지 않는다(강제 전파 금지 — 이동 권한은 G0 사용자 빚 결정→리팩토링 슬라이스(슬라이스 0 · 리팩토링 모드 변경 슬라이스)와 이 실행의 새 · 바뀐 파일이 부른 묶음 이동(형성 · 해체 · 다시 놓기 — `folder_group.py` 가 계산 · 파일 이름 · 내용 무변 · import 기계 치환만 · 묶음 창 안에서 — 규칙이 권한이다 · 묻지 않는다 · 이미 있던 빚의 정리는 G0 빚 결정 그대로) 뿐 · `discipline-houserules` SKILL §1.1 판정 물음 · 2026-08-13 · 2026-10-27).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b22> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
@@ -1413,7 +1447,7 @@ djr:R-3684 a djr:Obligation ;
     djr:order 24 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b17> ;
     djr:statesNorm djr:R-2584, djr:R-2585, djr:R-2586, djr:R-2587, djr:R-2588, djr:R-2589, djr:R-3405 ;
-    djr:text "- JSON API presentation은 승인된 명세의 stack·controller·module 결정을 그대로 집행한다. `dddjango-code-json`의 새 표준 Ninja surface가 class controller로 승인됐다면 `implementation-django-ninja` §2.3의 `@api_controller` + `@route.*`를 사용한다. `preserve-established`는 승인된 native controller/Router/handler form을 바꾸지 않는다. 어느 profile에서도 406/415를 이유로 함수형 `Router`를 새로 강제하지 않는다. **단, 명세의 배선/등록 결정이 표준(#105~#112)과 어긋나면 그대로 집행하지 않고 `TREE_CONTRACT_MISMATCH`로 반송한다** — 명세 복종이 배선 답습의 통로가 되지 않게(라운드 1′ 실증: 명세 R1 이 «확립된 import-time 등록 규약 보존»을 결정으로 박자 coder 가 복종했다). 대칭으로, **명세가 승인 스코프 산출물 목록 밖 기존 파일의 이동·재배선을 결정으로 박아도 그대로 집행하지 않고 `TREE_CONTRACT_MISMATCH`로 반송한다** — 명세 복종이 강제 전파의 통로가 되지 않게(2026-08-13 라운드 2 실증: 명세가 «11 BC canonical 이관»을 결정으로 박자 100파일이 이동됐다). 같은 형식으로, **명세가 신규 HTTP/JSON API 표면의 함수형 Router·plain Django view 채택을 승인 evidence 참조(STOP 승인 기록 경로·발주서/사용자 명시 지시 인용) 없이 결정으로 박아도 그대로 집행하지 않고 `TREE_CONTRACT_MISMATCH`로 반송한다** — 명세 복종이 스택 답습의 통로가 되지 않게(2026-09-01 실증: 확립 plain 관찰이 신규 표면 함수형 확정의 근거로 쓰였다).\n\n"@ko .
+    djr:text "- JSON API presentation은 승인된 명세의 stack·controller·module 결정을 그대로 집행한다. `dddjango-code-json`의 새 표준 Ninja surface가 class controller로 승인됐다면 `implementation-django-ninja` §2.3의 `@api_controller` + `@route.*`를 사용한다. `preserve-established`는 승인된 native controller/Router/handler form을 바꾸지 않는다. 어느 profile에서도 406/415를 이유로 함수형 `Router`를 새로 강제하지 않는다. **단, 명세의 배선/등록 결정이 표준(#105~#112)과 어긋나면 그대로 집행하지 않고 `TREE_CONTRACT_MISMATCH`로 반송한다** — 명세 복종이 배선 답습의 통로가 되지 않게(라운드 1′ 실증: 명세 R1 이 «확립된 import-time 등록 규약 보존»을 결정으로 박자 coder 가 복종했다). 대칭으로, **명세가 승인 스코프 산출물 목록 밖 기존 파일의 이동·재배선을 결정으로 박아도 그대로 집행하지 않고 `TREE_CONTRACT_MISMATCH`로 반송한다** — 명세 복종이 강제 전파의 통로가 되지 않게(2026-08-13 라운드 2 실증: 명세가 «11 BC canonical 이관»을 결정으로 박자 100파일이 이동됐다) — 단 `folder_group.py apply` 가 계산한 묶음 이동(이 실행이 부른 묶음 이동 · G0 ⓐ 묶음 빚 이동)은 반송 대상이 아니다(명세는 묶음 이동을 적지 않는다 — 아래 «묶음 창»). 같은 형식으로, **명세가 신규 HTTP/JSON API 표면의 함수형 Router·plain Django view 채택을 승인 evidence 참조(STOP 승인 기록 경로·발주서/사용자 명시 지시 인용) 없이 결정으로 박아도 그대로 집행하지 않고 `TREE_CONTRACT_MISMATCH`로 반송한다** — 명세 복종이 스택 답습의 통로가 되지 않게(2026-09-01 실증: 확립 plain 관찰이 신규 표면 함수형 확정의 근거로 쓰였다).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
@@ -1548,3 +1582,10 @@ djr:R-3684 a djr:Obligation ;
     djr:order 6 ;
     djr:statesNorm djr:R-3505, djr:R-3506, djr:R-3649, djr:R-3650, djr:R-3651, djr:R-3684 ;
     djr:text "- **슬라이스 0 창**(2026-09-27): Coordinator 가 창 종류(0T | 0C)를 준다. **0C**(코드 정리)에서는 옮긴·개명한 코드를 따라가는 테스트 치환 편집(import·문자열 속 경로·이름)을 테스트 소유와 무관하게(외부 계약 테스트 포함) 네가 한다 — 테스트의 로직·단언은 바꾸지 않고, 판정은 Coordinator 의 `behavior_guard.py close` 다. **0T**(테스트 정리)에서는 입력된 ⓐ 항목을 고치는 테스트 편집만 테스트 소유와 무관하게 한다 — 새 case 를 더하거나 케이스 이름을 바꾸지 않고, 제품 코드를 편집하지 않는다(루트 pytest 설정 절은 테스트 쪽이다). 어느 창이든 반대쪽 본문(0C 의 테스트 로직 · 0T 의 제품 코드)을 고쳐야 정리가 되면 편집하지 말고 그 사실을 보고한다(리팩토링 모드에서는 그 몫을 명세가 0F · 변경 슬라이스로 둔다). **리팩토링 모드 창**(2026-10-04): **0T**(`test`)의 기대 변경은 명세 입장 표 `update` 행(V 에 딸리지 않은 행)의 케이스에서만 한다(그 밖 확정 기대 변화는 red 다). **0F**(`follow` — 구조 추종)에서는 명세의 `retain` 재조직 행(candidate 칸에 낱말 `재조직`)에 적힌 파일만 «기대 의미 그대로» 고친다(시험 소유 무관 — 기대 원소를 바꾸면 red 다). 0T · 0F 에서 시험 케이스 이름 · parametrize 원소 id 는 명세의 `retain` «개명» 행대로만 바꾼다(정의 이름 · id 리터럴 자리만 — 픽스처 · 도우미 이름은 개명 행이 받지 않고, 개명하는 파일을 같은 창에서 옮기지 않는다 · 2026-10-24). **변경 창**(`change`)에서는 승인 V 의 안(내부 약속 · DB 구조) 몫과 그 시험 `update`/`add`/`remove`(owner coder)를 집행하고, 밖 동작 V 는 acceptance-tester 의 시험 편집 뒤에 제품 코드를 고친다(`update` · `add` 행은 그 Red 뒤 · `remove` 행은 acceptance-tester 가 그 케이스를 지운 결과를 받는다 — 삭제만 있는 V 에 Red 를 만들거나 기다리지 않는다) — «바뀌는 기대» 밖 기대 원소는 바꾸지 않고, 대상 BC 밖 파일은 다른 BC 편집 목록에 적힌 것만 고친다. DB 구조 V 는 `makemigrations` 로 새 마이그레이션 파일을 만들어 승인 연산 호출식과 같게 한다 — 기존 마이그레이션 파일은 고치거나 지우지 않고 `RunPython` · `RunSQL` · `SeparateDatabaseAndState` 는 쓰지 않는다. 리팩토링 모드의 어느 창이든 시험 편집은 close 가 감사 키 또는 red 로 처분한다(자동 초록 없음).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s006/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s006> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-3708, djr:R-3709 ;
+    djr:text "- **묶음 창**(2026-10-27): Coordinator 가 «묶음 창»으로 파견하면 준 명령 하나 — `scripts/folder_group.py apply . --run <산출물 폴더> --debt` 또는 `--run-moves`(이관 빚 목록이 있으면 `--legacy-debt-file <목록>`) — 만 Coordinator 가 준 경로 그대로 돌린다(cwd 는 대상 프로젝트 루트). 손으로 옮기거나 이름을 바꾸거나 다른 편집(import 정리 · 서식 · 테스트 포함)을 하지 않고, 묶음 창 밖에서는 묶음 이동을 하지 않는다 — 새 파일은 file-plan 경로 그대로 만든다(묶음 자리로는 끝 맞춤 묶음 창이 옮긴다). 출력이 `요약: apply 멈춤 — 기계 이동 불가 …` 이면 아무것도 고치지 말고 그 출력을 그대로 보고한다. 판정은 Coordinator 의 `behavior_guard.py close` 와 `folder_group.py verify --window` 다.\n"@ko .
