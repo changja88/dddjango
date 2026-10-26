@@ -633,7 +633,7 @@
         "workspace/eval/fixtures/bounce_counter/expected.json": "2de2acde68dd4a255db02dc5316e1263bbb5fbb93b39b86e3b458007626189b9",
         "workspace/tools/collect_violations.py": "b1376af5cab3714a89f4a0b464e8d7c7d3b78ad42b1bfbd1dc74cfce0eff93de",
         "workspace/tools/construct_drift_report.py": "54adb95d6465022a14233f08143cc45c4754228f9beeffc6583ada607ae0bfcd",
-        "workspace/tools/field_report_checker_smoke.py": "efb39b3d371c6c83cff2706f6d4947f9d2fc37773c84e92e252ee9c2b37dc8ec",
+        "workspace/tools/field_report_checker_smoke.py": "c6f39181acb6d13e6e97d6d63f33d973f7980b985eb940fa91313e724065c1e0",
         "workspace/tools/findings_count_matrix.py": "a4fc4996acc81f47c8d6cc4e5e0f892be20d05491df8874aba93d89b599ca463",
         "workspace/tools/firing_probe.py": "09994ac306dbb06dfce46429bdd8701cdd39bf6964f515e596dbae3dbd918003",
         "workspace/tools/manifest_seal.py": "e54328c0780986131910d57a7086eba9542df71fa8bb0d658ceaf6cb5bee0b72",
@@ -670,7 +670,7 @@
         "workspace/tools/probe-fixture-requirements.txt"
       ],
       "n_files": 36,
-      "tree_sha256": "655a6ec1444c0ff80d29e7b42bd641d779ee2d05f7893498ea08bdf66e1ad5f2",
+      "tree_sha256": "f1d6029b4c4d717c998df277efcffae95d881d55045bad2501d39272b357cd6c",
       "why": "측정기. 실런 중 측정기가 바뀌면 앞뒤 런의 수치가 같은 자를 안 쓴 것이 된다(D11)."
     },
     "orders": {
@@ -878,7 +878,7 @@
     "scorer": {
       "files": {
         "dddjango/scripts/anchor_diff.py": "42fd02d88e78e8448913fda2fc8046b776a6d8628aa9936251dabe243ec05bd2",
-        "dddjango/scripts/business_vocab.py": "959f2946d3d819f7f884f0d43be98ed90ae01344623fc529aff2696cddb4b10b",
+        "dddjango/scripts/business_vocab.py": "48e01b0ef8e8f6c26a19e3b4c5ac6ca24ba88f930e1eb4cc4fe3e535e17eae88",
         "dddjango/scripts/check-api-error-controller-contract.py": "b373592402d206dcc9fce6b7a8bc03f8c4fac40b434fbcdef571417e177bb885",
         "dddjango/scripts/check-app-container.py": "5ad27ade9fc986f6c47833215b22495878c5e10ea851d475e91869bc155359cd",
         "dddjango/scripts/check-broker-contract.py": "d24431ae305dbdd7e1b9a40d7c206855174c168455e33c995a1b106af9173eb6",
@@ -929,7 +929,7 @@
         "workspace/tools/ab_score.py"
       ],
       "n_files": 38,
-      "tree_sha256": "6707b7a0fc5099b6ba23df762280752a502217b4ad7deabe9285bc62b876b088",
+      "tree_sha256": "dff6811178dbe095249f831e4fb8e0fe713e6dfdd3e4770ea2f208f61d6d15f5",
       "why": "판정 스칼라(결정적 검사기 위반 수)를 만드는 전부. 발주·암 산출물을 보기 전에 동결한다 — 산출물을 본 뒤 채점기를 만지면 판정 교락(L-M #4)."
     }
   },
@@ -977,11 +977,11 @@
     "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.27.3/scripts",
     "cache-codex": "17dc17268052ff2021a2f9fb9d16c2e492ac02cd61551727eaa3dece5366d204",
     "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.27.3/skills/dddjango/scripts",
-    "source-claude": "f2ab25585463d547fcfc55ae7db3894081cb15c1dfc6d51205f56023965d24d5",
-    "source-codex": "f2ab25585463d547fcfc55ae7db3894081cb15c1dfc6d51205f56023965d24d5"
+    "source-claude": "e48bc00e1d60bba46fd73b554051bff3e963d2fc68c08544f9dce40fac2a6717",
+    "source-codex": "e48bc00e1d60bba46fd73b554051bff3e963d2fc68c08544f9dce40fac2a6717"
   },
-  "sealed_commit": "097c0189beef0554abd0465220ba3c6d77126397",
-  "self_sha256": "fe2f011ad81cff95149555065c526a5cc08fdedc222da4b838ab2d9604ce394b",
+  "sealed_commit": "bdd0fa1363aac15f1ed31707ffde405bb4323052",
+  "self_sha256": "e22946a8563186a46d8613521379f763a1dabe8828e98b104f866fa03b0e2f78",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [
