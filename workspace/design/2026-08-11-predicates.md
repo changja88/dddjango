@@ -162,7 +162,7 @@ human 158  →  path 11 · ast 63 · ast+ 57 · human 27
 | 301 | ast+ | 후보: `domain_service/**` 공개 함수 중 «애그리거트 루트 타입 인자가 정확히 하나»인 것 / 물음: 「이 규칙이 «없을 때»를 판정하나」 (①루트 인자 0, ③루트 인자 ≥2 는 시그니처로 «센다») |
 | 304 | ast | `domain_service/**` 에 `*Repository`·`*Port` 가 import·인자 애너테이션·호출로 나오면 위반 |
 | 307 | ast | `domain_service/**` 공개 함수의 모든 인자 애너테이션이 (제네릭을 벗긴 뒤) `domain_layer/**` 정의 타입으로 해소돼야 한다 — **양성 허용목록**이라 닫힌 목록 문제가 없다 |
-| 311 | ast+ | 후보: `domain_service/*.py` 중 파일명 토큰 ∩ 애그리거트 폴더 이름 = 0 (+`_service`·`_domain_service` 접미사) / 물음: 「겹쳐서 «행위»로 지은 것인가」 |
+| 311 | ast+ | 후보: `domain_service/*.py` 중 파일명 토큰 ∩ 애그리거트 폴더 이름 낱말과 그 규칙 복수형(세 글자 이상 낱말만 · -s·-es·-ies) = 0 (+`_service`·`_domain_service` 접미사) / 물음: 「겹쳐서 «행위»로 지은 것인가」 |
 | 316 | **human** | **Q2** — 전건(「재료를 한 번에 못 모으는 경우」)이 코드에 흔적을 안 남긴다 |
 | 319 | ast | 4갈래를 import 로 계산해 폴더와 대조 — `ORM`(#462) → persistence · `CONTRACT` → acl · `SOCKET`(#367) → external_system · 나머지 → capability |
 | 343 | ast+ | 후보: `panel.py` 의 django 훅 본문에 `.objects`·`transaction`·루프·모델 필드 조건 / 물음: 「이 문장이 운영 «기능»인가 장고 «배선»인가」 |
@@ -194,7 +194,7 @@ human 158  →  path 11 · ast 63 · ast+ 57 · human 27
 | 475 | ast+ | 후보: 유스케이스 안에서 `*DomainBypassQuery` 결과에 바인딩된 이름이 비교·불리언 피연산자로 흐르는 자리(지역 taint) / 물음: **Q2** |
 | 480 | ast | 그 칸의 파일·클래스 이름에 `dto`·`Dto`·`DTO` 가 있거나 `_command`·`_result` 로 끝나면 위반 |
 | 484 | ast | `contract/request/` 는 `Request`, `contract/response/` 는 `Response` 로 끝나고 `Result` 면 위반 |
-| 485 | ast+ | 확정: 이름이 `notify`·`handle`·`execute`·`process`·`run`·`do` 이거나 `_command`·`_query` 접미사를 단 포트 메서드 / 후보: deny-list 밖인데 첫 `_`-토큰이 동사가 아니고 묻는 꼴(`has_`·`is_`·`can_`·`current_`)도 아닌 메서드 / 물음: 「이 이름이 무엇을 시키는지 말하나」 |
+| 485 | ast+ | 확정: 이름이 `notify`·`handle`·`execute`·`process`·`run`·`do` 이거나 `_command`·`_query` 접미사를 단 포트 메서드 / 후보: deny-list 밖인데 첫 `_`-토큰이 아는 동사 목록(데이터 — 닫지 않는다 · 모호 동사 `run` 등은 넣지 않는다)에 없고 묻는 꼴(`has_`·`is_`·`can_`·`current_`)도 아닌 메서드 / 물음: 「이 이름이 무엇을 시키는지 말하나」 |
 | 492 | ast+ | 후보: 정본 트리 칸 설명에 조건 표현(있을 수도·필요하면·커지면·권장·해도 된다)이 든 행 / 물음: 「«있어야 하나»인가 «어떻게 쓰나»인가」 (주어가 코드가 아니라 정본 문서 — #491 이 같은 주어로 이미 `path`) |
 | 494 | **human** | **Q0** — 주어가 «규칙을 쓰는 사람». 코드 쪽 강제는 #493·#495·#496 |
 | 346 | human | **면제라 대상 밖** |

@@ -44,7 +44,7 @@
   #307 [ast]  시그니처는 값 객체 — 전 인자가 원시 타입이면 계산 함수다.
   #308 [ast]  위반의 알림은 도메인 예외 — bool 반환 선언이면 위반.
   #310 [ast]  무상태 규칙 하나 = 파일 하나.
-  #311 [ast+] 후보: 파일명이 접미사(_service)를 달거나 애그리거트 어휘 0(행위 이름 물음).
+  #311 [ast+] 후보: 파일명이 접미사(_service)를 달거나 애그리거트 어휘 0(규칙 복수형 포함 · 행위 이름 물음).
   #315 [path] Factory 는 그 애그리거트 폴더 안.
   #459 [path] shared_value_object 파일 규칙 동일 — 하위 폴더 금지.
   #505 [ast]  <A>/event/ 는 «내부용» — BC 밖 import 금지(밖은 published_event 로 옮겨 담는다).
@@ -147,6 +147,21 @@ def _rel(root: Path, path: Path, line: int | None = None) -> str:
 
 def _camel(snake: str) -> str:
     return "".join(w.capitalize() for w in snake.split("_"))
+
+
+def _word_forms(word: str) -> set[str]:
+    """#311 — 애그리거트 낱말과 그 규칙 복수형(-s · 치찰음 뒤 -es · 자음+y → -ies). 불규칙형(people 류)은 받지 않는다.
+
+    복수형은 세 글자 이상 낱말에만 만든다 — 두 글자 이하(`a` · `it`)의 +s 는 기능어(`as` · `its`)가 된다
+    (`business_vocab.tokens` 의 세 글자 바닥과 같은 기준)."""
+    forms: set[str] = {word}
+    if len(word) >= 3:
+        forms.add(word + "s")
+        if word.endswith(("s", "x", "z", "ch", "sh")):
+            forms.add(word + "es")
+        if word.endswith("y") and word[-2] not in "aeiou":
+            forms.add(word[:-1] + "ies")
+    return forms
 
 
 def _public_classes(mod: ast.Module) -> list[ast.ClassDef]:
@@ -611,6 +626,8 @@ def _check_domain_services(root: Path, bc: Path, ds: Path, f: Findings, cand: Ca
     domain = bc / "domain_layer"
     agg_names = {d.name for d in _aggregate_dirs(domain)}
     root_classes = {_camel(n) for n in agg_names}
+    # #311 — 파일명 낱말(`_` 경계) 하나가 애그리거트 낱말이거나 그 규칙 복수형이면 어휘가 있다(`visits` ∋ visit).
+    agg_words = {form for a in agg_names for w in a.split("_") for form in _word_forms(w)}
     for py in checker_target.slot_glob(ds, "*.py"):  # 승격 domain_service 본체 포함(부품은 #15 재량 — 제외)
         if py.name == "__init__.py":
             continue
@@ -622,7 +639,7 @@ def _check_domain_services(root: Path, bc: Path, ds: Path, f: Findings, cand: Ca
             cand.add("#311", _rel(root, py), "접미사를 단 도메인 서비스 파일명 — 접미사 없이 "
                      "«행위»로 짓는다(`lesson_slot_policy`·`settle_turn`)",
                      "이 이름이 규칙 «행위»를 말하나")
-        elif not any(set(a.split("_")) & stem_toks for a in agg_names):
+        elif not agg_words & stem_toks:
             cand.add("#311", _rel(root, py), "파일명에 주어가 되는 애그리거트 어휘가 없다",
                      "이 이름이 규칙 «행위»를 말하나")
         pubs = [n for n in mod.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))

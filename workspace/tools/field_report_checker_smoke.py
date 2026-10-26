@@ -3079,5 +3079,85 @@ class FrameworkServerBcNameRegression(unittest.TestCase):
         self.assertEqual(self.lines("check-port-adapter-pairing.py", "365"), [])
 
 
+class CandidateWordRegression(unittest.TestCase):
+    """F4-113 · F4-114 — 후보 물음의 낱말 판정.
+
+    #311: 도메인 서비스 파일 이름의 낱말(`_` 경계) 하나가 애그리거트 낱말의 규칙 복수형이어도 어휘가 있다.
+    #485: 포트 메서드 첫 토큰이 아는 동사 목록에 있으면 묻지 않는다 — 목록 밖 낱말은 그대로 묻는다.
+    """
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="field-candidate-word-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name) / "project"
+        self.env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+                        DJR_FINDINGS_JSON=str(Path(self.tmp.name) / "records.jsonl"),
+                        DJR_VIOLATIONS_DIR=str(Path(self.tmp.name) / "violations"))
+
+    def write(self, relative: str, text: str = "") -> None:
+        path: Path = self.root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def lines(self, script: str, rule: str) -> "list[str]":
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / script), str(self.root)],
+                                capture_output=True, text=True, env=self.env)
+        self.assertEqual(result.stderr, "")
+        return [line.strip() for line in result.stdout.splitlines() if f"#{rule}]" in line]
+
+    def domain_services(self, aggregates: "tuple[str, ...]", services: "tuple[str, ...]") -> None:
+        for aggregate in aggregates:
+            camel: str = "".join(part.title() for part in aggregate.split("_"))
+            self.write(f"application/house/domain_layer/{aggregate}/{aggregate}.py", f"class {camel}:\n    pass\n")
+        for service in services:
+            self.write(f"application/house/domain_layer/domain_service/{service}.py",
+                       f"def {service}(left: object, right: object) -> None:\n    return None\n")
+
+    def port(self, *methods: str) -> None:
+        base: str = "application/house/application_layer/port/signup_bonus_grant"
+        self.write(f"{base}/exception.py", "class SignupBonusGrantRejected(Exception):\n    pass\n")
+        body: str = "".join(f"\n    @abstractmethod\n    def {name}(self) -> None: ...\n" for name in methods)
+        self.write(f"{base}/signup_bonus_grant_port.py",
+                   "from abc import ABC, abstractmethod\n\n\nclass SignupBonusGrantPort(ABC):" + body)
+
+    def test_311_regular_plural_of_aggregate_word_counts(self) -> None:
+        self.domain_services(("visit", "category", "batch", "content_card"),
+                             ("rewind_turn_across_visits", "arrange_categories", "merge_batches", "arrange_popular_contents"))
+        self.assertEqual(self.lines("check-domain-model.py", "311"), [])
+
+    def test_311_word_boundary_short_word_and_irregular_plural_keep_candidate(self) -> None:
+        self.domain_services(("visit", "person", "plan_a"),
+                             ("count_visitors", "revisit_turn", "match_people", "settle_turn", "treat_as_paid"))
+        question: str = "파일명에 주어가 되는 애그리거트 어휘가 없다 — 물음: 이 이름이 규칙 «행위»를 말하나"
+        self.assertEqual(self.lines("check-domain-model.py", "311"), [
+            f"[ⓓ#311] application/house/domain_layer/domain_service/{name}.py: {question}"
+            for name in ("count_visitors", "match_people", "revisit_turn", "settle_turn", "treat_as_paid")
+        ])
+
+    def test_485_grant_is_a_known_verb(self) -> None:
+        self.port("grant", "read_balance")
+        self.assertEqual(self.lines("check-port-adapter-pairing.py", "485"), [])
+
+    def test_485_field_verbs_are_known(self) -> None:
+        self.port(*(f"{verb}_item" for verb in (
+            "grant", "read", "calculate", "check", "split", "detect", "digest", "load", "replace", "review",
+            "stream", "ask", "confirm", "draw", "prepare", "reserve", "search", "validate", "wait", "choose",
+            "compose", "consume", "decide", "hash", "inspect", "link", "locate", "parse", "phrase", "pull",
+            "quote", "redact", "require", "rewind", "store", "summarize", "classify", "proceed", "rank")))
+        self.assertEqual(self.lines("check-port-adapter-pairing.py", "485"), [])
+
+    def test_485_unlisted_first_tokens_stay_questions(self) -> None:
+        self.port("timeout_seconds", "transmit_payload", "run_searches", "_normalize")
+        path: str = "application/house/application_layer/port/signup_bonus_grant/signup_bonus_grant_port.py"
+        question: str = " — 물음: 이 이름이 무엇을 시키는지 말하나"
+        self.assertEqual(self.lines("check-port-adapter-pairing.py", "485"), [
+            *(f"[ⓓ#485] {path}:{line}: 포트 메서드 `{name}` 의 첫 토큰 `{first}` 이 아는 동사 목록에도 묻는 꼴에도 없다{question}"
+              for line, name, first in ((6, "timeout_seconds", "timeout"), (9, "transmit_payload", "transmit"),
+                                        (12, "run_searches", "run"))),
+            f"[ⓓ#485] {path}:15: 포트 메서드 `_normalize` 이 `_` 로 시작해 첫 토큰이 없다 — 아는 동사로도 묻는 꼴로도 읽히지 않는다"
+            f"{question}",
+        ])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

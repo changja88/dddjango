@@ -309,7 +309,7 @@ EXPECTED: "dict[tuple[str, str], tuple[int, tuple[tuple[int, int], ...], tuple[t
     ('context_isolation', 'check-domain-model.py'): (2, ((299, 2),), ((268, 1),), '최소성'),
     ('context_isolation', 'check-error-centralization.py'): (2, ((114, 1),), (), '최소성'),
     ('context_isolation', 'check-layer-skeleton.py'): (2, ((488, 69), (490, 3)), (), '골격-부재'),
-    ('context_isolation', 'check-port-adapter-pairing.py'): (2, ((225, 4),), ((485, 2),), '최소성'),
+    ('context_isolation', 'check-port-adapter-pairing.py'): (2, ((225, 4),), (), '최소성'),
     ('context_isolation', 'check-public-surface-annotation.py'): (2, ((493, 5),), (), '최소성'),
     ('context_isolation', 'check-usecase-dto-placement.py'): (2, ((569, 2), (570, 1)), (), '최소성'),
     ('db_table', 'check-api-error-controller-contract.py'): (2, (), (), '가드-red'),

@@ -8,7 +8,7 @@
          #64 포트 예외는 도메인 예외 비상속 · #214 애그리거트 리포지토리 선언은 여기 금지 ·
          #227[ast+] 자료는 원시값으로 안 될 때만(후보) · #228 <data>_in/_out 에 도메인·
          유스케이스 DTO 금지(토큰 검사 ✗ — predicates ⓐ) · #573 방향(_in/_out) 이름 교차 ·
-         #485[ast+] 메서드는 의도(확정: notify·handle·execute… / 후보: 동사 아님) ·
+         #485[ast+] 메서드는 의도(확정: notify·handle·execute… / 후보: 아는 동사 목록 밖) ·
          #594[ast+] 폴더 이름에 누가·언제·어떻게 금지(#595 확정: 기술 이름 정확 일치) ·
          #313 domain_layer/<agg>/port/ 금지
   bypass #229 계약은 port/domain_bypass_query/ · #231 domain_layer 에 조회 계약 금지 ·
@@ -90,10 +90,19 @@ SOCKET_LIBS = {"httpx", "requests", "boto3", "openai", "redis", "kafka", "conflu
 RETRY_LIBS = {"tenacity", "backoff", "retrying"}
 INTENT_DENY = {"notify", "handle", "execute", "process", "run", "do"}
 ASKING_PREFIX = ("has_", "is_", "can_", "current_", "get_", "find_", "list_", "count_", "exists_")
+# #485 후보 — 아는 동사(원형) 목록. 데이터라 닫지 않는다(#367 방식): 현장 포트 메서드에서 동사로 쓰인 낱말만 넣는다.
+# 명사로도 쓰는 낱말(wait · review · link …)이 섞여 있어 그 낱말이 머리인 명사구 이름(`wait_seconds`)은 묻지 않고 지나간다
+# — 같은 꼴 `timeout_seconds` 는 묻는다(받아들인 한계). INTENT_DENY 의 모호 동사는 넣지 않는다(`run_x` 도 `process_x` 처럼 묻는다).
 VERB_HINTS = {"send", "issue", "revoke", "generate", "publish", "acquire", "release", "charge",
               "refund", "create", "delete", "save", "remove", "fetch", "resolve", "render",
               "sign", "verify", "upload", "download", "enqueue", "schedule", "cancel", "mark",
-              "record", "translate", "convert", "open", "close", "lock", "unlock", "now"}
+              "record", "translate", "convert", "open", "close", "lock", "unlock", "now",
+              # 현장 포트 메서드에서 본 동사(F4-114)
+              "grant", "read", "calculate", "check", "split", "detect", "digest", "load",
+              "replace", "review", "stream", "ask", "confirm", "draw", "prepare", "reserve",
+              "search", "validate", "wait", "choose", "compose", "consume", "decide", "hash",
+              "inspect", "link", "locate", "parse", "phrase", "pull", "quote", "redact",
+              "require", "rewind", "store", "summarize", "classify", "proceed", "rank"}
 MEANS_WORDS = {"client", "cache", "sync", "cron", "queue", "http", "rest", "sdk",
                "nightly", "daily", "hourly", "weekly", "realtime", "driver", "gateway"}
 TECH_EXACT = {"smtp", "redis", "celery", "kafka", "django", "ninja", "stripe", "s3", "grpc"}
@@ -277,7 +286,8 @@ def _check_port_contract(root: Path, cap: Path, py: Path, mod: ast.Module,
                       "물으면 묻는 꼴 — revoke_for_child()·has_shipped())")
             elif not m.name.startswith(ASKING_PREFIX) and first not in VERB_HINTS:
                 cand.add("#485", _rel(root, py, m.lineno),
-                         f"포트 메서드 `{m.name}` 의 첫 토큰이 동사도 묻는 꼴도 아니다",
+                         f"포트 메서드 `{m.name}` 의 첫 토큰 `{first}` 이 아는 동사 목록에도 묻는 꼴에도 없다" if first
+                         else f"포트 메서드 `{m.name}` 이 `_` 로 시작해 첫 토큰이 없다 — 아는 동사로도 묻는 꼴로도 읽히지 않는다",
                          "이 이름이 무엇을 시키는지 말하나")
 
 
