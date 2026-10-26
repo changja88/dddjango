@@ -1,0 +1,28 @@
+{
+  "기준": "application/orbit/domain_layer/",
+  "까닭": {
+    "domain_service/build_bridge.py": "반환 부모",
+    "domain_service/compose_orbit_summary.py": "부모 3미만",
+    "domain_service/judge_link.py": "반환 부모",
+    "domain_service/relation/relation.py": "반환 부모",
+    "domain_service/resolve_ghost_gates.py": "반환 부모",
+    "shared_value_object/moon_phase.py": "부모 3미만",
+    "shared_value_object/relation_gate.py": "이름 relation",
+    "shared_value_object/relation_link.py": "이름 relation",
+    "shared_value_object/relation_seam.py": "이름 relation"
+  },
+  "자리": {
+    "domain_service/build_bridge.py": "domain_service/build_bridge.py",
+    "domain_service/compose_orbit_summary.py": "domain_service/compose_orbit_summary.py",
+    "domain_service/judge_link.py": "domain_service/judge_link.py",
+    "domain_service/relation/relation.py": "domain_service/relation/relation.py",
+    "domain_service/resolve_ghost_gates.py": "domain_service/resolve_ghost_gates.py",
+    "shared_value_object/moon_phase.py": "shared_value_object/moon_phase.py",
+    "shared_value_object/relation_gate.py": "shared_value_object/relation/relation_gate.py",
+    "shared_value_object/relation_link.py": "shared_value_object/relation/relation_link.py",
+    "shared_value_object/relation_seam.py": "shared_value_object/relation/relation_seam.py"
+  },
+  "줄": [
+    "[#656] application/orbit/domain_layer/shared_value_object/__init__.py: 묶음 `relation/` 을(를) 만든다"
+  ]
+}

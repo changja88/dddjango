@@ -1,0 +1,31 @@
+{
+  "기준": "application/orbit/domain_layer/",
+  "까닭": {
+    "shared_value_object/address_line.py": "부모 3미만",
+    "shared_value_object/address_zip.py": "부모 3미만",
+    "shared_value_object/english_address_city.py": "이름 english_address",
+    "shared_value_object/english_address_line.py": "이름 english_address",
+    "shared_value_object/english_address_note.py": "이름 english_address",
+    "shared_value_object/english_address_zip.py": "이름 english_address",
+    "shared_value_object/solar_term_end.py": "이름 solar_term",
+    "shared_value_object/solar_term_gap.py": "이름 solar_term",
+    "shared_value_object/solar_term_start.py": "이름 solar_term",
+    "shared_value_object/term_window.py": "부모 3미만"
+  },
+  "자리": {
+    "shared_value_object/address_line.py": "shared_value_object/address_line.py",
+    "shared_value_object/address_zip.py": "shared_value_object/address_zip.py",
+    "shared_value_object/english_address_city.py": "shared_value_object/english_address/english_address_city.py",
+    "shared_value_object/english_address_line.py": "shared_value_object/english_address/english_address_line.py",
+    "shared_value_object/english_address_note.py": "shared_value_object/english_address/english_address_note.py",
+    "shared_value_object/english_address_zip.py": "shared_value_object/english_address/english_address_zip.py",
+    "shared_value_object/solar_term_end.py": "shared_value_object/solar_term/solar_term_end.py",
+    "shared_value_object/solar_term_gap.py": "shared_value_object/solar_term/solar_term_gap.py",
+    "shared_value_object/solar_term_start.py": "shared_value_object/solar_term/solar_term_start.py",
+    "shared_value_object/term_window.py": "shared_value_object/term_window.py"
+  },
+  "줄": [
+    "[#656] application/orbit/domain_layer/shared_value_object/__init__.py: 묶음 `english_address/` 을(를) 만든다",
+    "[#656] application/orbit/domain_layer/shared_value_object/__init__.py: 묶음 `solar_term/` 을(를) 만든다"
+  ]
+}

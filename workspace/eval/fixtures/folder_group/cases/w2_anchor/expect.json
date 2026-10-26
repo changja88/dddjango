@@ -1,0 +1,27 @@
+{
+  "기준": "application/orbit/domain_layer/",
+  "까닭": {
+    "shared_value_object/moon_phase.py": "부모 3미만",
+    "shared_value_object/void/half_step.py": "쓰는 곳 부모",
+    "shared_value_object/void/tie_step.py": "쓰는 곳 부모",
+    "star_chart/value_object/star_angle.py": "부모 3미만",
+    "star_chart/value_object/void_arc.py": "이름 void",
+    "star_chart/value_object/void_disk.py": "이름 void",
+    "star_chart/value_object/void_ring.py": "이름 void"
+  },
+  "자리": {
+    "shared_value_object/moon_phase.py": "shared_value_object/moon_phase.py",
+    "shared_value_object/void/half_step.py": "shared_value_object/half_step.py",
+    "shared_value_object/void/tie_step.py": "shared_value_object/tie_step.py",
+    "star_chart/value_object/star_angle.py": "star_chart/value_object/star_angle.py",
+    "star_chart/value_object/void_arc.py": "star_chart/value_object/void/void_arc.py",
+    "star_chart/value_object/void_disk.py": "star_chart/value_object/void/void_disk.py",
+    "star_chart/value_object/void_ring.py": "star_chart/value_object/void/void_ring.py"
+  },
+  "줄": [
+    "[#656] application/orbit/domain_layer/shared_value_object/void/__init__.py: 묶음 `void/` 을(를) 푼다",
+    "[#656] application/orbit/domain_layer/shared_value_object/void/half_step.py: 부모에 둔다",
+    "[#656] application/orbit/domain_layer/shared_value_object/void/tie_step.py: 부모에 둔다",
+    "[#656] application/orbit/domain_layer/star_chart/value_object/__init__.py: 묶음 `void/` 을(를) 만든다"
+  ]
+}

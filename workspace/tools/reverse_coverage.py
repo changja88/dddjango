@@ -164,6 +164,11 @@ def main() -> int:
                 why = ("pre-gate Base 병기 의무 종류 소성물(R-3426 — 검사기 소스 기계 추출 닫힌 목록) — "
                        "저자는 workspace/tools/gen_pregate_symbol_kinds.py 하나뿐이고 --check 가 "
                        "재생성 byte 동일·소재 소실·미등재 검사기를 red 로 고정")
+            elif rel.name == "folder_group.py":
+                why = ("의미 묶음 배치 함수 · 이 실행의 이동 · 묶음 창 판정(2.28.0 — #654~#656 · D60) — "
+                       "검사기 · 게이트 · pre-gate · 감사가 같은 `place` · `expected_moves` · `actual_moves` 를 부르고 "
+                       "`draft` · `apply` · `verify` 명령이 조정자 · coder 의 묶음 창 재료다 · "
+                       "folder_group_fixture_run 이 픽스처 · git 시나리오 · 변이로 행동 고정")
             elif rel.name == "anchor_diff.py":
                 why = "scope-render 직접 계열 판정 차분 공용 모듈(2026-08-15 r2″ — registry 2·5·6·15·16번 --anchor 소비·registry_gate 동형 N∖L·빚 채널) — anchor_diff_smoke 가 행동 고정"
             else:

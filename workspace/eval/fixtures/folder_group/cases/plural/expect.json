@@ -1,0 +1,29 @@
+{
+  "기준": "application/orbit/domain_layer/",
+  "까닭": {
+    "shared_value_object/alarm_settings.py": "부모 3미만",
+    "shared_value_object/chimes_ring.py": "이름 chimes",
+    "shared_value_object/chimes_scale.py": "이름 chimes",
+    "shared_value_object/chimes_tone.py": "이름 chimes",
+    "shared_value_object/setting_alarm.py": "부모 3미만",
+    "shared_value_object/setting_theme.py": "부모 3미만",
+    "shared_value_object/voucher_code.py": "이름 voucher",
+    "shared_value_object/voucher_ledger.py": "이름 voucher",
+    "shared_value_object/vouchers_batch.py": "이름 voucher"
+  },
+  "자리": {
+    "shared_value_object/alarm_settings.py": "shared_value_object/alarm_settings.py",
+    "shared_value_object/chimes_ring.py": "shared_value_object/chimes/chimes_ring.py",
+    "shared_value_object/chimes_scale.py": "shared_value_object/chimes/chimes_scale.py",
+    "shared_value_object/chimes_tone.py": "shared_value_object/chimes/chimes_tone.py",
+    "shared_value_object/setting_alarm.py": "shared_value_object/setting_alarm.py",
+    "shared_value_object/setting_theme.py": "shared_value_object/setting_theme.py",
+    "shared_value_object/voucher_code.py": "shared_value_object/voucher/voucher_code.py",
+    "shared_value_object/voucher_ledger.py": "shared_value_object/voucher/voucher_ledger.py",
+    "shared_value_object/vouchers_batch.py": "shared_value_object/voucher/vouchers_batch.py"
+  },
+  "줄": [
+    "[#656] application/orbit/domain_layer/shared_value_object/__init__.py: 묶음 `chimes/` 을(를) 만든다",
+    "[#656] application/orbit/domain_layer/shared_value_object/__init__.py: 묶음 `voucher/` 을(를) 만든다"
+  ]
+}

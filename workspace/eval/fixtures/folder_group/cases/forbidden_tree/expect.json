@@ -1,0 +1,35 @@
+{
+  "기준": "application/orbit/domain_layer/",
+  "까닭": {
+    "shared_value_object/event_bell.py": "부모 3미만",
+    "shared_value_object/event_drum.py": "부모 3미만",
+    "shared_value_object/event_gong.py": "부모 3미만",
+    "shared_value_object/request_carried.py": "부모 뜻낱말",
+    "shared_value_object/request_moved.py": "부모 뜻낱말",
+    "shared_value_object/request_pending.py": "부모 뜻낱말",
+    "shared_value_object/utils/moon_phase.py": "부모 3미만",
+    "shared_value_object/utils/sun_phase.py": "부모 3미만",
+    "shared_value_object/work_load.py": "이름 work",
+    "shared_value_object/work_order.py": "이름 work",
+    "shared_value_object/work_shift.py": "이름 work"
+  },
+  "자리": {
+    "shared_value_object/event_bell.py": "shared_value_object/event_bell.py",
+    "shared_value_object/event_drum.py": "shared_value_object/event_drum.py",
+    "shared_value_object/event_gong.py": "shared_value_object/event_gong.py",
+    "shared_value_object/request_carried.py": "shared_value_object/request_carried.py",
+    "shared_value_object/request_moved.py": "shared_value_object/request_moved.py",
+    "shared_value_object/request_pending.py": "shared_value_object/request_pending.py",
+    "shared_value_object/utils/moon_phase.py": "shared_value_object/moon_phase.py",
+    "shared_value_object/utils/sun_phase.py": "shared_value_object/sun_phase.py",
+    "shared_value_object/work_load.py": "shared_value_object/work/work_load.py",
+    "shared_value_object/work_order.py": "shared_value_object/work/work_order.py",
+    "shared_value_object/work_shift.py": "shared_value_object/work/work_shift.py"
+  },
+  "줄": [
+    "[#656] application/orbit/domain_layer/shared_value_object/__init__.py: 묶음 `work/` 을(를) 만든다",
+    "[#656] application/orbit/domain_layer/shared_value_object/utils/__init__.py: 묶음 `utils/` 을(를) 푼다",
+    "[#656] application/orbit/domain_layer/shared_value_object/utils/moon_phase.py: 부모에 둔다",
+    "[#656] application/orbit/domain_layer/shared_value_object/utils/sun_phase.py: 부모에 둔다"
+  ]
+}

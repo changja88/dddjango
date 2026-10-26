@@ -1,0 +1,14 @@
+{
+  "기준": "application/orbit/domain_layer/",
+  "까닭": {
+    "shared_value_object/moon_phase.py": "부모 3미만",
+    "shared_value_object/void/void_branch.py": "이름 void",
+    "shared_value_object/void/void_gate.py": "이름 void"
+  },
+  "자리": {
+    "shared_value_object/moon_phase.py": "shared_value_object/moon_phase.py",
+    "shared_value_object/void/void_branch.py": "shared_value_object/void/void_branch.py",
+    "shared_value_object/void/void_gate.py": "shared_value_object/void/void_gate.py"
+  },
+  "줄": []
+}

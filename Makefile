@@ -201,7 +201,10 @@ verify-base-backstop:
 
 verify-base-regen:
 	@set -euo pipefail; \
-	echo "[verify-base-regen] 검증 세트 (regen-golden·regen-loop·runtime-parity·rulepack-smoke·pregate-kinds·pregate-fixture·behavior-guard·refactor-audit)"; \
+	echo "[verify-base-regen] 검증 세트 (regen-golden·regen-loop·runtime-parity·rulepack-smoke·pregate-kinds·pregate-fixture·behavior-guard·refactor-audit·folder-group)"; \
+	test -x "$${DJR_PY39:-/usr/bin/python3}" || { echo "ERROR: Python 3.9 인터프리터 부재 — folder_group 3.9 다리(DJR_PY39 로 경로 지정)"; exit 1; }; \
+	PYTHONUTF8=1 "$${DJR_PY39:-/usr/bin/python3}" workspace/tools/folder_group_fixture_run.py --require 3.9; \
+	PYTHONUTF8=1 python3 workspace/tools/folder_group_fixture_run.py --py39 "$${DJR_PY39:-/usr/bin/python3}"; \
 	PYTHONUTF8=1 python3 workspace/tools/regen_loop_prototype.py --self-test; \
 	PYTHONUTF8=1 python3 workspace/tools/regen_loop_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/runtime_parity_check.py; \
@@ -226,7 +229,8 @@ verify-base-probe:
 # 팩·selector 를 건드린 커밋은 이 타깃도 green 이어야 한다.
 verify-mutation:
 	@set -euo pipefail; \
-	PYTHONUTF8=1 python3 workspace/tools/rulepack_smoke.py --mutation-test
+	PYTHONUTF8=1 python3 workspace/tools/rulepack_smoke.py --mutation-test; \
+	PYTHONUTF8=1 python3 workspace/tools/folder_group_fixture_run.py --mutation-test
 
 # C암 발화 증명 — 4트리(source 2 + 설치 cache 2) × 5단언. **T2-5 실런 진입의 hard gate**.
 # 지금은 cache 가 2.11.0 이라 cache 두 레인이 red 인 것이 정상이고, 그 red 가 곧

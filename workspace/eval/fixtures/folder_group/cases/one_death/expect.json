@@ -1,0 +1,18 @@
+{
+  "기준": "application/orbit/domain_layer/",
+  "까닭": {
+    "shared_value_object/amber_bronze.py": "이름 bronze",
+    "shared_value_object/bronze_amber.py": "이름 bronze",
+    "shared_value_object/bronze_kit_amber.py": "이름 bronze",
+    "shared_value_object/moon_phase.py": "부모 3미만"
+  },
+  "자리": {
+    "shared_value_object/amber_bronze.py": "shared_value_object/bronze/amber_bronze.py",
+    "shared_value_object/bronze_amber.py": "shared_value_object/bronze/bronze_amber.py",
+    "shared_value_object/bronze_kit_amber.py": "shared_value_object/bronze/bronze_kit_amber.py",
+    "shared_value_object/moon_phase.py": "shared_value_object/moon_phase.py"
+  },
+  "줄": [
+    "[#656] application/orbit/domain_layer/shared_value_object/__init__.py: 묶음 `bronze/` 을(를) 만든다"
+  ]
+}

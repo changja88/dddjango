@@ -1,0 +1,22 @@
+{
+  "기준": "application/orbit/domain_layer/",
+  "까닭": {
+    "shared_value_object/climate_band.py": "이름 climate",
+    "shared_value_object/climate_god.py": "이름 climate",
+    "shared_value_object/climate_zone.py": "이름 climate",
+    "shared_value_object/god_rank.py": "부모 3미만",
+    "shared_value_object/god_seat.py": "부모 3미만",
+    "shared_value_object/useful_god.py": "부모 3미만"
+  },
+  "자리": {
+    "shared_value_object/climate_band.py": "shared_value_object/climate/climate_band.py",
+    "shared_value_object/climate_god.py": "shared_value_object/climate/climate_god.py",
+    "shared_value_object/climate_zone.py": "shared_value_object/climate/climate_zone.py",
+    "shared_value_object/god_rank.py": "shared_value_object/god_rank.py",
+    "shared_value_object/god_seat.py": "shared_value_object/god_seat.py",
+    "shared_value_object/useful_god.py": "shared_value_object/useful_god.py"
+  },
+  "줄": [
+    "[#656] application/orbit/domain_layer/shared_value_object/__init__.py: 묶음 `climate/` 을(를) 만든다"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "기준": "application/orbit/domain_layer/",
+  "까닭": {
+    "domain_service/bell_policy.py": "부모 3미만",
+    "domain_service/compose_orbit_summary.py": "부모 3미만",
+    "domain_service/drum_policy.py": "부모 3미만",
+    "domain_service/gong_policy.py": "부모 3미만"
+  },
+  "자리": {
+    "domain_service/bell_policy.py": "domain_service/bell_policy.py",
+    "domain_service/compose_orbit_summary.py": "domain_service/compose_orbit_summary.py",
+    "domain_service/drum_policy.py": "domain_service/drum_policy.py",
+    "domain_service/gong_policy.py": "domain_service/gong_policy.py"
+  },
+  "줄": []
+}

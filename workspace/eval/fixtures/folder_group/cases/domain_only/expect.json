@@ -1,0 +1,20 @@
+{
+  "기준": "application/orbit/domain_layer/",
+  "까닭": {
+    "shared_value_object/moon_phase.py": "부모 3미만",
+    "shared_value_object/orbit/orbit_period.py": "부모 뜻낱말",
+    "shared_value_object/orbit/orbit_table.py": "부모 뜻낱말",
+    "shared_value_object/orbit_kind.py": "부모 뜻낱말"
+  },
+  "자리": {
+    "shared_value_object/moon_phase.py": "shared_value_object/moon_phase.py",
+    "shared_value_object/orbit/orbit_period.py": "shared_value_object/orbit_period.py",
+    "shared_value_object/orbit/orbit_table.py": "shared_value_object/orbit_table.py",
+    "shared_value_object/orbit_kind.py": "shared_value_object/orbit_kind.py"
+  },
+  "줄": [
+    "[#656] application/orbit/domain_layer/shared_value_object/orbit/__init__.py: 묶음 `orbit/` 을(를) 푼다",
+    "[#656] application/orbit/domain_layer/shared_value_object/orbit/orbit_period.py: 부모에 둔다",
+    "[#656] application/orbit/domain_layer/shared_value_object/orbit/orbit_table.py: 부모에 둔다"
+  ]
+}

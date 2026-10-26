@@ -1,0 +1,20 @@
+{
+  "기준": "application/orbit/domain_layer/",
+  "까닭": {
+    "shared_value_object/favorable_god.py": "부모 3미만",
+    "shared_value_object/god_rank.py": "부모 3미만",
+    "shared_value_object/god_seat.py": "부모 3미만",
+    "shared_value_object/noble_god.py": "부모 3미만",
+    "shared_value_object/ten_god.py": "부모 3미만",
+    "shared_value_object/useful_god.py": "부모 3미만"
+  },
+  "자리": {
+    "shared_value_object/favorable_god.py": "shared_value_object/favorable_god.py",
+    "shared_value_object/god_rank.py": "shared_value_object/god_rank.py",
+    "shared_value_object/god_seat.py": "shared_value_object/god_seat.py",
+    "shared_value_object/noble_god.py": "shared_value_object/noble_god.py",
+    "shared_value_object/ten_god.py": "shared_value_object/ten_god.py",
+    "shared_value_object/useful_god.py": "shared_value_object/useful_god.py"
+  },
+  "줄": []
+}

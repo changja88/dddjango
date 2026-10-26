@@ -60,6 +60,8 @@ GROUPS: "dict[str, dict]" = {
             "dddjango/scripts/business_vocab.py",
             "dddjango/scripts/anchor_diff.py",
             "dddjango/scripts/standard_tree.py",
+            # 의미 묶음 배치 함수 — 검사기(#654~#656)가 import 해 위반 수를 만든다(2.28.0).
+            "dddjango/scripts/folder_group.py",
             "workspace/eval/rubric/*.md",
             "workspace/eval/tools/FC-GOLDEN.md",
             # **계수 규약의 실행체**. 검사기 파일만 동결하고 «어떻게 부르는가»를 두면, 재는 법이

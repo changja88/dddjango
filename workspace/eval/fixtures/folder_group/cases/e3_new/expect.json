@@ -1,0 +1,14 @@
+{
+  "기준": "application/orbit/domain_layer/",
+  "까닭": {
+    "shared_value_object/email_draft.py": "부모 3미만",
+    "shared_value_object/email_inbox.py": "부모 3미만",
+    "shared_value_object/email_outbox.py": "부모 3미만"
+  },
+  "자리": {
+    "shared_value_object/email_draft.py": "shared_value_object/email_draft.py",
+    "shared_value_object/email_inbox.py": "shared_value_object/email_inbox.py",
+    "shared_value_object/email_outbox.py": "shared_value_object/email_outbox.py"
+  },
+  "줄": []
+}
