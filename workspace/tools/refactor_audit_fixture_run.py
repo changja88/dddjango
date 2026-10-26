@@ -13,6 +13,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import importlib.util
+import itertools
 import json
 import random
 import re
@@ -4080,7 +4081,8 @@ def deps_http_text_cases(fails: "list[str]", td: Path) -> None:
     """F4-121 — HTTP 소비 셈은 부를 수 있는 글만: `.py` 문서 문자열 · 주석 밖 문자열 · 바이트 상수(+ doctest docstring) · `.html` 은
     HTML · Django 주석 밖(태그 · 날 글 요소 · 템플릿 태그 안 `<!--` 는 주석 아님 · verbatim 안 Django 주석은 글자 · Django 낱말은 한 줄 안 ·
     이름 붙은 verbatim 은 이름까지 같은 endverbatim 까지 · `--!>` 도 주석 끝 · 날 글 요소는 이름 뒤가 공백 · `/` · `>` 인 끝 태그에서만
-    끝남 · 짝 없는 여는 글이 많은 긴 줄도 선형 시간) · `.js` · 계약 · 파싱 못 한 `.py` 는 원문 줄(JS 주석은 받아들인 한계로 지금처럼 셈).
+    끝남 · 짝 없는 여는 글이 많은 긴 줄도 선형 시간 · 그 바꾸기는 낱말을 바꾸지 않음) · `.js` · 계약 · 파싱 못 한 `.py` 는 원문 줄(JS 주석은
+    받아들인 한계로 지금처럼 셈).
     대상 demo 의 한 자리에 other API 주소를 꼴만 바꿔 넣는다
     (other → demo 실제 변이 있어 demo → other 변이 서면 순환 묶음). 옛 판 = F121_OLD_SHA(HEAD 아님)."""
     old_tool: Path = td / "f121-old" / "refactor_audit.py"
@@ -4306,6 +4308,32 @@ def deps_http_text_cases(fails: "list[str]", td: Path) -> None:
         took: float = time.perf_counter() - began
         expect(fails, f"RD-F121 {tag.upper()} _mask_html — {label} → 선형 시간(2 초 안 · 제곱이면 열 초 넘음) · 주소 남음",
                (0 if took < 2.0 and '"/x"' in masked and len(masked) == len(text) else 9, f"{took:.2f} 초"), 0)
+    # 짝 없는 여는 글 바꾸기(`_lone_openers_blanked`)는 낱말을 바꾸지 않는다 — 줄 끝 거리 문턱을 0 으로 낮춰 모든 여는 글에서 돌리고,
+    # 글자 `{}%#\n\x0cx` 로 만든 길이 6 이하 모든 글(13만 7256 개)의 Django · HTML 낱말(자리 · 종류)을 원문과 사본에서 견준다.
+    real_opener: str = ra._LONE_OPENER
+    ra._LONE_OPENER = r"\{(?=[{%#])"
+    try:
+        django_tag: "re.Pattern[str]" = re.compile(ra._DJANGO_TAG)
+        html_token: "re.Pattern[str]" = re.compile(ra._HTML_TOKEN, re.S | re.I)
+        seen: int = 0
+        differ: "list[str]" = []
+        for size in range(1, 7):
+            for chars in itertools.product("{}%#\n\x0cx", repeat=size):
+                text = "".join(chars)
+                copy: str = ra._lone_openers_blanked(text)
+                seen += 1
+                if ([m.span() for m in django_tag.finditer(text)] != [m.span() for m in django_tag.finditer(copy)]
+                        or [(m.span(), m.lastgroup) for m in html_token.finditer(text)]
+                        != [(m.span(), m.lastgroup) for m in html_token.finditer(copy)]):
+                    differ.append(text)
+    finally:
+        ra._LONE_OPENER = real_opener
+    expect(fails, "RD-F121 U9 짝 없는 여는 글 바꾸기 — 문턱 0 · 길이 6 이하 모든 글 13만 7256 개에서 Django · HTML 낱말(자리 · 종류)이 원문과 같다",
+           (0 if seen == 137256 and not differ else 9, f"글 {seen} · 다름 {len(differ)} · 예 {differ[:3]!r}"), 0)
+    named: str = ("{% verbatim {{ %} }}<p>a</p>{% endverbatim {{ %}" + '{# <a hx-get="/x"></a> #}' + " " * 300 + "\n")
+    masked = ra._mask_html(named)
+    expect(fails, "RD-F121 U10 긴 줄 · verbatim 이름에 여는 글(`{% verbatim {{ %}` … `{% endverbatim {{ %}`) → 이름까지 같은 끝에서 닫히고 뒤 `{# #}` 지움"
+           "(태그 내용은 원문에서 읽는다)", (0 if '"/x"' not in masked and len(masked) == len(named) else 9, repr(masked[:80])), 0)
 
 
 def map_items_case(fails: "list[str]", td: Path) -> None:

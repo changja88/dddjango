@@ -54,8 +54,11 @@
 | U6 ×4 | iframe · noembed · noframes · noscript 안 `<!--` → 주소 남음 | ✗ ×4 | ✓ |
 | U7 | `--!` 뒤가 `>` 가 아니면 닫히지 않음(지킬 꼴) | ✓ | ✓ |
 | U8a ~ U8c | 한 줄 짝 없는 `{{` · `{%` · CSS `{#` 각 1만 2천 → 2 초 안(제곱이면 열 초 넘음) | ✓ ✓ ✗ | ✓ |
+| U9 | 짝 없는 여는 글 바꾸기 — 문턱 0 · 글자 `{}%#\n\x0cx` 로 만든 길이 6 이하 모든 글(13만 7256 개)의 Django · HTML 낱말(자리 · 종류)이 원문과 같다 | — | ✓ |
+| U10 | 긴 줄 · verbatim 이름에 여는 글(`{% verbatim {{ %}` … `{% endverbatim {{ %}`) → 이름까지 같은 끝에서 닫힘(태그 내용은 원문에서 읽는다) | — | ✓ |
 
-- RD-F121 사례 44 → 66. 2.27.1 도구로 돌리면 새 사례 16 이 붉다. 선형 고침을 뺀 판은 U8a ~ U8c 가, 끝 태그 고침(A-I1)을 뺀 판은 F16 · F17 이 붉다.
+- RD-F121 사례 44 → 68. 2.27.1 도구로 돌리면 새 사례 16 이 붉다(U9 · U10 은 새 함수 시험). 선형 고침을 뺀 판은 U8a ~ U8c 가, 끝 태그 고침(A-I1)을 뺀 판은 F16 · F17 이 붉다.
+- 선형 바꾸기를 깨는 변이 — 앞 `{{` 이어짐 갈래 없앰 · 닫힘 판정 한 칸 밀림 · 줄 끝을 `\x0c` 에서도 끊음 은 U9 가, 태그 내용을 바꾼 사본에서 읽음 은 U10 이 붉게 잡는다.
 
 ### 속도(«느려지는 건 선택 사항이 아니다»)
 같은 기계에서 다른 작업이 돌아 부하 평균 17 ~ 21(20 코어)이었다 — 세 판을 번갈아 잰 중앙값(ms).
@@ -127,7 +130,7 @@
 | `dddjango/scripts/refactor_audit.py` | A | `groups.pipeline` |
 | `dddjango/scripts/design_pregate.py` | C | `groups.pipeline` |
 | `codex-dddjango/skills/dddjango/scripts/refactor_audit.py` · `design_pregate.py` | A · C byte 미러 | — |
-| `workspace/tools/refactor_audit_fixture_run.py` | A 시험 22 | — |
+| `workspace/tools/refactor_audit_fixture_run.py` | A 시험 24 | — |
 | `workspace/tools/pregate_transcription_smoke.py` | B 시험 행 · C 시험 | `groups.harness` |
 | `workspace/plan/2026-10-25-f4-115-pregate-s5/plan-2.27.0.md` | B s1 한 문장 | — |
 | `workspace/eval/ab/T2-0b-manifest.json` · `workspace/design/2026-08-20-ontology-t2-0b-design.md`(MANIFEST-FACTS) | 봉인 재발행 | 통합 때 |
