@@ -159,3 +159,11 @@ djr:R-3500 djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pair
 djr:R-3501 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 
 djr:R-3659 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-3691 djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-3692 djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-3693 djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-3694 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .

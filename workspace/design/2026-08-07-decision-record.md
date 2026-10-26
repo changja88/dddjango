@@ -1469,7 +1469,7 @@ BC 밖   framework/ninja/<b>framework_</b>error_schema.py
 
 ## D54 · 제1원칙 — 모든 BC 는 같은 골격을 «내용과 무관하게» 갖는다
 
-**확정 · 08-09 · T51** · 자리 — ① 칸 &nbsp;·&nbsp; <b>다른 모든 것보다 앞선다</b> &nbsp;·&nbsp; 백스톱 1순위 &nbsp;·&nbsp; <b>유형 셋 · 조건부 0 · 예외 0</b> <span class='dim'>T52</span>
+**확정 · 08-09 · T51 · 개정 10-27 · D60** · 자리 — ① 칸 &nbsp;·&nbsp; <b>다른 모든 것보다 앞선다</b> &nbsp;·&nbsp; 백스톱 1순위 &nbsp;·&nbsp; <b>유형 셋 · 조건부 0 · 예외 0</b> <span class='dim'>T52</span>
 
 <dl class="kv">
 <dt class="ans-dt">결정 — <b>이 트리는 «권고»가 아니라 «형태»다</b></dt>
@@ -2141,7 +2141,7 @@ Data Access Interface   출력 포트             →  &lt;aggregate&gt;_reposit
 
 ## D27 · 예외 — 세 자리가 이미 정해져 있었다 (플러그인 대조)
 
-**확정 · 08-06** · 자리 — ① 칸 · ③ 화살표 &nbsp;·&nbsp; <b>새로 정한 게 아니라 «옮겨 적은» 결정</b> &nbsp;·&nbsp; 출처: 플러그인 <code>discipline-houserules</code> · <code>implementation-django-ninja</code>
+**확정 · 08-06 · 개정 10-27 · D60** · 자리 — ① 칸 · ③ 화살표 &nbsp;·&nbsp; <b>새로 정한 게 아니라 «옮겨 적은» 결정</b> &nbsp;·&nbsp; 출처: 플러그인 <code>discipline-houserules</code> · <code>implementation-django-ninja</code>
 
 <dl class="kv">
 <dt class="ans-dt">① 칸 — <b>도메인 예외는 애그리거트 밑 파일 하나</b></dt>
@@ -2469,7 +2469,7 @@ OpenAPI 를 어떻게 쓰나는 <code>implementation-django-ninja</code> 가 <b>
 
 ## D10 · 트리는 어디까지 규정하나
 
-**확정 · 08-04** · 자리 — 모든 칸에 걸리는 규칙
+**확정 · 08-04 · 개정 10-27 · D60** · 자리 — 모든 칸에 걸리는 규칙
 
 <dl class="kv">
 <dt class="ans-dt">결정</dt>
@@ -2602,7 +2602,7 @@ D6 는 방식을 정했고 이 카드는 그걸 몰랐다 — <b>두 카드가 �
 
 ## D12 · domain_layer 의 1차 축
 
-**확정 · 08-06** · 자리 — ① 칸 &nbsp;·&nbsp; ② 이름 &nbsp;·&nbsp; 닫는 문제 <b>P1</b>
+**확정 · 08-06 · 개정 10-27 · D60** · 자리 — ① 칸 &nbsp;·&nbsp; ② 이름 &nbsp;·&nbsp; 닫는 문제 <b>P1</b>
 
 <dl class="kv">
 <dt class="ans-dt">결정</dt>
@@ -4043,6 +4043,59 @@ eShop·Grzybek SaveChanges 가 걷는다  커밋 «직전»</code></pre></div>
 <span class="dim">08-10 · T50 — <code>pull_events()</code> 는 <b>D40</b> 카드 <b>한 자리</b>에만 있고
 행·<code>WHAT</code>·<code>NAMES</code> 어디에도 <b>0건</b>이었다. 카드에만 있으면 강제가 0이라 이번에 행으로 내렸다 —
 <b>D58</b> 에서 잡은 것과 <b>같은 병</b>이다.</span></dd>
+</dl>
+
+
+## D60 · 의미 묶음 — 평평하게 쌓이는 여섯 칸을 «이름이 정하는» 한 겹으로 나눈다
+
+**확정 · 10-27** · 자리 — <b>트리 171행 그대로</b> &nbsp;·&nbsp; 64·66·68·71·73·75행에 <b>묶음 허용 표기</b>(<code>data-grp</code>) &nbsp;·&nbsp; 새 규칙 넷 #654~#657 &nbsp;·&nbsp; D54 · D10 · D12 · D27 · #492 개정
+
+<dl class="kv">
+<dt class="ans-dt">물음 — <b>개념 원자 칸이 한 폴더에 수십 개씩 평평하게 쌓인다</b></dt>
+<dd class="ans-dd filled">엔티티 · 값 객체 · 이벤트 · 예외 · 공유 값 객체 · 도메인 서비스 — 여섯 칸은 <b>성장 출구가 «새 파일»</b>이라(승격 배제 ⓓ) 업무가 자라면 파일 수가 그대로 는다.
+<b>«무엇에 관한 파일인가»가 폴더에서 안 보인다.</b>
+그런데 트리는 하위 폴더를 두 갈래로만 다뤘다 — 막거나(<b>#490 폐쇄</b>) 맡기거나(<b>D10 · #15 작성자 재량</b>).
+막으면 평평하게 쌓이고, 맡기면 <b>사람마다 다르게 묶는다</b>.</dd>
+
+<dt class="ans-dt">결정 — <b>부모 바로 아래 «묶음» 한 겹 · 자리는 함수가 정한다</b></dt>
+<dd class="ans-dd filled"><b>여섯 칸에 한해</b> 인스턴스 파일을 부모 바로 아래 묶음 폴더 한 계층으로 나눈다.
+자리는 사람이 아니라 <b>결정적 함수 <code>folder_group.place</code></b> 가 정한다 — 입력은 파일 이름 · AST(반환 주석 · import · 클래스 기반) · 묶음 폴더 목록뿐이고 <b>프로젝트 설정은 없다</b>.
+검사기 · 게이트 · 설계 도구가 <b>같은 함수</b>를 부르므로 «도구가 놓은 자리»와 «검사기가 요구하는 자리»가 갈리지 않는다.
+<div class="pre-wrap"><pre><code>value_object/                    value_object/
+  billing_anchor.py                billing/
+  billing_cycle.py         →         billing_anchor.py · billing_cycle.py · billing_period.py
+  billing_period.py                discount/
+  discount_code.py                   discount_code.py · discount_rate.py · discount_reason.py
+  discount_rate.py                 display_order.py     ← 단위가 셋 미만 · 부모에 남는다
+  discount_reason.py
+  display_order.py</code></pre></div>
+<b>규칙 넷</b> — <b>#654</b> 묶음 안에 폴더 없음(한 계층) · <b>#655</b> 묶음의 <code>__init__.py</code> 는 비어 있다(재수출 없음) ·
+<b>#656</b> 파일과 묶음 폴더는 <code>place</code> 가 낸 자리에 · <b>#657</b> 여러 애그리거트가 함께 쓰는 개념의 업무 예외는 <code>shared_value_object/</code>.
+<br><b>서고 죽는 셈</b> — 새 묶음은 <b>맨 자리 이름 셋</b>부터, 있는 묶음은 <b>둘</b>까지 산다(하나가 되면 푼다).
+부모를 통째로 먹는 묶음 · 같은 이름 서비스와 겹치는 묶음은 서지 않는다.
+애매한 20 낱말(<code>order</code> · <code>plan</code> · <code>code</code> …)은 <b>언제나 업무 낱말</b>이고, 철자가 다른 단위는 <b>합치지 않는다</b>.</dd>
+
+<dt class="ans-dt">명시적 개정 — <b>«맞춤»이 아니라 사용자 결정으로 고친다</b></dt>
+<dd class="ans-dd filled"><b>D54</b> «유형 셋 · 조건부 0» 은 칸의 <b>존재</b>에 대한 말이라 그대로 서고, 묶음 허용 표기는 승격 표기처럼 <b>실현 형태</b>의 값이다(#491 부칙).
+<b>#492</b> «개수 조건은 트리에 두지 않는다» 는 이 여섯 칸에 한해 <b>셋 · 둘</b>을 D60 이 정한다.
+<b>D10</b> 의 «리프로 닫은 폴더 안은 작성자 재량» 은 이 여섯 칸에서 <b>재량이 아니라 함수</b>다.
+<b>D12</b> 의 종류 폴더(<code>entity/</code> · <code>value_object/</code> · <code>exception/</code>)는 그대로고 묶음은 그 <b>«안» 한 겹</b>이다.
+<b>D27</b> 의 예외 자리에 공유 개념의 예외 <code>shared_value_object/</code> 가 더해진다(#657).
+<span class="dim">앞선 내부 조사는 «N 개 넘으면 묶기»를 권하지 않았다 — 사용자 결정(10-27)이 그것을 뒤집었다.</span></dd>
+
+<dt class="ans-dt">겹치지 않는 것 — <b>D28 · D55</b></dt>
+<dd class="ans-dd filled"><b>D28</b> 은 애그리거트 <b>«안»</b>의 서비스 자리를 걷었다 — 그 자리는 여전히 없다.
+묶음은 <code>domain_service/</code> 아래 한 겹이고, 서비스는 <b>돌려주는 값 객체의 묶음 이름</b>을 따른다.
+<br>문서 낱말 <b>«묶음»은 폴더 이름이 아니다</b> — 폴더 이름은 업무 낱말 그대로라
+<b>D55</b> 가 기각한 <code>group</code> · <code>module</code> 같은 이름이 생기지 않는다(<code>group</code> 은 일반어라 단위가 못 된다).</dd>
+
+<dt class="ans-dt">옮기는 길 — <b>둘뿐이다</b></dt>
+<dd class="ans-dd filled">기존 파일을 묶음으로 옮기는 것은 <b>G0 빚 결정(슬라이스 0 의 묶음 창)</b>과 <b>이 실행이 부른 묶음 이동(끝 맞춤 창)</b>뿐이다.
+게이트는 <b>«이 실행의 이동»</b>을 같은 함수로 다시 계산해 실제 이동과 대조한다 — 미룬 빚 · 다른 레인이 부른 이동은 건드리지 않는다.</dd>
+
+<dt class="ans-dt">기각</dt>
+<dd class="ans-dd filled">크기 문턱(«N 파일 넘으면») · import 그래프로 묶기 · 묶음 사이 순환 금지 · 사람 판정 · 프로젝트 설정 파일(낱말 고름 · 덮어쓰기) · 철자 합침.
+<b>기계가 같은 답을 못 내는 것은 모두 뺐다</b> — 사람마다 다르게 묶는 것이 이 카드가 닫으려던 문제다.</dd>
 </dl>
 
 
