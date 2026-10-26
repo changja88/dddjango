@@ -337,6 +337,7 @@
     "claude": {
       "checked": 75,
       "mismatch": [
+        "dddjango/.claude-plugin/plugin.json",
         "dddjango/scripts/business_vocab.py",
         "dddjango/scripts/check-business-vocabulary.py",
         "dddjango/scripts/pregate_symbol_kinds.json"
@@ -347,10 +348,12 @@
     },
     "codex": {
       "checked": 35,
-      "mismatch": [],
+      "mismatch": [
+        "codex-dddjango/.codex-plugin/plugin.json"
+      ],
       "missing": [],
       "root": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.27.1",
-      "status": "ok"
+      "status": "drift"
     }
   },
   "claude_install": {
@@ -741,7 +744,7 @@
       "files": {
         ".agents/plugins/marketplace.json": "bc134ae724e1e23019506c756bc3d2a0e6dfdc25f7dbaf55881e7edf173457f9",
         ".claude-plugin/marketplace.json": "2ab8baa47e88eb8fd0b51644b7e1e422c6e3f194520476db4ee1b1a8a693c4c4",
-        "codex-dddjango/.codex-plugin/plugin.json": "813d3129173dd19119e8b7f1d396d7577120f2b94e9a59b8439fa93d6b161455",
+        "codex-dddjango/.codex-plugin/plugin.json": "942c8babf45bf5df62c2343ee2e3df8a56648fd65188339f7691d93c264ea358",
         "codex-dddjango/skills/architecture-api/SKILL.md": "1f6c9659d8b9d230c2556c130c31d52031356c07eaafe00a10973ed7fcd8c5ab",
         "codex-dddjango/skills/architecture-api/references/final.md": "545763129dc13993e6bc8f37f91c17927206318393d0a9c7b5cd2c3b4773d048",
         "codex-dddjango/skills/architecture-db/SKILL.md": "b1560b89855acd55e0722ddd0ad7e808b4679adb899d1b75364bb4ffe8521e1d",
@@ -775,7 +778,7 @@
         "codex-dddjango/skills/implementation-django/references/final.md": "f44441feb4b1088713e141f8a3570eacf4f887e19a37ccc110aff953e9a4ddcb",
         "codex-dddjango/skills/implementation-python/SKILL.md": "b9f224cb502fbb1b067f22a001a4726679fd697cb88c09fb8cb47bef034f7db8",
         "codex-dddjango/skills/implementation-python/references/final.md": "61e58305498ad0038a26b7c0538dfbed1ce17f79036576781969c62be67a82d2",
-        "dddjango/.claude-plugin/plugin.json": "93673e87af052d6a66c1905a5ae55ee4ef38b396b907f023dd7c10d5ef806dbf",
+        "dddjango/.claude-plugin/plugin.json": "525bf6a552e62069b92ab6079a73a88f57fcd942b5e18eeab00ffd700cb60076",
         "dddjango/agents/acceptance-tester.md": "2ca08513500a13fa31ccccb2b41af786589728e0168df838669400c987144b72",
         "dddjango/agents/coder.md": "7b428cf007ee78d68efc35d13ce6d24f781756b0ffe500f964568350b25e125c",
         "dddjango/agents/design-architect.md": "eaf66fa498d8793f9a1b3c418bbe6702750b74d93b98911147fafd7bce5a0bc3",
@@ -817,7 +820,7 @@
         ".agents/plugins/marketplace.json"
       ],
       "n_files": 66,
-      "tree_sha256": "16173e9c7af158e48a1593f2e36a766e14b57d4ae561a8a164b73164b0a439b4",
+      "tree_sha256": "03253c245ff9960d4c17be13f3a2309aafa3458f41a4d1c0f0956a0ffbcd2253",
       "why": "절차서가 **부르는 것들**. 서브에이전트 정의와 규범 산문(`references/final.md`)이 여기 있다 — 그중 ninja §6.1·§6.2 와 ddd §3.2 는 파일럿 이관 대상 클러스터 그 자체다. 절차서만 동결하고 이것들을 두면 봉투만 봉인하고 내용물을 열어 둔 것이다. 산문이 런 사이에 바뀌면 세 암이 같은 규범을 상대한 것이 아니게 되고, `coder.md` 한 줄이 바뀌면 처치와 무관하게 산출물이 달라진다."
     },
     "preregistration": {
@@ -834,7 +837,7 @@
     "protocol": {
       "files": {
         "Makefile": "fa1aab76c46ad60a5e2431fad6d4cfcc7f09d09bcf1ffdb086ce8fea9a4f39b8",
-        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "9d621604f839585ff496ab4d91fb37a23aef6a55e04e9da89744a54648e8354e",
+        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "e25a366a198241e3a2b11e0b32b3e19ec68f74cf9035e0896c9f66ff6376e967",
         "workspace/plan/2026-08-12-bc-rebuild-protocol.md": "a39ba66e58cb8bde5ad8f84d630b6fd9b04300f7130d4bbc2d149751c2f6c492",
         "workspace/plan/templates/request-template.md": "531bb5c0e9b147d51665981bc3218aa027ddc4170101ea920ecc8a87f7018fe4",
         "workspace/tools/openapi_shape.py": "ea564e3b0ce0550352935b7a572f93dfae404f1a1d24f0fd9d4acf6dc4bc4932",
@@ -849,7 +852,7 @@
         "workspace/design/2026-08-20-ontology-t2-0b-design.md"
       ],
       "n_files": 6,
-      "tree_sha256": "80f08ad8196e9865072021c1606b878d025c44163d3e9ef0978cc78a54608868",
+      "tree_sha256": "0f2ad92c2f3c1f980758bb14953b2045da1c8f959e7fc1bcc4ff0671b0280abe",
       "why": "**전이 의존** — 발주문이 «그대로 따르라»고 가리키는 판형과, 인수 판정이 부르는 도구와, 게이트를 배선하는 Makefile. 이 중 하나만 바뀌어도 모델이 받는 요청문·허용 범위·STOP 규약·shape 합격 여부·실런 진입 조건이 바뀐다. 그런데 대조는 글롭에 든 것만 재전개하므로, 봉인 밖이면 그 변경은 드리프트가 아니었다(레인 AU 발견 4)."
     },
     "queries": {
@@ -950,8 +953,8 @@
     "n_files": 43
   },
   "plugin_versions": {
-    "claude": "2.27.1",
-    "codex": "2.27.1"
+    "claude": "2.27.2",
+    "codex": "2.27.2"
   },
   "schema": "t2-0b-manifest/1",
   "schemas": {
@@ -979,8 +982,8 @@
     "source-claude": "5b4c4bb809e916e42663f7aaed81e7c6a5e1df26a57d8678db85d9fc61e4ccc6",
     "source-codex": "5b4c4bb809e916e42663f7aaed81e7c6a5e1df26a57d8678db85d9fc61e4ccc6"
   },
-  "sealed_commit": "0a0e6a7129a4deb30da0caff200f247dee1dd4c1",
-  "self_sha256": "3d144b839112a9b9dede9fb6510eaa3bf358fea07325d7a3c2b2e7e5c597bbbf",
+  "sealed_commit": "2dc5aa9994305c1a23cd7775c3d4ccba62e7c2fd",
+  "self_sha256": "6f7141436b67e089e8d4443e6fa6470dcb94f0b8c0c8a1610db2ebcd7147b1e0",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [
