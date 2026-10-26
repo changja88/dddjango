@@ -98,12 +98,33 @@ def server_bc_dirs(root: Path) -> list[Path]:
     return [p for p in sorted(c.iterdir()) if p.is_dir() and not p.name.startswith(".")]
 
 
+# framework 쪽 동음 낱말 — BC 이름에도 나오지만 framework 능력 · 순수 계산이 기술 뜻으로 쓰는 낱말(#628 · predicates ⓑ — 저장소가
+# 유지하는 데이터 · 닫지 않는다). 영역이 서른 개쯤 되면 BC 어휘 합집합이 일반 영어를 덮어, 업무 낱말 0 인 framework 계약이 붉어진다.
+# BC 마다 도는 검사(bc_vocab)와 전역 STOPWORDS 는 그대로다 — 합집합(all_vocab)에서만 뺀다. 등재는 현장 근거가 있는 낱말만, 그때의
+# 합집합 출처를 대조해 사유를 남긴다. 받아들인 한계: 그 낱말을 업무 뜻으로 쓰는 영역(work · register 는 실제로 그렇다)의 framework
+# 누설은 이 낱말로는 못 잡는다 — 그 영역의 다른 낱말이 함께 새면 잡는다(`event` 와 같은 처지).
+FRAMEWORK_HOMONYMS = frozenset({
+    # 식별 · 사전 키 — `IdempotencyKey` · `find_by_key` · `asked_consultation_keys` ↔ framework 의 키 · 사전 키 정렬(RFC 8785 JCS).
+    "key", "keys",
+    # 병렬 작업 능력의 낱말 — 열거 값 `work_pool_unavailable` · `…Unavailable` 예외 · `remaining_seconds` · `customer_wait` ·
+    # `has_run_out` · `require_within` ↔ framework `parallel_work` 의 `run_within` · `PoolUnavailable` · 대기 초.
+    "pool", "unavailable", "seconds", "wait", "run", "within",
+    # 업무 뜻과 겹치는 낱말 — `WorkId`(문헌 식별 값) ↔ `parallel_work` · `Account.register`(가입) ↔ 작업 등록.
+    "work", "register",
+    # JSON 값 · 컨테이너 영어 — `JsonDocument` · `to_json_document` · `SequenceRange` ↔ pure/ JSON 값 별칭 · `collections.abc`
+    # 의 `Mapping` · `Sequence`.
+    "json", "mapping", "sequence",
+})
+
+
 def all_vocab(root: Path) -> set[str]:
-    """서버 BC 합집합 — framework · broker 쪽 업무 어휘 검사(#47·#587·#617·#562·#518 · 후보 #448·#425 · ⓓ#36)의 재료."""
+    """서버 BC 합집합 — framework · broker 쪽 업무 어휘 검사(#47·#587·#617·#562·#518 · 후보 #448·#425 · ⓓ#36)의 재료.
+
+    framework 쪽 동음 낱말(`FRAMEWORK_HOMONYMS`)은 뺀다."""
     out: set[str] = set()
     for bc in server_bc_dirs(root):
         out |= bc_vocab(bc)
-    return out
+    return out - FRAMEWORK_HOMONYMS
 
 
 def bc_names(root: Path) -> set[str]:

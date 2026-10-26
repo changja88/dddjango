@@ -265,7 +265,7 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     "check-broker-contract.py": (2, 22, 22, 6, False),
     "check-missable-entrance.py": (2, 17, 17, 5, False),
     "check-naming.py": (2, 33, 33, 6, False),
-    "check-business-vocabulary.py": (2, 49, 49, 8, False),
+    "check-business-vocabulary.py": (2, 49, 49, 7, False),
     "check-response-schema-bypass.py::git-clean": (0, 0, 0, 0, False),
     "check-response-schema-bypass.py::git-modified": (2, 0, 0, 3, True),
     "check-response-schema-bypass.py::git-untracked": (2, 0, 0, 3, True),

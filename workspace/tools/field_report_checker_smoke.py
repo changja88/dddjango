@@ -3710,5 +3710,126 @@ class RootBcSelectionRegression(unittest.TestCase):
                 self.assertEqual(self.run_checker(script), want)
 
 
+class FrameworkHomonymRegression(unittest.TestCase):
+    """F4-124 · F4-42 — framework 쪽 업무 어휘 검사는 BC 이름에도 나오는 기술 뜻 낱말(동음)을 업무 어휘로 세지 않는다.
+
+    영역이 많으면 BC 어휘 합집합이 `key` · `seconds` · `json` 같은 일반 낱말을 덮어, 업무 낱말 0 인 framework 계약 · 순수 계산 ·
+    브로커가 붉어졌다. 동음 낱말은 합집합(all_vocab)에서만 빠져 framework · broker 쪽 채널이 모두 같은 판정을 받는다.
+    """
+
+    HOMONYMS: "tuple[str, ...]" = ("key", "keys", "pool", "unavailable", "seconds", "wait", "run", "within", "work",
+                                   "register", "json", "mapping", "sequence")
+    CHANNEL_FILES: "tuple[str, ...]" = (
+        "framework/batch/batch_port.py", "framework/batch/batch_in.py", "framework/batch/batch_out.py",
+        "framework/batch/runner.py", "framework/test/batch_material.py", "framework/pure/slots.py",
+        "framework/broker/internal/internal_broker_port.py", "framework/broker/internal/internal_broker.py")
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="field-homonym-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root: Path = Path(self.tmp.name) / "project"
+        self.env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+                        DJR_FINDINGS_JSON=str(Path(self.tmp.name) / "records.jsonl"),
+                        DJR_VIOLATIONS_DIR=str(Path(self.tmp.name) / "violations"))
+
+    def write(self, relative: str, text: str = "") -> None:
+        path: Path = self.root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def lines(self, script: str, rules: "tuple[str, ...]") -> "list[str]":
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / script), str(self.root)],
+                                capture_output=True, text=True, env=self.env)
+        self.assertEqual(result.stderr, "", script)
+        return [line.strip() for line in result.stdout.splitlines() if any(f"{rule}]" in line for rule in rules)]
+
+    def test_homonym_list_is_the_field_evidence_list(self) -> None:
+        import business_vocab
+        self.assertEqual(business_vocab.FRAMEWORK_HOMONYMS, frozenset(self.HOMONYMS))
+
+    def test_every_framework_channel_drops_homonyms_and_keeps_business_word(self) -> None:
+        # 도메인 이름에 동음 낱말 전부와 업무 낱말 `invoice` · framework 채널 파일마다 같은 낱말 전부 → 남는 낱말은 `invoice` 하나.
+        self.write("application/ledger/__init__.py")
+        self.write("application/ledger/domain_layer/ledger/ledger.py",
+                   "class Ledger:\n    pass\n" + "".join(f"\n\ndef {word}_invoice() -> None:\n    pass\n" for word in self.HOMONYMS))
+        body: str = "".join(f"def {word}_slot() -> None:\n    pass\n\n\n" for word in self.HOMONYMS + ("invoice",))
+        for relative in self.CHANNEL_FILES:
+            self.write(relative, body)
+        self.assertEqual(self.lines("check-business-vocabulary.py", ("#47", "#587", "#617", "#562", "#448", "#425")), [
+            "[ⓓ#448] framework/batch/runner.py: framework 파일에 업무 어휘 ['invoice'] — 물음: 이 낱말의 뜻을 저장소 밖이 정하나",
+            "[ⓓ#448] framework/pure/slots.py: framework 파일에 업무 어휘 ['invoice'] — 물음: 이 낱말의 뜻을 저장소 밖이 정하나",
+            "[ⓓ#425] framework/test/batch_material.py: framework/test/ 재료에 업무 어휘 ['invoice'] — 물음: 이 재료의 뜻을 밖(HTTP·pytest·시간)이 정하나",
+            "[#587] framework/batch/batch_in.py: <data>_in.py 에 업무 어휘 ['invoice'] — 검사 둘 중 하나(어휘 0)에 걸렸다",
+            "[#617] framework/batch/batch_out.py: <data>_out.py 에 업무 어휘 ['invoice'] — 한 글자라도 나오면 위반이다(#628)",
+            "[#47] framework/batch/batch_port.py: capability 계약의 이름·시그니처에 업무 어휘 ['invoice'] — 한 글자도 없어야 framework 에 들어온다",
+            "[#562] framework/pure/slots.py: pure/ 에 업무 어휘 ['invoice'] — 한 글자라도 나오면 위반(Shared Kernel 차단 기계)",
+        ])
+        self.assertEqual(self.lines("check-broker-contract.py", ("#518",)), [
+            "[#518] framework/broker/internal/internal_broker.py: broker 에 업무 어휘 ['invoice'] — framework/broker/ 아래에는 어느 BC 의 업무 어휘도 나오지 않는다(#628)",
+            "[#518] framework/broker/internal/internal_broker_port.py: broker 에 업무 어휘 ['invoice'] — framework/broker/ 아래에는 어느 BC 의 업무 어휘도 나오지 않는다(#628)",
+        ])
+
+    def test_bc_vocabulary_keeps_homonyms(self) -> None:
+        # BC 마다 도는 검사의 재료(bc_vocab)는 그대로 — 동음 낱말은 합집합에서만 빠진다.
+        import business_vocab
+        self.write("application/ledger/__init__.py")
+        self.write("application/ledger/domain_layer/ledger/ledger.py", "class IdempotencyKey:\n    pass\n\n\ndef remaining_seconds() -> int:\n    return 0\n")
+        self.assertEqual(business_vocab.bc_vocab(self.root / "application/ledger"), {"ledger", "idempotency", "key", "remaining", "seconds"})
+        self.assertEqual(business_vocab.all_vocab(self.root), {"ledger", "idempotency", "remaining"})
+
+
+class PublicSurfaceRootRegression(unittest.TestCase):
+    """F4-125 — public-surface 의 #646 · #647 · #650 은 뿌리 `application/` · `framework/` 아래만 잰다.
+
+    자매 플러그인 구역(`web/application/**`)은 그 플러그인 규칙(`to_json(self) -> dict[str, object]`)을 따르고, 뿌리 밖 중첩 컨테이너
+    (`src/application/**`)는 BC 마다 도는 검사기와 같이 대상 밖이다. 저장소 전체를 보는 기존 규칙(#493 · #645)은 그대로다.
+    """
+
+    TO_JSON: str = ("`to_json()` 반환 타입의 값 자리가 `object` 다 — 키가 정해진 값 묶음은 `TypedDict`(파싱한 JSON 은 `TypeAdapter` 검증 파싱)"
+                    " · 조회표는 `dict[K, 구체 V]` · 통과 값은 `JsonValue` — 반환·속성에 남은 `object` 는 좁히지 않은 누수다")
+    LOAD: str = ("`load()` 매개변수 `data`의 값 자리가 `Any` 다 — 키가 정해진 값 묶음은 `TypedDict`(파싱한 JSON 은 `TypeAdapter` 검증 파싱)"
+                 " · 조회표는 `dict[K, 구체 V]` · 통과 값은 `JsonValue`")
+    NESTED_ANY: str = ("`load()` 매개변수 `data` 의 타입 안에 `Any` — 물음: 이 `Any` 를 `object`(즉시 좁힘)·정확 타입으로 바꿀 수 있나"
+                       "(프레임워크 계약이라도 우리 선언은 `object` 다)")
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="field-surface-root-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root: Path = Path(self.tmp.name) / "project"
+        self.env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+                        DJR_FINDINGS_JSON=str(Path(self.tmp.name) / "records.jsonl"),
+                        DJR_VIOLATIONS_DIR=str(Path(self.tmp.name) / "violations"))
+
+    def write(self, relative: str, text: str = "") -> None:
+        path: Path = self.root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def test_rule_roots_are_the_root_containers_only(self) -> None:
+        source: str = ("from typing import Any\n\n\nclass Profile:\n    def to_json(self) -> dict[str, object]:\n        return {}\n\n\n"
+                       "def load(data: dict[str, Any]) -> None:\n    return None\n")
+        for base in ("application/shop/domain_layer/shop/value_object", "web/application/shop/domain_layer/shop/value_object",
+                     "src/application/shop/domain_layer/shop/value_object", "framework/codec"):
+            self.write(f"{base}/profile.py", source)
+        self.write("web/application/shop/views.py", "def page(request):\n    return None\n")
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / "check-public-surface-annotation.py"), str(self.root)],
+                                capture_output=True, text=True, env=self.env)
+        self.assertEqual(result.stderr, "")
+        self.assertEqual(result.returncode, 2)
+        vo: str = "shop/domain_layer/shop/value_object/profile.py"
+        self.assertEqual([line.strip() for line in result.stdout.splitlines() if line.strip()], [
+            "blocker 6건 — 타입 전면 규율 위반 (#493 «첫 대입에 타입» · #645/#647 `Any`·레코드 · #646 django-stubs 제네릭 기저 외)",
+            f"[#647] application/{vo}:5: {self.TO_JSON}",
+            f"[#647] application/{vo}:9: {self.LOAD}",
+            f"[#647] framework/codec/profile.py:5: {self.TO_JSON}",
+            f"[#647] framework/codec/profile.py:9: {self.LOAD}",
+            "[#493] web/application/shop/views.py:1: `page()` 매개변수 `request` 에 타입이 없다",
+            "[#493] web/application/shop/views.py:1: `page()` 반환 타입이 없다",
+            "ⓓ 후보 2건 — 기계가 후보를 좁혔다 · 마무리 물음은 discipline-reviewer 몫(exit 불산입)",
+            f"[ⓓ#645] src/application/{vo}:9: {self.NESTED_ANY}",
+            f"[ⓓ#645] web/application/{vo}:9: {self.NESTED_ANY}",
+        ])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

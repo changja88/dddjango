@@ -58,8 +58,9 @@
        AnnAssign/Return 값이면 원소 슬롯 · 호출 인자면 비후보) · 컴프리헨션 요소 · 직접 첨자/속성 접근)로
        흐르면 후보 · union 은 전 구성원이 `object` 슬롯일 때만 비후보 · `x: object = …` 와 파서 직접
        인자·무주석 Assign(#493 몫)은 후보 아님. 좌표 = AnnAssign/Return 문장 줄 · 그 밖 호출 줄.
-  #646·#647·#650 은 상대 경로 성분에 `application`/`framework` 가 있는 파일만 본다(어느 깊이든 — `src/application/**`
-       도 채택 신호와 같은 판 · kkebi `web/`·`scripts/` 등 자매 플러그인·운영 스크립트 영역 제외 — 기존 5규칙의 대상은 무변).
+  #646·#647·#650 은 뿌리 `application/`·`framework/` 아래 파일만 본다(BC 마다 도는 검사기의 BC 고르기와 같은 판 — 자매
+       플러그인 구역 `web/application/**`·`web_test/**` · 운영 스크립트 · 뿌리 밖 중첩 컨테이너 `src/application/**` 제외 —
+       기존 5규칙의 대상은 무변).
 
 문법 외 면제(도구·프로토콜 소유 — 사람이 짓는 자리가 아니다):
   - `migrations/`(#593 이 모양을 소유) · `manage.py`/`wsgi.py`/`asgi.py`(생성 골격).
@@ -160,7 +161,7 @@ STUB_GENERIC_MODULES = (
     "django.views.generic", "django.views.generic.detail", "django.views.generic.list",
     "django.views.generic.edit", "django.views.generic.dates",
 )
-RULE_ROOTS = {"application", "framework"}  # #646·#647·#650 루트 필터(신규 3규칙만 — 기존 규칙 무변)
+RULE_ROOTS = {"application", "framework"}  # #646·#647·#650 뿌리 필터(상대 경로 첫 성분 · 신규 3규칙만 — 기존 규칙 무변)
 TYPE_IGNORE_RE = re.compile(r"#\s*type:\s*ignore(?:\[([^\]]*)\])?")
 
 # #647 — 값 자리 판정 재료.
@@ -678,7 +679,7 @@ RETURN_OBJECT_Q = "이 `object` 를 정확 타입 / 도메인 이벤트 union(`l
 
 
 def _in_rule_roots(rel: Path) -> bool:
-    return bool(RULE_ROOTS & set(rel.parts))
+    return bool(rel.parts) and rel.parts[0] in RULE_ROOTS
 
 
 def _leaf(name: str) -> str:
@@ -1122,7 +1123,7 @@ def _check_explicit_any(mod: ast.Module, rel: Path, out: Findings, cands: Candid
     #647 — 같은 애너테이션에서 먼저 판정한다: `dict/Mapping` 값 자리 `Any` 는 전 자리 차단 · `object` 는
     반환/클래스 속성 차단 · 매개변수/변수 ⓓ(면제 = `TypeIs/TypeGuard` 루트 · 스텁 강제 오버라이드).
     #647 위반이 난 애너테이션은 #645 nested ⓓ 를 생략한다(bare 는 유지 — 슬롯이 다르다). #647 은
-    `application/`·`framework/` 루트만. #493 과 독립이다(«존재»는 #493 · «내용»은 #645/#647)."""
+    뿌리 `application/`·`framework/` 아래만 — 뿌리 밖 파일은 #647 이 없으니 nested `Any` 는 #645 ⓓ 다. #493 과 독립이다(«존재»는 #493 · «내용»은 #645/#647)."""
     names, mods = _any_bindings(mod)
     bindings = bindings if bindings is not None else _module_bindings(mod)
     in_roots = _in_rule_roots(rel)
