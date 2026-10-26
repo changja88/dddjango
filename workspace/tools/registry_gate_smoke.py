@@ -1232,8 +1232,9 @@ class ApprovedInflowGateRegression(unittest.TestCase):
 _PREGATE_MINI: Path = ROOT / "workspace" / "eval" / "fixtures" / "pregate" / "mini_repo"
 _LINK_DIR: str = ".dddjango-web/20261012-0717-x/return1/browser-basetemp-2"
 _PURE_REL: str = "framework/pure/json_value.py"
-_PURE_SRC: str = ('from typing import Mapping, Sequence, Union\n\nJsonScalar = Union[str, int, float, bool, None]\n'
-                  'JsonValue = Union[JsonScalar, Sequence["JsonValue"], Mapping[str, "JsonValue"]]\n')
+_PURE_SRC: str = ('from typing import Mapping as Glossary, Sequence as Roster, Union\n\n'
+                  'TallyScalar = Union[str, int, float, bool, None]\n'
+                  'TallyValue = Union[TallyScalar, Roster["TallyValue"], Glossary[str, "TallyValue"]]\n')
 
 
 def _gate_module() -> ModuleType:
@@ -1346,15 +1347,15 @@ class ListShrinkRegression(unittest.TestCase):
     def repo(self, name: str, extra: str = "") -> Path:
         repo: Path = self.td / name
         shutil.copytree(_PREGATE_MINI, repo)
-        _write(repo, "application/orders/domain_layer/order_sequence/__init__.py", "")
-        _write(repo, "application/orders/domain_layer/order_sequence/order_sequence.py",
-               "class OrderSequence:\n    def next_json_scalar(self) -> int:\n        return 1\n")
+        _write(repo, "application/orders/domain_layer/order_roster/__init__.py", "")
+        _write(repo, "application/orders/domain_layer/order_roster/order_roster.py",
+               "class OrderRoster:\n    def next_tally_scalar(self) -> int:\n        return 1\n")
         for rel in ("application/library/__init__.py", "application/library/domain_layer/__init__.py",
-                    "application/library/domain_layer/search_term_mapping/__init__.py",
+                    "application/library/domain_layer/search_term_glossary/__init__.py",
                     "framework/__init__.py", "framework/pure/__init__.py"):
             _write(repo, rel, "")
-        _write(repo, "application/library/domain_layer/search_term_mapping/search_term_mapping.py",
-               "class SearchTermMapping:\n    pass\n")
+        _write(repo, "application/library/domain_layer/search_term_glossary/search_term_glossary.py",
+               "class SearchTermGlossary:\n    pass\n")
         _write(repo, _PURE_REL, _PURE_SRC + extra)
         _git(repo, "init", "-q")
         _commit_all(repo, "anchor")
@@ -1367,19 +1368,19 @@ class ListShrinkRegression(unittest.TestCase):
         self.assertEqual(code, 0, out)
         self.assertIn("목록만 줄어 잔존으로 센 줄 1건", out)
         self.assertIn("↳ 앵커: check-business-vocabulary.py :: [#562] framework/pure/json_value.py: pure/ 에 업무 어휘 "
-                      "['json', 'mapping', 'scalar', 'sequence']", out)
+                      "['glossary', 'roster', 'scalar', 'tally']", out)
         self.assertIn("== ⓓ 신규(N′∖L′) 0건 · legacy 1건 · 해소 0건", out)
         self.assertIn("  legacy check-business-vocabulary.py: 1", out)
         self.assertIn("  목록만 줄어 legacy 로 센 ⓓ 줄 1건", out)
         self.assertIn("↳ 앵커: check-business-vocabulary.py :: [ⓓ#448] framework/pure/json_value.py: framework 파일에 업무 어휘 "
-                      "['json', 'mapping', 'scalar', 'sequence']", out)
+                      "['glossary', 'roster', 'scalar', 'tally']", out)
 
     def test_V3_lists_longer_than_five_words_are_not_cut(self) -> None:
         repo: Path = self.repo("v3", '\n\nclass NextOrderSearchTerm:\n    """x."""\n')
         shutil.rmtree(repo / "application" / "library")
         code, out = _gate(repo, "HEAD")
         self.assertEqual(code, 0, out)
-        self.assertIn("['json', 'mapping', 'next', 'order', 'scalar', 'search', 'sequence', 'term']", out)
+        self.assertIn("['glossary', 'next', 'order', 'roster', 'scalar', 'search', 'tally', 'term']", out)
 
     def test_V4_V5_A1_C3_growth_swap_and_edited_file_stay_attributed(self) -> None:
         def edit(repo: Path, replace: "tuple[str, str] | None", append: str, delete_bc: bool) -> None:
@@ -1391,11 +1392,11 @@ class ListShrinkRegression(unittest.TestCase):
             if delete_bc:
                 shutil.rmtree(repo / "application" / "library")
         variants = {
-            "v4-growth": (None, "\n\nclass JsonTerm:\n    pass\n", False),
-            "v5-swap": (None, "\n\nclass JsonOrder:\n    pass\n", True),
-            "a1-edited-same-words": (None, "\n\nclass JsonScalarSequence:\n    pass\n", True),
-            "c3-edited-shrunk": (("Mapping[str, \"JsonValue\"]", "dict[str, \"JsonValue\"]"),
-                                 "\n\ndef json_scalar_sequence(value: JsonScalar) -> Sequence[JsonScalar]:\n    return [value]\n", False),
+            "v4-growth": (None, "\n\nclass TallyTerm:\n    pass\n", False),
+            "v5-swap": (None, "\n\nclass TallyOrder:\n    pass\n", True),
+            "a1-edited-same-words": (None, "\n\nclass TallyScalarRoster:\n    pass\n", True),
+            "c3-edited-shrunk": (("Glossary[str, \"TallyValue\"]", "dict[str, \"TallyValue\"]"),
+                                 "\n\ndef tally_scalar_roster(value: TallyScalar) -> Roster[TallyScalar]:\n    return [value]\n", False),
         }
         for name, (replace, append, delete_bc) in variants.items():
             with self.subTest(name=name):

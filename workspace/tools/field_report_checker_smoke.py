@@ -3791,6 +3791,10 @@ class PublicSurfaceRootRegression(unittest.TestCase):
                  " · 조회표는 `dict[K, 구체 V]` · 통과 값은 `JsonValue`")
     NESTED_ANY: str = ("`load()` 매개변수 `data` 의 타입 안에 `Any` — 물음: 이 `Any` 를 `object`(즉시 좁힘)·정확 타입으로 바꿀 수 있나"
                        "(프레임워크 계약이라도 우리 선언은 `object` 다)")
+    BARE_ADMIN: str = ("`ProfileAdmin` 이 django-stubs 제네릭 기저 `ModelAdmin` 를 맨몸으로 상속했다 — mypy strict `[type-arg]` 빚"
+                       " · `if TYPE_CHECKING:` 별칭으로 모델 타입 인자를 적는다")
+    JSON_LOADS: str = ("`json.loads(…)` 결과가 반환로 흐른다 — 물음: `TypeAdapter(<TypedDict>).validate_python/validate_json` 으로"
+                       " 검증하며 받았거나 `x: object` 로 받아 즉시 좁혔는가 — 결과가 `object` 아닌 자리로 그냥 흐른다")
 
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory(prefix="field-surface-root-")
@@ -3806,8 +3810,11 @@ class PublicSurfaceRootRegression(unittest.TestCase):
         path.write_text(text, encoding="utf-8")
 
     def test_rule_roots_are_the_root_containers_only(self) -> None:
-        source: str = ("from typing import Any\n\n\nclass Profile:\n    def to_json(self) -> dict[str, object]:\n        return {}\n\n\n"
-                       "def load(data: dict[str, Any]) -> None:\n    return None\n")
+        source: str = ("import json\nfrom typing import Any\n\nfrom django.contrib import admin\n\n\n"
+                       "class Profile:\n    def to_json(self) -> dict[str, object]:\n        return {}\n\n\n"
+                       "def load(data: dict[str, Any]) -> None:\n    return None\n\n\n"
+                       "class ProfileAdmin(admin.ModelAdmin):\n    pass\n\n\n"
+                       "def parse(raw: str) -> dict[str, int]:\n    return json.loads(raw)\n")
         for base in ("application/shop/domain_layer/shop/value_object", "web/application/shop/domain_layer/shop/value_object",
                      "src/application/shop/domain_layer/shop/value_object", "framework/codec"):
             self.write(f"{base}/profile.py", source)
@@ -3818,16 +3825,20 @@ class PublicSurfaceRootRegression(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         vo: str = "shop/domain_layer/shop/value_object/profile.py"
         self.assertEqual([line.strip() for line in result.stdout.splitlines() if line.strip()], [
-            "blocker 6건 — 타입 전면 규율 위반 (#493 «첫 대입에 타입» · #645/#647 `Any`·레코드 · #646 django-stubs 제네릭 기저 외)",
-            f"[#647] application/{vo}:5: {self.TO_JSON}",
-            f"[#647] application/{vo}:9: {self.LOAD}",
-            f"[#647] framework/codec/profile.py:5: {self.TO_JSON}",
-            f"[#647] framework/codec/profile.py:9: {self.LOAD}",
+            "blocker 8건 — 타입 전면 규율 위반 (#493 «첫 대입에 타입» · #645/#647 `Any`·레코드 · #646 django-stubs 제네릭 기저 외)",
+            f"[#647] application/{vo}:8: {self.TO_JSON}",
+            f"[#647] application/{vo}:12: {self.LOAD}",
+            f"[#646] application/{vo}:16: {self.BARE_ADMIN}",
+            f"[#647] framework/codec/profile.py:8: {self.TO_JSON}",
+            f"[#647] framework/codec/profile.py:12: {self.LOAD}",
+            f"[#646] framework/codec/profile.py:16: {self.BARE_ADMIN}",
             "[#493] web/application/shop/views.py:1: `page()` 매개변수 `request` 에 타입이 없다",
             "[#493] web/application/shop/views.py:1: `page()` 반환 타입이 없다",
-            "ⓓ 후보 2건 — 기계가 후보를 좁혔다 · 마무리 물음은 discipline-reviewer 몫(exit 불산입)",
-            f"[ⓓ#645] src/application/{vo}:9: {self.NESTED_ANY}",
-            f"[ⓓ#645] web/application/{vo}:9: {self.NESTED_ANY}",
+            "ⓓ 후보 4건 — 기계가 후보를 좁혔다 · 마무리 물음은 discipline-reviewer 몫(exit 불산입)",
+            f"[ⓓ#650] application/{vo}:21: {self.JSON_LOADS}",
+            f"[ⓓ#650] framework/codec/profile.py:21: {self.JSON_LOADS}",
+            f"[ⓓ#645] src/application/{vo}:12: {self.NESTED_ANY}",
+            f"[ⓓ#645] web/application/{vo}:12: {self.NESTED_ANY}",
         ])
 
 

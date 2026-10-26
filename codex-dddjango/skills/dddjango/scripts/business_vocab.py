@@ -104,15 +104,15 @@ def server_bc_dirs(root: Path) -> list[Path]:
 # 합집합 출처를 대조해 사유를 남긴다. 받아들인 한계: 그 낱말을 업무 뜻으로 쓰는 영역(work · register 는 실제로 그렇다)의 framework
 # 누설은 이 낱말로는 못 잡는다 — 그 영역의 다른 낱말이 함께 새면 잡는다(`event` 와 같은 처지).
 FRAMEWORK_HOMONYMS = frozenset({
-    # 식별 · 사전 키 — `IdempotencyKey` · `find_by_key` · `asked_consultation_keys` ↔ framework 의 키 · 사전 키 정렬(RFC 8785 JCS).
+    # 식별 · 사전 키 — BC 의 멱등 키 · 키로 찾기 · 물은 항목 키 이름 ↔ framework 의 키 · 사전 키 정렬(RFC 8785 JCS).
     "key", "keys",
-    # 병렬 작업 능력의 낱말 — 열거 값 `work_pool_unavailable` · `…Unavailable` 예외 · `remaining_seconds` · `customer_wait` ·
-    # `has_run_out` · `require_within` ↔ framework `parallel_work` 의 `run_within` · `PoolUnavailable` · 대기 초.
+    # 병렬 작업 능력의 낱말 — BC 의 «작업 풀 없음» 열거 값 · «…없음» 예외 · 남은 초 · 기다림 · 다 씀 · «이내» 조건 ↔ framework
+    # 병렬 작업 능력의 시한 실행 · 풀 없음 예외 · 대기 초.
     "pool", "unavailable", "seconds", "wait", "run", "within",
-    # 업무 뜻과 겹치는 낱말 — `WorkId`(문헌 식별 값) ↔ `parallel_work` · `Account.register`(가입) ↔ 작업 등록.
+    # 업무 뜻과 겹치는 낱말 — BC 의 문헌 식별 값(work) · 가입(register) ↔ framework 병렬 작업 · 작업 등록.
     "work", "register",
-    # JSON 값 · 컨테이너 영어 — `JsonDocument` · `to_json_document` · `SequenceRange` ↔ pure/ JSON 값 별칭 · `collections.abc`
-    # 의 `Mapping` · `Sequence`.
+    # JSON 값 · 컨테이너 영어 — BC 의 JSON 문서 값 · 범위 수열 ↔ pure/ JSON 값 별칭 · `collections.abc` 의 `Mapping` · `Sequence`
+    # (mapping 은 2026-10-03 현장 보고(F4-42)의 합집합 출처 — 2026-10-26 현장 합집합에는 출처가 없다).
     "json", "mapping", "sequence",
 })
 

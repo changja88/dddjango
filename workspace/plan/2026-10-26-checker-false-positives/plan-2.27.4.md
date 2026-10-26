@@ -22,9 +22,19 @@
 - 차단 1: F4-123 은 규범과 부딪힘 → 사용자 결정으로 올리고 이 판에서 뺌.
 - 중요 1: 국소 목록(`_check_isolation` 만)은 같은 파일 · 같은 낱말이 #562 · #518 과 ⓓ#448 에서 둘로 갈림 → 데이터 모듈 `all_vocab()` 에서 빼는 자리로(현장 사본에서
   business-vocabulary 출력은 국소 판과 같고 broker · naming · missable-entrance 변화 0 · 전역 STOPWORDS 는 port-adapter-pairing ⓓ#553 글자가 바뀌어 기각).
-- 중요 2: work(문헌 식별 값 `WorkId`) · register(가입 `Account.register`)는 실제 업무 뜻과 겹친다 — 사유를 «동음 충돌 수용» 으로 적고 받아들인 한계에 넣음.
+- 중요 2: work(문헌 식별 값) · register(가입)는 실제 업무 뜻과 겹친다 — 사유를 «동음 충돌 수용» 으로 적고 받아들인 한계에 넣음.
 - 중요 4: 시험 — 목록 낱말 전부 · 채널 일곱 · 뿌리 밖 두 꼴 · ⓓ#645 로 바뀌는 꼴을 정확 일치로.
 - 사소: docstring 정리 · 남는 web 줄(#493 · ⓓ#69 · ⓓ#645)은 범위 밖 · 행동 변화에 재예보와 ⓓ 줄 변화 적음.
+
+## 구현 검토 반영
+- 차단 1: `registry_gate_smoke.ListShrinkRegression`(F4-99 목록만 줄어든 줄) 재료가 json · mapping · sequence 를 업무 어휘로 썼다 — 동음 낱말이 된 뒤
+  V1 · V3 · a1 · c3 이 붉었다. 재료 낱말을 업무 낱말(tally · roster · glossary)로 바꾸고 `Mapping` · `Sequence` 는 `import … as` 별칭으로 들여
+  c3 의 고침이 낱말을 실제로 지우게 했다(검사기는 import 이름이 아니라 쓰인 이름만 센다).
+- 사소: `PublicSurfaceRootRegression` 이 #647 만 썼다 — #646(django-stubs 맨몸 기저) · ⓓ#650(`json.loads` 흐름)을 더해 세 규칙의 뿌리 거름을
+  하나씩 되돌리면 붉게 했다. 픽스처 `canon_json.py` docstring 을 동음 낱말 경계로 고쳐 씀. 동음 낱말 주석은 현장 식별자 대신 일반 말로 ·
+  mapping 의 출처(2026-10-03 F4-42) 적음.
+- 검증 환경: `pregate_field_report_smoke` 의 옛 판 대조(2.27.0 고정 커밋)는 Python 3.13 · 3.14 에서 옛 판 검사기 불러오기가 죽는다(2.27.3 이 고친 결함 ·
+  옛 판엔 없음). `make verify` 는 경로의 `python3`(3.15)로 돈다 — 가상환경을 경로 앞에 두고 돌리면 붉다.
 
 ## 행동 변화 · 받아들인 한계
 1. framework · broker 쪽 업무 어휘 판정에서 동음 낱말이 빠진다 — #47 · #562 줄이 사라지고 ⓓ#448 · ⓓ#425 낱말 목록이 줄거나(낱말이 동음뿐이면) 줄이 사라진다.
