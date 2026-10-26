@@ -618,7 +618,7 @@ def main(argv: list[str]) -> int:
     union = vocab.all_vocab(root)
     bc_names = vocab.bc_names(root)
     agg_camels = set()
-    for bc in vocab.bc_dirs(root):
+    for bc in vocab.server_bc_dirs(root):
         domain = bc / "domain_layer"
         if domain.is_dir():
             agg_camels |= {_camel(d.name) for d in domain.iterdir()

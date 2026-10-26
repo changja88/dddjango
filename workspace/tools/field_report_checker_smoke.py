@@ -2926,5 +2926,157 @@ class ApprovedMergeFlagRegression(unittest.TestCase):
                     self.assertNotIn("unrecognized arguments", proc.stdout + proc.stderr)
 
 
+class FrameworkServerBcNameRegression(unittest.TestCase):
+    """F4-122 — framework · `<project>/` 쪽 «어느 BC 든» 검사(BC 이름 · 업무 어휘 · 애그리거트 · ACL 상대)는 뿌리 `application/` 의 서버 BC 만 센다.
+
+    자매 플러그인(dddjango-web)의 화면 구역(`web/application/<단위>`)과 기록 사본(`.dddjango-web/**/application/<bc>`)은 서버 BC 가 아니다.
+    """
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="field-server-bc-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name) / "project"
+        self.env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+                        DJR_FINDINGS_JSON=str(Path(self.tmp.name) / "records.jsonl"),
+                        DJR_VIOLATIONS_DIR=str(Path(self.tmp.name) / "violations"))
+
+    def write(self, relative: str, text: str = "") -> None:
+        path: Path = self.root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def bc(self, container: str, name: str, aggregate: "str | None" = None, extra: str = "") -> None:
+        aggregate = aggregate or name
+        camel: str = "".join(part.title() for part in aggregate.split("_"))
+        self.write(f"{container}/{name}/__init__.py")
+        self.write(f"{container}/{name}/domain_layer/{aggregate}/{aggregate}.py", f"class {camel}:\n    pass\n" + extra)
+
+    def lines(self, script: str, rule: str) -> "list[str]":
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / script), str(self.root)],
+                                capture_output=True, text=True, env=self.env)
+        self.assertEqual(result.stderr, "")
+        return [line.strip() for line in result.stdout.splitlines() if f"#{rule}]" in line]
+
+    def retry_module(self) -> None:
+        self.write("framework/httpx/__init__.py")
+        self.write("framework/httpx/transient_retry.py", "def send(client, request):\n    return client.send(request)\n")
+
+    def render_capability(self) -> None:
+        self.write("framework/render/__init__.py")
+        self.write("framework/render/render_port.py", "class RenderPort:\n    pass\n")
+
+    def acl_to_chart(self, owner: str, body: str) -> None:
+        base: str = f"{owner}/driven_layer/adapter/anticorruption_layer/chart"
+        self.write(f"{owner}/driven_layer/__init__.py")
+        self.write(f"{owner}/driven_layer/adapter/__init__.py")
+        self.write(f"{base}/__init__.py")
+        self.write(f"{base}/chart_adapter.py", body)
+
+    def test_technology_module_ignores_web_unit_name(self) -> None:
+        self.bc("application", "order")
+        self.bc("web/application", "client")
+        self.retry_module()
+        self.assertEqual(self.lines("check-business-vocabulary.py", "416"), [])
+
+    def test_technology_module_ignores_record_copy_name(self) -> None:
+        self.bc("application", "order")
+        self.bc(".dddjango-web/run1/server-source/application", "client")
+        self.retry_module()
+        self.assertEqual(self.lines("check-business-vocabulary.py", "416"), [])
+
+    def test_technology_module_keeps_server_bc_name(self) -> None:
+        self.bc("application", "client")
+        self.bc("web/application", "chart")
+        self.retry_module()
+        self.assertEqual(self.lines("check-business-vocabulary.py", "416"), [
+            "[#416] framework/httpx/transient_retry.py: <technology> 모듈에 BC 이름 ['client'] — BC 를 다 지워도 그대로 남아야 한다",
+        ])
+
+    def test_framework_file_ignores_web_unit_name(self) -> None:
+        self.bc("application", "order")
+        self.bc("web/application", "settings")
+        self.write("framework/ninja/__init__.py")
+        self.write("framework/ninja/ninja_auth_port.py", "class NinjaAuthPort:\n    pass\n")
+        self.write("framework/ninja/auth.py", "from django.conf import settings\nKEY = settings.SECRET_KEY\n")
+        self.assertEqual(self.lines("check-business-vocabulary.py", "52"), [])
+
+    def test_framework_test_ignores_web_unit_name(self) -> None:
+        self.bc("application", "order")
+        self.bc("web/application", "preferences")
+        self.write("framework/test/__init__.py")
+        self.write("framework/test/test_cookie.py", "def test_x():\n    preferences = {}\n    assert preferences == {}\n")
+        self.assertEqual(self.lines("check-business-vocabulary.py", "426"), [])
+
+    def test_contract_vocabulary_ignores_web_unit_but_keeps_server(self) -> None:
+        self.bc("application", "order")
+        self.bc("web/application", "chart", extra="def horoscope_wheel():\n    pass\n")
+        self.render_capability()
+        self.write("framework/render/render_out.py", "class RenderOut:\n    wheel: str\n")
+        self.assertEqual(self.lines("check-business-vocabulary.py", "617"), [])
+        self.write("framework/render/render_out.py", "class RenderOut:\n    order: str\n")
+        self.assertEqual(self.lines("check-business-vocabulary.py", "617"), [
+            "[#617] framework/render/render_out.py: <data>_out.py 에 업무 어휘 ['order'] — 한 글자라도 나오면 위반이다(#628)",
+        ])
+
+    def test_data_field_ignores_web_aggregate(self) -> None:
+        self.bc("application", "order")
+        self.bc("web/application", "chart", aggregate="birth_chart")
+        self.render_capability()
+        self.write("framework/render/render_in.py", "class RenderIn:\n    x: BirthChart\n")
+        self.assertEqual(self.lines("check-business-vocabulary.py", "616"), [])
+
+    def test_pure_ignores_web_vocabulary(self) -> None:
+        self.bc("application", "order")
+        self.bc("web/application", "chart", extra="def horoscope_wheel():\n    pass\n")
+        self.write("framework/pure/__init__.py")
+        self.write("framework/pure/geometry.py", "def wheel(x):\n    return x\n")
+        self.assertEqual(self.lines("check-business-vocabulary.py", "562"), [])
+
+    def test_celery_packages_ignore_web_unit_name(self) -> None:
+        self.bc("application", "order")
+        self.bc("web/application", "client")
+        self.write("proj/celery.py", "from celery import Celery\napp = Celery('proj')\n"
+                   "app.autodiscover_tasks(lambda: ['client.tasks'], related_name=None)\n")
+        self.assertEqual(self.lines("check-broker-contract.py", "444"), [])
+
+    def test_broker_ignores_web_vocabulary(self) -> None:
+        self.bc("application", "order")
+        self.bc("web/application", "chart", extra="def horoscope_wheel():\n    pass\n")
+        self.write("framework/broker/__init__.py")
+        self.write("framework/broker/internal/internal_broker_port.py", "class InternalBrokerPort:\n    pass\n")
+        self.write("framework/broker/internal/internal_broker.py", "class InternalBroker:\n    def wheel(self):\n        pass\n")
+        self.assertEqual(self.lines("check-broker-contract.py", "518"), [])
+
+    def test_capability_name_only_in_web_vocabulary_is_asked(self) -> None:
+        self.bc("application", "order")
+        self.bc("web/application", "chart", extra="def horoscope_wheel():\n    pass\n")
+        self.write("framework/wheel/__init__.py")
+        self.assertEqual(self.lines("check-naming.py", "36"), [
+            "[ⓓ#36] framework/wheel: framework 칸 `wheel` 이 트리·기술·업무 어휘 어디에도 없다 — 물음: 이 이름에 예/아니오로 답하는 물음이 붙나",
+        ])
+
+    def test_acl_to_web_unit_is_external(self) -> None:
+        self.bc("application", "order")
+        self.bc("web/application", "chart")
+        self.acl_to_chart("application/order", "import urllib.request\nclass ChartAdapter:\n    pass\n")
+        self.assertEqual(self.lines("check-port-adapter-pairing.py", "365"), [
+            "[#365] application/order/driven_layer/adapter/anticorruption_layer/chart: acl/chart/ — 우리가 못 고치고 계약이 저장소 밖인 상대는 "
+            "external_system/ 이다(anticorruption_layer 는 «우리 다른 BC» 전용)",
+        ])
+
+    def test_acl_to_server_bc_stays_clean(self) -> None:
+        self.bc("application", "order")
+        self.bc("application", "chart")
+        self.bc("web/application", "client")
+        self.acl_to_chart("application/order", "class ChartAdapter:\n    pass\n")
+        self.assertEqual(self.lines("check-port-adapter-pairing.py", "365"), [])
+
+    def test_record_copy_acl_to_server_bc_stays_clean(self) -> None:
+        self.bc("application", "chart")
+        self.bc(".dddjango-web/run1/server-source/application", "order")
+        self.acl_to_chart(".dddjango-web/run1/server-source/application/order", "import urllib.request\nclass ChartAdapter:\n    pass\n")
+        self.assertEqual(self.lines("check-port-adapter-pairing.py", "365"), [])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

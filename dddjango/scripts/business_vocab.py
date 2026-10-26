@@ -94,16 +94,29 @@ def bc_dirs(root: Path) -> list[Path]:
     return out
 
 
+def server_bc_dirs(root: Path) -> list[Path]:
+    """뿌리 `application/` 컨테이너의 BC — «어느 BC 든» 을 묻는 framework · `<project>/` 쪽 검사의 재료.
+
+    `bc_dirs` 는 저장소 안 모든 `application/`(자매 플러그인 dddjango-web 의 `web/application/<단위>` · 기록 사본 등)을
+    고른다 — 그 이름 · 어휘를 서버 BC 로 세면 화면 구역 낱말(`client` · `admin`)이 framework 를 붉게 잡는다.
+    """
+    c: Path = root / "application"
+    if not c.is_dir() or set(c.parts) & SKIP_DIRS:
+        return []
+    return [p for p in sorted(c.iterdir()) if p.is_dir() and not p.name.startswith(".")]
+
+
 def all_vocab(root: Path) -> set[str]:
-    """전 BC 합집합 — framework·broker 쪽 검사(#47·#52·#518·#617)의 재료."""
+    """서버 BC 합집합 — framework·broker 쪽 검사(#47·#52·#518·#617)의 재료."""
     out: set[str] = set()
-    for bc in bc_dirs(root):
+    for bc in server_bc_dirs(root):
         out |= bc_vocab(bc)
     return out
 
 
 def bc_names(root: Path) -> set[str]:
-    return {bc.name for bc in bc_dirs(root)}
+    """서버 BC 이름 — framework · celery 쪽 «BC 이름 0» 검사(#52·#416·#426·#444)와 ACL 상대 «우리 BC» 판정(#365)의 재료."""
+    return {bc.name for bc in server_bc_dirs(root)}
 
 
 def container_bc_names(bc: Path) -> set[str]:
