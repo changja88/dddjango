@@ -37,8 +37,8 @@
 - 사소: AsyncGenerator 면제 뺌(규범 글은 send 만 · 현장 근거 0) · enum 답 · 맨 대입 단일 이름 · 제네릭 별칭은 유지 꼴 · #160 메시지 무변.
 
 ## 시험
-- `field_report_checker_smoke.GeneratorWindowReplyRegression` 3건 — 고친 꼴 14(정확히 0 줄) · 유지 꼴 9(줄 목록 정확 일치) · #157 메시지 글자.
-  2.27.4 검사기로 돌리면 고친 꼴 14 · 메시지 1 이 붉다(유지 꼴 가운데 답의 일부만 자격인 섞인 꼴 5 는 자격 있는 쪽 줄만 빠진다).
+- `field_report_checker_smoke.GeneratorWindowReplyRegression` 3건 — 고친 꼴 17(정확히 0 줄) · 유지 꼴 13(줄 목록 정확 일치) · #157 메시지 글자.
+  2.27.4 검사기로 돌리면 고친 꼴 17 · 메시지 1 이 붉다(유지 꼴 가운데 답의 일부만 자격인 섞인 꼴은 자격 있는 쪽 줄만 빠진다).
 - 골든: findings_count_matrix context-isolation 행 stdout 해시 · construct_drift_report context-isolation 해시(#157 줄 글자 — 계수 · 서명 무변).
 - 현장 사본: 그 16 줄만 빠지고 다른 줄 무변.
 
@@ -48,3 +48,14 @@
 - 감수자는 §13.5 · SKILL 핵심 원칙의 예외 문구로 대화 사슬의 send 를 받아들인다. 사슬 밖 send · throw 금지는 감수 몫 그대로(검사기 없음).
 - 맨 대입 단일 이름(`Reply = Continue`) · 제네릭 별칭(`type Dialog[T] = …`) · `AsyncGenerator` 는 면제 밖.
 - 현장 소비 쪽 답이 도메인 값 객체를 포트가 import 하는 것은 #227 · #228 의 기존 사정 — 이 예외는 send 꼴만 덮고 자리는 덮지 않는다.
+- 이름으로 고르는 면제라 다음은 면제가 넓게 선다(받아들임 · 현장 근거 0 · 감수 몫):
+  답 자리 `Annotated[…]` 의 메타데이터 이름 · `Literal["…"]` 안 글자가 같은 파일 클래스 이름과 같을 때 ·
+  다른 모듈의 같은 이름 클래스를 답으로 쓸 때 요청 파일의 같은 이름 클래스 · `async def … -> Generator[…]`(실행 불가 꼴).
+
+## 구현 검토 반영(독립 검토 · 차단 0)
+- 중요: 파일트리 문서 생성기(`docs/mkrev2.py`)의 계약 파일 행 규칙 · 설명 글에 대화 창구 send 답 타입을 더함(문서 두 줄만 · 생성기의 무관한 표류는 들이지 않음).
+- 중요: 살아남은 변이(연산 범위 · 요청 쪽 별칭 고정점)를 잡는 시험 꼴 추가 —
+  고친 꼴 `request-two-level-alias` · `entry-two-level-alias` · `command-window`,
+  유지 꼴 `same-name-other-operation` · `cyclic-alias` · `private-function` · `unparsable-string`.
+- 사소: 문자열 답 타입 풀기가 아주 긴 · 깊은 글자에서 `MemoryError` · `RecursionError` 로 죽지 않게 받음(`unparsable-string`).
+- 사소(이름 기반 넓은 면제): 위 «받아들인 한계» 에 적음.

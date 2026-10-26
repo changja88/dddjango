@@ -350,7 +350,7 @@ ROWS = [
  row("fixed", ["v","v","sp","t"], "&lt;service&gt;_service.py", "DDD", "공개 함수 — <code>api/</code>의 controller 자리 · <b>함수 이름은 <code>_command</code>/<code>_query</code> 로 끝난다</b> — 상태를 바꾸면 커맨드, 안 바꾸면 질의 <em>AST 한 줄 — 「의도를 안 밝힌 함수」가 걸린다</em> · <b>남이 내 자료로 «정렬·페이지네이션» 해야 하면 «내가» 해서 준다</b> <em>목록을 통째로 넘기면 부르는 쪽이 전부 가져와야 한다 — 이 창구가 잘라서 «식별자»만 돌려준다</em> · <b>«대사»는 다른 이야기다</b> <em>하루치를 맞춰 보려는 조회는 화면용 목록이 아니라 <b>기간이 곧 조건</b>이라, 식별자만이 아니라 대조에 필요한 값까지 실어 준다 — 자르는 크기는 여기가 정한다<span class='dim'> 08-10 · C4</span></em> · <b>도메인 예외는 «타입»으로만 쓴다</b> — <code>except … as e</code> 로 묶은 이름을 이 파일 안에서 참조하면 위반 <em>컨트롤러와 같은 규칙</em>", "확정", "fix", pin(9)+pin(11)+pin(39)),
  row("fixed", ["v","v","sp","l"], "contract/", "DDD", "<b>계약은 «표준 라이브러리»와 «같은 BC 의 다른 계약» 말고는 import 하지 않는다</b> <em>AST 한 줄</em>", "확정", "fix", pin(35)+pin(9)+pin(10)),
  row("fixed", ["v","v","sp","sp","t"], "request/", "DDD", "", "개명", "fix", pin(9)),
- row("fixed", ["v","v","sp","sp","v","l"], "&lt;request&gt;_request.py", "DDD", '<b>주 request 계약 하나 = 파일 하나</b>. 주 계약의 필드 어노테이션이 직접·간접 참조하는 구성용 공개 <code>dataclass</code> 는 같은 파일에 함께 둘 수 있다. 별개 연산의 Request·Response·Result 를 보조 타입으로 위장하지 않는다(#156·#157·#484).', "개명", "fix", pin(10)+pin(39)+pin(41)),
+ row("fixed", ["v","v","sp","sp","v","l"], "&lt;request&gt;_request.py", "DDD", '<b>주 request 계약 하나 = 파일 하나</b>. 주 계약의 필드 어노테이션이 직접·간접 참조하는 구성용 공개 <code>dataclass</code> 는 같은 파일에 함께 둘 수 있다. 대화 창구(공개 함수가 <code>Generator[&lt;Op&gt;Response, &lt;답&gt;]</code> 을 돌려줌)의 send 답 타입과 그 구성 <code>dataclass</code> 도 이 파일에 둔다<span class="dim"> 10-26 · F4-123</span>. 별개 연산의 Request·Response·Result 를 보조 타입으로 위장하지 않는다(#156·#157·#484).', "개명", "fix", pin(10)+pin(39)+pin(41)),
  row("fixed", ["v","v","sp","sp","t"], "response/", "DDD", "<b>«성공의 모양»이 아니라 «이 창구가 낼 수 있는 답 전부»다 — 거절도 답이다</b>", "개명", "fix", pin(36)+pin(9)),
  row("fixed", ["v","v","sp","sp","v","l"], "&lt;response&gt;_response.py", "DDD", '<b>주 response 계약 하나 = 파일 하나</b>. 주 계약의 필드 어노테이션이 직접·간접 참조하는 구성용 공개 <code>dataclass</code> 만 동거를 허용한다. 업무 실패를 예외로 공개할 때는 <code>contract/exception/</code> 의 published exception 으로 번역한다.', "개명", "fix", pin(36)+pin(10)+pin(39)+pin(41)),
  row("fixed", ["v","v","sp","sp","l"], "exception/", "DDD", "판정: <b>이 창구가 «혼자서 답을 만들 수 있나»</b> — 만들 수 있으면 <code>response/</code>, <b>못 만들면 여기</b> <em>부르는 쪽 사정은 묻지 않는다</em>", "개명", "fix", pin(36)+pin(27)+pin(9)),
@@ -977,7 +977,7 @@ HTTP 면 <code>api/</code>, 같은 프로세스 함수 호출이면 <code>open_h
 <code>schema_in.py</code> 와 같은 논리인데 여기만 파일이 아니라 폴더인 이유는 <b>연산 하나마다 계약이 따로</b>이기 때문이다.
 """,
 
-28: '<p>연산 하나가 받는 주 request 계약이다. 표준 라이브러리와 같은 BC 의 다른 계약만 import 한다. 주 계약을 구성하는 보조 공개 dataclass 는 필드 어노테이션으로 연결된 경우에만 함께 둔다.</p><p>두 연산이 같은 보조 타입을 쓰면 정의는 한 계약 파일에 두고 다른 계약에서 import 한다. 같은 자료를 파일마다 재정의하지 않는다. 계약 안의 런타임 검증으로 개발자 실수를 막지 않는다 — 타입 체커·테스트가 그 역할을 진다.</p>',
+28: '<p>연산 하나가 받는 주 request 계약이다. 표준 라이브러리와 같은 BC 의 다른 계약만 import 한다. 주 계약을 구성하는 보조 공개 dataclass 는 필드 어노테이션으로 연결된 경우에만 함께 둔다. 대화 창구(공개 함수가 <code>Generator[&lt;Op&gt;Response, &lt;답&gt;]</code> 을 돌려주고 부르는 쪽이 <code>send(&lt;답&gt;)</code> 으로 답을 넣음)의 답 타입과 그 구성 dataclass 도 이 연산이 받는 타입이라 여기 둔다(10-26).</p><p>두 연산이 같은 보조 타입을 쓰면 정의는 한 계약 파일에 두고 다른 계약에서 import 한다. 같은 자료를 파일마다 재정의하지 않는다. 계약 안의 런타임 검증으로 개발자 실수를 막지 않는다 — 타입 체커·테스트가 그 역할을 진다.</p>',
 
 29: '<p>창구가 돌려주는 주 response 와 그 구성 자료가 온다. 상대 BC 에 필요한 공개 값만 담고 우리 내부 객체를 노출하지 않는다.</p><p>빈 조회 결과처럼 정상적으로 답할 수 있는 결과와 published exception 으로 선언한 실패를 구분한다. 어느 경우를 어느 경로로 표현할지는 해당 창구의 승인된 계약을 따른다.</p>',
 

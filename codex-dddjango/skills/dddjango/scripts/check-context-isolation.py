@@ -441,11 +441,11 @@ def _module_type_aliases(mod: ast.Module) -> "dict[str, ast.expr]":
 
 
 def _unquote(e: "ast.expr | None") -> "ast.expr | None":
-    """문자열 어노테이션은 식으로 파싱한다(못 읽으면 None)."""
+    """문자열 어노테이션은 식으로 파싱한다(못 읽으면 None — 파서 깊이 넘침 포함)."""
     if isinstance(e, ast.Constant) and isinstance(e.value, str):
         try:
             return ast.parse(e.value, mode="eval").body
-        except SyntaxError:
+        except (SyntaxError, ValueError, MemoryError, RecursionError):
             return None
     return e
 

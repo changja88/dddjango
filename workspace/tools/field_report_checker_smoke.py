@@ -3932,6 +3932,12 @@ class GeneratorWindowReplyRegression(unittest.TestCase):
                                     "Reply = Continue | Clock\n"),
             "service-private-alias": (h + req_import + "Clock, Continue, TalkRequest\n\ntype _Reply = Continue | Clock\n\n\n"
                                       "def talk_query(request: TalkRequest) -> Generator[TalkResponse, _Reply]:\n" + b, ""),
+            "request-two-level-alias": (h + i + "\n\ndef talk_query(request: TalkRequest) -> Generator[TalkResponse, Reply]:\n" + b,
+                                        "Inner: TypeAlias = Clock\nReply: TypeAlias = Continue | Inner\n"),
+            "entry-two-level-alias": (h + req_import + "Clock, Continue, TalkRequest\n\ntype _A = Continue | _B\ntype _B = Clock\n\n\n"
+                                      "def talk_query(request: TalkRequest) -> Generator[TalkResponse, _A]:\n" + b, ""),
+            "command-window": (h + i + "\n\ndef talk_command(request: TalkRequest) -> Generator[TalkResponse, Reply]:\n" + b,
+                               "type Reply = Continue | Clock\n"),
         }
         for name, (service, tail) in forms.items():
             with self.subTest(form=name):
@@ -3939,6 +3945,7 @@ class GeneratorWindowReplyRegression(unittest.TestCase):
 
     def test_forms_outside_the_window_reply_keep_their_lines(self) -> None:
         h, i, b = self.HEAD, self.IMPORT, self.BODY
+        req_import: str = "from application.shop.driving_layer.open_host_service.chat.contract.request.talk_request import "
         three: "list[str]" = ["[#484] talk_request.py `Continue`", "[#484] talk_request.py `Clock`", "[#484] talk_request.py `Detail`"]
         forms: "dict[str, tuple[str, str, dict[str, str] | None, list[str]]]" = {
             "iterator": (h + i + "\n\ndef talk_query(request: TalkRequest) -> Iterator[TalkResponse]:\n" + b,
@@ -3974,6 +3981,25 @@ class GeneratorWindowReplyRegression(unittest.TestCase):
                                        "from __future__ import annotations\nfrom dataclasses import dataclass\n\n\n"
                                        "@dataclass(frozen=True)\nclass ListenResponse:\n    text: str\n"},
                                       ["[#157] listen_request.py", "[#484] listen_request.py `Pause`"]),
+            "same-name-other-operation": (h + "from application.shop.driving_layer.open_host_service.chat.contract.request.listen_request import "
+                                          "ListenRequest\nfrom application.shop.driving_layer.open_host_service.chat.contract.response.listen_response "
+                                          "import ListenResponse\n" + req_import + "Clock, Continue, TalkRequest\n\n\n"
+                                          "def listen_query(request: ListenRequest) -> ListenResponse:\n    return ListenResponse(text='')\n\n\n"
+                                          "def talk_query(request: TalkRequest) -> Generator[TalkResponse, Continue | Clock]:\n" + b, "",
+                                          {"application/shop/driving_layer/open_host_service/chat/contract/request/listen_request.py":
+                                           "from __future__ import annotations\nfrom dataclasses import dataclass\n\n\n"
+                                           "@dataclass(frozen=True)\nclass ListenRequest:\n    text: str\n\n\n"
+                                           "@dataclass(frozen=True)\nclass Continue:\n    pass\n",
+                                           "application/shop/driving_layer/open_host_service/chat/contract/response/listen_response.py":
+                                           "from __future__ import annotations\nfrom dataclasses import dataclass\n\n\n"
+                                           "@dataclass(frozen=True)\nclass ListenResponse:\n    text: str\n"},
+                                          ["[#157] listen_request.py", "[#484] listen_request.py `Continue`"]),
+            "cyclic-alias": (h + i + "\n\ndef talk_query(request: TalkRequest) -> Generator[TalkResponse, Reply]:\n" + b,
+                             "Loop: TypeAlias = Reply | Loop\nReply: TypeAlias = Loop\n", None, ["[#157] talk_request.py", *three]),
+            "private-function": (h + i + "\n\ndef _talk_query(request: TalkRequest) -> Generator[TalkResponse, Reply]:\n" + b,
+                                 "type Reply = Continue | Clock\n", None, ["[#157] talk_request.py", *three]),
+            "unparsable-string": (h + i + "\n\ndef talk_query(request: TalkRequest) -> Generator[TalkResponse, '" + "-" * 10000 + "1']:\n" + b,
+                                  "type Reply = Continue | Clock\n", None, ["[#157] talk_request.py", *three]),
             "response-typealias": (h + i + "\n\ndef talk_query(request: TalkRequest) -> Generator[TalkResponse, Reply]:\n" + b,
                                    "type Reply = Continue | Clock\n",
                                    {"application/shop/driving_layer/open_host_service/chat/contract/response/talk_response.py":
