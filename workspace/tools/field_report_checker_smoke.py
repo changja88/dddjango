@@ -3092,6 +3092,12 @@ class RootBcSelectionRegression(unittest.TestCase):
         "check-db-table.py", "check-usecase-dto-placement.py", "check-transaction-boundary.py", "check-domain-model.py",
         "check-port-adapter-pairing.py", "check-event-publish.py", "check-missable-entrance.py", "check-naming.py",
         "check-business-vocabulary.py")
+    ERROR_CHECKERS: "tuple[str, ...]" = (
+        "check-api-error-controller-contract.py", "check-error-centralization.py", "check-openapi-error-declaration.py")
+    CHECKER_ARGS: "dict[str, tuple[str, ...]]" = {"check-api-error-controller-contract.py": ("--error-profile", "auto")}
+    NESTED_BAD_RULES: "tuple[str, ...]" = (
+        "composition_root", "api_error_controller", "error_centralization", "openapi_error_declaration",
+        "business_vocabulary", "naming", "missable_entrance")
 
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory(prefix="field-root-bc-")
@@ -3110,7 +3116,7 @@ class RootBcSelectionRegression(unittest.TestCase):
         path.write_text(text, encoding="utf-8")
 
     def run_checker(self, script: str) -> "tuple[int, list[str]]":
-        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / script), str(self.root)],
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / script), str(self.root), *self.CHECKER_ARGS.get(script, ())],
                                 capture_output=True, text=True, env=self.env)
         self.assertEqual(result.stderr, "", script)
         return result.returncode, [line.strip() for line in result.stdout.splitlines() if line.strip()]
@@ -3190,6 +3196,68 @@ class RootBcSelectionRegression(unittest.TestCase):
             "[#12] application/orders/driving_layer/api/order/schema/web_peek.py: 타 BC 에서 부를 수 있는 것은 OHS·published_event 둘이다"
             "(#83 — 이 import 는 BC 삭제 내성을 깬다) — `web.application.shop.domain_layer.shop.shop`",
         ])
+
+    def test_import_of_a_name_found_only_in_a_record_copy_is_not_an_other_bc_import(self) -> None:
+        # 점 폴더(기록 사본)는 G2 · pre-gate 사본에 없다 — 그 안에만 있는 이름은 BC 이름이 아니므로 직접 실행도 #12 를 내지 않는다.
+        self.lane("skeleton/good_bc")
+        self.write(".dddjango-web/run1/captures/baseline/application/billing/domain_layer/billing/billing.py",
+                   "class Unit:\n    pass\n")
+        self.write("application/orders/driving_layer/api/order/schema/billing_peek.py",
+                   "from application.billing.domain_layer.billing.billing import Unit\n\n_N: str = Unit.__name__\n")
+        _code, lines = self.run_checker("check-context-isolation.py")
+        self.assertEqual([line for line in lines if "[#12]" in line], [])
+
+    def test_bad_bcs_in_a_nested_container_are_measured_only_by_whole_repo_scans(self) -> None:
+        # 뿌리 밖 `src/application/<bc>` 의 위반 BC 는 BC 마다 도는 검사의 대상이 아니다. 다만 저장소 전체 코드를 훑는
+        # composition-root #653 · openapi-error-declaration #63 은 그 코드 줄을 그대로 잰다.
+        self.lane("skeleton/good_bc")
+        for fixture in self.NESTED_BAD_RULES:
+            for bc in sorted((FIXTURES / fixture / "bad_rules/application").iterdir()):
+                if bc.is_dir():
+                    shutil.copytree(bc, self.root / "src/application" / f"{fixture}_{bc.name}")
+        wiring: str = ("`wiring_material` 낱말은 그 파일 자신과 같은 BC dependency_wiring.py 의 모듈째 import 한 줄 · "
+                       "`wiring_material.<재료>()` 호출에만 나온다")
+        extra: str = ("`openapi_extra` 의 responses 보충 — 오류 응답은 `response=` 에 그 status 의 실제 오류 타입 그대로 직접 선언한다"
+                      "(허용은 `response=` 에 선언된 성공 status 의 리터럴 메타데이터 보충뿐)")
+        order: str = "src/application/openapi_error_declaration_orders/driving_layer/api/order/order_controller.py"
+        promo: str = "src/application/openapi_error_declaration_orders/driving_layer/api/promo/promo_controller.py"
+        expected: "dict[str, tuple[int, list[str]]]" = {
+            "check-composition-root.py": (2, [
+                "[check-composition-root] BLOCKER — 표준 트리 결선·등록 규율 위반 (트리 2~4·9·10·137·138행):",
+                f"[#653] src/application/composition_root_orders/driving_layer/api/order/order_controller.py:6: {wiring}",
+                f"[#653] src/application/composition_root_orders/test/unit/test_place_order_material.py:5: {wiring}",
+                f"[#653] src/application/composition_root_shipping/composition_root/dependency_wiring.py:1: {wiring}",
+            ]),
+            "check-api-error-controller-contract.py": (0, []),
+            "check-error-centralization.py": (0, []),
+            "check-openapi-error-declaration.py": (2, [
+                "[check-openapi-error-declaration] BLOCKER — OpenAPI 오류 선언 규율 위반 (#63 · D27):",
+                f"[#63] {order}:15: {extra}",
+                f"[#63] {order}:19: `get_openapi_schema` override — 오류 응답은 operation 의 `response=` 직접 선언으로만 문서화한다",
+                f"[#63] {order}:23: `openapi_schema` monkeypatch — OpenAPI 를 사후 변형하지 않는다",
+                f"[#63] {promo}:18: {extra}",
+                f"[#63] {promo}:27: {extra}",
+                f"[#63] {promo}:36: {extra}",
+            ]),
+            "check-business-vocabulary.py": (0, []),
+            "check-naming.py": (0, []),
+            "check-missable-entrance.py": (0, []),
+        }
+        for script, want in expected.items():
+            with self.subTest(script=script):
+                self.assertEqual(self.run_checker(script), want)
+
+    def test_web_only_repo_has_no_server_bc_for_any_bc_checker(self) -> None:
+        # web 구역만 있는 저장소 — 서버 BC 가 없으니 검사기마다 미채택이거나 빈 출력이다(층 0건 가드 #74 도 서지 않는다).
+        self.web_unit("web/application", "shop")
+        not_adopted: "tuple[int, list[str]]" = (0, ["표준 레이아웃 미채택 — 검사 대상 없음 (clean)"])
+        expected: "dict[str, tuple[int, list[str]]]" = {script: (0, []) for script in self.BC_CHECKERS + self.ERROR_CHECKERS}
+        for script in ("check-layer-skeleton.py", "check-context-isolation.py", "check-test-config.py", "check-db-table.py",
+                       "check-usecase-dto-placement.py"):
+            expected[script] = not_adopted
+        for script, want in expected.items():
+            with self.subTest(script=script):
+                self.assertEqual(self.run_checker(script), want)
 
 
 if __name__ == "__main__":
