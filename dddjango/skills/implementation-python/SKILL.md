@@ -25,7 +25,7 @@ Python 언어 관용구·타입 시스템·Protocol/ABC·dataclass·제너레이
 - Protocol로 구조적 서브타이핑, ABC는 런타임 등록이 필요할 때만 (§9)
 - dataclass(slots, frozen, kw_only)로 불변 값 객체를 표현, NamedTuple은 불변 레코드에 (§10)
 - 디스크립터·@property는 검증과 지연 계산에만; 단순 필드는 평범한 애트리뷰트로 (§6–§7)
-- 제너레이터로 지연 평가, send/throw 금지 (§13.2, §13.5)
+- 제너레이터로 지연 평가, send/throw 금지 — OHS 대화 사슬의 send 만 예외 (§13.2, §13.5)
 - 커스텀 컨텍스트 매니저로 리소스 해제를 with문으로 명확히 (§14)
 - 예외는 도메인 최상위 클래스 정의 후 계층화; None 반환 대신 예외 발생 (§15)
 - I/O 병목엔 asyncio.TaskGroup(3.11+), CPU 병목엔 멀티프로세싱 (§16)

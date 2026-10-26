@@ -477,8 +477,8 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 153 | `<service>_service.py` 는 계약 타입을 응용 DTO 로 바꾸고, 유스케이스를 부르고, 결과를 계약 타입으로 되돌리는 일만 한다 — **#164 가 요구하는 «도메인 예외 → `contract/exception/` 번역»은 그 「되돌리는 일」에 들어간다**(거절도 답이다). 도메인 예외는 «타입»으로만 쓰고 속성을 읽지 않는다. | 트리 25행+D9 | `ast+` | principle |  | **blocker** |
 | 154 | `<service>/` 안은 `<service>_service.py` 와 `contract/` 둘로 구성한다. | 트리 26행+D9 | `path` | both | `measured_ok` | **blocker** |
 | 155 | `contract/` 는 `request/` · `response/` · `exception/` 셋으로 갈리고 잎까지 규정한다. | 트리 26행+D9+D10 | `path` | principle |  | **blocker** |
-| 156 | `contract/request/` 에는 이 창구가 받는 타입만 둔다. | 트리 27행 | `ast` | principle |  | **blocker** |
-| 157 | 요청 계약 타입 하나 = 파일 하나다. | 트리 28행+D10 | `ast` | both | `measured_ok` | **blocker** |
+| 156 | `contract/request/` 에는 이 창구가 받는 타입만 둔다. <span>10-26 · F4-123 부칙 — OHS 대화 창구의 send 답 타입(창구 반환 `Generator[Y, S, …]` 의 S)과 그 구성 dataclass 는 «이 창구가 받는 타입» 이다 · send 답은 #633 의 인자가 아니다.</span> | 트리 27행 | `ast` | principle |  | **blocker** |
+| 157 | 요청 계약 타입 하나 = 파일 하나다. <span>10-26 · 주 계약이 참조하는 보조 dataclass(08-24) · 대화 창구의 send 답 타입과 그 구성 dataclass(#156 부칙)는 이 행 밖.</span> | 트리 28행+D10 | `ast` | both | `measured_ok` | **blocker** |
 | 159 | `contract/response/` 에는 이 창구가 돌려주는 타입만 둔다. | 트리 29행 | `ast` | principle |  | **blocker** |
 | 160 | 응답 계약 타입 하나 = 파일 하나다. | 트리 30행+D10 | `ast` | both | `measured_ok` | **blocker** |
 | 162 | 응답 계약에 도메인 객체를 그대로 담지 않는다. | 트리 30행 | `ast` | principle |  | **blocker** |
@@ -785,7 +785,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 |---|---|---|---|---|---|---|
 | 482 | `open_host_service/<service>/<service>_service.py` 의 공개 함수 이름은 `_command` 또는 `_query` 로 끝난다 — 상태를 바꾸면 커맨드, 안 바꾸면 질의다. 둘 중 무엇이냐는 사람 판정이지만 «접미사가 없다»는 위반이다. | 트리 25행+D39 결정① | `ast` | principle |  | **blocker** |
 | 483 | 계약 파일 이름은 그 창구 함수 이름에서 접미사를 떼고 **종류 접미사를 단 것**이다 — `evict_child_command()` ↔ `contract/request/evict_child_request.py` · `list_children_query()` ↔ `contract/response/list_children_response.py`. | 트리 25·28·30행+D39+D41 | `path` | principle |  | **blocker** |
-| 484 | 계약 클래스는 `<Operation>Request` / `<Operation>Response` 다 — `<Operation>Result` 로 짓지 않는다(`request` 의 짝은 `response` 이고 `result` 는 짝이 없는 «인과» 어휘라 방향 축이 깨진다 · 이 폴더는 「낼 수 있는 답 전부 — 거절도 답」이라 `Result` 는 정의를 좁힌다). | 트리 28·30행+D39+D41 | `ast` | principle |  | **blocker** |
+| 484 | 계약 클래스는 `<Operation>Request` / `<Operation>Response` 다 — `<Operation>Result` 로 짓지 않는다(`request` 의 짝은 `response` 이고 `result` 는 짝이 없는 «인과» 어휘라 방향 축이 깨진다 · 이 폴더는 「낼 수 있는 답 전부 — 거절도 답」이라 `Result` 는 정의를 좁힌다). <span>10-26 · 주 계약이 참조하는 보조 dataclass(08-24) · 대화 창구의 send 답 타입과 그 구성 dataclass(#156 부칙)는 이 행 밖.</span> | 트리 28·30행+D39+D41 | `ast` | principle |  | **blocker** |
 | 485 | `port/<capability>/<capability>_port.py` 의 메서드 이름은 «의도»를 진다 — 시키면 명령형 동사구(`revoke_for_child()`), 물으면 묻는 꼴(`current_status()`·`has_shipped()`). `notify()`·`handle()`·`execute()` 처럼 무엇을 시키는지 안 말하는 이름은 위반이다. 창구와 달리 접미사는 붙이지 않는다(클래스가 이미 `<Capability>Port` 다). | 트리 48행+D39 결정③ | `ast+` | principle |  | **blocker** |
 
 **«어겼을 때» 매트릭스 갱신** — 485 기준.
@@ -1162,7 +1162,7 @@ Phase 1 산출물 리뷰(렌즈③ «잃은 값»)의 회수다. **유실 확정
 | 632 | ORM 모델 클래스 이름은 «상시» `<Name>Model` 이다 — 도메인 쪽이 bare(`Order`), ORM 쪽이 `OrderModel` 로 늘 갈린다. «이름이 충돌할 때만»이 아니다 — alias import 로 충돌을 피해도 규칙은 남는다(파일 축은 #335 가 진다). <span>08-11 · T60-1 복원(사용자 승인).</span> | 트리 80행 | `ast` | principle |  | **blocker** |
 | 633 | `<service>_service.py` 의 공개 함수는 인자로 그 연산의 request 계약 **하나**만 받는다 — 맨 스칼라·다중 인자는 위반이고, 인자 0개는 입력 없는 `_query` 만 허용한다. <span>08-11 · T60-2 복원(사용자 승인).</span> | 트리 25행 | `ast` | principle |  | **blocker** |
 | 634 | `<service>_service.py` 의 공개 표면은 모듈 수준 «함수»뿐이다 — 공개 클래스를 두지 않는다(계약 클래스는 `contract/` 에 산다 · `_` 사설은 자유). <span>08-11 · T60-3 복원(사용자 승인).</span> | 트리 25행 | `ast` | principle |  | **blocker** |
-| 635 | `<use_case>_use_case.py` 의 진입점은 클래스 하나이고 실행 메서드는 `execute` 하나다 — 자기 `<use_case>_command.py`/`_query.py` 의 계약 객체 하나를 받아 `<use_case>_result.py` 의 result(스트림이면 `Iterator[<UseCase>Result]` — D40)를 돌려준다. <span>08-11 · T60-4 복원(사용자 승인).</span> | 트리 42행 | `ast` | principle |  | **blocker** |
+| 635 | `<use_case>_use_case.py` 의 진입점은 클래스 하나이고 실행 메서드는 `execute` 하나다 — 자기 `<use_case>_command.py`/`_query.py` 의 계약 객체 하나를 받아 `<use_case>_result.py` 의 result(스트림이면 `Iterator[<UseCase>Result]` — D40)를 돌려준다. <span>08-11 · T60-4 복원(사용자 승인).</span> <span>10-26 · OHS 대화 사슬의 유스케이스는 `execute -> Generator[<UseCase>Result, <답>]` — implementation-python §13.5 예외.</span> | 트리 42행 | `ast` | principle |  | **blocker** |
 | 636 | `bc_error_schema.py` 의 `<Bc>ErrorCode` 는 `StrEnum` 이다 — `Literal`·맨 문자열 상수 모음으로 대신하지 않는다(#572 가 정한 동거의 «타입» 축). <span>08-11 · T60-5 복원(사용자 승인).</span> | 트리 11행 | `ast` | principle |  | **blocker** |
 | 637 | `test/` 아래 어디에도 migration 산출물(파일·operation·적용 순서·과거 state·DDL)을 오라클로 삼는 테스트를 두지 않는다 — `migrations/` 는 `makemigrations` 가 생성한 것이라 테스트 대상이 아니며 기존 것도 삭제한다(신호: `django.db.migrations`·`MigrationExecutor`/`MigrationLoader`/`ProjectState`/`MigrationRecorder`·migration 모듈 import). <span>08-25 · tarot 잔존 판정 5(사용자 «절대 규칙» 확정) — `check-test-config`.</span> | 트리 161~165행 | `ast` | principle |  | **blocker** |
 | 638 | 동명 폴더 승격(#490 교체형)의 승격 폴더는 안에 본체 `<이름>.py` 를 반드시 가진다 — 본체 없는 폴더는 위장이라 위반이다(`__init__.py` 도 함께 있어야 한다). <span>09-01 · 동명 폴더 승격 규범화 — `check-layer-skeleton`.</span> | 승격 허용 13행(§0 교체형) | `path` | principle |  | **blocker** |

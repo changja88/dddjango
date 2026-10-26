@@ -15,7 +15,9 @@ Kernel 없음)·#83(BC 삭제 내성)은 아래 각론 진단이 집행한다.
          #98 타 BC composition_root 금지 · #102 driving 중 OHS 만 · #51 test→타 BC test 금지
   OHS    #146 published_service 금지 · #149/#113 라우팅·등록 함수 금지 · #150 평면 .py 금지
          #152/#154/#155 service·contract 구조 · #156/#157/#159/#160 계약 1타입=1파일
-         (주 계약이 어노테이션으로 참조하는 보조 공개 dataclass 는 면제 — 2026-08-24 좁은 정합화)
+         (주 계약이 어노테이션으로 참조하는 보조 공개 dataclass 는 면제 — 2026-08-24 좁은 정합화 ·
+         대화 창구(공개 함수가 `Generator[<Op>Response, <답>]`)의 send 답 타입과 그 구성 dataclass 도
+         요청 파일에서 면제 — 2026-10-26 · implementation-python §13.5 예외)
          #162 응답에 도메인 금지 · #163 exception 은 서비스 스코프 · #164 도메인 예외 번역
          #166/#167/#168/#170 기저 예외·상속·1클래스=1모듈·_v1 금지 · #453/#454 «없다»는 답
          #455 사유는 코드로 · #472 contract 는 stdlib·같은 BC 계약만 · #482/#483/#484 명명
@@ -400,8 +402,10 @@ def _check_ohs(ohs: Path, bc: Path, bc_rel: Path, agg_names: set[str], container
                 out.add("#154", srel / p.name, "`<service>/` 안은 `<service>_service.py` 와 `contract/` 둘로 구성한다")
 
         ops: set[str] = set()
+        sends: "dict[str, set[str]]" = {}
         if entry is not None:
             ops = _check_ohs_service(entry, srel / entry.relative_to(svc), out, cand)
+            sends = _window_send_types(entry)
 
         contract = svc / "contract"
         if contract.is_dir():
@@ -412,9 +416,97 @@ def _check_ohs(ohs: Path, bc: Path, bc_rel: Path, agg_names: set[str], container
             for p in cfiles:
                 if p.name != "__init__.py":
                     out.add("#155", srel / "contract" / p.name, "`contract/` 직계에 평면 파일을 두지 않는다")
-            _check_contract_kind(contract / "request", "Request", "#157", "#156", ops, srel, out)
+            _check_contract_kind(contract / "request", "Request", "#157", "#156", ops, srel, out, sends)
             _check_contract_kind(contract / "response", "Response", "#160", "#159", ops, srel, out)
             _check_published_exceptions(contract / "exception", svc.name, srel, out, cand)
+
+
+_ALIAS_DEPTH = 8
+
+
+def _module_type_aliases(mod: ast.Module) -> "dict[str, ast.expr]":
+    """모듈 수준 별칭 세 꼴 — PEP 695 `type X = …` · `X: TypeAlias = …` · 맨 대입 `X = A | B` / `X = G[…]`.
+    대화 창구 send 답 해소 전용이다(맨 대입 단일 이름 `X = Y` 는 상수와 갈리지 않아 풀지 않는다 · 제네릭 별칭은 대상 밖)."""
+    out: "dict[str, ast.expr]" = {}
+    for n in mod.body:
+        if isinstance(n, ast.TypeAlias) and isinstance(n.name, ast.Name) and not n.type_params:
+            out[n.name.id] = n.value
+        elif (isinstance(n, ast.AnnAssign) and isinstance(n.target, ast.Name) and n.value is not None
+              and "TypeAlias" in _ann_idents(n.annotation)):
+            out[n.target.id] = n.value
+        elif (isinstance(n, ast.Assign) and len(n.targets) == 1 and isinstance(n.targets[0], ast.Name)
+              and isinstance(n.value, (ast.BinOp, ast.Subscript))):
+            out[n.targets[0].id] = n.value
+    return out
+
+
+def _unquote(e: "ast.expr | None") -> "ast.expr | None":
+    """문자열 어노테이션은 식으로 파싱한다(못 읽으면 None)."""
+    if isinstance(e, ast.Constant) and isinstance(e.value, str):
+        try:
+            return ast.parse(e.value, mode="eval").body
+        except SyntaxError:
+            return None
+    return e
+
+
+def _alias_names(names: "set[str]", aliases: "dict[str, ast.expr]", renamed: "dict[str, str]") -> set[str]:
+    """이름들을 별칭 고정점까지 풀어 구성 이름으로 — `import … as` 별명은 원래 이름으로 되돌린다(순환은 seen 이 멈춘다)."""
+    out: set[str] = set()
+    seen: set[str] = set()
+    queue: "list[str]" = sorted(names)
+    while queue:
+        raw: str = queue.pop()
+        name: str = renamed.get(raw, raw)
+        if name in seen:
+            continue
+        seen.add(name)
+        if name in aliases:
+            queue.extend(_ann_idents(_unquote(aliases[name])))
+        else:
+            out.add(name)
+    return out
+
+
+def _window_send_types(entry: Path) -> "dict[str, set[str]]":
+    """대화 창구의 연산별 send 답 이름 — 공개 함수가 `Generator[<Op>Response, <답>, …]` 을 돌려주면 둘째 인자 <답> 의 이름
+    (F4-123 · 2026-10-26 · implementation-python §13.5 예외). 진입 파일 별칭은 반환 머리와 답 둘 다 고정점까지 풀고 `import … as`
+    별명은 원래 이름으로 되돌린다. `AsyncGenerator` · `Iterator` 는 대상 밖. 연산 이름은 `_check_ohs_service` 의 ops 와 같은 규칙."""
+    mod = _parse(entry)
+    out: "dict[str, set[str]]" = {}
+    if mod is None:
+        return out
+    aliases = _module_type_aliases(mod)
+    renamed: "dict[str, str]" = {}
+    for n in mod.body:
+        if isinstance(n, ast.ImportFrom):
+            for a in n.names:
+                if a.asname:
+                    renamed[a.asname] = a.name
+
+    def original(name: str) -> str:
+        return renamed.get(name, name)
+
+    for fn in mod.body:
+        if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)) or fn.name.startswith("_"):
+            continue
+        ret = _unquote(fn.returns)
+        seen: set[str] = set()
+        for _ in range(_ALIAS_DEPTH):
+            if isinstance(ret, ast.Name) and original(ret.id) in aliases and original(ret.id) not in seen:
+                seen.add(original(ret.id))
+                ret = _unquote(aliases[original(ret.id)])
+            else:
+                break
+        if not isinstance(ret, ast.Subscript):
+            continue
+        head = ret.value
+        head_name = head.id if isinstance(head, ast.Name) else head.attr if isinstance(head, ast.Attribute) else ""
+        if original(head_name) != "Generator" or not isinstance(ret.slice, ast.Tuple) or len(ret.slice.elts) < 2:
+            continue
+        op = fn.name.removesuffix("_command") if fn.name.endswith("_command") else fn.name.removesuffix("_query")
+        out.setdefault(op, set()).update(_alias_names(_ann_idents(_unquote(ret.slice.elts[1])), aliases, renamed))
+    return out
 
 
 def _ohs_execution_count(entry: Path, mod: ast.Module, fn: ast.AST) -> tuple[int, bool]:
@@ -673,7 +765,8 @@ def _is_dataclass_def(cls: ast.ClassDef, local: set[str], mods: set[str]) -> boo
     return False
 
 
-def _contract_aux_exempt(mod: ast.Module, pubs: "list[ast.ClassDef]", suffix: str) -> set[str]:
+def _contract_aux_exempt(mod: ast.Module, pubs: "list[ast.ClassDef]", suffix: str,
+                         extra_seeds: "set[str] | None" = None) -> set[str]:
     """주 계약(`<Operation><suffix>`)의 필드 어노테이션이 직·간접 참조하는 같은 파일의
     보조 공개 dataclass — 1타입=1파일·접미 강제의 면제 집합(2026-08-24 좁은 정합화).
     자격 셋 전부: ① 주 계약에서 전이 참조(인용 forward-ref 포함 — _ann_idents) ② 계약
@@ -681,7 +774,8 @@ def _contract_aux_exempt(mod: ast.Module, pubs: "list[ast.ClassDef]", suffix: st
     참조가 모듈 내 `type` 별칭(PEP 695)을 경유하면 별칭을 해소해 구성 클래스까지
     따라간다(중첩 별칭 포함 — 판정 ⑦ 2026-08-25 · seen 가드라 순환에도 안전).
     두 연산이 한 보조 타입을 공유하면 정의는 한 계약 파일에 두고 다른 계약이 같은 BC
-    계약 간 import(#472 허용)로 참조한다 — 파일별 중복 정의는 같은 지식 두 벌이다."""
+    계약 간 import(#472 허용)로 참조한다 — 파일별 중복 정의는 같은 지식 두 벌이다.
+    `extra_seeds` 는 대화 창구의 send 답 구성 이름(2026-10-26) — 주 계약 필드 참조와 같은 길로 자격을 본다."""
     local: set[str] = _dataclass_local_names(mod)
     mods: set[str] = _dataclass_module_aliases(mod)
     by_name: dict[str, ast.ClassDef] = {c.name: c for c in pubs}
@@ -701,7 +795,7 @@ def _contract_aux_exempt(mod: ast.Module, pubs: "list[ast.ClassDef]", suffix: st
     exempt: set[str] = set()
     primaries = [c for c in pubs if c.name.endswith(suffix)]
     seen: set[str] = {c.name for c in primaries}
-    queue: "list[str]" = [name for c in primaries for name in field_refs(c)]
+    queue: "list[str]" = [name for c in primaries for name in field_refs(c)] + sorted(extra_seeds or ())
     while queue:
         name = queue.pop()
         if name in seen:
@@ -721,7 +815,7 @@ def _contract_aux_exempt(mod: ast.Module, pubs: "list[ast.ClassDef]", suffix: st
 
 
 def _check_contract_kind(kind_dir: Path, suffix: str, one_file_rule: str, only_rule: str,
-                         ops: set[str], srel, out: Findings) -> None:
+                         ops: set[str], srel, out: Findings, sends: "dict[str, set[str]] | None" = None) -> None:
     if not kind_dir.is_dir():
         return
     kname = kind_dir.name
@@ -739,11 +833,14 @@ def _check_contract_kind(kind_dir: Path, suffix: str, one_file_rule: str, only_r
         if mod is None:
             continue
         pubs = [n for n in mod.body if isinstance(n, ast.ClassDef) and not n.name.startswith("_")]
-        exempt: set[str] = _contract_aux_exempt(mod, pubs, suffix)
+        send_names: set[str] = (sends or {}).get(stem.removesuffix(expected_tail), set()) if stem.endswith(expected_tail) else set()
+        seeds: set[str] = _alias_names(send_names, _module_type_aliases(mod), {}) if send_names else set()
+        exempt: set[str] = _contract_aux_exempt(mod, pubs, suffix, seeds)
         primaries = [c for c in pubs if c.name.endswith(suffix)]
         surplus = [c for c in pubs if not c.name.endswith(suffix) and c.name not in exempt]
         if len(pubs) >= 2 and (len(primaries) >= 2 or surplus):
-            out.add(one_file_rule, rel, f"계약 타입 하나 = 파일 하나다 — 공개 클래스가 {len(pubs)}개다(주 계약이 어노테이션으로 참조하는 보조 dataclass 만 예외)")
+            send_clause: str = " · 대화 창구의 send 답 타입과 그 구성 dataclass" if suffix == "Request" else ""
+            out.add(one_file_rule, rel, f"계약 타입 하나 = 파일 하나다 — 공개 클래스가 {len(pubs)}개다(주 계약이 어노테이션으로 참조하는 보조 dataclass{send_clause} 만 예외)")
         for cls in pubs:
             if not cls.name.endswith(suffix) and cls.name not in exempt:
                 out.add("#484", rel, f"계약 클래스는 `<Operation>{suffix}` 다(`Result` 금지 — {only_rule}: 이 폴더에는 이 창구가 {'받는' if suffix == 'Request' else '돌려주는'} 타입과 그 구성 보조 dataclass 만 온다) — `{cls.name}`")

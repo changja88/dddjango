@@ -922,7 +922,7 @@
       ]
     },
     "dddjango/agents/design-architect.md/s005/b21": {
-      "h": "e1079d62e0d18e7b",
+      "h": "8c537b1f5d37d2ca",
       "n": 1,
       "works": [
         "R-1680",
@@ -13448,7 +13448,7 @@
       ]
     },
     "dddjango/skills/implementation-python/SKILL.md/s004/b6": {
-      "h": "55d2e57ecbd38885",
+      "h": "3a7ae5dc49974c16",
       "n": 1,
       "works": [
         "R-2997",
@@ -13791,8 +13791,8 @@
       ]
     },
     "dddjango/skills/implementation-python/references/final.md/s081-13.5/b1": {
-      "h": "be8f0c33a40b2725",
-      "n": 3,
+      "h": "26540834f4538335",
+      "n": 5,
       "works": [
         "R-2763"
       ]
@@ -14851,7 +14851,7 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "d5e1afe8f19d198f475819ddc464424a09724df11de04d85f6e0211c3b37bbf1"
+      "sha256": "957ce322b7d06ad2234b6058798a8f2a407103ab9e04f31a8177b583a00680c3"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
@@ -14947,11 +14947,11 @@
     },
     {
       "path": "ontology/rules/implementation-python-final.ttl",
-      "sha256": "6c21afe8059353ac483df9205025d21fd3316dc718bdf95e71654fefb49aa47e"
+      "sha256": "dc0f0f8312eb1bad2c552cf9c9f338ef5c3a518177d385394b399bf79c63cf6a"
     },
     {
       "path": "ontology/rules/implementation-python-skill.ttl",
-      "sha256": "4366796d0a50101e333030f0ed10a8d8b21a710d2707146d060e02a56d7c1ce0"
+      "sha256": "48fd5a94c92c10f169ffd5d5f5b04440d75c7349b105f4beab8c76889c7f30db"
     },
     {
       "path": "ontology/rules/implementation-test-final.ttl",
@@ -52483,8 +52483,8 @@
         "check-context-isolation.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-1699@2026-08-24",
-      "label": "공개 함수 request/response 계약 시그니처·예외 번역표·보조 계약 타입 결정",
+      "expression": "https://numchida.com/ns/djr#R-1699@2026-10-26",
+      "label": "공개 함수 request/response 계약 시그니처·예외 번역표·보조 계약 타입 결정 (대화 창구 send 답 타입 포함)",
       "norm_kind": "Obligation",
       "order_rank": 380,
       "overrides": [],
@@ -70994,8 +70994,8 @@
       "block_order": 1,
       "checkers": [],
       "document": "dddjango/skills/implementation-python/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-2763@2026-08-22",
-      "label": "send·throw 대신 이터레이터 입력 또는 상태 클래스 사용",
+      "expression": "https://numchida.com/ns/djr#R-2763@2026-10-26",
+      "label": "send·throw 대신 이터레이터 입력 또는 상태 클래스 사용 (OHS 대화 사슬 send 예외)",
       "norm_kind": "Obligation",
       "order_rank": 3445,
       "overrides": [],
@@ -75102,8 +75102,8 @@
       "block_order": 6,
       "checkers": [],
       "document": "dddjango/skills/implementation-python/SKILL.md",
-      "expression": "https://numchida.com/ns/djr#R-2998@2026-08-22",
-      "label": "제너레이터 send·throw 사용 금지",
+      "expression": "https://numchida.com/ns/djr#R-2998@2026-10-26",
+      "label": "제너레이터 send·throw 사용 금지 (OHS 대화 사슬 send 예외)",
       "norm_kind": "Prohibition",
       "order_rank": 3382,
       "overrides": [],

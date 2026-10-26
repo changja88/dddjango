@@ -3842,5 +3842,158 @@ class PublicSurfaceRootRegression(unittest.TestCase):
         ])
 
 
+class GeneratorWindowReplyRegression(unittest.TestCase):
+    """F4-123 — OHS 대화 창구(공개 함수가 `Generator[<Op>Response, <답>]`)의 send 답 타입과 그 구성 dataclass 는 그 연산의 요청 파일에 둔다
+    (implementation-python §13.5 예외 · 2026-10-26). 답을 이름으로 적든 별칭(진입 · 요청 파일 · PEP 695 · `TypeAlias` · 맨 대입 합)으로 적든
+    #157 · #484 가 서지 않는다. send 가 없는 반환 · 아무 데도 안 닿는 클래스 · 다른 연산의 답 · 계약 접미 · enum · 응답 파일은 그대로다."""
+
+    PKG: str = "application.shop.driving_layer.open_host_service.chat.contract"
+    REQUEST: str = ("from __future__ import annotations\nfrom dataclasses import dataclass\n\n\n"
+                    "@dataclass(frozen=True)\nclass TalkRequest:\n    text: str\n\n\n"
+                    "@dataclass(frozen=True)\nclass Continue:\n    pass\n\n\n"
+                    "@dataclass(frozen=True)\nclass Clock:\n    after: Detail\n\n\n"
+                    "@dataclass(frozen=True)\nclass Detail:\n    seconds: float\n")
+    RESPONSE: str = ("from __future__ import annotations\nfrom dataclasses import dataclass\n\n\n"
+                     "@dataclass(frozen=True)\nclass TalkResponse:\n    text: str\n")
+    HEAD: str = ("from __future__ import annotations\n\nimport typing\nfrom collections.abc import AsyncGenerator, Generator, Iterator\n"
+                 "from typing import TypeAlias\n\n"
+                 "from application.shop.driving_layer.open_host_service.chat.contract.response.talk_response import TalkResponse\n")
+    IMPORT: str = "from application.shop.driving_layer.open_host_service.chat.contract.request.talk_request import Reply, TalkRequest\n"
+    BODY: str = "    yield TalkResponse(text='')\n"
+    REQ_FILE: str = "application/shop/driving_layer/open_host_service/chat/contract/request/talk_request.py"
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="field-window-reply-")
+        self.addCleanup(self.tmp.cleanup)
+        self.env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+                        DJR_FINDINGS_JSON=str(Path(self.tmp.name) / "records.jsonl"),
+                        DJR_VIOLATIONS_DIR=str(Path(self.tmp.name) / "violations"))
+
+    def build(self, name: str, service: str, request_tail: str = "type Reply = Continue | Clock\n",
+              extra: "dict[str, str] | None" = None) -> Path:
+        root: Path = Path(self.tmp.name) / name
+        svc: str = "application/shop/driving_layer/open_host_service/chat"
+        files: dict[str, str] = {
+            f"{svc}/chat_service.py": service,
+            f"{svc}/contract/request/talk_request.py": self.REQUEST + "\n\n" + request_tail,
+            f"{svc}/contract/response/talk_response.py": self.RESPONSE,
+            **(extra or {}),
+        }
+        for pkg in ("application", "application/shop", "application/shop/domain_layer", "application/shop/application_layer",
+                    "application/shop/driven_layer", "application/shop/driving_layer", "application/shop/driving_layer/open_host_service",
+                    svc, f"{svc}/contract", f"{svc}/contract/request", f"{svc}/contract/response", f"{svc}/contract/exception"):
+            (root / pkg).mkdir(parents=True, exist_ok=True)
+            (root / pkg / "__init__.py").write_text("", encoding="utf-8")
+        for rel, text in files.items():
+            (root / rel).write_text(text, encoding="utf-8")
+        return root
+
+    def contract_lines(self, root: Path) -> "list[str]":
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / "check-context-isolation.py"), str(root)],
+                                capture_output=True, text=True, env=self.env)
+        self.assertEqual(result.stderr, "")
+        rows: "list[str]" = []
+        for line in result.stdout.splitlines():
+            line = line.strip()
+            if line.startswith(("[#157]", "[#160]", "[#484]")):
+                rule, rest = line.split(" ", 1)
+                rows.append(f"{rule} {rest.split(':', 1)[0].rsplit('/', 1)[-1]} {rest.rsplit(' — ', 1)[-1] if rule == '[#484]' else ''}".strip())
+        return rows
+
+    def test_window_reply_forms_are_exempt(self) -> None:
+        h, i, b = self.HEAD, self.IMPORT, self.BODY
+        req_import: str = "from application.shop.driving_layer.open_host_service.chat.contract.request.talk_request import "
+        forms: dict[str, tuple[str, str]] = {
+            "direct": (h + i + "\n\ndef talk_query(request: TalkRequest) -> Generator[TalkResponse, Reply]:\n" + b, "type Reply = Continue | Clock\n"),
+            "three-args": (h + i + "\n\ndef talk_query(request: TalkRequest) -> typing.Generator[TalkResponse, Reply, None]:\n" + b,
+                           "type Reply = Continue | Clock\n"),
+            "string": (h + i + "\n\ndef talk_query(request: TalkRequest) -> 'Generator[TalkResponse, Reply]':\n" + b, "type Reply = Continue | Clock\n"),
+            "inline-union": (h + req_import + "Clock, Continue, TalkRequest\n\n\n"
+                             "def talk_query(request: TalkRequest) -> Generator[TalkResponse, Continue | Clock]:\n" + b, ""),
+            "module-attr": (h + "from application.shop.driving_layer.open_host_service.chat.contract.request import talk_request\n"
+                            + req_import + "TalkRequest\n\n\n"
+                            "def talk_query(request: TalkRequest) -> Generator[TalkResponse, talk_request.Reply]:\n" + b,
+                            "type Reply = Continue | Clock\n"),
+            "entry-pep695": (h + i + "\ntype Dialog = Generator[TalkResponse, Reply]\n\n\ndef talk_query(request: TalkRequest) -> Dialog:\n" + b,
+                             "type Reply = Continue | Clock\n"),
+            "entry-typealias": (h + i + "\nDialog: TypeAlias = Generator[TalkResponse, Reply]\n\n\n"
+                                "def talk_query(request: TalkRequest) -> Dialog:\n" + b, "type Reply = Continue | Clock\n"),
+            "entry-plain": (h + i + "\nDialog = Generator[TalkResponse, Reply]\n\n\ndef talk_query(request: TalkRequest) -> Dialog:\n" + b,
+                            "type Reply = Continue | Clock\n"),
+            "alias-of-alias": (h + i + "\ntype _Inner = Generator[TalkResponse, Reply]\ntype Dialog = _Inner\n\n\n"
+                               "def talk_query(request: TalkRequest) -> Dialog:\n" + b, "type Reply = Continue | Clock\n"),
+            "generator-as": (h.replace("Generator, Iterator", "Generator as Gen, Iterator") + i
+                             + "\n\ndef talk_query(request: TalkRequest) -> Gen[TalkResponse, Reply]:\n" + b, "type Reply = Continue | Clock\n"),
+            "reply-as": (h + req_import + "Reply as ChatReply, TalkRequest\n\n\n"
+                         "def talk_query(request: TalkRequest) -> Generator[TalkResponse, ChatReply]:\n" + b, "type Reply = Continue | Clock\n"),
+            "request-typealias": (h + i + "\n\ndef talk_query(request: TalkRequest) -> Generator[TalkResponse, Reply]:\n" + b,
+                                  "Reply: TypeAlias = Continue | Clock\n"),
+            "request-plain-union": (h + i + "\n\ndef talk_query(request: TalkRequest) -> Generator[TalkResponse, Reply]:\n" + b,
+                                    "Reply = Continue | Clock\n"),
+            "service-private-alias": (h + req_import + "Clock, Continue, TalkRequest\n\ntype _Reply = Continue | Clock\n\n\n"
+                                      "def talk_query(request: TalkRequest) -> Generator[TalkResponse, _Reply]:\n" + b, ""),
+        }
+        for name, (service, tail) in forms.items():
+            with self.subTest(form=name):
+                self.assertEqual(self.contract_lines(self.build(name, service, tail)), [])
+
+    def test_forms_outside_the_window_reply_keep_their_lines(self) -> None:
+        h, i, b = self.HEAD, self.IMPORT, self.BODY
+        three: "list[str]" = ["[#484] talk_request.py `Continue`", "[#484] talk_request.py `Clock`", "[#484] talk_request.py `Detail`"]
+        forms: "dict[str, tuple[str, str, dict[str, str] | None, list[str]]]" = {
+            "iterator": (h + i + "\n\ndef talk_query(request: TalkRequest) -> Iterator[TalkResponse]:\n" + b,
+                         "type Reply = Continue | Clock\n", None, ["[#157] talk_request.py", *three]),
+            "async-generator": (h + i + "\n\nasync def talk_query(request: TalkRequest) -> AsyncGenerator[TalkResponse, Reply]:\n" + b,
+                                "type Reply = Continue | Clock\n", None, ["[#157] talk_request.py", *three]),
+            "single-name-plain": (h + i + "\n\ndef talk_query(request: TalkRequest) -> Generator[TalkResponse, Reply]:\n" + b,
+                                  "Reply = Continue\n", None, ["[#157] talk_request.py", *three]),
+            "generic-alias": (h + i + "\ntype Dialog[T] = Generator[TalkResponse, T]\n\n\n"
+                              "def talk_query(request: TalkRequest) -> Dialog[Reply]:\n" + b,
+                              "type Reply = Continue | Clock\n", None, ["[#157] talk_request.py", *three]),
+            "unreached-class": (h + "from application.shop.driving_layer.open_host_service.chat.contract.request.talk_request import "
+                                "Continue, TalkRequest\n\n\ndef talk_query(request: TalkRequest) -> Generator[TalkResponse, Continue]:\n" + b,
+                                "", None, ["[#157] talk_request.py", "[#484] talk_request.py `Clock`", "[#484] talk_request.py `Detail`"]),
+            "contract-suffix-reply": (h + i + "\n\ndef talk_query(request: TalkRequest) -> Generator[TalkResponse, Reply]:\n" + b,
+                                      "@dataclass(frozen=True)\nclass AnswerResult:\n    text: str\n\n\ntype Reply = Continue | AnswerResult\n",
+                                      None, ["[#157] talk_request.py", "[#484] talk_request.py `Clock`", "[#484] talk_request.py `Detail`",
+                                             "[#484] talk_request.py `AnswerResult`"]),
+            "enum-reply": (h + i + "\n\ndef talk_query(request: TalkRequest) -> Generator[TalkResponse, Reply]:\n" + b,
+                           "from enum import StrEnum\n\n\nclass Choice(StrEnum):\n    STOP = 'stop'\n\n\ntype Reply = Continue | Clock | Choice\n",
+                           None, ["[#157] talk_request.py", "[#484] talk_request.py `Choice`"]),
+            "other-operation-reply": (h + "from application.shop.driving_layer.open_host_service.chat.contract.request.listen_request import "
+                                      "ListenRequest\nfrom application.shop.driving_layer.open_host_service.chat.contract.response.listen_response "
+                                      "import ListenResponse\n" + i + "\n\ndef listen_query(request: ListenRequest) -> ListenResponse:\n"
+                                      "    return ListenResponse(text='')\n\n\n"
+                                      "def talk_query(request: TalkRequest) -> Generator[TalkResponse, Reply]:\n" + b,
+                                      "type Reply = Continue | Clock\n",
+                                      {"application/shop/driving_layer/open_host_service/chat/contract/request/listen_request.py":
+                                       "from __future__ import annotations\nfrom dataclasses import dataclass\n\n\n"
+                                       "@dataclass(frozen=True)\nclass ListenRequest:\n    text: str\n\n\n"
+                                       "@dataclass(frozen=True)\nclass Pause:\n    pass\n",
+                                       "application/shop/driving_layer/open_host_service/chat/contract/response/listen_response.py":
+                                       "from __future__ import annotations\nfrom dataclasses import dataclass\n\n\n"
+                                       "@dataclass(frozen=True)\nclass ListenResponse:\n    text: str\n"},
+                                      ["[#157] listen_request.py", "[#484] listen_request.py `Pause`"]),
+            "response-typealias": (h + i + "\n\ndef talk_query(request: TalkRequest) -> Generator[TalkResponse, Reply]:\n" + b,
+                                   "type Reply = Continue | Clock\n",
+                                   {"application/shop/driving_layer/open_host_service/chat/contract/response/talk_response.py":
+                                    "from __future__ import annotations\nfrom dataclasses import dataclass\nfrom typing import TypeAlias\n\n\n"
+                                    "@dataclass(frozen=True)\nclass TalkResponse:\n    event: Event\n\n\n"
+                                    "@dataclass(frozen=True)\nclass Started:\n    pass\n\n\n"
+                                    "@dataclass(frozen=True)\nclass Ended:\n    pass\n\n\nEvent: TypeAlias = Started | Ended\n"},
+                                   ["[#160] talk_response.py", "[#484] talk_response.py `Started`", "[#484] talk_response.py `Ended`"]),
+        }
+        for name, (service, tail, extra, expected) in forms.items():
+            with self.subTest(form=name):
+                self.assertEqual(sorted(self.contract_lines(self.build(name, service, tail, extra))), sorted(expected))
+
+    def test_request_one_file_message_names_the_window_reply(self) -> None:
+        root: Path = self.build("message", self.HEAD + self.IMPORT + "\n\ndef talk_query(request: TalkRequest) -> Iterator[TalkResponse]:\n" + self.BODY)
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / "check-context-isolation.py"), str(root)],
+                                capture_output=True, text=True, env=self.env)
+        self.assertIn(f"[#157] {self.REQ_FILE}: 계약 타입 하나 = 파일 하나다 — 공개 클래스가 4개다(주 계약이 어노테이션으로 참조하는 보조 dataclass"
+                      " · 대화 창구의 send 답 타입과 그 구성 dataclass 만 예외)", result.stdout)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

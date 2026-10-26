@@ -107,12 +107,18 @@ djr:R-2997 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2998 a djr:Prohibition ;
-    skos:prefLabel "제너레이터 send·throw 사용 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2998@2026-08-22> .
+    skos:prefLabel "제너레이터 send·throw 사용 금지 (OHS 대화 사슬 send 예외)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2998@2026-10-26> .
 
 <https://numchida.com/ns/djr#R-2998@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2998 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2998@2026-10-26> a djr:Expression ;
+    prov:specializationOf djr:R-2998 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2998@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2999 a djr:Obligation ;
     skos:prefLabel "커스텀 컨텍스트 매니저로 리소스 해제를 with 문에 명시"@ko ;
@@ -321,7 +327,7 @@ djr:R-3006 a djr:Obligation ;
     djr:order 6 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s081-13.5/b1> ;
     djr:statesNorm djr:R-2997, djr:R-2998 ;
-    djr:text "- 제너레이터로 지연 평가, send/throw 금지 (§13.2, §13.5)\n"@ko .
+    djr:text "- 제너레이터로 지연 평가, send/throw 금지 — OHS 대화 사슬의 send 만 예외 (§13.2, §13.5)\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004/b7> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
