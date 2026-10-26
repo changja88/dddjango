@@ -3079,5 +3079,297 @@ class FrameworkServerBcNameRegression(unittest.TestCase):
         self.assertEqual(self.lines("check-port-adapter-pairing.py", "365"), [])
 
 
+
+class AclWindowTryRegression(unittest.TestCase):
+    """F4-111 — #473 은 상대 창구(OHS) 코드가 돌 수 있는 try 에만 기저 예외를 요구한다(모르면 돈다고 본다).
+
+    받은 글을 JSON 으로 읽기만 하는 try 처럼 알려진 바깥 코드만 도는 try 는 면제한다. 진단은 `<파일>:<try 줄>` 과
+    둘러싼 `클래스.함수` 를 단다. «붉음 유지» 꼴은 옛 판도 붉히던 꼴이라 줄 수만 견준다.
+    """
+
+    OHS: str = "application.orders.driving_layer.open_host_service.order_lookup"
+    ACL: str = "application/billing/driven_layer/adapter/anticorruption_layer/orders"
+    SLOT: str = f"{ACL}/order_lookup_adapter.py"
+    MSG: str = "try 의 마지막 except 에 상대 창구의 기저 예외가 있어야 한다(#167 짝 — 둘이 닫혀야 약속이 선다)"
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="acl-window-try-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+
+    def head(self, base: bool = True) -> str:
+        lines: list[str] = ["import asyncio", "import json", "from pydantic import TypeAdapter",
+                            f"from {self.OHS}.order_lookup_service import get_order_query",
+                            f"from {self.OHS}.contract.request.get_order_request import GetOrderRequest"]
+        if base:
+            lines.append(f"from {self.OHS}.contract.exception.order_lookup_published_error import OrderLookupPublishedError")
+        return "\n".join(lines) + "\n"
+
+    def lines(self, body: str, head: "str | None" = None) -> list[str]:
+        path: Path = self.root / self.SLOT
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text((self.head() if head is None else head) + textwrap.dedent(body), encoding="utf-8")
+        bc: Path = self.root / "application/billing"
+        out = isolation.Findings(defer=True)
+        isolation._check_acl(bc / "driven_layer/adapter/anticorruption_layer", bc, Path("application/billing"), out)
+        return [e.line for e in out.entries if e.rule == "#473"]
+
+    def test_try_where_window_code_cannot_run_needs_no_base(self) -> None:
+        for name, body in (
+            ("받은 글을 JSON 으로 읽기(신고 꼴)", """\
+                _READER = TypeAdapter(object)
+
+                class OrdersOrderLookupAdapter:
+                    def fetch(self, order_id):
+                        try:
+                            return get_order_query(GetOrderRequest(order_id=order_id))
+                        except OrderLookupPublishedError:
+                            return None
+
+                def _received(text):
+                    try:
+                        parsed = json.loads(text)
+                        return _READER.validate_python(parsed), json.loads(text).get("id")
+                    except ValueError:
+                        return None
+                """),
+            ("안쪽 try 가 기저를 잡아 번역", """\
+                def fetch(order_id):
+                    try:
+                        try:
+                            text = get_order_query(GetOrderRequest(order_id=order_id))
+                        except OrderLookupPublishedError:
+                            raise LookupError(order_id) from None
+                        return json.loads(text)
+                    except ValueError:
+                        return None
+                """),
+            ("상대 계약 타입 만들기만", """\
+                def build(order_id):
+                    try:
+                        return GetOrderRequest(order_id=int(order_id))
+                    except ValueError:
+                        return None
+                """),
+            ("창구 호출이 except 몸통에만", """\
+                def fetch(order_id):
+                    try:
+                        key = int(order_id)
+                    except ValueError:
+                        return get_order_query(GetOrderRequest(order_id=0))
+                    try:
+                        return get_order_query(GetOrderRequest(order_id=key))
+                    except OrderLookupPublishedError:
+                        return None
+                """),
+        ):
+            with self.subTest(name):
+                self.assertEqual(self.lines(body), [])
+
+    def test_try_where_window_code_may_run_keeps_base_rule(self) -> None:
+        for name, body in (
+            ("창구 직접 호출", """\
+                def fetch(order_id):
+                    try:
+                        return get_order_query(GetOrderRequest(order_id=order_id))
+                    except ValueError:
+                        return None
+                """),
+            ("self 속성에 주입한 창구", """\
+                class OrdersOrderLookupAdapter:
+                    def __init__(self, lookup=None):
+                        self._lookup = lookup if lookup is not None else get_order_query
+
+                    def fetch(self, order_id):
+                        try:
+                            return self._lookup(GetOrderRequest(order_id=order_id))
+                        except ValueError:
+                            return None
+                """),
+            ("self 속성 창구를 바깥 함수에 콜백으로", """\
+                class OrdersOrderLookupAdapter:
+                    def __init__(self, lookup=None):
+                        self._lookup = lookup or get_order_query
+
+                    async def fetch(self, order_id):
+                        try:
+                            return await asyncio.to_thread(self._lookup, GetOrderRequest(order_id=order_id))
+                        except ValueError:
+                            return None
+                """),
+            ("창구를 내장에 콜백으로", """\
+                def fetch_all(requests):
+                    try:
+                        return list(map(get_order_query, requests))
+                    except ValueError:
+                        return []
+                """),
+            ("같은 파일 객체 주입의 메서드", """\
+                class _Gateway:
+                    def get(self, order_id):
+                        return get_order_query(GetOrderRequest(order_id=order_id))
+
+                class OrdersOrderLookupAdapter:
+                    def __init__(self, gateway=None):
+                        self._gateway = gateway or _Gateway()
+
+                    def fetch(self, order_id):
+                        try:
+                            return self._gateway.get(order_id)
+                        except ValueError:
+                            return None
+                """),
+            ("매개변수 객체의 메서드(출처 모름)", """\
+                def fetch(order_id, gateway):
+                    try:
+                        return gateway.get(order_id)
+                    except ValueError:
+                        return None
+                """),
+            ("property 가 창구를 부름", """\
+                class OrdersOrderLookupAdapter:
+                    @property
+                    def order(self):
+                        return get_order_query(GetOrderRequest(order_id=1))
+
+                    def fetch(self):
+                        try:
+                            return self.order
+                        except ValueError:
+                            return None
+                """),
+            ("super() 로 부른 부모가 창구를 부름", """\
+                class _Base:
+                    def fetch(self, order_id):
+                        return get_order_query(GetOrderRequest(order_id=order_id))
+
+                class OrdersOrderLookupAdapter(_Base):
+                    def fetch(self, order_id):
+                        try:
+                            return super().fetch(order_id)
+                        except ValueError:
+                            return None
+                """),
+            ("self 의 번역 메서드(모르면 돈다)", """\
+                class OrdersOrderLookupAdapter:
+                    def _parse(self, text):
+                        return json.loads(text)
+
+                    def parse(self, text):
+                        try:
+                            return self._parse(text)
+                        except ValueError:
+                            return None
+                """),
+            ("창구가 돌려준 생성기를 for 로 읽음", """\
+                def _follow(responses):
+                    try:
+                        for response in responses:
+                            yield response
+                    except ValueError:
+                        return
+                """),
+            ("생성기를 next · send 로 읽음", """\
+                def _dialog(dialog, answer):
+                    try:
+                        first = next(dialog)
+                        return first, dialog.send(answer)
+                    except ValueError:
+                        return None
+                """),
+            ("생성기를 list() 로 다 읽음", """\
+                def _all(responses):
+                    try:
+                        return list(responses)
+                    except ValueError:
+                        return []
+                """),
+            ("비동기 생성기를 anext 로 읽음", """\
+                async def _first(stream):
+                    try:
+                        return await anext(stream)
+                    except ValueError:
+                        return None
+                """),
+            ("창구 이름을 같은 이름으로 감싸 다시 묶음", """\
+                def _logged(fn):
+                    return fn
+
+                get_order_query = _logged(get_order_query)
+
+                def fetch(order_id):
+                    try:
+                        return get_order_query(GetOrderRequest(order_id=order_id))
+                    except ValueError:
+                        return None
+                """),
+            ("안쪽 try 가 기저를 잡고 그대로 다시 던짐", """\
+                def fetch(order_id):
+                    try:
+                        try:
+                            text = get_order_query(GetOrderRequest(order_id=order_id))
+                        except OrderLookupPublishedError:
+                            raise
+                        return json.loads(text)
+                    except ValueError:
+                        return None
+                """),
+            ("안쪽 try 가 잡은 이름을 다시 던짐", """\
+                def fetch(order_id):
+                    try:
+                        try:
+                            text = get_order_query(GetOrderRequest(order_id=order_id))
+                        except OrderLookupPublishedError as error:
+                            raise error
+                        return json.loads(text)
+                    except ValueError:
+                        return None
+                """),
+        ):
+            with self.subTest(name):
+                self.assertEqual(len(self.lines(body)), 1)
+
+    def test_line_names_try_line_and_function(self) -> None:
+        body: str = """\
+            class OrdersOrderLookupAdapter:
+                def __init__(self, lookup=None):
+                    self._lookup = lookup or get_order_query
+
+                def fetch(self, order_id):
+                    try:
+                        return self._lookup(GetOrderRequest(order_id=order_id))
+                    except ValueError:
+                        return None
+
+
+            def _received(text):
+                try:
+                    return json.loads(text)
+                except ValueError:
+                    return None
+
+
+            try:
+                _WARM = get_order_query(GetOrderRequest(order_id=0))
+            except ValueError:
+                _WARM = None
+            """
+        tail: str = " — 상대 창구가 돌 수 있는 try · "
+        self.assertEqual(self.lines(body), [
+            f"[#473] {self.SLOT}:12: {self.MSG}{tail}`OrdersOrderLookupAdapter.fetch`",
+            f"[#473] {self.SLOT}:25: {self.MSG}{tail}`모듈`",
+        ])
+
+    def test_missing_base_import_stays_file_level(self) -> None:
+        body: str = """\
+            def fetch(order_id):
+                try:
+                    return get_order_query(GetOrderRequest(order_id=order_id))
+                except ValueError:
+                    return None
+            """
+        self.assertEqual(self.lines(body, head=self.head(base=False)), [
+            f"[#473] {self.SLOT}: ACL 어댑터는 상대 창구의 «기저 예외»를 반드시 잡는다 — 기저(`*_published_error`) import 가 없다"])
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

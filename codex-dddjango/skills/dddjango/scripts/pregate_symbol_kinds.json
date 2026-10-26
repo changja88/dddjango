@@ -8,7 +8,7 @@
     "check-choices-literal-consumption.py": "c1f6a998f550c67c",
     "check-common-container.py": "83f6298c127862b5",
     "check-composition-root.py": "f5f767be79c0cf38",
-    "check-context-isolation.py": "68ec0cc2b1a93c2c",
+    "check-context-isolation.py": "cd7ce93015226d7c",
     "check-db-table.py": "6d4d0fe16386946a",
     "check-domain-model.py": "3588edd3fdbed67a",
     "check-error-centralization.py": "b6fab23dd1cef698",
