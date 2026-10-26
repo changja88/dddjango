@@ -402,7 +402,7 @@ def main(argv: list[str]) -> int:
 
     findings = Findings(defer=True)
     cand = Candidates(defer=True)
-    bcs = [bc for bc in vocab.bc_dirs(root) if _has_adoption_signal(bc)]
+    bcs = [bc for bc in vocab.server_bc_dirs(root) if _has_adoption_signal(bc)]
 
     # 대상 0건 가드(#74) — adopted 인데 driving 층이 0건이면 경로 계약 불일치다.
     if bcs and not any(_driving(bc) is not None for bc in bcs):

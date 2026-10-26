@@ -3079,5 +3079,118 @@ class FrameworkServerBcNameRegression(unittest.TestCase):
         self.assertEqual(self.lines("check-port-adapter-pairing.py", "365"), [])
 
 
+class RootBcSelectionRegression(unittest.TestCase):
+    """BC 마다 도는 검사기는 뿌리 `application/` 의 서버 BC 만 잰다.
+
+    자매 플러그인(dddjango-web)의 화면 구역(`web/application/<단위>` · `web_test/application/<단위>`) · 기록 사본
+    (`.dddjango-web/**/application/<bc>`) · 뿌리 밖 중첩 컨테이너는 서버 BC 가 아니다. 고르면 화면 구역을 서버 규율로 재고,
+    같은 이름 구역 · 사본이 서버 BC 를 «타 BC» · «다른 앱» 으로 만든다(#505 · #331).
+    """
+
+    BC_CHECKERS: "tuple[str, ...]" = (
+        "check-layer-skeleton.py", "check-context-isolation.py", "check-test-config.py", "check-composition-root.py",
+        "check-db-table.py", "check-usecase-dto-placement.py", "check-transaction-boundary.py", "check-domain-model.py",
+        "check-port-adapter-pairing.py", "check-event-publish.py", "check-missable-entrance.py", "check-naming.py",
+        "check-business-vocabulary.py")
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="field-root-bc-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root: Path = Path(self.tmp.name) / "project"
+        self.env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+                        DJR_FINDINGS_JSON=str(Path(self.tmp.name) / "records.jsonl"),
+                        DJR_VIOLATIONS_DIR=str(Path(self.tmp.name) / "violations"))
+
+    def lane(self, fixture: str) -> None:
+        shutil.copytree(FIXTURES / fixture, self.root)
+
+    def write(self, relative: str, text: str = "") -> None:
+        path: Path = self.root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def run_checker(self, script: str) -> "tuple[int, list[str]]":
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / script), str(self.root)],
+                                capture_output=True, text=True, env=self.env)
+        self.assertEqual(result.stderr, "", script)
+        return result.returncode, [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+    def web_unit(self, container: str, name: str) -> None:
+        """dddjango-web 화면 구역 꼴 — 간소화 DDD 4층(domain · application · infra · presentation)."""
+        package: str = container.replace("/", ".")
+        self.write(f"{container}/{name}/__init__.py")
+        self.write(f"{container}/{name}/domain_layer/{name}/{name}.py",
+                   f"from {package}.{name}.domain_layer.{name}.value_object.{name}_label import Label\n\n\n"
+                   "class Unit:\n    label: Label\n")
+        self.write(f"{container}/{name}/domain_layer/{name}/value_object/{name}_label.py", "class Label:\n    pass\n")
+        self.write(f"{container}/{name}/application_layer/{name}/use_case/{name}_use_case.py",
+                   "def run(code: int) -> None:\n    if code:\n        raise ValueError(code)\n")
+        self.write(f"{container}/{name}/infra_layer/data_source/{name}_data_source.py",
+                   "def fetch() -> dict:\n    return {}\n")
+        self.write(f"{container}/{name}/presentation_layer/view/{name}_view.py", "def view() -> None:\n    pass\n")
+
+    def test_sister_areas_and_nested_containers_leave_server_output_unchanged(self) -> None:
+        self.lane("skeleton/good_bc")
+        before: "dict[str, tuple[int, list[str]]]" = {script: self.run_checker(script) for script in self.BC_CHECKERS}
+        self.web_unit("web/application", "shop")
+        self.web_unit("web_test/application", "shop")
+        self.write("web_test/application/shop/fixtures/shop_fixture.py", "ROWS: list = []\n")
+        shutil.copytree(self.root / "application/orders", self.root / ".dddjango-web/run1/captures/baseline/application/orders")
+        self.web_unit("src/application", "legacy")
+        for script in self.BC_CHECKERS:
+            with self.subTest(script=script):
+                self.assertEqual(self.run_checker(script), before[script])
+
+    def test_same_name_web_unit_keeps_own_event_import_inside_the_bc(self) -> None:
+        self.lane("skeleton/good_bc")
+        self.write("application/orders/domain_layer/order/event/__init__.py")
+        self.write("application/orders/domain_layer/order/event/order_placed.py",
+                   '"""주문 접수 사실."""\nfrom dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass OrderPlaced:\n    order_id: str\n')
+        use_case: Path = self.root / "application/orders/application_layer/order/place_order/place_order_use_case.py"
+        use_case.write_text("from application.orders.domain_layer.order.event.order_placed import OrderPlaced\n"
+                            + use_case.read_text(encoding="utf-8"), encoding="utf-8")
+        self.web_unit("web/application", "orders")
+        _code, lines = self.run_checker("check-domain-model.py")
+        self.assertEqual([line for line in lines if "[#505]" in line], [])
+
+    def test_record_copy_of_a_server_app_is_not_a_second_app(self) -> None:
+        self.lane("db_table/good")
+        shutil.copytree(self.root / "application/orders", self.root / ".dddjango-web/run1/captures/baseline/application/orders")
+        code, lines = self.run_checker("check-db-table.py")
+        self.assertEqual(code, 0, lines)
+        self.assertEqual([line for line in lines if "[#331]" in line], [])
+
+    def test_layer_less_root_bc_meets_the_zero_target_guard_like_a_repo_without_web(self) -> None:
+        # 뿌리 BC 가 장고 표지만 가진 옮긴 옛 앱 꼴이면 층 0건 가드(#74)가 선다 — web 구역의 층이 그것을 가리지 않는다.
+        self.write("application/__init__.py")
+        self.write("application/legacy_shop/__init__.py")
+        self.write("application/legacy_shop/models.py",
+                   "from django.db import models\n\n\nclass Shop(models.Model):\n    name = models.CharField(max_length=10)\n")
+        without_web: "dict[str, tuple[int, list[str]]]" = {
+            script: self.run_checker(script) for script in ("check-domain-model.py", "check-port-adapter-pairing.py",
+                                                            "check-transaction-boundary.py", "check-event-publish.py",
+                                                            "check-usecase-dto-placement.py")}
+        self.web_unit("web/application", "shop")
+        self.assertEqual(self.run_checker("check-domain-model.py"),
+                         (2, ["blocker: 채택 신호는 있는데 domain_layer/application_layer 가 0건이다 — 조용한 무동작을 금지한다(#74)"]))
+        for script, expected in without_web.items():
+            with self.subTest(script=script):
+                code, lines = self.run_checker(script)
+                self.assertEqual((code, lines), expected)
+                self.assertEqual(code, 2)
+                self.assertTrue(any("#74" in line for line in lines), lines)
+
+    def test_server_import_of_a_web_unit_stays_an_other_bc_import(self) -> None:
+        self.lane("skeleton/good_bc")
+        self.web_unit("web/application", "shop")
+        self.write("application/orders/driving_layer/api/order/schema/web_peek.py",
+                   "from web.application.shop.domain_layer.shop.shop import Unit\n\n_N: str = Unit.__name__\n")
+        _code, lines = self.run_checker("check-context-isolation.py")
+        self.assertEqual([line for line in lines if "[#12]" in line], [
+            "[#12] application/orders/driving_layer/api/order/schema/web_peek.py: 타 BC 에서 부를 수 있는 것은 OHS·published_event 둘이다"
+            "(#83 — 이 import 는 BC 삭제 내성을 깬다) — `web.application.shop.domain_layer.shop.shop`",
+        ])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

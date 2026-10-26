@@ -8166,7 +8166,7 @@ _CATCH_ALL_NAMES = {"Exception", "BaseException"}
 
 def _tree_bcs2(root: Path) -> list[Path]:
     out: list[Path] = []
-    for c in root.rglob("application"):
+    for c in (root / "application",):
         if not c.is_dir() or set(c.parts) & CODE_SKIP_DIRS:
             continue
         out.extend(p for p in sorted(c.iterdir()) if p.is_dir() and not p.name.startswith("."))

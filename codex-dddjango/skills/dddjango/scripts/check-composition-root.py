@@ -178,7 +178,7 @@ class RegistrarSpec:
 def _find_application_containers(root: Path) -> list[Path]:
     """표준 앱 컨테이너(`application/`) 디렉터리들."""
     out: list[Path] = []
-    for path in root.rglob("application"):
+    for path in (root / "application",):
         if not path.is_dir():
             continue
         if set(path.parts) & SKIP_DIRS:

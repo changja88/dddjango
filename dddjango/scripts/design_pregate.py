@@ -2981,17 +2981,14 @@ def _repository_entry_forecast(ck: ModuleType, entry: PlanEntry, path: str, scra
 
 
 def _checker_bc(copy: Path, parts: "tuple[str, ...]", at: int, skip_dirs: "set[str] | frozenset[str]") -> "Path | None":
-    """검사기의 BC 고르기(`rglob("application")` → 그 폴더의 절대 마디에 `skip_dirs` 없음 → 점으로 시작하지 않는 자식 폴더)를
-    사본 전체를 훑지 않고 계획 경로(사본 상대 마디)로 바로 맞춘다 — `parts[at - 1] == "application"` · `parts[at]` = BC 이름.
-    `rglob` 은 링크 폴더 안으로 내려가지 않으므로 `application` 의 조상(사본 안)에 링크 폴더가 있으면 고르지 않는다(`application`
-    · BC 자신이 링크인 것은 검사기도 고른다). 고르면 BC 폴더 경로, 아니면 None. 뒤의 채택 신호 · 칸 고르기는 검사기 함수를
-    그대로 부른다(F4-115 — 같음은 무작위 트리 대조 시험이 고정한다)."""
-    if at < 1 or at >= len(parts) or parts[at - 1] != "application" or parts[at].startswith("."):
+    """검사기의 BC 고르기(뿌리 `application/` → 그 폴더의 절대 마디에 `skip_dirs` 없음 → 점으로 시작하지 않는 자식 폴더)를
+    사본 전체를 훑지 않고 계획 경로(사본 상대 마디)로 바로 맞춘다 — `at == 1` · `parts[0] == "application"` · `parts[1]` = BC 이름.
+    뿌리 밖 `application/`(자매 플러그인 화면 구역 · 기록 사본 · 중첩 컨테이너)의 폴더는 고르지 않는다. 고르면 BC 폴더 경로,
+    아니면 None. 뒤의 채택 신호 · 칸 고르기는 검사기 함수를 그대로 부른다(F4-115 — 같음은 무작위 트리 대조 시험이 고정한다)."""
+    if at != 1 or len(parts) <= at or parts[0] != "application" or parts[at].startswith("."):
         return None
-    app: Path = copy.joinpath(*parts[:at])
+    app: Path = copy / "application"
     if set(app.parts) & skip_dirs:
-        return None
-    if any(copy.joinpath(*parts[:k]).is_symlink() for k in range(1, at)):
         return None
     bc: Path = app / parts[at]
     return bc if app.is_dir() and bc.is_dir() else None
@@ -3118,7 +3115,7 @@ def _real_parts(copy: Path, parts: "tuple[str, ...]") -> "tuple[str, ...]":
 
 
 def _domain_service_selected(ck: ModuleType, copy: Path, parts: "tuple[str, ...]") -> bool:
-    """검사기 도메인 서비스 대상 선택(`vocab.bc_dirs` → `_has_adoption_signal` → `<bc>/domain_layer/domain_service` →
+    """검사기 도메인 서비스 대상 선택(`vocab.server_bc_dirs` → `_has_adoption_signal` → `<bc>/domain_layer/domain_service` →
     `slot_glob(…, "*.py")` · `__init__.py` 뺌)과 같은 판정 — 실물 마디 `parts` 의 BC 를 바로 맞춘다(직계 칸 · 승격 본체)."""
     for at in (len(parts) - 3, len(parts) - 4):
         if at < 2 or parts[at:at + 2] != ("domain_layer", "domain_service"):
@@ -3403,7 +3400,7 @@ def check_domain_service_forecast(plan: Plan, copy: Path, scratch: Path,
     """F4-115 A1 — update 도메인 서비스 칸의 symbols 공개 메서드 · 모듈 함수 서명을 번들 `check-domain-model.py` 의 #304(인자
     `*Repository`) · #305(인자 `*Port`) · #307(원시 인자만) · #308(반환 `bool`) 판정으로 선언 예보한다.
 
-    대상 = 검사기 선택(`vocab.bc_dirs` → `_has_adoption_signal` → `<bc>/domain_layer/domain_service` → `slot_glob(…, "*.py")`,
+    대상 = 검사기 선택(`vocab.server_bc_dirs` → `_has_adoption_signal` → `<bc>/domain_layer/domain_service` → `slot_glob(…, "*.py")`,
     `__init__.py` 뺌)과 같은 경로 ∩ file-plan update(계획 경로는 `_plan_parts` 로 정규화 · 승격 칸은 `slot_file` 로 본체에 맞춤 ·
     선택은 계획 경로로 BC 를 바로 맞춘다 — `_domain_service_targets`). add 칸은 스텁이 registry 에 실려 이미 귀속되므로 넣지 않는다. `baseline` = `forecast_baseline`(materialize 전
     실물). 대상 칸이 없으면 검사기를 적재하지 않는다. #301 · #302 · #303 · #310 · #311 은 싣지 않는다(투영이 파일 일부다)."""

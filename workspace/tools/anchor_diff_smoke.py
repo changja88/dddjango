@@ -701,17 +701,18 @@ class SisterAnchorRegression(unittest.TestCase):
         self.assertIn("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED", out)
         self.assertNotIn(self.title, out)
 
-    def test_actual_sister_only_anchor_and_no_anchor_stop(self):
+    def test_actual_web_only_change_is_outside_the_bc_walk(self):
+        # BC 는 뿌리 `application/` 뿐 — web 화면 구역 파일은 범위 렌더(#2 · #5 · #6 · #15 · #16)가 재지 않아 자매 절도 없다.
+        # 자매 가름 자체는 위의 문자열 주입 시험들이 지킨다(범위 렌더 다섯은 이제 web 주어 줄을 내지 않는다).
         web = "web/application/shop/driving_layer/api/item/schema/invalid.py"
         _write(self.repo, web, "from application.orders.domain_layer.order.order import Order\n")
         code, out = _run(CTX, self.repo, [])
-        self.assertEqual(code, 2, out)
-        self.assertIn("[#12] " + web + ":", out)
-        self.assertNotIn(self.title, out)
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("web/", out)
         code, out = _run(CTX, self.repo, ["--anchor", self.anchor])
         self.assertEqual(code, 0, out)
-        self.assertEqual(self.section(out, self.title),
-            {"[#12] " + web + ": 타 BC 에서 부를 수 있는 것은 OHS·published_event 둘이다(#83 — 이 import 는 BC 삭제 내성을 깬다) — `application.orders.domain_layer.order.order`"})
+        self.assertNotIn(self.title, out)
+        self.assertNotIn("web/", out)
 
 
 class UnnumberedDebtRegression(unittest.TestCase):
@@ -3145,23 +3146,23 @@ class HiddenSnapshotRegression(unittest.TestCase):
         self.assertEqual(self.ad.snapshot_escape(full), "app/y.py")
 
     def test_A10_direct_checker_anchor_still_extracts_hidden_records(self) -> None:
-        """직접 실행 검사기는 실제 작업 트리를 재므로 앵커도 숨김 경로까지 푼다 — 숨김 경로 주어 줄은 앵커 기존분 그대로."""
+        """직접 실행 검사기는 실제 작업 트리를 재므로 앵커도 숨김 경로까지 푼다 — 숨김 경로 주어 줄은 앵커 기존분 그대로.
+        BC 는 뿌리 `application/` 뿐이라(기록 사본 `.dddjango-web/**/application/<bc>` 는 BC 가 아니다) 숨김 경로 줄은 BC 안
+        숨김 폴더에서 낸다."""
         repo: Path
         repo, _anchor = _init_repo(self.td, "a10", F / "skeleton" / "good_bc")
-        copied: Path = repo / ".dddjango-web" / "r" / "baseline" / "application"
-        shutil.copytree(F / "skeleton" / "good_bc" / "application", copied)
-        router: Path = copied / "orders" / "driving_layer" / "api" / "api_router.py"
-        router.write_text(router.read_text(encoding="utf-8") + "import os\n", encoding="utf-8")
-        anchor: str = _commit_all(repo, "record copy of the app")
+        driving: Path = repo / "application" / "orders" / "driving_layer"
+        (driving / ".old").mkdir()
+        shutil.copy(driving / "api" / "api_router.py", driving / ".old" / "api_router.py")
+        anchor: str = _commit_all(repo, "hidden copy of the router")
         _write(repo, "lane_note.md", "lane\n")
         _commit_all(repo, "lane")
         code: int
         out: str
-        code, out = _run(COMP, repo, ["--anchor", anchor])
+        code, out = _run(CTX, repo, ["--anchor", anchor])
         self.assertEqual(code, 0, out)
         self.assertIn("신규분(앵커 이후) 0건", out)
-        self.assertIn(".dddjango-web/r/baseline/application/orders/driving_layer/api/api_router.py",
-                      out.split("== 앵커 기존분", 1)[-1])
+        self.assertIn("application/orders/driving_layer/.old/api_router.py", out.split("== 앵커 기존분", 1)[-1])
 
     def test_A11_links_to_record_folders_or_dddjango_itself_extract_everything(self) -> None:
         """남길 링크가 사본에 그대로 남지 않는 숨김 칸(`.dddjango` · `.dddjango/<폴더>` 처럼 일부만 남는 폴더 포함)에 닿거나

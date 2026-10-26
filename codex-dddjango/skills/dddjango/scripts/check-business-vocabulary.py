@@ -551,7 +551,7 @@ def _check_pure(root: Path, fw: Path, union: set, f: Findings) -> None:
 # ── BC 쪽 — #393 · #119 · #294 · #420 ──────────────────────────────────────
 
 def _check_bc_side(root: Path, f: Findings) -> None:
-    for bc in vocab.bc_dirs(root):
+    for bc in vocab.server_bc_dirs(root):
         for d in bc.rglob("framework"):
             if d.is_dir() and not set(d.parts) & SKIP_DIRS:
                 f.add("#393", _rel(root, d),
@@ -649,7 +649,7 @@ def main(argv: list[str]) -> int:
                          f"`{name}` — 접힌 규칙 클래스는 framework/ninja/ 로 간다"
                          "(<project>/ 에 두지 않는다)")
     # #19 — 기술 이름 1차 축은 framework/<technology>/ 뿐.
-    for bc in vocab.bc_dirs(root):
+    for bc in vocab.server_bc_dirs(root):
         for d in bc.rglob("*"):
             if not d.is_dir() or set(d.parts) & SKIP_DIRS or d.name == "__pycache__":
                 continue

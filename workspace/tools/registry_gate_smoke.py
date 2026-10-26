@@ -295,14 +295,23 @@ _MANY_BADS: "tuple[str, ...]" = (
 )
 
 
+def _add_bad_rules(repo: Path, bad: str) -> None:
+    """재료 하나를 `fx_<재료>/` 에 두고 그 BC 는 뿌리 `application/<재료>_<bc>` 로 옮긴다 — BC 마다 도는 검사기는 뿌리
+    `application/` 만 BC 로 고른다(저장소 전체를 훑는 검사기 몫은 `fx_<재료>/` 그대로)."""
+    shutil.copytree(_FIXTURES / bad / "bad_rules", repo / f"fx_{bad}")
+    for bc in sorted((repo / f"fx_{bad}" / "application").iterdir()):
+        if bc.is_dir():
+            shutil.move(str(bc), str(repo / "application" / f"{bad}_{bc.name}"))
+
+
 def _many_records_repo(td: Path, name: str) -> "tuple[Path, str]":
     repo, _good = _make_repo(td, name)
     split: int = len(_MANY_BADS) // 2
     for bad in _MANY_BADS[:split]:
-        shutil.copytree(_FIXTURES / bad / "bad_rules", repo / f"fx_{bad}")
+        _add_bad_rules(repo, bad)
     anchor: str = _commit_all(repo, "anchor + legacy half")
     for bad in _MANY_BADS[split:]:
-        shutil.copytree(_FIXTURES / bad / "bad_rules", repo / f"fx_{bad}")
+        _add_bad_rules(repo, bad)
     _plant_violation(repo)
     return repo, anchor
 
@@ -935,9 +944,13 @@ class SisterGateRegression(unittest.TestCase):
                "    status = models.CharField(choices=Status.choices)\n")
         _write(self.repo, "web/application/shop/domain_layer/item/item.py", "class Item: ...\n")
         web = "web/application/shop/driving_layer/api/item/schema/invalid.py"
-        _write(self.repo, web, "from application.orders.domain_layer.order.order import Order\n")
+        # web 파일의 서버 도메인 import 는 BC 마다 도는 #6 이 더는 안 잰다(뿌리 `application/` 만 BC). 자매 절까지 가는 실제 출력은
+        # 저장소 전체를 훑는 public-surface 검사기의 타입 없는 함수 줄로 지킨다.
+        _write(self.repo, web, "from application.orders.domain_layer.order.order import Order\n\n\n"
+               "def peek(order):\n    return Order\n")
         out = io.StringIO()
-        selected = [(self.checker, False), ("check-choices-literal-consumption.py", False)]
+        surface = "check-public-surface-annotation.py"
+        selected = [(self.checker, False), ("check-choices-literal-consumption.py", False), (surface, False)]
         with patch.object(self.gate, "REGISTRY", selected), contextlib.redirect_stdout(out):
             code = self.gate.main([str(self.repo), "--anchor", self.anchor,
                 "--introduced-json", str(self.td / "introduced.json"),
@@ -949,7 +962,9 @@ class SisterGateRegression(unittest.TestCase):
         self.assertIn("web.application.shop.domain_layer", matched[0]["message"])
         self.assertTrue(any("[#12] " + server in l for l in payload["attributed_lines"]))
         self.assertEqual(_lines_of(out.getvalue(), self.sister_title),
-            {self.checker + " :: [#12] " + web + ": 타 BC 에서 부를 수 있는 것은 OHS·published_event 둘이다(#83 — 이 import 는 BC 삭제 내성을 깬다) — `application.orders.domain_layer.order.order`"})
+            {surface + " :: [#493] " + web + ":N: `peek()` 매개변수 `order` 에 타입이 없다",
+             surface + " :: [#493] " + web + ":N: `peek()` 반환 타입이 없다"})
+        self.assertFalse(any(r["file"].startswith("web/") for r in payload["records"]), payload)
         contract = json.loads((self.td / "contract.json").read_text())
         self.assertEqual(contract["total"], 1, contract)
         rec = contract["records"][0]

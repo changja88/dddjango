@@ -297,6 +297,21 @@ def _apply_other_bc(loc: str, tgt: str, tgt_bc: str, rel, mod_path: str, out: Fi
         out.add("#12", rel, f"타 BC 에서 부를 수 있는 것은 OHS·published_event 둘이다(#83 — 이 import 는 BC 삭제 내성을 깬다) — `{mod_path}`")
 
 
+def _import_target_names(target: Path) -> set[str]:
+    """import 경로가 BC 를 가리키는지(#12 등) 가리는 이름 — 점으로 시작하는 마디 밖 모든 `application/` 컨테이너의 폴더 이름.
+
+    검사 대상 BC 는 뿌리 `application/` 뿐이지만, 서버 BC 파일이 자매 플러그인 화면 구역(`web/application/<단위>`)을
+    import 하는 것도 «타 BC» import 로 잡도록 이름은 저장소 전체에서 모은다. 점 폴더(기록 사본 `.dddjango-web/` 등)는
+    G2 · pre-gate 사본에 없으므로 빼서 직접 실행과 같은 이름을 쓴다.
+    """
+    names: set[str] = set()
+    for c in target.rglob("application"):
+        if not c.is_dir() or set(c.parts) & SKIP_DIRS or any(part.startswith(".") for part in c.relative_to(target).parts):
+            continue
+        names |= {p.name for p in c.iterdir() if p.is_dir() and not p.name.startswith(".")}
+    return names
+
+
 def _scan_imports(f: Path, bc: Path, bc_rel: Path, all_bcs: set[str], out: Findings) -> None:
     file_parts = f.relative_to(bc).parts
     loc = _spot(file_parts)
@@ -1275,7 +1290,7 @@ def main(argv: list[str]) -> int:
             return 1
 
     containers = [
-        p for p in target.rglob("application")
+        p for p in (target / "application",)
         if p.is_dir() and not (set(p.parts) & SKIP_DIRS)
     ]
     bcs: list[Path] = []
@@ -1292,7 +1307,7 @@ def main(argv: list[str]) -> int:
         emit_all(guard, printer=print, indent="")
         return 2
 
-    all_bcs = {b.name for b in bcs}
+    all_bcs = _import_target_names(target)
     findings = Findings(defer=True)
     cand = Candidates(defer=True)
     acl_partners: dict[str, set[str]] = {}

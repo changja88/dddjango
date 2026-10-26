@@ -1433,7 +1433,7 @@ def main(argv: list[str]) -> int:
     findings = Findings(defer=True)
     cand = Candidates(defer=True)
     tech = vocab.tech_names()
-    bcs = [bc for bc in vocab.bc_dirs(root) if _has_adoption_signal(bc)]
+    bcs = [bc for bc in vocab.server_bc_dirs(root) if _has_adoption_signal(bc)]
 
     # 대상 0건 가드(#74) — touched 필터 없음이라 자리는 대상 집합 직후다(#75).
     if bcs and not any((bc / "application_layer").is_dir() or _driven(bc) is not None

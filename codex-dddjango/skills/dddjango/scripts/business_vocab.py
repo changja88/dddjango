@@ -85,20 +85,12 @@ def bc_vocab(bc_dir: Path) -> set[str]:
     return out
 
 
-def bc_dirs(root: Path) -> list[Path]:
-    out: list[Path] = []
-    for c in root.rglob("application"):
-        if not c.is_dir() or set(c.parts) & SKIP_DIRS:
-            continue
-        out.extend(p for p in sorted(c.iterdir()) if p.is_dir() and not p.name.startswith("."))
-    return out
-
-
 def server_bc_dirs(root: Path) -> list[Path]:
-    """뿌리 `application/` 컨테이너의 BC — «어느 BC 든» 을 묻는 framework · `<project>/` 쪽 검사의 재료.
+    """뿌리 `application/` 컨테이너의 BC — BC 마다 도는 검사의 대상이자 «어느 BC 든» 을 묻는 framework · `<project>/` 쪽 검사의 재료.
 
-    `bc_dirs` 는 저장소 안 모든 `application/`(자매 플러그인 dddjango-web 의 `web/application/<단위>` · 기록 사본 등)을
-    고른다 — 그 이름 · 어휘를 서버 BC 로 세면 화면 구역 낱말(`client` · `admin`)이 framework 를 붉게 잡는다.
+    뿌리 밖 `application/`(자매 플러그인 dddjango-web 의 `web/application/<단위>` · `web_test/application/<단위>` · 기록 사본
+    `.dddjango-web/**/application/<bc>`)은 서버 BC 가 아니다 — 고르면 화면 구역을 서버 BC 규율로 재고, 같은 이름 사본이 서버 BC 를
+    «타 BC» 로 만든다(#505 · #331).
     """
     c: Path = root / "application"
     if not c.is_dir() or set(c.parts) & SKIP_DIRS:
