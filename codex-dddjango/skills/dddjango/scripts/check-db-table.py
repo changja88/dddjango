@@ -520,7 +520,7 @@ def main(argv: list[str]) -> int:
         return 1
 
     containers = [
-        p for p in target.rglob("application")
+        p for p in (target / "application",)
         if p.is_dir() and not (set(p.parts) & SKIP_DIRS)
     ]
     bcs: list[Path] = []

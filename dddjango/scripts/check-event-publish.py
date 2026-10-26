@@ -101,7 +101,7 @@ def _has_adoption_signal(bc_dir: Path) -> bool:
 
 def _find_bcs(target: Path) -> list[Path]:
     bcs: list[Path] = []
-    for c in target.rglob("application"):
+    for c in (target / "application",):
         if not c.is_dir() or set(c.parts) & SKIP_DIRS:
             continue
         bcs.extend(p for p in sorted(c.iterdir()) if p.is_dir() and not p.name.startswith("."))

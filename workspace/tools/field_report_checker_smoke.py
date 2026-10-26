@@ -3529,5 +3529,186 @@ class AclWindowTryRegression(unittest.TestCase):
             f"[#473] {self.SLOT}: ACL 어댑터는 상대 창구의 «기저 예외»를 반드시 잡는다 — 기저(`*_published_error`) import 가 없다"])
 
 
+class RootBcSelectionRegression(unittest.TestCase):
+    """BC 마다 도는 검사기는 뿌리 `application/` 의 서버 BC 만 잰다.
+
+    자매 플러그인(dddjango-web)의 화면 구역(`web/application/<단위>` · `web_test/application/<단위>`) · 기록 사본
+    (`.dddjango-web/**/application/<bc>`) · 뿌리 밖 중첩 컨테이너는 서버 BC 가 아니다. 고르면 화면 구역을 서버 규율로 재고,
+    같은 이름 구역 · 사본이 서버 BC 를 «타 BC» · «다른 앱» 으로 만든다(#505 · #331).
+    """
+
+    BC_CHECKERS: "tuple[str, ...]" = (
+        "check-layer-skeleton.py", "check-context-isolation.py", "check-test-config.py", "check-composition-root.py",
+        "check-db-table.py", "check-usecase-dto-placement.py", "check-transaction-boundary.py", "check-domain-model.py",
+        "check-port-adapter-pairing.py", "check-event-publish.py", "check-missable-entrance.py", "check-naming.py",
+        "check-business-vocabulary.py")
+    ERROR_CHECKERS: "tuple[str, ...]" = (
+        "check-api-error-controller-contract.py", "check-error-centralization.py", "check-openapi-error-declaration.py")
+    CHECKER_ARGS: "dict[str, tuple[str, ...]]" = {"check-api-error-controller-contract.py": ("--error-profile", "auto")}
+    NESTED_BAD_RULES: "tuple[str, ...]" = (
+        "composition_root", "api_error_controller", "error_centralization", "openapi_error_declaration",
+        "business_vocabulary", "naming", "missable_entrance")
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="field-root-bc-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root: Path = Path(self.tmp.name) / "project"
+        self.env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+                        DJR_FINDINGS_JSON=str(Path(self.tmp.name) / "records.jsonl"),
+                        DJR_VIOLATIONS_DIR=str(Path(self.tmp.name) / "violations"))
+
+    def lane(self, fixture: str) -> None:
+        shutil.copytree(FIXTURES / fixture, self.root)
+
+    def write(self, relative: str, text: str = "") -> None:
+        path: Path = self.root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def run_checker(self, script: str) -> "tuple[int, list[str]]":
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / script), str(self.root), *self.CHECKER_ARGS.get(script, ())],
+                                capture_output=True, text=True, env=self.env)
+        self.assertEqual(result.stderr, "", script)
+        return result.returncode, [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+    def web_unit(self, container: str, name: str) -> None:
+        """dddjango-web 화면 구역 꼴 — 간소화 DDD 4층(domain · application · infra · presentation)."""
+        package: str = container.replace("/", ".")
+        self.write(f"{container}/{name}/__init__.py")
+        self.write(f"{container}/{name}/domain_layer/{name}/{name}.py",
+                   f"from {package}.{name}.domain_layer.{name}.value_object.{name}_label import Label\n\n\n"
+                   "class Unit:\n    label: Label\n")
+        self.write(f"{container}/{name}/domain_layer/{name}/value_object/{name}_label.py", "class Label:\n    pass\n")
+        self.write(f"{container}/{name}/application_layer/{name}/use_case/{name}_use_case.py",
+                   "def run(code: int) -> None:\n    if code:\n        raise ValueError(code)\n")
+        self.write(f"{container}/{name}/infra_layer/data_source/{name}_data_source.py",
+                   "def fetch() -> dict:\n    return {}\n")
+        self.write(f"{container}/{name}/presentation_layer/view/{name}_view.py", "def view() -> None:\n    pass\n")
+
+    def test_sister_areas_and_nested_containers_leave_server_output_unchanged(self) -> None:
+        self.lane("skeleton/good_bc")
+        before: "dict[str, tuple[int, list[str]]]" = {script: self.run_checker(script) for script in self.BC_CHECKERS}
+        self.web_unit("web/application", "shop")
+        self.web_unit("web_test/application", "shop")
+        self.write("web_test/application/shop/fixtures/shop_fixture.py", "ROWS: list = []\n")
+        shutil.copytree(self.root / "application/orders", self.root / ".dddjango-web/run1/captures/baseline/application/orders")
+        self.web_unit("src/application", "legacy")
+        for script in self.BC_CHECKERS:
+            with self.subTest(script=script):
+                self.assertEqual(self.run_checker(script), before[script])
+
+    def test_same_name_web_unit_keeps_own_event_import_inside_the_bc(self) -> None:
+        self.lane("skeleton/good_bc")
+        self.write("application/orders/domain_layer/order/event/__init__.py")
+        self.write("application/orders/domain_layer/order/event/order_placed.py",
+                   '"""주문 접수 사실."""\nfrom dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass OrderPlaced:\n    order_id: str\n')
+        use_case: Path = self.root / "application/orders/application_layer/order/place_order/place_order_use_case.py"
+        use_case.write_text("from application.orders.domain_layer.order.event.order_placed import OrderPlaced\n"
+                            + use_case.read_text(encoding="utf-8"), encoding="utf-8")
+        self.web_unit("web/application", "orders")
+        _code, lines = self.run_checker("check-domain-model.py")
+        self.assertEqual([line for line in lines if "[#505]" in line], [])
+
+    def test_record_copy_of_a_server_app_is_not_a_second_app(self) -> None:
+        self.lane("db_table/good")
+        shutil.copytree(self.root / "application/orders", self.root / ".dddjango-web/run1/captures/baseline/application/orders")
+        code, lines = self.run_checker("check-db-table.py")
+        self.assertEqual(code, 0, lines)
+        self.assertEqual([line for line in lines if "[#331]" in line], [])
+
+    def test_layer_less_root_bc_meets_the_zero_target_guard_like_a_repo_without_web(self) -> None:
+        # 뿌리 BC 가 장고 표지만 가진 옮긴 옛 앱 꼴이면 층 0건 가드(#74)가 선다 — web 구역의 층이 그것을 가리지 않는다.
+        self.write("application/__init__.py")
+        self.write("application/legacy_shop/__init__.py")
+        self.write("application/legacy_shop/models.py",
+                   "from django.db import models\n\n\nclass Shop(models.Model):\n    name = models.CharField(max_length=10)\n")
+        without_web: "dict[str, tuple[int, list[str]]]" = {
+            script: self.run_checker(script) for script in ("check-domain-model.py", "check-port-adapter-pairing.py",
+                                                            "check-transaction-boundary.py", "check-event-publish.py",
+                                                            "check-usecase-dto-placement.py")}
+        self.web_unit("web/application", "shop")
+        self.assertEqual(self.run_checker("check-domain-model.py"),
+                         (2, ["blocker: 채택 신호는 있는데 domain_layer/application_layer 가 0건이다 — 조용한 무동작을 금지한다(#74)"]))
+        for script, expected in without_web.items():
+            with self.subTest(script=script):
+                code, lines = self.run_checker(script)
+                self.assertEqual((code, lines), expected)
+                self.assertEqual(code, 2)
+                self.assertTrue(any("#74" in line for line in lines), lines)
+
+    def test_server_import_of_a_web_unit_stays_an_other_bc_import(self) -> None:
+        self.lane("skeleton/good_bc")
+        self.web_unit("web/application", "shop")
+        self.write("application/orders/driving_layer/api/order/schema/web_peek.py",
+                   "from web.application.shop.domain_layer.shop.shop import Unit\n\n_N: str = Unit.__name__\n")
+        _code, lines = self.run_checker("check-context-isolation.py")
+        self.assertEqual([line for line in lines if "[#12]" in line], [
+            "[#12] application/orders/driving_layer/api/order/schema/web_peek.py: 타 BC 에서 부를 수 있는 것은 OHS·published_event 둘이다"
+            "(#83 — 이 import 는 BC 삭제 내성을 깬다) — `web.application.shop.domain_layer.shop.shop`",
+        ])
+
+    def test_import_of_a_name_found_only_in_a_record_copy_is_not_an_other_bc_import(self) -> None:
+        # 점 폴더(기록 사본)는 G2 · pre-gate 사본에 없다 — 그 안에만 있는 이름은 BC 이름이 아니므로 직접 실행도 #12 를 내지 않는다.
+        self.lane("skeleton/good_bc")
+        self.write(".dddjango-web/run1/captures/baseline/application/billing/domain_layer/billing/billing.py",
+                   "class Unit:\n    pass\n")
+        self.write("application/orders/driving_layer/api/order/schema/billing_peek.py",
+                   "from application.billing.domain_layer.billing.billing import Unit\n\n_N: str = Unit.__name__\n")
+        _code, lines = self.run_checker("check-context-isolation.py")
+        self.assertEqual([line for line in lines if "[#12]" in line], [])
+
+    def test_bad_bcs_in_a_nested_container_are_measured_only_by_whole_repo_scans(self) -> None:
+        # 뿌리 밖 `src/application/<bc>` 의 위반 BC 는 BC 마다 도는 검사의 대상이 아니다. 다만 저장소 전체 코드를 훑는
+        # composition-root #653 · openapi-error-declaration #63 은 그 코드 줄을 그대로 잰다.
+        self.lane("skeleton/good_bc")
+        for fixture in self.NESTED_BAD_RULES:
+            for bc in sorted((FIXTURES / fixture / "bad_rules/application").iterdir()):
+                if bc.is_dir():
+                    shutil.copytree(bc, self.root / "src/application" / f"{fixture}_{bc.name}")
+        wiring: str = ("`wiring_material` 낱말은 그 파일 자신과 같은 BC dependency_wiring.py 의 모듈째 import 한 줄 · "
+                       "`wiring_material.<재료>()` 호출에만 나온다")
+        extra: str = ("`openapi_extra` 의 responses 보충 — 오류 응답은 `response=` 에 그 status 의 실제 오류 타입 그대로 직접 선언한다"
+                      "(허용은 `response=` 에 선언된 성공 status 의 리터럴 메타데이터 보충뿐)")
+        order: str = "src/application/openapi_error_declaration_orders/driving_layer/api/order/order_controller.py"
+        promo: str = "src/application/openapi_error_declaration_orders/driving_layer/api/promo/promo_controller.py"
+        expected: "dict[str, tuple[int, list[str]]]" = {
+            "check-composition-root.py": (2, [
+                "[check-composition-root] BLOCKER — 표준 트리 결선·등록 규율 위반 (트리 2~4·9·10·137·138행):",
+                f"[#653] src/application/composition_root_orders/driving_layer/api/order/order_controller.py:6: {wiring}",
+                f"[#653] src/application/composition_root_orders/test/unit/test_place_order_material.py:5: {wiring}",
+                f"[#653] src/application/composition_root_shipping/composition_root/dependency_wiring.py:1: {wiring}",
+            ]),
+            "check-api-error-controller-contract.py": (0, []),
+            "check-error-centralization.py": (0, []),
+            "check-openapi-error-declaration.py": (2, [
+                "[check-openapi-error-declaration] BLOCKER — OpenAPI 오류 선언 규율 위반 (#63 · D27):",
+                f"[#63] {order}:15: {extra}",
+                f"[#63] {order}:19: `get_openapi_schema` override — 오류 응답은 operation 의 `response=` 직접 선언으로만 문서화한다",
+                f"[#63] {order}:23: `openapi_schema` monkeypatch — OpenAPI 를 사후 변형하지 않는다",
+                f"[#63] {promo}:18: {extra}",
+                f"[#63] {promo}:27: {extra}",
+                f"[#63] {promo}:36: {extra}",
+            ]),
+            "check-business-vocabulary.py": (0, []),
+            "check-naming.py": (0, []),
+            "check-missable-entrance.py": (0, []),
+        }
+        for script, want in expected.items():
+            with self.subTest(script=script):
+                self.assertEqual(self.run_checker(script), want)
+
+    def test_web_only_repo_has_no_server_bc_for_any_bc_checker(self) -> None:
+        # web 구역만 있는 저장소 — 서버 BC 가 없으니 검사기마다 미채택이거나 빈 출력이다(층 0건 가드 #74 도 서지 않는다).
+        self.web_unit("web/application", "shop")
+        not_adopted: "tuple[int, list[str]]" = (0, ["표준 레이아웃 미채택 — 검사 대상 없음 (clean)"])
+        expected: "dict[str, tuple[int, list[str]]]" = {script: (0, []) for script in self.BC_CHECKERS + self.ERROR_CHECKERS}
+        for script in ("check-layer-skeleton.py", "check-context-isolation.py", "check-test-config.py", "check-db-table.py",
+                       "check-usecase-dto-placement.py"):
+            expected[script] = not_adopted
+        for script, want in expected.items():
+            with self.subTest(script=script):
+                self.assertEqual(self.run_checker(script), want)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

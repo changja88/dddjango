@@ -1632,7 +1632,7 @@ class SelectionEquivalenceTest(unittest.TestCase):
     def walked(self, root: Path) -> "dict[str, set[tuple[str, ...]]]":
         """검사기 선택 그대로(사본 전체 훑기)."""
         sel: "dict[str, set[tuple[str, ...]]]" = {"ds": set(), "repo": set(), "ohs": set()}
-        for bc in self.dm.vocab.bc_dirs(root):
+        for bc in self.dm.vocab.server_bc_dirs(root):
             ds = bc / "domain_layer" / "domain_service"
             if self.dm._has_adoption_signal(bc) and ds.is_dir():
                 sel["ds"] |= {p.relative_to(root).parts for p in self.dm.checker_target.slot_glob(ds, "*.py")
@@ -1673,13 +1673,13 @@ class SelectionEquivalenceTest(unittest.TestCase):
         self.assertTrue(all(n > 200 for n in counts.values()), counts)
 
     def test_selection_does_not_walk_the_copy(self) -> None:
-        # 대상 칸이 있어도 사본 전체 훑기(`bc_dirs` · `_find_bcs` · `_tree_bcs2`)를 부르지 않는다 — 저장소 예보의 표준 라이브러리
+        # 대상 칸이 있어도 사본 전체 훑기(`server_bc_dirs` · `_find_bcs` · `_tree_bcs2`)를 부르지 않는다 — 저장소 예보의 표준 라이브러리
         # 가림 판단만 그것을 물을 때 한 번 훑는다(결과는 미리 잰 집합과 같다).
         with tempfile.TemporaryDirectory(prefix="pregate-nowalk-") as tmp:
             root = Path(tmp)
             _equivalence_tree(root, random.Random(7))
             walk = mock.Mock(side_effect=AssertionError("사본 전체 훑기"))
-            with mock.patch.object(self.dm.vocab, "bc_dirs", walk), mock.patch.object(self.tx, "_find_bcs", walk), \
+            with mock.patch.object(self.dm.vocab, "server_bc_dirs", walk), mock.patch.object(self.tx, "_find_bcs", walk), \
                     mock.patch.object(self.api, "_tree_bcs2", walk):
                 self.assertTrue(pg._domain_service_selected(self.dm, root, ("application", "garden", "domain_layer",
                                                                             "domain_service", "rule.py"))
