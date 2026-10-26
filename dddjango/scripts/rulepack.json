@@ -3552,7 +3552,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s007/b12": {
-      "h": "f0248bb49e22e10a",
+      "h": "97c2780ce61756b4",
       "n": 2,
       "works": [
         "R-0301",
@@ -4327,7 +4327,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s012/b15": {
-      "h": "00949121ccb8d9be",
+      "h": "a06ad82c3fbd950b",
       "n": 4,
       "works": [
         "R-3535",
@@ -14948,7 +14948,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "6d9ee4ffba29d5ac97a59e3f95d70686f21fe53f96979814f8f7f5557f65c091"
+      "sha256": "8464d28aac24395bceb0ef1078fb3d34fa03c65d989d7e31fda487d6995de2c9"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -84670,8 +84670,8 @@
       "block_order": 15,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3535@2026-10-04",
-      "label": "리팩토링 모드 G2 잔존 M = M_c + M_m — M_m 은 residual(결정적 바닥 + 렌즈별 잔존 확인 1회 · 해소 근거 = ` — ` 앞 새 위치 · 근거 판형 아님은 시각마다 같은 렌즈 재기재 1회 뒤 잔존 · 요지 축소 항목은 남긴 요지로 · 재상정 어휘 밖·요지 축소 정형 불비·# 앞 실행 절 밖 상시 답 출처 줄은 실행 불능)",
+      "expression": "https://numchida.com/ns/djr#R-3535@2026-10-27",
+      "label": "리팩토링 모드 G2 잔존 M = M_c + M_m(M_c 의 이동 따라 옮긴 줄 몫 = residual 의 M_c 이동 잔존 · 같은 C 한 번) — M_m 은 residual --gate-json <폴더>/introduced.json(모든 호출 · 묶음 이동 쌍의 이름 바꿈 + import 치환뿐 = 안 바뀜 · 결정적 바닥 + 렌즈별 잔존 확인 1회 · 해소 근거 = ` — ` 앞 새 위치 · 근거 판형 아님은 시각마다 같은 렌즈 재기재 1회 뒤 잔존 · 요지 축소 항목은 남긴 요지로 · 재상정 어휘 밖·요지 축소 정형 불비·# 앞 실행 절 밖 상시 답 출처 줄은 실행 불능)",
       "norm_kind": "Obligation",
       "order_rank": 1500,
       "overrides": [],
@@ -87733,7 +87733,7 @@
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
       "expression": "https://numchida.com/ns/djr#R-3705@2026-10-27",
-      "label": "6번 registry_gate 에 --group-moves <산출물 폴더>(build_anchor·approved-merges 일치) · 이동 따라 옮긴 legacy 는 보고(exit 밖) · 계산 밖 이동은 귀속 · 같은 때 folder_group verify --run — red 면 G2 미제시(창 밖 이동 → 되돌리고 끝 맞춤 · red 묶음 창 → 철회·열기 앞 확인 뒤 다시 · 자리 다름 → 끝 맞춤)",
+      "label": "6번 registry_gate 에 --group-moves <산출물 폴더>(build_anchor·approved-merges 일치) · --introduced-json <산출물 폴더>/introduced.json(리팩토링 모드 G2 residual --gate-json 입력) · 이동 따라 옮긴 legacy 는 보고(exit 밖) · 계산 밖 이동은 귀속 · 같은 때 folder_group verify --run — red 면 G2 미제시(창 밖 이동 → 되돌리고 끝 맞춤 · red 묶음 창 → 철회·열기 앞 확인 뒤 다시 · 자리 다름 → 끝 맞춤)",
       "norm_kind": "Obligation",
       "order_rank": 1272,
       "overrides": [],
