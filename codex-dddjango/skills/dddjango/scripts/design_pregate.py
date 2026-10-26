@@ -2594,17 +2594,35 @@ _STDLIB_PACKAGES: "frozenset[str]" = frozenset({
 })
 
 
+def _load_bundled(path: Path, module_name: str) -> ModuleType:
+    """번들 검사기 파일을 `module_name` 모듈로 싣는다(main 가드라 import 만으로 검사를 돌리지 않는다). 싣기 전에 `sys.modules` 에
+    올린다 — dataclass 는 클래스를 만들 때 `sys.modules[cls.__module__]` 를 찾는다(파이썬 3.12 ~ 3.14 는 없으면 실패). 싣다가 실패하면
+    이 적재가 올린 모듈만 걷고(앞서 있던 같은 이름 모듈은 되돌린다) 그 예외를 그대로 낸다."""
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    if spec is None or spec.loader is None:
+        raise ImportError("모듈 명세를 만들지 못했다")
+    module: ModuleType = importlib.util.module_from_spec(spec)
+    previous: "ModuleType | None" = sys.modules.get(module_name)
+    sys.modules[module_name] = module
+    try:
+        spec.loader.exec_module(module)
+    except BaseException:
+        if sys.modules.get(module_name) is module:
+            if previous is None:
+                del sys.modules[module_name]
+            else:
+                sys.modules[module_name] = previous
+        raise
+    return module
+
+
 def _transaction_checker() -> ModuleType:
-    """번들 `check-transaction-boundary.py` 를 한 번 로드한다(main 가드라 import 만으로 검사를 돌리지 않는다).
+    """번들 `check-transaction-boundary.py` 를 한 번 로드한다(`_load_bundled`).
     로드 실패는 실행 불능(RunError)이다 — 무출력 통과로 두지 않는다."""
     global _TRANSACTION_CHECKER_MODULE
     if _TRANSACTION_CHECKER_MODULE is None:
         try:
-            spec = importlib.util.spec_from_file_location("_pregate_transaction_boundary", TRANSACTION_CHECKER)
-            if spec is None or spec.loader is None:
-                raise ImportError("모듈 명세를 만들지 못했다")
-            module: ModuleType = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
+            module: ModuleType = _load_bundled(TRANSACTION_CHECKER, "_pregate_transaction_boundary")
         except (Exception, SystemExit) as exc:
             raise RunError(f"번들 검사기 로드 실패 — {TRANSACTION_CHECKER.name}: {exc}") from exc
         _TRANSACTION_CHECKER_MODULE = module
@@ -3079,15 +3097,11 @@ _DOMAIN_SERVICE_MOVED_QUESTION: str = ("이 자리에서 새로 들이는 위반
 
 
 def _bundled_checker(path: Path, module_name: str) -> ModuleType:
-    """번들 검사기를 한 번 로드한다(main 가드라 import 만으로 검사를 돌리지 않는다). 로드 실패는 실행 불능(RunError)이다."""
+    """번들 검사기를 한 번 로드한다(`_load_bundled`). 로드 실패는 실행 불능(RunError)이다."""
     key: str = str(path)
     if key not in _BUNDLED_CHECKERS:
         try:
-            spec = importlib.util.spec_from_file_location(module_name, path)
-            if spec is None or spec.loader is None:
-                raise ImportError("모듈 명세를 만들지 못했다")
-            module: ModuleType = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
+            module: ModuleType = _load_bundled(path, module_name)
         except (Exception, SystemExit) as exc:
             raise RunError(f"번들 검사기 로드 실패 — {path.name}: {exc}") from exc
         _BUNDLED_CHECKERS[key] = module
@@ -4243,11 +4257,7 @@ def _generated_admin_slots(root: Path, generated_methods: dict[str, list[Generat
     Loading our bundled checker does not import or execute inspected project code.
     Open helper annotations are only body-unverified evidence; names imply no role.
     """
-    spec = importlib.util.spec_from_file_location("_pregate_public_surface", SCRIPTS_DIR / "check-public-surface-annotation.py")
-    if spec is None or spec.loader is None:
-        return set()
-    checker = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(checker)
+    checker: ModuleType = _load_bundled(SCRIPTS_DIR / "check-public-surface-annotation.py", "_pregate_public_surface")
     slots: set[tuple[str, int, str]] = set()
     for path, generated in generated_methods.items():
         try:

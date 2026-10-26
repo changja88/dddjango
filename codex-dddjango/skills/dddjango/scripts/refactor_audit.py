@@ -3667,19 +3667,21 @@ def _doc_ids(tree: ast.AST) -> "set[int]":
 
 _LINE_ENDS: str = "\n\r\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029"      # str.splitlines 의 줄 끝 — 지운 글도 줄 번호가 같게
 # 주석 지우기 정규식은 글로만 두고 `re` 캐시로 처음 쓸 때 만든다(HTML 을 안 지우는 실행은 만들지 않는다).
-# Django 주석(엔진이 먼저 지운다) — `{# #}` 한 줄 · `{% comment %}` 닫는 태그까지 · `{% verbatim %}` 안은 글자 그대로(지우지 않음).
-_DJANGO_COMMENT: str = (
-    r"(?P<keep>\{%\s*verbatim\b[^%]*%\}(?:.*?\{%\s*endverbatim\b[^%]*%\}|.*))"
-    r"|\{#[^\n]*?#\}|\{%\s*comment(?:\s[^%]*)?%\}.*?\{%\s*endcomment\s*%\}")
-# HTML 낱말(왼쪽부터) — 닫힌 주석 · 날 글 요소(script · style · textarea · title — 닫는 태그까지) · 글 · 태그(따옴표 존중) · 템플릿 태그
-# 줄기 · 닫히지 않은 것(`stop`) — 날 글 요소 · 태그 · 템플릿 태그 안의 `<!--` 는 주석이 아니다.
+# Django 렉서 낱말(`django.template.base.tag_re` 와 같은 글 · re.S 없음 — 태그 · 변수 · 주석은 한 줄 안).
+_DJANGO_TAG: str = r"\{%.*?%\}|\{\{.*?\}\}|\{#.*?#\}"
+_DJANGO_CLOSE: "dict[str, str]" = {"%": "%}", "{": "}}", "#": "#}"}   # 여는 글 `{` 다음 글자 → 닫는 글
+_LONE_OPENER: str = r"\{(?=[{%#][^\n]{256})"                         # 줄 끝까지 256 자 이상 남은 여는 글(가까운 것은 훑어도 싸다)
+# HTML 낱말(왼쪽부터) — 닫힌 주석(`-->` · `--!>` · `<!-->` · `<!--->`) · 날 글 요소(닫는 태그까지 — 이름 뒤가 공백 · `/` · `>` 일 때만
+# 끝(브라우저 «맞는 끝 태그») · noscript 는 스크립트가 켜진 브라우저 꼴) · 글 · 태그(따옴표 존중) · 템플릿 태그 · 변수(한 줄 안 — 짝 없는
+# `{%` · `{{` 는 글자) · 닫히지 않은 것(`stop`) — 날 글 요소 · 태그 · 템플릿 태그 안의 `<!--` 는 주석이 아니다.
+_HTML_RAW: str = "script|style|textarea|title|xmp|iframe|noembed|noframes|noscript"
 _HTML_TOKEN: str = (
-    r"(?P<comment><!--(?:-?>|.*?-->))"
-    r"|<(?P<raw>script|style|textarea|title)(?![\w:-])[^\"'>]*(?:(?:\"[^\"]*\"|'[^']*')[^\"'>]*)*>.*?</(?P=raw)(?![\w:-])"
-    r"|(?P<stop><!--|<(?:script|style|textarea|title)(?![\w:-]))"
-    r"|(?:[^<{]+|<(?![A-Za-z/!?])|\{(?![%{])|\{%.*?%\}|\{\{.*?\}\}"
-    r"|<(?!!--)(?!(?:script|style|textarea|title)(?![\w:-]))[A-Za-z/!?][^\"'>]*(?:(?:\"[^\"]*\"|'[^']*')[^\"'>]*)*>)+"
-    r"|(?P<stop2><[A-Za-z/!?]|\{[%{])")
+    r"(?P<comment><!--(?:-?>|.*?--!?>))"
+    r"|<(?P<raw>" + _HTML_RAW + r")(?![\w:-])[^\"'>]*(?:(?:\"[^\"]*\"|'[^']*')[^\"'>]*)*>.*?</(?P=raw)(?=[\t\n\f\r />])"
+    r"|(?P<stop><!--|<(?:" + _HTML_RAW + r")(?![\w:-]))"
+    r"|(?:[^<{]+|<(?![A-Za-z/!?])|\{%[^\n]*?%\}|\{\{[^\n]*?\}\}|\{"
+    r"|<(?!!--)(?!(?:" + _HTML_RAW + r")(?![\w:-]))[A-Za-z/!?][^\"'>]*(?:(?:\"[^\"]*\"|'[^']*')[^\"'>]*)*>)+"
+    r"|(?P<stop2><[A-Za-z/!?])")
 
 
 def _blank(span: str) -> str:
@@ -3698,19 +3700,83 @@ def _line_starts(text: str) -> "list[int]":
     return starts[:-1] or [0]
 
 
+def _lone_openers_blanked(text: str) -> str:
+    """같은 줄 뒤에 닫는 글이 없는 `{%` · `{{` · `{#` 가운데 줄 끝까지 긴 것(`_LONE_OPENER`)의 `{` 를 `\\x00` 으로 바꾼 사본(글자 자리
+    그대로 · 낱말 판정 전용). 그런 여는 글은 Django 렉서 · HTML 낱말 모두 낱말을 만들지 못하고 글자로 넘기는데, 정규식은 그것을 알려고
+    자리마다 줄 끝까지 훑는다(긴 한 줄에 수천 개면 제곱 시간) — 미리 바꿔 같은 낱말을 선형 시간에 얻는다. 줄 끝이 가까운 것은 훑어도
+    싸서 두고, 바로 앞 `{` 와 이어 닫히는 `{{` 를 이루면 그 낱말을 깨지 않게 둔다(그 `{{` 가 이 자리를 삼키므로 정규식은 이 자리에서
+    시작하지 않는다)."""
+    marks: "list[int]" = []
+    line_start: int = 0
+    line_end: int = -1
+    last: "dict[str, int]" = {}                            # 이 줄에서 닫는 글이 마지막으로 시작하는 자리
+    prev: int = -2                                         # 바로 앞에 본 여는 글 자리 · 그것이 닫히는가
+    prev_closed: bool = False
+    for m in re.finditer(_LONE_OPENER, text):
+        p: int = m.start()
+        if p > line_end:
+            line_start = text.rfind("\n", 0, p) + 1
+            line_end = text.find("\n", p)
+            line_end = len(text) if line_end < 0 else line_end
+            last = {}
+        kind: str = text[p + 1]
+        if kind not in last:
+            last[kind] = text.rfind(_DJANGO_CLOSE[kind], line_start, line_end)
+        closed: bool = last[kind] >= p + 2
+        if not closed and not (prev == p - 1 and prev_closed):
+            marks.append(p)
+        prev, prev_closed = p, closed
+    if not marks:
+        return text
+    return "\x00".join(text[a + 1:b] for a, b in zip([-1, *marks], [*marks, len(text)]))
+
+
+def _mask_django(text: str) -> str:
+    """Django 엔진이 지우는 주석을 공백으로 지운 글 — 렉서(`tag_re` 낱말 · verbatim)와 파서(`comment` 태그 = `skip_past("endcomment")`)
+    꼴 그대로: `{# #}` 낱말 · `{% comment … %}` 부터 그 뒤 첫 `{% endcomment %}` 낱말까지(없으면 Django 오류라 지우지 않는다).
+    `{% verbatim[ 이름] %}` 부터 이름까지 같은 `{% endverbatim[ 이름] %}` 까지는 글자 낱말(주석도 태그도 아님)."""
+    out: "list[str]" = []
+    last: int = 0
+    verbatim: str = ""
+    opened: int = -1                                       # 열린 `{% comment %}` 의 자리
+    for m in re.finditer(_DJANGO_TAG, _lone_openers_blanked(text)):
+        token: str = m.group(0)                            # 낱말 처음 두 글자는 바뀌지 않는다 — 안쪽 글은 원문에서 읽는다
+        start: int = -1
+        if token[1] == "%":
+            content: str = text[m.start() + 2:m.end() - 2].strip()
+            if verbatim:
+                if content != verbatim:
+                    continue
+                verbatim = ""
+            elif content[:9] in ("verbatim", "verbatim "):
+                verbatim = "end" + content
+            if opened >= 0:
+                if content == "endcomment":
+                    start, opened = opened, -1
+            elif content.split()[:1] == ["comment"]:
+                opened = m.start()
+        elif token[1] == "#" and not verbatim and opened < 0:
+            start = m.start()
+        if start >= 0:
+            out += [text[last:start], _blank(text[start:m.end()])]
+            last = m.end()
+    out.append(text[last:])
+    return "".join(out)
+
+
 def _mask_html(text: str) -> str:
-    """HTML · Django 주석을 공백으로 지운 글(줄 끝 · 글자 자리 그대로) — Django 주석 먼저 · HTML 주석은 `_HTML_TOKEN` 낱말로 가린다 ·
-    닫히지 않은 것을 만나면 그 뒤는 지우지 않는다(모를 때 원문)."""
-    if "{#" in text or "{%" in text:
-        text = re.sub(_DJANGO_COMMENT, lambda m: m.group(0) if m.group("keep") else _blank(m.group(0)), text, flags=re.S)
+    """HTML · Django 주석을 공백으로 지운 글(줄 끝 · 글자 자리 그대로) — Django 주석 먼저(`_mask_django`) · HTML 주석은 `_HTML_TOKEN`
+    낱말로 가린다 · 닫히지 않은 것을 만나면 그 뒤는 지우지 않는다(모를 때 원문)."""
+    if "{#" in text or ("{%" in text and "comment" in text):
+        text = _mask_django(text)
     if "<!--" not in text:
         return text
     out: "list[str]" = []
     last: int = 0
-    for m in re.finditer(_HTML_TOKEN, text, re.S | re.I):
+    for m in re.finditer(_HTML_TOKEN, _lone_openers_blanked(text), re.S | re.I):
         kind: "str | None" = m.lastgroup                   # comment · raw(날 글 요소) · stop · stop2 · None(글 · 태그 · 템플릿 태그 줄기)
         if kind == "comment":
-            out += [text[last:m.start()], _blank(m.group(0))]
+            out += [text[last:m.start()], _blank(text[m.start():m.end()])]
             last = m.end()
         elif kind is not None and kind != "raw":
             break

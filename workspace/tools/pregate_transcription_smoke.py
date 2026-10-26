@@ -4,7 +4,8 @@
 삭제 정리 제거, decorator 유실, TYPE_CHECKING 평탄화가 각각 이 검증을 red로 만든다.
 반대 대조군은 전역 빈 폴더 정리와 무조건 dataclass/admin 면제를 잡는다.
 F4-115 — update 도메인 서비스 서명(#304 · #305 · #307 · #308)과 OHS 번역 출처 칸(#474 · #62)의 선언 예보를 실검사기 판정 ·
-후상태 줄 수와 대조한다(`DomainServiceForecastTest` · `CatchForecastTest`).
+후상태 줄 수와 대조한다(`DomainServiceForecastTest` · `CatchForecastTest`). 번들 검사기는 싣는 동안 `sys.modules` 에 있고 실패하면
+이 적재가 올린 것만 걷는다(`BundledCheckerLoadTest` — 파이썬 판과 무관한 단언).
 """
 from __future__ import annotations
 
@@ -1476,7 +1477,7 @@ class CatchForecastTest(GardenFixture):
     def test_existing_catch_debt_is_keyed_by_the_catch_that_raises_the_published_exception(self) -> None:
         # 구현 검토 I1 · I1′ — 기존 빚 열쇠: 기준선 창구에 그 규칙 줄을 낸 catch(빚 catch)가 있으면 행의 published 예외를 누가 내는지로
         # 그 행이 고칠 catch 를 가린다. #474 는 같은 출처를 잡는 catch 만 · #62 는 어느 catch-all 빚이든(이름 무관). ① 빚 catch 가 냄 →
-        # 후보 ② 빚 없는 catch 가 냄 → 확정 ③ 둘 다 아님 → 후보. 여덟 꼴과 실검사기 줄 수(기준선 → 구현 뒤).
+        # 후보 ② 빚 없는 catch 가 냄 → 확정 ③ 둘 다 아님 → 후보. 여덟 꼴 · 열쇠 변이를 막는 여덟과 실검사기 줄 수(기준선 → 구현 뒤).
         peek = ("\n\ndef peek_plant_query(name: str) -> str:\n    try:\n        return _read(name)\n"
                 "    except PlantUnreadable as {bound}:\n        print({bound})\n        return ''\n")
         clean_catch = "    except PlantUnreadable:\n"
@@ -1488,6 +1489,26 @@ class CatchForecastTest(GardenFixture):
                                        "    except BaseException:\n        return ''\n")
         gone_exc = f"{CATALOG}/contract/exception/plant_gone_exception.py"
         row_474 = f"PlantUnavailableException  {CATALOG_SERVICE}  <= PlantUnreadable as"
+        gone_import = UNREADABLE_IMPORT.replace("plant_unreadable import PlantUnreadable", "plant_gone import PlantGone")
+        other_source = CATALOG_BASELINE.replace(f"{UNREADABLE_IMPORT}\n", f"{UNREADABLE_IMPORT}\n{gone_import}\n") + (
+            "\n\ndef gone_plant_query(name: str) -> str:\n    try:\n        return _read(name)\n"
+            "    except PlantGone as gone:\n        print(gone)\n        raise PlantUnavailableException() from None\n")
+        bare = CATALOG_BASELINE.replace(clean_catch, "    except:\n")
+        tupled = CATALOG_BASELINE.replace(clean_catch, "    except (PlantUnreadable, ValueError) as unreadable:\n        print(unreadable)\n")
+        gone_exc_import = ("from application.garden.driving_layer.open_host_service.catalog.contract.exception.plant_gone_exception "
+                           "import PlantGoneException")
+        debt_to_gone = CATALOG_BASELINE.replace(f"{UNREADABLE_IMPORT}\n", f"{UNREADABLE_IMPORT}\n{gone_import}\n{gone_exc_import}\n").replace(
+            "    except PlantUnreadable:\n        raise PlantUnavailableException() from None\n",
+            "    except PlantUnreadable as unreadable:\n        print(unreadable)\n        raise PlantGoneException() from None\n") + (
+            "\n\ndef gone_plant_query(name: str) -> str:\n    try:\n        return _read(name)\n"
+            "    except PlantGone:\n        raise PlantUnavailableException() from None\n")
+        both = debt_474 + ("\n\ndef peek_plant_query(name: str) -> str:\n    try:\n        return _read(name)\n"
+                           "    except PlantUnreadable:\n        raise PlantUnavailableException() from None\n")
+        bare_raise = debt_474.replace("raise PlantUnavailableException() from None", "raise PlantUnavailableException from None")
+        dotted = debt_474.replace(f"{UNREADABLE_IMPORT}\n", f"{UNREADABLE_IMPORT}\n"
+                                  "from application.garden.domain_layer.plant.exception import plant_unreadable as errors\n").replace(
+            "    except PlantUnreadable as unreadable:\n", "    except errors.PlantUnreadable as unreadable:\n")
+        again = ("        print(unreadable)\n", "        print(unreadable)\n        print('again')\n")
         for label, baseline, implemented, row, paths, symbols, confirmed, why, rule, lines in [
             ("C1b 빚 catch 의 본문만 바꿈 — ①", debt_474, debt_474.replace("        print(unreadable)\n",
                                                                        "        print(unreadable)\n        print('again')\n"),
@@ -1515,13 +1536,41 @@ class CatchForecastTest(GardenFixture):
              catch_all.replace("    except BaseException:\n", "    except Exception:\n"),
              f"PlantUnavailableException  {CATALOG_SERVICE}  <= Exception", None, [], False,
              "#62 빚 catch(`read_plant_query` 의 `except BaseException`)가 이 행의 published 예외", "#62", (1, 1)),
+            # 열쇠를 넓히거나 규칙끼리 섞는 변이를 막는 꼴 — 다른 출처 catch 의 #474 빚 · #474 빚과 #62 행 · bare `except:` · 튜플 catch.
+            ("N1 다른 예외를 잡는 catch 의 #474 빚은 같은 published 예외를 내도 낮추지 않음 — 빚 없음", other_source,
+             other_source.replace(clean_catch, logged, 1), row_474, None, [], True, "", "#474", (1, 2)),
+            ("N2 #474 빚은 #62 행을 낮추지 않음 — 빚 없음", debt_474, debt_474.replace(logged, "    except Exception:\n"),
+             f"PlantUnavailableException  {CATALOG_SERVICE}  <= Exception", None, [], True, "", "#62", (0, 1)),
+            ("N3 bare `except:` 빚 + `<= BaseException as` — ①", bare,
+             bare.replace("    except:\n", "    except BaseException as error:\n        print(error)\n"),
+             f"PlantUnavailableException  {CATALOG_SERVICE}  <= BaseException as", None, [], False,
+             "#62 빚 catch(`read_plant_query` 의 `except`)가 이 행의 published 예외", "#62", (1, 1)),
+            ("N4 튜플 catch 의 #474 빚 — ①", tupled,
+             tupled.replace("        print(unreadable)\n", "        print(unreadable)\n        print('again')\n"), row_474, None, [],
+             False, "#474 빚 catch(`read_plant_query` 의 `except (PlantUnreadable, ValueError) as unreadable`)가 이 행의 published 예외",
+             "#474", (1, 1)),
+            ("N5 다른 출처 catch 가 published 예외를 내도 #474 ② 로 보지 않음 — ③", debt_to_gone,
+             debt_to_gone.replace("raise PlantGoneException() from None", "raise PlantUnavailableException() from None"), row_474, None,
+             [], False, "published 예외 `PlantUnavailableException` 를 내는 같은 출처를 잡는 catch 는 없다", "#474", (1, 1)),
+            ("N6 빚 catch 와 빚 없는 catch 가 같은 published 예외를 냄 — ①(② 보다 먼저)", both, both.replace(clean_catch, logged), row_474,
+             None, [], False, "#474 빚 catch(`read_plant_query` 의 `except PlantUnreadable as unreadable`)가 이 행의 published 예외",
+             "#474", (1, 2)),
+            ("N7 빚 catch 가 published 예외를 부르지 않고 냄(`raise X from None`) — ①", bare_raise, bare_raise.replace(*again), row_474,
+             None, [], False, "#474 빚 catch(`read_plant_query` 의 `except PlantUnreadable as unreadable`)가 이 행의 published 예외",
+             "#474", (1, 1)),
+            ("N8 점 이름 catch(`except errors.PlantUnreadable as`)의 #474 빚 — ①", dotted, dotted.replace(*again), row_474, None, [],
+             False, "#474 빚 catch(`read_plant_query` 의 `except errors.PlantUnreadable as unreadable`)가 이 행의 published 예외",
+             "#474", (1, 1)),
         ]:
             with self.subTest(label=label):
+                self.write(f"{GARDEN}/domain_layer/plant/exception/plant_gone.py", "class PlantGone(Exception):\n    pass\n")
                 self.write(gone_exc, "class PlantGoneException(Exception):\n    pass\n")
                 self.write(CATALOG_SERVICE, baseline)
                 found, _ = self.forecast([row], paths=paths, symbols=symbols)
                 self.assertEqual([(f.rule, f.confirmed) for f in found], [(rule, confirmed)])
                 self.assertIn(why, found[0].detail)
+                if not why:
+                    self.assertNotIn("빚 catch", found[0].detail)
                 self.assertNotIn("G2 도 0", found[0].detail)
                 self.assertNotIn("기존 줄로 본다", found[0].detail)
                 if not confirmed:
@@ -1539,6 +1588,77 @@ class CatchForecastTest(GardenFixture):
         found, _ = self.forecast([f"PlantUnavailableException  {added}  <= PlantUnreadable as"], paths=[f"add {added}"],
                                  imports=[f"{added}  {UNREADABLE_IMPORT}"])
         self.assertEqual([(f.rule, f.confirmed) for f in found], [("#474", True)])
+        # 기준선 판정의 사건 좌표를 catch 에 맞추지 못하면(좌표 수가 판정 수와 다름) 기존 빚인지 가를 수 없다 — 확정하지 않고 묻는다.
+        ck = pg._bundled_checker(pg.API_ERROR_CHECKER, "_pregate_api_error_contract")
+        real_slice = ck._slice_check_controller_ast
+
+        def unmatched(*args: object) -> None:
+            real_slice(*args)
+            args[4].append(None)
+
+        self.write(CATALOG_SERVICE, debt_474)
+        with mock.patch.object(ck, "_slice_check_controller_ast", unmatched):
+            found, _ = self.forecast([row_474])
+        self.assertEqual([(f.rule, f.confirmed) for f in found], [("#474", False)])
+        self.assertIn("기준선 창구의 #474 줄을 catch 에 맞추지 못했다(기존 빚인지 가를 수 없다)", found[0].detail)
+
+
+class BundledCheckerLoadTest(unittest.TestCase):
+    """번들 검사기 적재 세 곳(`_bundled_checker` · `_transaction_checker` · `_generated_admin_slots`)은 싣는 동안 `sys.modules` 에
+    올린다 — dataclass 가 클래스를 만들 때 그 모듈을 찾는다(파이썬 3.12 ~ 3.14). 가짜 검사기가 «싣는 동안 sys.modules 에 없으면»
+    스스로 실패하므로 판과 무관하게 가린다. 실패한 적재는 자기가 올린 모듈만 걷고 앞서 실린 같은 이름 모듈은 되돌린다."""
+
+    NAMES: "tuple[str, ...]" = ("_pregate_load_probe", "_pregate_transaction_boundary", "_pregate_public_surface")
+
+    def setUp(self) -> None:
+        tmp = tempfile.TemporaryDirectory(prefix="pregate-load-")
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        saved: "dict[str, object]" = {name: sys.modules.get(name) for name in self.NAMES}
+
+        def restore() -> None:
+            for name, module in saved.items():
+                if module is None:
+                    sys.modules.pop(name, None)
+                else:
+                    sys.modules[name] = module
+
+        self.addCleanup(restore)
+
+    def fake(self, name: str) -> Path:
+        path = self.root / name
+        path.write_text("import sys\nfrom dataclasses import dataclass\n\nif sys.modules.get(__name__) is None:\n"
+                        "    raise ImportError('싣는 동안 sys.modules 에 없다')\n\n\n@dataclass\nclass Row:\n    rule: 'str'\n",
+                        encoding="utf-8")
+        return path
+
+    def test_every_load_site_registers_the_checker_while_loading(self) -> None:
+        with mock.patch.dict(pg._BUNDLED_CHECKERS, clear=True):
+            module = pg._bundled_checker(self.fake("check-probe.py"), "_pregate_load_probe")
+        self.assertIs(sys.modules.get("_pregate_load_probe"), module)
+        self.assertEqual(module.Row("#1").rule, "#1")
+        with mock.patch.object(pg, "TRANSACTION_CHECKER", self.fake("check-transaction-boundary.py")), \
+                mock.patch.object(pg, "_TRANSACTION_CHECKER_MODULE", None):
+            module = pg._transaction_checker()
+            self.assertIs(sys.modules.get("_pregate_transaction_boundary"), module)
+        self.fake("check-public-surface-annotation.py")
+        with mock.patch.object(pg, "SCRIPTS_DIR", self.root):
+            self.assertEqual(pg._generated_admin_slots(self.root, {}), set())
+        self.assertEqual(sys.modules["_pregate_public_surface"].__file__, str(self.root / "check-public-surface-annotation.py"))
+
+    def test_failed_load_removes_only_its_own_module(self) -> None:
+        bad = self.root / "check-bad.py"
+        bad.write_text("raise ValueError('깨진 검사기')\n", encoding="utf-8")
+        with mock.patch.dict(pg._BUNDLED_CHECKERS, clear=True):
+            sys.modules.pop("_pregate_load_probe", None)
+            with self.assertRaises(pg.RunError):
+                pg._bundled_checker(bad, "_pregate_load_probe")
+            self.assertNotIn("_pregate_load_probe", sys.modules)
+            good = pg._bundled_checker(self.fake("check-probe.py"), "_pregate_load_probe")
+            pg._BUNDLED_CHECKERS.clear()
+            with self.assertRaises(pg.RunError):
+                pg._bundled_checker(bad, "_pregate_load_probe")
+            self.assertIs(sys.modules.get("_pregate_load_probe"), good)
 
 
 class ForecastScopeTest(GardenFixture):
