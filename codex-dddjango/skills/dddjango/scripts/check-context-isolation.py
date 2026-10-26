@@ -22,6 +22,7 @@ Kernel 없음)·#83(BC 삭제 내성)은 아래 각론 진단이 집행한다.
          #633 인자는 request 하나 · #634 공개 표면은 함수만 · #295 raw 재노출 금지
   ACL    #361 상대 BC 하나=폴더 하나 · #363 클래스명 <Bc><Capability>Adapter
          #364 포트 파일명에 공급자 BC 금지 · #450 상호 ACL 금지 · #473 기저 예외를 잡는다
+         (상대 창구 코드가 돌 수 있는 try 만 — 모르면 돈다고 본다 · 2026-10-26)
          (#151·#364 의 «타 BC 이름» = 같은 `application/` 컨테이너의 BC — 자매 플러그인
          `web/application/<단위>` 같은 다른 컨테이너의 폴더 이름은 세지 않는다)
   기타   #14 `with unit_of_work:` 안에서 크로스-BC 포트 호출 금지 · #110 auto_import=False
@@ -55,6 +56,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import builtins
 import re
 import sys
 
@@ -787,6 +789,132 @@ def _acl_dir(bc: Path) -> Path | None:
     return cand_path if cand_path.is_dir() else None
 
 
+# #473 — 이름 · 값을 거쳐 아무 코드에나 닿는 내장(이름으로 속성 찾기 · 반복기 한 칸 읽기 · 동적 실행)은 «알려진 바깥» 이 아니다.
+_REACHING_BUILTINS: frozenset[str] = frozenset({
+    "super", "type", "getattr", "hasattr", "setattr", "delattr", "vars", "globals", "locals",
+    "__import__", "eval", "exec", "next", "iter", "anext", "aiter"})
+# #473 — 넘긴 값을 끝까지 읽거나 넘긴 함수를 부르는 내장. 바깥 아닌 맨 이름(창구가 돌려준 생성기 · 창구 함수를
+# 담았을 수 있다)을 넘기면 창구 코드가 돌 수 있다고 본다.
+_CONSUMING_BUILTINS: frozenset[str] = frozenset({
+    "list", "tuple", "set", "frozenset", "dict", "bytes", "bytearray", "sorted", "reversed", "sum", "min", "max",
+    "any", "all", "enumerate", "zip", "map", "filter"})
+
+
+def _covers_base(node: ast.Try, base_names: set[str]) -> bool:
+    """마지막 except 가 상대 창구의 기저 예외를 잡나."""
+    return bool(node.handlers) and bool(_ann_idents(node.handlers[-1].type) & base_names)
+
+
+def _reraises(node: ast.Try) -> bool:
+    """처리기 안에 잡은 예외를 그대로 다시 던지는 `raise` · `raise <잡은 이름>` 이 있나."""
+    return any(
+        isinstance(r, ast.Raise) and (r.exc is None or (isinstance(r.exc, ast.Name) and r.exc.id == h.name))
+        for h in node.handlers for r in ast.walk(h)
+    )
+
+
+def _tries(node: ast.AST, owner: str):
+    """(try, 둘러싼 `클래스.함수`) 를 소스 차례로 — 진단 꼬리용."""
+    for child in ast.iter_child_nodes(node):
+        if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            yield from _tries(child, f"{owner}.{child.name}" if owner else child.name)
+            continue
+        if isinstance(child, ast.Try) and child.handlers:
+            yield child, owner
+        yield from _tries(child, owner)
+
+
+def _root(expr: ast.expr) -> str | None:
+    """`a.b[c](d).e` 의 뿌리 이름 `a` — 뿌리가 이름이 아니면(글자 · 식) None."""
+    while isinstance(expr, (ast.Attribute, ast.Subscript, ast.Call)):
+        expr = expr.func if isinstance(expr, ast.Call) else expr.value
+    return expr.id if isinstance(expr, ast.Name) else None
+
+
+class _WindowTry:
+    """기저를 안 잡는 try 에서 상대 창구 코드가 돌 수 있나(#473) — 모르면 돈다고 본다.
+
+    안 돈다 = 몸통(기저를 잡고 다시 던지지 않는 안쪽 try 의 몸통은 뺀다)에서
+      ① 창구 · ACL 안 import 이름 · 같은 파일 함수/클래스 이름이 글자로 없고(인자 · 람다 안 포함 — 콜백이 잡힌다)
+      ② 모든 호출 · with · 반복 · await · yield from 대상의 뿌리가 «알려진 바깥» 이고
+         (내장 · 창구 밖 import · 그것으로만 지은 모듈 상수 — 파일 안에서 다시 묶이지 않은 이름)
+      ③ self · cls 의 속성 · 같은 파일 함수 이름의 속성 · 같은 파일에서 값을 담는 속성을 읽지 않고
+      ④ 넘긴 값을 읽거나 넘긴 함수를 부르는 내장에 바깥 아닌 맨 이름을 넘기지 않을 때뿐이다.
+    알려진 바깥 함수는 넘겨받은 맨 이름(지역 · 매개변수)과 그 칸을 자료로 쓴다고 본다 — 이 판정의 한계다.
+    """
+
+    def __init__(self, mod: ast.Module, base_names: set[str]) -> None:
+        self.base_names: set[str] = base_names
+        self.defs: set[str] = set()
+        self.holders: set[str] = set()  # 파일 안에서 값을 담는 속성 이름(`x.a = …` · 클래스 몸통 `a = …`) — 창구를 담았을 수 있다
+        self.inside: set[str] = set()
+        outside: set[str] = set()
+        bound: dict[str, int] = {}  # 파일 안에서 묶인 횟수(대입 · 매개변수 · def)
+        for n in ast.walk(mod):
+            if isinstance(n, ast.Import):
+                for a in n.names:
+                    parts: list[str] = a.name.split(".")
+                    window: bool = "open_host_service" in parts and "contract" not in parts
+                    (self.inside if window else outside).add(a.asname or parts[0])
+            elif isinstance(n, ast.ImportFrom):
+                local: bool = n.level > 0 or "anticorruption_layer" in (n.module or "").split(".")
+                for a in n.names:
+                    parts = f"{n.module}.{a.name}".split(".")
+                    window = n.level == 0 and "open_host_service" in parts and "contract" not in parts
+                    (self.inside if local or window else outside).add(a.asname or a.name)
+            elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                self.defs.add(n.name)
+                bound[n.name] = bound.get(n.name, 0) + 1
+                for item in n.body if isinstance(n, ast.ClassDef) else []:
+                    targets: list[ast.expr] = (item.targets if isinstance(item, ast.Assign)
+                                               else [item.target] if isinstance(item, ast.AnnAssign) else [])
+                    self.holders.update(t.id for t in targets if isinstance(t, ast.Name))
+            elif isinstance(n, ast.Attribute) and isinstance(n.ctx, ast.Store):
+                self.holders.add(n.attr)
+            elif isinstance(n, ast.Name) and not isinstance(n.ctx, ast.Load):
+                bound[n.id] = bound.get(n.id, 0) + 1
+            elif isinstance(n, ast.arg):
+                bound[n.arg] = bound.get(n.arg, 0) + 1
+        self.inside |= self.defs
+        self.known: set[str] = (outside | set(dir(builtins))) - _REACHING_BUILTINS - self.inside - set(bound)
+        for stmt in mod.body:  # 모듈 상수 — 한 번만 묶였고 값을 알려진 바깥으로만 지었다(람다 없음)
+            target: ast.expr | None = None
+            if isinstance(stmt, ast.Assign) and len(stmt.targets) == 1:
+                target = stmt.targets[0]
+            elif isinstance(stmt, ast.AnnAssign) and stmt.value is not None:
+                target = stmt.target
+            if isinstance(target, ast.Name) and bound.get(target.id) == 1 and all(
+                    not isinstance(x, ast.Lambda) and (not isinstance(x, ast.Name) or x.id in self.known)
+                    for x in ast.walk(stmt.value)):
+                self.known.add(target.id)
+
+    def may_run_window(self, node: ast.Try) -> bool:
+        stack: list[ast.AST] = list(node.body)
+        while stack:
+            n: ast.AST = stack.pop()
+            if isinstance(n, ast.Try) and _covers_base(n, self.base_names) and not _reraises(n):
+                stack.extend([*n.handlers, *n.orelse, *n.finalbody])  # 몸통의 창구 예외는 안쪽 try 에서 끝난다
+                continue
+            if self._runs(n):
+                return True
+            stack.extend(ast.iter_child_nodes(n))
+        return False
+
+    def _runs(self, n: ast.AST) -> bool:
+        """이 마디에서 «알려진 바깥» 밖의 코드가 돌 수 있나."""
+        if isinstance(n, ast.Name):
+            return n.id in self.inside
+        if isinstance(n, ast.Attribute):  # 메서드 · property · 담아 둔 창구(콜백) — 매개변수 · 지역 · 받은 값의 칸은 자료로 본다
+            return n.attr in self.defs or n.attr in self.holders or _root(n) in ("self", "cls")
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in _CONSUMING_BUILTINS and any(
+                isinstance(a, ast.Name) and a.id not in self.known for a in [*n.args, *(k.value for k in n.keywords)]):
+            return True
+        ran: ast.expr | None = (n.func if isinstance(n, ast.Call) else n.context_expr if isinstance(n, ast.withitem)
+                                else n.iter if isinstance(n, (ast.For, ast.AsyncFor, ast.comprehension))
+                                else n.value if isinstance(n, (ast.Await, ast.YieldFrom)) else None)
+        return ran is not None and _root(ran) not in self.known
+
+
 def _check_acl(acl: Path, bc: Path, bc_rel: Path, out: Findings) -> set[str]:
     rel0 = bc_rel / acl.relative_to(bc)
     dirs, files = _entries(acl)
@@ -830,11 +958,15 @@ def _check_acl(acl: Path, bc: Path, bc_rel: Path, out: Findings) -> set[str]:
             if not base_names:
                 out.add("#473", rel, "ACL 어댑터는 상대 창구의 «기저 예외»를 반드시 잡는다 — 기저(`*_published_error`) import 가 없다")
                 continue
-            for node in ast.walk(mod):
-                if isinstance(node, ast.Try) and node.handlers:
-                    last = node.handlers[-1]
-                    if not (_ann_idents(last.type) & base_names):
-                        out.add("#473", rel, "try 의 마지막 except 에 상대 창구의 기저 예외가 있어야 한다(#167 짝 — 둘이 닫혀야 약속이 선다)")
+            reach: _WindowTry | None = None  # 기저를 안 잡는 try 가 있을 때만 짓는다
+            for node, owner in _tries(mod, ""):
+                if _covers_base(node, base_names):
+                    continue
+                reach = reach or _WindowTry(mod, base_names)
+                if reach.may_run_window(node):
+                    out.add("#473", f"{rel}:{node.lineno}",
+                            "try 의 마지막 except 에 상대 창구의 기저 예외가 있어야 한다(#167 짝 — 둘이 닫혀야 약속이 선다)"
+                            f" — 상대 창구가 돌 수 있는 try · `{owner or '모듈'}`")
     return partners
 
 
