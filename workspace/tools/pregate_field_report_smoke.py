@@ -1076,20 +1076,21 @@ class BookAdmin(TranslatableAdmin):
         self.assertEqual((self.source / ORDER_REPOSITORY).read_text(), original)
 
     def test_repository_source_root_package_is_not_a_standard_library_origin(self):
-        nested = f'src/{ORDER_REPOSITORY}'
-        self.write(self.source, nested, ('from abc import ABC, abstractmethod\n'
-                                         'from calendar.read_models import CalendarSummary\n\n\n'
-                                         'class OrderRepository(ABC):\n    pass\n'))
-        self.write(self.source, f'src/{ORDER_DOMAIN}/order.py', 'class Order:\n    pass\n')
-        self.write(self.source, 'src/calendar/__init__.py', '')
-        self.write(self.source, 'src/calendar/read_models.py', 'class CalendarSummary:\n    pass\n')
+        # source root 는 저장소 루트다(검사기가 고르는 BC 는 뿌리 `application/` 에만 있다) — 그 아래 패키지 `calendar` 가 표준
+        # 라이브러리 이름을 가린다.
+        self.write(self.source, ORDER_REPOSITORY, ('from abc import ABC, abstractmethod\n'
+                                                   'from calendar.read_models import CalendarSummary\n\n\n'
+                                                   'class OrderRepository(ABC):\n    pass\n'))
+        self.write(self.source, f'{ORDER_DOMAIN}/order.py', 'class Order:\n    pass\n')
+        self.write(self.source, 'calendar/__init__.py', '')
+        self.write(self.source, 'calendar/read_models.py', 'class CalendarSummary:\n    pass\n')
         _git(self.source, 'add', '-A')
-        _git(self.source, 'commit', '-qm', 'src layout fixture')
-        text = spec_text([f'update {nested}'], [f'{nested}::OrderRepository(ABC)',
-                         f'{nested}::OrderRepository.calendar_summary() -> CalendarSummary'])
+        _git(self.source, 'commit', '-qm', 'source root package fixture')
+        text = spec_text([f'update {ORDER_REPOSITORY}'], [f'{ORDER_REPOSITORY}::OrderRepository(ABC)',
+                         f'{ORDER_REPOSITORY}::OrderRepository.calendar_summary() -> CalendarSummary'])
         run, report = self.cli(text)
         self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
-        self.assertNotIn(nested, pg._subsection(report, '선언 확정'))
+        self.assertNotIn(ORDER_REPOSITORY, pg._subsection(report, '선언 확정'))
         self.assertIn('OrderRepository.calendar_summary: `calendar_summary` 반환 `CalendarSummary` 이 애그리거트도 값 객체도 '
                       '아니다 — 예보 불확정: 반환 이름 `CalendarSummary` 출처 미해소(기준선에만 있는 출처',
                       pg._subsection(report, '선언 후보'))

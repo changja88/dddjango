@@ -609,22 +609,23 @@ class RepositoryForecastTest(unittest.TestCase):
         self.assertIn(BASELINE_ONLY, found[0].detail)
 
     def test_source_root_package_shadowing_a_standard_library_name_is_a_project_origin(self) -> None:
-        nested = f"src/{ORDER_REPOSITORY}"
-        order = dict(path=nested, owner="OrderRepository(ABC)")
-        self.write(nested, ORDER_HEAD + "from calendar.read_models import CalendarSummary\n" + ORDER_CLASS)
-        self.write("src/calendar/__init__.py", "")
-        self.write("src/calendar/read_models.py", "class CalendarSummary:\n    pass\n")
+        # source root 는 저장소 루트다(검사기가 고르는 BC 는 뿌리 `application/` 에만 있다) — 그 아래 패키지 `calendar` 가 표준 라이브러리
+        # 이름을 가린다.
+        order = dict(path=ORDER_REPOSITORY, owner="OrderRepository(ABC)")
+        self.write(ORDER_REPOSITORY, ORDER_HEAD + "from calendar.read_models import CalendarSummary\n" + ORDER_CLASS)
+        self.write("calendar/__init__.py", "")
+        self.write("calendar/read_models.py", "class CalendarSummary:\n    pass\n")
         found = self.forecast(["calendar_summary() -> CalendarSummary"], **order)
         self.assertEqual([(f.rule, f.path, f.owner, f.confirmed) for f in found],
-                         [("#355", nested, "OrderRepository.calendar_summary", False)])
+                         [("#355", ORDER_REPOSITORY, "OrderRepository.calendar_summary", False)])
         self.assertIn(BASELINE_ONLY, found[0].detail)
         # 후상태 대조 — 구현이 같은 이름의 domain 값 객체를 들이면 실검사기는 그 메서드를 통과시킨다.
-        self.write(nested, ORDER_HEAD + f"from {SUMMARY_VO.replace('.summary', '.calendar_summary')} import CalendarSummary\n"
+        self.write(ORDER_REPOSITORY, ORDER_HEAD + f"from {SUMMARY_VO.replace('.summary', '.calendar_summary')} import CalendarSummary\n"
                    + ORDER_CLASS.replace("    pass\n", "    @abstractmethod\n    def calendar_summary(self) -> CalendarSummary: ...\n"))
         result = subprocess.run([sys.executable, str(SCRIPTS / "check-transaction-boundary.py"), str(self.repo)],
                                 env=self.env, capture_output=True, text=True)
         self.assertIn(f"[#355] {REPOSITORY}:", result.stdout)
-        self.assertNotIn(nested, result.stdout)
+        self.assertNotIn(ORDER_REPOSITORY, result.stdout)
         for label, baseline, method, expected in [
             ("source root 의 패키지를 첫 마디로 들임", ORDER_HEAD + "from calendar import Event\n", "events() -> Event", False),
             ("가림 없는 표준 라이브러리 import", ORDER_HEAD + "from uuid import UUID\n", "token() -> UUID", True),
@@ -632,7 +633,7 @@ class RepositoryForecastTest(unittest.TestCase):
              "index() -> Mapping[int, int]", True),
         ]:
             with self.subTest(label=label):
-                self.write(nested, baseline + ORDER_CLASS)
+                self.write(ORDER_REPOSITORY, baseline + ORDER_CLASS)
                 found = self.forecast([method], **order)
                 self.assertEqual([(f.rule, f.confirmed) for f in found], [("#355", expected)])
                 self.assertEqual(BASELINE_ONLY in found[0].detail, not expected, found[0].detail)

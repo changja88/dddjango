@@ -140,8 +140,8 @@ first-parent 사슬의 참여 머지가 들여온 verbatim 변경(추가·수정
 메서드가 클래스 직계가 아니라 복합문 아래에만 있음 · 파싱 불능 · 같은 판정문의 기존 줄이 그 클래스가 아니라 그 파일 안에서
 확인되는 조상에게만 있음 — 물려받은 빚을 다시 적은 것인지 이 클래스의 새 위반인지 가를 수 없다)은 선언 후보다.
 검사기 로드·투영 실패는 실행 불능(exit 1).
-이 확정 근거의 한계: 표준 라이브러리 이름을 가리는 프로젝트 모듈은 source root(저장소 루트 · 검사기가 고른 `application`
-폴더의 부모)의 폴더·모듈로만 찾는다 — 네임스페이스 패키지·`.pth`·finder 로 바꾼 import 경로는 못 본다. 소문자 내장 이름
+이 확정 근거의 한계: 표준 라이브러리 이름을 가리는 프로젝트 모듈은 source root(저장소 루트 — 검사기가 고르는 BC 는 뿌리
+`application/` 에만 있다)의 폴더·모듈로만 찾는다 — 네임스페이스 패키지·`.pth`·finder 로 바꾼 import 경로는 못 본다. 소문자 내장 이름
 (`type`·`set` 류)과 같은 이름의 domain 값 객체도 가르지 못한다(확정으로 선다).
 도메인 서비스 서명(F4-115 · #304 · #305 · #307 · #308): 검사기 선택(채택 BC `domain_layer/domain_service/*.py` · 승격 본체 포함 —
 검사기의 BC 고르기를 계획 경로로 바로 맞추고(사본 전체 훑기 없음 · 저장소 예보도 같다) 채택 신호 · 칸 고르기는 검사기 함수 그대로) ∩
@@ -2581,8 +2581,8 @@ _REPOSITORY_NESTED_QUESTION: str = "구현 뒤 이 메서드를 클래스 직계
 _ORIGIN_BASELINE: str = "baseline"
 _ORIGIN_STATED: str = "spec"
 # 기준선에만 있어도 확정 근거로 두는 출처 — 표준 라이브러리 모듈(py3.9 에는 `sys.stdlib_module_names` 가 없어 검사기들과 같은
-# 기본 목록으로 메운다). source root(저장소 루트 · 검사기가 고른 `application` 폴더의 부모)에 같은 이름의 폴더·모듈이 있으면
-# 프로젝트 모듈로 본다(`check_repository_forecast` 가 뺀다).
+# 기본 목록으로 메운다). source root(저장소 루트 — 검사기가 고르는 BC 는 뿌리 `application/` 에만 있다)에 같은 이름의
+# 폴더·모듈이 있으면 프로젝트 모듈로 본다(`check_repository_forecast` 가 뺀다).
 _STDLIB_MODULES: "frozenset[str]" = frozenset(getattr(sys, "stdlib_module_names", ())) | vocab.STDLIB_FALLBACK
 # 하위 모듈을 가진 표준 라이브러리 패키지 — py3.9 · py3.14 표준 라이브러리의 공통분을 적은 고정 목록이다(실행 인터프리터에
 # 묻지 않는다 — 판마다 달라지면 같은 명세의 예보가 갈린다). 이 밖의 표준 모듈은 단일 모듈이라 `from calendar.read_models import …`
@@ -3024,9 +3024,10 @@ def _repository_selected(ck: ModuleType, copy: Path, parts: "tuple[str, ...]", s
 
 
 class _ShadowAwareStdlib:
-    """표준 라이브러리 모듈 이름 — 가림을 볼 source root(저장소 루트 · 검사기가 고른 BC 가 놓인 `application` 폴더의 부모 전부)를
-    처음 물을 때만 사본을 훑어(검사기 `_find_bcs` 그대로) 같은 이름의 폴더 · 모듈을 뺀다. 미리 잰 집합과 결과가 같다 — 출처가
-    기준선의 표준 라이브러리 import 뿐인 반환 이름을 확정 근거로 쓸 때만 훑는다."""
+    """표준 라이브러리 모듈 이름 — 가림을 볼 source root(저장소 루트 · 검사기가 고른 채택 BC 가 놓인 `application` 폴더의 부모 —
+    검사기가 뿌리 `application/` 만 고르므로 저장소 루트와 같다)를 처음 물을 때만 사본을 훑어(검사기 `_find_bcs` 그대로) 같은
+    이름의 폴더 · 모듈을 뺀다. 미리 잰 집합과 결과가 같다 — 출처가 기준선의 표준 라이브러리 import 뿐인 반환 이름을 확정 근거로
+    쓸 때만 훑는다."""
 
     def __init__(self, ck: ModuleType, copy: Path) -> None:
         self._ck: ModuleType = ck
