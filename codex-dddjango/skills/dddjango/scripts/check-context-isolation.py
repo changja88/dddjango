@@ -836,15 +836,17 @@ class _WindowTry:
 
     안 돈다 = 몸통(기저를 잡고 다시 던지지 않는 안쪽 try 의 몸통은 뺀다)에서
       ① 창구 · ACL 안 import 이름 · 같은 파일 함수/클래스 이름이 글자로 없고(인자 · 람다 안 포함 — 콜백이 잡힌다)
-      ② 모든 호출 · with · 반복 · await · yield from 대상과 속성을 읽는 값의 뿌리가 «알려진 바깥» 이고
+      ② 모든 호출 · with · 반복 · await · yield from 대상의 뿌리가 «알려진 바깥» 이고
          (내장 · 창구 밖 import · 그것으로만 지은 모듈 상수 — 파일 안에서 다시 묶이지 않은 이름)
-      ③ 넘긴 값을 읽거나 넘긴 함수를 부르는 내장에 바깥 아닌 맨 이름을 넘기지 않을 때뿐이다.
-    알려진 바깥 함수는 넘겨받은 맨 이름(지역 · 매개변수)을 자료로 쓴다고 본다 — 이 판정의 한계다.
+      ③ self · cls 의 속성 · 같은 파일 함수 이름의 속성 · 같은 파일에서 값을 담는 속성을 읽지 않고
+      ④ 넘긴 값을 읽거나 넘긴 함수를 부르는 내장에 바깥 아닌 맨 이름을 넘기지 않을 때뿐이다.
+    알려진 바깥 함수는 넘겨받은 맨 이름(지역 · 매개변수)과 그 칸을 자료로 쓴다고 본다 — 이 판정의 한계다.
     """
 
     def __init__(self, mod: ast.Module, base_names: set[str]) -> None:
         self.base_names: set[str] = base_names
         self.defs: set[str] = set()
+        self.holders: set[str] = set()  # 파일 안에서 값을 담는 속성 이름(`x.a = …` · 클래스 몸통 `a = …`) — 창구를 담았을 수 있다
         self.inside: set[str] = set()
         outside: set[str] = set()
         bound: dict[str, int] = {}  # 파일 안에서 묶인 횟수(대입 · 매개변수 · def)
@@ -863,6 +865,12 @@ class _WindowTry:
             elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 self.defs.add(n.name)
                 bound[n.name] = bound.get(n.name, 0) + 1
+                for item in n.body if isinstance(n, ast.ClassDef) else []:
+                    targets: list[ast.expr] = (item.targets if isinstance(item, ast.Assign)
+                                               else [item.target] if isinstance(item, ast.AnnAssign) else [])
+                    self.holders.update(t.id for t in targets if isinstance(t, ast.Name))
+            elif isinstance(n, ast.Attribute) and isinstance(n.ctx, ast.Store):
+                self.holders.add(n.attr)
             elif isinstance(n, ast.Name) and not isinstance(n.ctx, ast.Load):
                 bound[n.id] = bound.get(n.id, 0) + 1
             elif isinstance(n, ast.arg):
@@ -896,8 +904,8 @@ class _WindowTry:
         """이 마디에서 «알려진 바깥» 밖의 코드가 돌 수 있나."""
         if isinstance(n, ast.Name):
             return n.id in self.inside
-        if isinstance(n, ast.Attribute):  # 메서드 · property · 넘긴 속성(콜백)
-            return n.attr in self.defs or _root(n) not in self.known
+        if isinstance(n, ast.Attribute):  # 메서드 · property · 담아 둔 창구(콜백) — 매개변수 · 지역 · 받은 값의 칸은 자료로 본다
+            return n.attr in self.defs or n.attr in self.holders or _root(n) in ("self", "cls")
         if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in _CONSUMING_BUILTINS and any(
                 isinstance(a, ast.Name) and a.id not in self.known for a in [*n.args, *(k.value for k in n.keywords)]):
             return True
