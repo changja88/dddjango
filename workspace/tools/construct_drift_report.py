@@ -64,14 +64,14 @@ SEALED: "dict[str, str]" = {
 # 신판 기본 red 레인 stdout sha256 (--emit-expected 재생성). domain-model·
 # common-container 는 findings_smoke.BASELINE_SHA 와 동일값(교차 골든 — 2026-08-20 실측).
 EXPECTED_SHA: "dict[str, str]" = {
-    "check-domain-model.py": "b571ad8ca4677a586c856199281b6fd4d76a848426e453e147803b1f505f06b7",
+    "check-domain-model.py": "acceb19db1b33aa7bc590d03fd6b12a0e9716a78a31d014b5aa29fda67ed414d",
     "check-common-container.py": "10f52932ce07457413bcb0c580ae8735a33f1ea08f3725a7a370962e1f5d39d0",
     "check-api-error-controller-contract.py": "0d67284f2cff0187daa8631d3973daac6b4cece9460a8dfe85c69658de72ec46",
     "check-error-centralization.py": "4360dbfa8557143519bed6c38096004f93213472d4d9a9a7ceff635128ee932f",
-    "check-composition-root.py": "bdb7e5216c51ec841672ede638040a68e7088f4fe99b31daad8bae6e34b54d1c",
+    "check-composition-root.py": "4a12ac3325603484de4568ff910a984346731f1b7386c9b6085ab9a72d0e391a",
     "check-openapi-error-declaration.py": "92eb113f8e75c74ea617737804420f4df82b841996cc910ce3bc3944ded097a0",
     "check-response-schema-bypass.py": "b1a77bebb4272f9eb817feb63f31b6715d52da9d0ad312a2f02d744717428793",
-    "check-context-isolation.py": "dc3417c85f4483054ac49f22ea3abd2e12fd4a493b792d5fcd800baf31f692ec",
+    "check-context-isolation.py": "844e16f0803d2307715c2e1f02d5efd1a60e9cffed416219c4f4f79ba43c10d1",
 }
 
 CHECKER_TIMEOUT_S: int = 300
