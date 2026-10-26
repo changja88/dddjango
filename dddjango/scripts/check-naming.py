@@ -39,6 +39,9 @@
   #382 [ast]  클래스 `Gateway` 접미 금지 — 계약이면 Port, 구현이면 Adapter.
   #481 [path] 부모 폴더 낱말을 자식 «폴더»가 반복 금지(`request/request_contract/`) —
               파일 반복은 정상(#30·#568 몫).
+  의미 묶음(#654~#656): #30 의 종류는 묶음 위 칸 폴더가 말하고, #44 는 묶음 안 값 객체 ·
+              서비스(묶음 안 승격 본체 포함)까지 보며 주어는 실제 서비스 경로다. #41 · #481 의
+              승격 면제는 `folder_group.recognize` 가 승격이라 한 폴더뿐이다(값 객체 칸 C2 는 묶음).
   #588 [ast]  사람 문구는 템플릿에 — 유스케이스·도메인의 render_to_string·gettext 호출 위반.
   #589 [ast+] 템플릿 업무 판정 후보 — `{% if %}` 조건의 비교 연산·업무 어휘(Q2).
   #590 [ast+] Presenter 는 «칸»이 아니다 — 확정: presenter 이름 칸·파일 / 후보:
@@ -66,6 +69,7 @@ import re
 import sys
 
 import checker_target
+import folder_group
 from findings import Candidates, Findings, emit_all, zero_target_guard
 from pathlib import Path
 
@@ -157,7 +161,9 @@ def _check_path_words(root: Path, bc: Path, bc_vocab_set: set, tech: set,
         if "application_programming_interface" in name:
             f.add("#148", rel, "일반어가 된 약어는 풀어 쓰지 않는다 — `api` 그대로 쓴다")
         # 동명 폴더 승격(#490 교체형)의 정본 형 — 폴더명+`.py` 본체가 폴더 안에 실존.
-        promoted = (d / f"{name}.py").is_file() or checker_target.adapter_bundle(d)
+        # 묶음 허용 칸의 하위 폴더는 `recognize` 가 가른다 — 승격은 서비스 칸뿐이고 값 객체 칸
+        # `D/D.py`(C2)는 묶음이라 면제가 없다(#654~#656).
+        promoted = _promoted(root, d)
         if name == "gateway" or (name.endswith(("_port", "_adapter", "_gateway")) and not promoted):
             # 승격 폴더(본체 실존)는 칸 실현이라 #41 면제 — `*_port` 는 승격 배제 칸이라
             # 면제 개념 밖이지만, 승격 시도 자체는 registry #4(#490)가 red 로 잡는다.
@@ -198,6 +204,22 @@ def _check_path_words(root: Path, bc: Path, bc_vocab_set: set, tech: set,
             f.add("#148", _rel(root, py), "일반어가 된 약어는 풀어 쓰지 않는다 — `api` 그대로")
 
 
+def _promoted(root: Path, d: Path) -> bool:
+    """승격 폴더(칸 실현)인가 — 묶음 허용 칸 바로 아래 폴더면 `folder_group.recognize` 로 가른다."""
+    hit = folder_group.slot_of((d / "_.py").relative_to(root).as_posix())
+    if hit is not None and len(hit[1]) == 2:
+        return folder_group.recognize(d, hit[0].row) == "promotion"
+    return (d / f"{d.name}.py").is_file() or checker_target.adapter_bundle(d)
+
+
+def _kind_folder(root: Path, py: Path) -> str:
+    """파일이 사는 칸 폴더 이름 — 묶음 안 파일이면 그 위 칸 폴더(#30 의 종류는 칸이 말한다)."""
+    hit = folder_group.slot_of(py.relative_to(root).as_posix())
+    if hit is not None and len(hit[1]) == 2 and folder_group.recognize(py.parent, hit[0].row) == "group":
+        return py.parent.parent.name
+    return py.parent.name
+
+
 # ── #30 · #33 · #34 — 접두·접미 스코프 ──────────────────────────────────────
 
 def _check_prefix_suffix(root: Path, bc: Path, f: Findings) -> None:
@@ -210,7 +232,7 @@ def _check_prefix_suffix(root: Path, bc: Path, f: Findings) -> None:
             if not stem.endswith(suf):
                 continue
             kind = suf[1:]
-            parent = py.parent.name
+            parent = _kind_folder(root, py)
             if "open_host_service" in parts and "contract" in parts:
                 continue  # 트리 28·30·33행 — OHS `contract/` 안은 접미형이 정본이다(`<exception>_exception.py`)
             if parent == kind or (kind == "value_object" and parent == "shared_value_object"):
@@ -276,15 +298,19 @@ def _check_prefix_suffix(root: Path, bc: Path, f: Findings) -> None:
 def _check_name_pairs(root: Path, bc: Path, f: Findings) -> None:
     domain = bc / "domain_layer"
     if domain.is_dir():
-        vo_stems = {p.stem for p in domain.glob("*/value_object/*.py") if p.stem != "__init__"}
-        vo_stems |= {p.stem for p in domain.glob("shared_value_object/*.py") if p.stem != "__init__"}
-        # domain_service 는 승격 허용 칸 — 승격 본체(`domain_service/<이름>/<이름>.py`) stem 포함.
-        ds_stems = {p.stem for p in checker_target.slot_glob(domain / "domain_service", "*.py")
+        # 값 객체 칸 둘(애그리거트 안 · shared)과 서비스 칸은 묶음 안 파일까지 본다(#654~#656).
+        vo_dirs = [d / "value_object" for d in sorted(domain.iterdir()) if d.is_dir()]
+        vo_dirs.append(domain / "shared_value_object")
+        vo_stems = {p.stem for v in vo_dirs for p in folder_group.group_members(v, "*.py", promotable=False)
                     if p.stem != "__init__"}
-        for name in sorted(vo_stems & ds_stems):
-            f.add("#44", _rel(root, domain / "domain_service" / f"{name}.py"),
-                  f"도메인 서비스 `{name}` 이 같은 BC 의 값 객체와 겹친다 — 행위 이름으로 짓는다"
-                  "(`settle_turn` 처럼)")
+        # domain_service 는 승격 허용 칸 — 승격 본체(`domain_service/<이름>/<이름>.py`) stem 포함.
+        services = [p for p in folder_group.group_members(domain / "domain_service", "*.py", promotable=True)
+                    if p.stem != "__init__"]
+        for py in sorted(services, key=lambda p: (p.stem, p.as_posix())):
+            if py.stem in vo_stems:
+                f.add("#44", _rel(root, py),
+                      f"도메인 서비스 `{py.stem}` 이 같은 BC 의 값 객체와 겹친다 — 행위 이름으로 짓는다"
+                      "(`settle_turn` 처럼)")
     for py in _py_files(bc):
         parts = py.relative_to(bc).parts
         # #169 — 예외 계약 파일명 = 주 클래스명 snake_case.

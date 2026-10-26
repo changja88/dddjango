@@ -136,3 +136,9 @@ def Amount() -> Amount:  # 기대: #652 M-r4-shadow — r4 재료 def Amount() �
 
 def created_language() -> LanguageCode:  # 기대: #652 M-lead-c-no-create — (라) 인데 값 객체 모듈에 @classmethod def create 없음(V4) ⟪`LanguageCode` 의 값 객체 모듈에 `@classmethod def create` 가 없다((라) · V4)⟫
     return LanguageCode.create(settings.PARLER_DEFAULT_LANGUAGE_CODE)
+
+
+from application.orders.domain_layer.order.value_object.ghost_limit.limit_amount import GhostLimitAmount  # 기대: #652 G-group-missing — 가운데 폴더가 없다(묶음 아님 · F2 밖) ⟪밖이다(F2)⟫
+from application.orders.domain_layer.order.value_object.stale.stale_amount import StaleAmount  # 기대: #652 G-group-cache — 가운데가 캐시만 남은 폴더(묶음 아님 · F2 밖) ⟪밖이다(F2)⟫
+from application.orders.domain_layer.shared_value_object.ghost_locale.locale_tag import GhostLocaleTag  # 기대: #652 G-shared-missing — shared 가운데 폴더가 없다(F2 밖) ⟪밖이다(F2)⟫
+from application.orders.domain_layer.order.value_object.limit.extra.limit_amount import DeepLimitAmount  # 기대: #652 G-two-levels — 두 칸(F2 밖) ⟪밖이다(F2)⟫

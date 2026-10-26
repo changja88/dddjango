@@ -6,3 +6,7 @@ from .tie_break_step import TieBreakStep
 @dataclass(frozen=True)
 class VoidBranch:
     value: str
+
+    def __post_init__(self) -> None:
+        if not self.value:
+            raise ValueError("value")

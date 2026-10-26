@@ -66,6 +66,7 @@ import re
 import sys
 
 import checker_target
+import folder_group
 from findings import Candidates, Findings, emit_all, zero_target_guard
 from pathlib import Path
 
@@ -434,13 +435,13 @@ def _aggregate_pending_api(domain: Path, agg: str) -> "tuple[str, set[str], set[
          list 사본 반환 또는 bare 반환) + **같은 필드를 실제로 비우는 소거/소모 창구**(clear·
          빈 재대입 — 생성자 초기화는 제외. 소거 창구 요건이 SajuChart(_snapshots — append 만)
          오탐을 차단한다) → «full»(가드 검사)
-      ⓐ ⓑ 미충족 + `event/` 비-`__init__` 실재 → «half»(반쪽 채택 — 가드 대상 API 가 없어
-         준수 불능이므로 후보 발화)
+      ⓐ ⓑ 미충족 + `event/` 비-`__init__` 실재(묶음 안 파일 포함) → «half»(반쪽 채택 — 가드
+         대상 API 가 없어 준수 불능이므로 후보 발화)
       둘 다 아니면 «none»(비적용).
     """
     event_dir = domain / agg / "event"
-    event_adopted = event_dir.is_dir() and any(
-        p.suffix == ".py" and p.stem != "__init__" for p in event_dir.iterdir())
+    event_adopted = any(  # 묶음 안 이벤트 파일도 센다(#654~#656)
+        p.stem != "__init__" for p in folder_group.group_members(event_dir, "*.py", promotable=False))
     root_py = domain / agg / f"{agg}.py"
     stores: set[str] = set()
     queries: set[str] = set()

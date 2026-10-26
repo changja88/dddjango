@@ -8,6 +8,8 @@
   이 파일의 git 시나리오 표.
 - `--py39 <python>`: 그 판으로 `--emit` 을 돌려 지금 판의 `--emit` 과 바이트가 같은지 본다(불변식 8 — 3.9 · 최신 판).
 - `--require 3.9`: 이 러너를 돌리는 판이 그 판이 아니면 red(3.9 다리가 다른 판으로 조용히 돌지 않게).
+- 검사기 단계(단계 2 · 불변식 2): `good/` 은 온전한 BC 골격이라 등록 검사기 27종이 모두 exit 0 · 줄 0 이다.
+  사례마다 검사기 #656 줄 = 도구 `lines` 이고, 도구 자리대로 옮긴 사본에서는 #654 ~ #656 줄이 0 이다.
 - 임시 저장소 · 사본은 시스템 임시 폴더에 만든다(플러그인 폴더를 링크하지 않는다 — 파일을 복사한다).
 - 종료: 0 green · 1 red · 2 변이 생존.
 """
@@ -16,6 +18,7 @@ from __future__ import annotations
 import ast
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -148,14 +151,19 @@ def case_result(fg, root: Path) -> "tuple[dict, dict, list[str], object]":
     return where, why, lines, (files, dirs, placement)
 
 
+def _add_cache(root: Path) -> None:
+    """good 의 캐시만 남은 옛 묶음 폴더(실행 때 생기는 것 — 저장소에 두지 않는다)."""
+    cache = root / BASE / "shared_value_object" / "removed" / "__pycache__"
+    cache.mkdir(parents=True)
+    (cache / "gone.cpython-39.pyc").write_bytes(b"\0")
+
+
 def check_cases(fg, run: Run, td: Path) -> None:
     for name, src in _cases():
         expect = json.loads((src / "expect.json").read_text(encoding="utf-8"))
         root = _copy_case(src, td / f"case-{name}")
         if name == "good":
-            cache = root / BASE / "shared_value_object" / "removed" / "__pycache__"
-            cache.mkdir(parents=True)
-            (cache / "gone.cpython-39.pyc").write_bytes(b"\0")
+            _add_cache(root)
         where, why, lines, (files, dirs, placement) = case_result(fg, root)
         _diff_dict(f"{name} 자리", where, expect["자리"], run)
         _diff_dict(f"{name} 까닭", why, expect["까닭"], run)
@@ -179,6 +187,69 @@ def check_cases(fg, run: Run, td: Path) -> None:
             run.eq(f"{name} recognize {rel}", fg.recognize(root / BASE / rel, row), want)
     m3p = _copy_case(FIX / "cases" / "m3_promo", td / "recognize-m3p")
     run.eq("recognize 서비스 칸 승격", fg.recognize(m3p / BASE / "domain_service" / "relation", 75), "promotion")
+
+
+# ── 검사기(불변식 2 · 단계 2) ─────────────────────────────────────────────────────
+
+_RULE_LINE = re.compile(r"^\s*\[ⓓ?#\d+\]")
+_GROUP_LINE = re.compile(r"^\[ⓓ?#65[456]\]")
+
+
+def _checker(scripts: Path, name: str, root: Path, auto: bool = False) -> "tuple[int, list[str], str]":
+    """검사기를 사본에 돌려 (exit, 규칙 줄(사본 접두를 뗀 것), stderr 끝)."""
+    env: "dict[str, str]" = dict(os.environ)
+    env.pop("DJR_FINDINGS_JSON", None)
+    argv: "list[str]" = [sys.executable, str(scripts / name), str(root)] + (["--error-profile", "auto"] if auto else [])
+    proc = subprocess.run(argv, capture_output=True, text=True, env=env, cwd=str(ROOT))
+    prefixes: "list[str]" = sorted({str(root) + "/", str(root.resolve()) + "/"}, key=len, reverse=True)
+    out: "list[str]" = []
+    for ln in proc.stdout.splitlines():
+        if _RULE_LINE.match(ln):
+            text: str = ln.strip()
+            for pre in prefixes:
+                text = text.replace(pre, "")
+            out.append(text)
+    return proc.returncode, out, (proc.stdout + proc.stderr).strip()[-300:]
+
+
+def _invariant2(fg, scripts: Path, name: str, src: Path, td: Path) -> "list[tuple[str, object, object]]":
+    """사례 하나 — 검사기 #656 = 도구 줄 · 도구 자리대로 옮긴 사본에서 #654 ~ #656 0. (이름, 실제, 기대) 목록."""
+    root = _copy_case(src, td / f"inv2-{name}")
+    if name == "good":
+        _add_cache(root)
+    files, dirs = fg.scan_tree(root)
+    placement = fg.place(files, dirs)
+    want: "list[str]" = sorted(f"[#656] {w}: {m}" for w, m in fg.lines(placement))
+    code, before, tail = _checker(scripts, "check-domain-model.py", root)
+    out: "list[tuple[str, object, object]]" = [
+        (f"{name} 검사기 exit(옮기기 전)", code in (0, 2), True),
+        (f"{name} 검사기 #656 줄 = 도구 줄", sorted(ln for ln in before if ln.startswith("[#656]")), want)]
+    fg.apply_to_copy(root, fg.placement_moves(placement))
+    after: "list[str]" = []
+    for checker in ("check-layer-skeleton.py", "check-domain-model.py"):
+        code, got, tail = _checker(scripts, checker, root)
+        out.append((f"{name} {checker} exit(옮긴 뒤) — {tail[-120:]}", code in (0, 2), True))
+        after += [ln for ln in got if _GROUP_LINE.match(ln)]
+    out.append((f"{name} 불변식 2(옮긴 사본 · 검사기 #654~#656 0)", after, []))
+    return out
+
+
+def check_checkers(fg, scripts: Path, run: Run, td: Path) -> None:
+    sys.path.insert(0, str(scripts))
+    import checker_registry  # noqa: E402
+    from concurrent.futures import ThreadPoolExecutor
+    good = _copy_case(FIX / "good", td / "good-bc")
+    _add_cache(good)
+    registry = list(checker_registry.REGISTRY)
+    run.eq("등록 검사기 27종", len(registry), 27)
+    with ThreadPoolExecutor(max_workers=min(8, os.cpu_count() or 2)) as pool:
+        got = list(pool.map(lambda item: (item[0], _checker(scripts, item[0], good, item[1])), registry))
+        for checker, (code, lines, tail) in got:
+            run.eq(f"good 온전한 BC — {checker} (exit · 줄)", (code, lines), (0, []))
+        results = list(pool.map(lambda c: _invariant2(fg, scripts, c[0], c[1], td), _cases()))
+    for rows in results:
+        for label, got_v, want_v in rows:
+            run.eq(label, got_v, want_v)
 
 
 def emit(fg) -> str:
@@ -580,7 +651,7 @@ def run_all(scripts: Path, fail_fast: bool = False) -> "tuple[Run, object]":
     run = Run()
     steps = (("낱말", lambda td: check_words(fg, scripts, run)), ("픽스처", lambda td: check_cases(fg, run, td)),
              ("병합", lambda td: scen_merge(fg, scripts, run, td)), ("다시 옮김", lambda td: scen_chain(fg, scripts, run, td)),
-             ("빚", lambda td: scen_debt(fg, scripts, run, td)))
+             ("빚", lambda td: scen_debt(fg, scripts, run, td)), ("검사기", lambda td: check_checkers(fg, scripts, run, td)))
     with tempfile.TemporaryDirectory(prefix="fg-fixture-") as tmp:
         for name, step in steps:
             td = Path(tmp) / name
@@ -675,6 +746,7 @@ _MUTATIONS: "tuple[tuple[str, str, str], ...]" = (
      "elif (string_sub is not None and isinstance(node, ast.Constant) and isinstance(node.value, str)",
      "elif (False and isinstance(node, ast.Constant) and isinstance(node.value, str)"),
     ("계산된 import 를 막지 않음", "if hits_package(pieces):", "if False:"),
+    ("새 묶음에 빈 __init__.py 를 만들지 않음(불변식 2 — #655)", 'out.setdefault(f"{d}/__init__.py", "")', "pass"),
     ("앵커에도 서는 묶음을 이 실행의 형성으로 셈(D2)", "(bset | (g1 - g0p)) - ((bset & g0p) - g1)",
      "(bset | g1) - ((bset & g0p) - g1)"),
 )

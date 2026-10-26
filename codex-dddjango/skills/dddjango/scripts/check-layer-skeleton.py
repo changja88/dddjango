@@ -26,6 +26,14 @@
 내용 판정(#10·#628 등 ast 규칙)은 Phase 3 편입분이다 — 여기는 «존재·폐쇄»와 동명 폴더
 승격 실현의 형태 검증(#638~#641·#643 · ⓓ#644 후보 신호 — 2026-09-01)만 본다.
 
+의미 묶음(2.28.0 · D60): 묶음 허용 칸(트리 64·66·68·71·73·75행)의 하위 폴더는
+`folder_group.recognize` 로 가른다 — 캐시만 남은 폴더는 건너뛰고, 서비스 칸 `D/D.py` 는 승격
+(#638~#641·#643), 그 밖은 묶음이다.
+  #654  묶음 안 폴더 — 묶음은 한 계층이다(서비스 칸 묶음 안 승격만 파일 하나로 센다).
+  #655  묶음 `__init__.py` 없음 · 내용 있음(0바이트 · docstring · 주석뿐이 아님 — #488 과 같은 잣대).
+  묶음 안 파일도 부모 칸의 파일 모양(#490) · 서비스 칸이면 ⓓ#644 신호를 진다. 자리(#656)는
+  `check-domain-model` 몫이다.
+
 사용법: check-layer-skeleton.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
@@ -45,6 +53,7 @@ import re
 import sys
 
 import checker_target
+import folder_group
 from findings import Candidates, Findings, emit_all, zero_target_guard
 from pathlib import Path
 
@@ -155,6 +164,35 @@ def _check_promoted(dir_path: Path, crow: "tree.Row", out: Findings, cand: Candi
                 cand.add("#644", body, f"행위 칸 실현 {n}행(>{PROMO_SIGNAL_LINES}) — 캐스케이드 판정 의무 (트리 {crow.r}행)", _CASCADE_Q)
 
 
+def _check_group(group: Path, crow: "tree.Row", file_patterns: "list[str]", out: Findings,
+                 cand: Candidates) -> None:
+    """묶음 폴더(설계 7.1 · 7.4 — #654 · #655 · 파일 폐쇄 · ⓓ#644). 자리(#656)는 domain-model 이 본다."""
+    init = group / "__init__.py"
+    if not init.is_file():
+        out.add("#655", init, "묶음 폴더에 `__init__.py` 가 없다 — 비워 둔다(0바이트 · docstring · 주석뿐)")
+    elif not checker_target.skeleton_placeholder(init):
+        out.add("#655", init, "묶음 `__init__.py` 는 내용이 없다 — 0바이트 · docstring · 주석뿐(재수출 · 코드를 두지 않는다)")
+    subdirs, files = _entries(group)
+    for sd in subdirs:
+        kind = folder_group.recognize(sd, crow.r)
+        if kind == "cache":
+            continue
+        if kind == "promotion":
+            if (group / (sd.name + ".py")).is_file():
+                out.add("#639", sd, f"형제 `{sd.name}.py` 와 승격 폴더의 공존 — import 는 패키지가 이겨 조용한 위장 중복이다")
+            _check_promoted(sd, crow, out, cand)
+            continue
+        out.add("#654", sd, "묶음 안 폴더 — 묶음은 한 계층이다(서비스 칸 묶음 안 승격만 파일 하나로 센다)")
+    for f in files:
+        if not any(_file_pattern_ok(f.name, pat) for pat in file_patterns):
+            out.add("#490", f, "묶음 안 파일이 부모 칸의 파일 모양이 아니다 — 트리에 없는 경로")
+            continue
+        if crow.r in PROMO_ACTION_ROWS:
+            n = _phys_lines(f)
+            if n > PROMO_SIGNAL_LINES:
+                cand.add("#644", f, f"행위 칸 실현 {n}행(>{PROMO_SIGNAL_LINES}) — 캐스케이드 판정 의무 (트리 {crow.r}행)", _CASCADE_Q)
+
+
 # ── 트리 대조 재귀 ──────────────────────────────────────────────────────────
 
 def _segments(row: "tree.Row") -> list[str]:
@@ -263,6 +301,18 @@ def _check_level(dir_path: Path, row: "tree.Row", bindings: dict[str, str], out:
                 if _file_pattern_ok(p.name + ".py", tree.concrete_name(fp, bindings)):
                     kan_row = fp
                     break
+        if kan_row is not None and getattr(kan_row, "groupable", False):
+            # 묶음 허용 칸의 하위 폴더 — 캐시만 · 승격 · 묶음으로 가른다(설계 7.1)
+            kind = folder_group.recognize(p, kan_row.r)
+            if kind == "cache":
+                continue
+            if kind == "promotion":
+                if (dir_path / (p.name + ".py")).is_file():
+                    out.add("#639", p, f"형제 `{p.name}.py` 와 승격 폴더의 공존 — import 는 패키지가 이겨 조용한 위장 중복이다")
+                _check_promoted(p, kan_row, out, cand)
+            else:
+                _check_group(p, kan_row, [tree.concrete_name(fp, bindings) for fp in file_placeholders], out, cand)
+            continue
         if kan_row is not None:  # 파일 칸의 동명 폴더 — 승격 허용 여부로 갈린다(#490 교체형)
             if getattr(kan_row, "swappable", False):
                 if (dir_path / (p.name + ".py")).is_file():

@@ -60,6 +60,7 @@ import sys
 import warnings
 
 import checker_target
+import folder_group
 from findings import Candidates, ContractFindings, Findings, emit_all, lines
 from dataclasses import dataclass
 from pathlib import Path
@@ -2266,7 +2267,11 @@ def _material_plain_import(node: ast.stmt) -> bool:
 
 
 def _material_value_object_import(node: ast.stmt, bc: Path) -> tuple[str, str, Path] | None:
-    """F2 셋째 — (클래스, 모듈, 직접 모듈 파일) · 꼴이 아니면 None."""
+    """F2 셋째 — (클래스, 모듈, 직접 모듈 파일) · 꼴이 아니면 None.
+
+    값 객체 칸 둘(`<aggregate>/value_object/` · `shared_value_object/`)의 직계 모듈, 또는 그 칸의
+    묶음(#654~#656) 한 칸 안 모듈 — 가운데가 `folder_group.recognize` 로 묶음인 실제 폴더일 때만.
+    """
     if not (
         isinstance(node, ast.ImportFrom)
         and node.level == 0
@@ -2280,12 +2285,20 @@ def _material_value_object_import(node: ast.stmt, bc: Path) -> tuple[str, str, P
     if parts[:3] != ["application", bc.name, "domain_layer"] or parts[-1] == "__init__":
         return None
     rest: list[str] = parts[3:]
-    if len(rest) == 3 and rest[1] == "value_object":
+    if len(rest) in (3, 4) and rest[1] == "value_object":
         folder: Path = bc / "domain_layer" / rest[0] / "value_object"
-    elif len(rest) == 2 and rest[0] == "shared_value_object":
+        inner: list[str] = rest[2:-1]
+    elif len(rest) in (2, 3) and rest[0] == "shared_value_object":
         folder = bc / "domain_layer" / "shared_value_object"
+        inner = rest[1:-1]
     else:
         return None
+    if inner:  # 가운데 한 칸은 실제 묶음일 때만(#654~#656) — 없는 폴더 · 캐시만 남은 폴더는 꼴 밖
+        group: Path = folder / inner[0]
+        hit = folder_group.slot_of("/".join(parts) + ".py")
+        if hit is None or not group.is_dir() or folder_group.recognize(group, hit[0].row) != "group":
+            return None
+        folder = group
     return node.names[0].name, node.module, folder / f"{rest[-1]}.py"
 
 

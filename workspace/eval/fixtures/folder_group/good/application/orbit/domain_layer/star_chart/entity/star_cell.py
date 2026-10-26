@@ -1,7 +1,8 @@
-"""star_cell 값."""
+"""star_cell 엔티티."""
 from dataclasses import dataclass
 
 
-@dataclass(frozen=True)
+@dataclass
 class StarCell:
+    star_cell_id: int
     value: str

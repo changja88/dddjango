@@ -27,8 +27,8 @@
          #142 요청 스키마는 도메인 객체를 만들지 않는다(#141: 값 객체 import 는 면제)
          #143/#144 `schema_out` 은 result 로 만든다 — 도메인·ORM 타입 노출 금지
          #210 컨트롤러는 result 만 보고 응답을 만든다(도메인 들여다보기 금지 —
-              예외: 같은 BC `domain_layer/<agg>/exception/` 의 실선언 예외 클래스
-              import 는 #95·#92(driving 잎의 도메인 예외 허용) 준거 면제 · 2026-08-14
+              예외: 같은 BC `domain_layer/<agg>/exception/`(그 묶음 한 칸 안 포함 · #654~#656)의
+              실선언 예외 클래스 import 는 #95·#92(driving 잎의 도메인 예외 허용) 준거 면제 · 2026-08-14
               라운드 3 실증: 검사기 간 충돌 — billing NJ-7 확립 모양이 direct catch)
 
 ast+ 후보 채널 (㉰ — 기계가 후보를 좁히고 사람이 물음으로 마무리):
@@ -63,6 +63,7 @@ import re
 import sys
 
 import checker_target
+import folder_group
 from findings import Candidates, Findings, emit_all, zero_target_guard
 from pathlib import Path
 
@@ -183,16 +184,24 @@ def _lawful_domain_exception_import(mod_path: str, names: "list[str]", bc: Path)
     """같은 BC `domain_layer/<agg>/exception/<module>` 실선언 예외 클래스 import 인가.
 
     #95·#92(driving 잎이 domain 에서 가져올 수 있는 것: exception·값 객체) 준거 면제의
-    Goodhart 방어 셋(2026-08-14 적대 리뷰): ⑴ 경로 깊이 고정(`exception/` 직계 모듈만)
+    Goodhart 방어 셋(2026-08-14 적대 리뷰): ⑴ 경로 깊이 고정(`exception/` 직계 모듈, 또는 정확히 한
+    칸 더 — 그 칸이 `<aggregate>/exception/` 아래 «실제 묶음»일 때만 · #654~#656)
     ⑵ 가져온 이름 전부가 그 모듈이 «직접 선언한» ClassDef(재수출·함수·상수 세탁 차단 —
     별칭 import 는 이름 불일치로 자연 탈락) ⑶ 기반 사슬에 Exception/Error 토큰.
     타 BC 의 exception 은 면제 밖(#12 축과 별개로 여기서도 발화 유지)이다.
     """
     parts = mod_path.split(".")
-    if len(parts) != 6 or parts[:3] != ["application", bc.name, "domain_layer"]:
+    if len(parts) not in (6, 7) or parts[:3] != ["application", bc.name, "domain_layer"]:
         return False
     if parts[4] != "exception":
         return False
+    if len(parts) == 7:
+        row = folder_group.AGG_KINDS["exception"]
+        hit = folder_group.slot_of("/".join(parts) + ".py")
+        group = bc.joinpath(*parts[2:6])
+        if hit is None or hit[0].row != row or len(hit[1]) != 2 or not group.is_dir() \
+                or folder_group.recognize(group, row) != "group":
+            return False
     module_file = bc.joinpath(*parts[2:]).with_suffix(".py")
     if not module_file.is_file():
         return False
@@ -602,7 +611,7 @@ def _check_controller(f: Path, rel, bc: Path, out: Findings, cand: Candidates) -
     for mod_path, names in _import_records(mod):
         kind = _domain_kind(mod_path)
         if kind == "exception" and not _lawful_domain_exception_import(mod_path, names, bc):
-            out.add("#210", rel, f"컨트롤러는 `<use_case>_result` 만 보고 응답을 만든다 — `{mod_path}` 로 도메인을 들여다본다(예외 면제는 같은 BC `exception/` 직계 모듈의 실선언 예외 클래스뿐 — #95)")
+            out.add("#210", rel, f"컨트롤러는 `<use_case>_result` 만 보고 응답을 만든다 — `{mod_path}` 로 도메인을 들여다본다(예외 면제는 같은 BC `exception/` 직계 · 그 묶음 한 칸 안 모듈의 실선언 예외 클래스뿐 — #95)")
         elif kind in ("entity", "aggregate", "other"):
             out.add("#210", rel, f"컨트롤러는 `<use_case>_result` 만 보고 응답을 만든다 — `{mod_path}` 로 도메인을 들여다본다")
         elif kind == "value_object":

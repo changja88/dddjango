@@ -42,7 +42,8 @@ FIXTURES: Path = ROOT / "workspace" / "eval" / "fixtures"
 BASELINE_SHA: "dict[str, str]" = {
     # 2026-08-25 재실측 — #543 저널 carve-out 경계 픽스처 +2(no-op mark·일반 관용구 흉내)
     # 2026-08-25 판정 ④ — pass-only 루트 음성 fixture(#256 +1) 반영 재실측.
-    "domain_model/bad_rules": "b571ad8ca4677a586c856199281b6fd4d76a848426e453e147803b1f505f06b7",
+    # 2.28.0 의미 묶음(설계 7.4) — 묶음 안 파일을 보는 고침 · #656 · 묶음 픽스처 반영 재실측(위반 +12 · 후보 +1).
+    "domain_model/bad_rules": "acceb19db1b33aa7bc590d03fd6b12a0e9716a78a31d014b5aa29fda67ed414d",
     # 계약 레인 이행(3a68fe3)의 의도 변경 열거표 등재분 반영 — `[컨테이너] {rel}/  (내용: …)`
     # → `- {rel}: 횡단 버킷이 application/ 안에 있다 (내용: …)`(계약 문법 정형화).
     # 2026-10-04 D17 재실측 — 결선 재료 칸(`wiring_material.py`) 삽입 재번호로 문구 속 행 번호만 +1
@@ -67,8 +68,8 @@ DM_EXPECT_INFO: "dict[str, object]" = {
     "symbol": None,
     "severity": "info",
 }
-DM_COUNT_VIOLATION: int = 50  # 2026-08-25 +2 — #543 경계 픽스처 · +1 — 판정 ④ pass-only 루트(#256)
-DM_COUNT_INFO: int = 14
+DM_COUNT_VIOLATION: int = 62  # 2026-08-25 +2 — #543 경계 픽스처 · +1 — 판정 ④ pass-only 루트(#256) · 2.28.0 묶음 +12
+DM_COUNT_INFO: int = 15  # 2.28.0 묶음 +1
 
 # CC-red 기대(선행 계약 — rule=null + contract_ref).
 CC_EXPECT_FILES: "set[str]" = {"application/framework", "application/common"}
@@ -116,7 +117,7 @@ def _case_red_dm(td: Path, rows: "list[tuple[str, bool, str]]") -> None:
     recs: "list[dict]" = _load_records(rec_path)
     vio: "list[dict]" = [r for r in recs if r["severity"] == "violation"]
     info: "list[dict]" = [r for r in recs if r["severity"] == "info"]
-    rows.append(("DM-red 레코드 계수 50+14(㉡)",
+    rows.append(("DM-red 레코드 계수 62+15(㉡)",
                  len(vio) == DM_COUNT_VIOLATION and len(info) == DM_COUNT_INFO,
                  f"violation {len(vio)} · info {len(info)}"))
     rows.append(("DM-red 표본 violation 레코드(㉡)", any(_matches(r, DM_EXPECT_VIOLATION) for r in vio),
