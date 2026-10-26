@@ -223,8 +223,9 @@ try:
     import standard_tree as tree  # noqa: E402  — 신규 BC 골격 전량(D2 ② 화이트리스트)의 유일 트리 데이터
     import checker_target as ct  # noqa: E402  — 자리표시자 술어·슬롯 실현(계약 실존 ⑵ — 재구현 금지)
     import business_vocab as vocab  # noqa: E402  — 표준 라이브러리 이름의 기본 목록(검사기들과 같은 재료 — py3.9 보충)
+    import folder_group  # noqa: E402  — 묶음 자리 · 사본 이동 · 묶음 칸 구조(2.28.0 의미 묶음 — 재구현 금지)
 except ImportError:  # 데이터·술어 모듈 없이는 골격 실체화·실존 판정 불가 — fail-closed(실행 불능)
-    print("실행 불능: standard_tree.py / checker_target.py / business_vocab.py 를 찾지 못했다 — 실행기와 같은 폴더에 "
+    print("실행 불능: standard_tree.py / checker_target.py / business_vocab.py / folder_group.py 를 찾지 못했다 — 실행기와 같은 폴더에 "
           "있어야 한다", file=sys.stderr)
     sys.exit(1)
 
@@ -3110,11 +3111,12 @@ def _bundled_checker(path: Path, module_name: str) -> ModuleType:
 
 
 def _domain_service_slot_shape(parts: "tuple[str, ...]") -> bool:
-    """`…/domain_layer/domain_service/<칸>.py` 또는 승격 본체 `…/domain_service/<칸>/<칸>.py` 꼴 — 검사기 선택 앞의 거름."""
+    """`…/domain_layer/domain_service/<칸>.py` · 승격 본체 `<칸>/<칸>.py` · 묶음 안 파일 `<묶음>/<칸>.py` · 묶음 안 승격 본체
+    `<묶음>/<칸>/<칸>.py` 꼴 — 검사기 선택 앞의 거름(승격 부품은 선택이 뺀다 — 설계 7.4 의 17)."""
     for i in range(len(parts) - 2):
         if parts[i:i + 2] == ("domain_layer", "domain_service"):
             rest: "tuple[str, ...]" = parts[i + 2:]
-            return rest[-1].endswith(".py") and (len(rest) == 1 or (len(rest) == 2 and rest[1] == f"{rest[0]}.py"))
+            return rest[-1].endswith(".py") and (len(rest) in (1, 2) or (len(rest) == 3 and rest[2] == f"{rest[1]}.py"))
     return False
 
 
@@ -3123,23 +3125,37 @@ def _ohs_catch_slot(parts: "tuple[str, ...]") -> bool:
     return _OHS_CATCH_RE.search("/".join(parts)) is not None
 
 
+def _slot_real(copy: Path, parts: "tuple[str, ...]") -> "Path | None":
+    """계획 칸의 실현 — 파일이면 그 파일 · 유효 승격이면 본체. 묶음 칸(값 객체 · 엔티티 · 이벤트 · 예외 · 서비스)에서는
+    `folder_group.recognize` 가 승격이라고 볼 때만 본체다 — 값 객체 칸의 `D/D.py`(C2)는 묶음이라 None(설계 7.4 의 18′)."""
+    target: Path = copy.joinpath(*parts)
+    hit = folder_group.slot_of("/".join(parts))
+    if hit is None or target.is_file():
+        return ct.slot_file(target)
+    promo: Path = target.parent / target.name[:-3] if target.name.endswith(".py") else target
+    if promo.is_dir() and folder_group.recognize(promo, hit[0].row) == "promotion":
+        return promo / target.name
+    return None
+
+
 def _real_parts(copy: Path, parts: "tuple[str, ...]") -> "tuple[str, ...]":
-    """계획 칸의 실물 상대 마디 — 칸 파일이 있으면 그 파일, 유효 승격이면 본체(`slot_file`), 없으면 계획 마디 그대로."""
-    slot: "Path | None" = ct.slot_file(copy.joinpath(*parts))
+    """계획 칸의 실물 상대 마디 — 칸 파일이 있으면 그 파일, 유효 승격이면 본체(`_slot_real`), 없으면 계획 마디 그대로."""
+    slot: "Path | None" = _slot_real(copy, parts)
     return slot.relative_to(copy).parts if slot is not None else parts
 
 
 def _domain_service_selected(ck: ModuleType, copy: Path, parts: "tuple[str, ...]") -> bool:
     """검사기 도메인 서비스 대상 선택(`vocab.server_bc_dirs` → `_has_adoption_signal` → `<bc>/domain_layer/domain_service` →
-    `slot_glob(…, "*.py")` · `__init__.py` 뺌)과 같은 판정 — 실물 마디 `parts` 의 BC 를 바로 맞춘다(직계 칸 · 승격 본체)."""
-    for at in (len(parts) - 3, len(parts) - 4):
+    구조만 보는 `group_members(…, "*.py", promotable=True)` · `__init__.py` 뺌 — 설계 7.4 의 7 · 18)과 같은 판정 — 실물 마디
+    `parts` 의 BC 를 바로 맞춘다(직계 칸 · 승격 본체 · 묶음 안 파일 · 묶음 안 승격 본체)."""
+    for at in (len(parts) - 3, len(parts) - 4, len(parts) - 5):
         if at < 2 or parts[at:at + 2] != ("domain_layer", "domain_service"):
             continue
         bc: "Path | None" = _checker_bc(copy, parts, at - 1, ck.vocab.SKIP_DIRS)
         if bc is None or not ck._has_adoption_signal(bc):
             continue
         ds: Path = bc / "domain_layer" / "domain_service"
-        if ds.is_dir() and parts in {p.relative_to(copy).parts for p in ck.checker_target.slot_glob(ds, "*.py")
+        if ds.is_dir() and parts in {p.relative_to(copy).parts for p in folder_group.group_members(ds, "*.py", promotable=True)
                                      if p.name != "__init__.py"}:
             return True
     return False
@@ -3209,7 +3225,7 @@ def forecast_baseline(copy: Path, plan: Plan) -> "dict[str, bytes | None]":
         parts: "tuple[str, ...]" = _plan_parts(entry.path)
         if entry.tag != "update" or not (_domain_service_slot_shape(parts) or _ohs_catch_slot(parts)):
             continue
-        real: "Path | None" = ct.slot_file(copy.joinpath(*parts))
+        real: "Path | None" = _slot_real(copy, parts)
         try:
             baseline[entry.path] = real.read_bytes() if real is not None and not real.is_symlink() else None
         except OSError:
@@ -5226,6 +5242,25 @@ def main(argv: "list[str]") -> int:
         return 1
 
 
+def _group_copy_moves(copy: Path, plan: Plan, folder: Path) -> "list[tuple[str, str]]":
+    """설계 9.3 — 격리 사본(기준선 ⊕ 승인 유입 ⊕ 미커밋 = 이 실행의 T₀′)에서 G0 ⓐ 묶음 빚 이동과 이 명세가 부르는 이 실행의
+    이동(«지금 내용» = 사본 + file-plan `add` 이름 · `remove` — `folder_group.py draft --spec` 과 같은 재료)을 한다. 앵커 커밋
+    «전» 에 불러 옮긴 파일의 옛 위반이 앵커 스냅숏(L)에도 실린다. 아직 없는 `add` 의 자리는 옮기지 않는다(명세가 묶음 경로로
+    적는다). `refactor-scope.md` 는 명세의 산출물 폴더에서 읽는다. 돌려주는 값은 한 쌍(승격 폴더는 넓힌 쌍)."""
+    files: "dict[str, str]" = folder_group.scan_tree(copy)[0]
+    tags: "dict[str, str]" = {"/".join(_plan_parts(p)): e.tag for p, e in plan.entries.items()}
+    now: "dict[str, str]" = {p: t for p, t in files.items() if tags.get(p) != "remove"}
+    for p, tag in tags.items():
+        if tag == "add":
+            now.setdefault(p, "")
+    scope: Path = folder / "refactor-scope.md"
+    run = folder_group.load_run(copy, None, None, now_files=now)._replace(
+        scope=scope.read_text(encoding="utf-8") if scope.is_file() else "")
+    plan_g = folder_group.plan_for(run)
+    pairs: "list[tuple[str, str]]" = [(a, b) for a, b in plan_g.pairs(plan_g.current, plan_g.final) if (copy / a).is_file()]
+    return folder_group.apply_to_copy(copy, pairs) if pairs else []
+
+
 def _main(argv: "list[str]") -> int:
     ap: _UsageParser = _UsageParser(add_help=True, description="design-spec pre-gate 예보 실행기")
     ap.add_argument("spec", help="설계 명세 markdown(기계 블록 §4 포함)")
@@ -5433,9 +5468,15 @@ def _main(argv: "list[str]") -> int:
             header_notes = header_notes + (link_note,)
         # 기실현 add 는 앵커 커밋 «전»에 걷어낸다 — 앵커 스냅숏(L)에 실물이 남으면 스텁 진단이 잔존으로 빠진다.
         realized: "frozenset[str]" = lift_realized_adds(copy, plan, explicit_base, in_baseline)
+        # 묶음 이동(2.28.0 · 설계 9.3)도 앵커 커밋 «전» 에 한다 — 옮긴 파일의 옛 위반이 L∩N 으로 남게(뒤면 N∖L 로 예보된다).
+        group_moved: "list[tuple[str, str]]" = _group_copy_moves(copy, plan, spec_path.parent)
         _git(copy, "init", "-q")
         _git(copy, "add", "-A")
         _git(copy, "commit", "-q", "-m", "pregate-anchor", "--allow-empty")
+        if group_moved:
+            print(f"묶음 이동(사본 · 앵커 커밋 전) {len(group_moved)}쌍: "
+                  + " · ".join(f"{a} -> {b}" for a, b in group_moved[:6])
+                  + (f" 외 {len(group_moved) - 6}" if len(group_moved) > 6 else ""))
         # 저장소 선언 예보(#355·#597)의 비교 기준선 — 명세 전사 «전» 실물(F4-73).
         repository_material: "dict[str, bytes | None]" = repository_baseline(copy, plan)
         # 도메인 서비스 서명(#304·#305·#307·#308) · 번역 출처 칸(#474·#62) 선언 예보의 비교 기준선 — 같은 자리(F4-115).

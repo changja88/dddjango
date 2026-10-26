@@ -60,6 +60,11 @@
                           `__init__` · external) → 선언 확정 #541 2 · notify_order(생성자 없음) · archive_order(update · 기준선 생성자뿐)
                           → 후보 2 · rename_order(기준선 저장 경계) 0 · 귀속 0 → exit 2 · `--check-report` 미처분 3 → ignored 2 → 0.
   publish-green-spec.md — 저장 경계를 받는 발행 유스케이스 + 브로커 없는 `uow=none` 유스케이스 → exit 0 · #541 0.
+  묶음 group(2.28.0 의미 묶음 · 설계 9.3 — 합성 저장소 = `mini_repo` + `group_overlay/` · 리포트 1): `group-move-spec.md` 를 산출물
+  폴더(G0 ⓐ — 평평한 `term_c` 를 `term/` 에) 사본으로 돌림 → 사본이 앵커 커밋 «전» 에 `void_a` · `void_b`(이 실행의 형성) · `term_c`(ⓐ)
+  를 옮겨 옛 위반(`django.db`)이 L∩N · exit 0 · 예보 줄 0. 유닛: `_domain_service_slot_shape` 묶음 꼴(7.4 의 17) ·
+  `_domain_service_selected` 묶음 안 파일 · 묶음 안 승격 본체(18) · `_real_parts` 값 객체 C2 는 승격 본체로 잇지 않음(18′).
+  `--mutation-test`: «`apply_to_copy` 를 앵커 커밋 뒤로» 변이가 이 묶음을 붉게 하는지(계획 «단계 3 변이 회귀»).
   실행기 exit 규약: 0 green · 2 귀속 red(결손 병기) · 3 형식 red(문법 · 블록 부재·공허 · add 충돌 · update/remove 대상 기준선 부재) ·
   4 skip(실체화 0·결손 0) · 5 결손 ≥1 ∧ (귀속 0 ∨ 실체화 0) · 1 실행 불능 · `--check-report`: 0 정합 · 3 불비 · 1 리포트/절 부재.
   (아래 재발화 판형의 케이스 이름 E1~E4 는 이 러너의 것 — 승격 계획서의 실행기 변경 항목 번호와 무관.)
@@ -1983,15 +1988,172 @@ def _run_publish_bundle(scratch: Path, failures: "list[str]") -> None:
               "기대 일치")
 
 
+_GROUP_SV: str = "application/orders/domain_layer/shared_value_object/"
+
+
+def _group_unit_checks() -> "list[str]":
+    """설계 7.4 의 17 · 18 · 18′ — 도메인 서비스 칸 꼴 · 선택이 묶음(구조만 보는 `group_members`)을 따르고, 값 객체 칸의
+    `D/D.py`(C2)는 승격 본체로 잇지 않는다."""
+    fails: "list[str]" = []
+    pg: "types.ModuleType" = _load_module(EXECUTOR, "_pregate_group_units")
+    ds: "tuple[str, ...]" = ("application", "orders", "domain_layer", "domain_service")
+    for parts, want in ((ds + ("rule.py",), True), (ds + ("rule", "rule.py"), True), (ds + ("lunar", "lunar_rule.py"), True),
+                        (ds + ("lunar", "phase", "phase.py"), True), (ds + ("lunar", "phase", "part.py"), False),
+                        (ds + ("lunar", "a", "b", "c.py"), False), (ds + ("lunar", "notes.txt"), False)):
+        if pg._domain_service_slot_shape(parts) != want:
+            fails.append(f"[group 17] _domain_service_slot_shape({'/'.join(parts)}) ≠ {want}")
+    with tempfile.TemporaryDirectory(prefix="pregate-group-unit-") as tmp:
+        root: Path = Path(tmp)
+        files: "dict[str, str]" = {
+            "application/orders/domain_layer/__init__.py": "",
+            "application/orders/domain_layer/domain_service/__init__.py": "",
+            "application/orders/domain_layer/domain_service/rule.py": "",
+            "application/orders/domain_layer/domain_service/lunar/__init__.py": "",
+            "application/orders/domain_layer/domain_service/lunar/lunar_rule.py": "",
+            "application/orders/domain_layer/domain_service/lunar/phase/__init__.py": "",
+            "application/orders/domain_layer/domain_service/lunar/phase/phase.py": "",
+            "application/orders/domain_layer/domain_service/lunar/phase/part.py": "",
+            "application/orders/domain_layer/domain_service/solo/__init__.py": "",
+            "application/orders/domain_layer/domain_service/solo/solo.py": "",
+            "application/orders/domain_layer/domain_service/solo/solo_part.py": "",
+            _GROUP_SV + "pillar/__init__.py": "", _GROUP_SV + "pillar/pillar.py": "", _GROUP_SV + "pillar/pillar_day.py": "",
+        }
+        for rel, text in files.items():
+            (root / rel).parent.mkdir(parents=True, exist_ok=True)
+            (root / rel).write_text(text, encoding="utf-8")
+        ck: "types.ModuleType" = pg._bundled_checker(pg.DOMAIN_MODEL_CHECKER, "_pregate_domain_model_group")
+        for rel, want in (("domain_service/rule.py", True), ("domain_service/lunar/lunar_rule.py", True),
+                          ("domain_service/lunar/phase/phase.py", True), ("domain_service/lunar/phase/part.py", False),
+                          ("domain_service/solo/solo.py", True), ("domain_service/solo/solo_part.py", False),
+                          ("domain_service/lunar/__init__.py", False)):
+            parts = tuple(f"application/orders/domain_layer/{rel}".split("/"))
+            if pg._domain_service_selected(ck, root, parts) != want:
+                fails.append(f"[group 18] _domain_service_selected({rel}) ≠ {want}")
+        c2: "tuple[str, ...]" = tuple(f"{_GROUP_SV}pillar.py".split("/"))
+        if pg._real_parts(root, c2) != c2:
+            fails.append(f"[group 18′] _real_parts 가 값 객체 C2 `pillar/pillar.py` 를 승격 본체로 이었다 — {pg._real_parts(root, c2)}")
+        promo: "tuple[str, ...]" = ds + ("solo.py",)
+        if pg._real_parts(root, promo) != ds + ("solo", "solo.py"):
+            fails.append(f"[group 18′] _real_parts 가 서비스 승격 본체를 잇지 않았다 — {pg._real_parts(root, promo)}")
+    if not fails:
+        print("group 유닛: 서비스 칸 꼴 7 · 선택 7 · C2 · 승격 본체 — 기대 일치")
+    return fails
+
+
+def _run_group_bundle(scratch: Path, failures: "list[str]") -> None:
+    """설계 9.3 — 격리 사본에서 묶음 이동(ⓐ 빚 이동 + 이 실행의 형성)을 앵커 커밋 «전» 에 한다 → 옮긴 파일의 옛 위반이 L∩N."""
+    repo: Path = scratch / "repo-group"
+    shutil.copytree(FIXTURES / "mini_repo", repo)
+    shutil.copytree(FIXTURES / "group_overlay", repo, dirs_exist_ok=True)
+    _git(repo, "init", "-q")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "fixture-baseline+group-overlay")
+    run: Path = scratch / "group-run"
+    run.mkdir()
+    spec: Path = run / "design-spec.md"
+    shutil.copy2(FIXTURES / "group-move-spec.md", spec)
+    line: str = f"[#656] {_GROUP_SV}term_c.py: 묶음 `term/` 에 둔다"
+    (run / "refactor-scope.md").write_text(
+        "실행 · G0 승인 group\n\n| ID | 위반 | 백스톱 | 미룰 수 있나 |\n|---|---|---|---|\n"
+        f"| D1 | {line} | check-domain-model | 예 |\n\nD1 · 결정 = ⓐ · 사유 = 시험 · 출처 = 본인 직접(0000)\n", encoding="utf-8")
+    report: Path = scratch / "pregate-report-group.md"
+    proc: "subprocess.CompletedProcess[str]" = _run_pregate(spec, repo, report, ["--keep"])
+    kept: "re.Match[str] | None" = _KEEP_RE.search(proc.stdout)
+    layout: "dict[str, bool]" = {}
+    if kept is not None:
+        copy: Path = Path(kept.group(1)) / "copy"
+        for rel in ("void/void_a.py", "void/void_b.py", "void/void_c.py", "term/term_c.py", "void_a.py", "term_c.py"):
+            layout[rel] = (copy / _GROUP_SV / rel).is_file()
+        shutil.rmtree(kept.group(1), ignore_errors=True)
+    forecast: "list[str]" = [ln for ln in proc.stdout.splitlines() if _FORECAST_RULE_RE.match(ln)]
+    want_layout: "dict[str, bool]" = {"void/void_a.py": True, "void/void_b.py": True, "void/void_c.py": True,
+                                      "term/term_c.py": True, "void_a.py": False, "term_c.py": False}
+    if (proc.returncode != 0 or any("void_a" in ln or "term_c" in ln for ln in forecast) or layout != want_layout
+            or "묶음 이동(사본 · 앵커 커밋 전) 3쌍" not in proc.stdout):
+        failures.append(f"group-move-spec 기대 exit 0 · 옮긴 파일 예보 0 · 사본 자리 {want_layout} · 묶음 이동 3쌍 ≠ 실측 exit "
+                        f"{proc.returncode} · 자리 {layout} · 예보 {forecast}")
+        _dump("group-move", proc)
+    else:
+        print("group-move-spec: exit 0 · 사본이 앵커 커밋 전에 void_a · void_b(형성) · term_c(ⓐ)를 옮김 · 옛 위반 L∩N — 기대 일치")
+
+
 def _sid(path: str) -> str:
     """선언 #541 행의 안정 ID — 실행기 `_stable_id` 와 같은 결합(sha256(규칙#+경로)[:12])을 러너가 독립으로 계산한다."""
     return hashlib.sha256(f"#541+{path}".encode("utf-8")).hexdigest()[:12]
 
 
+# (이름, 옛 글, 새 글) — 옛 글은 design_pregate.py 에 정확히 한 번 있어야 한다(계획 «단계 3 변이 회귀» pre-gate).
+_MUTATIONS: "tuple[tuple[str, str, str], ...]" = (
+    ("apply_to_copy 를 앵커 커밋 뒤로",
+     '        group_moved: "list[tuple[str, str]]" = _group_copy_moves(copy, plan, spec_path.parent)\n'
+     '        _git(copy, "init", "-q")\n        _git(copy, "add", "-A")\n'
+     '        _git(copy, "commit", "-q", "-m", "pregate-anchor", "--allow-empty")\n',
+     '        _git(copy, "init", "-q")\n        _git(copy, "add", "-A")\n'
+     '        _git(copy, "commit", "-q", "-m", "pregate-anchor", "--allow-empty")\n'
+     '        group_moved: "list[tuple[str, str]]" = _group_copy_moves(copy, plan, spec_path.parent)\n'),
+)
+
+
+def _only_group(scratch: Path) -> "list[str]":
+    failures: "list[str]" = _group_unit_checks()
+    _run_group_bundle(scratch, failures)
+    return failures
+
+
+def _mutation_test() -> int:
+    survived: "list[str]" = []
+    src: str = EXECUTOR.read_text(encoding="utf-8")
+    for name, old, new in _MUTATIONS:
+        if src.count(old) != 1:
+            survived.append(f"{name}: 변이 지점이 정확히 한 곳이 아니다({src.count(old)})")
+            continue
+        with tempfile.TemporaryDirectory(prefix="pregate-mutant-") as tmp:
+            copy: Path = Path(tmp) / "scripts"
+            shutil.copytree(EXECUTOR.parent, copy, symlinks=False, ignore=shutil.ignore_patterns("__pycache__"))
+            (copy / EXECUTOR.name).write_text(src.replace(old, new, 1), encoding="utf-8")
+            proc = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--scripts", str(copy), "--only-group"],
+                                  capture_output=True, text=True)
+        if proc.returncode == 0:
+            survived.append(f"{name}: 변이가 살아남음")
+        elif "FAIL — pre-gate 픽스처 기대 불일치" not in proc.stdout:
+            survived.append(f"{name}: 변이가 러너를 깨뜨림 — {(proc.stdout + proc.stderr).strip()[-300:]}")
+        else:
+            print(f"  죽음 {name}")
+    if survived:
+        print(f"[mutation] 생존 변이 {len(survived)}건", file=sys.stderr)
+        for line in survived:
+            print(f"  {line}", file=sys.stderr)
+        return 2
+    print(f"[mutation] pre-gate 변이 {len(_MUTATIONS)}종 모두 red")
+    return 0
+
+
 def main(argv: "list[str]") -> int:
+    global EXECUTOR, GATE
     ap: argparse.ArgumentParser = argparse.ArgumentParser(description="pre-gate 픽스처 러너")
     ap.add_argument("--keep", action="store_true", help="합성 저장소 보존(디버그)")
+    ap.add_argument("--scripts", default=None, help="그 폴더의 design_pregate.py · registry_gate.py 로(변이 사본)")
+    ap.add_argument("--only-group", action="store_true", help="묶음 이동(2.28.0) 유닛 · 묶음만")
+    ap.add_argument("--mutation-test", action="store_true", help="계획 «단계 3 변이 회귀» pre-gate 변이 — 모두 red 여야 exit 0")
     ns: argparse.Namespace = ap.parse_args(argv)
+    if ns.scripts is not None:
+        EXECUTOR = Path(ns.scripts).resolve() / "design_pregate.py"
+        GATE = Path(ns.scripts).resolve() / "registry_gate.py"
+    if ns.mutation_test:
+        return _mutation_test()
+    if ns.only_group:
+        scratch_g: Path = Path(tempfile.mkdtemp(prefix="pregate-group-"))
+        try:
+            group_fails: "list[str]" = _only_group(scratch_g)
+        finally:
+            shutil.rmtree(scratch_g, ignore_errors=True)
+        if group_fails:
+            print("\nFAIL — pre-gate 픽스처 기대 불일치:")
+            for f in group_fails:
+                print(f"  - {f}")
+            return 1
+        print("\nPASS — pre-gate 묶음 이동")
+        return 0
 
     scratch: Path = Path(tempfile.mkdtemp(prefix="pregate-fixture-"))
     failures: "list[str]" = []
@@ -2000,6 +2162,7 @@ def main(argv: "list[str]") -> int:
     failures.extend(_enforce_unit_checks())
     failures.extend(_in_argument_unit_checks())
     failures.extend(_publish_path_unit_checks())       # F4-93 · #541 선언 예보
+    failures.extend(_group_unit_checks())              # 2.28.0 의미 묶음 — 7.4 의 17 · 18 · 18′
     try:
         _run_execution_modes_bundle(scratch, failures)
         _run_base_bundle(scratch, failures)
@@ -2012,6 +2175,7 @@ def main(argv: "list[str]") -> int:
         _run_stub_bundle(scratch, failures)
         _run_stub_material_bundle(scratch, failures)      # D17 소유 · #652
         _run_publish_bundle(scratch, failures)            # F4-93 · #541 선언 예보
+        _run_group_bundle(scratch, failures)              # 2.28.0 의미 묶음 — 사본 이동은 앵커 커밋 전(설계 9.3)
 
         if failures:
             print("\nFAIL — pre-gate 픽스처 기대 불일치:")

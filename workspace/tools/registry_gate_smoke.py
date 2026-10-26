@@ -1705,6 +1705,352 @@ class TempRootRegression(unittest.TestCase):
         self.assertTrue(extra[0].startswith("정리: 끊긴 실행이 남긴 임시 사본 1개("), extra[0])
 
 
+# ── 묶음 이동 채널(2.28.0 의미 묶음 · 설계 5 · 9.3 · 9.4) ────────────────────────────────────────
+
+_SV: str = "application/orders/domain_layer/shared_value_object/"
+_SV_PKG: str = "application.orders.domain_layer.shared_value_object"
+_SCOPE_HEAD: str = "| ID | 위반 | 백스톱 | 미룰 수 있나 |\n|---|---|---|---|\n"
+_HEAVY: str = "".join(f"\n\ndef helper_{i}() -> int:\n    return {i}\n" for i in range(12))
+_MOVED_TITLE: str = "이동 따라 옮긴 legacy"
+
+
+def _fg_vo(stem: str, *imports: str) -> str:
+    cls: str = "".join(x.capitalize() for x in stem.split("_"))
+    return (f'"""{stem} 값."""\nfrom dataclasses import dataclass\n' + "".join(f"{i}\n" for i in imports)
+            + f"\n\n@dataclass(frozen=True)\nclass {cls}:\n    value: str\n")
+
+
+def _fg_tool(*args: object) -> "tuple[int, str]":
+    proc: "subprocess.CompletedProcess[str]" = subprocess.run(
+        [sys.executable, str(GATE.parent / "folder_group.py"), *map(str, args)],
+        capture_output=True, text=True, env=_scrubbed_env())
+    return proc.returncode, proc.stdout + proc.stderr
+
+
+def _fg_folder(repo: Path, name: str, anchor: str, rows: str = "", merges: "tuple[str, ...]" = ()) -> Path:
+    """산출물 폴더 — `build_anchor` · `refactor-scope.md`(G0 표 + 결정 줄) · (있으면) `approved-merges.txt`."""
+    folder: Path = repo / ".dddjango" / name
+    folder.mkdir(parents=True)
+    (folder / "build_anchor").write_text(anchor + "\n", encoding="utf-8")
+    (folder / "refactor-scope.md").write_text(f"실행 · G0 승인 {name}\n\n{rows}", encoding="utf-8")
+    if merges:
+        (folder / "approved-merges.txt").write_text("".join(f"{m} 받음\n" for m in merges), encoding="utf-8")
+    return folder
+
+
+def _debt_rows(line: str, decision: str) -> str:
+    return (f"{_SCOPE_HEAD}| D1 | {line} | check-domain-model | 예 |\n\n"
+            f"D1 · 결정 = {decision} · 사유 = 시험 · 출처 = 본인 직접(0000)\n")
+
+
+def _top_lines(body: str) -> "list[str]":
+    """절 본문의 줄(두 칸 들여쓰기 · ` :: ` 가 있는 줄 — `↳` 줄 · 쌍 줄은 뺀다)."""
+    return [ln.strip() for ln in body.splitlines()
+            if ln.startswith("  ") and not ln.startswith("    ") and " :: " in ln]
+
+
+def _pure_move_repo(td: Path, name: str, decision: str = "ⓐ") -> "tuple[Path, str, Path]":
+    """앵커: `void/`(a · b) + 평평한 `void_c`(옛 위반 `django.db`) + `moon_phase`(부모가 비지 않게 — E3).
+    G0 표에 `void_c` 를 `void/` 에 두라는 #656 줄 · 결정 `decision`."""
+    repo, _pre = _make_repo(td, name)
+    for rel, text in {_SV + "void/__init__.py": "", _SV + "void/void_a.py": _fg_vo("void_a"),
+                      _SV + "void/void_b.py": _fg_vo("void_b"),
+                      _SV + "void_c.py": _fg_vo("void_c", "from django.db import models"),
+                      _SV + "moon_phase.py": _fg_vo("moon_phase")}.items():
+        _write(repo, rel, text)
+    anchor: str = _commit_all(repo, "앵커 — void 묶음 + 평평한 void_c")
+    folder: Path = _fg_folder(repo, name, anchor, _debt_rows(f"[#656] {_SV}void_c.py: 묶음 `void/` 에 둔다", decision))
+    return repo, anchor, folder
+
+
+def _void_inflow_repo(td: Path, name: str, conflict: bool) -> "tuple[Path, str, str]":
+    """앵커 → 레인 편집 → 상류가 `void/` 를 만들며 void_a(옛 위반) · void_b 를 옮김 → 레인이 받음(M).
+    `conflict` 면 레인 · 상류가 void_a 의 다른 자리를 고쳐 git 이 합친다(M 판 ≠ M^2 판 — 충돌 해소분 · 위험 R11)."""
+    repo, _pre = _make_repo(td, name)
+    _write(repo, _SV + "void_a.py", _fg_vo("void_a", "from django.db import models"))
+    _write(repo, _SV + "void_b.py", _fg_vo("void_b"))
+    _write(repo, _SV + "moon_phase.py", _fg_vo("moon_phase"))
+    anchor: str = _commit_all(repo, "앵커")
+    _git(repo, "checkout", "-q", "-b", "lane")
+    _write(repo, _SV + "moon_phase.py", _fg_vo("moon_phase") + "# 레인\n")
+    if conflict:
+        _write(repo, _SV + "void_a.py", _fg_vo("void_a", "from django.db import models").replace("값.", "값(레인)."))
+    _commit_all(repo, "레인 편집")
+    _git(repo, "checkout", "-q", "main")
+    (repo / _SV / "void").mkdir()
+    for stem in ("void_a", "void_b"):
+        _git(repo, "mv", f"{_SV}{stem}.py", f"{_SV}void/{stem}.py")
+    _write(repo, _SV + "void/__init__.py", "")
+    _write(repo, _SV + "void/void_c.py", _fg_vo("void_c"))
+    if conflict:
+        _write(repo, _SV + "void/void_a.py", _fg_vo("void_a", "from django.db import models") + "# 상류\n")
+    _commit_all(repo, "상류 void 묶음")
+    _git(repo, "checkout", "-q", "lane")
+    proc: "subprocess.CompletedProcess[str]" = _git(repo, "merge", "-q", "--no-ff", "-m", "M main 받음", "main")
+    if proc.returncode != 0:
+        raise RuntimeError(f"git merge 실패: {proc.stderr.strip()} {proc.stdout.strip()}")
+    return repo, anchor, _head(repo)
+
+
+def _chain_gate_repo(td: Path, name: str) -> "tuple[Path, str, str]":
+    """설계 V2 (a) · (b) — 상류가 `term/` 을 만들며 solar_term_x(옛 위반)를 머리 합류로 넣고 많이 고침 · 레인은
+    solar_term_y · z 를 더함 → 레인이 받음(M). 끝 맞춤이 받은 파일을 `solar_term/` 으로 다시 옮긴다(병합 몫 A → B · 레인 B → C)."""
+    repo, _pre = _make_repo(td, name)
+    _write(repo, _SV + "moon_phase.py", _fg_vo("moon_phase"))
+    _write(repo, _SV + "solar_term_x.py", _fg_vo("solar_term_x", "from django.db import models"))
+    _write(repo, _SV + "term_a.py", _fg_vo("term_a"))
+    _write(repo, _SV + "term_b.py", _fg_vo("term_b"))
+    anchor: str = _commit_all(repo, "앵커")
+    _git(repo, "checkout", "-q", "-b", "lane")
+    _write(repo, _SV + "solar_term_y.py", _fg_vo("solar_term_y"))
+    _write(repo, _SV + "solar_term_z.py", _fg_vo("solar_term_z", "from .moon_phase import MoonPhase"))
+    _commit_all(repo, "레인 새 파일")
+    _git(repo, "checkout", "-q", "main")
+    (repo / _SV / "term").mkdir()
+    for stem in ("term_a", "term_b", "solar_term_x"):
+        _git(repo, "mv", f"{_SV}{stem}.py", f"{_SV}term/{stem}.py")
+    _write(repo, _SV + "term/__init__.py", "")
+    _write(repo, _SV + "term/term_c.py", _fg_vo("term_c"))
+    _write(repo, _SV + "term/solar_term_x.py", _fg_vo("solar_term_x", "from django.db import models") + _HEAVY)
+    _commit_all(repo, "상류 term 묶음")
+    _git(repo, "checkout", "-q", "lane")
+    proc: "subprocess.CompletedProcess[str]" = _git(repo, "merge", "-q", "--no-ff", "-m", "M main 받음", "main")
+    if proc.returncode != 0:
+        raise RuntimeError(f"git merge 실패: {proc.stderr.strip()} {proc.stdout.strip()}")
+    return repo, anchor, _head(repo)
+
+
+class GroupMoveGateRegression(unittest.TestCase):
+    """2.28.0 의미 묶음 — `--group-moves <산출물 폴더>` «이동 따라 옮긴 legacy» 채널(설계 9.4)과 묶음 부모 캐시 폴더(7.4 의 21).
+
+    쌍 = 실제(병합 몫 ∘ 레인 이동) ∩ 계산(`folder_group.expected_moves`). 줄은 «옛 경로 → 새 경로» 치환 뒤 글자가 같을 때만 1:1.
+    채널은 정규화 · F4-99 · 빚 · 승인 유입 뒤에 돈다 · exit 밖 · 항상 보고 · sidecar `group_moves`."""
+
+    def setUp(self) -> None:
+        self.temp: tempfile.TemporaryDirectory[str] = tempfile.TemporaryDirectory(prefix="gate-group-")
+        self.addCleanup(self.temp.cleanup)
+        self.td: Path = Path(self.temp.name)
+
+    def gate(self, repo: Path, anchor: str, folder: Path, *extra: str) -> "tuple[int, str, dict]":
+        sidecar: Path = self.td / f"{repo.name}-introduced.json"
+        code, out = _gate(repo, anchor, ["--group-moves", str(folder), "--introduced-json", str(sidecar), *extra])
+        data: dict = json.loads(sidecar.read_text(encoding="utf-8")) if sidecar.is_file() else {}
+        return code, out, data
+
+    def test_pure_move_lines_follow_the_pair(self) -> None:
+        # 불변식 4(픽스처 판): 순수 이동 ⇒ 귀속 0 · 옮긴 파일의 옛 위반은 «이동 따라 옮긴 legacy».
+        repo, anchor, folder = _pure_move_repo(self.td, "pure")
+        rc, out = _fg_tool("apply", repo, "--run", folder, "--debt")
+        self.assertEqual(rc, 0, out)
+        _commit_all(repo, "묶음 창 — void_c 를 void/ 로")
+        code, out, data = self.gate(repo, anchor, folder)
+        self.assertEqual(code, 0, out)
+        moved: "list[str]" = _top_lines(_section(out, _MOVED_TITLE))
+        self.assertEqual(len(moved), 2, out)
+        self.assertTrue(all(f"{_SV}void/void_c.py" in ln and "django.db" in ln for ln in moved), moved)
+        self.assertIn("↳ 앵커: ", _section(out, _MOVED_TITLE))
+        self.assertIn("판정: 귀속 0건 → green(신규 위반 없음)(이동 따라 옮긴 legacy 2건 제외)", out)
+        self.assertEqual(data.get("group_moves", {}).get("pairs"), {f"{_SV}void_c.py": f"{_SV}void/void_c.py"})
+        self.assertEqual(sorted(x["line"] for x in data["group_moves"]["lines"]), sorted(moved))
+        self.assertEqual(data["attributed_lines"], [])
+
+    def test_move_outside_the_calculation_stays_attributed(self) -> None:
+        # 계산 밖(G0 ⓑ 인데 손으로 옮김) — 실제에만 있는 쌍은 버리고 목록으로 낸다 · 옛 위반은 귀속.
+        repo, anchor, folder = _pure_move_repo(self.td, "outside", decision="ⓑ")
+        _git(repo, "mv", f"{_SV}void_c.py", f"{_SV}void/void_c.py")
+        _commit_all(repo, "손으로 옮김")
+        code, out, data = self.gate(repo, anchor, folder)
+        self.assertEqual(code, 2, out)
+        self.assertEqual(_top_lines(_section(out, _MOVED_TITLE)), [])
+        attributed: "list[str]" = _top_lines(_section(out, "귀속(N∖L)"))
+        self.assertEqual(len([ln for ln in attributed if f"{_SV}void/void_c.py" in ln and "django.db" in ln]), 2, out)
+        self.assertIn(f"계산 밖 이동(쌍에서 뺌 — 그 파일의 옛 위반은 귀속) {_SV}void_c.py -> {_SV}void/void_c.py", out)
+        self.assertEqual(data["group_moves"]["pairs"], {})
+        self.assertEqual(data["group_moves"]["dropped"], {f"{_SV}void_c.py": f"{_SV}void/void_c.py"})
+
+    def test_pair_whose_text_differs_after_substitution_is_not_matched(self) -> None:
+        repo, anchor, folder = _pure_move_repo(self.td, "differs")
+        _fg_tool("apply", repo, "--run", folder, "--debt")
+        _write(repo, _SV + "void/void_c.py", _fg_vo("void_c", "from django.core import signals"))
+        _commit_all(repo, "옮기고 import 를 바꿈")
+        code, out, data = self.gate(repo, anchor, folder)
+        self.assertEqual(code, 2, out)
+        self.assertEqual(_top_lines(_section(out, _MOVED_TITLE)), [])
+        self.assertTrue(any(f"{_SV}void/void_c.py" in ln for ln in _top_lines(_section(out, "귀속(N∖L)"))), out)
+        self.assertEqual(data["group_moves"]["pairs"], {f"{_SV}void_c.py": f"{_SV}void/void_c.py"})
+
+    def test_approved_merge_then_lane_move_is_one_pair(self) -> None:
+        # 설계 V2 (a) 병합 몫 A → B 와 레인 이동 B → C 를 이어 A → C · (b) 상류가 많이 고친 뒤 옮긴 파일도 쌍.
+        repo, anchor, merge = _chain_gate_repo(self.td, "chain")
+        folder: Path = _fg_folder(repo, "chain", anchor, merges=(merge,))
+        rc, out = _fg_tool("apply", repo, "--run", folder, "--run-moves")
+        self.assertEqual(rc, 0, out)
+        _commit_all(repo, "끝 맞춤 묶음 창")
+        _code, out, data = self.gate(repo, anchor, folder, "--approved-merge-file", str(folder / "approved-merges.txt"))
+        x_new: str = f"{_SV}solar_term/solar_term_x.py"
+        moved: "list[str]" = [ln for ln in _top_lines(_section(out, _MOVED_TITLE)) if x_new in ln]
+        self.assertEqual(len(moved), 2, out)
+        self.assertFalse(any(x_new in ln for ln in _top_lines(_section(out, "귀속(N∖L)"))), out)
+        self.assertEqual(data["group_moves"]["pairs"].get(f"{_SV}solar_term_x.py"), x_new)
+
+    def test_conflict_resolved_file_stays_attributed(self) -> None:
+        # 위험 R11 — 레인 · 상류가 함께 고쳐 git 이 합친 파일은 T₀′ 에 들지 않아 쌍이 없다 · 옛 위반은 귀속.
+        repo, anchor, merge = _void_inflow_repo(self.td, "r11", conflict=True)
+        folder: Path = _fg_folder(repo, "r11", anchor, merges=(merge,))
+        code, out, data = self.gate(repo, anchor, folder, "--approved-merge-file", str(folder / "approved-merges.txt"))
+        self.assertEqual(code, 2, out)
+        a_new: str = f"{_SV}void/void_a.py"
+        self.assertTrue(any(a_new in ln and "django.db" in ln for ln in _top_lines(_section(out, "귀속(N∖L)"))), out)
+        self.assertFalse(any(a_new in ln for ln in _top_lines(_section(out, _MOVED_TITLE))), out)
+        self.assertNotIn(f"{_SV}void_a.py", data["group_moves"]["pairs"])
+
+    def test_verbatim_approved_inflow_is_inflow_not_moved(self) -> None:
+        # 채널은 승인 유입 판정 뒤에 돈다 — 상류판 그대로 받은 파일의 줄은 «승인 유입» 이다(이동 채널로 새지 않는다).
+        repo, anchor, merge = _void_inflow_repo(self.td, "inflow", conflict=False)
+        folder: Path = _fg_folder(repo, "inflow", anchor, merges=(merge,))
+        _code, out, data = self.gate(repo, anchor, folder, "--approved-merge-file", str(folder / "approved-merges.txt"))
+        a_new: str = f"{_SV}void/void_a.py"
+        self.assertEqual(data["group_moves"]["pairs"].get(f"{_SV}void_a.py"), a_new)
+        inflow: "list[str]" = [ln for ln in _top_lines(_section(out, "승인 유입")) if a_new in ln]
+        self.assertEqual(len(inflow), 2, out)
+        self.assertFalse(any(a_new in ln for ln in _top_lines(_section(out, _MOVED_TITLE))), out)
+        self.assertFalse(any(a_new in ln for ln in _top_lines(_section(out, "귀속(N∖L)"))), out)
+
+    def test_line_matching_is_one_to_one(self) -> None:
+        gate: ModuleType = _gate_module()
+        pairs: "dict[str, str]" = {"app/x.py": "app/g/x.py"}
+        old_a: str = "c.py :: [#1] app/x.py: imports app.x"
+        old_b: str = "c.py :: [#1] app/x.py: imports app.g.x"
+        new: str = "c.py :: [#1] app/g/x.py: imports app.g.x"
+        rest, resolved, moved = gate._follow_moves([new, "c.py :: [#2] app/y.py: other"], [old_a, old_b], pairs)
+        self.assertEqual(rest, ["c.py :: [#2] app/y.py: other"])
+        self.assertEqual(moved, {new: old_a})
+        self.assertEqual(resolved, [old_b])
+        self.assertEqual(gate._follow_moves([new], [old_a], {}), ([new], [old_a], {}))
+
+    def test_usage_errors_fail_before_measuring(self) -> None:
+        repo, anchor, folder = _pure_move_repo(self.td, "usage")
+        _write(repo, "note.md", "변경\n")
+        other: str = _commit_all(repo, "다른 커밋")
+        bare: Path = self.td / "bare-folder"
+        bare.mkdir()
+        for extra, needle in ((["--group-moves", str(bare)], "build_anchor"),
+                              (["--group-moves", str(self.td / "none")], "폴더가 아니다")):
+            code, out = _gate(repo, anchor, extra)
+            self.assertEqual(code, 1, out)
+            self.assertIn(needle, out)
+        (folder / "build_anchor").write_text(other + "\n", encoding="utf-8")
+        code, out = _gate(repo, anchor, ["--group-moves", str(folder)])
+        self.assertEqual((code, "build_anchor" in out), (1, True), out)
+        (folder / "build_anchor").write_text(anchor + "\n", encoding="utf-8")
+        (folder / "approved-merges.txt").write_text(f"{other} 받음\n", encoding="utf-8")
+        code, out = _gate(repo, anchor, ["--group-moves", str(folder)])
+        self.assertEqual((code, "approved-merges.txt" in out, "판정:" in out), (1, True, False), out)
+
+    def test_snapshot_skips_cache_only_group_folders(self) -> None:
+        # 7.4 의 21 — 묶음 부모(값 객체 · 엔티티 · 서비스 칸)의 캐시만 남은 하위 폴더는 사본에 빈 폴더로 남지 않는다.
+        gate: ModuleType = _gate_module()
+        repo: Path = self.td / "cache"
+        shutil.copytree(BASE_FIXTURE, repo)
+        gone: "tuple[str, ...]" = (_SV + "void", "application/orders/domain_layer/order/entity/line",
+                                   "application/orders/domain_layer/domain_service/pricing")
+        for rel in gone:
+            _write(repo, rel + "/__pycache__/old.cpython-39.pyc", "cache")
+        _write(repo, _SV + "kept/kept_a.py", _fg_vo("kept_a"))
+        _write(repo, _SV + "kept/__pycache__/kept_a.cpython-39.pyc", "cache")
+        snapshot: Path = self.td / "cache-snapshot"
+        gate._snapshot_current(repo, snapshot)
+        for rel in gone:
+            self.assertFalse((snapshot / rel).exists(), rel)
+        self.assertTrue((snapshot / _SV / "kept/kept_a.py").is_file())
+
+
+_STAR: str = "application/stellar/domain_layer/shared_value_object/star_link.py"
+
+
+def _coordinator_end_matching(repo: Path, folder: Path, legacy: "Path | None") -> "Path | None":
+    """조정자 대신(설계 9.3 끝 맞춤) — `draft --run` 이 G1 목록(`group-moves.txt`)에 없던 다른 BC import 를 내면 창을 열지 않고
+    STOP 문서를 쓴다(등재할 줄 `#656 <주어 경로>: <메시지>` 를 목록 꼴 그대로). 아니면 남은 이동이 있을 때 `apply --run-moves` 뒤
+    커밋. 이관 빚 목록은 발주자 소유라 읽기만 한다(W3). 반환: STOP 문서 경로 또는 None."""
+    rc, out = _fg_tool("draft", repo, "--bc", "orders", "--run", folder,
+                       *(["--legacy-debt-file", legacy] if legacy is not None else []))
+    if rc != 0:
+        raise RuntimeError(out)
+    lines: "list[str]" = out.splitlines()
+    g1: "set[str]" = set((folder / "group-moves.txt").read_text(encoding="utf-8").splitlines())
+    fresh: "list[str]" = [ln for ln in lines if ln.startswith("다른 BC import ") and ln not in g1]
+    remaining: "list[str]" = [ln[len("남은 이동 "):].split(" -> ")[0] for ln in lines if ln.startswith("남은 이동 ")]
+    if fresh:
+        quoted: "list[str]" = []
+        for old in remaining:
+            module: str = old[:-3].replace("/", ".")
+            if any(ln.endswith(f" {module}") for ln in fresh):
+                quoted += [f"#656 {ln[len('줄 [#656] '):]}" for ln in lines if ln.startswith(f"줄 [#656] {old}: ")]
+        doc: Path = folder / "stop-group-moves.md"
+        doc.write_text("STOP_FOR_USER_APPROVAL — 끝 맞춤에서 처음 드러난 다른 BC import\n"
+                       + "".join(f"- {ln}\n" for ln in fresh)
+                       + "선택지: 옮기고 진행 / 이번엔 부모에 두고 그 줄을 이관 빚으로(등재할 줄 — 발주자가 목록에 적는다) / 종료\n"
+                       + "".join(f"  {q}\n" for q in quoted), encoding="utf-8")
+        return doc
+    if remaining:
+        rc, out = _fg_tool("apply", repo, "--run", folder, "--run-moves",
+                           *(["--legacy-debt-file", legacy] if legacy is not None else []))
+        if rc != 0:
+            raise RuntimeError(out)
+        _commit_all(repo, "끝 맞춤 묶음 창")
+    return None
+
+
+class GroupEndMatchingScenario(unittest.TestCase):
+    """설계 9.3 · 12.5 끝 맞춤 — 다른 BC import 가 끝에서 처음 드러나면 STOP 문서에 등재 줄 원문 → 시험이 발주자 몫으로 목록에 적음
+    → 5절 ⓪ 으로 끝 맞춤 0 · `verify --run` green · 게이트 귀속 없음 → 조정자 흐름은 목록 파일을 쓰지 않는다(W3)."""
+
+    def test_stop_then_owner_lists_then_green(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="gate-end-") as tmp:
+            td: Path = Path(tmp)
+            repo, _pre = _make_repo(td, "end")
+            for rel, text in {_SV + "void/__init__.py": "", _SV + "void/void_a.py": _fg_vo("void_a"),
+                              _SV + "void/void_b.py": _fg_vo("void_b"), _SV + "void/void_c.py": _fg_vo("void_c"),
+                              _SV + "tie_break_step.py": _fg_vo("tie_break_step"),
+                              _SV + "moon_phase.py": _fg_vo("moon_phase"),
+                              "application/stellar/__init__.py": "", "application/stellar/domain_layer/__init__.py": "",
+                              "application/stellar/domain_layer/shared_value_object/__init__.py": "",
+                              _STAR: _fg_vo("star_link", f"from {_SV_PKG}.tie_break_step import TieBreakStep")}.items():
+                _write(repo, rel, text)
+            anchor: str = _commit_all(repo, "앵커")
+            folder: Path = _fg_folder(repo, "end", anchor)
+            legacy: Path = td / "legacy-debt.txt"
+            rc, g1 = _fg_tool("draft", repo, "--bc", "orders", "--run", folder)
+            self.assertEqual(rc, 0, g1)
+            self.assertNotIn("남은 이동", g1)
+            (folder / "group-moves.txt").write_text(g1, encoding="utf-8")
+            _write(repo, _SV + "void/void_a.py", _fg_vo("void_a", "from ..tie_break_step import TieBreakStep"))
+            _commit_all(repo, "슬라이스 — void_a 가 tie_break_step 을 쓴다")
+
+            doc: "Path | None" = _coordinator_end_matching(repo, folder, None)
+            self.assertIsNotNone(doc)
+            quoted: str = f"#656 {_SV}tie_break_step.py: 묶음 `void/` 에 둔다"
+            self.assertIn(f"  {quoted}\n", doc.read_text(encoding="utf-8"))
+            self.assertIn(f"{_STAR}:3 {_SV_PKG}.tie_break_step", doc.read_text(encoding="utf-8"))
+            self.assertFalse(legacy.exists(), "조정자 흐름이 이관 빚 목록을 썼다(W3)")
+
+            legacy.write_text(f"{quoted}\n", encoding="utf-8")            # 발주자 몫
+            written: bytes = legacy.read_bytes()
+            self.assertIsNone(_coordinator_end_matching(repo, folder, legacy))
+            rc, out = _fg_tool("verify", repo, "--run", folder, "--legacy-debt-file", legacy)
+            self.assertEqual(rc, 0, out)
+            self.assertTrue((repo / _SV / "tie_break_step.py").is_file())
+            code, out = _gate(repo, anchor, ["--legacy-debt-file", str(legacy), "--group-moves", str(folder)])
+            self.assertEqual(code, 0, out)
+            self.assertFalse(any("tie_break_step" in ln for ln in _top_lines(_section(out, "귀속(N∖L)"))), out)
+            self.assertTrue(all("이관 빚" in out.split(ln)[0].rsplit("== ", 1)[-1]
+                                for ln in _top_lines(out) if "#656" in ln and "tie_break_step" in ln), out)
+            self.assertEqual(legacy.read_bytes(), written)
+
+
+_GROUP_CASES: "tuple[type, ...]" = (GroupMoveGateRegression, GroupEndMatchingScenario)
+
+
 def _unnumbered_debt_rows(td: Path, repo: Path, anchor: str, debt: Path,
                           e_out: str) -> "list[tuple[str, int, int, bool, str]]":
     """E3 · E4 — 번호 없는 줄 빚(`= <검사기 파일> :: <줄>`)을 섞은 목록: 새 게이트와 옛 직렬 게이트 사본
@@ -1734,14 +2080,85 @@ def _unnumbered_debt_rows(td: Path, repo: Path, anchor: str, debt: Path,
     return rows
 
 
-def main() -> int:
+# (이름, [(옛 글, 새 글) …]) — 옛 글은 registry_gate.py 에 정확히 한 번 있어야 한다. 계획 «단계 3 변이 회귀»의 게이트 채널 다섯.
+_MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...]], ...]" = (
+    ("채널 지움", (("attributed, resolved, moved = _follow_moves(attributed, resolved, group_pairs)", "moved = {}"),)),
+    ("쌍을 실제만으로(계산과 교집합 안 함)", (("if expected.get(a) == c:", "if True:"),)),
+    ("1:1 대신 다:1", (("[line for line in resolved if line not in taken]",
+                       "[line for line in resolved if subst(line) not in moved]"),)),
+    ("채널을 승인 유입 판정 앞에", (
+        ("        moved: \"dict[str, str]\" = {}\n        if group_pairs is not None:\n"
+         "            attributed, resolved, moved = _follow_moves(attributed, resolved, group_pairs)\n", ""),
+        ("        if approved_path is not None:\n            # 순서: attributed → 빚 분리 → provenance 분리(빚 우선) → 잔여 = exit 근거.\n",
+         "        moved: \"dict[str, str]\" = {}\n        if group_pairs is not None:\n"
+         "            attributed, resolved, moved = _follow_moves(attributed, resolved, group_pairs)\n"
+         "        if approved_path is not None:\n            # 순서: attributed → 빚 분리 → provenance 분리(빚 우선) → 잔여 = exit 근거.\n"))),
+    ("병합 몫을 이어 붙이지 않음", (("b: str = merge_share.get(a, a)", "b: str = a"),)),
+)
+
+
+def _mutation_test() -> int:
+    """변이를 scripts 사본에 하나씩 넣고 묶음 이동 시험(`--only-group`)을 돈다 — 모두 붉어야 green."""
+    from concurrent.futures import ThreadPoolExecutor
+    src: str = GATE.read_text(encoding="utf-8")
+
+    def one(item: "tuple[str, tuple[tuple[str, str], ...]]") -> "tuple[str, str]":
+        name, edits = item
+        text: str = src
+        for old, new in edits:
+            if text.count(old) != 1:
+                return name, f"변이 지점이 정확히 한 곳이 아니다({text.count(old)}) — 변이 표를 코드에 맞춰라"
+            text = text.replace(old, new, 1)
+        with tempfile.TemporaryDirectory(prefix="gate-mutant-") as tmp:
+            copy: Path = Path(tmp) / "scripts"
+            shutil.copytree(GATE.parent, copy, symlinks=False, ignore=shutil.ignore_patterns("__pycache__"))
+            (copy / GATE.name).write_text(text, encoding="utf-8")
+            proc = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--scripts", str(copy), "--only-group",
+                                   "--fail-fast"], capture_output=True, text=True, env=_scrubbed_env())
+        if proc.returncode == 0:
+            return name, "변이가 살아남음(시험이 못 잡는다)"
+        if "FAILED (" not in proc.stderr:
+            return name, f"변이가 러너를 깨뜨림(시험 실패가 아님) — {proc.stderr.strip()[-300:]}"
+        return name, ""
+
+    survived: "list[str]" = []
+    with ThreadPoolExecutor(max_workers=len(_MUTATIONS)) as pool:
+        for name, why in pool.map(one, _MUTATIONS):
+            if why:
+                survived.append(f"{name}: {why}")
+            else:
+                print(f"  죽음 {name}")
+    if survived:
+        print(f"[mutation] 생존 변이 {len(survived)}건", file=sys.stderr)
+        for line in survived:
+            print(f"  {line}", file=sys.stderr)
+        return 2
+    print(f"[mutation] registry_gate 변이 {len(_MUTATIONS)}종 모두 red")
+    return 0
+
+
+def main(argv: "list[str] | None" = None) -> int:
     """스모크 전체를 이 실행 전용 임시 폴더(TMPDIR)에서 돈다 — 게이트의 시작 때 쓸기가 실제 임시 폴더의 다른 실행 사본을
-    건드리거나 그 알림 줄이 옛 판 대조 출력에 섞이지 않게."""
+    건드리거나 그 알림 줄이 옛 판 대조 출력에 섞이지 않게.
+
+    `--scripts <dir>`: 그 폴더의 registry_gate.py · folder_group.py 로(변이 사본) · `--only-group`: 묶음 이동 시험만 ·
+    `--fail-fast` · `--mutation-test`: 계획 «단계 3 변이 회귀» 게이트 채널 변이 다섯(모두 red 여야 exit 0)."""
+    global GATE
+    args: "list[str]" = list(sys.argv[1:] if argv is None else argv)
+    only_group: bool = "--only-group" in args
+    fail_fast: bool = "--fail-fast" in args
+    if "--scripts" in args:
+        GATE = Path(args[args.index("--scripts") + 1]).resolve() / "registry_gate.py"
+    if "--mutation-test" in args:
+        return _mutation_test()
     private: str = tempfile.mkdtemp(prefix="gate-smoke-tmp-")
     saved: "str | None" = os.environ.get("TMPDIR")
     os.environ["TMPDIR"] = private
     tempfile.tempdir = private
     try:
+        if only_group:
+            suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case) for case in _GROUP_CASES)
+            return 0 if unittest.TextTestRunner(verbosity=2, failfast=fail_fast).run(suite).wasSuccessful() else 2
         return _main()
     finally:
         tempfile.tempdir = None
@@ -1756,7 +2173,7 @@ def _main() -> int:
     suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case)
                                for case in (CacheSnapshotRegression, IdempotencySnapshotRegression, SisterGateRegression,
                                             ApprovedInflowGateRegression, SnapshotLinkRegression, ListShrinkRegression,
-                                            HiddenAnchorGateRegression, TempRootRegression))
+                                            HiddenAnchorGateRegression, TempRootRegression) + _GROUP_CASES)
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     if not result.wasSuccessful():
         return 2

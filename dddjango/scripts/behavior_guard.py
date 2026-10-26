@@ -1342,7 +1342,7 @@ MIGRATION_OPS: "frozenset[str]" = frozenset({
     "CreateModel", "DeleteModel", "RenameModel", "AlterModelTable", "AlterModelOptions", "AlterModelManagers",
     "AddField", "RemoveField", "AlterField", "RenameField", "AddIndex", "RemoveIndex", "RenameIndex",
     "AddConstraint", "RemoveConstraint", "AlterUniqueTogether", "AlterIndexTogether"})
-FOLLOW_OUTSIDE_KINDS: "frozenset[str]" = frozenset({"프로젝트 합성", "공유 표면"})
+FOLLOW_OUTSIDE_KINDS: "frozenset[str]" = frozenset({"프로젝트 합성", "공유 표면", "묶음 import 치환"})
 D_FIXED: "frozenset[str]" = frozenset({"확정 변화", "확정 변화(지역 정의)", "삭제", "추가"})
 D_KINDS: "tuple[str, ...]" = ("기대식", "맥락만", "지역 정의", "추가", "삭제", "공유 정의 변화")
 SPOT_LIMIT: int = 300
@@ -2630,7 +2630,8 @@ def _confirmed_snapshot(folder: Path, repo: Path, label: str) -> dict:
 
 def _outside_allowed(kind: str, edits: "list[dict]") -> "set[str]":
     """대상 BC 밖에서 이 창이 고쳐도 되는 경로(§3-5 · §4-5 «창 종류가 허락한 갈래만») — 0T 는 없음(루트 pytest 설정 절은
-    `_side_rules` 가 따로 받는다) · 0C · 0F 는 «다른 BC 편집 목록»의 프로젝트 합성 · 공유 표면 줄 · 변경 창은 목록 전부."""
+    `_side_rules` 가 따로 받는다) · 0C · 0F 는 «다른 BC 편집 목록»의 프로젝트 합성 · 공유 표면 · 묶음 import 치환 줄 · 변경 창은
+    목록 전부."""
     if kind == "test":
         return set()
     return {e["path"] for e in edits if kind == "change" or e.get("kind") in FOLLOW_OUTSIDE_KINDS}

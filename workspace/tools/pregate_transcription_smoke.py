@@ -1751,12 +1751,12 @@ class SelectionEquivalenceTest(unittest.TestCase):
         cls.api = pg._bundled_checker(pg.API_ERROR_CHECKER, "_pregate_api_error_contract")
 
     def walked(self, root: Path) -> "dict[str, set[tuple[str, ...]]]":
-        """검사기 선택 그대로(사본 전체 훑기)."""
+        """검사기 선택 그대로(사본 전체 훑기) — 도메인 서비스 칸은 2.28.0 의미 묶음부터 구조만 보는 `group_members`(설계 7.4 의 7)."""
         sel: "dict[str, set[tuple[str, ...]]]" = {"ds": set(), "repo": set(), "ohs": set()}
         for bc in self.dm.vocab.server_bc_dirs(root):
             ds = bc / "domain_layer" / "domain_service"
             if self.dm._has_adoption_signal(bc) and ds.is_dir():
-                sel["ds"] |= {p.relative_to(root).parts for p in self.dm.checker_target.slot_glob(ds, "*.py")
+                sel["ds"] |= {p.relative_to(root).parts for p in pg.folder_group.group_members(ds, "*.py", promotable=True)
                               if p.name != "__init__.py"}
         sink = self.tx.Findings(defer=True)
         for bc in self.tx._find_bcs(root):

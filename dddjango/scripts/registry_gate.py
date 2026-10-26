@@ -84,8 +84,19 @@ provenance 차분 — 귀속의 분할이지 재정의가 아니다
   `^2` 를 포함하는 ref 가 HEAD 브랜치뿐이면 «역방향/합성 머지 의심» 진단 1행을 낸다(exit 무변 ·
   custody 는 발주자 소유).
 
+묶음 이동 채널(2.28.0 의미 묶음 · `--group-moves <산출물 폴더>`)
+  `folder_group.expected_moves`(앵커 · 승인 병합 · `refactor-scope.md` 결정 · 이관 빚 목록)로 계산한 «앵커 자리 → 끝 자리»와
+  실제 이동(병합 몫 `앵커 → T₀′` 과 레인 이동 `T₀′ → 지금` 을 이은 `A → C` — 같은 `actual_moves`)의 교집합이 쌍이다. 실제에만
+  있는 쌍은 버리고 «계산 밖 이동» 으로 싣는다(그 파일의 옛 위반은 귀속). 정규화 · F4-99 · 빚 · 승인 유입 **뒤** 남은 귀속 줄 ℓ 마다
+  해소(L∖N) 줄 ℓ′ 의 «옛 경로 → 새 경로 · 옛 점 경로 → 새 점 경로» 치환이 ℓ 과 글자로 같으면 1:1 로 짝지어 «이동 따라 옮긴
+  legacy» 절로 보낸다(exit 밖 · 항상 보고 · sidecar `group_moves`). 산출물 폴더의 `build_anchor` 는 `--anchor` 와 같은 커밋 ·
+  `approved-merges.txt` 는 `--approved-merge-file` 과 같은 목록이어야 한다(아니면 사용 오류). flag 가 없으면 출력 · sidecar 무변.
+- **묶음 부모의 캐시만 남은 폴더**: 값 객체 · 엔티티 · 이벤트 · 예외 · 서비스 칸의 하위 폴더에 캐시만 남았으면 현재 사본에서
+  뺀다(지운 묶음이 빈 폴더로 남아 거짓 위반을 내지 않게 — 설계 7.4 의 21).
+
 사용: python3 registry_gate.py <저장소 루트> --anchor <ref> [--legacy-debt-file <path>]
       [--approved-merge-file <path>] [--introduced-json <path>] [--contract-json <path>]
+      [--group-moves <산출물 폴더>]
       python3 registry_gate.py --temp-report
 환경(선택): DJR_REGISTRY_WORKERS=<양의 정수> — 검사기 동시 실행 수. 없으면 빈 코어 수(CPU − 1분 부하 · 1~8)다.
       앵커·현재 두 벌이 한 한도를 나눠 쓴다. 출력·sidecar 는 워커 수와 무관하다(REGISTRY 순서 병합).
@@ -155,14 +166,17 @@ def _snapshot_cache_instances(root: Path) -> set[Path]:
         optional = next((c for c in children if tree.is_dir(c) and c.kind == "placeholder"
                          and "/" not in c.name.rstrip("/")), None)
         files = [tree.concrete_name(c, bindings) for c in children if not tree.is_dir(c)]
+        groupable = any(c.groupable for c in children if not tree.is_dir(c))
         for child in sorted(directory.iterdir()):
             if not child.is_dir() or child.is_symlink() or child.name.startswith(".") or child.name == "__pycache__":
                 continue
             if child.name in fixed:
                 walk(child, fixed[child.name], bindings)
                 continue
-            # 파일의 승격 실현은 선택 폴더 인스턴스가 아니다.
+            # 파일의 승격 실현은 선택 폴더 인스턴스가 아니다. 묶음 부모의 캐시만 남은 하위 폴더(지운 묶음 · 승격)는 뺀다(7.4 의 21).
             if any(re.fullmatch(token.sub(".+", name), child.name + ".py") for name in files):
+                if groupable and checker_target.cache_only_instance(child):
+                    omitted.add(child.relative_to(root))
                 continue
             if optional is None:
                 continue
@@ -477,10 +491,86 @@ def _run_registry(target: Path,
     return exits, lines, records, cands
 
 
+def _group_folder_error(root: Path, folder: Path, anchor: "str | None", approved: "Path | None") -> "str | None":
+    """`--group-moves` 재료 대조 — 산출물 폴더의 `build_anchor` 가 `--anchor` 와 같은 커밋이고 `approved-merges.txt` 가
+    `--approved-merge-file` 과 같은 목록(둘 다 없음 포함)이어야 한다. 어긋나면 사용 오류 문면."""
+    if not folder.is_dir():
+        return f"--group-moves {folder} 가 폴더가 아니다"
+    marker: Path = folder / "build_anchor"
+    recorded: str = marker.read_text(encoding="utf-8").strip() if marker.is_file() else ""
+    if not recorded:
+        return f"--group-moves {folder}/build_anchor 없음 — 묶음 이동 계산의 앵커가 없다"
+    if anchor is None:
+        return None  # git TARGET 의 --anchor 누락은 아래 본 자리가 낸다
+    shas: "list[str]" = []
+    for ref in (recorded, anchor):
+        rev: "subprocess.CompletedProcess[str]" = anchor_diff.run_git(root, "rev-parse", "--verify", f"{ref}^{{commit}}")
+        shas.append(rev.stdout.strip() if rev.returncode == 0 else f"(resolve 불능 {ref})")
+    if shas[0] != shas[1]:
+        return f"--group-moves {folder}/build_anchor({shas[0][:12]}) 와 --anchor({shas[1][:12]}) 가 다른 커밋이다"
+    listed: Path = folder / "approved-merges.txt"
+    mine: "bytes | None" = listed.read_bytes() if listed.is_file() else None
+    given: "bytes | None" = approved.read_bytes() if approved is not None else None
+    if mine != given:
+        return (f"--group-moves {folder}/approved-merges.txt 와 {anchor_diff.APPROVED_MERGE_FLAG} 가 같은 목록이 아니다 — "
+                "묶음 이동 계산과 승인 유입 판정이 같은 승인 병합을 써야 한다")
+    return None
+
+
+def _group_pairs(root: Path, folder: Path, anchor_sha: str, merges: "list[anchor_diff.ApprovedMerge]",
+                 legacy: "Path | None") -> "tuple[dict[str, str], dict[str, str]]":
+    """설계 9.4 — 쌍 = 실제(병합 몫 `앵커 → T₀′` 과 레인 이동 `T₀′ → 지금` 을 이은 `A → C`) ∩ 계산(`expected_moves`).
+    반환 (쌍, 계산 밖 실제 쌍). 실제 이동 · T₀′ · 계산은 `folder_group` 의 한 정의다(불변식 7)."""
+    import folder_group
+    expected: "dict[str, str]" = folder_group.expected_moves(root, folder, legacy)
+    t0: "dict[str, str]" = folder_group.tree_oids(root, anchor_sha, folder_group.git_prefix(root))
+    t0p: "dict[str, str]" = folder_group.base_tree(root, anchor_sha, merges)
+    now: "dict[str, str]" = {p: folder_group.blob_oid(b) for p, b in folder_group.worktree_bytes(root).items()}
+    merge_share: "dict[str, str]" = folder_group.actual_moves(t0, t0p)
+    lane: "dict[str, str]" = folder_group.actual_moves(t0p, now)
+    pairs: "dict[str, str]" = {}
+    dropped: "dict[str, str]" = {}
+    for a in sorted(t0):
+        b: str = merge_share.get(a, a)
+        c: str = lane.get(b, b)
+        if c == a or c not in now:
+            continue
+        if expected.get(a) == c:
+            pairs[a] = c
+        else:
+            dropped[a] = c
+    return pairs, dropped
+
+
+def _follow_moves(attributed: "list[str]", resolved: "list[str]",
+                  pairs: "dict[str, str]") -> "tuple[list[str], list[str], dict[str, str]]":
+    """설계 9.4 줄 대응 — 귀속 줄 ℓ 마다 해소 줄 ℓ′ 의 «옛 경로 → 새 경로 · 옛 점 경로 → 새 점 경로» 치환이 ℓ 과 글자로 같으면
+    1:1 로 짝짓는다. 반환 (남은 귀속, 남은 해소, {ℓ: ℓ′})."""
+    if not pairs:
+        return attributed, resolved, {}
+    import folder_group
+    subst = folder_group.string_substituter(sorted(pairs.items()))
+    pool: "dict[str, list[str]]" = {}
+    for old in resolved:
+        new: str = subst(old)
+        if new != old:
+            pool.setdefault(new, []).append(old)
+    rest: "list[str]" = []
+    moved: "dict[str, str]" = {}
+    for line in attributed:
+        if pool.get(line):
+            moved[line] = pool[line].pop(0)
+        else:
+            rest.append(line)
+    taken: "set[str]" = set(moved.values())
+    return rest, [line for line in resolved if line not in taken], moved
+
+
 def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
                       records: "list[dict]", prefixes: "tuple[str, ...]",
                       provenance: "_ProvenanceResult | None" = None,
-                      candidates: "list[str] | None" = None) -> None:
+                      candidates: "list[str] | None" = None,
+                      group_moves: "dict[str, object] | None" = None) -> None:
     """귀속(N∖L) 라인에 대응하는 **현재 실행 레코드만** sidecar 로 쓴다(T2-3).
 
     왜 게이트가 쓰는가: 귀속은 «앵커 대비 차분»이라 게이트만 알 수 있다. 소비자가 raw
@@ -527,6 +617,8 @@ def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
         # flag 시에만 키 추가 — 스키마 문자열은 유지(호환 확장 · flag 없으면 payload byte 동일).
         # `attributed_lines`·`records` 는 잔여(승인 유입 제외)만이다 — 재생성 루프 입력에 유입이 섞이지 않는다.
         payload["provenance"] = provenance.as_payload()
+    if group_moves is not None:  # `--group-moves` 때만 키를 둔다(flag 없으면 payload byte 무변)
+        payload["group_moves"] = group_moves
     dest.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"\n귀속 레코드 sidecar → {dest} "
           f"(레코드 {len(picked)} · 대응 없는 귀속 라인 {len(want - matched)})")
@@ -1012,6 +1104,9 @@ def main(argv: "list[str]") -> int:
     ap.add_argument("--contract-json", default=None,
                     help="`rule=null`(선행 계약·센티널) 레코드의 계수를 companion sidecar 로 "
                          "쓴다 — 주입 대상이 아니라 «계수 후 유효 유지»(개정 9)의 원자료")
+    ap.add_argument("--group-moves", default=None, metavar="산출물 폴더",
+                    help="묶음 이동(2.28.0 의미 묶음)을 따라 옮긴 legacy 줄을 귀속에서 빼 «이동 따라 옮긴 legacy» 절로 "
+                         "보고한다 — 쌍 = 실제 이동 ∩ folder_group 계산(설계 9.4 · git TARGET 전용 · exit 밖 · sidecar)")
     ap.add_argument("--temp-report", action="store_true",
                     help="임시 사본 한 줄 보고만 하고 끝낸다(G2 배너용 — 판정 · 지우기 없음 · TARGET 불요)")
     ns: argparse.Namespace = ap.parse_args(argv)
@@ -1068,6 +1163,19 @@ def main(argv: "list[str]") -> int:
     merges: "list[anchor_diff.ApprovedMerge]" = []
     chain: "list[anchor_diff.ChainCommit]" = []
     provenance: "_ProvenanceResult | None" = None
+    group_folder: "Path | None" = None
+    if ns.group_moves is not None:
+        if not is_git:
+            print("사용 오류: --group-moves 는 git 저장소 TARGET 에서만 쓸 수 있다 — 묶음 이동 재료(앵커 · 커밋 트리)가 없다",
+                  file=sys.stderr)
+            return 1
+        group_folder = Path(ns.group_moves).resolve()
+        why: "str | None" = _group_folder_error(root, group_folder, ns.anchor, approved_path)
+        if why is not None:
+            print(f"사용 오류: {why}", file=sys.stderr)
+            return 1
+    group_pairs: "dict[str, str] | None" = None
+    group_dropped: "dict[str, str]" = {}
 
     anchor_diff.sweep_temp_root()
     with anchor_diff.owned_tempdir("registry-gate") as td:
@@ -1136,6 +1244,15 @@ def main(argv: "list[str]") -> int:
                     merges, chain = anchor_diff.load_approved_merges(approved_path, root, anchor_sha, head)
                 except anchor_diff.AnchorDiffUsage as exc:
                     print(f"사용 오류: {exc}", file=sys.stderr)
+                    return 1
+            if group_folder is not None:
+                import folder_group
+                try:
+                    group_pairs, group_dropped = _group_pairs(
+                        root, group_folder, anchor_sha, merges,
+                        Path(ns.legacy_debt_file) if ns.legacy_debt_file is not None else None)
+                except folder_group.FolderGroupError as exc:
+                    print(f"사용 오류: --group-moves 묶음 이동 계산 불능 — {exc}", file=sys.stderr)
                     return 1
             anc: Path = Path(td) / "anchor"
             try:
@@ -1212,6 +1329,10 @@ def main(argv: "list[str]") -> int:
             inflow_lines: "set[str]" = provenance.inflow_lines
             attributed = [line for line in attributed if line not in inflow_lines]
 
+        moved: "dict[str, str]" = {}
+        if group_pairs is not None:
+            attributed, resolved, moved = _follow_moves(attributed, resolved, group_pairs)
+
         sister: "list[str]" = []
         if has_sister:
             invalid: "set[str]" = {checker for exits in (exits_n, exits_l)
@@ -1280,6 +1401,8 @@ def main(argv: "list[str]") -> int:
         for line, anchor_line in sorted(shrunk.items()):
             print(f"    {line}")
             print(f"      ↳ 앵커: {anchor_line}")
+    if group_pairs is not None:
+        _print_group_moves(moved, group_pairs, group_dropped)
     if n_cands or l_cands:
         print(f"\n== ⓓ 신규(N′∖L′) {len(cand_new)}건 · legacy {cand_legacy}건 · 해소 {cand_resolved}건 — exit 불산입 · 감수자 입력은 신규분만(R-0284) ==")
         for line in cand_new:
@@ -1299,7 +1422,10 @@ def main(argv: "list[str]") -> int:
     if ns.introduced_json is not None:
         _write_introduced(Path(ns.introduced_json), anchor_sha, attributed,
                           n_records, cur_prefixes, provenance,
-                          cand_new if (n_cands or l_cands) else None)
+                          cand_new if (n_cands or l_cands) else None,
+                          None if group_pairs is None else {
+                              "pairs": group_pairs, "dropped": group_dropped,
+                              "lines": [{"line": line, "anchor_line": moved[line]} for line in sorted(moved)]})
     if ns.contract_json is not None:
         sister_keys: "set[str]" = set(sister)
         server_records: "list[dict]" = [rec for rec in n_records
@@ -1311,11 +1437,26 @@ def main(argv: "list[str]") -> int:
     unmeasured: int = anchor_diff.unmeasured_count(attributed, provenance.retained) if provenance is not None else 0
     if unmeasured:
         tail = f"(승인 유입 {len(provenance.inflow)}건 제외 · 귀속 {len(attributed)}건 가운데 잴 수 없어 남긴 {unmeasured}건 — 위 provenance 진단)"
+    if group_pairs is not None:
+        followed: str = f"이동 따라 옮긴 legacy {len(moved)}건 제외"
+        tail = f"{tail[:-1]} · {followed})" if tail else f"({followed})"
     if anchor_escape is not None:
         note: str = "기준선 불능 — 앵커 사본 밖 심링크 · 현재 위반 전량 귀속"
         tail = f"{tail[:-1]} · {note})" if tail else f"({note})"
     print(f"\n판정: 귀속 {len(attributed)}건 → {'green(신규 위반 없음)' if not attributed else 'red'}{tail}")
     return 0 if not attributed else 2
+
+
+def _print_group_moves(moved: "dict[str, str]", pairs: "dict[str, str]", dropped: "dict[str, str]") -> None:
+    """«이동 따라 옮긴 legacy» 절(설계 9.4) — 줄과 앵커 줄 · 쌍 · 계산 밖 이동. `--group-moves` 면 0건이어도 낸다."""
+    print(f"\n== 이동 따라 옮긴 legacy(묶음 이동 쌍 — exit 제외 · 보고) {len(moved)}건 ==")
+    for line in sorted(moved):
+        print(f"  {line}")
+        print(f"    ↳ 앵커: {moved[line]}")
+    for a, c in sorted(pairs.items()):
+        print(f"  쌍 {a} -> {c}")
+    for a, c in sorted(dropped.items()):
+        print(f"  계산 밖 이동(쌍에서 뺌 — 그 파일의 옛 위반은 귀속) {a} -> {c}")
 
 
 def _print_inflow(prov: _ProvenanceResult) -> None:

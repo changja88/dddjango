@@ -25,7 +25,8 @@ import time
 from pathlib import Path
 
 ROOT: Path = Path(__file__).resolve().parents[2]
-TOOL: Path = ROOT / "dddjango" / "scripts" / "refactor_audit.py"
+_SCRIPTS: "str | None" = sys.argv[sys.argv.index("--scripts") + 1] if "--scripts" in sys.argv[1:-1] else None
+TOOL: Path = (Path(_SCRIPTS).resolve() if _SCRIPTS else ROOT / "dddjango" / "scripts") / "refactor_audit.py"
 CODEX_SKILLS: Path = ROOT / "codex-dddjango" / "skills"
 sys.path.insert(0, str(TOOL.parent))
 import refactor_audit as ra  # noqa: E402
@@ -1306,8 +1307,8 @@ CH_ROW_M2: str = "| M2 | 1 | 예외 매핑 흩어짐 | 변경 | — | V2 | M2 �
 class ChangesLane:
     """changes 픽스처 — 합성 저장소 · G0 ⓐ M1 · M2 · 명세(V · 입장 표 · 다른 BC 편집 · 해소 표) · 지원 기록."""
 
-    def __init__(self, td: Path, name: str) -> None:
-        self.repo: Path = _project(td / name, DEPS_FILES)
+    def __init__(self, td: Path, name: str, files: "dict[str, str] | None" = None) -> None:
+        self.repo: Path = _project(td / name, files or DEPS_FILES)
         self.folder, self.anchor = _res_folder(self.repo, [row(1, V_B9, where=P_LOC), row(2, V_B9, where=C_LOC)],
                                                ["M1 | ddd-01#1 | 채택 | | ", "M2 | ddd-01#2 | 채택 | | "])
         self.scope_base: str = (f"실행 · G0 승인 20261004-1900 · 모드 리팩토링 · audit 20260927-0250 · build_anchor "
@@ -1489,6 +1490,108 @@ OUT_ROW: str = ("| 컨트롤러 응답 기대 | HTTP 계약 | 매핑 오류 | te
 V2_UPDATE: str = V2_TEXT.replace(
     "  - 연산: demo", "  - 시험: 컨트롤러 응답 기대 update(acceptance-tester) application/demo/test/test_policy.py::test_rule\n"
                      "    - 바뀌는 기대: «assert True»\n  - 연산: demo")
+
+
+GRP_SV: str = "application/demo/domain_layer/shared_value_object/"
+GRP_PKG: str = "application.demo.domain_layer.shared_value_object"
+
+
+def _grp_vo(stem: str) -> str:
+    cls: str = "".join(x.capitalize() for x in stem.split("_"))
+    return f'"""{stem} 값."""\nfrom dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass {cls}:\n    value: str\n'
+
+
+# 묶음 부모(값 객체 칸)에 `void_*` 셋 — C1(#656 만든다) ⓐ 면 셋이 `void/` 로 간다 · 다른 BC(third)가 void_b 를 부른다
+GRP_FILES: "dict[str, str]" = {
+    GRP_SV + "__init__.py": "", **{f"{GRP_SV}{s}.py": _grp_vo(s) for s in ("void_a", "void_b", "void_c", "moon_phase")},
+    "application/demo/domain_layer/void_use.py": f"from {GRP_PKG}.void_a import VoidA\n\n\nUSE = VoidA\n",
+    "application/third/domain_layer/void_user.py": f"from {GRP_PKG}.void_b import VoidB\n\n\nUSER = VoidB\n",
+}
+GRP_C1: str = f"| C1 | [#656] {GRP_SV}__init__.py: 묶음 `void/` 을(를) 만든다 | check-domain-model | 예 |\n"
+GRP_C2: str = f"| C2 | [#459] {GRP_SV}void_a.py:6: 값 객체 칸 이름 픽스처 위반 | check-domain-model | 예 |\n"
+GRP_C3: str = f"| C3 | [#459] {GRP_SV}moon_phase.py:6: 값 객체 칸 이름 픽스처 위반 | check-domain-model | 예 |\n"
+GRP_TABLE: str = "| ID | 위반 | 백스톱 | 미룰 수 있나 |\n|---|---|---|---|\n"
+GRP_PAIRS: "dict[str, str]" = {f"{GRP_SV}{s}.py": f"{GRP_SV}void/{s}.py" for s in ("void_a", "void_b", "void_c")}
+
+
+def _grp_apply(repo: Path, folder: Path) -> None:
+    """묶음 창 대역 — folder_group `apply --debt`(이동 + import 치환) 뒤 커밋."""
+    proc = subprocess.run([sys.executable, str(TOOL.parent / "folder_group.py"), "apply", str(repo), "--run", str(folder), "--debt"],
+                          capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(f"folder_group apply 실패: {proc.stdout}{proc.stderr}")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "group window")
+
+
+def _grp_sidecar(path: Path, pairs: "dict[str, str] | None" = None, lines: "tuple[str, ...]" = ()) -> Path:
+    """게이트 `--introduced-json` sidecar 대역(`--group-moves` 로 돈 판 — `group_moves` 키)."""
+    moved: "list[dict]" = [{"line": f"check-domain-model :: {ln}", "anchor_line": "(앵커 줄)"} for ln in lines]
+    path.write_text(json.dumps({"anchor": "0" * 40, "records": [], "group_moves": {
+        "pairs": GRP_PAIRS if pairs is None else pairs, "dropped": {}, "lines": moved}}, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
+def group_move_cases(fails: "list[str]", td: Path) -> None:
+    """2.28.0 의미 묶음 — `changes` 의 갈래 `묶음 import 치환` ⊆ draft 다른 BC import · `residual --gate-json` 의 쌍(M_c · M_m)."""
+    lane = ChangesLane(td, "chg-grp", files={**DEPS_FILES, **GRP_FILES})
+    scope: str = lane.scope_base.replace("- M1, M2 · 결정", GRP_TABLE + GRP_C1 + "\n- C1, M1, M2 · 결정")
+    (lane.folder / "refactor-scope.md").write_text(scope, encoding="utf-8")
+    user: str = "application/third/domain_layer/void_user.py"
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE + f"- {user} · 묶음 import 치환 · 0C\n", CH_ROW_M1 + CH_ROW_M2)
+    expect(fails, "FG-C1 changes 갈래 `묶음 import 치환` 줄이 draft 다른 BC import 안 → green", lane.ch(), 0, "red 0")
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE + "- application/third/domain_layer/y.py · 묶음 import 치환 · 0C\n",
+              CH_ROW_M1 + CH_ROW_M2)
+    expect(fails, "FG-C2 changes 갈래 `묶음 import 치환` 줄이 draft 다른 BC import 밖 → red", lane.ch(), 2,
+           "다른 BC 편집 `application/third/domain_layer/y.py · 묶음 import 치환` 가 draft 다른 BC import 밖")
+    (lane.folder / "refactor-scope.md").write_text(lane.scope_base, encoding="utf-8")
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE + f"- {user} · 묶음 import 치환 · 0C\n", CH_ROW_M1 + CH_ROW_M2)
+    expect(fails, "FG-C3 C1 이 ⓐ 가 아니면(묶음 이동 없음) 같은 줄도 draft 다른 BC import 밖 → red", lane.ch(), 2,
+           f"다른 BC 편집 `{user} · 묶음 import 치환` 가 draft 다른 BC import 밖")
+    (lane.folder / "refactor-scope.md").write_text(scope, encoding="utf-8")
+    _grp_apply(lane.repo, lane.folder)
+    expect(fails, "FG-C4 묶음 창이 이미 옮기고 import 를 고친 뒤 다시 돈 changes → green(앵커 판의 다른 BC import)", lane.ch(), 0,
+           "red 0")
+    # residual — C<n> ⓐ 만(M 없음): 이동 따라 옮긴 legacy 가 C2 면 M_c 1 → red
+    repo: Path = _project(td / "grp-res", {**FILES, **GRP_FILES})
+    folder, anchor = _res_folder(repo, [row(1, V_B9, where=f"{GRP_SV}void_c.py:6"),
+                                        row(2, V_B9, where="application/demo/domain_layer/void_use.py:1"),
+                                        row(3, V_B9, where=f"{GRP_SV}void_b.py:6")],
+                                 ["M1 | ddd-01#1 | 채택 | | ", "M2 | ddd-01#2 | 채택 | | ", "M3 | ddd-01#3 | 채택 | | "])
+    head: str = f"실행 · G0 승인 20260927-0300 · 모드 리팩토링 · audit 20260927-0250 · build_anchor {anchor}\n\n"
+    scope_path: Path = folder / "refactor-scope.md"
+    scope_path.write_text(head + GRP_TABLE + GRP_C1 + GRP_C2 + GRP_C3
+                          + "\n- C1, C2, C3 · 결정 = ⓐ · 사유 = 픽스처 · 출처 = 본인 직접(0300)\n", encoding="utf-8")
+    _grp_apply(repo, folder)
+    moved_c2: str = f"[#459] {GRP_SV}void/void_a.py:N: 값 객체 칸 이름 픽스처 위반"
+    side: Path = _grp_sidecar(td / "grp-side.json", lines=(moved_c2,))
+    expect(fails, "FG-R1 residual --gate-json · 이동 따라 옮긴 legacy 가 ⓐ C2 → M_c 이동 잔존 1 → red",
+           run(repo, "residual", str(folder), "--gate-json", str(side)), 2, "M_c 이동 잔존 1(C2)", "M_m=0")
+    expect(fails, "FG-R2 residual --gate-json 없음 → 지금과 같음(M_c 줄 없음 · green)", run(repo, "residual", str(folder)), 0,
+           "M_m=0")
+    other: Path = _grp_sidecar(td / "grp-side-c3.json",
+                               lines=(f"[#459] {GRP_SV}void/moon_phase.py:N: 값 객체 칸 이름 픽스처 위반",))
+    expect(fails, "FG-R3 쌍에 없는 경로의 줄은 C<n> 과 맞추지 않는다 → M_c 0 → green",
+           run(repo, "residual", str(folder), "--gate-json", str(other)), 0, "M_c 이동 잔존 0")
+    bare: Path = td / "grp-side-bare.json"
+    bare.write_text(json.dumps({"anchor": "0" * 40, "records": []}), encoding="utf-8")
+    expect(fails, "FG-R4 residual --gate-json sidecar 에 group_moves 없음 → 실행 불능",
+           run(repo, "residual", str(folder), "--gate-json", str(bare)), 1, "group_moves")
+    # M_m — 이름 바꿈 + import 치환뿐인 항목 파일은 «안 바뀜»(결정적 잔존) · 그 밖은 리뷰어
+    scope_path.write_text(head + GRP_TABLE + GRP_C1 + GRP_C2 + GRP_C3
+                          + "\n- C1, C2, C3, M1, M2, M3 · 결정 = ⓐ · 사유 = 픽스처 · 출처 = 본인 직접(0300)\n", encoding="utf-8")
+    moved_c: Path = repo / GRP_SV / "void" / "void_c.py"
+    moved_c.write_text(moved_c.read_text(encoding="utf-8") + "\n\nEXTRA: int = 1\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "edit moved")
+    expect(fails, "FG-R5 residual --gate-json · 옮기기만 한 파일(M3) · import 만 고친 파일(M2) → 결정적 잔존 · 옮긴 뒤 고친 파일(M1) → 리뷰어",
+           run(repo, "residual", str(folder), "--gate-json", str(side)), 0, "결정적 잔존 2", "리뷰어 확인 대상 1(ddd)",
+           "M_c 이동 잔존 1(C2)")
+    bottom: str = max((folder / "residual").glob("*/bottom.md"), key=lambda q: q.stat().st_mtime).read_text(encoding="utf-8")
+    expect(fails, "FG-R6 bottom.md 사유 = 이름 바꿈 + import 치환뿐", (0 if bottom.count("이름 바꿈 + import 치환뿐") == 2 else 9, bottom),
+           0)
+    expect(fails, "FG-R7 residual --gate-json 없음 → 지금과 같음(옮긴 파일은 바뀐 파일 · 셋 다 리뷰어)",
+           run(repo, "residual", str(folder)), 0, "결정적 잔존 0", "리뷰어 확인 대상 3(ddd)")
 
 
 def update_rows_cases(fails: "list[str]", td: Path) -> None:
@@ -4429,7 +4532,73 @@ def corpus_cases(fails: "list[str]", nov_id: str) -> None:
     expect(fails, "self-test(Claude — 점검 절 실재 · 경로 사상 · 어구 상수 = 규범 문면)", run(ROOT, "--self-test"), 0, "red 0")
 
 
+def _only_group() -> int:
+    """묶음 사례만(`group_move_cases`) — 변이 시험이 scripts 사본에 대고 돈다."""
+    fails: "list[str]" = []
+    with tempfile.TemporaryDirectory(prefix="ra-fg-") as tmp:
+        group_move_cases(fails, Path(tmp))
+    if fails:
+        print("\nFAIL — refactor_audit 묶음 사례 기대 불일치:")
+        for f in fails:
+            print("  - " + f.replace("\n", "\n    "))
+        return 1
+    print("\nPASS — refactor_audit 묶음 사례 기대 일치")
+    return 0
+
+
+# 변이(묶음 사례가 잡아야 한다) — (이름, ((옛 글, 새 글), …)) · refactor_audit.py 사본에 하나씩
+_MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...]], ...]" = (
+    ("changes 의 ⊆ 대조 지움", (("        elif e[\"kind\"] == GROUP_IMPORT_KIND and e[\"path\"] not in group_import:",
+                                "        elif False:"),)),
+    ("residual 이 쌍을 안 따름(M_c)", (("    sub = fg.string_substituter(sorted(pairs.items())) if pairs else None",
+                                       "    sub = None"),)),
+    ("residual 이 쌍을 안 따름(M_m 바닥)", (("                if f in pairs or f in changed:\n                    same = _rename_only(",
+                                           "                if False:\n                    same = _rename_only("),)),
+)
+
+
+def _mutation_test() -> int:
+    """변이를 scripts 사본에 하나씩 넣고 묶음 사례(`--only-group`)를 돈다 — 모두 붉어야 green."""
+    src: str = TOOL.read_text(encoding="utf-8")
+    survived: "list[str]" = []
+    for name, edits in _MUTATIONS:
+        text: str = src
+        bad: str = ""
+        for old, new in edits:
+            if text.count(old) != 1:
+                bad = f"변이 지점이 정확히 한 곳이 아니다({text.count(old)}) — 변이 표를 코드에 맞춰라"
+                break
+            text = text.replace(old, new, 1)
+        if not bad:
+            with tempfile.TemporaryDirectory(prefix="ra-mutant-") as tmp:   # 설치본째(코퍼스 · 플랫폼 판별은 scripts 의 부모)
+                plugin: Path = Path(tmp) / TOOL.parent.parent.name
+                shutil.copytree(TOOL.parent.parent, plugin, symlinks=False, ignore=shutil.ignore_patterns("__pycache__"))
+                (plugin / "scripts" / TOOL.name).write_text(text, encoding="utf-8")
+                proc = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--scripts", str(plugin / "scripts"),
+                                       "--only-group"], capture_output=True, text=True)
+            out: str = proc.stdout + proc.stderr
+            if proc.returncode == 0:
+                bad = "변이가 살아남음(시험이 못 잡는다)"
+            elif "FAIL — refactor_audit 묶음 사례" not in out:
+                bad = f"변이가 러너를 깨뜨림(시험 실패가 아님) — {out.strip()[-300:]}"
+        if bad:
+            survived.append(f"{name}: {bad}")
+        else:
+            print(f"  죽음 {name}")
+    if survived:
+        print(f"[mutation] 생존 변이 {len(survived)}건", file=sys.stderr)
+        for line in survived:
+            print(f"  {line}", file=sys.stderr)
+        return 2
+    print(f"[mutation] refactor_audit 변이 {len(_MUTATIONS)}종 모두 red")
+    return 0
+
+
 def main() -> int:
+    if "--mutation-test" in sys.argv[1:]:
+        return _mutation_test()
+    if "--only-group" in sys.argv[1:]:
+        return _only_group()
     fails: "list[str]" = []
     try:
         nov = _nov()
@@ -4456,6 +4625,7 @@ def main() -> int:
         change_column_cases(fails, aud)
         other_bc_lane_case(fails, td)
         changes_cases(fails, td)
+        group_move_cases(fails, td)
         update_rows_cases(fails, td)
         g1_time_cases(fails, td)
         support_rule_cases(fails, td)

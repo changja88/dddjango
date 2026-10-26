@@ -2004,13 +2004,72 @@ def _reduction_notes(folder: Path, reduced: "dict[str, Reduction]") -> "dict[str
     return notes
 
 
-def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finalize: "str | None") -> int:
+def _gate_group_moves(path: Path) -> "tuple[dict[str, str], list[str]]":
+    """게이트 sidecar(`registry_gate.py … --group-moves <폴더> --introduced-json <파일>`)의 묶음 이동 —
+    (쌍 앵커 경로 → 지금 경로, «이동 따라 옮긴 legacy» 줄(검사기 머리 뺀 `[#k] 경로:N: …`))."""
+    try:
+        data: object = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, UnicodeDecodeError) as exc:
+        raise ToolError(f"--gate-json `{path}` 을 읽지 못한다 — {type(exc).__name__}") from None
+    moves: object = data.get("group_moves") if isinstance(data, dict) else None
+    if not (isinstance(moves, dict) and isinstance(moves.get("pairs"), dict) and isinstance(moves.get("lines"), list)):
+        raise ToolError(f"--gate-json `{path}` 에 `group_moves`(pairs · lines)가 없다 — registry_gate.py 를 --group-moves "
+                        "<산출물 폴더> 와 --introduced-json 으로 돌린 sidecar 를 준다")
+    pairs: "dict[str, str]" = {str(a): str(b) for a, b in moves["pairs"].items()}
+    moved: "list[str]" = [re.sub(r"^\S+ :: ", "", str(x.get("line", ""))) for x in moves["lines"] if isinstance(x, dict)]
+    return pairs, moved
+
+
+def _moved_c(folder: Path, lines: "list[DecisionLine]", pairs: "dict[str, str]", moved: "list[str]") -> "list[str]":
+    """M_c 의 이동 몫(설계 9.4) — 이번 실행 ⓐ `C<n>`(재상정으로 뺀 것 제외) 행의 옛 경로를 쌍의 새 경로로 바꾼 글이 게이트의
+    «이동 따라 옮긴 legacy» 줄을 품으면 잔존이다(줄 번호는 게이트처럼 `:N`)."""
+    fg = _folder_group_module()
+    live: "set[str]" = ({k for d in lines if d.decision and not d.reconsider and d.token.startswith("ⓐ")
+                         and not d.token.startswith("ⓐ′") for k in d.ckeys}
+                        - {k for d in lines if d.decision and d.reconsider and not d.token.startswith(REDUCE_TOKEN)
+                           for k in d.ckeys})
+    sub = fg.string_substituter(sorted(pairs.items())) if pairs else None
+    out: "set[str]" = set()
+    for raw in _current_scope(folder)[1]:
+        cid = fg._row_id(raw)
+        if cid not in live:
+            continue
+        text: str = re.sub(r":\d+", ":N", sub(raw) if sub is not None else raw)
+        if any(line and line in text for line in moved):
+            out.add(cid)
+    return sorted(out, key=lambda k: int(k[1:]))
+
+
+def _rename_only(project: Path, anchor: str, rel: str, pairs: "dict[str, str]") -> bool:
+    """항목 파일이 «이름 바꿈 + import 치환뿐»인가 — 앵커 글에 쌍을 기계 적용한 글(`folder_group.move_texts`)이 지금 새 경로
+    글과 같다(못 읽으면 바뀜)."""
+    fg = _folder_group_module()
+    new: str = pairs.get(rel, rel)
+    then = subprocess.run(["git", "-C", str(project), "show", f"{anchor}:./{rel}"], capture_output=True)
+    now: Path = project / new
+    if then.returncode != 0 or not now.is_file():
+        return False
+    try:
+        moved: "dict[str, str]" = fg.move_texts({rel: then.stdout.decode("utf-8")}, sorted(pairs.items()))
+        return moved.get(new) == now.read_text(encoding="utf-8")
+    except (UnicodeDecodeError, OSError):
+        return False
+
+
+def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finalize: "str | None",
+                 gate_json: "Path | None" = None) -> int:
     audit_ts, adopted, removed, reductions, lines = _scope(folder)
     _no_standing(lines, "residual")
     items: "set[str]" = adopted - removed
     reduced: "dict[str, Reduction]" = {m: r for m, r in reductions.items() if m in items}
     notes: "dict[str, str]" = _reduction_notes(folder, reduced)
     red_tail: str = f" · 요지 축소 {len(reduced)}" if reduced else ""
+    pairs: "dict[str, str]" = {}
+    moved_c: "list[str]" = []
+    if gate_json is not None:                                # 묶음 이동(2.28.0) — 게이트 sidecar 의 쌍 · 이동 따라 옮긴 legacy
+        pairs, moved_lines = _gate_group_moves(gate_json)
+        moved_c = _moved_c(folder, lines, pairs, moved_lines)
+        red_tail += f" · M_c 이동 잔존 {len(moved_c)}" + (f"({'·'.join(moved_c)})" if moved_c else "")
     audit: Path = folder / "audit" / audit_ts
     verdicts: "dict[str, Verdict]" = _final_verdicts(audit)
     plan: Plan = Plan(audit)
@@ -2019,6 +2078,7 @@ def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finaliz
     anchor: str = _read(folder / "build_anchor").strip()
     changed: "set[str]" = _changed_since(project, anchor)
     mapping: "dict[str, str]" = _map_items(folder, run_value)
+    mapping.update(pairs)
     cand_lines: "list[str]" = _read(candidates).splitlines() if candidates else []
     stamp, out_dir = _stamp_dir(folder, finalize)
     prev_stamp, prev_solved = _carried(folder, stamp)
@@ -2042,6 +2102,14 @@ def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finaliz
         if files and not any(f in changed for f in files):
             floor[mid] = "파일 무변(build_anchor..작업 트리)"
             continue
+        if files and pairs:                                  # 게이트 묶음 이동 쌍 — 이름 바꿈 + import 치환뿐이면 안 바뀜
+            same: bool = True
+            for f in files:
+                if f in pairs or f in changed:
+                    same = _rename_only(project, anchor, f, pairs) and same
+            if same:
+                floor[mid] = "이름 바꿈 + import 치환뿐(build_anchor..작업 트리 · 게이트 묶음 이동 쌍)"
+                continue
         if marks:
             if candidates is None:
                 raise ToolError(f"{mid} 이 ⓓ 겹침 항목({', '.join(sorted(marks))})이다 — --candidates <G2 검사기 출력> 필요")
@@ -2097,7 +2165,7 @@ def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finaliz
         (out_dir / "result.json").write_text(json.dumps(
             {"stamp": stamp, "solved": {m: prev_solved[m] for m in carried}}, ensure_ascii=False, sort_keys=True)
             + "\n", encoding="utf-8")
-        return EXIT_RED if floor else EXIT_OK
+        return EXIT_RED if floor or moved_c else EXIT_OK
     results: "dict[str, list[tuple[str, str, str]]]" = {}     # M → (렌즈, 판정 칸, 근거 칸)
     for lens in to_review:
         path: Path = out_dir / f"result-{lens}.md"
@@ -2177,7 +2245,7 @@ def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finaliz
                                       for m in unformed)
         print(f"  근거 판형 아님: {notes_redo} — 그 행만 같은 렌즈 리뷰어에게 묶음 머리의 판형대로 다시 받아 result-<렌즈>.md 에 "
               f"고쳐 쓰고 --finalize {stamp} 한 번 더(코드 재개봉·새 시각 아님 · 다시 판형 아님이면 잔존)")
-    return EXIT_RED if m_m else EXIT_OK
+    return EXIT_RED if m_m or moved_c else EXIT_OK
 
 
 # ── changes(명세 «바뀌는 것 목록» · G1 후보/반영/확정 digest) ──────────────
@@ -2186,9 +2254,10 @@ V_KINDS: "tuple[str, ...]" = ("내부 약속", "밖 동작", "DB 구조")
 TEST_VERBS: "tuple[str, ...]" = ("update", "add", "remove")
 TEST_OWNERS: "tuple[str, ...]" = ("coder", "acceptance-tester")
 OUTSIDE_OWNER: str = "acceptance-tester"           # 밖 동작 = acceptance-tester · 안(내부 약속 · DB 구조) = coder
+GROUP_IMPORT_KIND: str = "묶음 import 치환"           # 묶음 이동이 따라 고치는 다른 BC import 줄(0C 묶음 창 · ⊆ `draft`)
 OTHER_EDIT_KINDS: "tuple[str, ...]" = ("받는 쪽 어댑터", "받는 쪽 시험", "직접 import 자리", "HTTP 소비자", "공유 표면",
-                                       "프로젝트 합성")
-DEPS_EDIT_KINDS: "tuple[str, ...]" = OTHER_EDIT_KINDS[:5]   # `deps` 출력과 대조하는 갈래(프로젝트 합성 제외)
+                                       "프로젝트 합성", GROUP_IMPORT_KIND)
+DEPS_EDIT_KINDS: "tuple[str, ...]" = OTHER_EDIT_KINDS[:5]   # `deps` 출력과 대조하는 갈래(프로젝트 합성 · 묶음 import 치환 제외)
 OTHER_EDIT_REFS: "tuple[str, ...]" = ("0C", "0F")
 MIGRATION_OPS: "tuple[str, ...]" = (
     "CreateModel", "DeleteModel", "RenameModel", "AlterModelTable", "AlterModelOptions", "AlterModelManagers",
@@ -3199,13 +3268,55 @@ def _semantic_reds(project: Path, folder: Path, spec: SpecChanges,
     bc: str = _run_bc(folder)
     owned: "dict[str, tuple[str, ...]]" = (_lane_edit_paths(project, bc)
                                            if any(e["kind"] in DEPS_EDIT_KINDS for e in spec.edits) else {})
+    group_import: "set[str]" = (_group_import_files(project, folder, bc)
+                                if any(e["kind"] == GROUP_IMPORT_KIND for e in spec.edits) else set())
     for e in spec.edits:
         if e["path"] == f"application/{bc}" or e["path"].startswith(f"application/{bc}/"):
             reds.append(f"다른 BC 편집 `{e['path']}` 가 대상 BC({bc}) 안이다")
         elif e["kind"] in DEPS_EDIT_KINDS and e["kind"] not in owned.get(e["path"], ()):
             got: str = " · ".join(owned.get(e["path"], ())) or "deps 에 없음"
             reds.append(f"다른 BC 편집 `{e['path']} · {e['kind']}` 가 deps 출력과 다르다({got})")
+        elif e["kind"] == GROUP_IMPORT_KIND and e["path"] not in group_import:
+            reds.append(f"다른 BC 편집 `{e['path']} · {e['kind']}` 가 draft 다른 BC import 밖(묶음 이동이 따라 고칠 import 가 "
+                        "없는 파일)")
     return reds, routed
+
+
+def _folder_group_module():  # noqa: ANN202
+    try:
+        import folder_group  # noqa: PLC0415 — 함수 안 import · 묶음 이동 계산은 folder_group 한 곳(설계 5절)
+    except Exception as exc:  # noqa: BLE001
+        raise ToolError(f"folder_group 을 불러오지 못했다 — {type(exc).__name__}: {exc}") from exc
+    return folder_group
+
+
+def _group_import_files(project: Path, folder: Path, bc: str) -> "set[str]":
+    """`folder_group.py draft --bc <bc> --run <folder>` 의 «다른 BC import» 파일 — 앵커 판(앵커 → 끝 쌍)과 지금 판(남은 쌍)의
+    합(앞 창이 이미 옮기고 고친 줄 · 끝에서 처음 드러난 줄 둘 다). 이관 빚 목록은 보지 않는다(목록은 이동을 줄일 뿐이다)."""
+    fg = _folder_group_module()
+    try:
+        import business_vocab  # noqa: PLC0415
+        bcs: "list[str]" = [d.name for d in business_vocab.server_bc_dirs(project)]
+        plan = fg.plan_for(fg.load_run(project, folder, {bc}))
+        views: "list[tuple[dict[str, str], list[tuple[str, str]]]]" = [
+            (fg._project_texts(project), plan.pairs(plan.current, plan.final))]
+        anchor: str = _read(folder / "build_anchor").strip() if (folder / "build_anchor").is_file() else ""
+        if anchor:
+            sha: str = _git(project, "rev-parse", "--verify", f"{anchor}^{{commit}}").strip()
+            oids: "dict[str, str]" = {q: o for q, o in fg.tree_oids(project, sha, fg.git_prefix(project)).items()
+                                      if q.endswith(".py")}
+            blobs: "dict[str, bytes]" = fg.blob_bytes(project, list(oids.values()))
+            views.append(({q: fg._decode(blobs.get(o, b"")) for q, o in oids.items()}, plan.pairs(plan.anchor, plan.final)))
+    except (fg.FolderGroupError, subprocess.CalledProcessError) as exc:
+        raise ToolError(f"묶음 이동 계산 불능(다른 BC import) — {exc}") from None
+    out: "set[str]" = set()
+    for texts, pairs in views:
+        if pairs:
+            for hit in fg.hazards(texts, fg._expand(pairs, texts), bcs).other_bc:
+                m = re.match(r"^(.*):\d+ \S+$", hit)
+                if m:
+                    out.add(m.group(1))
+    return out
 
 
 def _run_bc(folder: Path) -> str:
@@ -5839,6 +5950,7 @@ def main(argv: "list[str]") -> int:
     p.add_argument("folder")
     p.add_argument("--candidates")
     p.add_argument("--finalize")
+    p.add_argument("--gate-json", help="registry_gate.py --group-moves 로 돈 sidecar(--introduced-json) — 묶음 이동 쌍")
     p = sub.add_parser("changes")
     p.add_argument("folder")
     group = p.add_mutually_exclusive_group()
@@ -5870,7 +5982,8 @@ def main(argv: "list[str]") -> int:
         if ns.command == "deps":
             return cmd_deps(project, ns.bc, Path(ns.out))
         if ns.command == "residual":
-            return cmd_residual(project, Path(ns.folder), Path(ns.candidates) if ns.candidates else None, ns.finalize)
+            return cmd_residual(project, Path(ns.folder), Path(ns.candidates) if ns.candidates else None, ns.finalize,
+                                Path(ns.gate_json) if ns.gate_json else None)
         if ns.command == "resolution":
             return cmd_resolution(project, Path(ns.folder), ns.gate, corpus_fn)
         if ns.command == "changes":

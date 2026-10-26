@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -1153,7 +1154,7 @@ def rcases() -> "list[dict]":
     add("대상 BC 밖: 0C · 목록 밖 다른 BC 파일 → red", "code", {TP: SIMPLE, shared: "NAME = 'old'\n"},
         _edit({**billing, shared: "NAME = 'new'\n"}), {}, exit=2, snap=_snap(other=((shared, "공유 표면", "0C"),)),
         needles=("application/billing/api.py — 대상 BC(`application/core/`) 밖 경로가 다른 BC 편집 목록 밖(창 0C 허용 갈래: "
-                 "공유 표면 · 프로젝트 합성)",),
+                 "공유 표면 · 묶음 import 치환 · 프로젝트 합성)",),
         post=lambda repo, rec, _o: [] if rec.get("outside_bc") == ["application/billing/api.py"] else [
             f"outside_bc {rec.get('outside_bc')}"])
     add("대상 BC 밖: 0C · 갈래가 허락 밖(받는 쪽 어댑터 줄)인 경로 → red", "code", {TP: SIMPLE}, _edit(billing), {}, exit=2,
@@ -1163,6 +1164,22 @@ def rcases() -> "list[dict]":
         {TP: SIMPLE, bill_test: IMPORT_ONLY.replace("test_check", "test_bill")},
         _edit(MOVE, OLD_TO_NEW(IMPORT_ONLY.replace("test_check", "test_bill")), path=bill_test),
         {bill_test: ("묶음 감사", ["<module>"])}, exit=2, needles=(f"{bill_test} — 대상 BC",))
+    # 묶음 창(0C) — 대상 BC 안 묶음 이동이 다른 BC 파일의 import 를 따라 고친 줄(설계 10절 · 갈래 `묶음 import 치환`)
+    grp_user = "application/billing/uses_core.py"
+    grp_src = "from application.core.old import product\n\n\ndef bill():\n    return product()\n"
+    add("대상 BC 밖: 0C 묶음 창 · 다른 BC import 치환 줄이 갈래 `묶음 import 치환` → 통과", "code", {grp_user: grp_src},
+        _edit({**MOVE, grp_user: OLD_TO_NEW(grp_src)}), {}, exit=0, snap=_snap(other=((grp_user, "묶음 import 치환", "0C"),)),
+        post=lambda repo, rec, _o: [] if rec.get("outside_bc") == [] else [f"outside_bc {rec.get('outside_bc')}"], group=True)
+    add("대상 BC 밖: 0C 묶음 창 · 같은 치환 줄이 목록에 갈래 없이(받는 쪽 어댑터) → red", "code", {grp_user: grp_src},
+        _edit({**MOVE, grp_user: OLD_TO_NEW(grp_src)}), {}, exit=2, snap=_snap(other=((grp_user, "받는 쪽 어댑터", "0C"),)),
+        needles=(f"{grp_user} — 대상 BC(`application/core/`) 밖 경로가 다른 BC 편집 목록 밖(창 0C 허용 갈래: "
+                 "공유 표면 · 묶음 import 치환 · 프로젝트 합성)",),
+        post=lambda repo, rec, _o: [] if rec.get("outside_bc") == [grp_user] else [f"outside_bc {rec.get('outside_bc')}"], group=True)
+    add("대상 BC 밖: 0C 묶음 창 · 같은 치환 줄이 목록에 없음 → red", "code", {grp_user: grp_src},
+        _edit({**MOVE, grp_user: OLD_TO_NEW(grp_src)}), {}, exit=2, needles=(f"{grp_user} — 대상 BC",), group=True)
+    add("대상 BC 밖: 0T · 갈래 `묶음 import 치환` 줄도 0T 는 받지 않음 → red", "test", {grp_user: grp_src},
+        _edit({grp_user: OLD_TO_NEW(grp_src)}), {}, exit=2, snap=_snap(other=((grp_user, "묶음 import 치환", "0C"),)),
+        needles=(f"{grp_user} — 0T 는 대상 BC(`application/core/`) 밖 편집 없음",), group=True)
     # 케이스 증감 — change 는 add/remove 행 그대로
     add("케이스: change · 승인 add 행의 새 케이스 → 승인 변경 감사", "change", {TP: SIMPLE},
         _edit({}, SIMPLE + "\n\ndef test_new():\n    assert 1 == 1\n"), {TP: ("승인 변경 감사", ["<module>", "test_new"])},
@@ -2171,8 +2188,82 @@ def rename_verify_checks() -> "list[str]":
     return fails
 
 
+def _only_group(stub_support: bool) -> int:
+    """묶음 창 사례만(`group=True`) — 변이 시험이 scripts 사본에 대고 돈다."""
+    fails: "list[str]" = []
+    with tempfile.TemporaryDirectory(prefix="bg-stub-") as stub:
+        _setup_refactor(Path(stub), stub_support)
+        group = [case for case in rcases() if case.get("group")]
+        for case in group:
+            msg, _counts = run_rcase(case)
+            print(("  ✗ " if msg else "  ✓ ") + case["label"])
+            if msg:
+                fails.append(f"{case['label']}: {msg}")
+        broken: "list[str]" = STATE["invariant_fails"]  # type: ignore[assignment]
+        fails += [f"자동 초록 0: {b}" for b in broken]
+    if fails:
+        print("\nFAIL — behavior_guard 묶음 창 사례 기대 불일치:")
+        for f in fails:
+            print("  - " + f.replace("\n", "\n    "))
+        return 1
+    print(f"\nPASS — behavior_guard 묶음 창 사례 {len(group)}건")
+    return 0
+
+
+# 변이(묶음 창 사례가 잡아야 한다) — (이름, ((옛 글, 새 글), …)) · behavior_guard.py 사본에 하나씩
+_MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...]], ...]" = (
+    ("갈래 `묶음 import 치환` 뺌", (('frozenset({"프로젝트 합성", "공유 표면", "묶음 import 치환"})',
+                                  'frozenset({"프로젝트 합성", "공유 표면"})'),)),
+)
+
+
+def _mutation_test() -> int:
+    """변이를 scripts 사본에 하나씩 넣고 묶음 창 사례(`--only-group`)를 돈다 — 모두 붉어야 green."""
+    src: str = GUARD.read_text(encoding="utf-8")
+    survived: "list[str]" = []
+    for name, edits in _MUTATIONS:
+        text: str = src
+        bad: str = ""
+        for old, new in edits:
+            if text.count(old) != 1:
+                bad = f"변이 지점이 정확히 한 곳이 아니다({text.count(old)}) — 변이 표를 코드에 맞춰라"
+                break
+            text = text.replace(old, new, 1)
+        if not bad:
+            with tempfile.TemporaryDirectory(prefix="bg-mutant-") as tmp:
+                copy: Path = Path(tmp) / "scripts"
+                shutil.copytree(GUARD.parent, copy, symlinks=False, ignore=shutil.ignore_patterns("__pycache__"))
+                (copy / GUARD.name).write_text(text, encoding="utf-8")
+                proc = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--scripts", str(copy), "--only-group"],
+                                      capture_output=True, text=True, env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
+            out: str = proc.stdout + proc.stderr
+            if proc.returncode == 0:
+                bad = "변이가 살아남음(시험이 못 잡는다)"
+            elif "FAIL — behavior_guard 묶음 창" not in out:
+                bad = f"변이가 러너를 깨뜨림(시험 실패가 아님) — {out.strip()[-300:]}"
+        if bad:
+            survived.append(f"{name}: {bad}")
+        else:
+            print(f"  죽음 {name}")
+    if survived:
+        print(f"[mutation] 생존 변이 {len(survived)}건", file=sys.stderr)
+        for line in survived:
+            print(f"  {line}", file=sys.stderr)
+        return 2
+    print(f"[mutation] behavior_guard 변이 {len(_MUTATIONS)}종 모두 red")
+    return 0
+
+
 def main() -> int:
-    stub_support: bool = "--stub-support" in sys.argv[1:]
+    global GUARD
+    argv: "list[str]" = sys.argv[1:]
+    if "--scripts" in argv:
+        GUARD = Path(argv[argv.index("--scripts") + 1]).resolve() / "behavior_guard.py"
+    stub_support: bool = "--stub-support" in argv
+    if "--mutation-test" in argv:
+        return _mutation_test()
+    if "--only-group" in argv:
+        return _only_group(stub_support)
     fails: "list[str]" = []
     for case in cases():
         msg = run_case(*case)
