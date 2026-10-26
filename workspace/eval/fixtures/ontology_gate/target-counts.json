@@ -1,11 +1,11 @@
 {
   "AliasEntryShape": 36,
-  "BlockShape": 2994,
-  "ExpressionShape": 4079,
+  "BlockShape": 2998,
+  "ExpressionShape": 4117,
   "MetaNodeShapeIriShape": 22,
-  "NormShape": 3703,
+  "NormShape": 3722,
   "SectionShape": 553,
   "SyncDebtShape": 2,
   "ViolationShape": 2,
-  "WorkShape": 3703
+  "WorkShape": 3722
 }
