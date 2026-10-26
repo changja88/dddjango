@@ -1499,20 +1499,22 @@ def compute_plan(t0: "Mapping[str, str]", t0p: "Mapping[str, str]", now: "Mappin
     p1: Placement = place(now, b_dirs)
     g0p, g1 = _groups(p0p), _groups(p1)
     bset: "set[Tuple[str, str]]" = {(d.rsplit("/", 1)[0], d.rsplit("/", 1)[1]) for d in b_dirs}
-    s_groups: "set[Tuple[str, str]]" = (bset | (g1 - g0p)) - ((bset & g0p) - g1)
+    legacy_list: "list[str]" = list(legacy)
+    held: "set[Tuple[str, str]]" = {(parent, g) for parent, g in g1 - g0p   # «만든다» 줄이 이관 빚 — 형성 안 함
+                                    if any(sub in f"{parent}/__init__.py: {MAKE.format(g)}" for sub in legacy_list)}
+    s_groups: "set[Tuple[str, str]]" = (bset | ((g1 - g0p) - held)) - ((bset & g0p) - g1)
     base_m: "dict[Tuple[str, str], Member]" = {_key(m): m for m in members_of(t0p)}
     debt_m: "dict[Tuple[str, str], Member]" = {_key(m): m for m in members_of(b_paths)}
     p0p_k, p1_k = _keyed(p0p), _keyed(p1)
     lines_now: "list[Tuple[str, str]]" = lines(p1)
-    legacy_list: "list[str]" = list(legacy)
     final: "dict[Tuple[str, str], str]" = {}
     for k, fp in p1_k.items():
         m: Member = fp.member
         own_lines = [f"{w}: {msg}" for w, msg in lines_now
                      if w == m.path or (fp.group is not None and w == f"{m.slot.parent}/__init__.py"
                                         and msg == MAKE.format(fp.group))]
-        if k in debt_m and any(sub in ln for sub in legacy_list for ln in own_lines):
-            final[k] = debt_m[k].path                                  # ⓪ 이관 빚
+        if any(sub in ln for sub in legacy_list for ln in own_lines):
+            final[k] = debt_m[k].path if k in debt_m else m.path       # ⓪ 이관 빚 — 새 파일은 지금 자리
             continue
         b_group: "Optional[str]" = debt_m[k].group if k in debt_m else None
         moved_by_run: bool = (k not in base_m or k not in p0p_k or fp.group != p0p_k[k].group

@@ -573,6 +573,44 @@ def scen_debt(fg, scripts: Path, run: Run, td: Path) -> None:
     run.true("불변식 5 — R 의 줄 ⊆ 앵커 줄", r_lines <= anchor_lines and bool(r_lines), f"{r_lines} ⊄ {anchor_lines}")
 
 
+def scen_legacy(fg, scripts: Path, run: Run, td: Path) -> None:
+    """5절 ⓪ — 이관 빚 목록에 오른 줄은 새 파일도 지금 자리 그대로(9.3 «부모에 두고 이관 빚»)."""
+    # 늦은 슬라이스의 셋째 파일이 부른 형성 — «만든다» 줄이 이관 빚이면 형성 없음 · 셋 모두 부모
+    repo = Repo(td / "late-make")
+    repo.write({SV + "__init__.py": "", SV + "void_a.py": _vo("void_a"), SV + "void_b.py": _vo("void_b"),
+                SV + "moon_phase.py": _vo("moon_phase")})
+    folder = _folder(repo, "l1", repo.commit("앵커"))
+    repo.write({SV + "void_c.py": _vo("void_c")})
+    repo.commit("슬라이스")
+    legacy = td / "legacy-make.txt"
+    legacy.write_text(f"#656 {SV}__init__.py: 묶음 `void/` 을(를) 만든다\n", encoding="utf-8")
+    rc, out = _tool(scripts, "draft", repo.root, "--bc", "orbit", "--run", folder, "--legacy-debt-file", legacy)
+    run.eq("⓪ «만든다» 이관 빚 — 이동 0 · 새 파일 부모 · 형성 0",
+           (rc, _starting(out, "이 실행 이동"), _starting(out, "남은 이동"), _starting(out, "새 파일"),
+            _starting(out, "알림 묶음")),
+           (0, [], [], [f"새 파일 {SV}void_c.py -> {SV}void_c.py"],
+            ["알림 묶음: 새 파일 1 · 이 실행의 이동 0(형성 0 · 해체 0 · 다시 놓기 0) · 경로 결속 0 · 다른 BC import 0"]))
+    rc, out = _tool(scripts, "verify", repo.root, "--run", folder, "--legacy-debt-file", legacy)
+    run.eq("⓪ «만든다» 이관 빚 — verify --run green", (rc, _starting(out, "red")), (0, []))
+    # 있는 묶음 옆에 평평하게 둔 새 파일 — 그 파일 줄이 이관 빚이면 부모 그대로
+    repo = Repo(td / "late-file")
+    repo.write({SV + "__init__.py": "", SV + "void/__init__.py": "", SV + "void/void_a.py": _vo("void_a"),
+                SV + "void/void_b.py": _vo("void_b"), SV + "moon_phase.py": _vo("moon_phase")})
+    folder = _folder(repo, "l2", repo.commit("앵커"))
+    repo.write({SV + "void_c.py": _vo("void_c")})
+    repo.commit("슬라이스")
+    legacy = td / "legacy-file.txt"
+    legacy.write_text(f"#656 {SV}void_c.py: 묶음 `void/` 에 둔다\n", encoding="utf-8")
+    rc, out = _tool(scripts, "draft", repo.root, "--bc", "orbit", "--run", folder, "--legacy-debt-file", legacy)
+    run.eq("⓪ 새 파일 줄 이관 빚 — 새 파일 부모 · 남은 이동 0",
+           (rc, _starting(out, "새 파일"), _starting(out, "남은 이동")),
+           (0, [f"새 파일 {SV}void_c.py -> {SV}void_c.py"], []))
+    rc, out = _tool(scripts, "verify", repo.root, "--run", folder, "--legacy-debt-file", legacy)
+    run.eq("⓪ 새 파일 줄 이관 빚 — verify --run green", (rc, _starting(out, "red")), (0, []))
+    rc, out = _tool(scripts, "draft", repo.root, "--bc", "orbit", "--run", folder)
+    run.eq("목록 없으면 새 파일은 있는 묶음으로", _starting(out, "새 파일"), [f"새 파일 {SV}void_c.py -> {SV}void/void_c.py"])
+
+
 # ── 진입 ──────────────────────────────────────────────────────────────────────
 
 def run_all(scripts: Path, fail_fast: bool = False) -> "tuple[Run, object]":
@@ -580,7 +618,7 @@ def run_all(scripts: Path, fail_fast: bool = False) -> "tuple[Run, object]":
     run = Run()
     steps = (("낱말", lambda td: check_words(fg, scripts, run)), ("픽스처", lambda td: check_cases(fg, run, td)),
              ("병합", lambda td: scen_merge(fg, scripts, run, td)), ("다시 옮김", lambda td: scen_chain(fg, scripts, run, td)),
-             ("빚", lambda td: scen_debt(fg, scripts, run, td)))
+             ("빚", lambda td: scen_debt(fg, scripts, run, td)), ("이관 빚", lambda td: scen_legacy(fg, scripts, run, td)))
     with tempfile.TemporaryDirectory(prefix="fg-fixture-") as tmp:
         for name, step in steps:
             td = Path(tmp) / name
@@ -675,8 +713,12 @@ _MUTATIONS: "tuple[tuple[str, str, str], ...]" = (
      "elif (string_sub is not None and isinstance(node, ast.Constant) and isinstance(node.value, str)",
      "elif (False and isinstance(node, ast.Constant) and isinstance(node.value, str)"),
     ("계산된 import 를 막지 않음", "if hits_package(pieces):", "if False:"),
-    ("앵커에도 서는 묶음을 이 실행의 형성으로 셈(D2)", "(bset | (g1 - g0p)) - ((bset & g0p) - g1)",
-     "(bset | g1) - ((bset & g0p) - g1)"),
+    ("앵커에도 서는 묶음을 이 실행의 형성으로 셈(D2)", "(bset | ((g1 - g0p) - held)) - ((bset & g0p) - g1)",
+     "(bset | (g1 - held)) - ((bset & g0p) - g1)"),
+    ("⓪ «만든다» 이관 빚도 형성으로 셈", "(bset | ((g1 - g0p) - held)) - ((bset & g0p) - g1)",
+     "(bset | (g1 - g0p)) - ((bset & g0p) - g1)"),
+    ("⓪ 새 파일은 이관 빚 고정 없음", "if any(sub in ln for sub in legacy_list for ln in own_lines):",
+     "if k in debt_m and any(sub in ln for sub in legacy_list for ln in own_lines):"),
 )
 
 
