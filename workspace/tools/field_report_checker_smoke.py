@@ -3048,11 +3048,12 @@ class FrameworkServerBcNameRegression(unittest.TestCase):
         self.assertEqual(self.lines("check-broker-contract.py", "518"), [])
 
     def test_capability_name_only_in_web_vocabulary_is_asked(self) -> None:
+        # 칸 이름은 배포판 이름일 수 없는 지은 낱말 — 기술 이름(설치 배포판)과 겹치면 ⓓ#36 이 서지 않는다.
         self.bc("application", "order")
-        self.bc("web/application", "chart", extra="def horoscope_wheel():\n    pass\n")
-        self.write("framework/wheel/__init__.py")
+        self.bc("web/application", "chart", extra="def spin_quokkadial():\n    pass\n")
+        self.write("framework/quokkadial/__init__.py")
         self.assertEqual(self.lines("check-naming.py", "36"), [
-            "[ⓓ#36] framework/wheel: framework 칸 `wheel` 이 트리·기술·업무 어휘 어디에도 없다 — 물음: 이 이름에 예/아니오로 답하는 물음이 붙나",
+            "[ⓓ#36] framework/quokkadial: framework 칸 `quokkadial` 이 트리·기술·업무 어휘 어디에도 없다 — 물음: 이 이름에 예/아니오로 답하는 물음이 붙나",
         ])
 
     def test_acl_to_web_unit_is_external(self) -> None:

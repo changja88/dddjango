@@ -107,7 +107,7 @@ def server_bc_dirs(root: Path) -> list[Path]:
 
 
 def all_vocab(root: Path) -> set[str]:
-    """서버 BC 합집합 — framework·broker 쪽 검사(#47·#52·#518·#617)의 재료."""
+    """서버 BC 합집합 — framework · broker 쪽 업무 어휘 검사(#47·#587·#617·#562·#518 · 후보 #448·#425 · ⓓ#36)의 재료."""
     out: set[str] = set()
     for bc in server_bc_dirs(root):
         out |= bc_vocab(bc)

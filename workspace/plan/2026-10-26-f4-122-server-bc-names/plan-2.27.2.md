@@ -26,7 +26,9 @@
 ## 적대 검토 반영
 - 중요 1(#365): 시제품은 «우리 BC» 를 `container_bc_names(bc)` 로 바꿨으나, 뿌리 밖 컨테이너의 BC(기록 사본 · `web_test/`)가 뿌리 서버 BC 를 ACL 상대로 둘
   때 새로 붉었다 → 원래 줄(`bc_names(root)`)을 그대로 둔다. `bc_names` 가 서버 BC 이름이 되므로 web 구역 상대는 잡히고 그 소음은 없다.
-- 사소: 뿌리 찾기를 형제 도구 꼴로 · 시험에 broker · naming 쪽 부르는 자리와 기록 사본 ACL 꼴을 더함 · 행동 변화 문구(아래) · 커밋 → 봉인 → verify 순서.
+- 사소: 뿌리 찾기를 형제 도구 꼴로 · 시험에 broker · naming 쪽 부르는 자리와 기록 사본 ACL 꼴을 더함 · 행동 변화 문구(아래) · 봉인을 기능 커밋에 함께 넣고 그 뒤 verify.
+- 구현 검토(고친 뒤 배포 · 차단 0 · 중요 1 · 사소 4): ⓓ#36 시험의 칸 이름이 흔한 배포판 이름(`wheel`)이라 그 배포판이 깔린 파이썬에서 거짓으로 붉었다 →
+  배포판일 수 없는 지은 낱말로. `all_vocab` docstring 의 규칙 목록 · 아래 문구 셋을 바로잡음.
 - 그대로(선택): `application/__pycache__` 가 이름에 드는 것은 옛 판과 같아 손대지 않는다.
 
 ## 행동 변화 · 받아들인 한계
@@ -34,14 +36,15 @@
    뿌리 `application/` 이 없는 저장소는 그 검사의 BC 이름 · 어휘가 0 이다(옛 판은 그 밖 컨테이너의 것을 셌다). 표준 호출 계약(TARGET = `application/` 의 부모)
    밖 배치다.
 2. framework 가 web 구역을 import 하거나 그 타입을 자료 필드에 써도 core 검사기는 잡지 않는다 — 옛 판은 #52 · #616 으로 우연히 잡았다(#46 은 `application` 만 본다).
-3. #365 는 ACL 상대 이름이 web 구역에만 있으면 이제 위반(통신 import) · 후보(순수 스텁) — 옛 판은 놓쳤다.
+3. #365 는 ACL 상대 이름이 뿌리 서버 BC 가 아니면(web 구역에만 · 기록 사본에만 있는 이름 포함) 위반(통신 import) · 후보(순수 스텁) — 옛 판은 그 이름이
+   저장소 어디에든 있으면 받았다.
 4. ⓓ#36(후보)은 framework 칸 이름이 web 어휘에만 있으면 새로 뜬다.
 5. 메시지에 찍히는 목록(BC 이름 #52 · #416 · #426 · 업무 어휘 #47 · #518 · #562 · #587 · #617 · 애그리거트 #616 · 후보 #448 · #425)은 줄 수 있고 #444 는 줄이
    사라질 수 있다. 빚 매칭은 앵커 뒤 새로 선 줄에만 걸리므로(registry_gate 귀속 줄 · 앵커 기존분은 앵커 · 현재를 같은 판으로 잰다) 진행 중 레인이 새로 만든
    framework 파일 줄을 목록까지 부분 문자열로 빚에 적었다면 다시 적는다.
 
 ## 시험
-- `field_report_checker_smoke.FrameworkServerBcNameRegression` 14 건 — 오탐 꼴 11(#416 web 구역 · 기록 사본 · #52 · #426 · #617 · #616 · #562 · #444 · #518 ·
+- `field_report_checker_smoke.FrameworkServerBcNameRegression` 14 건(ⓓ#36 꼴의 칸 이름은 배포판일 수 없는 지은 낱말) — 오탐 꼴 11(#416 web 구역 · 기록 사본 · #52 · #426 · #617 · #616 · #562 · #444 · #518 ·
   ⓓ#36 · #365 web 구역 상대) · 유지 꼴 3(서버 BC 이름 #416 · 서버 BC 상대 #365 · 기록 사본 BC 의 서버 BC 상대 #365) — 줄 글자 정확 일치.
   2.27.1 검사기로 돌리면 고친 꼴 11 이 붉고 유지 꼴 3 은 통과, 고친 판에서 14 모두 통과.
 - 기존 묶음(시제품 위): fixture_matrix 114/114 · findings_count_matrix 73/73 · checker_cross_matrix 348 차이 0 · field_report_checker_smoke 79 OK.
@@ -54,5 +57,6 @@
 
 ## 범위 밖(다음 판 후보)
 - BC 마다 도는 검사기(`bc_dirs` → 채택 신호)가 `web/application/<단위>` · `web_test/application/<단위>` 도 서버 BC 로 돈다(현장 naming · port-adapter 에
-  `web/` 줄이 있음). G2 · pre-gate 는 작업 트리 사본에서 숨김 경로만 빼므로 `web/` · `web_test/` 몫은 든다. 검사 대상 고르기라 pre-gate `_checker_bc` 와 함께 바꿔야 한다.
+  `web/` 줄이 있음). G2 현재 쪽은 작업 트리 사본에서 숨김 경로를 빼고, pre-gate 사본은 기준선 트리에 승인 유입 · 작업 트리 변경을 얹은 것이라 둘 다
+  `.dddjango-web/` 은 안 들고 `web/` · `web_test/` 몫은 든다. 검사 대상 고르기라 pre-gate `_checker_bc` 와 함께 바꿔야 한다.
 - #46 을 `web` 뿌리 import 까지 넓힐지.
