@@ -509,6 +509,8 @@
   .tabrail .tr.pick{background:var(--hex-bg)}
   .tabrail .tr.pick .nm{color:var(--ink)}
   .tabrail .tr[data-sw="1"] .nm::after{content:" ⇄";color:var(--hex)}
+  .tabrail .tr[data-grp="1"] .nm::after{content:" ▦";color:var(--ddd)}
+  .tabrail .tr[data-sw="1"][data-grp="1"] .nm::after{content:" ⇄ ▦";color:var(--hex)}
   .tabrail .tr .pin{cursor:pointer}
   /* 왼쪽 트리에 «이름 규칙»을 같이 그린다 — 파일 이름 오른쪽에 붙는 옅은 칸.
      오른쪽 패널의 «이름» 줄이 긴 설명을 지고, 여기는 그 «결론»만 한 조각 진다. */
@@ -1030,7 +1032,7 @@
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g t"></i><b class="nm">entity/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d12">D12</button></span>
         </div>
-        <div data-r="64" class="tr fixed" style="--d:4">
+        <div data-r="64" class="tr fixed" style="--d:4" data-grp="1">
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g v"></i><i class="g l"></i><b class="nm">&lt;entity&gt;.py</b><em class="nmr">접미사 없음</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d12">D12</button></span>
         </div>
@@ -1038,7 +1040,7 @@
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g t"></i><b class="nm">value_object/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d12">D12</button></span>
         </div>
-        <div data-r="66" class="tr fixed" style="--d:4">
+        <div data-r="66" class="tr fixed" style="--d:4" data-grp="1">
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g v"></i><i class="g l"></i><b class="nm">&lt;value_object&gt;.py</b><em class="nmr">접미사 없음</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d12">D12</button></span>
         </div>
@@ -1046,7 +1048,7 @@
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g t"></i><b class="nm">event/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d13">D13</button><button type="button" class="pin d" data-k="d40">D40</button></span>
         </div>
-        <div data-r="68" class="tr fixed" style="--d:4">
+        <div data-r="68" class="tr fixed" style="--d:4" data-grp="1">
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g v"></i><i class="g l"></i><b class="nm">&lt;event&gt;.py</b><em class="nmr">과거형 사실 · _event ✗</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d13">D13</button><button type="button" class="pin d" data-k="d40">D40</button></span>
         </div>
@@ -1058,7 +1060,7 @@
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g l"></i><b class="nm">exception/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d27">D27</button><button type="button" class="pin d" data-k="d12">D12</button><button type="button" class="pin d" data-k="d40">D40</button></span>
         </div>
-        <div data-r="71" class="tr fixed" style="--d:4">
+        <div data-r="71" class="tr fixed" style="--d:4" data-grp="1">
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g sp"></i><i class="g l"></i><b class="nm">&lt;exception&gt;.py</b><em class="nmr">서술문 · _error ✗</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d27">D27</button><button type="button" class="pin d" data-k="d40">D40</button><button type="button" class="pin d" data-k="d36">D36</button></span>
         </div>
@@ -1066,7 +1068,7 @@
           <span class="path"><i class="g v"></i><i class="g t"></i><b class="nm">shared_value_object/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d12">D12</button></span>
         </div>
-        <div data-r="73" class="tr fixed" style="--d:3">
+        <div data-r="73" class="tr fixed" style="--d:3" data-grp="1">
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g l"></i><b class="nm">&lt;value_object&gt;.py</b><em class="nmr">접미사 없음</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d12">D12</button></span>
         </div>
@@ -1074,7 +1076,7 @@
           <span class="path"><i class="g v"></i><i class="g l"></i><b class="nm">domain_service/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d28">D28</button><button type="button" class="pin d" data-k="d13">D13</button><button type="button" class="pin d" data-k="d32">D32</button></span>
         </div>
-        <div data-r="75" class="tr fixed" style="--d:3" data-sw="1">
+        <div data-r="75" class="tr fixed" style="--d:3" data-sw="1" data-grp="1">
           <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g l"></i><b class="nm">&lt;domain_service&gt;.py</b><em class="nmr">무상태 규칙 이름</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d13">D13</button><button type="button" class="pin d" data-k="d28">D28</button></span>
         </div>

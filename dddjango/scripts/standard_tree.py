@@ -13,6 +13,11 @@ import 하는 유일한 트리 데이터다. **손으로 고치지 않는다** �
 swappable=True 는 «동명 폴더 승격» 허용 표기다(#490 교체형 실현 — 파일 칸이
 `<이름>.py` ⇄ `<이름>/`(본체+`__init__.py`) 두 실현을 갖는다). 칸 유형이 아니라
 실현 형태의 직교 속성이며, 값의 정본은 docs/file_tree.html 의 data-sw 다.
+
+groupable=True 는 «의미 묶음» 허용 표기다(#654~#656 · D60 — 파일 칸의 인스턴스
+파일을 부모 바로 아래 묶음 폴더 한 계층으로 나눠 둘 수 있다). 이것도 칸 유형이
+아니라 실현 형태의 직교 속성이며, 값의 정본은 docs/file_tree.html 의 data-grp 다.
+묶음의 자리 판정은 `folder_group.place` 가 한다(#656).
 """
 from __future__ import annotations
 
@@ -20,7 +25,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 SOURCE: str = "docs/file_tree.html"
-SOURCE_SHA: str = "b10137679cc22962"  # 생성 시점 정본 sha256[:16] — 출처 표시(동기 판정은 행 비교로 한다)
+SOURCE_SHA: str = "2b272a305f705778"  # 생성 시점 정본 sha256[:16] — 출처 표시(동기 판정은 행 비교로 한다)
 
 Kind = Literal["fixed", "placeholder", "reappear"]
 
@@ -32,6 +37,7 @@ class Row:
     name: str       # 리프 이름 — admin·templates 처럼 하위 경로를 품은 이름도 있다
     kind: Kind
     swappable: bool = False  # 동명 폴더 승격 허용 표기(#490 교체형 — 정본은 data-sw)
+    groupable: bool = False  # 의미 묶음 허용 표기(#654~#656 · D60 — 정본은 data-grp)
 
 
 ROWS: tuple[Row, ...] = (
@@ -98,18 +104,18 @@ ROWS: tuple[Row, ...] = (
     Row(61, 2, '<aggregate>/', 'placeholder'),
     Row(62, 3, '<aggregate>.py', 'reappear', swappable=True),
     Row(63, 3, 'entity/', 'fixed'),
-    Row(64, 4, '<entity>.py', 'placeholder'),
+    Row(64, 4, '<entity>.py', 'placeholder', groupable=True),
     Row(65, 3, 'value_object/', 'fixed'),
-    Row(66, 4, '<value_object>.py', 'placeholder'),
+    Row(66, 4, '<value_object>.py', 'placeholder', groupable=True),
     Row(67, 3, 'event/', 'fixed'),
-    Row(68, 4, '<event>.py', 'placeholder'),
+    Row(68, 4, '<event>.py', 'placeholder', groupable=True),
     Row(69, 3, '<aggregate>_repository.py', 'reappear'),
     Row(70, 3, 'exception/', 'fixed'),
-    Row(71, 4, '<exception>.py', 'placeholder'),
+    Row(71, 4, '<exception>.py', 'placeholder', groupable=True),
     Row(72, 2, 'shared_value_object/', 'fixed'),
-    Row(73, 3, '<value_object>.py', 'placeholder'),
+    Row(73, 3, '<value_object>.py', 'placeholder', groupable=True),
     Row(74, 2, 'domain_service/', 'fixed'),
-    Row(75, 3, '<domain_service>.py', 'placeholder', swappable=True),
+    Row(75, 3, '<domain_service>.py', 'placeholder', swappable=True, groupable=True),
     Row(76, 1, 'driven_layer/', 'fixed'),
     Row(77, 2, 'django_<bounded_context>/', 'reappear'),
     Row(78, 3, 'apps.py', 'fixed'),

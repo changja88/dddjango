@@ -263,7 +263,7 @@ D45 축자가 *「기계가 후보를 좁히고 사람이 마무리한다」* �
 
 | 값 | 테스트 | 개수 |
 |---|---|---|
-| **`blocker`** | 어긴 것을 **파일 하나로 지목**할 수 있고, 어긴 채 두면 다른 규칙이 성립하지 않는다 | **502** |
+| **`blocker`** | 어긴 것을 **파일 하나로 지목**할 수 있고, 어긴 채 두면 다른 규칙이 성립하지 않는다 | **506** |
 | **`면제`** | 규칙 자체가 「여기는 규정하지 않는다」거나 «허가문»이라 위반 주체가 없다 | **22** |
 | **`검사기`** | 어길 수 있는 것이 **코드가 아니라 검사기**다(검사 범위·채택 신호·fail-open·라우팅) | **20** |
 | **`이행`** | 이관 절차 규칙 — 한 시점의 코드로는 참·거짓이 안 갈린다 | **10** |
@@ -272,11 +272,11 @@ D45 축자가 *「기계가 후보를 좁히고 사람이 마무리한다」* �
 
 | 판정 | blocker | 검사기 | 이행 | 면제 | 계 |
 |---|---|---|---|---|---|
-| `path` | 154 | 9 | 4 | 5 | **172** |
-| `ast` | 280 | 7 | 4 | 1 | **292** |
+| `path` | 155 | 9 | 4 | 5 | **173** |
+| `ast` | 282 | 7 | 4 | 1 | **294** |
 | `ast+` | 62 | 1 | 0 | 0 | **63** |
-| `human` | 6 | 3 | 2 | 16 | **27** |
-| **계** | **502** | **20** | **10** | **22** | **554** |
+| `human` | 7 | 3 | 2 | 16 | **28** |
+| **계** | **506** | **20** | **10** | **22** | **558** |
 
 <span>*(3단계에서 24건이 들어와 447 → 471, 3차 리뷰 반영으로 10건이 들어와 481, T26·T27(D39) 반영으로 4건이 들어와 **485**, 그리고 **D40~D59 회수로 110건이 들어와 595** 가 됐다. 3차에서 허가문 9건이 blocker → `면제`, 검사 범위 6건이 → `검사기` 로 바로잡혔고, «파일 내용을 세는» path 9건이 `ast` 로, 크로스-BC·어휘 판정 4건이 `human` 으로, «두 번째 BC» 3건이 `human` → `ast` 로 옮겨갔다. 복합 제안(ast+human)은 상위 수단 하나로 적는다 — 판정 컬럼은 «충분한 최소 수단»이다. **회수분 110건의 갈림은 `ast` 57 · `human` 30 · `path` 23** 이다 — 신설 칸이 대부분 «파일 안의 모양»을 규정해서다.)*</span>
 
@@ -284,9 +284,9 @@ D45 축자가 *「기계가 후보를 좁히고 사람이 마무리한다」* �
 
 | | 몇 | 무엇 |
 |---|---|---|
-| `path`+`ast` 의 blocker | **434** | **결정적 백스톱** — 기계가 혼자 판정하고 반송한다 |
+| `path`+`ast` 의 blocker | **437** | **결정적 백스톱** — 기계가 혼자 판정하고 반송한다 |
 | `ast+` 의 blocker | **62** | **후보를 좁히는 검사** — 경고를 내고 리뷰어가 마무리한다. 술어 셋(확정·후보·물음)이 `2026-08-11-predicates.md` 에 있다 |
-| `human` 의 blocker | **6** | 기계 술어가 아예 없다 — `#254`·`#316`·`#526`·`#530`·`#563`·`#626` |
+| `human` 의 blocker | **7** | 기계 술어가 아예 없다 — `#254`·`#316`·`#526`·`#530`·`#563`·`#626`·`#657` |
 
 <span>08-11 · C5 ㉰ — **옛 문면의 「`human` blocker 148」은 «소거법»으로 매겨진 수였다.** 「기계가 못 하면 human」이라 성질이 다른 것이 한 칸에 뭉쳐 있었고, 전수 재분류로 **131건이 `human` 을 벗고 `ast+` 가 신설됐다**. 남은 실질 `human` 은 **11건**이고 그중 blocker 는 **6건**이다.</span>
 **★ 그중 `#486~#492`(제1원칙)는 «다른 모든 검사보다 먼저» 도는 자리라 6번에서 별도 게이트로 뽑는다** — 골격이 어긋나면 나머지 **547개**를 돌릴 이유가 없다.
@@ -570,7 +570,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 
 | # | 규칙 | 자리 | 판정 | 근거 | 3차 | 어겼을 때 |
 |---|---|---|---|---|---|---|
-| 249 | `domain_layer/` 의 자식은 애그리거트 폴더들과 `shared_value_object/` · `domain_service/` 뿐이다. | 트리 60행+D12+D13 | `path` | principle |  | **blocker** |
+| 249 | `domain_layer/` 의 자식은 애그리거트 폴더들과 `shared_value_object/` · `domain_service/` 뿐이다 — 묶음은 그 셋 안에만 산다(#654~#656). | 트리 60행+D12+D13 | `path` | principle |  | **blocker** |
 | 251 | `domain_layer` 로 들어오는 import 는 `application_layer`·`driven_layer`·`composition_root` 뿐이고 `driving_layer` 는 금지다 — 단 driving 잎이 `exception`·값 객체(`shared_value_object/` 포함)를 «자료로» import 하는 것(#95·#141)은 예외다. | D13 결정③ | `ast` | principle |  | **blocker** |
 | 252 | `domain_layer/` 의 1차 폴더는 클래스 종류가 아니라 `<aggregate>/` 이고 `entity/`·`value_object/` 는 그 안으로 내린다. | 트리 61행+D12 | `path` | principle |  | **blocker** |
 | 253 | `domain_layer/<A>/**` 는 `domain_layer/<B>/` 의 루트 모듈만 import 한다(대상은 애그리거트 구성원이고 `domain_service/` 는 해당 없다). | 트리 61행+D12+D13 검사① | `ast` | principle |  | **blocker** |
@@ -586,7 +586,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 264 | `<aggregate>/value_object/` 안의 클래스는 불변이다 — 검사는 관례로 한다: `__init__` 밖에서 자기 속성 대입(`self.x = …`)이 없어야 한다. | 트리 65행+D12 | `ast` | principle |  | **blocker** |
 | 265 | `<aggregate>/value_object/` 의 값 객체는 그 애그리거트 밖에서는 쓰이지 않는다. | 트리 65행+D12 | `ast` | principle |  | **blocker** |
 | 266 | 다른 애그리거트가 그 값 객체를 쓰기 시작하는 순간 `shared_value_object/` 로 올린다. | 트리 65행+D12 | `ast` | principle |  | **blocker** |
-| 267 | 값 객체 하나 = 파일 하나다(애그리거트 안이든 `shared_value_object/` 든 같은 규칙이고 다른 것은 사는 폴더뿐이다). <span>09-01 · 계수 — 값 집합 Enum 계열(`StrEnum`·`Enum`·`IntEnum`·Choices 류)도 값 객체다(공개 클래스 계수 포함). 참고: ErrorSchema+ErrorCode 동거는 #572 소관(`bc_error_schema.py` 는 driving_layer 라 #267 대상 밖).</span> | 트리 66행+56행 | `ast` | principle |  | **blocker** |
+| 267 | 값 객체 하나 = 파일 하나다(애그리거트 안이든 `shared_value_object/` 든 같은 규칙이고 다른 것은 사는 폴더뿐이다 — 묶음 안 파일도 같다). <span>09-01 · 계수 — 값 집합 Enum 계열(`StrEnum`·`Enum`·`IntEnum`·Choices 류)도 값 객체다(공개 클래스 계수 포함). 참고: ErrorSchema+ErrorCode 동거는 #572 소관(`bc_error_schema.py` 는 driving_layer 라 #267 대상 밖).</span> | 트리 66행+56행 | `ast` | principle |  | **blocker** |
 | 268 | 값 객체는 만들어지는 시점에 스스로 검증해 잘못된 값으로는 존재할 수 없어야 한다. | 트리 66행 | `ast+` | principle |  | **blocker** |
 | 269 | `<aggregate>/event/` 에는 이 BC 안에서 읽히는 «일어난 사실»만 온다. | 트리 67행+D13 | `ast` | principle |  | **blocker** |
 | 270 | 이 BC 안에서 읽는 사람이 없으면 그것은 이벤트가 아니라 «알림»이고 자리는 `application_layer/port/` 다. | 트리 67행+D13+D34 | `ast` | principle |  | **blocker** |
@@ -601,18 +601,18 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 285 | 애그리거트 컬렉션을 세고 합친 요약값(`exists() -> bool` · `count() -> int`)은 반환형이 원시 타입이어도 리포지토리에 남는다. | 트리 69행+D29 | `ast+` | principle |  | **blocker** |
 | 287 | 리포지토리는 애그리거트를 주고받는다(`get(id) -> Aggregate` · `save(aggregate)`) — **쓰기 인자는 «애그리거트(또는 그 목록)»이고 «조건·필드»면 위반이다**(`bulk_update(filter, fields)`·`update(id, status=…)`). 필드 단위 갱신 메서드(`update_status(id, status)`)를 두지 않는다 — **판정이 SQL 로 가면 같은 판정의 도메인 메서드가 죽은 코드가 된다.** | D12+트리 69행+D43+T37 | `ast` | principle |  | **blocker** |
 | 288 | `<aggregate>_repository.py` 는 `domain_layer` 안에서 아무도 import 하지 않는다 — 부르는 것은 `application_layer`·`driven_layer`·`composition_root` 뿐이다. | D13 검사④ | `ast` | principle |  | **blocker** |
-| 289 | 애그리거트 불변식이 깨졌을 때 던지는 예외는 `domain_layer/<aggregate>/exception/` **폴더** 아래 «깨진 불변식 하나 = 파일 하나»로 둔다 — 파일이 아니라 폴더다. | 트리 70·71행+D27 ①+D40+D12 | `path` | principle |  | **blocker** |
+| 289 | 애그리거트 불변식이 깨졌을 때 던지는 예외는 `domain_layer/<aggregate>/exception/` **폴더** 아래(그 폴더의 묶음 포함) «깨진 불변식 하나 = 파일 하나»로 둔다 — 파일이 아니라 폴더다. | 트리 70·71행+D27 ①+D40+D12 | `path` | principle |  | **blocker** |
 | 290 | `exception/` 는 «처음부터» 폴더다 — 「커져서 감당이 안 되면 그때」 같은 조건은 두지 않는다(기계로 못 재는 조건이라 D10 에 걸린다). | 트리 70행+D27+D40 | `path` | principle | `measured_ok` | **blocker** |
-| 291 | BC 바로 밑 `domain_layer/exception.py` 를 두지 않는다 — 도메인 예외의 표준 자리는 애그리거트 밑 하나뿐이다. | D27 ① | `path` | principle |  | **blocker** |
-| 292 | 예외의 자리는 셋으로 갈린다 — 업무 규칙을 어겼으면 `domain_layer/<aggregate>/exception/` · 남에게 공개하는 실패면 `open_host_service/…/contract/exception/` · 바깥 행위자가 죽었으면 `application_layer/port/<capability>/exception.py` 다. | D27 ① | `ast` | principle |  | **blocker** |
+| 291 | BC 바로 밑 `domain_layer/exception.py` 를 두지 않는다 — 도메인 예외의 자리는 애그리거트 밑 `exception/` 과 공유 개념의 `shared_value_object/` 둘이다(#657). | D27 ① | `path` | principle |  | **blocker** |
+| 292 | 예외의 자리는 넷으로 갈린다 — 한 애그리거트의 업무 규칙을 어겼으면 `domain_layer/<aggregate>/exception/` · 여러 애그리거트가 함께 쓰는 개념이면 `shared_value_object/`(#657) · 남에게 공개하는 실패면 `open_host_service/…/contract/exception/` · 바깥 행위자가 죽었으면 `application_layer/port/<capability>/exception.py` 다. | D27 ① | `ast` | principle |  | **blocker** |
 | 294 | «저장이 실패하는 방식»에는 넷째 예외 자리를 두지 않는다 — 업무 의미가 있으면 애그리거트 예외로, 재시도 판정이면 `framework/` 로 가고 그 밖은 선언하지 않는다. | D27 ① | `ast` | principle |  | **blocker** |
 | 295 | 도메인 예외를 BC 밖으로 raw 로 전파하거나 재노출하지 않는다 — `__all__` 재노출도 금지다. | D27 ③ + 트리 31행 | `ast` | principle |  | **blocker** |
-| 298 | `domain_layer/shared_value_object/` 는 같은 `shared_value_object/` 안과 `exception` 모듈 말고는 아무것도 import 하지 않는다 — `<aggregate>/value_object/`·애그리거트·리포지토리·포트·이벤트·프레임워크는 전부 금지다. | 트리 72행+D12 검사② | `ast` | both | `measured_ok` | **blocker** |
+| 298 | `domain_layer/shared_value_object/` 는 같은 `shared_value_object/` 안(묶음 안 · 묶음 사이 포함 — 상대 import 는 패키지 기준으로 풀어 본다)과 `exception` 모듈 말고는 아무것도 import 하지 않는다 — `<aggregate>/value_object/`·애그리거트·리포지토리·포트·이벤트·프레임워크는 전부 금지다. | 트리 72행+D12 검사② | `ast` | both | `measured_ok` | **blocker** |
 | 299 | 주인이 하나가 아닌 것은 업무 이름이 아니라 종류 이름으로 폴더를 짓는다(`shared_value_object/`·`domain_service/`) — 그 밖의 1차 폴더는 도메인 이름만 쓴다. | 트리 72행+D12+D13 | `path` | principle |  | **blocker** |
 | 300 | 도메인 서비스는 BC 레벨 `domain_layer/domain_service/` 한 칸에만 살고 `<aggregate>/domain_service/` 를 두지 않는다. | 트리 74행+D28 ②(08-07 R10) | `path` | both | `measured_ok` | **blocker** |
 | 301 | `domain_service/` 에는 루트 메서드로 표현할 수 없는 규칙만 온다 — 루트 메서드가 될 수 있으면 애그리거트로 가고, 못 하는 이유는 셋 중 하나다(애그리거트를 아예 안 받거나 · «없을 때»를 판정하거나 · 둘 이상을 한꺼번에 보거나). | 트리 74행+D13+D28 | `ast+` | principle | `principle` | **blocker** |
 | 302 | 도메인 서비스는 무상태다. | 트리 74행+D13(Evans 3조건) | `ast` | principle |  | **blocker** |
-| 303 | `domain_service/` 는 애그리거트 루트 · `value_object` · `exception` · 같은 폴더의 다른 도메인 서비스만 import 한다 — 내부 엔티티도 리포지토리 선언도 포트도 안 된다. | 트리 74행+D13 검사③ | `ast` | both | `measured_ok` | **blocker** |
+| 303 | `domain_service/` 는 애그리거트 루트 · `value_object` · `exception` · 같은 `domain_service/` 안의 다른 서비스(묶음 · 승격 본체 포함)만 import 한다 — 내부 엔티티도 리포지토리 선언도 포트도 안 된다. | 트리 74행+D13 검사③ | `ast` | both | `measured_ok` | **blocker** |
 | 304 | 도메인 서비스는 애그리거트를 인자로 받고 불러오거나 저장하지 않는다 — 불러오거나 저장하면 그건 유스케이스다. «불러오지 않는다»는 원전보다 좁힌 우리 확장이다 — Vernon 의 리포지토리 쓰는 도메인 서비스 실례는 이 트리에선 유스케이스로 간다(3차 T24). | 트리 74행+58행+D13 | `ast` | principle |  | **blocker** |
 | 305 | 재료는 유스케이스가 모아 값으로 넘긴다 — 도메인은 협력이 필요해도 포트를 파라미터로 받아 부르지 않고 뽑힌 값을 받는다. | 트리 74행+D32 | `ast` | principle |  | **blocker** |
 | 307 | 도메인 서비스 시그니처에는 원시 타입이 아니라 값 객체가 온다(`amount: Money`) — 인자를 `Decimal` 로 쓰면 그건 도메인 서비스가 아니라 계산 함수다. | 트리 75행+D13 | `ast` | principle |  | **blocker** |
@@ -625,7 +625,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 314 | `domain_layer/` 에 `specification/` 폴더를 두지 않는다. | D13 ① | `path` | principle |  | **blocker** |
 | 315 | 복잡한 애그리거트 조립(Factory)은 그 애그리거트 폴더 안에 둔다. | D12 | `path` | principle |  | **blocker** |
 | 316 | 재료를 한 번에 못 모으는 경우(판정 결과에 따라 다음 조회가 달라질 때)에도 규칙을 풀지 않고 판정을 두 조각으로 쪼갠다 — 도메인 판정 → 응용 조회 → 도메인 판정. **[Q2]** | D32 | `human` | principle |  | **blocker** |
-| 459 | `shared_value_object/<value_object>.py` 는 애그리거트 안의 값 객체와 파일 규칙이 똑같고 다른 것은 사는 폴더뿐이다. | 트리 73행+D13 | `path` | principle |  | **blocker** |
+| 459 | `shared_value_object/<value_object>.py` 는 애그리거트 안의 값 객체와 파일 규칙이 똑같고 다른 것은 사는 폴더뿐이다 — 공유 개념의 예외도 이 칸에 산다(#657). 하위 폴더는 묶음(#654~#656)만 된다. | 트리 73행+D13 | `path` | principle |  | **blocker** |
 
 ## driven — 62개
 
@@ -813,9 +813,9 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 487 | 이 검사는 다른 모든 검사보다 «먼저» 돈다 — 걸리면 나머지 검사를 돌리지 않고 반환한다. | 트리 1행+D54 | `path` | principle |  | **검사기** |
 | 488 | 고정 이름의 칸은 «부모가 있으면» 반드시 있다 — 폴더는 비어도 `__init__.py` 로, 파일도 비면 «빈 파일»로 만든다. <span>2026-09-01 · **동명 폴더 승격 부칙** — 칸의 승격 실현(#490 교체형)이 이미 있으면 그 실현이 이 충족이다 — 동명 빈 파일을 병설하지 않는다.</span> 세 어댑터 패키지도 `adapter/`·`command/`·`constant/`·`contract/`·`schema/` 를 내용 없이 모두 만들고, 바깥 패키지와 각 역할 폴더의 `__init__.py` 를 둔다. | 트리 1행+D54 | `path` | principle |  | **blocker** |
 | 489 | `<…>` 가 붙은 자리표시자 칸만 그 개념이 실제로 생길 때 생긴다 — 그 외에 「이 BC 엔 없으니 뺀다」는 축소가 아니라 위반이다. | 트리 1행+D54 | `path` | principle |  | **blocker** |
-| 490 | `application/<bounded_context>/**` 안에 트리에 없는 경로가 하나라도 있으면 위반이다(`utils/`·`common/`·`helpers/`). 폐쇄는 **칸**(폴더 + 트리가 이름을 준 파일)에만 걸리고, 트리가 리프로 닫은 폴더 «안»의 추가 모듈은 #15 의 재량이다. `framework/`·`<project>/` 는 이 원칙의 주어가 아니다(D54 축자: 「이 원칙의 주어는 «BC»다」). <span>2026-09-01 · **동명 폴더 승격 부칙** — §1 트리의 승격 허용 표기가 붙은 파일 칸은 두 실현(`<이름>.py` ⇄ 동명 폴더)을 갖고, 유효한 승격 폴더는 «트리에 없는 경로»가 아니다(형태 요건 #638~#641·#643).</span> 세 어댑터 칸은 고정 패키지이므로 단일 파일·바깥 본체 파일·역할 아래 추가 폴더로 실현할 수 없다. | 트리 1행+D54 | `path` | principle |  | **blocker** |
-| 491 | 칸의 유형은 셋뿐이고 «조건부»는 없다 — ① 고정 이름 ② `<>` 첫 등장 ③ `<>` 재등장(조상이 이미 연 낱말이라 값이 이미 채워져 있어 ①과 같다). 「있을 수도 없을 수도」라고 적힌 칸은 셋 중 하나로 다시 분류한다. <span>2026-09-01 · **동명 폴더 승격 부칙** — «조건부 없음»의 주어는 칸의 존재다 — 승격 허용 표기는 실현 형태(#490)의 값이다.</span> | 트리 1행+D54(T52) | `path` | principle |  | **blocker** |
-| 492 | 「그 파일이 있어야 하나」는 트리가 정하고 「그것을 어떻게 쓰나」는 스킬이 정한다 — 트리에 조건을 적어 두 채널로 만들지 않는다. | D54+D10+D30 | `ast+` | principle |  | **blocker** |
+| 490 | `application/<bounded_context>/**` 안에 트리에 없는 경로가 하나라도 있으면 위반이다(`utils/`·`common/`·`helpers/`). 폐쇄는 **칸**(폴더 + 트리가 이름을 준 파일)에만 걸리고, 트리가 리프로 닫은 폴더 «안»의 추가 모듈은 #15 의 재량이다. `framework/`·`<project>/` 는 이 원칙의 주어가 아니다(D54 축자: 「이 원칙의 주어는 «BC»다」). <span>2026-09-01 · **동명 폴더 승격 부칙** — §1 트리의 승격 허용 표기가 붙은 파일 칸은 두 실현(`<이름>.py` ⇄ 동명 폴더)을 갖고, 유효한 승격 폴더는 «트리에 없는 경로»가 아니다(형태 요건 #638~#641·#643).</span> 세 어댑터 칸은 고정 패키지이므로 단일 파일·바깥 본체 파일·역할 아래 추가 폴더로 실현할 수 없다. <span>10-27 · 의미 묶음(#654~#657 · D60) **부칙 2** — §1 트리의 묶음 허용 표기가 붙은 파일 칸(트리 64·66·68·71·73·75행)의 인스턴스 파일은 부모 바로 아래 묶음 한 계층으로 나눠 둘 수 있고(#654~#656), 유효한 묶음은 «트리에 없는 경로»가 아니다.</span> | 트리 1행+D54 | `path` | principle |  | **blocker** |
+| 491 | 칸의 유형은 셋뿐이고 «조건부»는 없다 — ① 고정 이름 ② `<>` 첫 등장 ③ `<>` 재등장(조상이 이미 연 낱말이라 값이 이미 채워져 있어 ①과 같다). 「있을 수도 없을 수도」라고 적힌 칸은 셋 중 하나로 다시 분류한다. <span>2026-09-01 · **동명 폴더 승격 부칙** — «조건부 없음»의 주어는 칸의 존재다 — 승격 허용 표기는 실현 형태(#490)의 값이다.</span> <span>10-27 · 의미 묶음(#654~#657 · D60) **부칙** — 묶음 허용 표기도 칸의 존재가 아니라 실현 형태의 값이다.</span> | 트리 1행+D54(T52) | `path` | principle |  | **blocker** |
+| 492 | 「그 파일이 있어야 하나」는 트리가 정하고 「그것을 어떻게 쓰나」는 스킬이 정한다 — 트리에 조건을 적어 두 채널로 만들지 않는다. <span>10-27 · 의미 묶음(#654~#657 · D60) **부칙** — 묶음의 개수 조건(셋 · 둘)은 노드 조건이 아니다 — #654~#656 · D60 이 이 여섯 칸에 한해 사용자 결정(M4 · W1 · W2)으로 명시적으로 개정한다.</span> | D54+D10+D30 | `ast+` | principle |  | **blocker** |
 | 493 | 모든 이름은 «첫 대입»에 타입을 적는다 — 시그니처·속성·지역 변수에 예외가 없다. 빠지는 것은 **문법이 없는 여덟 자리뿐**이다: `for x in xs:` · `with … as f:` · `except … as e:` · `a, b = pair` · `a = b = 0` · `x += 1` · walrus · 컴프리헨션. 그리고 **재대입**(첫 바인딩이 아니다)과 **선언적 클래스 본문**(ORM 모델 필드·ninja Schema 필드)은 면제다. | D58+§4 | `ast` | principle |  | **blocker** |
 | 494 | 「자명하니까 면제」를 두지 않는다 — 조건을 하나라도 열면 「어디까지가 자명한가」가 되돌아와 규칙이 무너진다. **[Q0]** <span>08-11 — 「어겼을 때」를 `blocker` → `검사기` 로 옮겼다. **이 행의 주어는 «코드»가 아니라 «판정하는 사람»이라 반송할 파일을 지목할 수 없다**(Q0). 코드 쪽 귀결은 다른 행이 이미 `ast` 로 갖는다.</span> | D58 | `human` | principle |  | **검사기** |
 | 495 | mypy strict 는 「구성돼 있으면」이 아니라 «항상» 돈다 — 이 게이트가 타입 규칙의 결정적 백스톱이고, 없으면 강제가 0이다. | D58+§4 | `ast` | principle |  | **검사기** |
@@ -1165,11 +1165,11 @@ Phase 1 산출물 리뷰(렌즈③ «잃은 값»)의 회수다. **유실 확정
 | 635 | `<use_case>_use_case.py` 의 진입점은 클래스 하나이고 실행 메서드는 `execute` 하나다 — 자기 `<use_case>_command.py`/`_query.py` 의 계약 객체 하나를 받아 `<use_case>_result.py` 의 result(스트림이면 `Iterator[<UseCase>Result]` — D40)를 돌려준다. <span>08-11 · T60-4 복원(사용자 승인).</span> <span>10-26 · OHS 대화 사슬의 유스케이스는 `execute -> Generator[<UseCase>Result, <답>]` — implementation-python §13.5 예외.</span> | 트리 42행 | `ast` | principle |  | **blocker** |
 | 636 | `bc_error_schema.py` 의 `<Bc>ErrorCode` 는 `StrEnum` 이다 — `Literal`·맨 문자열 상수 모음으로 대신하지 않는다(#572 가 정한 동거의 «타입» 축). <span>08-11 · T60-5 복원(사용자 승인).</span> | 트리 11행 | `ast` | principle |  | **blocker** |
 | 637 | `test/` 아래 어디에도 migration 산출물(파일·operation·적용 순서·과거 state·DDL)을 오라클로 삼는 테스트를 두지 않는다 — `migrations/` 는 `makemigrations` 가 생성한 것이라 테스트 대상이 아니며 기존 것도 삭제한다(신호: `django.db.migrations`·`MigrationExecutor`/`MigrationLoader`/`ProjectState`/`MigrationRecorder`·migration 모듈 import). <span>08-25 · tarot 잔존 판정 5(사용자 «절대 규칙» 확정) — `check-test-config`.</span> | 트리 161~165행 | `ast` | principle |  | **blocker** |
-| 638 | 동명 폴더 승격(#490 교체형)의 승격 폴더는 안에 본체 `<이름>.py` 를 반드시 가진다 — 본체 없는 폴더는 위장이라 위반이다(`__init__.py` 도 함께 있어야 한다). <span>09-01 · 동명 폴더 승격 규범화 — `check-layer-skeleton`.</span> | 승격 허용 13행(§0 교체형) | `path` | principle |  | **blocker** |
-| 639 | 형제 `<이름>.py` 와 승격 폴더 `<이름>/` 의 공존은 위반이다 — 파일시스템은 공존을 허용하고 import 는 패키지가 이겨 조용한 위장 중복이 된다. <span>09-01 · 동명 폴더 승격 규범화.</span> | 승격 허용 13행(§0 교체형) | `path` | principle |  | **blocker** |
-| 640 | 세 어댑터의 바깥 패키지와 고정 역할 폴더의 `__init__.py` 는 재수출 전용이다. 승격 폴더의 `__init__.py` 는 재수출 전용(`from .<모듈> import <이름> as <이름>` 또는 `__all__`)이다 — 본체 코드 동거는 위반이고, 폴더 안 정크드로어 이름(`utils.py`·`helpers.py` 류)도 위반이다. <span>09-01 · 동명 폴더 승격 규범화.</span> | 승격 허용 13행 및 어댑터 고정 패키지 | `ast` | principle |  | **blocker** |
-| 641 | 승격 폴더 내부는 1단 평평이다 — 하위 폴더는 위반이다(부품 군집이 폴더를 요구하면 그것은 트리 개정 신호이지 중첩 근거가 아니다). <span>09-01 · 동명 폴더 승격 규범화.</span> | 승격 허용 13행(§0 교체형) | `path` | principle |  | **blocker** |
-| 643 | 부품이 0개(본체+`__init__.py` 뿐)가 된 승격 폴더는 위반이다 — 환원 신호다(파일 실현으로 되돌린다 · 기존 폴더면 G0 빚 경로). <span>09-01 · 동명 폴더 승격 규범화.</span> | 승격 허용 13행(§0 교체형) | `path` | principle |  | **blocker** |
+| 638 | 동명 폴더 승격(#490 교체형)의 승격 폴더는 안에 본체 `<이름>.py` 를 반드시 가진다 — 본체 없는 폴더는 위장이라 위반이다(`__init__.py` 도 함께 있어야 한다). <span>09-01 · 동명 폴더 승격 규범화 — `check-layer-skeleton`.</span> <span>10-27 · 의미 묶음(#654~#657 · D60) **공통 부칙(#638~#643)** — 서비스 칸 하위 폴더 `D` 는 `D/D.py` 가 있으면 승격, 없으면 묶음이다. 묶음 안 승격도 같은 형태 요건을 진다.</span> | 승격 허용 13행(§0 교체형) | `path` | principle |  | **blocker** |
+| 639 | 형제 `<이름>.py` 와 승격 폴더 `<이름>/` 의 공존은 위반이다 — 파일시스템은 공존을 허용하고 import 는 패키지가 이겨 조용한 위장 중복이 된다. <span>09-01 · 동명 폴더 승격 규범화.</span> <span>10-27 · 의미 묶음(#654~#657 · D60) **공통 부칙(#638~#643)** — 서비스 칸 하위 폴더 `D` 는 `D/D.py` 가 있으면 승격, 없으면 묶음이다. 묶음 안 승격도 같은 형태 요건을 진다.</span> | 승격 허용 13행(§0 교체형) | `path` | principle |  | **blocker** |
+| 640 | 세 어댑터의 바깥 패키지와 고정 역할 폴더의 `__init__.py` 는 재수출 전용이다. 승격 폴더의 `__init__.py` 는 재수출 전용(`from .<모듈> import <이름> as <이름>` 또는 `__all__`)이다 — 본체 코드 동거는 위반이고, 폴더 안 정크드로어 이름(`utils.py`·`helpers.py` 류)도 위반이다. <span>09-01 · 동명 폴더 승격 규범화.</span> <span>10-27 · 의미 묶음(#654~#657 · D60) **공통 부칙(#638~#643)** — 서비스 칸 하위 폴더 `D` 는 `D/D.py` 가 있으면 승격, 없으면 묶음이다. 묶음 안 승격도 같은 형태 요건을 진다.</span> | 승격 허용 13행 및 어댑터 고정 패키지 | `ast` | principle |  | **blocker** |
+| 641 | 승격 폴더 내부는 1단 평평이다 — 하위 폴더는 위반이다(부품 군집이 폴더를 요구하면 그것은 트리 개정 신호이지 중첩 근거가 아니다). <span>09-01 · 동명 폴더 승격 규범화.</span> <span>10-27 · 의미 묶음(#654~#657 · D60) **공통 부칙(#638~#643)** — 서비스 칸 하위 폴더 `D` 는 `D/D.py` 가 있으면 승격, 없으면 묶음이다. 묶음 안 승격도 같은 형태 요건을 진다.</span> | 승격 허용 13행(§0 교체형) | `path` | principle |  | **blocker** |
+| 643 | 부품이 0개(본체+`__init__.py` 뿐)가 된 승격 폴더는 위반이다 — 환원 신호다(파일 실현으로 되돌린다 · 기존 폴더면 G0 빚 경로). <span>09-01 · 동명 폴더 승격 규범화.</span> <span>10-27 · 의미 묶음(#654~#657 · D60) **공통 부칙(#638~#643)** — 서비스 칸 하위 폴더 `D` 는 `D/D.py` 가 있으면 승격, 없으면 묶음이다. 묶음 안 승격도 같은 형태 요건을 진다.</span> | 승격 허용 13행(§0 교체형) | `path` | principle |  | **blocker** |
 | 644 | 행위 칸 실현(파일 또는 승격 본체·부품)이 200행(물리 행·빈 줄 제외)을 넘으면 캐스케이드 판정 의무 후보다 — ⑴ 확정 위반: 형태 위반은 #638~#641·#643 이 잡는다 ⑵ 후보: 200행 초과(ⓓ 채널·exit 불산입·무조건 방출 — diff 한정은 감사자 몫) ⑶ 물음: 역할 밖 응집 단위가 있는가(①이동/②동명 폴더 승격/③유지 — houserules §1). <span>09-01 · 동명 폴더 승격 규범화 — `check-layer-skeleton` ⓓ.</span> | 승격 허용 13행(§0 교체형) | `ast+` | principle |  | **blocker** |
 | 645 | 명시 `Any` 는 타입이 아니라 검사 포기다 — 함수 시그니처(인자·`*args/**kwargs`·반환)의 bare `Any`(`Optional[Any]`·`Any` 와 None 의 합집합·문자열·별칭·`typing.Any` 포함)는 확정 위반이고, 시그니처 안 제네릭 인자·변수·클래스 속성의 `Any` 는 ⓓ 후보다(감수자가 마무리 — `object`/정확 타입으로 받아 즉시 좁힌다). 확인된 admin 슬롯 밖에서 프레임워크 오버라이드가 스텁에서 `Any` 를 쓰더라도 우리 선언은 `object` 다(#493 «주석 존재» 와 독립). <span>09-04 · 현장 보고 E — `Any` 정책(하우스룰 §4 R-3447/R-3448).</span> admin 허용은 확인된 Django/Parler framework 슬롯과 연결된 private 전달 helper의 열린 UI context 조립·병합·전달에 한한다. 업무 읽기·비교·계산·상태 변경 또는 업무 함수로 값 전달부터 기존 규칙을 적용한다. 출처나 소비가 미해소이면 후보로 흐름을 묻는다. framework 고정 kwargs 밖 bare Any·별도 업무 dict·admin 경로 전체는 면제하지 않는다. #493·#646·#650은 유지한다. | D58+§4 | `ast+` | principle |  | **blocker** |
 | 646 | django-stubs 가 제네릭으로 선언했지만 런타임은 subscript 못 하는 Django 기저(타입 매개변수에 기본값이 없는 것 — admin·forms·CBV)는 모델 타입 인자를 적는다 — `if TYPE_CHECKING:` 별칭(또는 분기 안 중간 ClassDef)이 기본이고 monkeypatch 채택 시 직접 표기다. 맨몸 상속과 `# type: ignore[type-arg]`(헤더·속성 줄)는 확정 위반이고, code 없는 `# type: ignore` 헤더와 `TYPE_CHECKING` 밖 subscript(런타임 `TypeError` 후보)는 ⓓ 후보다. <span>09-04 · 현장 보고 3 S-1(하우스룰 §4 R-3458/R-3459).</span> | D58+§4 | `ast+` | principle |  | **blocker** |
@@ -1180,6 +1180,10 @@ Phase 1 산출물 리뷰(렌즈③ «잃은 값»)의 회수다. **유실 확정
 | 651 | 세 어댑터의 `adapter/`·`command/`·`contract/`·`schema/` 내용 파일은 비공개 클래스를 포함해 클래스 하나당 파일 하나다. `constant/` 는 클래스 없이 관련 상수를 묶는다. 내용 없는 골격 파일·재수출 초기화 파일은 클래스 수 검사에서 제외한다. | 트리 101~110·114~123·126~135행+#488+#490 | `ast` | principle |  | **blocker** |
 | 652 | `composition_root/wiring_material.py` 는 결선 재료만 둔다 — import 는 `settings` 와 값 객체 모듈 허용 목록(V1~V4 — §2.3)에 드는 자기 BC 값 객체 클래스뿐이고, 재료 파일의 이름은 각각 한 번만 묶이며, 재료 함수는 매개변수 · 데코레이터 없이 `return <생성식>` 한 문장이며, 생성식은 설정 이름 · 값 객체 생성 · 값 객체 `create` 셋뿐이다(§2.3). 그 밖 꼴은 위반이다(내용 없는 골격 파일은 건너뛴다). | 트리 5행+D6+10-03 사용자 결정 | `ast` | principle |  | **blocker** |
 | 653 | `wiring_material` 낱말(import · 이름 · 속성 · 문자열 상수)은 그 파일 자신과 같은 BC `dependency_wiring.py` 의 모듈째 import 한 줄 · `wiring_material.<재료>` 호출에만 나온다. | 트리 5행+D6+10-03 사용자 결정 | `ast` | principle |  | **blocker** |
+| 654 | 묶음 허용 칸(§1 트리 `data-grp`)의 묶음 폴더 안에는 폴더를 두지 않는다 — 묶음은 부모 바로 아래 한 계층뿐이다. 서비스 칸 묶음 안의 동명 폴더 승격(#638~#643 꼴)은 파일 하나가 자란 것이라 계층으로 세지 않는다(그 안은 1단 평평 · #641). 묶음 허용 칸이 아닌 폴더 아래 폴더는 지금처럼 #490 이다. <span>10-27 · 의미 묶음(M1) — `check-layer-skeleton`.</span> | 트리 64·66·68·71·73·75행+D60 | `path` | principle |  | **blocker** |
+| 655 | 묶음 폴더는 내용 없는 `__init__.py`(0바이트 · docstring · 주석뿐 — #488 과 같은 자)를 갖는다 — 재수출 · `__all__` · 코드를 두지 않는다. <span>10-27 · 의미 묶음(M2) — `check-layer-skeleton`.</span> | 트리 64·66·68·71·73·75행+D60 | `ast` | principle |  | **blocker** |
+| 656 | 묶음 허용 칸의 파일과 묶음 폴더는 `folder_group.place` 가 낸 자리에 둔다 — 그 함수의 설명(하우스룰 «의미 묶음» 블록)이 곧 이 규칙의 문장이다: 파일 이름에서 왼쪽부터 가장 긴 살아 있는 단위의 묶음 · 서비스는 돌려주는 값 객체의 묶음 · 빈 낱말뿐인 파일은 쓰는 곳 · 새 묶음은 맨 자리 이름 셋부터 · 있는 묶음은 둘까지 유지 · 폴더를 통째로 먹는 묶음과 같은 이름 서비스가 있는 서비스 칸 묶음은 서지 않는다. 철자 합침은 없고 애매한 20 낱말은 언제나 업무 낱말이다. <span>10-27 · 의미 묶음(C1~C5 · C6′ · C7 · C8′ · S1 · W1 · W2 · M3 · E1 · E3 · E5 · E7) — `check-domain-model`.</span> | 트리 64·66·68·71·73·75행+D60 | `ast` | principle |  | **blocker** |
+| 657 | 여러 애그리거트가 함께 쓰는 개념(공유 값 객체 · 도메인 서비스가 던지는 것)의 업무 규칙 예외는 `shared_value_object/` 에 둔다 — 자리 안에서는 다른 파일처럼 이름으로 묶는다(#656). <span>10-27 · 의미 묶음(E4) — 기계 술어 없음 · discipline-reviewer 감수.</span> | 트리 73행+D60 | `human` | principle |  | **blocker** |
 
 ## 5차 적대적 리뷰 회수 — 20개 (596~619)
 

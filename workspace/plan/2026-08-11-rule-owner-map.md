@@ -564,3 +564,7 @@
 | 651 | ast | scripts/check-port-adapter-pairing.py | — | 신설 | 09-09 어댑터 고정 역할의 클래스별 파일·상수 묶음 |
 | 652 | ast | scripts/check-composition-root.py | — | 신설 | 10-04 D17 결선 재료 칸 `wiring_material.py` — 재료 파일 모양 · 생성식 셋 · 값 객체 모듈 허용 목록 |
 | 653 | ast | scripts/check-composition-root.py | — | 신설 | 10-04 D17 결선 재료 칸 — `wiring_material` 낱말 결속(모듈째 수입 한 줄 · 재료 호출만) |
+| 654 | path | scripts/check-layer-skeleton.py | — | 신설 | 10-27 의미 묶음(D60) — 묶음 폴더는 한 계층(서비스 칸 묶음 안 승격은 계층으로 세지 않음) |
+| 655 | ast | scripts/check-layer-skeleton.py | — | 신설 | 10-27 의미 묶음(D60) — 묶음 `__init__.py` 는 내용 없음(0바이트 · docstring · 주석뿐) |
+| 656 | ast | scripts/check-domain-model.py | — | 신설 | 10-27 의미 묶음(D60) — 묶음 자리 = `folder_group.place` 결과(만든다 · 푼다 · 둔다 · 부모에 둔다) |
+| 657 | human | — | agents/discipline-reviewer.md | 신설 | 10-27 의미 묶음(D60 · E4) — 공유 개념 예외는 `shared_value_object/` |

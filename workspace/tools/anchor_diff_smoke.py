@@ -178,7 +178,12 @@ def _run(script: Path, target: Path, extra: "list[str]") -> "tuple[int, str]":
         [sys.executable, str(script), str(target), *extra], capture_output=True, text=True,
         env=_scrubbed_env(),
     )
-    return proc.returncode, proc.stdout + proc.stderr
+    # 트리 출처 표시(`standard_tree <정본 sha256[:16]>` — 생성 시점 표지)는 정본이 바뀌면 함께 바뀐다. 옛 배포판 대조는
+    # 판정 글자를 보므로 그 표지만 지운다(2.28.0 — 트리에 묶음 허용 표기가 붙어 sha 가 바뀜 · 판정 글자는 그대로 대조).
+    return proc.returncode, _TREE_SHA.sub(r"\1<sha>", proc.stdout + proc.stderr)
+
+
+_TREE_SHA: "re.Pattern[str]" = re.compile(r"(standard_tree )[0-9a-f]{16}\b")
 
 
 def _section(out: str, title: str) -> set[str]:

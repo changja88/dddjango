@@ -57,6 +57,8 @@ TABCSS = """\
   .tabrail .tr.pick{background:var(--hex-bg)}
   .tabrail .tr.pick .nm{color:var(--ink)}
   .tabrail .tr[data-sw="1"] .nm::after{content:" ⇄";color:var(--hex)}
+  .tabrail .tr[data-grp="1"] .nm::after{content:" ▦";color:var(--ddd)}
+  .tabrail .tr[data-sw="1"][data-grp="1"] .nm::after{content:" ⇄ ▦";color:var(--hex)}
   .tabrail .tr .pin{cursor:pointer}
   /* 왼쪽 트리에 «이름 규칙»을 같이 그린다 — 파일 이름 오른쪽에 붙는 옅은 칸.
      오른쪽 패널의 «이름» 줄이 긴 설명을 지고, 여기는 그 «결론»만 한 조각 진다. */
@@ -1038,7 +1040,7 @@ D53 이 1차 축을 «전송»으로 바꾸면서 그 근거를 <em>「행위자
 <span class="dim"><b>08-08 · F6</b> — 넷이었다. <code>query_repository/</code> 와 <code>transaction/</code> 이 <code>port/</code> 아래로 들어가면서 둘로 줄었다.</span>""",
 
 
-40: '<p>유스케이스를 업무 영역으로 묶는다. <code>driving_layer/api/&lt;area&gt;/</code> 와 이름이 대응한다. 영역 직계에 공통 helper·validation·DTO 모듈을 올리지 않는다.</p><p>유스케이스 사이의 공유 모듈 칸은 없다(#189). 업무 판정은 도메인, 외부 능력은 포트, BC 소유가 아닌 기술은 framework 가 맡는다. 어디에도 해당하지 않는 짧은 사설 조각은 각 진입점 안의 <code>_</code> 함수로 둔다(#192).</p>',
+40: '<p>유스케이스를 업무 영역으로 묶는다. <code>driving_layer/api/&lt;area&gt;/</code> 와 이름이 대응한다(창구로만 열리는 영역은 <code>driving_layer/open_host_service/&lt;area&gt;/</code> 와). 영역 직계에 공통 helper·validation·DTO 모듈을 올리지 않는다.</p><p>유스케이스 사이의 공유 모듈 칸은 없다(#189). 업무 판정은 도메인, 외부 능력은 포트, BC 소유가 아닌 기술은 framework 가 맡는다. 어디에도 해당하지 않는 짧은 사설 조각은 각 진입점 안의 <code>_</code> 함수로 둔다(#192).</p>',
 
 
 41: '<p>한 유스케이스의 진입점과 command·query·result 세 자료 칸이 함께 산다. 일반적인 사설 조각은 진입점 파일 안에 두고, 별도 helper 파일을 임의로 만들지 않는다.</p><p><code>&lt;use_case&gt;_use_case.py</code> 는 동명 폴더 승격 허용 칸이다. 승인된 승격의 본체·부품은 이 유스케이스 소유이며, 그 부품도 다른 유스케이스의 공용 모듈이 되지 않는다.</p>',
@@ -1676,7 +1678,7 @@ NAMES = {
 36: "<b>종류 이름 폴더.</b> <span class='no'>subscriber/</span> ✗ — 형제 셋과 같은 자다. «누가»가 아니라 <b>«무엇이 들어오나»</b>로 짓는다.",
 37: "<b>고정 이름.</b> 접미사 <code>_router</code> 가 «표»라는 종류를 말한다 — 그래서 안에 든 항목 쪽에는 접미사가 붙지 않는다.",
 38: "<b>듣는 사실의 이름 + <code>_subscription</code></b> — <code>child_evicted_subscription.py</code>. <b>사실 이름만 쓰면 6행 <code>published_event/&lt;event&gt;.py</code> 와 파일 이름이 같아진다</b> — 같은 낱말이 «사실 자체»와 «그 사실을 받는 껍데기» 둘을 가리키게 된다.",
-40: "바깥 <code>driving_layer/api/&lt;area&gt;/</code> 와 <b>글자까지 같다</b>.",
+40: "바깥 <code>driving_layer/api/&lt;area&gt;/</code>(창구로만 열리면 <code>open_host_service/&lt;area&gt;/</code>) 와 <b>글자까지 같다</b>.",
 41: "<b>동사로 짓는다</b> — <code>start_turn/</code> · <code>evict_child/</code>. 시스템이 «해 주는 일» 하나이므로 명사가 아니다.",
 42: "폴더가 «동사 이름»이라 파일이 <b>종류</b>를 말한다. <span class='no'>_service</span>·<span class='no'>_app</span> 을 쓰지 않는다 — 옛 축이다.<br><b><code>_command</code>·<code>_query</code> 는 이 파일에 «안» 붙는다</b> <span class='dim'>08-09 · T53</span> — 그 낱말은 <b>형제 입력 파일</b>이 진다(<code>&lt;use_case&gt;_command.py</code>). <b>이 파일의 «종류»는 인터랙터</b>다.<br><b>같은 낱말이 창구 «함수»에는 강제된다</b>(<code>&lt;service&gt;_service.py</code>) — <b>자리마다 그 낱말이 «무엇의 종류»인지가 다르다</b>.",
 43: """<b>폴더 이름 + <code>_command</code></b> — <code>evict_child/evict_child_command.py</code>. 클래스는 <code>&lt;UseCase&gt;Command</code>(<code>EvictChildCommand</code>).<br><b>형제 <code>_query.py</code> 와 «둘 다» 있다</b> <span class='dim'>08-09 · T52</span> — <b>이름을 고르는 것이 아니라 «어느 쪽에 클래스를 두느냐»를 고른다</b>.<br><b>접두가 폴더 이름을 되풀이하는 것은 형제 <code>&lt;use_case&gt;_use_case.py</code> 와 같은 규칙</b>이다 — <span class='no'>command.py</span> 로 두면 편집기 탭 여럿이 전부 같은 이름이 된다.""",
@@ -1891,6 +1893,9 @@ def _nmr(g):
 # 동명 폴더 승격 허용 칸(규칙 #490 교체형 실현 — 배제 목록의 여집합 · 사유·값의 정본은
 # discipline-houserules final.md §0/§1. 파일 칸에만 붙는다 — 트리 행 번호(data-r)가 좌표다).
 SWAPPABLE_ROWS = {13, 15, 16, 19, 21, 22, 25, 42, 62, 75, 93, 95, 97}
+# 의미 묶음 허용 칸(#654~#656 · D60 — 부모 바로 아래 묶음 폴더 한 계층). 값의 정본은 discipline-houserules
+# final.md §1 트리 — 파일 칸에만 붙는다. 75행처럼 data-sw 가 먼저 붙은 행에서도 그 뒤에 붙는다(파서 계약).
+GROUPABLE_ROWS = {64, 66, 68, 71, 73, 75}
 
 
 def _tab_rail():
@@ -1907,6 +1912,8 @@ def _tab_rail():
             r = r.replace('<div class="tr ', '<div data-r="%d" class="tr ' % g, 1)
             if g in SWAPPABLE_ROWS:  # 승격 허용 표기 — 이름·행 구조 불변(파서 계약: style 뒤 optional)
                 r = re.sub(r'(style="--d:\d+")>', r'\1 data-sw="1">', r, count=1)
+            if g in GROUPABLE_ROWS:  # 묶음 허용 표기 — data-sw 뒤(파서 계약: style 뒤 optional 둘의 차례)
+                r = re.sub(r'(style="--d:\d+"(?: data-sw="1")?)>', r'\1 data-grp="1">', r, count=1)
             rows.append(r)
         o.append(
             '        <div class="pgroup">\n'

@@ -12,7 +12,8 @@
   B 플러그인  dddjango/scripts/standard_tree.py — 검사기들이 import 하는 유일한 트리 데이터.
   C 문서     dddjango/skills/discipline-houserules/references/final.md 의 TREE 블록.
 
-불변식:  A ≡ B (r·depth·name·kind) · A ≡ C (r·depth·name)
+불변식:  A ≡ B (r·depth·name·kind·swappable·groupable) · A ≡ C (r·depth·name)
+         · 묶음 허용 칸(data-grp) = GROUPABLE_ROWS 리터럴(#654~#656 · D60 — 바꾸려면 이 리터럴도 함께)
 --write: A 로부터 B 전체와 C 블록을 다시 쓴다(정본→배포 한 방향).
 
 fail-CLOSED: 파일 부재·행 수 ≠ 171·마커 부재는 exit 3.
@@ -37,6 +38,8 @@ CANON_REL = "docs/file_tree.html"
 PLUGIN_REL = "dddjango/scripts/standard_tree.py"
 FINAL_REL = "dddjango/skills/discipline-houserules/references/final.md"
 TREE_ROW_COUNT = 171
+# 의미 묶음 허용 칸(#654~#656 · D60) — 정본 data-grp 와 플러그인 groupable 이 정확히 이 행이어야 한다.
+GROUPABLE_ROWS: frozenset[int] = frozenset({64, 66, 68, 71, 73, 75})
 TREE_BEGIN = "<!-- TREE:BEGIN — tree_mirror_check 가 쓴다 · 손으로 고치지 않는다 -->"
 TREE_END = "<!-- TREE:END -->"
 
@@ -45,7 +48,7 @@ class StructureError(Exception):
     pass
 
 
-RowT = tuple[int, int, str, str, bool]  # (r, depth, name, kind, swappable)
+RowT = tuple[int, int, str, str, bool, bool]  # (r, depth, name, kind, swappable, groupable)
 
 
 def extract_canonical(root: Path) -> list[RowT]:
@@ -54,32 +57,44 @@ def extract_canonical(root: Path) -> list[RowT]:
         raise StructureError(f"정본 부재: {p}")
     text = p.read_text(encoding="utf-8")
     pat = re.compile(
-        r'<div data-r="(\d+)" class="tr[^"]*" style="--d:(\d+)"( data-sw="1")?>\s*<span class="path">(.*?)</span>',
+        r'<div data-r="(\d+)" class="tr[^"]*" style="--d:(\d+)"( data-sw="1")?( data-grp="1")?>\s*<span class="path">(.*?)</span>',
         re.S,
     )
-    rows: list[tuple[int, int, str, bool]] = []
+    rows: list[tuple[int, int, str, bool, bool]] = []
     for m in pat.finditer(text):
-        nm = re.search(r'<b class="nm">(.*?)</b>', m.group(4))
-        name = html_mod.unescape(re.sub(r"<[^>]+>", "", nm.group(1) if nm else m.group(4))).strip()
+        nm = re.search(r'<b class="nm">(.*?)</b>', m.group(5))
+        name = html_mod.unescape(re.sub(r"<[^>]+>", "", nm.group(1) if nm else m.group(5))).strip()
         swappable = m.group(3) is not None
+        groupable = m.group(4) is not None
         if swappable and name.endswith("/"):
             raise StructureError(f"data-sw 는 파일 칸에만 붙는다 — r{m.group(1)} {name}")
-        rows.append((int(m.group(1)), int(m.group(2)), name, swappable))
-    if len(rows) != TREE_ROW_COUNT or [r for r, _, _, _ in rows] != list(range(1, TREE_ROW_COUNT + 1)):
+        if groupable and name.endswith("/"):
+            raise StructureError(f"data-grp 는 파일 칸에만 붙는다 — r{m.group(1)} {name}")
+        rows.append((int(m.group(1)), int(m.group(2)), name, swappable, groupable))
+    if len(rows) != TREE_ROW_COUNT or [r for r, *_ in rows] != list(range(1, TREE_ROW_COUNT + 1)):
         raise StructureError(f"정본에서 {len(rows)}행 — {TREE_ROW_COUNT}행·연속 data-r 이어야 한다")
     # kind — 제1원칙 #491: 조상이 연 <토큰> 집합으로 셋 중 하나
     tok_pat = re.compile(r"<([a-z_]+)>")
     stack: list[tuple[int, set[str]]] = []
     out: list[RowT] = []
-    for r, d, name, sw in rows:
+    for r, d, name, sw, grp in rows:
         while stack and stack[-1][0] >= d:
             stack.pop()
         bound: set[str] = set().union(*[s[1] for s in stack]) if stack else set()
         toks = set(tok_pat.findall(name))
         kind = "fixed" if not toks else ("reappear" if toks <= bound else "placeholder")
-        out.append((r, d, name, kind, sw))
+        out.append((r, d, name, kind, sw, grp))
         stack.append((d, bound | toks))
     return out
+
+
+def check_groupable(rows: list[RowT], where: str) -> None:
+    """묶음 허용 칸이 정확히 GROUPABLE_ROWS 인지 — 다르면 --write 로도 못 푸는 구조 전제 깨짐."""
+    got = {r for r, *_, grp in rows if grp}
+    if got != GROUPABLE_ROWS:
+        raise StructureError(
+            f"{where} 묶음 허용 칸 {sorted(got)} ≠ GROUPABLE_ROWS {sorted(GROUPABLE_ROWS)}"
+            " — 표기를 바꾸려면 이 리터럴과 설계(#654~#656 · D60)를 함께 고친다")
 
 
 def read_plugin(root: Path) -> list[RowT]:
@@ -94,7 +109,8 @@ def read_plugin(root: Path) -> list[RowT]:
     mod = importlib.util.module_from_spec(spec)
     sys.modules["standard_tree"] = mod  # dataclass 가 문자열 애너테이션을 풀 때 모듈 조회가 필요하다
     spec.loader.exec_module(mod)
-    return [(row.r, row.depth, row.name, row.kind, bool(getattr(row, 'swappable', False))) for row in mod.ROWS]
+    return [(row.r, row.depth, row.name, row.kind, bool(getattr(row, 'swappable', False)),
+             bool(getattr(row, 'groupable', False))) for row in mod.ROWS]
 
 
 def render_block(rows: list[RowT]) -> str:
@@ -120,8 +136,9 @@ def read_final_block(root: Path) -> list[tuple[int, int, str]]:
 def emit_plugin(rows: list[RowT], root: Path) -> None:
     sha = hashlib.sha256((root / CANON_REL).read_bytes()).hexdigest()[:16]
     body = ",\n".join(
-        f"    Row({r}, {d}, {name!r}, {kind!r}" + (", swappable=True)" if sw else ")")
-        for r, d, name, kind, sw in rows
+        f"    Row({r}, {d}, {name!r}, {kind!r}" + (", swappable=True" if sw else "")
+        + (", groupable=True" if grp else "") + ")"
+        for r, d, name, kind, sw, grp in rows
     )
     module = f'''"""dddjango 표준 파일트리 — 정본의 기계 가독 사본 (데이터 모듈 · 게이트 아님).
 
@@ -138,6 +155,11 @@ import 하는 유일한 트리 데이터다. **손으로 고치지 않는다** �
 swappable=True 는 «동명 폴더 승격» 허용 표기다(#490 교체형 실현 — 파일 칸이
 `<이름>.py` ⇄ `<이름>/`(본체+`__init__.py`) 두 실현을 갖는다). 칸 유형이 아니라
 실현 형태의 직교 속성이며, 값의 정본은 docs/file_tree.html 의 data-sw 다.
+
+groupable=True 는 «의미 묶음» 허용 표기다(#654~#656 · D60 — 파일 칸의 인스턴스
+파일을 부모 바로 아래 묶음 폴더 한 계층으로 나눠 둘 수 있다). 이것도 칸 유형이
+아니라 실현 형태의 직교 속성이며, 값의 정본은 docs/file_tree.html 의 data-grp 다.
+묶음의 자리 판정은 `folder_group.place` 가 한다(#656).
 """
 from __future__ import annotations
 
@@ -157,6 +179,7 @@ class Row:
     name: str       # 리프 이름 — admin·templates 처럼 하위 경로를 품은 이름도 있다
     kind: Kind
     swappable: bool = False  # 동명 폴더 승격 허용 표기(#490 교체형 — 정본은 data-sw)
+    groupable: bool = False  # 의미 묶음 허용 표기(#654~#656 · D60 — 정본은 data-grp)
 
 
 ROWS: tuple[Row, ...] = (
@@ -220,6 +243,7 @@ def main(argv: list[str]) -> int:
     root = Path(args.root)
     try:
         canon = extract_canonical(root)
+        check_groupable(canon, "정본")
         if args.write:
             emit_plugin(canon, root)
             splice_final(canon, root)
@@ -227,6 +251,7 @@ def main(argv: list[str]) -> int:
             return EXIT_IN_SYNC
         drift: list[str] = []
         plugin = read_plugin(root)
+        check_groupable(plugin, "플러그인")
         if plugin != canon:
             diffs = [f"  r{c[0]}: 정본={c[1:]} ↔ 플러그인={p[1:]}" for c, p in zip(canon, plugin) if c != p]
             drift.append(f"A≠B ({len(diffs)}행):\n" + "\n".join(diffs[:10]))
