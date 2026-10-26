@@ -3134,6 +3134,13 @@ class CandidateWordRegression(unittest.TestCase):
             for name in ("count_visitors", "match_people", "revisit_turn", "settle_turn", "treat_as_paid")
         ])
 
+    def test_311_plural_only_for_words_of_three_letters_or_more(self) -> None:
+        self.domain_services(("day", "ad"), ("count_days", "rank_ads"))
+        self.assertEqual(self.lines("check-domain-model.py", "311"), [
+            "[ⓓ#311] application/house/domain_layer/domain_service/rank_ads.py: "
+            "파일명에 주어가 되는 애그리거트 어휘가 없다 — 물음: 이 이름이 규칙 «행위»를 말하나"
+        ])
+
     def test_485_grant_is_a_known_verb(self) -> None:
         self.port("grant", "read_balance")
         self.assertEqual(self.lines("check-port-adapter-pairing.py", "485"), [])

@@ -32,11 +32,11 @@
   이 문서를 실제 기준(«현장에서 동사로 쓰인 낱말만 — 명사 겸용 낱말도 있다»)으로 바로잡았다.
 - 중요 2: `run` 은 확정 목록의 모호 동사와 같은 부류라 동사 목록에 넣지 않는다(40 → 39). `run_<목적어>` 는 `process_<목적어>` · `handle_<목적어>` 처럼 계속 묻는다.
   두 목록이 서로 반대 뜻을 말하는 자리가 없다.
-- 사소: 복수형은 세 글자 이상 낱말만(두 글자 낱말의 +s 는 `as` · `its` 같은 기능어가 된다 — 업무 어휘 모듈의 세 글자 바닥과 같은 기준) · `_` 로 시작하는 이름의 글 ·
+- 사소: 복수형은 세 글자 이상 낱말만(두 글자 이하 낱말의 +s 는 `as` · `its` 같은 기능어가 된다 — 업무 어휘 모듈의 세 글자 바닥과 같은 기준) · `_` 로 시작하는 이름의 글 ·
   더한 39 낱말을 모두 지나가게 하는 시험(목록 철자 실수 잡기) · 받아들인 한계 넓힘(아래 1 · 2) · 같은 방향 규칙 #36 을 범위 밖 표에 · 문서의 낡은 사실(옛 목록 32 낱말).
 
 ## 행동 변화 · 받아들인 한계
-1. ⓓ#311 은 파일 이름 낱말이 애그리거트 낱말의 규칙 복수형이면 묻지 않는다. 그래도 묻는 꼴(놓침): 불규칙 복수(`people` · `leaves` · `heroes`) · z 겹침(`quizzes`) ·
+1. ⓓ#311 은 파일 이름 낱말이 애그리거트 낱말의 규칙 복수형이면 묻지 않는다. 그래도 묻는 꼴(놓침): 불규칙 복수(`people`) · 이 판이 만들지 않는 규칙 꼴(-o 뒤 -es `heroes` · -f → -ves `leaves` · z 겹침 `quizzes`) ·
    애그리거트 이름이 이미 복수이고 파일 이름이 단수(`settings` ↔ `apply_setting`).
 2. ⓓ#311 은 복수형 철자가 다른 낱말과 같으면 지나간다 — `news`(`new` +s) · `matches`(3인칭 동사) · 여러 낱말 애그리거트 앞 낱말의 복수(`birth_chart` → `births` —
    옛 규칙 «낱말 하나만 맞아도 어휘가 있다»의 연장) · 도메인 층에 잘못 둔 종류 폴더(`entity/` → `entities`).
@@ -46,12 +46,13 @@
 5. ⓓ#485 후보 글이 바뀐다. pre-gate 처분 · 검토 ID 는 규칙+경로로, 빚 잔존 후보 대조는 `[ⓓ#N]` + 경로로 맞추므로 글 바꿈에 흔들리지 않는다.
 
 ## 시험
-- `field_report_checker_smoke.CandidateWordRegression` 5 건 — 줄 글자 정확 일치:
+- `field_report_checker_smoke.CandidateWordRegression` 6 건 — 줄 글자 정확 일치:
   - #311 복수형 통과(`visits` · `categories` · `batches` · 여러 낱말 애그리거트 앞 낱말의 `contents`).
-  - #311 물음 유지(낱말 경계 `visitors` · `revisit` · 불규칙 `people` · 어휘 없음 · 두 글자 낱말 `as`).
+  - #311 물음 유지(낱말 경계 `visitors` · `revisit` · 불규칙 `people` · 어휘 없음 · 한 글자 낱말 `as`).
+  - #311 세 글자 바닥(`day` → `count_days` 통과 · 두 글자 `ad` → `rank_ads` 물음) — 바닥을 2 · 4 로 바꾼 변이가 각각 붉다.
   - #485 `grant` · `read_balance` 통과 · 더한 39 낱말 모두 통과.
   - #485 물음 유지(목록 밖 명사 `timeout_seconds` · 목록 밖 동사 `transmit_payload` · 모호 동사 `run_searches` · `_` 로 시작하는 이름의 글).
-  - 2.27.2 검사기로 돌리면 4 건이 붉고 유지 꼴 하나만 통과, 고친 판에서 5 건 모두 통과.
+  - 2.27.2 검사기로 돌리면 5 건이 붉고 유지 꼴 하나만 통과, 고친 판에서 6 건 모두 통과.
 - 좁은 실행: fixture_matrix 114/114 · findings_count_matrix 73/73 · checker_baseline_matrix 73/73 · findings_smoke 15/15 · checker_cross_matrix 의 두 검사기 열(60 실행)
   차이 0 · spec_lint · checker_lint 위반 0 · gen_pregate_symbol_kinds --check in-sync.
 
