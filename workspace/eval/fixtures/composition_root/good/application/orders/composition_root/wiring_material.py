@@ -3,8 +3,10 @@ from __future__ import annotations
 
 from django.conf import settings
 
+from application.orders.domain_layer.order.value_object.limit.limit_amount import LimitAmount
 from application.orders.domain_layer.order.value_object.order_thresholds import OrderThresholds
 from application.orders.domain_layer.shared_value_object.language_code import LanguageCode
+from application.orders.domain_layer.shared_value_object.locale.locale_tag import LocaleTag
 
 
 def operating_language() -> str:
@@ -20,3 +22,13 @@ def default_language() -> LanguageCode:
 def order_thresholds() -> OrderThresholds:
     """주문 경고 금액과 차단 금액의 조합을 만든다."""
     return OrderThresholds.create(warning=settings.ORDERS_WARNING_AMOUNT, block=1000000)
+
+
+def default_locale() -> LocaleTag:
+    """프로젝트 기본 언어를 orders 지역 태그로 만든다."""
+    return LocaleTag(settings.LANGUAGE_CODE)
+
+
+def order_limit() -> LimitAmount:
+    """주문 한도 금액을 만든다."""
+    return LimitAmount(settings.ORDERS_LIMIT_AMOUNT)

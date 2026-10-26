@@ -28,7 +28,7 @@ Kernel 없음)·#83(BC 삭제 내성)은 아래 각론 진단이 집행한다.
          (#151·#364 의 «타 BC 이름» = 같은 `application/` 컨테이너의 BC — 자매 플러그인
          `web/application/<단위>` 같은 다른 컨테이너의 폴더 이름은 세지 않는다)
   기타   #14 `with unit_of_work:` 안에서 크로스-BC 포트 호출 금지 · #110 auto_import=False
-         #117 두 번째 ErrorCode 컨테이너 금지 · #291/#292 예외의 자리 셋 · #431 부작용 등록 금지
+         #117 두 번째 ErrorCode 컨테이너 금지 · #291/#292 예외의 자리 넷 · #431 부작용 등록 금지
 
 ast+ 후보 채널 (㉰ — exit 불산입, 마무리는 discipline-reviewer):
   #151(창구 이름 — 기술·타 BC 토큰은 «확정» 위반) · #153(도메인 예외 속성 접근은 «확정»,
@@ -1190,9 +1190,9 @@ def _check_api_controllers(bc: Path, bc_rel: Path, out: Findings) -> None:
 def _check_exception_spots(bc: Path, bc_rel: Path, out: Findings) -> None:
     dl = bc / "domain_layer"
     if (dl / "exception.py").is_file():
-        out.add("#291", bc_rel / "domain_layer" / "exception.py", "BC 바로 밑 `domain_layer/exception.py` 를 두지 않는다 — 도메인 예외의 표준 자리는 애그리거트 밑 하나뿐이다")
+        out.add("#291", bc_rel / "domain_layer" / "exception.py", "BC 바로 밑 `domain_layer/exception.py` 를 두지 않는다 — 도메인 예외의 자리는 애그리거트 밑 `exception/` 과 공유 개념의 `shared_value_object/` 둘이다(#657)")
     if (dl / "exception").is_dir():
-        out.add("#292", bc_rel / "domain_layer" / "exception", "예외의 자리는 셋으로 갈린다 — 업무 규칙 위반은 `domain_layer/<aggregate>/exception/` 이다")
+        out.add("#292", bc_rel / "domain_layer" / "exception", "예외의 자리는 넷으로 갈린다 — 한 애그리거트 업무 규칙은 `domain_layer/<aggregate>/exception/` · 여러 애그리거트가 함께 쓰는 개념은 `shared_value_object/`(#657) · 남에게 공개하는 실패는 OHS `contract/exception/` · 바깥 행위자는 `port/<capability>/exception.py` 다")
     app = bc / "application_layer"
     if app.is_dir():
         for p in sorted(app.rglob("*")):

@@ -13,6 +13,7 @@
               허용이다 (api_router.py·event_router.py 는 잎이 아니다 — #99).
   #271 [ast+] 사실 이름은 과거형 — 확정: 첫 토큰이 애그리거트 공개 메서드와 같음
               (ReduceInventory↔reduce) / 후보: 끝 토큰이 -ed/-en·불규칙 과거분사 밖.
+              도메인 이벤트는 `<aggregate>/event/` 묶음(#654~#656) 안 파일까지 본다.
   #279 [ast]  핸들러는 application_layer 의 유스케이스다 — 구독·wiring 이
               domain_layer 를 import 하면 위반.
   #280 [ast]  핸들러는 이벤트를 애그리거트 어휘로 번역한다 — 이벤트 파라미터를 Call 에
@@ -59,6 +60,7 @@ import re
 import sys
 
 import checker_target
+import folder_group
 from findings import Candidates, Findings, emit_all, zero_target_guard
 from pathlib import Path
 
@@ -198,10 +200,11 @@ def _check_published_events(root: Path, bc: Path, f: Findings, cand: Candidates)
                     f.add("#503", _rel(root, py, m.lineno),
                           f"사실 클래스에 메서드 `{m.name}` — 사실에는 필드만 온다")
             _check_event_name(root, py, cls, methods, f, cand)
-    # domain_layer/*/event/ 의 도메인 이벤트 이름도 #271 대상이다.
+    # domain_layer/*/event/ 의 도메인 이벤트 이름도 #271 대상이다(묶음 안 파일 포함 — #654~#656).
     domain = bc / "domain_layer"
     if domain.is_dir():
-        for py in sorted(domain.glob("*/event/*.py")):
+        for py in [e for d in sorted(domain.iterdir()) if d.is_dir()
+                   for e in folder_group.group_members(d / "event", "*.py", promotable=False)]:
             mod = _parse(py)
             if mod is None:
                 continue

@@ -230,7 +230,8 @@ verify-base-probe:
 verify-mutation:
 	@set -euo pipefail; \
 	PYTHONUTF8=1 python3 workspace/tools/rulepack_smoke.py --mutation-test; \
-	PYTHONUTF8=1 python3 workspace/tools/folder_group_fixture_run.py --mutation-test
+	PYTHONUTF8=1 python3 workspace/tools/folder_group_fixture_run.py --mutation-test; \
+	PYTHONUTF8=1 python3 workspace/tools/fixture_matrix.py --mutation
 
 # C암 발화 증명 — 4트리(source 2 + 설치 cache 2) × 5단언. **T2-5 실런 진입의 hard gate**.
 # 지금은 cache 가 2.11.0 이라 cache 두 레인이 red 인 것이 정상이고, 그 red 가 곧

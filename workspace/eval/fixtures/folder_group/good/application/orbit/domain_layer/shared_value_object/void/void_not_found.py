@@ -2,4 +2,7 @@
 
 
 class VoidNotFound(Exception):
-    pass
+    def __init__(self, branch: str) -> None:
+        if not branch:
+            raise ValueError("branch")
+        super().__init__(branch)

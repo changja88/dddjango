@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """dddjango 도메인 모델 검사기 — 애그리거트·엔티티·값 객체·도메인 서비스·도메인 이벤트(D12·D13·D50).
 
-담당 규칙 (rule-owner-map · 총 50):
+담당 규칙 (rule-owner-map · 총 51):
   #8   [ast]  domain_layer 의 밖으로 나가는 import 0 — django·다른 층·다른 BC·서드파티.
   #17  [ast+] domain/app 1차 축은 도메인 이름 — 확정: 종류 낱말 폴더(entity·service 류) /
               후보: 종류 인접 낱말(data·objects·types)(Q1).
@@ -46,7 +46,7 @@
   #310 [ast]  무상태 규칙 하나 = 파일 하나.
   #311 [ast+] 후보: 파일명이 접미사(_service)를 달거나 애그리거트 어휘 0(규칙 복수형 포함 · 행위 이름 물음).
   #315 [path] Factory 는 그 애그리거트 폴더 안.
-  #459 [path] shared_value_object 파일 규칙 동일 — 하위 폴더 금지.
+  #459 [path] shared_value_object 파일 규칙 동일 — 하위 폴더는 묶음만 된다(그 판정은 #654~#656).
   #505 [ast]  <A>/event/ 는 «내부용» — BC 밖 import 금지(밖은 published_event 로 옮겨 담는다).
   #506 [ast]  발행 장치(레지스트리·dispatch·signal)는 domain_layer 에 살지 않는다.
   #542 [ast]  사실은 «애그리거트»가 만든다 — 유스케이스의 도메인 이벤트 생성이면 위반.
@@ -60,6 +60,12 @@
   #550 [ast]  배치 면제는 «생성»에만 — 조회로 꺼낸 것들의 save_all 이면 위반.
   #565 [ast+] 후보: 도메인 Enum 값이 유스케이스·서비스 이름과 겹침 — 「업무가 이 단계
               이름을 입으로 부르나」(워크플로 위장 신호).
+  #656 [ast]  묶음 자리 = `folder_group.place(지금 트리)` — 만들 묶음(부모 `__init__.py`) ·
+              풀 묶음(그 `__init__.py`) · 묶음에 둘 파일 · 부모에 둘 파일(D60 · 줄 꼴 설계 7.3).
+
+의미 묶음(D60): 묶음 허용 칸(entity·value_object·event·exception·shared_value_object·
+domain_service)의 파일은 `folder_group.group_members` 로 읽는다 — 묶음 안 파일도 같은 규칙을
+진다(서비스 칸은 묶음 안 승격 본체까지). #298 의 상대 import 는 그 파일의 패키지 기준으로 푼다.
 
 단순화(정직 기록): #269/#270 의 «읽힘»은 BC 파일 텍스트의 이름 등장으로 잰다. #546 의
 타입 해소는 파라미터·__init__ 애너테이션의 `*Repository` 이름과 import 경로 대조다.
@@ -86,6 +92,7 @@ import re
 import sys
 
 import checker_target
+import folder_group
 from findings import Candidates, Findings, emit_all, zero_target_guard
 from pathlib import Path
 
@@ -185,7 +192,7 @@ def _ann_names(node: ast.AST | None) -> set[str]:
     return out
 
 
-# ── 층 구조 — #249 · #252 · #17/#18 · #289 · #290 · #300 · #459 · #315 ─────
+# ── 층 구조 — #249 · #252 · #17/#18 · #289 · #290 · #300 · #315 · #656 ──────
 
 def _aggregate_dirs(domain: Path) -> list[Path]:
     return [p for p in sorted(domain.iterdir())
@@ -221,15 +228,11 @@ def _check_layout(root: Path, bc: Path, f: Findings, cand: Candidates) -> None:
                           f"`{d.name}_repository.py` 가 없다 — 애그리거트 폴더는 루트와 "
                           "리포지토리 선언 파일을 갖는다(#282)")
                 _check_aggregate(root, bc, d, f, cand)
+        _check_group_places(root, bc, f)
         shared = domain / "shared_value_object"
         if shared.is_dir():
-            for p in sorted(shared.iterdir()):
-                if p.is_dir() and p.name != "__pycache__":
-                    f.add("#459", _rel(root, p),
-                          "shared_value_object/ 하위 폴더 — 파일 규칙은 애그리거트 안 값 객체와 "
-                          "똑같고 다른 것은 «사는 폴더»뿐이다")
             _check_shared_imports(root, bc, shared, f)
-            for py in sorted(shared.glob("*.py")):
+            for py in folder_group.group_members(shared, "*.py", promotable=False):
                 _check_value_object_file(root, py, f, cand)
         ds = domain / "domain_service"
         if ds.is_dir():
@@ -244,6 +247,13 @@ def _check_layout(root: Path, bc: Path, f: Findings, cand: Candidates) -> None:
             elif d.name in KIND_SOFT:
                 cand.add("#17", _rel(root, d), f"종류 인접 낱말 `{d.name}/`",
                          "Q1 — 이 이름이 업무의 낱말인가")
+
+
+def _check_group_places(root: Path, bc: Path, f: Findings) -> None:
+    """#656 — 묶음 자리는 `folder_group.place` 가 정한다. 다르면 그 줄 꼴(설계 7.3)로 한 줄씩."""
+    files, dirs = folder_group.scan_tree(root, [bc.name])
+    for where, msg in folder_group.lines(folder_group.place(files, dirs)):
+        f.add("#656", where, msg)
 
 
 # ── 애그리거트 한 폴더 — #256 · #260~#276 · #289 · #290 · #300 · #315 · #543 ──
@@ -269,7 +279,7 @@ def _check_aggregate(root: Path, bc: Path, agg: Path, f: Findings, cand: Candida
               "exception 이 파일이다 — 깨진 불변식 하나 = 파일 하나로 exception/ «폴더» 아래 둔다")
     exc_dir = agg / "exception"
     if exc_dir.is_dir():
-        for py in sorted(exc_dir.glob("*.py")):
+        for py in folder_group.group_members(exc_dir, "*.py", promotable=False):
             if py.name == "__init__.py":
                 continue
             mod = _parse(py)
@@ -282,7 +292,7 @@ def _check_aggregate(root: Path, bc: Path, agg: Path, f: Findings, cand: Candida
               "한 칸에만 산다")
     ent_dir = agg / "entity"
     if ent_dir.is_dir():
-        for py in sorted(ent_dir.glob("*.py")):
+        for py in folder_group.group_members(ent_dir, "*.py", promotable=False):
             if py.name == "__init__.py":
                 continue
             if py.stem.endswith("_entity"):
@@ -300,7 +310,7 @@ def _check_aggregate(root: Path, bc: Path, agg: Path, f: Findings, cand: Candida
                           "«식별자를 갖고 값이 바뀌어도 같은 것인가»다(#259)")
     vo_dir = agg / "value_object"
     if vo_dir.is_dir():
-        for py in sorted(vo_dir.glob("*.py")):
+        for py in folder_group.group_members(vo_dir, "*.py", promotable=False):
             if py.name != "__init__.py":
                 _check_value_object_file(root, py, f, cand)
     ev_dir = agg / "event"
@@ -577,7 +587,7 @@ def _check_domain_events(root: Path, bc: Path, agg: Path, ev_dir: Path, f: Findi
         except (OSError, UnicodeDecodeError):
             continue
     driven_only_dirs = ("driven_layer",)
-    for py in sorted(ev_dir.glob("*.py")):
+    for py in folder_group.group_members(ev_dir, "*.py", promotable=False):
         if py.name == "__init__.py":
             continue
         mod = _parse(py)
@@ -604,12 +614,13 @@ def _check_domain_events(root: Path, bc: Path, agg: Path, ev_dir: Path, f: Findi
 
 
 def _check_shared_imports(root: Path, bc: Path, shared: Path, f: Findings) -> None:
-    for py in sorted(shared.glob("*.py")):
+    for py in folder_group.group_members(shared, "*.py", promotable=False):
         mod = _parse(py)
+        package = folder_group.package_of(py.relative_to(root).as_posix())
         for node in ast.walk(mod) if mod else []:
             if not isinstance(node, ast.ImportFrom):
                 continue
-            m = node.module or ""
+            m = _absolute_module(package, node.level, node.module)
             if not m or m.split(".")[0] in STDLIB:
                 continue
             ok = "shared_value_object" in m or m.split(".")[-1] == "exception" \
@@ -620,6 +631,15 @@ def _check_shared_imports(root: Path, bc: Path, shared: Path, f: Findings) -> No
                       "모듈 말고는 아무것도 import 하지 않는다")
 
 
+def _absolute_module(package: str, level: int, module: "str | None") -> str:
+    """`from` import 의 대상 모듈 — 상대 import 는 그 파일의 패키지 기준 절대 경로로 푼다."""
+    if level == 0:
+        return module or ""
+    parts = package.split(".") if package else []
+    base = parts[: len(parts) - (level - 1)] if level - 1 <= len(parts) else []
+    return ".".join(base + ([module] if module else []))
+
+
 # ── domain_service — #301~#311 ─────────────────────────────────────────────
 
 def _check_domain_services(root: Path, bc: Path, ds: Path, f: Findings, cand: Candidates) -> None:
@@ -628,7 +648,7 @@ def _check_domain_services(root: Path, bc: Path, ds: Path, f: Findings, cand: Ca
     root_classes = {_camel(n) for n in agg_names}
     # #311 — 파일명 낱말(`_` 경계) 하나가 애그리거트 낱말이거나 그 규칙 복수형이면 어휘가 있다(`visits` ∋ visit).
     agg_words = {form for a in agg_names for w in a.split("_") for form in _word_forms(w)}
-    for py in checker_target.slot_glob(ds, "*.py"):  # 승격 domain_service 본체 포함(부품은 #15 재량 — 제외)
+    for py in folder_group.group_members(ds, "*.py", promotable=True):  # 묶음 안 · 승격 본체 포함(부품은 #15 재량 — 제외)
         if py.name == "__init__.py":
             continue
         mod = _parse(py)
@@ -981,7 +1001,8 @@ def _check_application_side(root: Path, bc: Path, f: Findings, cand: Candidates)
         return
     event_classes: set[str] = set()
     if domain.is_dir():
-        for py in domain.glob("*/event/*.py"):
+        for py in [e for d in sorted(domain.iterdir()) if d.is_dir()
+                   for e in folder_group.group_members(d / "event", "*.py", promotable=False)]:
             mod = _parse(py)
             event_classes |= {c.name for c in _public_classes(mod)} if mod else set()
     repo_area_use: dict[str, set[str]] = {}
@@ -1080,8 +1101,8 @@ def _check_application_side(root: Path, bc: Path, f: Findings, cand: Candidates)
     # #547 후보 ⑶ — 비대한 루트.
     if domain.is_dir():
         for agg in _aggregate_dirs(domain):
-            ents = [p for p in (agg / "entity").glob("*.py") if p.stem != "__init__"] \
-                if (agg / "entity").is_dir() else []
+            ents = [p for p in folder_group.group_members(agg / "entity", "*.py", promotable=False)
+                    if p.stem != "__init__"]
             root_py = checker_target.slot_file(agg / f"{agg.name}.py")  # 승격이면 본체(#547 ⑶ 채널 복원)
             if len(ents) >= 3 and root_py is not None:
                 mod = _parse(root_py)

@@ -1,7 +1,13 @@
-"""star_chart 값."""
+"""star_chart 애그리거트 루트."""
 from dataclasses import dataclass
 
+from .event.star_chart_drawn import StarChartDrawn
 
-@dataclass(frozen=True)
+
+@dataclass
 class StarChart:
+    star_chart_id: int
     value: str
+
+    def draw(self) -> StarChartDrawn:
+        return StarChartDrawn(self.value)
