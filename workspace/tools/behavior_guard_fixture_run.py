@@ -1165,21 +1165,53 @@ def rcases() -> "list[dict]":
         _edit(MOVE, OLD_TO_NEW(IMPORT_ONLY.replace("test_check", "test_bill")), path=bill_test),
         {bill_test: ("묶음 감사", ["<module>"])}, exit=2, needles=(f"{bill_test} — 대상 BC",))
     # 묶음 창(0C) — 대상 BC 안 묶음 이동이 다른 BC 파일의 import 를 따라 고친 줄(설계 10절 · 갈래 `묶음 import 치환`)
+    # 묶음 창의 이동은 진짜 묶음 이동(같은 묶음 부모 · 같은 이름 · 칸만 다름 — `folder_group.actual_moves`)이다 — 모듈 개명
+    # (`old.py` → `new.py`)은 묶음 이동이 아니라 그 창은 묶음 창이 아니다(검토 B8).
     grp_user = "application/billing/uses_core.py"
-    grp_src = "from application.core.old import product\n\n\ndef bill():\n    return product()\n"
-    add("대상 BC 밖: 0C 묶음 창 · 다른 BC import 치환 줄이 갈래 `묶음 import 치환` → 통과", "code", {grp_user: grp_src},
-        _edit({**MOVE, grp_user: OLD_TO_NEW(grp_src)}), {}, exit=0, snap=_snap(other=((grp_user, "묶음 import 치환", "0C"),)),
+    grp_sv = "application/core/domain_layer/shared_value_object/"
+    grp_mod = grp_sv.replace("/", ".")
+    grp_base = {"application/core/domain_layer/__init__.py": "", grp_sv + "__init__.py": "",
+                grp_sv + "void_a.py": "class VoidA:\n    pass\n"}
+    grp_move: "dict[str, str | None]" = {grp_sv + "void_a.py": None, grp_sv + "void/__init__.py": "",
+                                         grp_sv + "void/void_a.py": "class VoidA:\n    pass\n"}
+    grp_src = f"from {grp_mod}void_a import VoidA\n\n\ndef bill():\n    return VoidA()\n"
+    grp_follow: "Callable[[str], str]" = lambda s: s.replace(f"{grp_mod}void_a", f"{grp_mod}void.void_a")  # noqa: E731
+    grp_row = _snap(other=((grp_user, "묶음 import 치환", "0C"),))
+    add("대상 BC 밖: 0C 묶음 창 · 다른 BC import 치환 줄이 갈래 `묶음 import 치환` → 통과", "code", {**grp_base, grp_user: grp_src},
+        _edit({**grp_move, grp_user: grp_follow(grp_src)}), {}, exit=0, snap=grp_row,
         post=lambda repo, rec, _o: [] if rec.get("outside_bc") == [] else [f"outside_bc {rec.get('outside_bc')}"], group=True)
-    add("대상 BC 밖: 0C 묶음 창 · 같은 치환 줄이 목록에 갈래 없이(받는 쪽 어댑터) → red", "code", {grp_user: grp_src},
-        _edit({**MOVE, grp_user: OLD_TO_NEW(grp_src)}), {}, exit=2, snap=_snap(other=((grp_user, "받는 쪽 어댑터", "0C"),)),
+    add("대상 BC 밖: 0C 묶음 창 · 같은 치환 줄이 목록에 갈래 없이(받는 쪽 어댑터) → red", "code", {**grp_base, grp_user: grp_src},
+        _edit({**grp_move, grp_user: grp_follow(grp_src)}), {}, exit=2,
+        snap=_snap(other=((grp_user, "받는 쪽 어댑터", "0C"),)),
         needles=(f"{grp_user} — 대상 BC(`application/core/`) 밖 경로가 다른 BC 편집 목록 밖(창 0C 허용 갈래: "
                  "공유 표면 · 묶음 import 치환 · 프로젝트 합성)",),
         post=lambda repo, rec, _o: [] if rec.get("outside_bc") == [grp_user] else [f"outside_bc {rec.get('outside_bc')}"], group=True)
-    add("대상 BC 밖: 0C 묶음 창 · 같은 치환 줄이 목록에 없음 → red", "code", {grp_user: grp_src},
-        _edit({**MOVE, grp_user: OLD_TO_NEW(grp_src)}), {}, exit=2, needles=(f"{grp_user} — 대상 BC",), group=True)
-    add("대상 BC 밖: 0T · 갈래 `묶음 import 치환` 줄도 0T 는 받지 않음 → red", "test", {grp_user: grp_src},
-        _edit({grp_user: OLD_TO_NEW(grp_src)}), {}, exit=2, snap=_snap(other=((grp_user, "묶음 import 치환", "0C"),)),
+    add("대상 BC 밖: 0C 묶음 창 · 같은 치환 줄이 목록에 없음 → red", "code", {**grp_base, grp_user: grp_src},
+        _edit({**grp_move, grp_user: grp_follow(grp_src)}), {}, exit=2, needles=(f"{grp_user} — 대상 BC",), group=True)
+    add("대상 BC 밖: 0T · 갈래 `묶음 import 치환` 줄도 0T 는 받지 않음 → red", "test", {**grp_base, grp_user: grp_src},
+        _edit({grp_user: grp_follow(grp_src)}), {}, exit=2, snap=grp_row,
         needles=(f"{grp_user} — 0T 는 대상 BC(`application/core/`) 밖 편집 없음",), group=True)
+    # 검토 B8 — 갈래 `묶음 import 치환` 은 0C 묶음 창에서만 · 그 창의 묶음 이동을 따른 import 치환만(설계 10절 :478)
+    grp_content = f"{grp_user} — 갈래 `묶음 import 치환` 은 이 창의 묶음 이동을 따른 import 치환만 받는다"
+    add("묶음 import 치환(B8): 0C 묶음 창 · 목록 파일에 기능 편집이 섞임 → red", "code", {**grp_base, grp_user: grp_src},
+        _edit({**grp_move, grp_user: grp_follow(grp_src).replace("return VoidA()", "return VoidA() or 100")}), {}, exit=2,
+        snap=grp_row, needles=(grp_content,),
+        post=lambda repo, rec, _o: [] if rec.get("outside_bc") == [] else [f"outside_bc {rec.get('outside_bc')}"], group=True)
+    old_user = "from application.core.old import product\n\n\ndef bill():\n    return product()\n"
+    add("묶음 import 치환(B8): 0C · 묶음 이동 없는 창(모듈 개명)의 import 치환도 → red", "code", {grp_user: old_user},
+        _edit({**MOVE, grp_user: OLD_TO_NEW(old_user)}), {}, exit=2, snap=grp_row, needles=(grp_content,), group=True)
+    add("묶음 import 치환(B8): 0C · 이동 없는 창에서 목록 파일 기능 편집(r5) → red", "code", {TP: SIMPLE, grp_user: grp_src},
+        _edit({grp_user: grp_src.replace("return VoidA()", "return VoidA() or 100")}), {}, exit=2, snap=grp_row,
+        needles=(grp_content,), group=True)
+    add("묶음 import 치환(B8): 0F · 갈래 `묶음 import 치환` 줄은 0F 가 받지 않음(r5) → red", "follow", {TP: SIMPLE, grp_user: grp_src},
+        _edit({grp_user: grp_src.replace("return VoidA()", "return VoidA() or 100")}), {}, exit=2, snap=grp_row,
+        needles=(f"{grp_user} — 대상 BC(`application/core/`) 밖 경로가 다른 BC 편집 목록 밖(창 0F 허용 갈래: 공유 표면 · 프로젝트 합성)",),
+        group=True)
+    add("묶음 import 치환(B8): 변경 창 · 갈래 `묶음 import 치환` 줄로만 든 파일의 기능 편집 → red", "change",
+        {TP: SIMPLE, grp_user: grp_src}, _edit({grp_user: grp_src.replace("return VoidA()", "return VoidA() or 100")}), {},
+        exit=2, snap=grp_row,
+        needles=(f"{grp_user} — 대상 BC(`application/core/`) 밖 경로가 다른 BC 편집 목록 밖(창 변경 허용 갈래: 목록 전부(묶음 "
+                 "import 치환 빼고))",), group=True)
     # 케이스 증감 — change 는 add/remove 행 그대로
     add("케이스: change · 승인 add 행의 새 케이스 → 승인 변경 감사", "change", {TP: SIMPLE},
         _edit({}, SIMPLE + "\n\ndef test_new():\n    assert 1 == 1\n"), {TP: ("승인 변경 감사", ["<module>", "test_new"])},
@@ -2188,9 +2220,102 @@ def rename_verify_checks() -> "list[str]":
     return fails
 
 
+_SUB_SV: str = "application/orbit/domain_layer/shared_value_object/"
+_SUB_ID: "list[str]" = ["-c", "user.email=t@t", "-c", "user.name=t", "-c", "commit.gpgsign=false", "-c", "init.defaultBranch=main"]
+
+
+def _sub_vo(stem: str) -> str:
+    cls: str = "".join(x.capitalize() for x in stem.split("_"))
+    return f'"""{stem} 값."""\nfrom dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass {cls}:\n    value: str\n'
+
+
+def _sub_flow(base: Path, sub: str, scenario: str) -> "tuple[int, str, dict, list[str]]":
+    """git 뿌리(`base`) 아래 프로젝트(`sub` 가 비면 뿌리) — 미커밋 레인 편집이 있는 채 창을 열고 닫는다. (close exit · close 출력 ·
+    open 기록 · 묶음 판정 줄)."""
+    git_root: Path = base
+    root: Path = base / sub if sub else base
+    root.mkdir(parents=True)
+    run_git = lambda *a: subprocess.run(["git", *_SUB_ID, *a], cwd=root, capture_output=True, text=True, check=True).stdout  # noqa: E731
+    subprocess.run(["git", *_SUB_ID, "init", "-q"], cwd=git_root, capture_output=True, check=True)
+    (git_root / "README").write_text("뿌리\n", encoding="utf-8")
+    test: str = "tests/test_moon.py"
+    _write(root, {"application/__init__.py": "", "application/orbit/__init__.py": "",
+                  "application/orbit/domain_layer/__init__.py": "", _SUB_SV + "__init__.py": "",
+                  _SUB_SV + "moon_phase.py": _sub_vo("moon_phase"), _SUB_SV + "void_a.py": _sub_vo("void_a"),
+                  _SUB_SV + "void_b.py": _sub_vo("void_b"), test: "def test_x():\n    assert 1\n"})
+    run_git("add", "-A", str(git_root))
+    run_git("commit", "-qm", "anchor")
+    folder: Path = root / ".dddjango" / "nc"
+    folder.mkdir(parents=True)
+    (folder / "build_anchor").write_text(run_git("rev-parse", "HEAD"), encoding="utf-8")
+    (folder / "refactor-scope.md").write_text("실행 · G0 승인 nc\n\n", encoding="utf-8")
+    # 미커밋 레인 편집(커밋하지 않는 실행 — dddjango.md:163) · 프로젝트 밖 뿌리 파일 변경(창 기록 밖)
+    _write(root, {_SUB_SV + "void_c.py": _sub_vo("void_c"), _SUB_SV + "moon_phase.py": _sub_vo("moon_phase") + "\nPHASES: int = 8\n"})
+    if scenario == "dirty-test":                          # 창 열기 전 미커밋 시험 편집 — 창 안에서는 그대로(창 기준 원문 = 지금)
+        _write(root, {test: "def test_x():\n    assert 3\n"})
+    (git_root / "README").write_text("뿌리 고침\n", encoding="utf-8")
+    guard = lambda *a: subprocess.run([sys.executable, str(GUARD), a[0], str(folder), "--repo", str(root), *a[1:]],  # noqa: E731
+                                      capture_output=True, text=True)
+    opened = guard("open", "--kind", "code", "--mode", "feature")
+    if opened.returncode != 0:
+        return -1, opened.stdout + opened.stderr, {}, []
+    group: "list[str]" = []
+    if scenario == "group":
+        tool = lambda *a: subprocess.run([sys.executable, str(GUARD.parent / "folder_group.py"), *a],  # noqa: E731
+                                         capture_output=True, text=True)
+        applied = tool("apply", str(root), "--run", str(folder), "--run-moves")
+        group.append(f"apply {applied.returncode}")
+    elif scenario == "test-edit":
+        _write(root, {test: "def test_x():\n    assert 2\n"})
+    closed = guard("close")
+    if scenario == "group":
+        for args in (("--window", "1"), ()):
+            got = tool("verify", str(root), "--run", str(folder), *args)
+            group.append(f"verify {' '.join(args) or '--run'} {got.returncode} "
+                         + " ".join(ln for ln in got.stdout.splitlines() if ln.startswith(("red", "요약"))))
+    record: dict = json.loads((folder / "behavior" / "nc" / "w1-open.json").read_text(encoding="utf-8"))
+    return closed.returncode, closed.stdout + closed.stderr, record, group
+
+
+def subfolder_checks() -> "list[str]":
+    """검토 B3 — git 뿌리 아래 하위 폴더 프로젝트(`git rev-parse --show-prefix` = `proj/`)에서도 창 기록 · close 판정이 뿌리 프로젝트와
+    같다: open 기록의 미커밋 원문(sha · b64)이 실제 파일이고(키는 git 뿌리 기준 — `folder_group._then_tree` 계약), close 가 그 원문과
+    지금 파일을 프로젝트 기준으로 견주고, 커밋하지 않는 실행의 순수 `apply --run-moves` 묶음 창이 `verify --window` · `--run` green."""
+    fails: "list[str]" = []
+    with tempfile.TemporaryDirectory(prefix="bg-sub-") as td:
+        for scenario in ("group", "test-edit", "dirty-test"):
+            got: "dict[str, tuple[int, str, dict, list[str]]]" = {}
+            for sub in ("", "proj"):
+                got[sub] = _sub_flow(Path(td) / scenario / (sub or "root"), sub, scenario)
+            for sub, (code, out, record, group) in got.items():
+                pre: str = f"{sub}/" if sub else ""
+                where: str = sub or "뿌리"
+                entry: dict = record.get("dirty", {}).get(pre + _SUB_SV + "moon_phase.py", {})
+                if not entry.get("sha") or not entry.get("b64"):
+                    fails.append(f"[{scenario} · {where}] open 기록 dirty `{pre}{_SUB_SV}moon_phase.py` sha · b64 없음 — "
+                                 f"{sorted(record.get('dirty', {}))} · {entry}")
+                if any(not k.startswith(pre) for k in record.get("dirty", {})):
+                    fails.append(f"[{scenario} · {where}] open 기록 dirty 에 프로젝트 밖 경로 — {sorted(record.get('dirty', {}))}")
+                if scenario == "group":
+                    want = ["apply 0", "verify --window 1 0", "verify --run 0"]
+                    if code != 0 or [g.split(" 요약")[0].split(" red")[0] for g in group] != want:
+                        fails.append(f"[group · {where}] close {code} · {group} — 기대 close 0 · {want}\n{out}")
+                elif scenario == "dirty-test":
+                    if code != 0 or "바뀐 경로 0 ·" not in out:
+                        fails.append(f"[dirty-test · {where}] close {code} — 기대 0 · 바뀐 경로 0(창 기준 미커밋 원문 = 지금)\n{out}")
+                else:
+                    reds: "list[str]" = [ln.strip().replace(pre, "", 1) for ln in out.splitlines() if ln.strip().startswith("red:")]
+                    if code != 2 or reds != ["red: tests/test_moon.py — 치환으로 설명되지 않는 변경: 본문 문장 1 이 다르다"]:
+                        fails.append(f"[test-edit · {where}] close {code} · {reds} — 기대 2 · 뿌리와 같은 사유\n{out}")
+    return fails
+
+
 def _only_group(stub_support: bool) -> int:
     """묶음 창 사례만(`group=True`) — 변이 시험이 scripts 사본에 대고 돈다."""
     fails: "list[str]" = []
+    sub_fails: "list[str]" = subfolder_checks()
+    print(("  ✗ " if sub_fails else "  ✓ ") + "하위 폴더 프로젝트(검토 B3) — 창 기록 · close · 묶음 창 verify 가 뿌리와 같음")
+    fails += sub_fails
     with tempfile.TemporaryDirectory(prefix="bg-stub-") as stub:
         _setup_refactor(Path(stub), stub_support)
         group = [case for case in rcases() if case.get("group")]
@@ -2214,6 +2339,24 @@ def _only_group(stub_support: bool) -> int:
 _MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...]], ...]" = (
     ("갈래 `묶음 import 치환` 뺌", (('frozenset({"프로젝트 합성", "공유 표면", "묶음 import 치환"})',
                                   'frozenset({"프로젝트 합성", "공유 표면"})'),)),
+    ("묶음 import 치환 줄 내용 대조 지움(검토 B8)", (("    reds += _group_import_reds(w)\n", ""),)),
+    ("0F 도 묶음 import 치환 줄을 받음(검토 B8)", (('in FOLLOW_OUTSIDE_KINDS} - plain) if kind == "code" else set()',
+                                          'in FOLLOW_OUTSIDE_KINDS} - plain) if kind in ("code", "follow") else set()'),)),
+    ("묶음 이동 대신 창의 모든 이동으로 치환(검토 B8)", (
+        ('pairs: "list[tuple[str, str]]" = sorted(folder_group.actual_moves(then, now).items())',
+         'pairs: "list[tuple[str, str]]" = sorted(w.maps.pairs.items())'),)),
+    ("변경 창도 묶음 import 치환 줄을 목록 전부로 받음(검토 B8)", (
+        ('{e["path"] for e in edits if e.get("kind") != GROUP_IMPORT_KIND\n                         and (kind == "change"',
+         '{e["path"] for e in edits if (kind == "change"'),)),
+    ("커밋 원문을 git 뿌리 기준으로 읽음(검토 B3)", (('f"{rev}:./{path}"', 'f"{rev}:{path}"'),)),
+    ("status 경로의 접두를 안 깎음(검토 B3)", (
+        ("    return sorted(p[len(pre):] for p in paths if p.startswith(pre) and not _excluded(p[len(pre):]))",
+         "    return sorted(p for p in paths if not _excluded(p))"),)),
+    ("open 기록 키를 프로젝트 기준으로(검토 B3 — folder_group 계약)", (
+        ("        dirty_entries[pre + p] = entry", "        dirty_entries[p] = entry"),)),
+    ("close 가 open 기록 키의 접두를 안 깎음(검토 B3)", (
+        ('    return {p[len(pre):]: e for p, e in opened["dirty"].items() if p.startswith(pre)}',
+         '    return dict(opened["dirty"])'),)),
 )
 
 
@@ -2273,6 +2416,9 @@ def main() -> int:
     proc = procedure_checks()
     print(("  ✗ " if proc else "  ✓ ") + "창 절차(앵커 선행 · 창 누락 · 재open 거부 · 열린 창 · close 재실행 · 두 번째 창 · 재상정 · 머지 · 대응 원소 기록)")
     fails += proc
+    sub_fails: "list[str]" = subfolder_checks()
+    print(("  ✗ " if sub_fails else "  ✓ ") + "하위 폴더 프로젝트(검토 B3) — 창 기록 · close · 묶음 창 verify 가 뿌리와 같음")
+    fails += sub_fails
     with tempfile.TemporaryDirectory(prefix="bg-stub-") as stub:
         _setup_refactor(Path(stub), stub_support)
         print(f"  — 리팩토링 모드(G1 스냅숏 대역 · behavior_support {'대역' if stub_support else '진짜'})")

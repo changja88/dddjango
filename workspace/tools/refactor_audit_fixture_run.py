@@ -1544,6 +1544,10 @@ def group_move_cases(fails: "list[str]", td: Path) -> None:
               CH_ROW_M1 + CH_ROW_M2)
     expect(fails, "FG-C2 changes 갈래 `묶음 import 치환` 줄이 draft 다른 BC import 밖 → red", lane.ch(), 2,
            "다른 BC 편집 `application/third/domain_layer/y.py · 묶음 import 치환` 가 draft 다른 BC import 밖")
+    for ref in ("0F", "V1"):   # 검토 B9 — 이 갈래는 0C 묶음 창에서만(설계 10절 :478)
+        lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE + f"- {user} · 묶음 import 치환 · {ref}\n", CH_ROW_M1 + CH_ROW_M2)
+        expect(fails, f"FG-C5 changes 갈래 `묶음 import 치환` 줄의 연결이 {ref}(0C 아님) → red", lane.ch(), 2,
+               f"다른 BC 편집 갈래 `묶음 import 치환` 의 연결 `{ref}` 가 0C 가 아니다")
     (lane.folder / "refactor-scope.md").write_text(lane.scope_base, encoding="utf-8")
     lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE + f"- {user} · 묶음 import 치환 · 0C\n", CH_ROW_M1 + CH_ROW_M2)
     expect(fails, "FG-C3 C1 이 ⓐ 가 아니면(묶음 이동 없음) 같은 줄도 draft 다른 BC import 밖 → red", lane.ch(), 2,
@@ -1577,6 +1581,13 @@ def group_move_cases(fails: "list[str]", td: Path) -> None:
     bare.write_text(json.dumps({"anchor": "0" * 40, "records": []}), encoding="utf-8")
     expect(fails, "FG-R4 residual --gate-json sidecar 에 group_moves 없음 → 실행 불능",
            run(repo, "residual", str(folder), "--gate-json", str(bare)), 1, "group_moves")
+    # 검토 SB2 — 이동 따라 옮긴 legacy 줄은 C 행의 위반 칸과 글자로 같아야 한다(줄이 그 칸의 앞부분일 뿐인 다른 위반 · 칸 밖
+    # 글은 맞지 않는다)
+    c4: str = f"| C4 | [#459] {GRP_SV}void_a.py:9: 값 객체 칸 이름 픽스처 위반 둘째 | check-domain-model | 예 |\n"
+    scope_path.write_text(head + GRP_TABLE + GRP_C1 + GRP_C2 + GRP_C3 + c4
+                          + "\n- C1, C2, C3, C4 · 결정 = ⓐ · 사유 = 픽스처 · 출처 = 본인 직접(0300)\n", encoding="utf-8")
+    expect(fails, "FG-R8 이동 따라 옮긴 legacy 줄이 다른 C 행 위반의 앞부분일 뿐 → 그 행은 M_c 아님(C2 만)",
+           run(repo, "residual", str(folder), "--gate-json", str(side)), 2, "M_c 이동 잔존 1(C2)")
     # M_m — 이름 바꿈 + import 치환뿐인 항목 파일은 «안 바뀜»(결정적 잔존) · 그 밖은 리뷰어
     scope_path.write_text(head + GRP_TABLE + GRP_C1 + GRP_C2 + GRP_C3
                           + "\n- C1, C2, C3, M1, M2, M3 · 결정 = ⓐ · 사유 = 픽스처 · 출처 = 본인 직접(0300)\n", encoding="utf-8")
@@ -4554,6 +4565,10 @@ _MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...]], ...]" = (
                                        "    sub = None"),)),
     ("residual 이 쌍을 안 따름(M_m 바닥)", (("                if f in pairs or f in changed:\n                    same = _rename_only(",
                                            "                if False:\n                    same = _rename_only("),)),
+    ("묶음 import 치환 줄의 연결 대조 지움(검토 B9)", (('        elif kind == GROUP_IMPORT_KIND and ref != "0C":',
+                                             "        elif False:"),)),
+    ("M_c 를 칸 끝 없이 부분 글로 맞춤(검토 SB2)", (("        if any(line and re.search(re.escape(line) + end, text) for line in moved):",
+                                            "        if any(line and line in text for line in moved):"),)),
 )
 
 

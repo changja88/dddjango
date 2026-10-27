@@ -122,6 +122,7 @@ import time
 from concurrent.futures import Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable
 
 _SCRIPTS_DIR: Path = Path(__file__).resolve().parent
 sys.path.insert(0, str(_SCRIPTS_DIR))
@@ -517,42 +518,171 @@ def _group_folder_error(root: Path, folder: Path, anchor: "str | None", approved
     return None
 
 
+@dataclass
+class _GroupMoves:
+    """설계 9.4 재료 — 쌍(앵커 → 지금 · 계산 안) · 계산 밖 실제 쌍 · 레인 이동(T₀′ → 지금 · 계산 안) · T₀′ 지문 · 순수 레인 이동."""
+
+    pairs: "dict[str, str]"
+    dropped: "dict[str, str]"
+    lane: "dict[str, str]"            # T₀′ 경로 B → 지금 경로 C(계산 안 — 병합이 들인 새 파일 포함)
+    base: "dict[str, str]"            # T₀′ 경로 → blob
+    pure: "set[str]"                  # 지금 글이 T₀′ 글에 같은 이동의 import 기계 치환만 한 C
+
+
 def _group_pairs(root: Path, folder: Path, anchor_sha: str, merges: "list[anchor_diff.ApprovedMerge]",
-                 legacy: "Path | None") -> "tuple[dict[str, str], dict[str, str]]":
+                 legacy: "Path | None") -> _GroupMoves:
     """설계 9.4 — 쌍 = 실제(병합 몫 `앵커 → T₀′` 과 레인 이동 `T₀′ → 지금` 을 이은 `A → C`) ∩ 계산(`expected_moves`).
-    반환 (쌍, 계산 밖 실제 쌍). 실제 이동 · T₀′ · 계산은 `folder_group` 의 한 정의다(불변식 7)."""
+    실제 이동 · T₀′ · 계산은 `folder_group` 의 한 정의다(불변식 7). 레인 이동은 승인 유입이 이동을 따라가는 재료다(검토 B1 —
+    병합이 들인 파일을 이 실행이 옮기면 그 줄의 유입 증명을 T₀′ 자리에서 한다 · 앵커에 없던 파일은 5절 계산 `T₀′ → R` 로 가린다)."""
     import folder_group
     expected: "dict[str, str]" = folder_group.expected_moves(root, folder, legacy)
     t0: "dict[str, str]" = folder_group.tree_oids(root, anchor_sha, folder_group.git_prefix(root))
     t0p: "dict[str, str]" = folder_group.base_tree(root, anchor_sha, merges)
-    now: "dict[str, str]" = {p: folder_group.blob_oid(b) for p, b in folder_group.worktree_bytes(root).items()}
+    now_bytes: "dict[str, bytes]" = folder_group.worktree_bytes(root)
+    now: "dict[str, str]" = {p: folder_group.blob_oid(b) for p, b in now_bytes.items()}
     merge_share: "dict[str, str]" = folder_group.actual_moves(t0, t0p)
-    lane: "dict[str, str]" = folder_group.actual_moves(t0p, now)
+    lane_all: "dict[str, str]" = folder_group.actual_moves(t0p, now)
     pairs: "dict[str, str]" = {}
     dropped: "dict[str, str]" = {}
+    lane: "dict[str, str]" = {}
     for a in sorted(t0):
         b: str = merge_share.get(a, a)
-        c: str = lane.get(b, b)
+        c: str = lane_all.get(b, b)
         if c == a or c not in now:
             continue
         if expected.get(a) == c:
             pairs[a] = c
+            if b != c:
+                lane[b] = c
         else:
             dropped[a] = c
-    return pairs, dropped
+    reached: "set[str]" = set(merge_share.values())
+    fresh: "dict[str, str]" = {b: c for b, c in lane_all.items() if b not in t0 and b not in reached}
+    if fresh:  # 앵커에 없던 T₀′ 파일(병합이 들인 새 파일) — 5절 계산 `T₀′ 자리 → R` 와 같을 때만
+        plan = folder_group.plan_for(folder_group.load_run(root, folder, None),
+                                     folder_group.legacy_entries(legacy))
+        base_final: "dict[str, str]" = dict(plan.pairs(plan.base, plan.final))
+        lane.update({b: c for b, c in fresh.items() if base_final.get(b) == c})
+    forward: "list[tuple[str, str]]" = sorted(lane.items())
+    moves: "dict[str, str]" = folder_group.module_moves(forward)
+    sub = folder_group.string_substituter(forward) if forward else None
+    texts: "dict[str, bytes]" = folder_group.blob_bytes(root, [t0p[b] for b in lane if b in t0p])
+    pure: "set[str]" = set()
+    for b, c in forward:
+        if b not in t0p or t0p[b] not in texts:
+            continue
+        before: str = texts[t0p[b]].decode("utf-8", "replace")
+        want: str = folder_group.rewrite_source(before, b, c, moves, sub) if c.endswith(".py") else before
+        if now_bytes[c].decode("utf-8", "replace") == want:
+            pure.add(c)
+    return _GroupMoves(pairs=pairs, dropped=dropped, lane=lane, base=t0p, pure=pure)
 
 
-def _follow_moves(attributed: "list[str]", resolved: "list[str]",
-                  pairs: "dict[str, str]") -> "tuple[list[str], list[str], dict[str, str]]":
-    """설계 9.4 줄 대응 — 귀속 줄 ℓ 마다 해소 줄 ℓ′ 의 «옛 경로 → 새 경로 · 옛 점 경로 → 새 점 경로» 치환이 ℓ 과 글자로 같으면
-    1:1 로 짝짓는다. 반환 (남은 귀속, 남은 해소, {ℓ: ℓ′})."""
+_QUOTED_RE: "re.Pattern[str]" = re.compile(r"`([^`\n]*)`")
+_SUBJECT_LINENO_RE: "re.Pattern[str]" = re.compile(r"(?::(?:\d+|N))+$")
+
+
+def _line_subject(line: str) -> "str | None":
+    """정규화된 줄(`<검사기> :: [#n] <주어>[:N]: …`)의 주어 경로 — 줄 번호 꼬리는 걷는다."""
+    _checker, sep, rest = line.partition(" :: ")
+    subject: "str | None" = anchor_diff.subject_path(rest) if sep else None
+    return _SUBJECT_LINENO_RE.sub("", subject) if subject else None
+
+
+def _relative_froms(text: str) -> "list[str] | None":
+    """상대 import 의 모듈 글(`..x` · `...`)을 문장 차례로 — 검사기가 인용하는 꼴(점 level 개 + module)."""
+    try:
+        parsed: ast.Module = ast.parse(text)
+    except (SyntaxError, ValueError):
+        return None
+    nodes: "list[ast.ImportFrom]" = sorted(
+        (n for n in ast.walk(parsed) if isinstance(n, ast.ImportFrom) and n.level > 0),
+        key=lambda n: (n.lineno, n.col_offset))
+    return ["." * n.level + (n.module or "") for n in nodes]
+
+
+def _depth_table(text: str, old_path: str, new_path: str, moves: "dict[str, str]") -> "dict[str, str]":
+    """그 파일 원문에 `apply` 와 같은 import 기계 치환(`folder_group.rewrite_source`)을 했을 때 상대 import 글이 어떻게 바뀌는가 —
+    옛 글 → 새 글(바뀐 것만 · 문장 수가 달라지면(나눔) 빈 표 · 한 옛 글이 두 새 글로 갈리면 그 글은 뺀다 — 결정적 깊이 치환만)."""
+    import folder_group
+    before: "list[str] | None" = _relative_froms(text)
+    after: "list[str] | None" = _relative_froms(folder_group.rewrite_source(text, old_path, new_path, moves))
+    if before is None or after is None or len(before) != len(after):
+        return {}
+    table: "dict[str, str]" = {}
+    clash: "set[str]" = set()
+    for old, new in zip(before, after):
+        if table.get(old, new) != new:
+            clash.add(old)
+        table[old] = new
+    return {old: new for old, new in table.items() if old not in clash and old != new}
+
+
+def _line_mover(pairs: "list[tuple[str, str]]",
+                source: "Callable[[str], str | None] | None") -> "Callable[[str], str]":
+    """옛 줄 → 이동 뒤 줄(설계 9.4 줄 대응의 결정적 치환) — 주어 파일 원문(`source`)의 상대 import 깊이 표로 백틱 인용 글을 바꾸고
+    (검토 B6 — 검사기는 상대 import 를 쓴 그대로 인용한다) «옛 경로 → 새 경로 · 옛 점 경로 → 새 점 경로» 를 치환한다."""
+    import folder_group
+    subst: "Callable[[str], str]" = folder_group.string_substituter(pairs)
+    moves: "dict[str, str]" = folder_group.module_moves(pairs)
+    where: "dict[str, str]" = dict(pairs)
+    tables: "dict[str, dict[str, str]]" = {}
+
+    def table(path: str) -> "dict[str, str]":
+        if path not in tables:
+            text: "str | None" = source(path) if source is not None else None
+            tables[path] = _depth_table(text, path, where.get(path, path), moves) if text else {}
+        return tables[path]
+
+    def move(line: str) -> str:
+        subject: "str | None" = _line_subject(line)
+        depth: "dict[str, str]" = table(subject) if subject is not None else {}
+        if depth:
+            line = _QUOTED_RE.sub(lambda m: f"`{depth.get(m.group(1), m.group(1))}`", line)
+        return subst(line)
+    return move
+
+
+def _back_mover(lane: "dict[str, str]", base_text: "Callable[[str], str | None]") -> "Callable[[str], str]":
+    """지금 줄(이동 뒤 C 자리) → T₀′ 자리(B) 줄 — B 의 T₀′ 원문으로 낸 깊이 표(B → C)를 뒤집고(한 새 글에 옛 글 둘이면 뺀다)
+    경로 · 점 경로를 C → B 로 치환한다(검토 B1 — 승인 유입 증명은 상류 경로의 줄로 한다). 이동 전 커밋의 B 자리 줄은 그대로다."""
+    import folder_group
+    forward: "list[tuple[str, str]]" = sorted(lane.items())
+    moves: "dict[str, str]" = folder_group.module_moves(forward)
+    subst: "Callable[[str], str]" = folder_group.string_substituter([(c, b) for b, c in forward])
+    origin: "dict[str, str]" = {c: b for b, c in forward}
+    tables: "dict[str, dict[str, str]]" = {}
+
+    def table(c: str) -> "dict[str, str]":
+        if c not in tables:
+            text: "str | None" = base_text(origin[c])
+            ahead: "dict[str, str]" = _depth_table(text, origin[c], c, moves) if text else {}
+            seen: "dict[str, int]" = {}
+            for new in ahead.values():
+                seen[new] = seen.get(new, 0) + 1
+            tables[c] = {new: old for old, new in ahead.items() if seen[new] == 1}
+        return tables[c]
+
+    def move(line: str) -> str:
+        subject: "str | None" = _line_subject(line)
+        depth: "dict[str, str]" = table(subject) if subject in origin else {}
+        if depth:
+            line = _QUOTED_RE.sub(lambda m: f"`{depth.get(m.group(1), m.group(1))}`", line)
+        return subst(line)
+    return move
+
+
+def _follow_moves(attributed: "list[str]", resolved: "list[str]", pairs: "dict[str, str]",
+                  source: "Callable[[str], str | None] | None" = None
+                  ) -> "tuple[list[str], list[str], dict[str, str]]":
+    """설계 9.4 줄 대응 — 귀속 줄 ℓ 마다 해소 줄 ℓ′ 의 결정적 이동 치환(`_line_mover` — 주어 파일 앵커 원문 `source` 의 상대 import
+    깊이 표 + «옛 경로 → 새 경로 · 옛 점 경로 → 새 점 경로»)이 ℓ 과 글자로 같으면 1:1 로 짝짓는다. 반환 (남은 귀속, 남은 해소, {ℓ: ℓ′})."""
     if not pairs:
         return attributed, resolved, {}
-    import folder_group
-    subst = folder_group.string_substituter(sorted(pairs.items()))
+    mover: "Callable[[str], str]" = _line_mover(sorted(pairs.items()), source)
     pool: "dict[str, list[str]]" = {}
     for old in resolved:
-        new: str = subst(old)
+        new: str = mover(old)
         if new != old:
             pool.setdefault(new, []).append(old)
     rest: "list[str]" = []
@@ -564,6 +694,44 @@ def _follow_moves(attributed: "list[str]", resolved: "list[str]",
             rest.append(line)
     taken: "set[str]" = set(moved.values())
     return rest, [line for line in resolved if line not in taken], moved
+
+
+def _snapshot_reader(base: "Path | None") -> "Callable[[str], str | None] | None":
+    """사본(앵커 스냅숏)의 파일 글 읽기 — 줄 대응의 깊이 표 재료. 사본이 없으면(기준선 불능) None — 깊이 표 없이 견준다."""
+    if base is None:
+        return None
+
+    def read(rel: str) -> "str | None":
+        f: Path = base / rel
+        return f.read_text(encoding="utf-8", errors="replace") if f.is_file() and not f.is_symlink() else None
+    return read
+
+
+def _moved_inflow(root: Path, anchor_sha: str, head_sha: str, merges: "list[anchor_diff.ApprovedMerge]",
+                  chain: "list[anchor_diff.ChainCommit]", attributed: "list[str]", records: "list[dict]",
+                  prefixes: "tuple[str, ...]", td: Path, group: _GroupMoves,
+                  provenance: _ProvenanceResult) -> "list[str]":
+    """검토 B1 — 이동 채널 뒤에도 남은 귀속 줄 가운데 이 실행이 옮긴(계산 안 · 순수) 파일의 줄을 T₀′ 자리에서 승인 유입으로 다시
+    판정한다(설계 :255 «병합이 들인 void_b 도 옮긴다» — 옮기지 않았으면 유입이었을 줄). 증명된 줄은 provenance 에 합쳐 «승인 유입»
+    절로 가고(`묶음 이동 따라 <B>`), 나머지는 귀속 그대로다. 반환: 남은 귀속."""
+    import folder_group
+    paths: "dict[str, str | None]" = _line_paths(attributed, records, prefixes)
+    origin: "dict[str, str]" = {c: b for b, c in group.lane.items()}
+    lines: "list[str]" = [line for line in attributed if paths.get(line) in origin]
+    if not lines:
+        return attributed
+    texts: "dict[str, bytes]" = folder_group.blob_bytes(root, [group.base[b] for b in group.lane if b in group.base])
+
+    def base_text(b: str) -> "str | None":
+        data: "bytes | None" = texts.get(group.base.get(b, ""))
+        return data.decode("utf-8", "replace") if data is not None else None
+    work: Path = td / "moved-inflow"
+    work.mkdir(exist_ok=True)
+    extra: _ProvenanceResult = _provenance_split(
+        root, anchor_sha, head_sha, merges, chain, lines, records, prefixes, work,
+        unmove=_Unmove(origin=origin, back=_back_mover(group.lane, base_text), base=group.base, pure=group.pure))
+    provenance.absorb(extra)
+    return [line for line in attributed if line not in extra.inflow_lines]
 
 
 def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
@@ -709,10 +877,23 @@ class _ProvenanceResult:
     snapshots_run: int = 0
     checker_runs: int = 0
     pruned_snapshots: "list[str]" = field(default_factory=list)          # 숨김 경로 사본 밖 링크를 뺀 스냅숏의 첫 경로
+    moved_from: "dict[str, str]" = field(default_factory=dict)           # 묶음 이동 따라 증명한 유입 줄 → T₀′ 경로(검토 B1)
 
     @property
     def inflow_lines(self) -> "set[str]":
         return {line for line, _m, _k in self.inflow}
+
+    def absorb(self, other: "_ProvenanceResult") -> None:
+        """묶음 이동 따라 다시 판정한 결과(같은 줄의 둘째 판정)를 합친다 — 그 줄의 귀속 유지 사유는 둘째 판정이 정한다."""
+        self.inflow.extend(other.inflow)
+        for line in other.inflow_lines:
+            self.retained.pop(line, None)
+        self.retained.update(other.retained)
+        self.snapshot_failures.update(other.snapshot_failures)
+        self.snapshots_run += other.snapshots_run
+        self.checker_runs += other.checker_runs
+        self.pruned_snapshots.extend(other.pruned_snapshots)
+        self.moved_from.update(other.moved_from)
 
     def per_merge(self, sha: str) -> "tuple[int, int]":
         files: int = sum(1 for _l, m, k in self.inflow if m == sha and k == "파일")
@@ -747,7 +928,9 @@ class _ProvenanceResult:
                  "parent2_only_head": m.parent2_only_head,
                  "subject": m.subject, "position": m.position, "memo": m.memo}
                 for m in self.merges],
-            "inflow_lines": [{"line": line, "merge": m, "kind": k} for line, m, k in self.inflow],
+            "inflow_lines": [dict({"line": line, "merge": m, "kind": k},
+                                  **({"moved_from": self.moved_from[line]} if line in self.moved_from else {}))
+                             for line, m, k in self.inflow],
             "retained_reasons": dict(sorted(self.retained.items())),
             "chain": self.chain_stats(),
         }
@@ -796,11 +979,39 @@ def _line_paths(attributed: "list[str]", records: "list[dict]",
     return out
 
 
+@dataclass
+class _Unmove:
+    """묶음 이동 따라 승인 유입을 판정하는 재료(검토 B1) — 이 실행이 옮긴(계산 안) 파일의 지금 경로 C → T₀′ 경로 B · 줄 되돌림
+    (`_back_mover`) · T₀′ 지문 · 순수 이동 C(지금 글 = T₀′ 글의 같은 이동 import 기계 치환)."""
+
+    origin: "dict[str, str]"
+    back: "Callable[[str], str]"
+    base: "dict[str, str]"
+    pure: "set[str]"
+
+    def judge(self, c: str, facts: anchor_diff.PathFacts,
+              active: "list[anchor_diff.ApprovedMerge]") -> "tuple[str, anchor_diff.ApprovedMerge | None] | str":
+        """`PathFacts.classify` 의 이동판 — «HEAD 판 = 전달 판» 을 «지금 C 글 = T₀′ B 글의 이동 치환» 으로 읽는다."""
+        b: str = self.origin[c]
+        if c not in self.pure:
+            return "묶음 이동 뒤 내용이 이동 치환만이 아니다(레인 수정)"
+        oid: "str | None" = self.base.get(b)
+        deliver: "anchor_diff.ApprovedMerge | None" = next(
+            (m for m in active if facts.blobs(m.parent1).get(b) != facts.blobs(m.sha).get(b)
+             and facts.blobs(m.sha).get(b) == facts.blobs(m.parent2).get(b) == oid), None)
+        if deliver is not None:
+            return ("파일", deliver)
+        if oid is not None and oid == facts.anchor.get(b):
+            return ("상호작용", None)
+        return facts.retained_reason(b)
+
+
 def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
                       merges: "list[anchor_diff.ApprovedMerge]",
                       chain: "list[anchor_diff.ChainCommit]",
                       attributed: "list[str]", records: "list[dict]",
-                      prefixes: "tuple[str, ...]", td: Path) -> _ProvenanceResult:
+                      prefixes: "tuple[str, ...]", td: Path,
+                      unmove: "_Unmove | None" = None) -> _ProvenanceResult:
     """빚 매칭 뒤 남은 귀속을 «승인 유입 ⊔ 귀속(잔여)» 로 분할한다 — 어떤 라인도 버려지지 않는다.
 
     (i) 경로 (ii) 주어 판정 = `anchor_diff.PathFacts.classify`(scope 렌더와 같은 함수) — 파일·상호작용, 또는
@@ -808,8 +1019,12 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
     (iv) L 탐색 — F1 은 전달 머지 먼저·다음 first-parent 순 · L(ℓ ∈ R(M^2) ∖ R(M^1)) 이 서면
     `anchor_diff.after_merge_check`(ⓒ 뒤 미승인 머지 없음 · ⓑ 뒤 승인 머지 ^2 에도 있음 · ⓓ M 부터 HEAD 커밋까지
     사슬마다 있음)까지 통과해야 유입이다. 측정 무효는 그 머지의 증명 기회만 잃는다(∃M).
+    `unmove`(검토 B1)면 줄은 이 실행이 옮긴 파일(지금 C)의 것이다 — 주어 판정은 `_Unmove.judge`(T₀′ 경로 B), L 탐색 · 사슬의
+    줄은 모두 `unmove.back`(C 자리 → B 자리)으로 되돌린 글로 견준다(이동 뒤 커밋의 C 줄도 B 줄로 읽힌다).
     """
     res: _ProvenanceResult = _ProvenanceResult(merges=merges, chain=chain)
+    line_map: "Callable[[str], str]" = unmove.back if unmove is not None else (lambda line: line)
+    keys: "dict[str, str]" = {}
     active: "list[anchor_diff.ApprovedMerge]" = sorted(
         (m for m in merges if m.participates), key=lambda m: m.position or 0)
     if not attributed:
@@ -840,6 +1055,16 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
         p: "str | None" = paths.get(line)
         if p is None:
             res.retained[line] = "레코드 없음"
+            continue
+        if unmove is not None:
+            moved: "tuple[str, anchor_diff.ApprovedMerge | None] | str" = (
+                unmove.judge(p, facts, active) if p in unmove.origin else "묶음 이동 밖 경로")
+            if isinstance(moved, str):
+                res.retained[line] = moved
+                continue
+            keys[line] = unmove.back(line)
+            res.moved_from[line] = unmove.origin[p]
+            candidates.append((line, unmove.origin[p], checker, moved[0], moved[1]))
             continue
         if p not in facts.head and absent_file(p):
             candidates.append((line, p, checker, "부재", None))
@@ -924,7 +1149,7 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
                     _cands: "set[str]"
                     exits, lines, _recs, _cands = _run_registry(snap, only=frozenset({checker}))
                     valid: bool = exits.get(checker) in (0, 2) and not any(_SYNTHETIC_MARK in l for l in lines)
-                    result = (valid, lines)
+                    result = (valid, {line_map(l) for l in lines})
                     with snapshot_lock:
                         res.checker_runs += 1
                 with snapshot_lock:
@@ -956,6 +1181,7 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
 
     # (iv) L 탐색 + 증명 머지 뒤 조건 — ∃M: 어느 머지든 끝까지 증명하면 유입 · 아니면 귀속 유지
     for line, p, checker, kind, deliver in candidates:
+        key: str = keys.get(line, line)
         order: "list[anchor_diff.ApprovedMerge]" = (
             [deliver] + [m for m in active if m is not deliver]) if deliver is not None else list(active)
 
@@ -985,19 +1211,20 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
                     sides.append("M^2")
                 invalid.append(f"측정 무효({'|'.join(sides) or 'M^1|M^2'}) — {m.sha[:12]}")
                 continue
-            if line in r2 and line not in r1:
+            if key in r2 and key not in r1:
                 # 같은 머지에서 L이 선 검사기만 사슬을 잰다. 사본은 그 트리의 필요한 검사기가
                 # 모두 끝나면 바로 지운다(사슬 길이만큼 디스크에 쥐고 있지 않는다).
                 proving: "frozenset[str]" = frozenset(
                     c for other, _p, c, _kind, _deliver in candidates
                     if run(m.parent1, c)[0] and run(m.parent2, c)[0]
-                    and other in run(m.parent2, c)[1] and other not in run(m.parent1, c)[1])
+                    and keys.get(other, other) in run(m.parent2, c)[1]
+                    and keys.get(other, other) not in run(m.parent1, c)[1])
 
                 def prefetch(shas: "list[str]") -> None:
                     run_batch(shas, proving)
 
                 reason: "str | None" = anchor_diff.after_merge_check(
-                    key=line, m=m, active=active, chain=chain, sample=sample, tree_of=tree_of, prefetch=prefetch)
+                    key=key, m=m, active=active, chain=chain, sample=sample, tree_of=tree_of, prefetch=prefetch)
                 if reason is None:
                     proven = m.sha
                     break
@@ -1022,6 +1249,9 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
             res.retained[line] = f"유입 증명 실패(이중 원인{hint})"
         else:
             res.retained[line] = "상호작용 미증명"
+    for line in list(res.moved_from):
+        if line not in res.inflow_lines:
+            del res.moved_from[line]
     return res
 
 
@@ -1174,6 +1404,7 @@ def main(argv: "list[str]") -> int:
         if why is not None:
             print(f"사용 오류: {why}", file=sys.stderr)
             return 1
+    group: "_GroupMoves | None" = None
     group_pairs: "dict[str, str] | None" = None
     group_dropped: "dict[str, str]" = {}
 
@@ -1248,9 +1479,9 @@ def main(argv: "list[str]") -> int:
             if group_folder is not None:
                 import folder_group
                 try:
-                    group_pairs, group_dropped = _group_pairs(
-                        root, group_folder, anchor_sha, merges,
-                        Path(ns.legacy_debt_file) if ns.legacy_debt_file is not None else None)
+                    group = _group_pairs(root, group_folder, anchor_sha, merges,
+                                         Path(ns.legacy_debt_file) if ns.legacy_debt_file is not None else None)
+                    group_pairs, group_dropped = group.pairs, group.dropped
                 except folder_group.FolderGroupError as exc:
                     print(f"사용 오류: --group-moves 묶음 이동 계산 불능 — {exc}", file=sys.stderr)
                     return 1
@@ -1330,8 +1561,18 @@ def main(argv: "list[str]") -> int:
             attributed = [line for line in attributed if line not in inflow_lines]
 
         moved: "dict[str, str]" = {}
+        cand_moved: "dict[str, str]" = {}
         if group_pairs is not None:
-            attributed, resolved, moved = _follow_moves(attributed, resolved, group_pairs)
+            source: "Callable[[str], str | None] | None" = _snapshot_reader(pair_root)
+            attributed, resolved, moved = _follow_moves(attributed, resolved, group_pairs, source)
+            # ⓓ 후보 줄도 같은 쌍 · 같은 치환으로 따라간다(검토 SB1 — 옮긴 파일의 옛 ⓓ 줄은 «ⓓ 신규» 가 아니다).
+            cand_new, _cand_gone, cand_moved = _follow_moves(
+                cand_new, sorted((l_cands - n_cands) - set(cand_shrunk.values())), group_pairs, source)
+            cand_legacy += len(cand_moved)
+            cand_resolved -= len(cand_moved)
+            if provenance is not None and group is not None and group.lane and attributed:
+                attributed = _moved_inflow(root, anchor_sha, head, merges, chain, attributed, n_records,
+                                           cur_prefixes, Path(td), group, provenance)
 
         sister: "list[str]" = []
         if has_sister:
@@ -1408,13 +1649,18 @@ def main(argv: "list[str]") -> int:
         for line in cand_new:
             print(f"  {line}")
         legacy_by: "dict[str, int]" = {}
-        for line in (n_cands & l_cands) | set(cand_shrunk):
+        for line in (n_cands & l_cands) | set(cand_shrunk) | set(cand_moved):
             legacy_by[line.split(" :: ", 1)[0]] = legacy_by.get(line.split(" :: ", 1)[0], 0) + 1
         for script in sorted(legacy_by):
             print(f"  legacy {script}: {legacy_by[script]}")
         if cand_shrunk:
             print(f"  목록만 줄어 legacy 로 센 ⓓ 줄 {len(cand_shrunk)}건(진단 글의 낱말 목록이 앵커 줄의 부분집합):")
             for line, anchor_line in sorted(cand_shrunk.items()):
+                print(f"    {line}")
+                print(f"      ↳ 앵커: {anchor_line}")
+        if cand_moved:
+            print(f"  이동 따라 legacy 로 센 ⓓ 줄 {len(cand_moved)}건(묶음 이동 쌍 — 설계 9.4):")
+            for line, anchor_line in sorted(cand_moved.items()):
                 print(f"    {line}")
                 print(f"      ↳ 앵커: {anchor_line}")
     if provenance is not None:
@@ -1425,7 +1671,9 @@ def main(argv: "list[str]") -> int:
                           cand_new if (n_cands or l_cands) else None,
                           None if group_pairs is None else {
                               "pairs": group_pairs, "dropped": group_dropped,
-                              "lines": [{"line": line, "anchor_line": moved[line]} for line in sorted(moved)]})
+                              "lines": [{"line": line, "anchor_line": moved[line]} for line in sorted(moved)],
+                              "candidate_lines": [{"line": line, "anchor_line": cand_moved[line]}
+                                                  for line in sorted(cand_moved)]})
     if ns.contract_json is not None:
         sister_keys: "set[str]" = set(sister)
         server_records: "list[dict]" = [rec for rec in n_records
@@ -1475,8 +1723,9 @@ def _print_inflow(prov: _ProvenanceResult) -> None:
                   "(발주자 확인 — 등재 전 `^2` 가 main(상류) 이력에 있는지 확인 · exit 무변)")
     for line, m, kind in prov.inflow:
         print(f"  {line}")
+        moved: str = f" · 묶음 이동 따라 {prov.moved_from[line]}" if line in prov.moved_from else ""
         print(f"    ↳ 유입: {m[:12]}(L 증명) · "
-              + {"파일": "파일 verbatim", "부재": "부재(상류에도 없던 파일)"}.get(kind, "상호작용"))
+              + {"파일": "파일 verbatim", "부재": "부재(상류에도 없던 파일)"}.get(kind, "상호작용") + moved)
 
 
 def _print_provenance_diag(prov: _ProvenanceResult, anchor_sha: str) -> None:
