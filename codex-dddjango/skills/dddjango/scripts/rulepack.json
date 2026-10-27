@@ -8780,7 +8780,7 @@
       ]
     },
     "dddjango/skills/discipline-houserules/references/final.md/s003-0/b13": {
-      "h": "ebfc06b87af6f246",
+      "h": "723d17cdcd2408de",
       "n": 13,
       "works": [
         "R-3691",
@@ -14960,7 +14960,7 @@
     },
     {
       "path": "ontology/rules/discipline-houserules-final.ttl",
-      "sha256": "af0ff37f28e6f6e14adb04900b5a89231f447b3b9d6f37112a68b38071be3cf3"
+      "sha256": "d4e3c6f1ba5f14092a614f41c9c6926bda04285d9b9f42d35d5dc19ce79356bf"
     },
     {
       "path": "ontology/rules/discipline-houserules-skill.ttl",
