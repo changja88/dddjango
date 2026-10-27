@@ -1,0 +1,34 @@
+{
+  "기준": "application/orbit/domain_layer/",
+  "까닭": {
+    "deep_reading_setting/exception/deep_reading_answer_rejected.py": "부모 3미만",
+    "deep_reading_setting/exception/deep_reading_field_description_korean_required.py": "이름 field",
+    "deep_reading_setting/exception/deep_reading_field_name_rejected.py": "이름 field",
+    "deep_reading_setting/exception/deep_reading_instruction_korean_required.py": "부모 3미만",
+    "deep_reading_setting/exception/deep_reading_llm_model_out_of_range.py": "부모 뜻낱말",
+    "deep_reading_setting/exception/deep_reading_max_output_tokens_out_of_range.py": "부모 3미만",
+    "deep_reading_setting/exception/deep_reading_price_out_of_range.py": "부모 3미만",
+    "deep_reading_setting/exception/deep_reading_reasoning_effort_out_of_range.py": "부모 3미만",
+    "deep_reading_setting/exception/deep_reading_template_korean_required.py": "부모 3미만",
+    "deep_reading_setting/exception/deep_reading_template_rejected.py": "부모 3미만",
+    "deep_reading_setting/exception/deep_reading_timeout_seconds_out_of_range.py": "부모 3미만",
+    "deep_reading_setting/exception/invalid_deep_reading_field.py": "이름 field"
+  },
+  "자리": {
+    "deep_reading_setting/exception/deep_reading_answer_rejected.py": "deep_reading_setting/exception/deep_reading_answer_rejected.py",
+    "deep_reading_setting/exception/deep_reading_field_description_korean_required.py": "deep_reading_setting/exception/field/deep_reading_field_description_korean_required.py",
+    "deep_reading_setting/exception/deep_reading_field_name_rejected.py": "deep_reading_setting/exception/field/deep_reading_field_name_rejected.py",
+    "deep_reading_setting/exception/deep_reading_instruction_korean_required.py": "deep_reading_setting/exception/deep_reading_instruction_korean_required.py",
+    "deep_reading_setting/exception/deep_reading_llm_model_out_of_range.py": "deep_reading_setting/exception/deep_reading_llm_model_out_of_range.py",
+    "deep_reading_setting/exception/deep_reading_max_output_tokens_out_of_range.py": "deep_reading_setting/exception/deep_reading_max_output_tokens_out_of_range.py",
+    "deep_reading_setting/exception/deep_reading_price_out_of_range.py": "deep_reading_setting/exception/deep_reading_price_out_of_range.py",
+    "deep_reading_setting/exception/deep_reading_reasoning_effort_out_of_range.py": "deep_reading_setting/exception/deep_reading_reasoning_effort_out_of_range.py",
+    "deep_reading_setting/exception/deep_reading_template_korean_required.py": "deep_reading_setting/exception/deep_reading_template_korean_required.py",
+    "deep_reading_setting/exception/deep_reading_template_rejected.py": "deep_reading_setting/exception/deep_reading_template_rejected.py",
+    "deep_reading_setting/exception/deep_reading_timeout_seconds_out_of_range.py": "deep_reading_setting/exception/deep_reading_timeout_seconds_out_of_range.py",
+    "deep_reading_setting/exception/invalid_deep_reading_field.py": "deep_reading_setting/exception/field/invalid_deep_reading_field.py"
+  },
+  "줄": [
+    "[#656] application/orbit/domain_layer/deep_reading_setting/exception/__init__.py: 묶음 `field/` 을(를) 만든다"
+  ]
+}

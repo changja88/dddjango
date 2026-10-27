@@ -1,0 +1,2 @@
+class DeepReadingTimeoutSecondsOutOfRange(Exception):
+    pass

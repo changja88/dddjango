@@ -224,7 +224,7 @@ def _invariant2(fg, scripts: Path, name: str, src: Path, td: Path) -> "list[tupl
     out: "list[tuple[str, object, object]]" = [
         (f"{name} 검사기 exit(옮기기 전)", code in (0, 2), True),
         (f"{name} 검사기 #656 줄 = 도구 줄", sorted(ln for ln in before if ln.startswith("[#656]")), want)]
-    fg.apply_to_copy(root, fg.placement_moves(placement))
+    fg.apply_to_copy(root, fg.placement_moves(placement), fg.placement_drops(placement))
     after: "list[str]" = []
     for checker in ("check-layer-skeleton.py", "check-domain-model.py"):
         code, got, tail = _checker(scripts, checker, root)
@@ -661,6 +661,8 @@ def scen_legacy(fg, scripts: Path, run: Run, td: Path) -> None:
             _starting(out, "알림 묶음")),
            (0, [], [], [f"새 파일 {SV}void_c.py -> {SV}void_c.py"],
             ["알림 묶음: 새 파일 1 · 이 실행의 이동 0(형성 0 · 해체 0 · 다시 놓기 0) · 경로 결속 0 · 다른 BC import 0"]))
+    plan = fg.plan_for(fg.load_run(repo.root, folder, None), fg.legacy_entries(legacy))
+    run.eq("⓪ «만든다» 이관 빚 — 이 실행의 형성 묶음 없음", plan.formed, set())
     rc, out = _tool(scripts, "verify", repo.root, "--run", folder, "--legacy-debt-file", legacy)
     run.eq("⓪ «만든다» 이관 빚 — verify --run green", (rc, _starting(out, "red")), (0, []))
     # 있는 묶음 옆에 평평하게 둔 새 파일 — 그 파일 줄이 이관 빚이면 부모 그대로
@@ -682,14 +684,402 @@ def scen_legacy(fg, scripts: Path, run: Run, td: Path) -> None:
     run.eq("목록 없으면 새 파일은 있는 묶음으로", _starting(out, "새 파일"), [f"새 파일 {SV}void_c.py -> {SV}void/void_c.py"])
 
 
+# ── 검토 고침(2.28.0 검토 A · B) — 메모리 ─────────────────────────────────────────
+
+WEB: str = "web/application/orbit/domain_layer/"
+MIRROR: str = "application/orbit/test/unit/domain_layer/shared_value_object/"
+
+
+def _rel_lines(fg, tree: "dict[str, str]") -> "list[tuple[str, str]]":
+    return fg.lines(fg.place(tree, fg.group_dirs_of(tree)))
+
+
+def review_debt_undo(fg, run: Run) -> None:
+    """A1 — 빚 줄은 줄마다(5절 B): «zeta/ 푼다» 만 ⓐ 면 zeta 의 파일은 부모로 · 미룬 «void/ 만든다» 는 하지 않는다."""
+    t0 = {SV + "__init__.py": "", SV + "zeta/__init__.py": "", SV + "zeta/void_a.py": _vo("void_a"),
+          SV + "void_b.py": _vo("void_b"), SV + "void_c.py": _vo("void_c"), SV + "moon.py": _vo("moon")}
+    make, undo = (SV + "__init__.py", fg.MAKE.format("void")), (SV + "zeta/__init__.py", fg.UNDO.format("zeta"))
+    run.eq("A1 앵커 줄", _rel_lines(fg, t0), [make, undo])
+    plan = fg.compute_plan(t0, t0, t0, lambda c: {x for x in c if x == undo})
+    run.eq("A1 «푼다» 만 ⓐ — 빚 이동은 부모로", plan.pairs(plan.base, plan.debt), [(SV + "zeta/void_a.py", SV + "void_a.py")])
+    r_tree = fg.move_texts(t0, fg._expand(plan.pairs(plan.current, plan.final), t0), plan.drops)
+    run.eq("A1 R 의 줄 = 미룬 «만든다» 하나(불변식 5)", _rel_lines(fg, r_tree), [make])
+
+
+def review_scope(fg, run: Run) -> None:
+    """A2 — 도구 범위 = 검사기 범위(서버 BC `application/<bc>/domain_layer/`). 시험 거울 · 자매 web 은 자리 · 낱말 밖."""
+    for path in (MIRROR + "test_void_a.py", WEB + "ghost_gate/ghost_gate.py", "lib/orbit/domain_layer/x/value_object/a.py"):
+        run.eq(f"A2 범위 밖 `{path}`", (fg._is_layer_py(path), fg.slot_of(path)), (False, None))
+    base = {SV + "__init__.py": "", SV + "void_state.py": _vo("void_state")}
+    now = dict(base, **{MIRROR + f"test_void_{x}.py": "def test_x() -> None:\n    pass\n" for x in "abc"})
+    plan = fg.compute_plan(base, base, now, lambda c: set())
+    run.eq("A2 시험 거울 파일은 옮기지 않는다", plan.pairs(plan.current, plan.final), [])
+    server = {SV + "__init__.py": "", SV + "moon.py": _vo("moon"), **{SV + f"ghost_gate_{x}.py": _vo(f"ghost_gate_{x}")
+                                                                     for x in "abc"}}
+    web = {WEB + "ghost_gate/ghost_gate.py": "class GhostGate:\n    pass\n",
+           WEB + "ghost_gate/value_object/gate_hint.py": "class GateHint:\n    pass\n"}
+    targets = lambda files: {p: fp.target for p, fp in fg.place(files, fg.group_dirs_of(files)).files.items()}  # noqa
+    run.eq("A2 web 의 애그리거트 구가 서버 BC 자리를 바꾸지 않는다", targets({**server, **web}), targets(server))
+
+
+def review_rewrite(fg, run: Run) -> None:
+    """A7 — 뜻이 다른 코드를 내지 않는다: 정확히 고치거나 «기계 이동 불가»로 멈춘다."""
+    old, new = SV + "void_a.py", SV + "void/void_a.py"
+    pairs = [(old, new), (SV + "void_b.py", SV + "void/void_b.py")]
+    moves = fg.module_moves(pairs)
+    user = SV + "user.py"
+
+    def rw(text: str, path: str = user, to: "str | None" = None) -> str:
+        return fg.rewrite_source(text, path, to or path, moves)
+
+    cases = (
+        ("역슬래시 이음 지킴", f"from {PKG}.void_a \\\n    import VoidA\n", user, None,
+         f"from {PKG}.void.void_a \\\n    import VoidA\n"),
+        ("`from .import` (옮긴 파일)", "from .import moon\n", old, new, "from ..import moon\n"),
+        ("`from.moon` (옮긴 파일)", "from.moon import Moon\n", old, new, "from..moon import Moon\n"),
+        ("`from .import void_a` 띄움", "from .import void_a\n", user, None, "from .void import void_a\n"),
+        ("괄호 나눔 — 주석 지킴", "if True:\n    from . import (  # keep\n        void_a,  # a\n        moon,\n    )\n",
+         user, None, "if True:\n    from .void import (  # keep\n        void_a,  # a\n    )\n"
+                     "    from . import (\n        moon,\n    )\n"),
+        ("괄호 나눔 — 제 줄 주석", "from . import (\n    # 앞\n    moon,\n    void_a,\n    # 끝\n)\n", user, None,
+         "from . import (\n    # 앞\n    moon,\n)\nfrom .void import (\n    void_a,\n    # 끝\n)\n"),
+        ("역슬래시 이음 나눔(문장 안)", "from . import void_a, \\\n    moon\n", user, None,
+         "from .void import void_a\nfrom . import moon\n"),
+        ("한 줄 복합문 — 나눔 없이 고침", "x = 1; from .void_a import VoidA\n", user, None,
+         "x = 1; from .void.void_a import VoidA\n"))
+    for label, text, path, to, want in cases:
+        got = rw(text, path, to)
+        run.eq(f"A7 {label}", got, want)
+        try:
+            compile(got, "<rewrite>", "exec")
+        except SyntaxError as exc:
+            run.fails.append(f"A7 {label}: 고친 글이 문법 오류 — {exc}")
+    blocked = (("한 줄 복합문 나눔", "counter = bump(); from . import void_a, moon\n"),
+               ("한 줄 복합문 나눔", "from . import void_a, moon; y = 1\n"),
+               ("한 줄 복합문 나눔", "if True: from . import void_a, moon\n"),
+               ("역슬래시 이음 나눔", "x = 1; \\\nfrom . import void_a, moon\n"))
+    for reason, text in blocked:
+        run.eq(f"A7 {reason} — 글 그대로", rw(text), text)
+        hz = fg.hazards({user: text, old: _vo("void_a"), SV + "void_b.py": _vo("void_b")}, pairs, ["orbit"])
+        line = len(text.split("from .")[0].split("\n"))
+        run.eq(f"A7 {reason} → 기계 이동 불가 `{text.strip()[:30]}`", hz.blocked, [f"{user}:{line} {reason}"])
+
+
+def review_clash(fg, run: Run) -> None:
+    """A8 — 한 부모의 `x/tarot.py` · `tarot.py` 는 기계로 못 옮긴다(둘이 한 자리로 가지 않고 · 하나를 조용히 버리지 않는다)."""
+    t = {SV + "__init__.py": "", SV + "x/__init__.py": "", SV + "x/tarot.py": _vo("tarot"), SV + "tarot.py": _vo("tarot"),
+         SV + "moon.py": _vo("moon")}
+    placement = fg.place(t, fg.group_dirs_of(t))
+    run.eq("A8 place 는 그대로(검사기 줄은 빚으로 남음)", sorted(fp.target for fp in placement.files.values()),
+           [SV + "moon.py", SV + "tarot.py", SV + "tarot.py"])
+    run.eq("A8 placement_moves — 겹친 둘은 옮기지 않는다", fg.placement_moves(placement), [])
+    plan = fg.compute_plan(t, t, t, lambda c: set())
+    run.eq("A8 compute_plan — 이름 겹침", plan.clashes, [(SV + "tarot.py", SV + "x/tarot.py")])
+    run.eq("A8 compute_plan — 겹친 키는 계획 밖(조용히 하나를 고르지 않음)",
+           sorted(v for v in plan.current.values()), [SV + "moon.py"])
+
+
+def review_deep(fg, run: Run) -> None:
+    """S3 — 파서가 «너무 깊음»(최신 판 MemoryError · RecursionError)을 내는 글도 자리 셈을 죽이지 않는다(파싱 불능 = 글 없음)."""
+    deep = "x = " + "-" * 6000 + "1\n"
+    t = {SV + "__init__.py": "", SV + "void_a.py": deep, SV + "void_b.py": _vo("void_b"), SV + "void_c.py": _vo("void_c"),
+         SV + "moon.py": _vo("moon")}
+    run.eq("S3 깊은 식 — 자리 셈", _rel_lines(fg, t), [(SV + "__init__.py", fg.MAKE.format("void"))])
+    run.eq("S3 깊은 식 — 치환 · 빈 init 판정", (fg.rewrite_source(deep, SV + "void_a.py", SV + "void/void_a.py", {}) == deep,
+                                          fg.empty_init(deep)), (True, False))
+
+
+def check_review_memory(fg, run: Run) -> None:
+    for step in (review_debt_undo, review_scope, review_rewrite, review_clash, review_deep):
+        try:
+            step(fg, run)
+        except Exception as exc:  # 한 갈래의 예외가 다른 갈래를 가리지 않게
+            run.fails.append(f"{step.__name__} 예외: {exc!r}")
+
+
+# ── 검토 고침 — git 시나리오 ───────────────────────────────────────────────────
+
+def _lines_of(out: "list[str]", *heads: str) -> "list[str]":
+    return [ln for ln in out if ln.startswith(heads)]
+
+
+def scen_review_scope(fg, scripts: Path, run: Run, td: Path) -> None:
+    """A2 · S4 — 시험 거울 · web 은 옮기지 않고 낱말에도 들지 않는다 · 그 import 는 apply 가 고친다(프로젝트 전체)."""
+    repo = Repo(td / "scope")
+    imp = f"from {PKG}.ghost_gate_a import GhostGateA\n"
+    repo.write({SV + "__init__.py": "", SV + "ghost_gate_a.py": _vo("ghost_gate_a"),
+                SV + "ghost_gate_b.py": _vo("ghost_gate_b"), SV + "moon.py": _vo("moon"),
+                WEB + "ghost_gate/__init__.py": "", WEB + "ghost_gate/ghost_gate.py": "class GhostGate:\n    pass\n",
+                WEB + "ghost_gate/value_object/gate_hint.py": "class GateHint:\n    pass\n",
+                "web/application/orbit/view/ghost_view.py": imp,
+                MIRROR + "__init__.py": "", MIRROR + "test_ghost.py": imp})
+    folder = _folder(repo, "s1", repo.commit("앵커"))
+    repo.write({SV + "ghost_gate_c.py": _vo("ghost_gate_c"),
+                **{MIRROR + f"test_void_{x}.py": "def test_x() -> None:\n    pass\n" for x in "abc"}})
+    repo.commit("슬라이스 — 새 값 하나 · 새 시험 셋")
+    want = [f"남은 이동 {SV}ghost_gate_{x}.py -> {SV}ghost/ghost_gate_{x}.py" for x in "abc"]
+    rc, out = _tool(scripts, "draft", repo.root, "--bc", "orbit", "--run", folder)
+    run.eq("A2 draft --run — 서버 BC 파일만 · 검사기와 같은 묶음", (rc, _lines_of(out, "남은 이동")), (0, want))
+    spec = repo.root / "spec.md"
+    spec.write_text(f"<!-- machine: file-plan -->\n```paths\nadd {SV}ghost_gate_d.py\n```\n", encoding="utf-8")
+    rc, out = _tool(scripts, "draft", repo.root, "--bc", "orbit", "--spec", spec, "--run", folder)
+    run.eq("S4 draft --spec --run — 시험 · web 파일이 지운 것으로 보이지 않음",
+           (rc, [ln for ln in out if "/test/" in ln or ln.startswith(("새 파일", "web")) or " web/" in ln]),
+           (0, [f"새 파일 {SV}ghost_gate_{x}.py -> {SV}ghost/ghost_gate_{x}.py" for x in "cd"]))
+    spec.unlink()
+    rc, out = _tool(scripts, "apply", repo.root, "--run", folder, "--run-moves")
+    run.eq("A2 apply — 서버 파일만 옮김", (rc, _lines_of(out, "이동")),
+           (0, [f"이동 {SV}ghost_gate_{x}.py -> {SV}ghost/ghost_gate_{x}.py" for x in "abc"]))
+    new_imp = f"from {PKG}.ghost.ghost_gate_a import GhostGateA\n"
+    read = lambda rel: (repo.root / rel).read_text(encoding="utf-8")  # noqa: E731
+    run.eq("A2 시험 거울 · web 의 import 는 고침 · 자리는 그대로",
+           (read(MIRROR + "test_ghost.py"), read("web/application/orbit/view/ghost_view.py"),
+            sorted(p.name for p in (repo.root / MIRROR).iterdir() if p.suffix == ".py")),
+           (new_imp, new_imp, ["__init__.py", "test_ghost.py", "test_void_a.py", "test_void_b.py", "test_void_c.py"]))
+    _code, got, _tail = _checker(scripts, "check-domain-model.py", repo.root)
+    run.eq("A2 apply 뒤 검사기 #654~#656 0(도구 = 검사기)", [ln for ln in got if _GROUP_LINE.match(ln)], [])
+
+
+def _window(scripts: Path, repo: Repo, folder: Path, n: int, *apply_args: str,
+            edit: "object" = None) -> "tuple[int, list[str], list[str]]":
+    rc, text = _guard(scripts, repo, folder, "open", "--kind", "code", "--mode", "feature")
+    if rc != 0:
+        return rc, [f"open 실패 {text[-300:]}"], []
+    rc, out = _tool(scripts, "apply", repo.root, "--run", folder, *apply_args)
+    if callable(edit):
+        edit(repo)
+    repo.commit(f"묶음 창 {n}")
+    _guard(scripts, repo, folder, "close")
+    vc, vout = _tool(scripts, "verify", repo.root, "--run", folder, "--window", str(n))
+    return vc, _lines_of(vout, "red"), out
+
+
+def scen_review_dissolve(fg, scripts: Path, run: Run, td: Path) -> None:
+    """A3 · A4 · B10 — 빈(0바이트 · docstring · 주석뿐) 묶음 `__init__` 만 남으면 apply 가 폴더째 푼다 · 내용 있는 `__init__` 은
+    남긴다 · 창 판정은 묶음 `__init__` 의 새로 · 지움만 받는다."""
+    repo = Repo(td / "dissolve")
+    repo.write({SV + "__init__.py": "", SV + "moon_phase.py": _vo("moon_phase"), SV + "star_dust.py": _vo("star_dust"),
+                SV + "void/__init__.py": "", SV + "void/void_a.py": _vo("void_a"), SV + "void/void_b.py": _vo("void_b"),
+                SV + "zeta/__init__.py": '"""zeta 묶음."""\n# 주석\n', SV + "zeta/zeta_one.py": _vo("zeta_one"),
+                SV + "zeta/zeta_two.py": _vo("zeta_two"), SV + "kappa/__init__.py": "KAPPA: int = 1\n",
+                SV + "kappa/kappa_one.py": _vo("kappa_one"), SV + "kappa/kappa_two.py": _vo("kappa_two")})
+    folder = _folder(repo, "v1", repo.commit("앵커"))
+    for rel in ("void/void_a.py", "void/void_b.py", "zeta/zeta_two.py", "kappa/kappa_two.py"):
+        (repo.root / SV / rel).unlink()
+    repo.commit("슬라이스 — 파일 지움")
+    vc, reds, out = _window(scripts, repo, folder, 1, "--run-moves")
+    run.eq("A3 · A4 apply — 남은 파일만 옮김", _lines_of(out, "이동"), [
+        f"이동 {SV}kappa/kappa_one.py -> {SV}kappa_one.py", f"이동 {SV}zeta/zeta_one.py -> {SV}zeta_one.py"])
+    run.eq("A3 · A4 빈 · docstring 묶음은 폴더째 지움 · 내용 있는 `__init__` 은 남김",
+           ((repo.root / SV / "void").exists(), (repo.root / SV / "zeta").exists(),
+            (repo.root / SV / "kappa/__init__.py").read_text(encoding="utf-8")), (False, False, "KAPPA: int = 1\n"))
+    run.eq("A3 · A4 창 판정 green(빈 묶음 `__init__` 지움)", (vc, reds), (0, []))
+    rc, out = _tool(scripts, "verify", repo.root, "--run", folder)
+    run.eq("A3 · A4 verify --run green", (rc, _lines_of(out, "red")), (0, []))
+    _code, got, _tail = _checker(scripts, "check-domain-model.py", repo.root)
+    run.eq("A3 · A4 남는 #656 은 내용 있는 kappa 하나(코드를 지우지 않음)", [ln for ln in got if _GROUP_LINE.match(ln)],
+           [f"[#656] {SV}kappa/__init__.py: {fg.UNDO.format('kappa')}"])
+    # B10 — 묶음이 아닌 빈 `__init__.py`(마이그레이션 패키지 표지)를 지우면 red
+    mig, anchor = _debt_repo(td / "b10", {"application/orbit/migrations/__init__.py": ""})
+    folder = _folder(mig, "b10", anchor, scope=_scope("ⓐ"))
+    vc, reds, _out = _window(scripts, mig, folder, 1, "--debt",
+                             edit=lambda r: (r.root / "application/orbit/migrations/__init__.py").unlink())
+    run.eq("B10 묶음 아닌 빈 `__init__` 지움은 red", (vc, reds), (2, [
+        "red: 창 안 다른 변화 `application/orbit/migrations/__init__.py` — 묶음 창은 이동 · import 치환 · 빈 묶음 "
+        "`__init__` · 설정 파일 경로 치환만 받는다"]))
+
+
+def scen_review_clash(fg, scripts: Path, run: Run, td: Path) -> None:
+    """A8 — 이름 겹침이면 draft · verify --run 이 보이고 apply 는 멈춘다."""
+    repo = Repo(td / "clash")
+    repo.write({SV + "__init__.py": "", SV + "x/__init__.py": "", SV + "x/tarot.py": _vo("tarot"),
+                SV + "tarot.py": _vo("tarot"), SV + "moon.py": _vo("moon")})
+    folder = _folder(repo, "k1", repo.commit("앵커"))
+    line = f"기계 이동 불가 이름 겹침 {SV}tarot.py {SV}x/tarot.py"
+    rc, out = _tool(scripts, "draft", repo.root, "--bc", "orbit", "--run", folder)
+    run.eq("A8 draft 가 이름 겹침을 냄", (rc, _lines_of(out, "기계 이동 불가")), (0, [line]))
+    rc, out = _tool(scripts, "apply", repo.root, "--run", folder, "--run-moves")
+    run.eq("A8 apply 멈춤", (rc, _lines_of(out, "기계 이동 불가", "이동 ")), (1, [line]))
+    run.true("A8 멈추면 옮기지 않음", (repo.root / SV / "x/tarot.py").is_file() and (repo.root / SV / "tarot.py").is_file())
+    rc, out = _tool(scripts, "verify", repo.root, "--run", folder)
+    run.eq("A8 verify --run 이 이름 겹침을 보임", (rc, _lines_of(out, "기계 이동 불가", "red")), (0, [line]))
+
+
+def scen_review_encoding(fg, scripts: Path, run: Run, td: Path) -> None:
+    """S1 — UTF-8 아닌 소스(인코딩 선언 latin-1)는 검사기처럼 빈 글로 센다 · 그 파일이 옮길 모듈을 부르면 apply 는 멈춘다."""
+    def svc(name: str, ret: str, mod: str, latin: bool = False) -> bytes:
+        head = "# -*- coding: latin-1 -*-\n# caf\xe9\n" if latin else ""
+        text = head + f'"""{name}."""\nfrom {PKG}.{mod} import {ret}\n\n\ndef {name}(x: str) -> {ret}:\n    return {ret}(x)\n'
+        return text.encode("latin-1" if latin else "utf-8")
+
+    repo = Repo(td / "latin")
+    repo.write({SV + "__init__.py": "", SV + "moon_phase.py": _vo("moon_phase"), SV + "relation/__init__.py": "",
+                **{SV + f"relation/relation_{x}.py": _vo(f"relation_{x}") for x in "abc"}, DS + "__init__.py": ""})
+    for x in "abc":
+        (repo.root / DS / f"resolve_star_{x}.py").write_bytes(
+            svc(f"resolve_star_{x}", f"Relation{x.upper()}", f"relation.relation_{x}", latin=x == "c"))
+    (repo.root / DS / "compute_moon_phase.py").write_bytes(svc("compute_moon_phase", "MoonPhase", "moon_phase"))
+    folder = _folder(repo, "e1", repo.commit("앵커"))
+    rc, out = _tool(scripts, "draft", repo.root, "--bc", "orbit", "--run", folder)
+    _code, got, _tail = _checker(scripts, "check-domain-model.py", repo.root)
+    run.eq("S1 UTF-8 아닌 서비스 — 도구 줄 = 검사기 줄(반환을 못 읽은 것으로)",
+           (rc, _lines_of(out, "줄 "), [ln for ln in got if _GROUP_LINE.match(ln)]), (0, [], []))
+    repo = Repo(td / "latin-apply")
+    repo.write({SV + "__init__.py": "", SV + "moon_phase.py": _vo("moon_phase"), SV + "void_a.py": _vo("void_a"),
+                SV + "void_b.py": _vo("void_b")})
+    user = "application/orbit/application_layer/use_void.py"
+    (repo.root / user).parent.mkdir(parents=True)
+    (repo.root / user).write_bytes(f"# -*- coding: latin-1 -*-\n# caf\xe9\nfrom {PKG}.void_a import VoidA\n".encode("latin-1"))
+    folder = _folder(repo, "e2", repo.commit("앵커"))
+    repo.write({SV + "void_c.py": _vo("void_c")})
+    repo.commit("슬라이스")
+    rc, out = _tool(scripts, "apply", repo.root, "--run", folder, "--run-moves")
+    run.eq("S1 UTF-8 아닌 소스가 옮길 모듈을 부르면 apply 멈춤", (rc, _lines_of(out, "기계 이동 불가", "이동 ")),
+           (1, [f"기계 이동 불가 {user}:1 UTF-8 아닌 소스"]))
+    run.true("S1 멈추면 옮기지 않음", (repo.root / SV / "void_a.py").is_file())
+
+
+def scen_review_leftover(fg, scripts: Path, run: Run, td: Path) -> None:
+    """S2 — 푸는 묶음 폴더에 `.py` 아닌 파일이 남으면(지울 수 없다 — 폴더가 남아 검사기가 그 묶음을 본다) apply 는 멈춘다."""
+    repo = Repo(td / "leftover")
+    repo.write({SV + "__init__.py": "", SV + "moon_phase.py": _vo("moon_phase"), SV + "star_dust.py": _vo("star_dust"),
+                SV + "void/__init__.py": "", SV + "void/void_a.py": _vo("void_a"), SV + "void/void_b.py": _vo("void_b"),
+                SV + "void/notes.md": "메모\n"})
+    folder = _folder(repo, "o1", repo.commit("앵커"))
+    (repo.root / SV / "void/void_b.py").unlink()
+    repo.commit("슬라이스")
+    line = f"기계 이동 불가 {SV}void/notes.md:1 푸는 묶음 폴더의 .py 아닌 파일"
+    rc, out = _tool(scripts, "draft", repo.root, "--bc", "orbit", "--run", folder)
+    run.eq("S2 draft 가 남는 파일을 냄", (rc, _lines_of(out, "기계 이동 불가")), (0, [line]))
+    rc, out = _tool(scripts, "apply", repo.root, "--run", folder, "--run-moves")
+    run.eq("S2 apply 멈춤", (rc, _lines_of(out, "기계 이동 불가", "이동 ")), (1, [line]))
+    run.true("S2 멈추면 옮기지 않음", (repo.root / SV / "void/void_a.py").is_file())
+
+
+def scen_review_notice(fg, scripts: Path, run: Run, td: Path) -> None:
+    """A9 — 알림 묶음의 형성 · 해체 · 다시 놓기는 이 실행이 옮기는 파일을 정확히 나눈다(해체 묶음에서 새 묶음으로 가는 파일은 형성)."""
+    repo = Repo(td / "notice")
+    repo.write({SV + "__init__.py": "", SV + "moon/__init__.py": "", SV + "moon/moon_a.py": _vo("moon_a"),
+                SV + "moon/void_moon.py": _vo("void_moon"), SV + "star_dust.py": _vo("star_dust")})
+    folder = _folder(repo, "n1", repo.commit("앵커"))
+    repo.write({SV + "void_b.py": _vo("void_b"), SV + "void_c.py": _vo("void_c")})
+    repo.commit("슬라이스")
+    rc, out = _tool(scripts, "draft", repo.root, "--bc", "orbit", "--run", folder)
+    run.eq("A9 알림 묶음 — 형성 1 · 해체 1 · 다시 놓기 0 (합 = 이동 2)", (rc, _lines_of(out, "알림 묶음")), (0, [
+        "알림 묶음: 새 파일 2 · 이 실행의 이동 2(형성 1 · 해체 1 · 다시 놓기 0) · 경로 결속 0 · 다른 BC import 0"]))
+
+
+def scen_review_windows(fg, scripts: Path, run: Run, td: Path) -> None:
+    """B4 — red 창을 철회하고 다시 연 창이 green 이면 verify --run 은 그 red 창에 묶이지 않는다(dddjango.md «그 창을 철회하고
+    … 다시 연다»). 철회 없이 남은 red 창의 이동은 «창 밖 이동» 이 잡는다."""
+    repo = Repo(td / "withdraw")
+    repo.write({SV + "__init__.py": "", SV + "moon_phase.py": _vo("moon_phase"), SV + "void_a.py": _vo("void_a"),
+                SV + "void_b.py": _vo("void_b")})
+    folder = _folder(repo, "w", repo.commit("앵커"))
+    repo.write({SV + "void_c.py": _vo("void_c")})
+    base = repo.commit("슬라이스")
+    vc, reds, _out = _window(scripts, repo, folder, 1, "--run-moves",
+                             edit=lambda r: r.write({SV + "moon_phase.py": _vo("moon_phase") + "# 기능 편집\n"}))
+    run.eq("B4 w1 섞인 창 red", vc, 2)
+    keep = td / "withdraw-records"
+    shutil.copytree(repo.root / ".dddjango", keep)
+    repo.git("reset", "-q", "--hard", base)
+    shutil.rmtree(repo.root / ".dddjango")
+    shutil.copytree(keep, repo.root / ".dddjango")
+    repo.commit("w1 철회(제품 편집만)")
+    rc, out = _tool(scripts, "verify", repo.root, "--run", folder)
+    run.true("B4 철회만 하고 다시 열기 전 — red 창이 남음", rc == 2 and "red: red 묶음 창 w1 — 그 창을 철회하고 다시 연다" in out,
+             str(out[-3:]))
+    vc, reds, _out = _window(scripts, repo, folder, 2, "--run-moves")
+    run.eq("B4 다시 연 w2 green", (vc, reds), (0, []))
+    rc, out = _tool(scripts, "verify", repo.root, "--run", folder)
+    run.eq("B4 다시 연 창이 green 이면 verify --run green", (rc, _lines_of(out, "red")), (0, []))
+
+
+def scen_review_promotion(fg, scripts: Path, run: Run, td: Path) -> None:
+    """B5 — 승격 폴더는 통째로 옮겨진다 — expected_moves 도 그 폴더의 모든 파일 쌍을 낸다(`_expand` 와 같이)."""
+    repo = Repo(td / "promo")
+
+    def svc(name: str, ret: str, mod: str) -> str:
+        return (f'"""{name}."""\nfrom {PKG}.{mod} import {ret}\n\n\n'
+                f"def {name}(x: str) -> {ret}:\n    return {ret}(x)\n")
+
+    repo.write({SV + "__init__.py": "", SV + "relation/__init__.py": "", SV + "moon_phase.py": _vo("moon_phase"),
+                **{SV + f"relation/relation_{x}.py": _vo(f"relation_{x}") for x in "abc"},
+                DS + "__init__.py": "", DS + "resolve_relation_a.py": svc("resolve_relation_a", "RelationA",
+                                                                           "relation.relation_a"),
+                DS + "compute_moon_phase.py": svc("compute_moon_phase", "MoonPhase", "moon_phase"),
+                DS + "resolve_ghost/__init__.py": "",
+                DS + "resolve_ghost/resolve_ghost.py": svc("resolve_ghost", "RelationC", "relation.relation_c"),
+                DS + "resolve_ghost/ghost_part.py": '"""부품."""\n\nGHOST: str = "x"\n'})
+    folder = _folder(repo, "p1", repo.commit("앵커"))
+    repo.write({DS + "resolve_relation_b.py": svc("resolve_relation_b", "RelationB", "relation.relation_b")})
+    repo.commit("슬라이스")
+    run.eq("B5 expected_moves — 승격 폴더의 모든 파일", fg.expected_moves(repo.root, folder), {
+        DS + "resolve_ghost/__init__.py": DS + "relation/resolve_ghost/__init__.py",
+        DS + "resolve_ghost/ghost_part.py": DS + "relation/resolve_ghost/ghost_part.py",
+        DS + "resolve_ghost/resolve_ghost.py": DS + "relation/resolve_ghost/resolve_ghost.py",
+        DS + "resolve_relation_a.py": DS + "relation/resolve_relation_a.py"})
+
+
+def scen_review_symlink(fg, scripts: Path, run: Run, td: Path) -> None:
+    """B7 — 손대지 않은 추적 심링크는 창 안 변화가 아니다(양쪽 모두 링크 글 = git blob · 링크 너머를 읽지 않는다)."""
+    repo, _anchor = _debt_repo(td / "link", {"CLAUDE.md": "규칙\n"})
+    (repo.root / "AGENTS.md").symlink_to("CLAUDE.md")
+    folder = _folder(repo, "l", repo.commit("링크"), scope=_scope("ⓐ"))
+    data = fg.worktree_bytes(repo.root).get("AGENTS.md")
+    run.eq("B7 worktree_bytes — 링크 글(blob 지문 = git)", (data, fg.blob_oid(data or b"")),
+           (b"CLAUDE.md", repo.git("rev-parse", "HEAD:AGENTS.md")))
+    vc, reds, _out = _window(scripts, repo, folder, 1, "--debt")
+    run.eq("B7 손대지 않은 심링크 — 창 판정 green", (vc, reds), (0, []))
+
+
+def scen_review_subfolder(fg, scripts: Path, run: Run, td: Path) -> None:
+    """B3 계약 — 하위 폴더 프로젝트 · 커밋하지 않는 실행. 창 열기 기록의 dirty 키는 git 뿌리 기준 경로 · 내용은 git 뿌리에서
+    읽은 바이트다(behavior_guard 쪽 고침의 계약). 그 기록이면 folder_group 의 창 판정 · verify --run 은 green 이다."""
+    import base64
+    import hashlib
+    repo = Repo(td / "sub-nc", "proj")
+    repo.write({SV + "__init__.py": "", SV + "moon_phase.py": _vo("moon_phase"), SV + "void_a.py": _vo("void_a"),
+                SV + "void_b.py": _vo("void_b")})
+    folder = _folder(repo, "nc", repo.commit("앵커"))
+    repo.write({SV + "void_c.py": _vo("void_c"), SV + "moon_phase.py": _vo("moon_phase") + "\nPHASES: int = 8\n"})
+    rc, text = _guard(scripts, repo, folder, "open", "--kind", "code", "--mode", "feature")
+    opened = next((folder / "behavior").rglob("w1-open.json"))
+    record = json.loads(opened.read_text(encoding="utf-8"))
+    for key in record["dirty"]:
+        f = repo.git_root / key
+        data = f.read_bytes() if f.is_file() else None
+        record["dirty"][key] = {"sha": None} if data is None else {
+            "sha": hashlib.sha256(data).hexdigest(), "b64": base64.b64encode(data).decode("ascii")}
+    opened.write_text(json.dumps(record, ensure_ascii=False), encoding="utf-8")
+    _tool(scripts, "apply", repo.root, "--run", folder, "--run-moves")
+    _guard(scripts, repo, folder, "close")
+    vc, vout = _tool(scripts, "verify", repo.root, "--run", folder, "--window", "1")
+    rc2, out2 = _tool(scripts, "verify", repo.root, "--run", folder)
+    run.eq("B3 계약 — 하위 폴더 · 미커밋 창 green", (rc, vc, _lines_of(vout, "red"), rc2, _lines_of(out2, "red")),
+           (0, 0, [], 0, []))
+
+
 # ── 진입 ──────────────────────────────────────────────────────────────────────
 
 def run_all(scripts: Path, fail_fast: bool = False) -> "tuple[Run, object]":
     fg = _load(scripts)
     run = Run()
     steps = (("낱말", lambda td: check_words(fg, scripts, run)), ("픽스처", lambda td: check_cases(fg, run, td)),
+             ("검토 메모리", lambda td: check_review_memory(fg, run)),
              ("병합", lambda td: scen_merge(fg, scripts, run, td)), ("다시 옮김", lambda td: scen_chain(fg, scripts, run, td)),
              ("빚", lambda td: scen_debt(fg, scripts, run, td)), ("이관 빚", lambda td: scen_legacy(fg, scripts, run, td)),
+             ("검토 범위", lambda td: scen_review_scope(fg, scripts, run, td)),
+             ("검토 풀기", lambda td: scen_review_dissolve(fg, scripts, run, td)),
+             ("검토 겹침", lambda td: scen_review_clash(fg, scripts, run, td)),
+             ("검토 인코딩", lambda td: scen_review_encoding(fg, scripts, run, td)),
+             ("검토 남는 파일", lambda td: scen_review_leftover(fg, scripts, run, td)),
+             ("검토 알림", lambda td: scen_review_notice(fg, scripts, run, td)),
+             ("검토 창", lambda td: scen_review_windows(fg, scripts, run, td)),
+             ("검토 승격", lambda td: scen_review_promotion(fg, scripts, run, td)),
+             ("검토 링크", lambda td: scen_review_symlink(fg, scripts, run, td)),
+             ("검토 하위 폴더", lambda td: scen_review_subfolder(fg, scripts, run, td)),
              ("검사기", lambda td: check_checkers(fg, scripts, run, td)))
     with tempfile.TemporaryDirectory(prefix="fg-fixture-") as tmp:
         for name, step in steps:
@@ -729,12 +1119,12 @@ _MUTATIONS: "tuple[tuple[str, str, str], ...]" = (
     ("주인 = 가장 긴 것을 오른쪽에서", "owner, at = matches[0]",
      "owner, at = max(reversed(matches), key=lambda x: len(x[0]))"),
     ("죽을 묶음을 한 바퀴에 모두 뺌",
-     "worst = min(bad, key=lambda b: (b[0], b[1], b[2]))\n        live[worst[1]].discard(worst[3])",
+     "worst = min(bad, key=lambda b: (slots[b[1]].service, b[0], b[1], b[2]))\n        live[worst[1]].discard(worst[3])",
      "for worst in bad:\n            live[worst[1]].discard(worst[3])"),
     ("E3 행 지움", "if why is None and len(realized) == 1 and parent_count == 0:", "if False:"),
     ("M3 행 지움", "if why is None and slots[parent].service and g in svc_stems.get(parent, set()):", "if False:"),
     ("닻 없음 행 지움", 'elif not any(a.anchor in ("bare", "phrase", "head", "return") for a in got):', "elif False:"),
-    ("자기 애그리거트 구도 단위", 'if "_" in a and a != slot.agg)', 'if "_" in a)'),
+    ("자기 애그리거트 구도 단위", 'if "_" in a and not all(w in domain for w in a.split("_")))', 'if "_" in a)'),
     ("서비스 칸이 값 객체 칸 단위를 모름", "universe[parent] |= vo_side", "universe[parent] |= set()"),
     ("서비스 반환이 예외 클래스도 셈", "and not index.is_exception(*ref):", ":"),
     ("dict 반환에서 키 타입도 셈", "args = args[-1:]", "args = args"),
@@ -792,6 +1182,57 @@ _MUTATIONS: "tuple[tuple[str, str, str], ...]" = (
      "(bset | (g1 - g0p)) - ((bset & g0p) - g1)"),
     ("⓪ 새 파일은 이관 빚 고정 없음", "if any(sub in ln for sub in legacy_list for ln in own_lines):",
      "if k in debt_m and any(sub in ln for sub in legacy_list for ln in own_lines):"),
+    # 검토 고침(2.28.0 검토 A · B · S) — 고침을 되돌린다
+    ("A1 «푼다» 만 골라도 미룬 «만든다» 자리로", "debt_pairs.append((path, fp.member.flat))",
+     "debt_pairs.append((path, fp.target))"),
+    ("A2 도구 범위 — domain_layer 를 아무 깊이에서 찾음(web · 시험 거울)",
+     'parts: "list[str]" = path.split("/")\n    if len(parts) < 4 or parts[0] != "application" or parts[2] != LAYER:',
+     'parts: "list[str]" = path.split("/")\n    if LAYER in parts[1:-1]:\n        return parts[parts.index(LAYER) - 1]\n'
+     '    if len(parts) < 4 or parts[0] != "application" or parts[2] != LAYER:'),
+    ("A3 drops 무시(이미 빈 묶음을 못 풂)", "init in drop_set or any(old.startswith(d + \"/\") for old in where)):",
+     "any(old.startswith(d + \"/\") for old in where)):"),
+    ("A3 placement_drops 없음", 'out.append(f"{parent}/{g}/__init__.py")\n    return out', "pass\n    return out"),
+    ("A3 실행 계획 drops 없음", "drops=_run_drops(now, current, final, s_groups)", "drops=[]"),
+    ("A4 빈 init = 0바이트만", "if rest == [init] and empty_init(out[init]) and (", 'if rest == [init] and out[init] == "" and ('),
+    ("A4 창 판정 — docstring init 지움을 받지 않음", "and empty_init(before) \\", 'and before == "" \\'),
+    ("B10 창 판정 — 묶음 아닌 빈 __init__ 지움도 받음", "and d in then_dirs and d not in now_dirs:", "and d not in now_dirs:"),
+    ("A5 영역 낱말만으로 된 이웃 애그리거트 구도 단위", 'if "_" in a and not all(w in domain for w in a.split("_")))',
+     'if "_" in a and a != slot.agg)'),
+    ("A6 서비스 이름 사전 = 서비스 칸 live 전부", "hit = _match(w, names)", "hit = _match(w, live)"),
+    ("A6 반환으로 서는 묶음을 이름 사전에서 뺌", 'mine: "set[Tuple[str, ...]]" = own.get(parent, set()) | {tuple(g.split("_")) for g in ret_groups}',
+     'mine: "set[Tuple[str, ...]]" = own.get(parent, set())'),
+    ("A6 죽음 차례 — 값 객체 칸 먼저 없음", "key=lambda b: (slots[b[1]].service, b[0], b[1], b[2])",
+     "key=lambda b: (b[0], b[1], b[2])"),
+    ("A7 모듈 조각 뒤 공백 · 역슬래시까지 바꿈", "lines.byte_of(toks[a_tok].start), lines.byte_of(toks[b_tok].end)",
+     "lines.byte_of(toks[a_tok].start), lines.byte_of(toks[b_tok + 1].start)"),
+    ("A7 `from .import` 띄움 없음", 'rep += b" "', 'rep += b""'),
+    ("A7 한 줄 복합문 · 역슬래시 나눔을 막지 않음", 'why: "Optional[str]" = _split_block(toks, i, j)', 'why: "Optional[str]" = None'),
+    ("A7 나눔이 주석을 버림", "if not any(t.type == tokenize.COMMENT for t in toks[i:j + 1]):", "if True:"),
+    ("A7 hazards 가 못 고치는 나눔을 안 냄",
+     'blocked += [f"{path}:{line} {why}" for line, why in rewrite_blocks(text, path, where.get(path, path), moves)]',
+     "pass"),
+    ("A8 계획이 이름 겹침을 모름",
+     'clash: "set[Tuple[str, str]]" = set(_clash_keys(t0)) | set(_clash_keys(t0p)) | set(_clash_keys(now))',
+     'clash: "set[Tuple[str, str]]" = set()'),
+    ("A8 placement_moves 가 겹친 둘을 옮김", "if fp.target == path or _key(fp.member) in clash:\n            continue\n        unit",
+     "if fp.target == path:\n            continue\n        unit"),
+    ("A8 apply 가 이름 겹침에 멈추지 않음",
+     'stops: "list[str]" = (hz.blocked + _disk_blocks(root, undecodable, full, drops, all_paths)\n'
+     '                          + [f"이름 겹침 {a} {b}" for a, b in plan.clashes])',
+     'stops: "list[str]" = (hz.blocked + _disk_blocks(root, undecodable, full, drops, all_paths))'),
+    ("A9 알림 셈이 형성 · 해체를 겹쳐 셈", "        elif (k[0], _group_of(plan.debt[k])) in plan.dissolved:",
+     "        if (k[0], _group_of(plan.debt[k])) in plan.dissolved:"),
+    ("B4 red 창은 다시 연 green 창 뒤에도 red",
+     '\n                        and not any(m > n and last[m]["verdict"] == "green" for m in last)]', "]"),
+    ("B5 expected_moves 가 승격 부품을 뺌", "return dict(_expand(plan.pairs(plan.anchor, plan.final), run.anchor_paths))",
+     "return dict(plan.pairs(plan.anchor, plan.final))"),
+    ("B7 심링크를 건너뜀", "        if f.is_symlink():\n            out[rel] = os.fsencode", "        if False:\n            out[rel] = os.fsencode"),
+    ("S1 UTF-8 아닌 소스를 바꿔 읽음", "    try:\n        return data.decode(\"utf-8\")\n    except UnicodeDecodeError:\n        return \"\"",
+     "    return data.decode(\"utf-8\", \"replace\")"),
+    ("S1 UTF-8 아닌 소스를 막지 않음", 'out.append(f"{p}:1 UTF-8 아닌 소스")', "pass"),
+    ("S2 푸는 묶음 폴더에 남는 파일을 막지 않음", 'out.append(f"{rest[0]}:1 푸는 묶음 폴더의 .py 아닌 파일")', "pass"),
+    ("S3 파서 «너무 깊음» 을 잡지 않음", "except (SyntaxError, ValueError, RecursionError, MemoryError):",
+     "except (SyntaxError, ValueError):"),
 )
 
 

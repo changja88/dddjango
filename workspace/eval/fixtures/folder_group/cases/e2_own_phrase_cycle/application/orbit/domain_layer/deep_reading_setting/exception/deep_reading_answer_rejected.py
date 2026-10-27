@@ -1,0 +1,2 @@
+class DeepReadingAnswerRejected(Exception):
+    pass
