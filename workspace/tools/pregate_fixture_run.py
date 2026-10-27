@@ -2077,6 +2077,53 @@ def _run_group_bundle(scratch: Path, failures: "list[str]") -> None:
         print("group-move-spec: exit 0 · 사본이 앵커 커밋 전에 void_a · void_b(형성) · term_c(ⓐ)를 옮김 · 옛 위반 L∩N — 기대 일치")
 
 
+def _run_group_legacy_bundle(scratch: Path, failures: "list[str]") -> None:
+    """검토 B2 — 설계 5절 ⓪: 이관 빚 목록이 붙든 묶음 자리(`void/` 을 만든다)를 pre-gate 사본도 지킨다. 같은 목록을 받은
+    `folder_group.py draft --legacy-debt-file` 이 새 파일 자리를 평평하게 주면, 그 자리를 적은 명세의 pre-gate 는 사본에서
+    `void_a` · `void_b` 를 옮기지 않고(묶음 이동 0) 예보 0 이다 — pre-gate 와 draft 가 같은 계산을 쓴다."""
+    repo: Path = scratch / "repo-group-legacy"
+    shutil.copytree(FIXTURES / "mini_repo", repo)
+    shutil.copytree(FIXTURES / "group_overlay", repo, dirs_exist_ok=True)
+    shutil.rmtree(repo / _GROUP_SV / "term")
+    (repo / _GROUP_SV / "term_c.py").unlink()
+    _git(repo, "init", "-q")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "fixture-baseline+flat-void")
+    run: Path = scratch / "group-legacy-run"
+    run.mkdir()
+    (run / "refactor-scope.md").write_text("실행 · G0 승인 group-legacy\n\n", encoding="utf-8")
+    legacy: Path = scratch / "group-legacy-debt.txt"
+    legacy.write_text(f"#656 {_GROUP_SV}__init__.py: 묶음 `void/` 을(를) 만든다\n", encoding="utf-8")
+    spec: Path = run / "design-spec.md"
+    spec.write_text((FIXTURES / "group-move-spec.md").read_text(encoding="utf-8").replace(
+        _GROUP_SV + "void/void_c.py", _GROUP_SV + "void_c.py"), encoding="utf-8")
+    draft: "subprocess.CompletedProcess[str]" = subprocess.run(
+        [sys.executable, "-I", str(EXECUTOR.parent / "folder_group.py"), "draft", str(repo), "--bc", "orders",
+         "--spec", str(spec), "--run", str(run), "--legacy-debt-file", str(legacy)], capture_output=True, text=True)
+    want_new: str = f"새 파일 {_GROUP_SV}void_c.py -> {_GROUP_SV}void_c.py"
+    report: Path = scratch / "pregate-report-group-legacy.md"
+    proc: "subprocess.CompletedProcess[str]" = _run_pregate(spec, repo, report,
+                                                            ["--keep", "--legacy-debt-file", str(legacy)])
+    kept: "re.Match[str] | None" = _KEEP_RE.search(proc.stdout)
+    layout: "dict[str, bool]" = {}
+    if kept is not None:
+        copy: Path = Path(kept.group(1)) / "copy"
+        for rel in ("void_a.py", "void_b.py", "void_c.py", "void/void_a.py", "void/void_c.py"):
+            layout[rel] = (copy / _GROUP_SV / rel).is_file()
+        shutil.rmtree(kept.group(1), ignore_errors=True)
+    forecast: "list[str]" = [ln for ln in proc.stdout.splitlines() if _FORECAST_RULE_RE.match(ln)]
+    want_layout: "dict[str, bool]" = {"void_a.py": True, "void_b.py": True, "void_c.py": True,
+                                      "void/void_a.py": False, "void/void_c.py": False}
+    if (draft.returncode != 0 or want_new not in draft.stdout or proc.returncode != 0 or forecast
+            or layout != want_layout or "묶음 이동(사본" in proc.stdout):
+        failures.append(f"group-legacy(검토 B2) 기대 draft «{want_new}» · pre-gate exit 0 · 묶음 이동 0 · 예보 0 · 사본 자리 "
+                        f"{want_layout} ≠ 실측 draft exit {draft.returncode} · pre-gate exit {proc.returncode} · 자리 {layout} "
+                        f"· 예보 {forecast}")
+        _dump("group-legacy", proc)
+    else:
+        print("group-legacy: 이관 빚이 붙든 `void/` — draft 와 pre-gate 사본이 같은 자리(평평) · 묶음 이동 0 · 예보 0 — 기대 일치")
+
+
 def _sid(path: str) -> str:
     """선언 #541 행의 안정 ID — 실행기 `_stable_id` 와 같은 결합(sha256(규칙#+경로)[:12])을 러너가 독립으로 계산한다."""
     return hashlib.sha256(f"#541+{path}".encode("utf-8")).hexdigest()[:12]
@@ -2085,18 +2132,23 @@ def _sid(path: str) -> str:
 # (이름, 옛 글, 새 글) — 옛 글은 design_pregate.py 에 정확히 한 번 있어야 한다(계획 «단계 3 변이 회귀» pre-gate).
 _MUTATIONS: "tuple[tuple[str, str, str], ...]" = (
     ("apply_to_copy 를 앵커 커밋 뒤로",
-     '        group_moved: "list[tuple[str, str]]" = _group_copy_moves(copy, plan, spec_path.parent)\n'
+     '        group_moved: "list[tuple[str, str]]" = _group_copy_moves(copy, plan, spec_path.parent, group_legacy)\n'
      '        _git(copy, "init", "-q")\n        _git(copy, "add", "-A")\n'
      '        _git(copy, "commit", "-q", "-m", "pregate-anchor", "--allow-empty")\n',
      '        _git(copy, "init", "-q")\n        _git(copy, "add", "-A")\n'
      '        _git(copy, "commit", "-q", "-m", "pregate-anchor", "--allow-empty")\n'
-     '        group_moved: "list[tuple[str, str]]" = _group_copy_moves(copy, plan, spec_path.parent)\n'),
+     '        group_moved: "list[tuple[str, str]]" = _group_copy_moves(copy, plan, spec_path.parent, group_legacy)\n'),
+    ("사본 이동이 이관 빚 고정(5절 ⓪)을 안 지킴(검토 B2)",
+     "    plan_g = folder_group.plan_for(run, legacy)\n", "    plan_g = folder_group.plan_for(run)\n"),
+    ("사본 게이트에 이관 빚 목록을 안 넘김(검토 B2)",
+     '        + (["--legacy-debt-file", str(legacy_debt_file)] if legacy_debt_file is not None else []),\n', ",\n"),
 )
 
 
 def _only_group(scratch: Path) -> "list[str]":
     failures: "list[str]" = _group_unit_checks()
     _run_group_bundle(scratch, failures)
+    _run_group_legacy_bundle(scratch, failures)
     return failures
 
 
@@ -2176,6 +2228,7 @@ def main(argv: "list[str]") -> int:
         _run_stub_material_bundle(scratch, failures)      # D17 소유 · #652
         _run_publish_bundle(scratch, failures)            # F4-93 · #541 선언 예보
         _run_group_bundle(scratch, failures)              # 2.28.0 의미 묶음 — 사본 이동은 앵커 커밋 전(설계 9.3)
+        _run_group_legacy_bundle(scratch, failures)       # 검토 B2 — 이관 빚이 붙든 묶음 자리(설계 5절 ⓪)
 
         if failures:
             print("\nFAIL — pre-gate 픽스처 기대 불일치:")

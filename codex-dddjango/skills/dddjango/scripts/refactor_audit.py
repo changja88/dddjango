@@ -2022,7 +2022,8 @@ def _gate_group_moves(path: Path) -> "tuple[dict[str, str], list[str]]":
 
 def _moved_c(folder: Path, lines: "list[DecisionLine]", pairs: "dict[str, str]", moved: "list[str]") -> "list[str]":
     """M_c 의 이동 몫(설계 9.4) — 이번 실행 ⓐ `C<n>`(재상정으로 뺀 것 제외) 행의 옛 경로를 쌍의 새 경로로 바꾼 글이 게이트의
-    «이동 따라 옮긴 legacy» 줄을 품으면 잔존이다(줄 번호는 게이트처럼 `:N`)."""
+    «이동 따라 옮긴 legacy» 줄을 위반 칸 통째로 품으면 잔존이다(줄 번호는 게이트처럼 `:N` · 줄 뒤가 칸 끝 — 표 행은 `|`, 목록 행은
+    ` · ` 나 줄 끝 — 이어야 한다: 그 줄이 다른 위반 글의 앞부분일 뿐이면 맞지 않는다 · 검토 SB2)."""
     fg = _folder_group_module()
     live: "set[str]" = ({k for d in lines if d.decision and not d.reconsider and d.token.startswith("ⓐ")
                          and not d.token.startswith("ⓐ′") for k in d.ckeys}
@@ -2035,7 +2036,8 @@ def _moved_c(folder: Path, lines: "list[DecisionLine]", pairs: "dict[str, str]",
         if cid not in live:
             continue
         text: str = re.sub(r":\d+", ":N", sub(raw) if sub is not None else raw)
-        if any(line and line in text for line in moved):
+        end: str = r"(?=`?\s*\|)" if raw.strip().startswith("|") else r"(?=`?\s*(?:·|$))"
+        if any(line and re.search(re.escape(line) + end, text) for line in moved):
             out.add(cid)
     return sorted(out, key=lambda k: int(k[1:]))
 
@@ -2568,6 +2570,9 @@ def _other_edits(text: str, vids: "set[str]") -> "tuple[list[dict], list[str]]":
             reds.append(f"{no}행 다른 BC 편집 갈래 `{kind}` 가 {' · '.join(OTHER_EDIT_KINDS)} 밖")
         if ref not in OTHER_EDIT_REFS and not (re.fullmatch(r"V\d+", ref) and ref in vids):
             reds.append(f"{no}행 다른 BC 편집 연결 `{ref}` 가 0C · 0F · 목록의 V 가 아니다")
+        elif kind == GROUP_IMPORT_KIND and ref != "0C":
+            reds.append(f"{no}행 다른 BC 편집 갈래 `{GROUP_IMPORT_KIND}` 의 연결 `{ref}` 가 0C 가 아니다(0C 묶음 창에서만 — "
+                        "설계 10절)")
         out.append({"path": norm, "kind": kind, "ref": ref})
     return out, reds
 

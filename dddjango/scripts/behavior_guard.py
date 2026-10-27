@@ -93,8 +93,16 @@ def _git(repo: Path, *args: str, check: bool = True) -> str:
 
 
 def _git_bytes(repo: Path, rev: str, path: str) -> "bytes | None":
-    proc = subprocess.run(["git", "-C", str(repo), "show", f"{rev}:{path}"], capture_output=True)
+    """커밋의 파일 원문 — `path` 는 프로젝트 기준(`<rev>:./<path>` — 하위 폴더 프로젝트에서도 · 검토 B3)."""
+    proc = subprocess.run(["git", "-C", str(repo), "show", f"{rev}:./{path}"], capture_output=True)
     return proc.stdout if proc.returncode == 0 else None
+
+
+def _prefix(repo: Path) -> str:
+    """프로젝트 루트의 git 뿌리 기준 접두(`proj/` · 뿌리면 빈 글). 이 도구는 경로를 프로젝트 기준으로 다루고(git 이 뿌리 기준으로
+    내는 status 를 이것으로 깎는다), 창 기록의 `dirty` 키 · `merged_excluded` 만 git 뿌리 기준으로 적는다(`folder_group` 이 접두를
+    깎아 읽는 기록 계약 · 검토 B3)."""
+    return _git(repo, "rev-parse", "--show-prefix").strip()
 
 
 def _is_ancestor(repo: Path, older: str, newer: str) -> bool:
@@ -121,7 +129,7 @@ def _tree_files(repo: Path, rev: str) -> "list[str]":
 
 
 def _dirty(repo: Path) -> "list[str]":
-    """HEAD 대비 작업 트리 변경 경로(수정·삭제·미추적) — `.dddjango/` 제외."""
+    """HEAD 대비 작업 트리 변경 경로(수정·삭제·미추적 · 프로젝트 기준 — 프로젝트 밖은 뺀다) — `.dddjango/` 제외."""
     out: str = _git(repo, "status", "--porcelain=v1", "-z", "--untracked-files=all")
     paths: "set[str]" = set()
     tokens: "list[str]" = out.split("\0")
@@ -135,7 +143,8 @@ def _dirty(repo: Path) -> "list[str]":
                 if i < len(tokens) and tokens[i]:
                     paths.add(tokens[i])
         i += 1
-    return sorted(p for p in paths if not _excluded(p))
+    pre: str = _prefix(repo)
+    return sorted(p[len(pre):] for p in paths if p.startswith(pre) and not _excluded(p[len(pre):]))
 
 
 def _sha(data: "bytes | None") -> "str | None":
@@ -1007,6 +1016,7 @@ def cmd_open(folder: Path, repo: Path, kind: str, mode: str) -> int:
     dirty: "list[str]" = _dirty(repo)
     files: "list[str]" = _worktree_files(repo)
     test_dirs: "set[str]" = _test_dirs(files)
+    pre: str = _prefix(repo)
     dirty_entries: "dict[str, dict]" = {}
     for p in dirty:
         data: "bytes | None" = (repo / p).read_bytes() if (repo / p).is_file() else None
@@ -1014,7 +1024,7 @@ def cmd_open(folder: Path, repo: Path, kind: str, mode: str) -> int:
         # 리팩토링 모드는 창 기준선의 모든 미커밋 원문을 남긴다(시험 쪽 분류가 비 .py 로 넓다 · 감사 키의 «전»).
         if data is not None and (mode == "refactor" or p.endswith(".py") or _is_test(p, test_dirs) or p in PYTEST_FILES):
             entry["b64"] = base64.b64encode(data).decode("ascii")
-        dirty_entries[p] = entry
+        dirty_entries[pre + p] = entry                   # 기록 키는 git 뿌리 기준(`_record_dirty` 가 깎아 읽는다)
     read = lambda q: (repo / q).read_bytes() if (repo / q).is_file() else None  # noqa: E731
     config: "dict[str, str]" = _pytest_config(repo)
     cases: "dict[str, list[str]]" = _cases(files, read, config, lambda q: _is_test(q, test_dirs))
@@ -1045,6 +1055,18 @@ def cmd_open(folder: Path, repo: Path, kind: str, mode: str) -> int:
 
 # ── close ────────────────────────────────────────────────────────────────────
 
+def _record_dirty(repo: Path, opened: dict) -> "dict[str, dict]":
+    """open 기록의 미커밋 원문(키는 git 뿌리 기준)을 프로젝트 기준 경로로 — 프로젝트 밖 키는 뺀다(검토 B3)."""
+    pre: str = _prefix(repo)
+    return {p[len(pre):]: e for p, e in opened["dirty"].items() if p.startswith(pre)}
+
+
+def _record_paths(repo: Path, paths: "set[str]") -> "list[str]":
+    """기록에 적는 경로(git 뿌리 기준) — `merged_excluded` 계약(`folder_group` 이 접두를 깎아 읽는다 · 검토 B3)."""
+    pre: str = _prefix(repo)
+    return sorted(pre + p for p in paths)
+
+
 def _approved_merges(repo: Path, folder: Path) -> "set[str]":
     """발주자 승인 머지 목록(`approved-merges.txt` — `<SHA> [메모]` · `//` 주석)의 전체 SHA."""
     listed: Path = folder / "approved-merges.txt"
@@ -1061,7 +1083,7 @@ def _approved_merges(repo: Path, folder: Path) -> "set[str]":
 
 
 def _diff_names(repo: Path, a: str, b: str) -> "set[str]":
-    return {p for p in _git(repo, "diff", "--no-renames", "--name-only", "-z", a, b).split("\0") if p}
+    return {p for p in _git(repo, "diff", "--no-renames", "--relative", "--name-only", "-z", a, b).split("\0") if p}
 
 
 def _merge_paths(repo: Path, folder: Path, head0: str) -> "tuple[set[str], set[str], list[str]]":
@@ -1133,7 +1155,7 @@ def cmd_close(folder: Path, repo: Path) -> int:
     overlap: "set[str]" = merged & lane
     if overlap:
         raise RunError("판정 불가(머지 겹침) — 승인 머지가 들여온 경로를 레인도 바꿨다: " + ", ".join(sorted(overlap)[:5]))
-    dirty0: "dict[str, dict]" = opened["dirty"]
+    dirty0: "dict[str, dict]" = _record_dirty(repo, opened)
 
     def read_then(p: str) -> "bytes | None":
         if p in dirty0:
@@ -1274,7 +1296,7 @@ def cmd_close(folder: Path, repo: Path) -> int:
                 notes.append(f"{old_path} — 재수출만 남은 모듈(patch(\"{old_mod}.…\") 는 헛돈다 — 사각)")
     verdict: str = "red" if reds else "green"
     closes.append({"closed": _now(), "verdict": verdict, "range": f"{head0}..{head}", "reds": reds, "notes": notes,
-                   "green_files": sorted(green_files), "merged_excluded": sorted(merged),
+                   "green_files": sorted(green_files), "merged_excluded": _record_paths(repo, merged),
                    "maps": {"pairs": len(maps.pairs), "dirs": len(maps.dirs), "modules": len(maps.mm),
                             "definitions": len(maps.dm), "renames": len(maps.rn)},
                    # 대응 원소(옛 경로 → 새 경로) — 리팩토링 모드 G2 잔존 판정·5번 감사가 옮긴 자리를 읽는다.
@@ -1295,8 +1317,8 @@ def cmd_close(folder: Path, repo: Path) -> int:
 
 
 def _git_worktree_changes(repo: Path, head0: str) -> "set[str]":
-    """작업 트리 대 창 기준 커밋의 경로(추적 파일)."""
-    return {p for p in _git(repo, "diff", "--no-renames", "--name-only", "-z", head0).split("\0") if p}
+    """작업 트리 대 창 기준 커밋의 경로(추적 파일 · 프로젝트 기준)."""
+    return {p for p in _git(repo, "diff", "--no-renames", "--relative", "--name-only", "-z", head0).split("\0") if p}
 
 
 def _removed_cases(folder: Path) -> "collections.Counter[str]":
@@ -1343,6 +1365,7 @@ MIGRATION_OPS: "frozenset[str]" = frozenset({
     "AddField", "RemoveField", "AlterField", "RenameField", "AddIndex", "RemoveIndex", "RenameIndex",
     "AddConstraint", "RemoveConstraint", "AlterUniqueTogether", "AlterIndexTogether"})
 FOLLOW_OUTSIDE_KINDS: "frozenset[str]" = frozenset({"프로젝트 합성", "공유 표면", "묶음 import 치환"})
+GROUP_IMPORT_KIND: str = "묶음 import 치환"   # 0C 묶음 창에서만 · 그 창의 묶음 이동을 따른 import 치환만(설계 10절 · 검토 B8)
 D_FIXED: "frozenset[str]" = frozenset({"확정 변화", "확정 변화(지역 정의)", "삭제", "추가"})
 D_KINDS: "tuple[str, ...]" = ("기대식", "맥락만", "지역 정의", "추가", "삭제", "공유 정의 변화")
 SPOT_LIMIT: int = 300
@@ -2628,13 +2651,50 @@ def _confirmed_snapshot(folder: Path, repo: Path, label: str) -> dict:
     return snap
 
 
-def _outside_allowed(kind: str, edits: "list[dict]") -> "set[str]":
-    """대상 BC 밖에서 이 창이 고쳐도 되는 경로(§3-5 · §4-5 «창 종류가 허락한 갈래만») — 0T 는 없음(루트 pytest 설정 절은
-    `_side_rules` 가 따로 받는다) · 0C · 0F 는 «다른 BC 편집 목록»의 프로젝트 합성 · 공유 표면 · 묶음 import 치환 줄 · 변경 창은
-    목록 전부."""
+def _outside_kinds(kind: str) -> str:
+    """창 종류가 받는 «다른 BC 편집 목록» 갈래(보고 글) — 갈래 `묶음 import 치환` 은 0C 만 받는다(설계 10절 :478 · 검토 B8)."""
+    if kind == "change":
+        return f"목록 전부({GROUP_IMPORT_KIND} 빼고)"
+    return " · ".join(sorted(FOLLOW_OUTSIDE_KINDS if kind == "code" else FOLLOW_OUTSIDE_KINDS - {GROUP_IMPORT_KIND}))
+
+
+def _outside_allowed(kind: str, edits: "list[dict]") -> "tuple[set[str], set[str]]":
+    """(대상 BC 밖에서 이 창이 고쳐도 되는 경로, 그 가운데 갈래 `묶음 import 치환` 줄로만 받은 경로)(§3-5 · §4-5 «창 종류가 허락한
+    갈래만») — 0T 는 없음(루트 pytest 설정 절은 `_side_rules` 가 따로 받는다) · 0C 는 «다른 BC 편집 목록»의 프로젝트 합성 · 공유 표면 ·
+    묶음 import 치환 줄 · 0F 는 프로젝트 합성 · 공유 표면 줄 · 변경 창은 묶음 import 치환 밖 목록 전부. 묶음 import 치환 줄로만 받은
+    경로의 내용은 `_group_import_reds` 가 본다(그 창의 묶음 이동을 따른 import 치환만)."""
     if kind == "test":
-        return set()
-    return {e["path"] for e in edits if kind == "change" or e.get("kind") in FOLLOW_OUTSIDE_KINDS}
+        return set(), set()
+    plain: "set[str]" = {e["path"] for e in edits if e.get("kind") != GROUP_IMPORT_KIND
+                         and (kind == "change" or e.get("kind") in FOLLOW_OUTSIDE_KINDS)}
+    group: "set[str]" = ({e["path"] for e in edits if e.get("kind") == GROUP_IMPORT_KIND and GROUP_IMPORT_KIND
+                          in FOLLOW_OUTSIDE_KINDS} - plain) if kind == "code" else set()
+    return plain | group, group
+
+
+def _group_import_reds(w: "_CloseWindow") -> "list[str]":
+    """갈래 `묶음 import 치환` 줄로만 받은 대상 BC 밖 경로 — 지금 글이 창 기준 글에 이 창의 묶음 이동(`folder_group.actual_moves` ·
+    같은 묶음 부모 · 같은 이름 · 칸만 다름)을 따른 import 치환(`folder_group.rewrite_source` — apply · verify --window 와 같은 함수)일
+    때만 받는다(설계 10절 :478 · 검토 B8). 이 창에 묶음 이동이 없으면(묶음 창이 아니면) 받을 치환이 없어 어떤 편집도 red 다."""
+    touched: "list[str]" = sorted(p for p in w.group_listed if p in w.changed and not p.startswith(w.inside))
+    if not touched:
+        return []
+    import folder_group  # noqa: PLC0415 — 묶음 이동 판정 함수(같은 스크립트 폴더)
+    then: "dict[str, str]" = {p: folder_group.blob_oid(a) for p, (a, _b) in w.changed.items() if a is not None}
+    now: "dict[str, str]" = {p: folder_group.blob_oid(b) for p, (_a, b) in w.changed.items() if b is not None}
+    pairs: "list[tuple[str, str]]" = sorted(folder_group.actual_moves(then, now).items())
+    moves: "dict[str, str]" = folder_group.module_moves(pairs)
+    sub: "Callable[[str], str] | None" = folder_group.string_substituter(pairs) if pairs else None
+    reds: "list[str]" = []
+    for p in touched:
+        before, after = (_text(x) for x in w.changed[p])
+        if before is not None and after is not None and sub is not None:
+            want: str = folder_group.rewrite_source(before, p, p, moves, sub) if p.endswith(".py") else sub(before)
+            if after == want:
+                continue
+        reds.append(f"{p} — 갈래 `{GROUP_IMPORT_KIND}` 은 이 창의 묶음 이동을 따른 import 치환만 받는다(0C 묶음 창 · 이 창의 "
+                    f"묶음 이동 {len(pairs)}쌍 · 설계 10절)")
+    return reds
 
 
 def _target_bc(folder: Path) -> str:
@@ -2675,6 +2735,7 @@ class _CloseWindow(NamedTuple):
     prior: "list[tuple[dict, dict]]"
     renamed: "tuple[dict, ...]" = ()          # 이 창이 적용한 개명 쌍(창 기준 케이스 이름을 옛 → 새 로 읽는다)
     rename_items: "tuple[dict, ...]" = ()     # 이 창이 받은 개명 행 항목(`at` · `done` — 같은 창 이동 + 개명 알림)
+    group_listed: "frozenset[str]" = frozenset()  # 갈래 `묶음 import 치환` 줄로만 받은 대상 BC 밖 경로(0C — 내용 대조)
 
 
 def _renamed_cases(path: str, names: "list[str]", renamed: "tuple[dict, ...]") -> "list[str]":
@@ -2768,8 +2829,9 @@ def _side_rules(w: _CloseWindow) -> "tuple[list[str], list[str], list[str], list
         reds += [f"테스트 케이스 추가 `{k}` ×{c}(승인판 add 행 밖)" for k, c in (came - room_add).items()]
         removed_ok = sorted((gone & room_rm).elements())
     outside = [p for p in sorted(w.changed) if not p.startswith(w.inside) and p not in w.listed]
-    allowed_kinds: str = "목록 전부" if kind == "change" else " · ".join(sorted(FOLLOW_OUTSIDE_KINDS))
+    allowed_kinds: str = _outside_kinds(kind)
     reds += [f"{p} — 대상 BC(`{w.inside}`) 밖 경로가 다른 BC 편집 목록 밖(창 {label} 허용 갈래: {allowed_kinds})" for p in outside]
+    reds += _group_import_reds(w)
     return reds, notes, removed_ok, sorted(came.elements()) if kind == "change" else [], outside
 
 
@@ -2850,6 +2912,8 @@ def _close_refactor(folder: Path, repo: Path, run_dir: Path, n: int, opened: dic
     inside: str = f"application/{_target_bc(folder)}/"
     allow: "dict | None" = None
     judge_allow: "dict | None"
+    listed: "set[str]"
+    group_listed: "set[str]"
     prior: "list[tuple[dict, dict]]" = [(o, c[-1]) for m, o, c in _windows(run_dir) if m < n and c]
     if kind in ("follow", "change"):
         current: str = _g1_state(folder, repo)[0]
@@ -2857,12 +2921,12 @@ def _close_refactor(folder: Path, repo: Path, run_dir: Path, n: int, opened: dic
             raise RunError(f"명세 승인판 digest {current} ≠ 창 결속 {opened.get('g1_digest')} — 승인판이 바뀌었으면 "
                            "G1 변경판 확정 · rebind 뒤에 close 한다")
         allow = judge_allow = opened["allow"]
-        listed: "set[str]" = _outside_allowed(kind, list(opened["allow"].get("other_bc_edits", [])))
+        listed, group_listed = _outside_allowed(kind, list(opened["allow"].get("other_bc_edits", [])))
         removable: "collections.Counter[str]" = collections.Counter()
         rename_items: "list[dict]" = list(opened["allow"].get("renames", [])) if kind == "follow" else []
     else:
         snap: dict = _confirmed_snapshot(folder, repo, label)
-        listed = _outside_allowed(kind, list(snap.get("other_bc_edits", [])))
+        listed, group_listed = _outside_allowed(kind, list(snap.get("other_bc_edits", [])))
         removable = collections.Counter(str(r["case"]) for r in snap.get("remove_rows", []) if r.get("v") is None)
         judge_allow = {"remove_cases": sorted(removable),
                        "update_rows": list(snap.get("update_rows", []))} if kind == "test" else None
@@ -2872,7 +2936,7 @@ def _close_refactor(folder: Path, repo: Path, run_dir: Path, n: int, opened: dic
     if rename_items:                                      # 개명 행 — 0T · 0F 가 받고 0C 는 red 로 본다(변경 창 밖)
         judge_allow = dict(judge_allow or {}, renames=rename_items)
     config_now: "dict[str, str]" = _pytest_config(repo)
-    dirty0: "dict[str, dict]" = opened["dirty"]
+    dirty0: "dict[str, dict]" = _record_dirty(repo, opened)
 
     def read_then(p: str) -> "bytes | None":
         if p in dirty0:
@@ -2905,7 +2969,7 @@ def _close_refactor(folder: Path, repo: Path, run_dir: Path, n: int, opened: dic
         alias_renamed(removable, [it for it in rename_items if it["done"]] + [u["item"] for u in judged.renamed])
     window = _CloseWindow(folder, repo, kind, opened, allow, inside, listed, removable, merged, changed, maps, judged.is_test,
                           files_now,
-                          read_then, read_now, config_now, prior, judged.renamed, tuple(rename_items))
+                          read_then, read_now, config_now, prior, judged.renamed, tuple(rename_items), frozenset(group_listed))
     reds: "list[str]" = [f"{d.path} — {d.reason}" for d in disps if d.disposition == RED]
     notes: "list[str]" = [f"미승인 머지 {s} — 들여온 경로를 레인 편집으로 판정(approved-merges.txt 밖)" for s in unapproved]
     side_reds, side_notes, removed_ok, cases_added, outside = _side_rules(window)
@@ -2950,7 +3014,7 @@ def _close_refactor(folder: Path, repo: Path, run_dir: Path, n: int, opened: dic
     if renamed:
         exceptions["renamed"] = renamed                   # 창 당시 경로 · 클래스 · 옛 → 새(G2 유지 대응 — behavior_support)
     closes.append({"closed": _now(), "verdict": verdict, "range": f"{head0}..{head}", "reds": reds, "notes": notes,
-                   "green_files": [], "merged_excluded": sorted(merged),
+                   "green_files": [], "merged_excluded": _record_paths(repo, merged),
                    "maps": {"pairs": len(maps.pairs), "dirs": len(maps.dirs), "modules": len(maps.mm),
                             "definitions": len(maps.dm), "renames": len(maps.rn)},
                    "map_items": {"pairs": dict(sorted(maps.pairs.items())), "dirs": dict(sorted(maps.dirs.items())),

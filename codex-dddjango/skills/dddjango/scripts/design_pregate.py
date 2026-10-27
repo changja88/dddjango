@@ -4225,8 +4225,9 @@ def _interpreter_gap_reason(repo: Path, python_bin: str) -> "str | None":
 
 
 def run_gate(copy: Path, scratch: Path, python_bin: str,
-             source_root: "Path | None" = None) -> GateResult:
-    """registry 원 exit/stdout과 전체 귀속/원본 레코드 재료를 보존한다."""
+             source_root: "Path | None" = None, legacy_debt_file: "Path | None" = None) -> GateResult:
+    """registry 원 exit/stdout과 전체 귀속/원본 레코드 재료를 보존한다. 이관 빚 목록은 G2 게이트처럼 넘긴다 — 목록이 붙든
+    줄(5절 ⓪ 의 «만든다» 줄 등)은 빚 절로 가고 예보가 아니다."""
     introduced: Path = scratch / "introduced.json"
     env: "dict[str, str]" = dict(os.environ)
     env["DJR_FINDINGS_JSON"] = str(scratch / "findings.jsonl")  # 스크래치 격리(D3)
@@ -4237,7 +4238,8 @@ def run_gate(copy: Path, scratch: Path, python_bin: str,
         env["DJR_SISTER_SOURCE_ROOT"] = str(source_root)
     proc: "subprocess.CompletedProcess[str]" = subprocess.run(
         [python_bin, str(SCRIPTS_DIR / "registry_gate.py"), str(copy),
-         "--anchor", "HEAD", "--introduced-json", str(introduced)],
+         "--anchor", "HEAD", "--introduced-json", str(introduced)]
+        + (["--legacy-debt-file", str(legacy_debt_file)] if legacy_debt_file is not None else []),
         capture_output=True, text=True, env=env)
     if proc.returncode not in (0, 2):
         raise RunError(f"registry_gate 실행 불능(exit {proc.returncode}): "
@@ -5242,11 +5244,12 @@ def main(argv: "list[str]") -> int:
         return 1
 
 
-def _group_copy_moves(copy: Path, plan: Plan, folder: Path) -> "list[tuple[str, str]]":
+def _group_copy_moves(copy: Path, plan: Plan, folder: Path, legacy: "list[str]") -> "list[tuple[str, str]]":
     """설계 9.3 — 격리 사본(기준선 ⊕ 승인 유입 ⊕ 미커밋 = 이 실행의 T₀′)에서 G0 ⓐ 묶음 빚 이동과 이 명세가 부르는 이 실행의
     이동(«지금 내용» = 사본 + file-plan `add` 이름 · `remove` — `folder_group.py draft --spec` 과 같은 재료)을 한다. 앵커 커밋
     «전» 에 불러 옮긴 파일의 옛 위반이 앵커 스냅숏(L)에도 실린다. 아직 없는 `add` 의 자리는 옮기지 않는다(명세가 묶음 경로로
-    적는다). `refactor-scope.md` 는 명세의 산출물 폴더에서 읽는다. 돌려주는 값은 한 쌍(승격 폴더는 넓힌 쌍)."""
+    적는다). `refactor-scope.md` 는 명세의 산출물 폴더에서 읽는다. 이관 빚 목록의 #656 줄(`legacy`)이 붙든 묶음 자리는
+    `draft --legacy-debt-file` 처럼 지킨다(5절 ⓪). 돌려주는 값은 한 쌍(승격 폴더는 넓힌 쌍)."""
     files: "dict[str, str]" = folder_group.scan_tree(copy)[0]
     tags: "dict[str, str]" = {"/".join(_plan_parts(p)): e.tag for p, e in plan.entries.items()}
     now: "dict[str, str]" = {p: t for p, t in files.items() if tags.get(p) != "remove"}
@@ -5256,7 +5259,7 @@ def _group_copy_moves(copy: Path, plan: Plan, folder: Path) -> "list[tuple[str, 
     scope: Path = folder / "refactor-scope.md"
     run = folder_group.load_run(copy, None, None, now_files=now)._replace(
         scope=scope.read_text(encoding="utf-8") if scope.is_file() else "")
-    plan_g = folder_group.plan_for(run)
+    plan_g = folder_group.plan_for(run, legacy)
     pairs: "list[tuple[str, str]]" = [(a, b) for a, b in plan_g.pairs(plan_g.current, plan_g.final) if (copy / a).is_file()]
     return folder_group.apply_to_copy(copy, pairs) if pairs else []
 
@@ -5273,6 +5276,9 @@ def _main(argv: "list[str]") -> int:
     ap.add_argument(anchor_diff.APPROVED_MERGE_FLAG, dest="approved_merge_file", default=None,
                     help="발주자 소유 승인 머지 목록(`<산출물 폴더>/approved-merges.txt`) — 기준선..HEAD 참여 머지의 "
                          "verbatim 유입(추가·수정·삭제)을 기준선 사본에 적용한다(registry_gate 와 같은 검증 · F4-21)")
+    ap.add_argument("--legacy-debt-file", dest="legacy_debt_file", default=None,
+                    help="발주자 소유 이관 빚 목록 — 그 #656 줄이 붙든 묶음 자리를 사본 묶음 이동에서 지킨다(설계 5절 ⓪ · "
+                         "`folder_group.py draft --legacy-debt-file` 과 같은 계산)")
     ap.add_argument("--python", dest="python_bin", default=sys.executable,
                     help="검사기 인터프리터(대상 venv — 기본 sys.executable)")
     ap.add_argument("--keep", action="store_true", help="격리 사본·스크래치 보존(디버그)")
@@ -5315,6 +5321,12 @@ def _main(argv: "list[str]") -> int:
         return run_check_report(text, Path(ns.check_report).resolve(), blk_hash, expect_base=ns.expect_base)
     if not (repo / ".git").exists():
         print(f"실행 불능: git 저장소가 아니다 — {repo} (차분 예보는 git 앵커가 전제다)", file=sys.stderr)
+        return 1
+    try:
+        group_legacy: "list[str]" = folder_group.legacy_entries(
+            Path(ns.legacy_debt_file).resolve() if ns.legacy_debt_file is not None else None)
+    except (folder_group.FolderGroupError, OSError) as exc:
+        print(f"실행 불능(사용 오류): --legacy-debt-file — {exc}", file=sys.stderr)
         return 1
 
     base_ref: str = ns.base or "HEAD"
@@ -5469,7 +5481,7 @@ def _main(argv: "list[str]") -> int:
         # 기실현 add 는 앵커 커밋 «전»에 걷어낸다 — 앵커 스냅숏(L)에 실물이 남으면 스텁 진단이 잔존으로 빠진다.
         realized: "frozenset[str]" = lift_realized_adds(copy, plan, explicit_base, in_baseline)
         # 묶음 이동(2.28.0 · 설계 9.3)도 앵커 커밋 «전» 에 한다 — 옮긴 파일의 옛 위반이 L∩N 으로 남게(뒤면 N∖L 로 예보된다).
-        group_moved: "list[tuple[str, str]]" = _group_copy_moves(copy, plan, spec_path.parent)
+        group_moved: "list[tuple[str, str]]" = _group_copy_moves(copy, plan, spec_path.parent, group_legacy)
         _git(copy, "init", "-q")
         _git(copy, "add", "-A")
         _git(copy, "commit", "-q", "-m", "pregate-anchor", "--allow-empty")
@@ -5538,7 +5550,8 @@ def _main(argv: "list[str]") -> int:
         print(f"실체화 {len(mat['materialized'])}건 · dirty overlay {len(overlaid)}건 · "
               f"미시뮬레이션 {len(mat['unsimulated'])}건 · already-built {len(mat['already_built'])}건")
 
-        gate_result = run_gate(copy, scratch, ns.python_bin, source_root=repo)
+        gate_result = run_gate(copy, scratch, ns.python_bin, source_root=repo,
+                               legacy_debt_file=Path(ns.legacy_debt_file).resolve() if ns.legacy_debt_file else None)
         attributed, deferred = partition_generated_findings(gate_result, mat["generated_methods"], copy)
         print("\n== 원 registry 결과 ==\n" + gate_result["raw_stdout"].rstrip())
         raw_summary = (f"원 registry 결과: exit {gate_result['raw_exit']} · 귀속 {len(gate_result['attributed_lines'])}건 · "

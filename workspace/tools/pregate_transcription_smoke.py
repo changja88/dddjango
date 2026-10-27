@@ -1282,12 +1282,26 @@ class DomainServiceForecastTest(GardenFixture):
                          [])
 
     def test_targets_follow_checker_selection_and_add_is_left_to_the_registry(self) -> None:
-        for path in (f"{GARDEN}/domain_layer/plant/watering.py", f"{GARDEN}/domain_layer/domain_service/sub/watering.py",
-                     f"{GARDEN}/domain_layer/domain_service/__init__.py"):
+        # 2.28.0 의미 묶음: `domain_service/sub/` 는 묶음 폴더라 그 직계 파일을 검사기(check-domain-model 의 `group_members`)가
+        # 고르고 같은 서명에 #308 을 낸다 — 예보도 같다. 묶음 안 하위 폴더의 승격 본체 아닌 파일 · 다른 칸 · `__init__` 은 고르지 않는다.
+        for path, expected in ((f"{GARDEN}/domain_layer/plant/watering.py", []),
+                               (f"{GARDEN}/domain_layer/domain_service/sub/inner/watering.py", []),
+                               (f"{GARDEN}/domain_layer/domain_service/__init__.py", []),
+                               (f"{GARDEN}/domain_layer/domain_service/sub/watering.py",
+                                [("#308", "WateringPolicy.is_due", True)])):
             with self.subTest(path=path):
+                before: "bytes | None" = (self.repo / path).read_bytes() if (self.repo / path).is_file() else None
                 self.write(path, POLICY_HEAD)
                 self.assertEqual(self.outcome([f"{path}::WateringPolicy", f"{path}::WateringPolicy.is_due(plant: Plant) -> bool"],
-                                              paths=[path]), [])
+                                              paths=[path]), expected)
+                # 기대의 근거 — 같은 서명을 실물에 넣으면 실검사기가 고르는지(#308 줄 유무)가 기대와 같다.
+                self.write(path, POLICY_HEAD + "\n\nclass WateringPolicy:\n    def is_due(self, plant: Plant) -> bool:\n"
+                                               "        return True\n")
+                self.assertEqual(bool(self.checker_lines("check-domain-model.py", "#308", path)), bool(expected), path)
+                if before is None:
+                    (self.repo / path).unlink()
+                else:
+                    (self.repo / path).write_bytes(before)
         added = f"{GARDEN}/domain_layer/domain_service/feeding.py"
         plan, errors = pg.parse_spec(spec_text([f"add {added}"], [f"{added}::FeedingPolicy",
                                                                    f"{added}::FeedingPolicy.is_due(plant: Plant) -> bool"]))

@@ -1743,6 +1743,16 @@ def _debt_rows(line: str, decision: str) -> str:
             f"D1 · 결정 = {decision} · 사유 = 시험 · 출처 = 본인 직접(0000)\n")
 
 
+# 앵커 · 현재에서 `django.db` 를 import 하는 값 객체 파일 하나가 내는 줄의 규칙 — 검사기 실제 출력(단계 2 뒤): 문맥 격리 #2 ·
+# domain 밖 import #8 · 공유 값 객체 칸 import #298(2.28.0 단계 2 가 더함). 시험은 개수가 아니라 이 규칙 묶음을 견준다.
+_DJANGO_DB_RULES: "list[str]" = ["#2", "#298", "#8"]
+
+
+def _rule_tags(lines: "list[str]") -> "list[str]":
+    """줄마다 `[#n]` 규칙 꼬리표 — 정렬."""
+    return sorted(tag for ln in lines for tag in re.findall(r"\[(#\d+)\]", ln))
+
+
 def _top_lines(body: str) -> "list[str]":
     """절 본문의 줄(두 칸 들여쓰기 · ` :: ` 가 있는 줄 — `↳` 줄 · 쌍 줄은 뺀다)."""
     return [ln.strip() for ln in body.splitlines()
@@ -1846,10 +1856,10 @@ class GroupMoveGateRegression(unittest.TestCase):
         code, out, data = self.gate(repo, anchor, folder)
         self.assertEqual(code, 0, out)
         moved: "list[str]" = _top_lines(_section(out, _MOVED_TITLE))
-        self.assertEqual(len(moved), 2, out)
+        self.assertEqual(_rule_tags(moved), _DJANGO_DB_RULES, out)
         self.assertTrue(all(f"{_SV}void/void_c.py" in ln and "django.db" in ln for ln in moved), moved)
         self.assertIn("↳ 앵커: ", _section(out, _MOVED_TITLE))
-        self.assertIn("판정: 귀속 0건 → green(신규 위반 없음)(이동 따라 옮긴 legacy 2건 제외)", out)
+        self.assertIn("판정: 귀속 0건 → green(신규 위반 없음)(이동 따라 옮긴 legacy 3건 제외)", out)
         self.assertEqual(data.get("group_moves", {}).get("pairs"), {f"{_SV}void_c.py": f"{_SV}void/void_c.py"})
         self.assertEqual(sorted(x["line"] for x in data["group_moves"]["lines"]), sorted(moved))
         self.assertEqual(data["attributed_lines"], [])
@@ -1863,7 +1873,8 @@ class GroupMoveGateRegression(unittest.TestCase):
         self.assertEqual(code, 2, out)
         self.assertEqual(_top_lines(_section(out, _MOVED_TITLE)), [])
         attributed: "list[str]" = _top_lines(_section(out, "귀속(N∖L)"))
-        self.assertEqual(len([ln for ln in attributed if f"{_SV}void/void_c.py" in ln and "django.db" in ln]), 2, out)
+        self.assertEqual(_rule_tags([ln for ln in attributed if f"{_SV}void/void_c.py" in ln and "django.db" in ln]),
+                         _DJANGO_DB_RULES, out)
         self.assertIn(f"계산 밖 이동(쌍에서 뺌 — 그 파일의 옛 위반은 귀속) {_SV}void_c.py -> {_SV}void/void_c.py", out)
         self.assertEqual(data["group_moves"]["pairs"], {})
         self.assertEqual(data["group_moves"]["dropped"], {f"{_SV}void_c.py": f"{_SV}void/void_c.py"})
@@ -1889,7 +1900,7 @@ class GroupMoveGateRegression(unittest.TestCase):
         _code, out, data = self.gate(repo, anchor, folder, "--approved-merge-file", str(folder / "approved-merges.txt"))
         x_new: str = f"{_SV}solar_term/solar_term_x.py"
         moved: "list[str]" = [ln for ln in _top_lines(_section(out, _MOVED_TITLE)) if x_new in ln]
-        self.assertEqual(len(moved), 2, out)
+        self.assertEqual(_rule_tags(moved), _DJANGO_DB_RULES, out)
         self.assertFalse(any(x_new in ln for ln in _top_lines(_section(out, "귀속(N∖L)"))), out)
         self.assertEqual(data["group_moves"]["pairs"].get(f"{_SV}solar_term_x.py"), x_new)
 
@@ -1912,9 +1923,114 @@ class GroupMoveGateRegression(unittest.TestCase):
         a_new: str = f"{_SV}void/void_a.py"
         self.assertEqual(data["group_moves"]["pairs"].get(f"{_SV}void_a.py"), a_new)
         inflow: "list[str]" = [ln for ln in _top_lines(_section(out, "승인 유입")) if a_new in ln]
-        self.assertEqual(len(inflow), 2, out)
+        self.assertEqual(_rule_tags(inflow), _DJANGO_DB_RULES, out)
         self.assertFalse(any(a_new in ln for ln in _top_lines(_section(out, _MOVED_TITLE))), out)
         self.assertFalse(any(a_new in ln for ln in _top_lines(_section(out, "귀속(N∖L)"))), out)
+
+    def test_pure_move_candidate_lines_follow_the_pair(self) -> None:
+        # 검토 SB1 — ⓓ 후보 줄도 같은 쌍 · 같은 치환으로 따라간다: 옮긴 파일의 옛 ⓓ 줄은 감수자에게 «ⓓ 신규» 로 가지 않는다.
+        repo, anchor, folder = _pure_move_repo(self.td, "cand")
+        rc, out = _fg_tool("apply", repo, "--run", folder, "--debt")
+        self.assertEqual(rc, 0, out)
+        _commit_all(repo, "묶음 창 — void_c 를 void/ 로")
+        code, out, data = self.gate(repo, anchor, folder)
+        self.assertEqual(code, 0, out)
+        self.assertIn("== ⓓ 신규(N′∖L′) 0건 · legacy 4건 · 해소 0건", out)
+        self.assertEqual(data["candidate_lines"], [], data)
+        self.assertIn(f"{_SV}void/void_c.py", _section(out, "ⓓ 신규"))  # 이동 따라 legacy 로 센 ⓓ 줄은 보고에 남는다
+
+    def test_relative_import_lines_follow_the_depth_rewrite(self) -> None:
+        # 검토 B6 — 검사기는 상대 import 를 쓴 그대로 인용하고 apply 는 깊이를 바꾼다(`...x` → `....x`). 줄 대응은 그 파일 앵커 원문에
+        # apply 와 같은 import 기계 치환을 한 결정적 깊이 표로 견준다: 순수 이동 ⇒ 귀속 0(설계 :205) · 깊이 치환 밖으로 바뀐 줄은 귀속.
+        for label, edit, expected_code in (("순수 이동", None, 0),
+                                          ("깊이 치환 밖 변경", ("from ....application_layer import port",
+                                                           "from ....application_layer.port import port"), 2)):
+            with self.subTest(label=label):
+                repo, _pre = _make_repo(self.td, f"rel-{expected_code}")
+                body: str = _fg_vo("void_c", "from ..order.order import Order", "from ...application_layer import port",
+                                   "from ... import application_layer", "from .. import order")
+                for rel, text in {_SV + "void/__init__.py": "", _SV + "void/void_a.py": _fg_vo("void_a"),
+                                  _SV + "void/void_b.py": _fg_vo("void_b"), _SV + "void_c.py": body,
+                                  _SV + "moon_phase.py": _fg_vo("moon_phase")}.items():
+                    _write(repo, rel, text)
+                anchor: str = _commit_all(repo, "앵커 — 상대 import 를 쓰는 평평한 void_c")
+                folder: Path = _fg_folder(repo, f"rel-{expected_code}", anchor,
+                                          _debt_rows(f"[#656] {_SV}void_c.py: 묶음 `void/` 에 둔다", "ⓐ"))
+                rc, out = _fg_tool("apply", repo, "--run", folder, "--debt")
+                self.assertEqual(rc, 0, out)
+                moved_text: str = (repo / _SV / "void/void_c.py").read_text(encoding="utf-8")
+                self.assertIn("from ....application_layer import port", moved_text)
+                if edit is not None:
+                    (repo / _SV / "void/void_c.py").write_text(moved_text.replace(*edit), encoding="utf-8")
+                _commit_all(repo, "묶음 창")
+                code, out, _data = self.gate(repo, anchor, folder)
+                self.assertEqual(code, expected_code, out)
+                attributed: "list[str]" = _top_lines(_section(out, "귀속(N∖L)"))
+                moved_body: str = _section(out, _MOVED_TITLE)
+                self.assertIn("— `....application_layer`" if edit is None else "— `....`", moved_body)
+                self.assertIn("↳ 앵커: " + "check-context-isolation.py :: [#1] " + _SV + "void_c.py", moved_body)
+                if edit is None:
+                    self.assertEqual(attributed, [], out)
+                    self.assertIn("— `....`", moved_body)
+                else:  # 바꾼 import 의 두 줄(#1 상대 글 · #298 해석한 점 경로)만 귀속 — 나머지 옛 줄은 그대로 따라간다
+                    self.assertEqual(_rule_tags(attributed), ["#1", "#298"], out)
+                    self.assertTrue(all("application_layer.port`" in ln for ln in attributed), out)
+                    self.assertIn("— `....application_layer.port`", "\n".join(attributed))
+
+    def test_merge_inflow_then_lane_move_stays_inflow(self) -> None:
+        # 검토 B1 — 승인 병합이 들인 위반(앵커에 없던 줄)은 상류 경로에서 «승인 유입» 이다. 레인 자신의 새 파일이 부른 형성이 받은
+        # 파일을 옮기면(설계 :255 «병합이 들인 void_b 도 옮긴다») 그 줄은 T₀′ 자리에서 유입 증명을 받는다 — 귀속 0. 옮긴 뒤 내용까지
+        # 고치면(이동 치환만이 아니다) 옮기지 않은 경우의 «레인 커밋 수정» 처럼 귀속으로 남고, 계산 밖에서 손으로 옮긴 받은 파일
+        # (셋째 파일 없음 — 형성 아님)의 줄도 귀속이다(쌍 = 실제 ∩ 계산 · 설계 9.4).
+        for label, upstream_new, lane_edit, by_hand in (("상류가 앵커 파일을 고침", False, False, False),
+                                                        ("상류가 새 파일을 더함", True, False, False),
+                                                        ("옮긴 뒤 레인이 내용도 고침", True, True, False),
+                                                        ("계산 밖에서 손으로 옮김", True, False, True)):
+            with self.subTest(label=label):
+                name: str = f"inflow-move-{int(upstream_new)}{int(lane_edit)}{int(by_hand)}"
+                repo, _pre = _make_repo(self.td, name)
+                for stem in ("void_a", "moon_phase", "star_x"):
+                    _write(repo, _SV + f"{stem}.py", _fg_vo(stem))
+                anchor: str = _commit_all(repo, "앵커")
+                _git(repo, "checkout", "-q", "-b", "lane")
+                _write(repo, _SV + "star_x.py", _fg_vo("star_x") + "# 레인\n")
+                _commit_all(repo, "레인 편집")
+                _git(repo, "checkout", "-q", "main")
+                bad: str = "void_b" if upstream_new else "void_a"
+                _write(repo, _SV + f"{bad}.py", _fg_vo(bad, "from django.db import models"))
+                _commit_all(repo, "상류")
+                _git(repo, "checkout", "-q", "lane")
+                proc: "subprocess.CompletedProcess[str]" = _git(repo, "merge", "-q", "--no-ff", "-m", "M main 받음", "main")
+                self.assertEqual(proc.returncode, 0, proc.stderr)
+                folder: Path = _fg_folder(repo, name, anchor, merges=(_head(repo),))
+                approved: str = str(folder / "approved-merges.txt")
+                moved: str = f"{_SV}void/{bad}.py"
+                if by_hand:
+                    (repo / _SV / "void").mkdir()
+                    _write(repo, _SV + "void/__init__.py", "")
+                    _git(repo, "mv", f"{_SV}{bad}.py", moved)
+                else:
+                    for stem in (("void_c",) if upstream_new else ("void_b", "void_c")):
+                        _write(repo, _SV + f"{stem}.py", _fg_vo(stem))
+                    _commit_all(repo, "레인 슬라이스 — 새 파일(void 셋째)")
+                    rc, out = _fg_tool("apply", repo, "--run", folder, "--run-moves")
+                    self.assertEqual(rc, 0, out)
+                if lane_edit:
+                    _write(repo, moved, (repo / moved).read_text(encoding="utf-8") + "# 레인이 고침\n")
+                _commit_all(repo, "끝 맞춤 묶음 창")
+                code, out, data = self.gate(repo, anchor, folder, "--approved-merge-file", approved)
+                attributed: "list[str]" = [ln for ln in _top_lines(_section(out, "귀속(N∖L)")) if moved in ln]
+                inflow: "list[str]" = [ln for ln in _top_lines(_section(out, "승인 유입")) if moved in ln]
+                if lane_edit or by_hand:
+                    self.assertEqual(code, 2, out)
+                    self.assertEqual(_rule_tags(attributed), _DJANGO_DB_RULES, out)
+                    self.assertEqual(inflow, [], out)
+                else:
+                    self.assertEqual(code, 0, out)
+                    self.assertEqual(attributed, [], out)
+                    self.assertEqual(_rule_tags(inflow), _DJANGO_DB_RULES, out)
+                    self.assertIn(f"묶음 이동 따라 {_SV}{bad}.py", _section(out, "승인 유입"))
+                    self.assertEqual(data["attributed_lines"], [])
 
     def test_line_matching_is_one_to_one(self) -> None:
         gate: ModuleType = _gate_module()
@@ -2080,20 +2196,32 @@ def _unnumbered_debt_rows(td: Path, repo: Path, anchor: str, debt: Path,
     return rows
 
 
-# (이름, [(옛 글, 새 글) …]) — 옛 글은 registry_gate.py 에 정확히 한 번 있어야 한다. 계획 «단계 3 변이 회귀»의 게이트 채널 다섯.
+# (이름, [(옛 글, 새 글) …]) — 옛 글은 registry_gate.py 에 정확히 한 번 있어야 한다. 계획 «단계 3 변이 회귀»의 게이트 채널 다섯 +
+# 검토 B 고침(B6 깊이 표 · SB1 ⓓ 후보 줄 · B1 이동 따라 유입 · 순수 이동 확인 · 앵커 밖 T₀′ 파일의 계산 대조).
 _MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...]], ...]" = (
-    ("채널 지움", (("attributed, resolved, moved = _follow_moves(attributed, resolved, group_pairs)", "moved = {}"),)),
+    ("채널 지움", (("attributed, resolved, moved = _follow_moves(attributed, resolved, group_pairs, source)",
+                  "moved = {}"),)),
     ("쌍을 실제만으로(계산과 교집합 안 함)", (("if expected.get(a) == c:", "if True:"),)),
     ("1:1 대신 다:1", (("[line for line in resolved if line not in taken]",
-                       "[line for line in resolved if subst(line) not in moved]"),)),
+                       "[line for line in resolved if mover(line) not in moved]"),)),
     ("채널을 승인 유입 판정 앞에", (
-        ("        moved: \"dict[str, str]\" = {}\n        if group_pairs is not None:\n"
-         "            attributed, resolved, moved = _follow_moves(attributed, resolved, group_pairs)\n", ""),
+        ("            attributed, resolved, moved = _follow_moves(attributed, resolved, group_pairs, source)\n", ""),
         ("        if approved_path is not None:\n            # 순서: attributed → 빚 분리 → provenance 분리(빚 우선) → 잔여 = exit 근거.\n",
-         "        moved: \"dict[str, str]\" = {}\n        if group_pairs is not None:\n"
-         "            attributed, resolved, moved = _follow_moves(attributed, resolved, group_pairs)\n"
+         "        if group_pairs is not None:\n"
+         "            attributed, resolved, _early = _follow_moves(attributed, resolved, group_pairs, _snapshot_reader(pair_root))\n"
          "        if approved_path is not None:\n            # 순서: attributed → 빚 분리 → provenance 분리(빚 우선) → 잔여 = exit 근거.\n"))),
     ("병합 몫을 이어 붙이지 않음", (("b: str = merge_share.get(a, a)", "b: str = a"),)),
+    ("상대 import 깊이 표 없이(경로 치환만 — 검토 B6)",
+     (("tables[path] = _depth_table(text, path, where.get(path, path), moves) if text else {}", "tables[path] = {}"),)),
+    ("ⓓ 후보 줄은 이동을 따라가지 않음(검토 SB1)", (
+        ("            cand_new, _cand_gone, cand_moved = _follow_moves(\n"
+         "                cand_new, sorted((l_cands - n_cands) - set(cand_shrunk.values())), group_pairs, source)\n",
+         "            _cand_gone: \"list[str]\" = []\n"),)),
+    ("이동 따라 유입 판정 지움(검토 B1)",
+     (("            if provenance is not None and group is not None and group.lane and attributed:", "            if False:"),)),
+    ("순수 이동 확인 지움(검토 B1)", (("        if c not in self.pure:", "        if False:"),)),
+    ("앵커 밖 T₀′ 파일은 계산과 견주지 않음(검토 B1)",
+     (("lane.update({b: c for b, c in fresh.items() if base_final.get(b) == c})", "lane.update(fresh)"),)),
 )
 
 
