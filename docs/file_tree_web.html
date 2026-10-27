@@ -494,7 +494,7 @@
 <div class="wrap">
 
 <header class="top">
-  <p class="kicker">dddjango-web 2.1.0 · 웹 표준 트리</p>
+  <p class="kicker">dddjango-web 2.8.3 · 웹 표준 트리</p>
   <h1>web/ 하나에 간소화 DDD 4층 — 지식은 한 방향</h1>
   <p class="lede">dddart 의 표준 파일트리를 그대로 가져와 구현 기술만 <b>Django · HTML · HTMX · JS</b> 로 바꿨다. BC 마다 <b>domain · application · infra · presentation</b> 네 층을 두고, 화면 지식은 <b>View → VM → UseCase → Repo</b> 한 방향으로만 흐른다. 기존 코드의 위반은 면제가 아니라 <b>빚</b>이다 — 이번 요청이 손대는 범위의 빚은 G0 에서 묻고, 고르면 기능보다 먼저 동작 그대로 정리한다.</p>
 </header>
@@ -521,7 +521,7 @@
       <div class="tabwrap">
         <div class="tabrail" role="tablist">
         <div class="pgroup">
-        <button type="button" class="tabbtn on" data-p="root-c" role="tab" aria-selected="true"><span class="tb-n">web/</span><span class="tb-s">컨테이너 뿌리 · 엔트리포인트</span><span class="tb-z z-own">셸</span><span class="tb-c">10</span></button>
+        <button type="button" class="tabbtn on" data-p="root-c" role="tab" aria-selected="true"><span class="tb-n">web/</span><span class="tb-s">컨테이너 뿌리 · 엔트리포인트</span><span class="tb-z z-own">셸</span><span class="tb-c">11</span></button>
           <div class="ptree on" id="pt-root-c">
             <div class="tree-scroll">
               <div class="tree-head"><span>경로 <em>· 한 줄 메모</em></span><span>검사</span></div>
@@ -562,6 +562,10 @@
           <span class="path"><i class="g t"></i><b class="nm">static/</b><em class="nmr">정적 자리 → static 탭</em></span>
           <span class="flagcell keep"><button type="button" class="pin w" data-k="st">ST</button></span>
         </div>
+        <div data-r="95" class="tr own" style="--d:1">
+          <span class="path"><i class="g t"></i><b class="nm">product_registry.json</b><em class="nmr">선택 · 제품 선언</em></span>
+          <span class="flagcell keep"><button type="button" class="pin w" data-k="st">ST</button></span>
+        </div>
         <div data-r="10" class="tr own" style="--d:1">
           <span class="path"><i class="g l"></i><b class="nm">sdk_registry.json</b><em class="nmr">조건 생성 · 공식 SDK 목록</em></span>
           <span class="flagcell keep"><button type="button" class="pin wp" data-k="wv">WV</button></span>
@@ -571,7 +575,7 @@
           </div>
         </div>
         <div class="pgroup">
-        <button type="button" class="tabbtn" data-p="root" role="tab" aria-selected="false"><span class="tb-n">root/</span><span class="tb-s">합성 루트 · 역할 4폴더</span><span class="tb-z z-own">셸</span><span class="tb-c">16</span></button>
+        <button type="button" class="tabbtn" data-p="root" role="tab" aria-selected="false"><span class="tb-n">root/</span><span class="tb-s">합성 루트 · 역할 4폴더</span><span class="tb-z z-own">셸</span><span class="tb-c">17</span></button>
           <div class="ptree" id="pt-root">
             <div class="tree-scroll">
               <div class="tree-head"><span>경로 <em>· 한 줄 메모</em></span><span>검사</span></div>
@@ -597,8 +601,12 @@
           <span class="flagcell keep"><button type="button" class="pin w" data-k="st">ST</button></span>
         </div>
         <div data-r="16" class="tr own" style="--d:3">
-          <span class="path"><i class="g v"></i><i class="g v"></i><i class="g l"></i><b class="nm">root_view.html</b><em class="nmr">모든 페이지가 extends 하는 셸</em></span>
-          <span class="flagcell keep"><button type="button" class="pin w" data-k="im">IM</button></span>
+          <span class="path"><i class="g v"></i><i class="g v"></i><i class="g t"></i><b class="nm">root_view.html</b><em class="nmr">모든 페이지가 extends 하는 셸 · 새로 지으면 지속 셸</em></span>
+          <span class="flagcell keep"><button type="button" class="pin w" data-k="im">IM</button><button type="button" class="pin w" data-k="sh">SH</button></span>
+        </div>
+        <div data-r="96" class="tr own" style="--d:3">
+          <span class="path"><i class="g v"></i><i class="g v"></i><i class="g l"></i><b class="nm">root_&lt;제품&gt;_view.html</b><em class="nmr">선택 · own 제품의 독립 문서 셸</em></span>
+          <span class="flagcell keep"><button type="button" class="pin w" data-k="im">IM</button><button type="button" class="pin w" data-k="nm">NM</button></span>
         </div>
         <div data-r="17" class="tr own" style="--d:2">
           <span class="path"><i class="g v"></i><i class="g t"></i><b class="nm">view_model/</b></span>
@@ -793,7 +801,7 @@
           <span class="flagcell keep"><button type="button" class="pin w" data-k="nm">NM</button><button type="button" class="pin w" data-k="im">IM</button></span>
         </div>
         <div data-r="55" class="tr mv" style="--d:2">
-          <span class="path"><i class="g v"></i><i class="g l"></i><b class="nm">&lt;화면&gt;_view.html</b><em class="nmr">root_view.html 을 extends</em></span>
+          <span class="path"><i class="g v"></i><i class="g l"></i><b class="nm">&lt;화면&gt;_view.html</b><em class="nmr">문서 셸을 extends</em></span>
           <span class="flagcell keep"><button type="button" class="pin w" data-k="nm">NM</button><button type="button" class="pin w" data-k="im">IM</button><button type="button" class="pin wp" data-k="pu">PU</button></span>
         </div>
         <div data-r="56" class="tr mv" style="--d:1">
@@ -855,7 +863,7 @@
           </div>
         </div>
         <div class="pgroup">
-        <button type="button" class="tabbtn" data-p="ds" role="tab" aria-selected="false"><span class="tb-n">design_system/</span><span class="tb-s">토큰 7파일 · 공용 부품</span><span class="tb-z z-clean">시각</span><span class="tb-c">9</span></button>
+        <button type="button" class="tabbtn" data-p="ds" role="tab" aria-selected="false"><span class="tb-n">design_system/</span><span class="tb-s">토큰 7파일 · 공용 부품</span><span class="tb-z z-clean">시각</span><span class="tb-c">10</span></button>
           <div class="ptree" id="pt-ds">
             <div class="tree-scroll">
               <div class="tree-head"><span>경로 <em>· 한 줄 메모</em></span><span>검사</span></div>
@@ -890,18 +898,22 @@
         </div>
         <div data-r="74" class="tr clean" style="--d:3">
           <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g l"></i><b class="nm">&lt;수식&gt;_&lt;군&gt;.html + .css</b><em class="nmr">클래스 &lt;수식&gt;-&lt;군&gt;</em></span>
-          <span class="flagcell keep"><button type="button" class="pin w" data-k="nm">NM</button></span>
+          <span class="flagcell keep"><button type="button" class="pin w" data-k="nm">NM</button><button type="button" class="pin w" data-k="cs">CS</button></span>
         </div>
         <div data-r="75" class="tr clean" style="--d:1">
-          <span class="path"><i class="g l"></i><b class="nm">util/</b><em class="nmr">시각 동작 헬퍼 CSS</em></span>
+          <span class="path"><i class="g t"></i><b class="nm">util/</b><em class="nmr">시각 동작 헬퍼 CSS</em></span>
           <span class="flagcell keep"><button type="button" class="pin w" data-k="st">ST</button></span>
+        </div>
+        <div data-r="97" class="tr clean" style="--d:1">
+          <span class="path"><i class="g l"></i><b class="nm">&lt;제품&gt;/</b><em class="nmr">선택 · own 제품 뿌리 · 같은 네 폴더</em></span>
+          <span class="flagcell keep"><button type="button" class="pin w" data-k="st">ST</button><button type="button" class="pin w" data-k="im">IM</button></span>
         </div>
               </div>
             </div>
           </div>
         </div>
         <div class="pgroup">
-        <button type="button" class="tabbtn" data-p="static" role="tab" aria-selected="false"><span class="tb-n">static/</span><span class="tb-s">조각 CSS · JS · htmx · SDK 사본</span><span class="tb-z z-clean">시각</span><span class="tb-c">14</span></button>
+        <button type="button" class="tabbtn" data-p="static" role="tab" aria-selected="false"><span class="tb-n">static/</span><span class="tb-s">조각 CSS · JS · htmx · SDK 사본</span><span class="tb-z z-clean">시각</span><span class="tb-c">16</span></button>
           <div class="ptree" id="pt-static">
             <div class="tree-scroll">
               <div class="tree-head"><span>경로 <em>· 한 줄 메모</em></span><span>검사</span></div>
@@ -923,16 +935,24 @@
           <span class="flagcell keep"><button type="button" class="pin w" data-k="st">ST</button></span>
         </div>
         <div data-r="80" class="tr clean" style="--d:2">
-          <span class="path"><i class="g v"></i><i class="g l"></i><b class="nm">&lt;조각 stem&gt;.css</b><em class="nmr">템플릿과 같은 stem</em></span>
+          <span class="path"><i class="g v"></i><i class="g t"></i><b class="nm">&lt;조각 stem&gt;.css</b><em class="nmr">템플릿과 같은 stem</em></span>
           <span class="flagcell keep"><button type="button" class="pin w" data-k="nm">NM</button></span>
+        </div>
+        <div data-r="99" class="tr clean" style="--d:2">
+          <span class="path"><i class="g v"></i><i class="g l"></i><b class="nm">root_&lt;제품&gt;_view.css</b><em class="nmr">선택 · own 제품 셸의 틀 CSS</em></span>
+          <span class="flagcell keep"><button type="button" class="pin w" data-k="nm">NM</button><button type="button" class="pin w" data-k="im">IM</button></span>
         </div>
         <div data-r="81" class="tr clean" style="--d:1">
           <span class="path"><i class="g t"></i><b class="nm">js/</b><em class="nmr">승인된 UI 동작</em></span>
           <span class="flagcell keep"><button type="button" class="pin w" data-k="st">ST</button><button type="button" class="pin wp" data-k="pu">PU</button></span>
         </div>
         <div data-r="82" class="tr clean" style="--d:2">
-          <span class="path"><i class="g v"></i><i class="g l"></i><b class="nm">&lt;기능&gt;.js</b><em class="nmr">기능당 한 파일</em></span>
+          <span class="path"><i class="g v"></i><i class="g t"></i><b class="nm">&lt;기능&gt;.js</b><em class="nmr">기능당 한 파일</em></span>
           <span class="flagcell keep"><button type="button" class="pin wp" data-k="pu">PU</button></span>
+        </div>
+        <div data-r="98" class="tr clean" style="--d:2">
+          <span class="path"><i class="g v"></i><i class="g l"></i><b class="nm">root_shell.js</b><em class="nmr">지속 셸만 · root 고정 파일 · 기능 JS 아님</em></span>
+          <span class="flagcell keep"><button type="button" class="pin w" data-k="sh">SH</button></span>
         </div>
         <div data-r="83" class="tr clean" style="--d:1">
           <span class="path"><i class="g t"></i><b class="nm">htmx/</b></span>
@@ -967,7 +987,7 @@
           </div>
         </div>
         <div class="pgroup">
-        <button type="button" class="tabbtn" data-p="test" role="tab" aria-selected="false"><span class="tb-n">web_test/</span><span class="tb-s">web/ 1:1 미러 · sparse</span><span class="tb-z z-ok">테스트</span><span class="tb-c">5</span></button>
+        <button type="button" class="tabbtn" data-p="test" role="tab" aria-selected="false"><span class="tb-n">web_test/</span><span class="tb-s">web/ 1:1 미러 · sparse</span><span class="tb-z z-ok">테스트</span><span class="tb-c">6</span></button>
           <div class="ptree" id="pt-test">
             <div class="tree-scroll">
               <div class="tree-head"><span>경로 <em>· 한 줄 메모</em></span><span>검사</span></div>
@@ -977,19 +997,23 @@
           <span class="flagcell keep"><button type="button" class="pin w" data-k="tg">TG</button></span>
         </div>
         <div data-r="91" class="tr ok" style="--d:1">
-          <span class="path"><i class="g l"></i><b class="nm">application/[&lt;area&gt;/]&lt;bc&gt;/</b><em class="nmr">SUT 가 있는 자리만</em></span>
+          <span class="path"><i class="g t"></i><b class="nm">application/[&lt;area&gt;/]&lt;bc&gt;/</b><em class="nmr">SUT 가 있는 자리만</em></span>
           <span class="flagcell keep"><button type="button" class="pin w" data-k="tg">TG</button></span>
         </div>
         <div data-r="92" class="tr ok" style="--d:2">
-          <span class="path"><i class="g sp"></i><i class="g t"></i><b class="nm">&lt;계층&gt;/…/&lt;sut&gt;_test.py</b><em class="nmr">web/ 와 같은 경로</em></span>
+          <span class="path"><i class="g v"></i><i class="g t"></i><b class="nm">&lt;계층&gt;/…/&lt;sut&gt;_test.py</b><em class="nmr">web/ 와 같은 경로</em></span>
           <span class="flagcell keep"><button type="button" class="pin w" data-k="tg">TG</button></span>
         </div>
         <div data-r="93" class="tr ok" style="--d:2">
-          <span class="path"><i class="g sp"></i><i class="g t"></i><b class="nm">_support.py</b><em class="nmr">같은 BC 시험이 함께 쓰는 헬퍼</em></span>
+          <span class="path"><i class="g v"></i><i class="g t"></i><b class="nm">_support.py</b><em class="nmr">같은 BC 시험이 함께 쓰는 헬퍼</em></span>
           <span class="flagcell keep"><button type="button" class="pin w" data-k="tg">TG</button></span>
         </div>
         <div data-r="94" class="tr ok" style="--d:2">
-          <span class="path"><i class="g sp"></i><i class="g l"></i><b class="nm">&lt;화면&gt;_browser_test.py</b><em class="nmr">UI JS 기능이 있을 때만</em></span>
+          <span class="path"><i class="g v"></i><i class="g l"></i><b class="nm">&lt;화면&gt;_browser_test.py</b><em class="nmr">UI JS 기능 · 완성 화면 갈무리</em></span>
+          <span class="flagcell keep"><button type="button" class="pin w" data-k="tg">TG</button></span>
+        </div>
+        <div data-r="100" class="tr ok" style="--d:1">
+          <span class="path"><i class="g l"></i><b class="nm">root/…/root_view_browser_test.py</b><em class="nmr">지속 셸만 · 셸 시험 하나</em></span>
           <span class="flagcell keep"><button type="button" class="pin w" data-k="tg">TG</button></span>
         </div>
               </div>
@@ -1002,15 +1026,15 @@
         <div class="pane-hd"><b class="ph-n">web/</b><span class="ph-s">컨테이너 뿌리 · 엔트리포인트</span><span class="tb-z z-own">셸</span></div>
         <dl class="pane-kv">
           <dt>목적</dt><dd><p>대상 Django 프로젝트에 붙는 앱 <code>web</code> 하나가 <b>dddjango-web 이 만드는 화면 코드의 뿌리</b>다. 백엔드 코드(<code>application/</code>·<code>framework/</code>)는 고치지 않고, 화면은 <b>이 프로젝트 안의 JSON API 를 같은 프로세스 안에서 불러</b> 데이터를 얻는다.</p><p><b>파일트리가 곧 규약이다</b> — 어떤 파일을 어디에 어떤 이름으로 만드는지가 핵심 강제이고, 기계로 셀 수 있는 부분은 결정적 백스톱 93종이 게이트에서 본다.</p></dd>
-          <dt>들어오는 것</dt><dd><p>엔트리포인트 셋(<code>__init__.py</code>·<code>apps.py</code>·<code>urls.py</code>) + 컨테이너 다섯(<code>root/</code>·<code>application/</code>·<code>common/</code>·<code>design_system/</code>·<code>static/</code>) + 승인된 공식 SDK 가 있을 때만 <code>sdk_registry.json</code>. 테스트는 <code>web/</code> 밖 형제 <code>web_test/</code> 에 둔다.</p><p>호스트 쪽 연결(settings 의 <code>INSTALLED_APPS</code>·<code>TEMPLATES</code>·<code>STATICFILES_DIRS</code>·<code>MIDDLEWARE</code>·<code>ALLOWED_HOSTS</code> · 루트 urls 의 <code>include("web.urls")</code>·404/500 연결 · htmx 2.0.10)은 Coordinator 가 G0 에서 점검하고 승인받아 넣는다.</p></dd>
+          <dt>들어오는 것</dt><dd><p>엔트리포인트 셋(<code>__init__.py</code>·<code>apps.py</code>·<code>urls.py</code>) + 컨테이너 다섯(<code>root/</code>·<code>application/</code>·<code>common/</code>·<code>design_system/</code>·<code>static/</code>) + 사용자가 제품을 나누기로 정했을 때만 <code>product_registry.json</code> + 승인된 공식 SDK 가 있을 때만 <code>sdk_registry.json</code>. 테스트는 <code>web/</code> 밖 형제 <code>web_test/</code> 에 둔다.</p><p>호스트 쪽 연결(settings 의 <code>INSTALLED_APPS</code>·<code>TEMPLATES</code>·<code>STATICFILES_DIRS</code>·<code>MIDDLEWARE</code>·<code>ALLOWED_HOSTS</code> · 루트 urls 의 <code>include("web.urls")</code>·404/500 연결 · htmx 2.0.10)은 Coordinator 가 G0 에서 점검하고 승인받아 넣는다.</p></dd>
           <dt class="no">안 들어오는 것</dt><dd><p>백엔드 <code>application.</code>·<code>framework.</code> import(IM25)와 상대 import(IM24). 시동 로직이 쌓인 <code>apps.py</code>, URL 분기 조립이 쌓인 <code>urls.py</code>.</p><p>표준 트리 밖 옛 배치 폴더(1.x 의 <code>&lt;screen_area&gt;/</code>·<code>client/</code>·<code>base/</code> 류) — 면제가 아니라 <b>빚</b>이다. 빚 스캔이 파일마다 <code>ST0</code> 로 내고, 이번 요청이 손대는 범위에 들면 슬라이스 0 이 새 트리로 옮긴다.</p></dd>
           <dt class="wy">이 모양이 된 까닭</dt><dd><p>2.0.0 부터 dddart 표준 파일트리(운영 앱 실측)를 그대로 가져와 <b>구현 기술만 Django · HTML · HTMX · JS 로 바꿨다</b>. 간소화 DDD(repository 인터페이스 · DTO · ACL 없음 — 뼈대 4계층은 유지) + 철저한 MVVM(View → VM → UseCase → Repo 한 방향).</p></dd>
         </dl>
-        <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">10칸</span></div>
+        <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">11칸</span></div>
         <ol class="rowdocs">
           <li class="rd" id="rd-1">
             <div class="rd-p" style="--d:0"><b class="rd-n"><b>web/</b></b><span class="tb-z z-own">셸</span><button type="button" class="pin w" data-k="st">ST</button></div>
-            <div class="rd-w"><b>여기 오는 것은 정해져 있다</b> — 엔트리포인트 셋 · 컨테이너 다섯 · (조건) 등재 목록. 그 밖의 최상위 폴더는 옛 배치 빚이다.</div>
+            <div class="rd-w"><b>여기 오는 것은 정해져 있다</b> — 엔트리포인트 셋 · 컨테이너 다섯 · (선택) 제품 선언 · (조건) 등재 목록. 그 밖의 최상위 폴더는 옛 배치 빚이다.</div>
             <div class="rd-r"><span class="rd-k">규칙</span>컨테이너 골격은 비어 있어도 둔다 — <em>Python 경로는 <code>__init__.py</code>, design_system·static 의 빈 폴더는 <code>.gitkeep</code></em></div>
             <div class="rd-nm"><span class="rd-k">이름</span>고정 이름 <code>web/</code> — 테스트 뿌리 <code>web_test/</code> 와 프로젝트 뿌리에서 형제다.</div>
           </li>
@@ -1050,6 +1074,12 @@
             <div class="rd-p" style="--d:1"><b class="rd-n">static/</b><span class="tb-z z-own">셸</span><button type="button" class="pin w" data-k="st">ST</button></div>
             <div class="rd-w">브라우저로 나가는 정적 파일 — <b>static/ 탭</b>.</div>
           </li>
+          <li class="rd" id="rd-95">
+            <div class="rd-p" style="--d:1"><b class="rd-n">product_registry.json</b><span class="tb-z z-own">셸</span><button type="button" class="pin w" data-k="st">ST</button></div>
+            <div class="rd-w">한 web 앱에 <b>제품이 여럿</b>일 때만 두는 선언. 제품마다 화면 범위(BC 목록)와 디자인 뿌리(<code>flat</code> 하나 · <code>own</code> 여럿)를 적는다. 없으면 평면 <code>design_system/</code> 과 <code>root_view.html</code> 한 제품이고, 제품 폴더를 알아서 찾지 않는다.</div>
+            <div class="rd-r"><span class="rd-k">규칙</span>사용자 결정으로만 쓴다 — <em>Coordinator 가 G0 승인 뒤 따로 떼어 커밋 · 코더는 읽기만 · 형식이 깨지면 백스톱이 «판정 불가»로 멈춘다</em></div>
+            <div class="rd-nm"><span class="rd-k">이름</span>고정 이름 · 스키마 <code>dddjango-web-products/1</code> · 일반 파일만(링크 · 폴더 불가).</div>
+          </li>
           <li class="rd" id="rd-10">
             <div class="rd-p" style="--d:1"><b class="rd-n">sdk_registry.json</b><span class="tb-z z-own">셸</span><button type="button" class="pin wp" data-k="wv">WV</button></div>
             <div class="rd-w">G1 에서 사용자가 승인한 <b>공식 플랫폼 SDK 등재 목록</b>. 승인된 SDK 가 있을 때만 생긴다.</div>
@@ -1064,9 +1094,9 @@
           <dt>목적</dt><dd><p><b>전체를 아는 유일한 곳</b>이다 — <code>application/</code>·<code>common/</code>·<code>design_system/</code> 세 컨테이너를 모두 안다. 그래서 <code>application/</code> 밖, <code>apps.py</code>·<code>urls.py</code> 옆에 있다.</p></dd>
           <dt>들어오는 것</dt><dd><p>계층 없이 <b>역할 4폴더</b> — <code>router/</code>(내비 그래프) · <code>scaffold/</code>(문서 셸 + 전역 게이트) · <code>handler/</code>(이벤트원당 1파일) · <code>initializer/</code>(시동). scaffold 만 종류 2차(<code>view/</code>·<code>view_model/</code>·<code>state/</code>)를 갖는다. 모든 파일은 <code>root_</code> 접두다.</p></dd>
           <dt class="no">안 들어오는 것</dt><dd><p>BC 어휘 화면 — 여러 BC 를 비추는 화면(피드 등)도 root 가 아니라 자기 이름의 일반 BC 다. Repo · DataSource 직접 호출 — <b>root 도 BC 의 UseCase 만</b> 부른다.</p></dd>
-          <dt class="wy">이 모양이 된 까닭</dt><dd><p>BC 가 root 를 알면 전체를 알게 되어 격리가 무너진다. root 를 아는 곳은 <code>web/apps.py</code>·<code>web/urls.py</code>·호스트 settings 뿐이다 — 예외는 페이지 템플릿의 <code>{% extends "root/scaffold/view/root_view.html" %}</code> 한 줄이다. BC 코드에 <code>import …root_…</code> 한 줄이 보이면 바로 위반으로 식별된다.</p></dd>
+          <dt class="wy">이 모양이 된 까닭</dt><dd><p>BC 가 root 를 알면 전체를 알게 되어 격리가 무너진다. root 를 아는 곳은 <code>web/apps.py</code>·<code>web/urls.py</code>·호스트 settings 뿐이다 — 예외는 페이지 템플릿의 <code>{% extends "root/scaffold/view/root_view.html" %}</code> 한 줄이다(제품 선언이 있으면 그 BC 가 속한 제품의 셸). BC 코드에 <code>import …root_…</code> 한 줄이 보이면 바로 위반으로 식별된다.</p></dd>
         </dl>
-        <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">16칸</span></div>
+        <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">17칸</span></div>
         <ol class="rowdocs">
           <li class="rd" id="rd-11">
             <div class="rd-p" style="--d:0"><b class="rd-n"><b>root/</b></b><span class="tb-z z-own">셸</span><button type="button" class="pin w" data-k="st">ST</button></div>
@@ -1090,11 +1120,18 @@
             <div class="rd-p" style="--d:2"><b class="rd-n">view/</b><span class="tb-z z-own">셸</span><button type="button" class="pin w" data-k="st">ST</button></div>
           </li>
           <li class="rd" id="rd-16">
-            <div class="rd-p" style="--d:3"><b class="rd-n">root_view.html</b><span class="tb-z z-own">셸</span><button type="button" class="pin w" data-k="im">IM</button></div>
-            <div class="rd-w">문서 셸 — 탭·내비 프레임 · htmx core 로드 · <code>app_theme.css</code> 링크 한 줄 · <code>{% block scripts %}</code>.</div>
+            <div class="rd-p" style="--d:3"><b class="rd-n">root_view.html</b><span class="tb-z z-own">셸</span><button type="button" class="pin w" data-k="im">IM</button><button type="button" class="pin w" data-k="sh">SH</button></div>
+            <div class="rd-w">문서 셸 — 탭·내비 프레임 · htmx core 로드 · <code>app_theme.css</code> 링크 한 줄. 탭 셸은 두 꼴이다 — 새로 짓는 탭 셸은 <b>지속 셸</b>(탭 막대가 남고 <code>&lt;main&gt;</code> 안만 바뀜 · 떠난 화면을 보관해 돌아오면 그대로 · ‹뒤로›는 지나온 차례), 이미 지은 <b>문서 이동 셸</b>은 G1 에서 바꾸기로 정하지 않으면 그대로 둔다.</div>
             <div class="rd-r"><span class="rd-k">규칙</span>페이지 템플릿만 이 셸을 extends 한다 — <em>조각(section·widget·component)이 extends 하면 IM26</em></div>
+            <div class="rd-r"><span class="rd-k">규칙</span>지속 셸은 공유 머리가 그 제품 CSS · JS 를 한 줄씩 다 싣는다(htmx core → <code>root_shell.js</code> → 기능 JS · 주소 꼬리 <code>?v=</code>) — <em>페이지 <code>{% block head %}</code> · <code>{% block scripts %}</code> 없음 · 백스톱 SH</em></div>
             <div class="rd-nm"><span class="rd-k">이름</span>고정 이름 · 게이트 화면은 <code>root_&lt;게이트&gt;_view.html</code>.</div>
-            <div class="rd-nm"><span class="rd-k">고정 id</span>지속 셸이면 <code>root-content</code> · <code>root-tab-bar</code> · <code>root-tab-items</code> · <code>root-tab-&lt;탭 키&gt;</code> · <code>root-who</code>(2.6 — <code>&lt;main&gt;</code> 안) · 탭 링크 <code>data-root-first</code>(2.6) · <code>root_shell.js</code> 가 만드는 <code>root-toast</code> · <code>root-announce</code>(2.6) — discipline-houserules 고정 이름 표.</div>
+            <div class="rd-nm"><span class="rd-k">고정 id</span>지속 셸이면 <code>root-content</code> · <code>root-tab-bar</code> · <code>root-tab-items</code> · <code>root-tab-&lt;탭 키&gt;</code> · <code>root-who</code>(2.6 — <code>&lt;main&gt;</code> 안) · 탭 링크 <code>data-root-first</code>(2.6) · <code>root_shell.js</code> 가 만드는 <code>root-toast</code> · <code>root-announce</code>(2.6) · 셸 표지 <code>data-root-shell</code> · 속성 <code>data-root-arm</code> · 이벤트 <code>root:leave</code> · <code>root:screen-hide</code> · <code>root:screen-show</code> — discipline-houserules 고정 이름 표.</div>
+          </li>
+          <li class="rd" id="rd-96">
+            <div class="rd-p" style="--d:3"><b class="rd-n">root_&lt;제품&gt;_view.html</b><span class="tb-z z-own">셸</span><button type="button" class="pin w" data-k="im">IM</button><button type="button" class="pin w" data-k="nm">NM</button></div>
+            <div class="rd-w">제품 선언의 <code>own</code> 제품마다 하나 — 그 제품 BC 의 페이지만 extends 하는 <b>독립 문서 셸</b>. 자기 제품 뿌리(<code>design_system/&lt;제품&gt;/</code>)의 theme 과 틀 CSS <code>static/root/root_&lt;제품&gt;_view.css</code> 를 싣는다.</div>
+            <div class="rd-r"><span class="rd-k">규칙</span>제품 선언이 있으면 <code>root_view.html</code> 과 제품 셸은 어떤 템플릿도 extends 하지 않는다 — <em>IM26 · VM · State 짝은 더 만들지 않고 <code>root_vm.py</code> · <code>root_state.py</code> 를 함께 쓴다</em></div>
+            <div class="rd-nm"><span class="rd-k">이름</span>선언된 제품 id 만 제품 셸이다 — 선언 안 된 <code>root_&lt;이름&gt;_view.html</code> 은 게이트 화면으로 본다.</div>
           </li>
           <li class="rd" id="rd-17">
             <div class="rd-p" style="--d:2"><b class="rd-n">view_model/</b><span class="tb-z z-own">셸</span><button type="button" class="pin w" data-k="st">ST</button></div>
@@ -1310,7 +1347,8 @@
           </li>
           <li class="rd" id="rd-55">
             <div class="rd-p" style="--d:2"><b class="rd-n">&lt;화면&gt;_view.html</b><span class="tb-z z-mv">MVVM</span><button type="button" class="pin w" data-k="nm">NM</button><button type="button" class="pin w" data-k="im">IM</button><button type="button" class="pin wp" data-k="pu">PU</button></div>
-            <div class="rd-w">페이지 템플릿 — <code>root/scaffold/view/root_view.html</code> 을 extends 하는 유일한 층. section 을 include 한다.</div>
+            <div class="rd-w">페이지 템플릿 — 문서 셸 <code>root/scaffold/view/root_view.html</code>(제품 선언이 있으면 자기 제품 셸)을 extends 하는 유일한 층. section 을 include 한다.</div>
+            <div class="rd-r"><span class="rd-k">규칙</span>다른 BC 조각 CSS 는 싣지 않는다(IM5) — <em>예외 하나: 다른 BC view 를 채널 ④ 로 임베드한 페이지는 셸 <code>&lt;head&gt;</code> 안 block 에서 <code>{% static %}</code> link 로 그 자식이 그리는 템플릿의 CSS 를 싣는다 · 러너가 자리 → href → 라우트 → 렌더 네 고리를 글자로 따라간다 · 지속 셸이면 셸이 다 싣는다</em></div>
           </li>
           <li class="rd" id="rd-56">
             <div class="rd-p" style="--d:1"><b class="rd-n">section/</b><span class="tb-z z-mv">MVVM</span><button type="button" class="pin w" data-k="st">ST</button></div>
@@ -1375,11 +1413,11 @@
         <div class="pane-hd"><b class="ph-n">design_system/</b><span class="ph-s">토큰 7파일 · 공용 부품</span><span class="tb-z z-clean">시각</span></div>
         <dl class="pane-kv">
           <dt>목적</dt><dd><p><b>BC 어휘도 도메인 어휘도 모르는 시각 요소</b> — 디자인 토큰과 공용 부품. STATICFILES 접두 <code>design_system</code> 으로 나간다.</p></dd>
-          <dt>들어오는 것</dt><dd><p><code>foundation/</code> 표준 7파일(색 · 글자 · 간격 · 모서리 · 그림자 · 연출 시간 · 자산)이 <b>시각 값의 단일 출처</b>. 시안이 있으면 Coordinator 가 <code>extract_design</code> 으로 토큰을 기계 절단해 <code>design-tokens.json</code> 으로 넘기고, 설계가 그 값을 인용해 박는다. <code>theme/app_theme.css</code> 는 문서 전역 기본값, <code>component/&lt;군&gt;/</code> 은 부품 템플릿 + 옆 부품 CSS.</p></dd>
-          <dt class="no">안 들어오는 것</dt><dd><p><code>application/</code>·<code>root/</code> 참조 · <code>btn/</code> 축약·<code>widget/</code>·<code>etc/</code> 같은 정크드로어 군 · <code>component/</code> 직속 파일 · 전역 JS 진입 함수 <code>show()</code>.</p></dd>
+          <dt>들어오는 것</dt><dd><p><code>foundation/</code> 표준 7파일(색 · 글자 · 간격 · 모서리 · 그림자 · 연출 시간 · 자산)이 <b>시각 값의 단일 출처</b>. 시안이 있으면 Coordinator 가 <code>extract_design</code> 으로 토큰을 기계 절단해 <code>design-tokens.json</code> 으로 넘기고, 설계가 그 값을 인용해 박는다. <code>theme/app_theme.css</code> 는 문서 전역 기본값, <code>component/&lt;군&gt;/</code> 은 부품 템플릿 + 옆 부품 CSS.</p><p>제품 선언이 있으면 <code>own</code> 제품마다 <code>&lt;제품&gt;/</code> 뿌리가 같은 네 폴더 · 표준 7파일로 더 선다. 부품 마크업은 평면 <code>component/</code> 것을 어느 제품이든 include 하고, CSS 는 그 제품 뿌리의 같은 군 · 같은 이름을 싣는다.</p></dd>
+          <dt class="no">안 들어오는 것</dt><dd><p><code>application/</code>·<code>root/</code> 참조 · <code>btn/</code> 축약·<code>widget/</code>·<code>etc/</code> 같은 정크드로어 군 · <code>component/</code> 직속 파일 · 전역 JS 진입 함수 <code>show()</code> · 다른 제품 뿌리의 표준 자리 CSS(제품 CSS 혼입 금지).</p></dd>
           <dt class="wy">이 모양이 된 까닭</dt><dd><p>색·글자·간격·연출 시간 리터럴을 한 곳에 모아야 시안 충실도를 대조할 수 있다. 시안 HTML·JSX 는 직수입하지 않고 <b>토큰 · 아이콘 · 이미지 src 만</b> 뽑아 템플릿·CSS 로 새로 쓴다.</p></dd>
         </dl>
-        <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">9칸</span></div>
+        <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">10칸</span></div>
         <ol class="rowdocs">
           <li class="rd" id="rd-67">
             <div class="rd-p" style="--d:0"><b class="rd-n"><b>design_system/</b></b><span class="tb-z z-clean">시각</span><button type="button" class="pin w" data-k="st">ST</button><button type="button" class="pin w" data-k="im">IM</button></div>
@@ -1399,7 +1437,7 @@
           </li>
           <li class="rd" id="rd-71">
             <div class="rd-p" style="--d:2"><b class="rd-n">app_theme.css</b><span class="tb-z z-clean">시각</span><button type="button" class="pin w" data-k="nm">NM</button></div>
-            <div class="rd-w">브라우저 기본 여백 초기화 · 웹폰트 <code>@font-face</code> · body 글꼴/색. root_view.html 이 링크 한 줄로 건다.</div>
+            <div class="rd-w">브라우저 기본 여백 초기화 · 웹폰트 <code>@font-face</code> · body 글꼴/색. root_view.html 이 링크 한 줄로 건다(제품 셸은 자기 제품 뿌리의 theme).</div>
           </li>
           <li class="rd" id="rd-72">
             <div class="rd-p" style="--d:1"><b class="rd-n">component/</b><span class="tb-z z-clean">시각</span><button type="button" class="pin w" data-k="st">ST</button></div>
@@ -1410,13 +1448,20 @@
             <div class="rd-w">예: button/ · dialog/.</div>
           </li>
           <li class="rd" id="rd-74">
-            <div class="rd-p" style="--d:3"><b class="rd-n">&lt;수식&gt;_&lt;군&gt;.html + .css</b><span class="tb-z z-clean">시각</span><button type="button" class="pin w" data-k="nm">NM</button></div>
+            <div class="rd-p" style="--d:3"><b class="rd-n">&lt;수식&gt;_&lt;군&gt;.html + .css</b><span class="tb-z z-clean">시각</span><button type="button" class="pin w" data-k="nm">NM</button><button type="button" class="pin w" data-k="cs">CS</button></div>
             <div class="rd-w">부품군 폴더 = 파일 접미사 = CSS 클래스 접두의 군.</div>
+            <div class="rd-r"><span class="rd-k">규칙</span>부품을 쓰는 문서는 그 부품 CSS 를 머리에 literal <code>{% static %}</code> link 로 싣는다 — <em>새로 빠지면 CS1 · 지속 셸은 공유 머리가 싣는다</em></div>
             <div class="rd-nm"><span class="rd-k">이름</span><code>appbar/</code> ✗ → <code>app_bar/</code> · <code>ds_</code> 접두 ✗</div>
           </li>
           <li class="rd" id="rd-75">
             <div class="rd-p" style="--d:1"><b class="rd-n">util/</b><span class="tb-z z-clean">시각</span><button type="button" class="pin w" data-k="st">ST</button></div>
             <div class="rd-w">시각 동작 헬퍼 CSS.</div>
+          </li>
+          <li class="rd" id="rd-97">
+            <div class="rd-p" style="--d:1"><b class="rd-n">&lt;제품&gt;/</b><span class="tb-z z-clean">시각</span><button type="button" class="pin w" data-k="st">ST</button><button type="button" class="pin w" data-k="im">IM</button></div>
+            <div class="rd-w">제품 선언의 <code>own</code> 제품 뿌리 — <code>foundation/</code>(표준 7파일) · <code>theme/</code> · <code>component/</code> · <code>util/</code> 네 폴더를 평면과 같이 둔다. 선언이 없으면 이 폴더는 없다.</div>
+            <div class="rd-r"><span class="rd-k">규칙</span>새 own 제품의 선언 커밋과 그 뿌리 골격 · 제품 셸은 같은 착륙 묶음으로 넣는다 — <em>평면 뿌리 직속은 네 종류 + 등록된 own 뿌리만 · own 뿌리 직속은 네 종류만</em></div>
+            <div class="rd-nm"><span class="rd-k">이름</span>제품 id — 소문자 snake_case · <code>foundation</code> · <code>theme</code> · <code>component</code> · <code>util</code> 과 겹치지 않는다. 명명은 제품 뿌리를 뗀 상대 경로에 같은 규칙.</div>
           </li>
         </ol>
       </section>
@@ -1424,11 +1469,11 @@
         <div class="pane-hd"><b class="ph-n">static/</b><span class="ph-s">조각 CSS · JS · htmx · SDK 사본</span><span class="tb-z z-clean">시각</span></div>
         <dl class="pane-kv">
           <dt>목적</dt><dd><p>브라우저로 나가는 정적 파일(STATICFILES 접두 <code>web</code>). <code>.py</code> 와 섞이면 <code>.py</code> 가 정적 파일로 나가서 따로 둔다.</p></dd>
-          <dt>들어오는 것</dt><dd><p>presentation 조각 CSS(<code>application/[&lt;area&gt;/]&lt;bc&gt;/</code> — 템플릿과 같은 stem · sparse) · root scaffold 조각 CSS(<code>root/</code>) · 승인된 UI 동작 JS(<code>js/&lt;기능&gt;.js</code>) · htmx core · (조건) 공식 SDK 사본 <code>vendor/</code> · (조건) <code>images/</code>·<code>fonts/</code>.</p><p>시안 이미지는 Coordinator 가 G0 에서 <code>fetch_images</code>·<code>extract_dc</code> 로 <code>images/</code> 에 직접 받는다 — 이미지는 입력이 곧 출력이라 동결처가 곧 번들처다.</p></dd>
+          <dt>들어오는 것</dt><dd><p>presentation 조각 CSS(<code>application/[&lt;area&gt;/]&lt;bc&gt;/</code> — 템플릿과 같은 stem · sparse) · root scaffold 조각 CSS(<code>root/</code> — 제품 선언이 있으면 own 제품 셸의 틀 CSS <code>root_&lt;제품&gt;_view.css</code> 도) · 승인된 UI 동작 JS(<code>js/&lt;기능&gt;.js</code>) · 지속 셸이면 root 고정 파일 <code>js/root_shell.js</code> · htmx core · (조건) 공식 SDK 사본 <code>vendor/</code> · (조건) <code>images/</code>·<code>fonts/</code>.</p><p>시안 이미지는 Coordinator 가 G0 에서 <code>fetch_images</code>·<code>extract_dc</code> 로 <code>images/</code> 에 직접 받는다 — 이미지는 입력이 곧 출력이라 동결처가 곧 번들처다.</p></dd>
           <dt class="no">안 들어오는 것</dt><dd><p>승인되지 않은 외부 JS(라이브러리 · CDN 로드 · 동적 로드) · 미등재 벤더 파일 · inline 실행 스크립트 · htmx 이중 설치나 조용한 업그레이드.</p></dd>
           <dt class="wy">이 모양이 된 까닭</dt><dd><p>web 이 들이는 외부 JS 는 <b>G1 에서 승인하고 등재한 플랫폼 공식 SDK 하나뿐</b>이다(카카오 SDK 류). 그 밖의 결과는 서버가 만드는 설계 · 평범한 링크 · native 로 낸다.</p></dd>
         </dl>
-        <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">14칸</span></div>
+        <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">16칸</span></div>
         <ol class="rowdocs">
           <li class="rd" id="rd-76">
             <div class="rd-p" style="--d:0"><b class="rd-n"><b>static/</b></b><span class="tb-z z-clean">시각</span><button type="button" class="pin w" data-k="st">ST</button></div>
@@ -1449,7 +1494,12 @@
           </li>
           <li class="rd" id="rd-80">
             <div class="rd-p" style="--d:2"><b class="rd-n">&lt;조각 stem&gt;.css</b><span class="tb-z z-clean">시각</span><button type="button" class="pin w" data-k="nm">NM</button></div>
-            <div class="rd-w">템플릿과 같은 stem.</div>
+            <div class="rd-w">템플릿과 같은 stem. 지속 셸의 틀 CSS 는 <code>root_view.css</code> 다.</div>
+          </li>
+          <li class="rd" id="rd-99">
+            <div class="rd-p" style="--d:2"><b class="rd-n">root_&lt;제품&gt;_view.css</b><span class="tb-z z-clean">시각</span><button type="button" class="pin w" data-k="nm">NM</button><button type="button" class="pin w" data-k="im">IM</button></div>
+            <div class="rd-w">제품 선언의 <code>own</code> 제품 셸 <code>root_&lt;제품&gt;_view.html</code> 의 틀 CSS — 같은 stem.</div>
+            <div class="rd-r"><span class="rd-k">규칙</span>그 셸만 싣는다 — <em>페이지가 제품 셸 CSS 를 직접 링크하면 root 참조 위반(IM2)</em></div>
           </li>
           <li class="rd" id="rd-81">
             <div class="rd-p" style="--d:1"><b class="rd-n">js/</b><span class="tb-z z-clean">시각</span><button type="button" class="pin w" data-k="st">ST</button><button type="button" class="pin wp" data-k="pu">PU</button></div>
@@ -1459,6 +1509,12 @@
             <div class="rd-p" style="--d:2"><b class="rd-n">&lt;기능&gt;.js</b><span class="tb-z z-clean">시각</span><button type="button" class="pin wp" data-k="pu">PU</button></div>
             <div class="rd-w">설계의 UI 동작 계약이 정한 기능 하나 = 파일 하나. SDK 호출도 그 행의 기능 JS 안에서만.</div>
             <div class="rd-r"><span class="rd-k">규칙</span>업무 판정 · 별도 API 호출 · SPA 상태 계층을 만들지 않는다 — <em>native HTML/CSS 로 되면 JS 없음</em></div>
+          </li>
+          <li class="rd" id="rd-98">
+            <div class="rd-p" style="--d:2"><b class="rd-n">root_shell.js</b><span class="tb-z z-clean">시각</span><button type="button" class="pin w" data-k="sh">SH</button></div>
+            <div class="rd-w">지속 셸에만 있는 <b>root 소유 고정 파일</b> — 기능 JS 가 아니다. 셸 머리가 htmx core 바로 뒤에 싣고, 이동 하나만 받기 · 떠난 화면 보관 · 알림 영역을 맡는다.</div>
+            <div class="rd-r"><span class="rd-k">규칙</span>implementation-django 의 글 그대로 둔다 — <em>고칠 값 없음 · 주소 꼬리 <code>?v=</code> 는 셸 머리 판</em></div>
+            <div class="rd-nm"><span class="rd-k">이름</span>고정 이름 <code>web/static/js/root_shell.js</code>.</div>
           </li>
           <li class="rd" id="rd-83">
             <div class="rd-p" style="--d:1"><b class="rd-n">htmx/</b><span class="tb-z z-clean">시각</span><button type="button" class="pin w" data-k="st">ST</button><button type="button" class="pin w" data-k="pj">PJ</button></div>
@@ -1475,7 +1531,7 @@
           <li class="rd" id="rd-86">
             <div class="rd-p" style="--d:2"><b class="rd-n">&lt;sdk_id&gt;/&lt;파일&gt;</b><span class="tb-z z-clean">시각</span><button type="button" class="pin wp" data-k="wv">WV</button></div>
             <div class="rd-w">G1 승인 · 등재된 공식 플랫폼 SDK 의 운영자 원본 한 파일. <code>chore(web-sdk):</code> 격리 커밋으로만 들어온다.</div>
-            <div class="rd-r"><span class="rd-k">규칙</span>로드는 페이지 템플릿의 <code>{% block scripts %}</code> 안 한 번 — <em>속성은 src·defer 만</em></div>
+            <div class="rd-r"><span class="rd-k">규칙</span>로드는 페이지 템플릿의 <code>{% block scripts %}</code> 안 한 번(지속 셸 제품이면 셸 <code>&lt;head&gt;</code> 의 <code>root_shell.js</code> 뒤 · 꼬리 <code>?v=</code>) — <em>속성은 src·defer 만</em></div>
           </li>
           <li class="rd" id="rd-87">
             <div class="rd-p" style="--d:2"><b class="rd-n">.gitattributes</b><span class="tb-z z-clean">시각</span><button type="button" class="pin wp" data-k="wv">WV</button></div>
@@ -1495,11 +1551,11 @@
         <div class="pane-hd"><b class="ph-n">web_test/</b><span class="ph-s">web/ 1:1 미러 · sparse</span><span class="tb-z z-ok">테스트</span></div>
         <dl class="pane-kv">
           <dt>목적</dt><dd><p>프로젝트 뿌리, <code>web/</code> 의 형제다(뿌리 <code>test/</code> 는 백엔드 트리와 헷갈려 쓰지 않는다). 명세 <b>시험 입장 표</b>대로 둔다 — 행위마다 그 고장을 잡는 시험 하나가 맡고, 같은 고장을 층마다 되풀이하지 않는다.</p></dd>
-          <dt>들어오는 것</dt><dd><p><code>web/application/&lt;bc&gt;/&lt;계층&gt;/&lt;sut&gt;.py</code> → <code>web_test/application/&lt;bc&gt;/&lt;계층&gt;/&lt;sut&gt;_test.py</code>. 같은 BC 시험이 함께 쓰는 헬퍼는 <code>_support.py</code> 한 곳. 승인된 JS 동작이 걸린 행위는 브라우저 테스트 <code>&lt;화면&gt;_browser_test.py</code>(pytest-playwright).</p></dd>
-          <dt class="no">안 들어오는 것</dt><dd><p>빈 미러 폴더 · 빈 테스트 파일(<b>sparse</b> — 골격 완비의 명시적 예외) · 200 만 보는 스모크(행위 검증이 아니다) · 제품 고장을 따로 잡지 않는 시험(사설 구조 · 상수 되적기 · 시험 장치 자기 검사 · 바이트 고정 — discipline-test §4).</p></dd>
+          <dt>들어오는 것</dt><dd><p><code>web/application/&lt;bc&gt;/&lt;계층&gt;/&lt;sut&gt;.py</code> → <code>web_test/application/&lt;bc&gt;/&lt;계층&gt;/&lt;sut&gt;_test.py</code>. 같은 BC 시험이 함께 쓰는 헬퍼는 <code>_support.py</code> 한 곳. 브라우저 테스트 <code>&lt;화면&gt;_browser_test.py</code> 는 셋뿐이다 — 승인된 JS 동작이 걸린 행위 · 명세에 <code>완성 그림:</code> 행이 있는 화면의 완성 화면 갈무리(<code>test_&lt;화면&gt;_render_capture</code>) · 지속 셸의 셸 시험 <code>root/scaffold/view/root_view_browser_test.py</code>. 브라우저는 pytest-playwright 공용 고정물 <code>page</code> 로만 연다(TG4).</p></dd>
+          <dt class="no">안 들어오는 것</dt><dd><p>빈 미러 폴더 · 빈 테스트 파일(<b>sparse</b> — 골격 완비의 명시적 예외) · 200 만 보는 스모크(행위 검증이 아니다) · 제품 고장을 따로 잡지 않는 시험(사설 구조 · 상수 되적기 · 시험 장치 자기 검사 · 바이트 고정 — discipline-test §4).</p><p>그림 비교(픽셀 diff) · 미디어 재생 자동 시험(영상 · 소리 재생은 G2 사용자 확인) · 색 · 여백 · 글꼴 값 단언(G2 화면 확인) · 하위 프로세스나 외부 E2E 러너 · 자체 고정물로 띄우는 브라우저(TG4).</p></dd>
           <dt class="wy">이 모양이 된 까닭</dt><dd><p>빈 슬롯을 채우려는 유혹이 헛테스트를 부른다. 테스트 명령은 G0 에서 web 시험 경로만 모으는 한 줄(<code>test_command</code>)로 확정한다 — coder-web 은 계층 중 · 슬라이스 끝에 <code>--test-scope</code> 가 낸 좁힌 실행만 돌고, Coordinator 는 G2 앞 그 명령을 한 번 돈다(도구가 «프로젝트 전체 필요»를 내면 그 대신 프로젝트 전체 한 번).</p></dd>
         </dl>
-        <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">5칸</span></div>
+        <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">6칸</span></div>
         <ol class="rowdocs">
           <li class="rd" id="rd-90">
             <div class="rd-p" style="--d:0"><b class="rd-n"><b>web_test/</b></b><span class="tb-z z-ok">테스트</span><button type="button" class="pin w" data-k="tg">TG</button></div>
@@ -1519,7 +1575,12 @@
           </li>
           <li class="rd" id="rd-94">
             <div class="rd-p" style="--d:2"><b class="rd-n">&lt;화면&gt;_browser_test.py</b><span class="tb-z z-ok">테스트</span><button type="button" class="pin w" data-k="tg">TG</button></div>
-            <div class="rd-w">UI JS 기능이 있을 때만.</div>
+            <div class="rd-w">승인된 UI JS 기능이 있는 화면 · 명세 <code>완성 그림:</code> 행이 있는 화면(<code>test_&lt;화면&gt;_render_capture</code> — 상태 단언을 모두 통과한 뒤 갈무리)에만.</div>
+            <div class="rd-r"><span class="rd-k">규칙</span>pytest-playwright 공용 고정물 <code>page</code> 만 쓴다(시험마다 새 context) — <em>하위 프로세스 · 직접 띄우기 · 자체 브라우저 고정물 · 외부 E2E 러너는 TG4</em></div>
+          </li>
+          <li class="rd" id="rd-100">
+            <div class="rd-p" style="--d:1"><b class="rd-n">root_view_browser_test.py</b><span class="tb-z z-ok">테스트</span><button type="button" class="pin w" data-k="tg">TG</button></div>
+            <div class="rd-w">자리는 <code>web_test/root/scaffold/view/</code>. 지속 셸일 때 하나 —탭 · ‹뒤로› · ‹앞으로› 뒤에도 탭 막대가 같은 요소로 남는지, 떠난 화면이 돌아오면 그대로인지 본다.</div>
           </li>
         </ol>
       </section>
@@ -1770,7 +1831,7 @@ class OrderListState: rows: tuple[OrderRowState, ...]; detail_href: str</code></
           <div class="st-b">
             <div class="st-f"><button type="button" class="fgo stpath" data-r="16" aria-label="root/scaffold/view/root_view.html — 1장 트리 16행으로">root/scaffold/view/root_view.html</button><span class="st-l z-own">셸</span></div>
             <pre class="st-sig"><code>&lt;script src="{% static 'web/htmx/htmx.min.js' %}" defer&gt;&lt;/script&gt;</code></pre>
-            <p class="st-t">문서 셸 — htmx core · <code>app_theme.css</code> · <code>{% block scripts %}</code>.</p>
+            <p class="st-t">문서 셸 — htmx core · <code>app_theme.css</code> · <code>{% block scripts %}</code>. 새로 짓는 탭 셸은 지속 셸이라 탭 막대가 남고 <code>&lt;main&gt;</code> 안만 바뀌며, 공유 머리가 htmx core 뒤 <code>root_shell.js</code> 와 기능 JS 를 다 싣는다(<code>{% block scripts %}</code> 없음).</p>
           </div>
         </li>
       </ol>
@@ -1795,17 +1856,21 @@ class OrderListState: rows: tuple[OrderRowState, ...]; detail_href: str</code></
   <div class="rationale two">
     <div class="rh">교차 BC · 전역 방향 규칙 — houserules §5</div>
     <div class="rz"><div class="k">교차 BC 는 4채널만</div>
-      <div class="v">① 도메인 타입 import ② 타 BC UseCase 호출 ③ 타 BC navigator 호출(href) ④ 타 BC view 임베드(<code>hx-get … hx-trigger="load"</code> 자리 하나). <span class="no">타 BC Repo·DataSource·VM 호출 · SharedState 읽기 · section·widget include</span> 는 금지 — 부품 재사용은 design_system 승격 경유.</div></div>
+      <div class="v">① 도메인 타입 import ② 타 BC UseCase 호출 ③ 타 BC navigator 호출(href) ④ 타 BC view 임베드(<code>hx-get … hx-trigger="load"</code> 자리 하나 — 자식이 그리는 CSS 는 받는 페이지가 싣는다). <span class="no">타 BC Repo·DataSource·VM 호출 · SharedState 읽기 · section·widget include</span> 는 금지 — 부품 재사용은 design_system 승격 경유.</div></div>
     <div class="rz"><div class="k">root 를 아는 곳은 셋뿐</div>
-      <div class="v"><code>web/apps.py</code> · <code>web/urls.py</code> · 호스트 settings. 예외는 페이지 템플릿의 <code>root_view.html</code> extends 한 줄. <b>root → BC 는 자유</b>지만 Model 방향은 같다 — root 도 UseCase 만.</div></div>
+      <div class="v"><code>web/apps.py</code> · <code>web/urls.py</code> · 호스트 settings. 예외는 페이지 템플릿의 문서 셸 extends 한 줄(<code>root_view.html</code> — 제품 선언이 있으면 자기 제품 셸). <b>root → BC 는 자유</b>지만 Model 방향은 같다 — root 도 UseCase 만.</div></div>
     <div class="rz"><div class="k">common 은 application·root 를 모른다</div>
       <div class="v">common 은 모두가 아는 곳이라 BC 를 알면 안 된다. 상태 동작도 금지 — BC 일이 필요하면 콜백 주입(연결은 root_initializer).</div></div>
     <div class="rz"><div class="k">design_system 참조 허용 자리는 닫힌 목록</div>
       <div class="v">presentation_layer 전체 · <code>root/scaffold/</code> · design_system 내부만. <span class="no">VM·UseCase·router·handler 의 시각 토큰 참조</span> 는 금지 — 토큰 매핑은 ui_extension 이 유일한 자리다.</div></div>
     <div class="rz"><div class="k">템플릿 상속 채널</div>
-      <div class="v">페이지 템플릿 → <code>root_view.html</code> 만 · 조각(section · widget · component) → design_system component 만(slot = block 채우기). 엇갈리면 IM26.</div></div>
+      <div class="v">페이지 템플릿 → 문서 셸만(<code>root_view.html</code> — 제품 선언 BC 의 페이지는 자기 제품 셸만) · 조각(section · widget · component) → design_system component 만(slot = block 채우기). 엇갈리면 IM26.</div></div>
     <div class="rz"><div class="k">domain 은 순수 Python</div>
       <div class="v"><code>django</code> import 금지. common 도 금지 — 단 <code>common/util/json_field.py</code> 하나만 예외(직파싱 단일 출처).</div></div>
+    <div class="rz"><div class="k">교차 BC CSS 는 임베드 받는 페이지 머리만</div>
+      <div class="v">다른 BC 조각 CSS 참조는 IM5 다 — 예외 하나: 문서 셸을 글자로 extends 한 페이지가 채널 ④ 로 임베드한 자식이 그리는 템플릿의 CSS 를 셸 <code>&lt;head&gt;</code> 안 block 의 <code>{% static %}</code> link 로 싣는 줄. 러너가 <b>자리 → href → 라우트 → 렌더</b> 네 고리를 글자로 따라가고, 하나라도 못 읽으면 IM5 그대로다. 지속 셸은 셸 머리가 다 싣는다.</div></div>
+    <div class="rz"><div class="k">제품 CSS 는 섞지 않는다</div>
+      <div class="v">제품 선언이 있으면 셸 · 페이지 · 제품 CSS 는 다른 제품의 표준 자리 CSS(foundation 7파일 · theme · component · util)를 싣지 않는다. 평면 component 마크업 include 는 어느 제품이든 된다 — CSS 만 자기 뿌리 것.</div></div>
   </div>
 
   <p class="eyebrow" style="margin-top:34px">백스톱</p>
@@ -1819,7 +1884,10 @@ class OrderListState: rows: tuple[OrderRowState, ...]; detail_href: str</code></
     <tbody>
       <tr><th class="mono">--diff-base</th><td>G2 배너 직전</td><td>이번 작업이 들인 위반만 — 구조·명명은 added, import 는 added 줄, 골격은 신규 단위, 순환은 래칫.</td></tr>
       <tr><th class="mono">--diff-base --slice-end</th><td>슬라이스 끝마다(커밋 전)</td><td>뒤 슬라이스가 채울 검사 일곱(CY1 · NM4 · NM5 · NM18 · NM19 · ST4 · TG1)을 미루고 나머지 86종을 돈다. 순환 기준선 파일은 만들지 않는다. 미룬 검사는 G2 배너 직전 실행이 본다.</td></tr>
-      <tr><th class="mono">--debt-scan</th><td>G0 (빚 스캔)</td><td><code>web/</code> 전체를 «모두 새 것»으로 보고 ST · MD · IM · NM · PU · WV 를 돌려 키(검사, 경로)마다 <code>C&lt;n&gt;</code> 을 매겨 <code>debt-g0.json</code> 으로 얼린다. 범위는 <b>손대는 파일 + 부르는 곳</b>.</td></tr>
+      <tr><th class="mono">--debt-scan</th><td>G0 (빚 스캔)</td><td><code>web/</code> 전체를 «모두 새 것»으로 보고 ST · MD · IM · NM · PU · WV 를 돌려 키(검사, 경로)마다 <code>C&lt;n&gt;</code> 을 매겨 <code>debt-g0.json</code> 으로 얼린다(CY · TG · PJ · SH · CS 는 빚 밖). 범위는 <b>손대는 파일 + 부르는 곳</b>.</td></tr>
+      <tr><th class="mono">--debt-scan --refactor</th><td>리팩토링 입구 G0</td><td>빚 스캔과 같고, 일반 스캔이 넘기는 기존 단위의 골격 미비(ST4)도 빚으로 낸다.</td></tr>
+      <tr><th class="mono">--all --only sh · cs</th><td>G0 (지속 셸 · 부품 CSS 점검)</td><td>이미 있는 지속 셸 꼴과 문서의 부품 CSS 실림을 전수로 본다 — 빚 질문 · 지문과 무관하고, 결과는 G0 배너와 설계자에게 넘긴다(부품 CSS 는 명세 «부품 CSS 표»로 잇는다).</td></tr>
+      <tr><th class="mono">--test-scope</th><td>G0 · 슬라이스 끝 · G2 앞</td><td>시험은 돌지 않는다. G0 의 <code>test_command</code> 가 web 시험 경로를 빠짐없이 모으는지 넓이를 재고(넓음 · 좁음은 exit 2 — 그 명령을 쓰지 않는다), <code>--since</code> 와 함께면 바뀐 파일에서 슬라이스 끝에 돌 좁힌 시험과 G2 에 더할 시험을 낸다.</td></tr>
       <tr><th class="mono">--debt-residual</th><td>G2 (빚 잔존)</td><td>같은 의미론으로 다시 스캔해 G0 에서 «지금 정리»로 고른 키가 사라졌는지 센다.</td></tr>
       <tr><th class="mono">--subst-check</th><td>슬라이스 0 끝</td><td>web/ 밖 테스트 변경이 옛 경로·이름 → 새 경로·이름 치환뿐인지 본다(단언은 그대로).</td></tr>
     </tbody>
@@ -1844,7 +1912,7 @@ class OrderListState: rows: tuple[OrderRowState, ...]; detail_href: str</code></
     <p>게이트는 이번 작업이 들인 위반만 잡는다. 기존 위반은 G0 빚 스캔이 다루고, <b>이번 요청이 손대는 파일과 그 파일을 부르는 곳</b>의 빚만 묻는다 — «지금 정리(권장) / 사유와 결정 출처를 적고 미룸 / 리팩토링 입구로 따로 정리». 이번 결과를 해치는 위반은 미룰 수 없다. 정리는 기능 앞 <b>슬라이스 0</b> 에서 동작 그대로 하고, 정리 앞뒤로 기존 테스트를 돌려 새 실패가 없는지 본다. 단위 하나를 통째 정리하려면 <code>/dddjango-web:refactor &lt;단위&gt;</code>.</p>
   </aside>
 
-  <div class="colophon">웹 표준 트리 — docs/master.html 에서 연결하는 문서(docs/file_tree_web.html) · dddjango-web 2.2.0 기준<br>정본 — dddjango-web/skills/discipline-houserules/references/final.md §1~§9 · undecidable.md · scripts/backstop.py 머리말<br>자매 문서 — docs/work_flow_web.html (에이전트 협력 흐름) · docs/work_flow_web_guide.html (동작 흐름 안내) · docs/file_tree.html (dddjango 백엔드 트리)</div>
+  <div class="colophon">웹 표준 트리 — docs/master.html 에서 연결하는 문서(docs/file_tree_web.html) · dddjango-web 2.8.3 기준<br>정본 — dddjango-web/skills/discipline-houserules/references/final.md §1~§9 · undecidable.md · scripts/backstop.py 머리말 · scripts/src/embed.py(IM5 예외)<br>자매 문서 — docs/work_flow_web.html (에이전트 협력 흐름) · docs/work_flow_web_guide.html (동작 흐름 안내) · docs/file_tree.html (dddjango 백엔드 트리)</div>
 </section>
 </div>
 <div class="wrap"><div class="chfoot"><a class="pv" href="#ch2"><span class="k">← 앞 장</span>2 장 흐름</a></div></div>
@@ -1869,7 +1937,9 @@ class OrderListState: rows: tuple[OrderRowState, ...]; detail_href: str</code></
     md: { id: "MD", vd: "패밀리 · 모델 형태 2종", t: "MD — frozen dataclass · from_json", d: "<b>지키는 것</b> — MD1 모델 파일(entity · VO · 애그리거트 루트 · State)의 <code>@dataclass(frozen=True, slots=True, kw_only=True)</code> 형태 · MD2 <code>from_json</code> 직파싱 형태.<br><b>발화 범위</b> — added." },
     pj: { id: "PJ", vd: "패밀리 · 토대 2종", t: "PJ — 늘 검사하는 토대", d: "<b>지키는 것</b> — PJ1 호스트 requirements 의 pytest · pytest-django 선언 · PJ2 htmx core 단일 고정 판(2.0.10).<br><b>빚 스캔 밖</b> — 게이트와 무관하게 늘 본다." },
     pu: { id: "PU", vd: "패밀리 · 출력 안전 6종", t: "PU — 템플릿·JS 실행 채널", d: "<b>지키는 것</b> — 외부 JS·inline 실행 채널(PU1 · PU2 — 미등재 벤더 JS·로드 태그 규칙 포함) · <code>hx-on</code>·<code>js:</code>·조건식 같은 금지 표면 · 자동 이스케이프 우회(PU7) · JS 동적 실행(PU8).<br><b>발화 범위</b> — PU1 은 added 파일, 나머지는 touched 파일의 added 줄.<br><b>한계</b> — 형태로 셀 수 있는 경계만 본다. 기능 JS 의 업무 의미·실제 동작은 감수와 브라우저 테스트 몫이다." },
-    wv: { id: "WV", vd: "패밀리 · 공식 SDK 13종", t: "WV — 공식 플랫폼 SDK 등재", d: "<b>지키는 것</b> — 등재 목록 형식 · 사본 바이트 · 결속·출처 · 공식성 · id 디렉터리 · 템플릿 참조 · 공개 키 리터럴 · 기능 JS 외부 코드 · 사용 범위 · 변경 격리 · 미사용 · 등재 전/목록 시대 미등재.<br><b>늘 검사</b> — WV1~WV6 · WV13 은 게이트와 무관하게 늘 보고, 빚 스캔에서도 «미룰 수 없음»이다. 목록·사본은 Coordinator 가 <code>sdk_vendor.py</code> 로만 바꾼다." }
+    wv: { id: "WV", vd: "패밀리 · 공식 SDK 13종", t: "WV — 공식 플랫폼 SDK 등재", d: "<b>지키는 것</b> — 등재 목록 형식 · 사본 바이트 · 결속·출처 · 공식성 · id 디렉터리 · 템플릿 참조 · 공개 키 리터럴 · 기능 JS 외부 코드 · 사용 범위 · 변경 격리 · 미사용 · 등재 전/목록 시대 미등재.<br><b>늘 검사</b> — WV1~WV6 · WV13 은 게이트와 무관하게 늘 보고, 빚 스캔에서도 «미룰 수 없음»이다. 목록·사본은 Coordinator 가 <code>sdk_vendor.py</code> 로만 바꾼다." },
+    sh: { id: "SH", vd: "패밀리 · 지속 셸 5종", t: "SH — 탭 막대는 남고 본문만 바뀐다", d: "<b>지키는 것</b> — 탭 막대 <code>hx-boost</code> 자리(SH1) · 셸 꼴(고정 id · 표지 — SH2) · 페이지 자산 자리(페이지에 <code>{% block head %}</code> · <code>{% block scripts %}</code> 없음 — SH3) · 공유 머리 완비(그 제품 CSS · htmx core · <code>root_shell.js</code> · 기능 JS 를 경로 순 한 줄씩 · 꼬리 <code>?v=</code> · core 판 — SH4) · 공유 머리 CSS 의 맨 선택자 · 블록 이름 겹침(SH5).<br><b>발화 범위</b> — touched 의 added 줄 · 지속 셸을 켜는 diff 는 그 제품 전수.<br><b>빚 스캔 밖</b> — 이미 있는 지속 셸은 G0 «지속 셸 점검»(<code>--all --only sh</code>)이 본다." },
+    cs: { id: "CS", vd: "패밀리 · 부품 CSS 1종", t: "CS1 — 문서가 쓰는 부품 CSS 가 머리에 실렸나", d: "<b>지키는 것</b> — 상속 · include 를 따라 문서가 그리는 design_system 부품마다, 그 제품 뿌리의 같은 군 · 같은 이름 CSS 가 문서 머리의 literal <code>{% static %}</code> link 로 실렸는지.<br><b>발화 범위</b> — 기준점보다 새로 빠진 문서 · CSS 쌍 · 슬라이스 끝에도 돈다.<br><b>빚 스캔 밖</b> — 기존 누락은 G0 «부품 CSS 점검»(<code>--all --only cs</code>)이 세어 명세 «부품 CSS 표»로 잇고, 못 읽은 자리는 «미검증»으로 G2 감수가 닫는다." }
   };
   var tip = document.getElementById("tip");
   var tId = tip.querySelector(".tid"), tVd = tip.querySelector(".tvd");

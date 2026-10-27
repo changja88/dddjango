@@ -1,592 +1,657 @@
 {
- "schema_version": 1,
- "diagram_type": "workflow",
- "meta": {
-  "title": "dddjango 파이프라인 실동작 지도",
-  "quality_profile": "showcase",
-  "views": [
-   {
-    "id": "main-pipeline",
-    "label": "발주에서 보고까지",
-    "focus": [
-     "order",
-     "scope",
-     "design",
-     "g1",
-     "red",
-     "slice",
-     "checkers",
-     "registry",
-     "audit",
-     "g2",
-     "report"
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "dddjango 파이프라인 실동작 지도",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "main-pipeline",
+        "label": "요청에서 보고까지",
+        "focus": [
+          "req",
+          "phase0",
+          "g0",
+          "spec",
+          "pregate",
+          "g1",
+          "slice0",
+          "slice",
+          "align",
+          "audit",
+          "backstop",
+          "g2",
+          "report"
+        ],
+        "note": "사용자 게이트 G0·G1·G2를 지나는 본선 — Coordinator는 위임과 판정만 하고 명세·테스트·코드는 쓰지 않는다."
+      },
+      {
+        "id": "design-gate",
+        "label": "설계와 pre-gate",
+        "focus": [
+          "g0",
+          "spec",
+          "reviews",
+          "pregate",
+          "g1"
+        ],
+        "note": "명세는 리뷰 다발을 거쳐 반영되고, pre-gate가 막힘 0을 확인해야 G1에 올라간다 — red면 설계자에게 돌아간다."
+      },
+      {
+        "id": "guard-windows",
+        "label": "보존·묶음 창",
+        "focus": [
+          "g1",
+          "slice0",
+          "slice",
+          "align",
+          "backstop",
+          "g2"
+        ],
+        "note": "슬라이스 0(0T 시험 → 0C 코드)과 끝 맞춤 묶음 이동은 창 안에서만 — behavior_guard·folder_group이 창마다 판정한다."
+      },
+      {
+        "id": "refactor-entry",
+        "label": "리팩토링 입구",
+        "focus": [
+          "req",
+          "phase0",
+          "refscan",
+          "g0",
+          "slice0",
+          "align",
+          "backstop"
+        ],
+        "note": "/dddjango:refactor는 같은 Coordinator에 리팩토링 모드로 위임 — BC 점검(R1–R3) 뒤 G0, 0T·0C·0F·변경 창으로 간다."
+      },
+      {
+        "id": "ontology-layer",
+        "label": "온톨로지가 있는 곳",
+        "focus": [
+          "graph",
+          "md",
+          "rulepack",
+          "reviews"
+        ],
+        "note": "규범 정본은 그래프(Turtle) — md는 렌더 투영물, rulepack은 소성물이다."
+      }
     ],
-    "note": "사용자 게이트 G0·G1·G2를 지나는 본선 — Coordinator는 위임·판정만 한다."
-   },
-   {
-    "id": "ontology-layer",
-    "label": "온톨로지가 있는 곳",
-    "focus": [
-     "graph",
-     "skills",
-     "rulepack",
-     "red"
+    "viewBox": [
+      740,
+      1100
     ],
-    "note": "규범 정본은 그래프(Turtle) — 스킬 md는 렌더 투영물, rulepack은 소성물."
-   },
-   {
-    "id": "backstop-loop",
-    "label": "백스톱과 폐루프",
-    "focus": [
-     "checkers",
-     "registry",
-     "loop",
-     "slice",
-     "rulepack"
-    ],
-    "note": "검사기 red 중 귀속분(N∖L)만 반송 — 6′ 루프는 기본 off."
-   },
-   {
-    "id": "web-track",
-    "label": "dddjango-web",
-    "focus": [
-     "scope",
-     "design",
-     "web-design",
-     "g1",
-     "slice"
-    ],
-    "note": "별개 플러그인 — 실물 API 계약만 소비, 부족하면 /dddjango 발주."
-   }
-  ],
-  "viewBox": [
-   740,
-   1100
-  ],
-  "legend": {
-   "entries": {
-    "backend": {
-     "label": "에이전트"
-    },
-    "frontend": {
-     "label": "dddjango-web 에이전트"
-    },
-    "security": {
-     "label": "게이트·판정"
-    },
-    "messagebus": {
-     "label": "폐루프 도구"
-    },
-    "database": {
-     "label": "온톨로지 정본·산출물"
-    },
-    "external": {
-     "label": "사용자"
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "에이전트"
+        },
+        "security": {
+          "label": "게이트·판정"
+        },
+        "messagebus": {
+          "label": "결정적 도구·창"
+        },
+        "database": {
+          "label": "온톨로지 정본·산출물"
+        },
+        "external": {
+          "label": "사용자"
+        }
+      }
     }
-   }
-  }
- },
- "lanes": [
-  {
-   "id": "user",
-   "label": "사용자 (게이트 소유)"
   },
-  {
-   "id": "coordinator",
-   "label": "Coordinator — /dddjango"
-  },
-  {
-   "id": "design-agents",
-   "label": "설계 에이전트"
-  },
-  {
-   "id": "web-track",
-   "label": "dddjango-web 플러그인"
-  },
-  {
-   "id": "impl-agents",
-   "label": "구현 에이전트"
-  },
-  {
-   "id": "backstop",
-   "label": "결정적 백스톱 — scripts/"
-  },
-  {
-   "id": "loop",
-   "label": "폐루프 6′ (기본 off)",
-   "variant": "exception"
-  },
-  {
-   "id": "ontology",
-   "label": "온톨로지 층 (빌드타임 정본)"
-  }
- ],
- "phases": [
-  {
-   "id": "ph-design",
-   "label": "Phase 0–1 · 요구와 설계",
-   "fromCol": 0,
-   "toCol": 1
-  },
-  {
-   "id": "ph-impl",
-   "label": "Phase 2 · 구현 (이중 루프 TDD)",
-   "fromCol": 2,
-   "toCol": 4,
-   "variant": "emphasis"
-  },
-  {
-   "id": "ph-report",
-   "label": "Phase 3 · 보고",
-   "fromCol": 5,
-   "toCol": 5
-  }
- ],
- "mainPath": [
-  "order",
-  "scope",
-  "design",
-  "g1",
-  "red",
-  "slice",
-  "checkers",
-  "registry",
-  "audit",
-  "g2",
-  "report"
- ],
- "nodes": [
-  {
-   "id": "order",
-   "lane": "user",
-   "col": 0,
-   "type": "external",
-   "label": "발주",
-   "sublabel": "/dddjango",
-   "width": 84
-  },
-  {
-   "id": "g1",
-   "lane": "user",
-   "col": 2,
-   "type": "security",
-   "label": "G1 승인",
-   "sublabel": "명세·입장 표"
-  },
-  {
-   "id": "g2",
-   "lane": "user",
-   "col": 5,
-   "type": "security",
-   "label": "G2 승인",
-   "sublabel": "완료 · 대가 한 줄 병기"
-  },
-  {
-   "id": "scope",
-   "lane": "coordinator",
-   "col": 0,
-   "type": "backend",
-   "label": "Phase 0",
-   "sublabel": "빚 스캔·G0",
-   "width": 84
-  },
-  {
-   "id": "report",
-   "lane": "coordinator",
-   "col": 5,
-   "type": "backend",
-   "label": "Phase 3",
-   "sublabel": "보고 · 게이트 기록"
-  },
-  {
-   "id": "design",
-   "lane": "design-agents",
-   "col": 1,
-   "type": "backend",
-   "label": "설계 통합",
-   "sublabel": "design-architect",
-   "width": 104
-  },
-  {
-   "id": "red",
-   "lane": "impl-agents",
-   "col": 2,
-   "type": "backend",
-   "label": "인수 Red",
-   "sublabel": "acceptance-tester"
-  },
-  {
-   "id": "slice",
-   "lane": "impl-agents",
-   "col": 3,
-   "type": "backend",
-   "label": "coder",
-   "sublabel": "TDD · 화면 시 +impl-ui"
-  },
-  {
-   "id": "audit",
-   "lane": "impl-agents",
-   "col": 5,
-   "type": "backend",
-   "label": "규율 감사",
-   "sublabel": "discipline-reviewer"
-  },
-  {
-   "id": "checkers",
-   "lane": "backstop",
-   "col": 3,
-   "type": "security",
-   "label": "검사기 27",
-   "sublabel": "AST"
-  },
-  {
-   "id": "registry",
-   "lane": "backstop",
-   "col": 5,
-   "type": "security",
-   "label": "귀속 판정",
-   "sublabel": "N∖L"
-  },
-  {
-   "id": "loop",
-   "lane": "loop",
-   "col": 4,
-   "type": "messagebus",
-   "label": "6′ 재생성",
-   "sublabel": "주입 ≤3회전"
-  },
-  {
-   "id": "graph",
-   "lane": "ontology",
-   "col": 0,
-   "type": "database",
-   "label": "그래프",
-   "sublabel": "정본 · Work 3,400",
-   "width": 84
-  },
-  {
-   "id": "skills",
-   "lane": "ontology",
-   "col": 2,
-   "type": "database",
-   "label": "스킬 30문서",
-   "sublabel": "투영 539절",
-   "width": 100
-  },
-  {
-   "id": "rulepack",
-   "lane": "ontology",
-   "col": 4,
-   "type": "database",
-   "label": "rulepack",
-   "sublabel": "SPARQL 소성"
-  },
-  {
-   "id": "web-design",
-   "lane": "web-track",
-   "col": 1,
-   "type": "frontend",
-   "label": "화면 설계",
-   "sublabel": "design-architect-web"
-  },
-  {
-   "id": "reviews",
-   "lane": "design-agents",
-   "col": 0,
-   "type": "backend",
-   "label": "리뷰 셋",
-   "sublabel": "review api·db·ddd",
-   "width": 84
-  }
- ],
- "edges": [
-  {
-   "id": "e-order-scope",
-   "from": "order",
-   "to": "scope",
-   "variant": "default",
-   "fromSide": "left",
-   "toSide": "left",
-   "via": [
-    [
-     26,
-     119
-    ],
-    [
-     26,
-     243
-    ]
-   ]
-  },
-  {
-   "id": "e-scope-design",
-   "from": "scope",
-   "to": "design",
-   "label": "G0 승인 후 위임",
-   "variant": "emphasis",
-   "labelSegment": 0,
-   "labelDy": -12
-  },
-  {
-   "id": "e-design-g1",
-   "from": "design",
-   "to": "g1",
-   "label": "상정",
-   "variant": "security",
-   "labelDy": 24,
-   "labelDx": 24
-  },
-  {
-   "id": "e-g1-red",
-   "from": "g1",
-   "to": "red",
-   "label": "입장 표",
-   "variant": "emphasis",
-   "route": "straight",
-   "fromSide": "bottom",
-   "toSide": "top",
-   "labelDx": 30,
-   "labelDy": 24
-  },
-  {
-   "id": "e-red-slice",
-   "from": "red",
-   "to": "slice",
-   "variant": "default",
-   "route": "straight",
-   "fromSide": "right",
-   "toSide": "left"
-  },
-  {
-   "id": "e-slice-checkers",
-   "from": "slice",
-   "to": "checkers",
-   "label": "게이트",
-   "variant": "default",
-   "labelDx": -46,
-   "labelDy": 24,
-   "route": "straight",
-   "fromSide": "bottom",
-   "toSide": "top"
-  },
-  {
-   "id": "e-checkers-registry",
-   "from": "checkers",
-   "to": "registry",
-   "variant": "default",
-   "route": "straight",
-   "fromSide": "right",
-   "toSide": "left"
-  },
-  {
-   "id": "e-registry-audit",
-   "from": "registry",
-   "to": "audit",
-   "variant": "default",
-   "route": "straight",
-   "fromSide": "top",
-   "toSide": "bottom"
-  },
-  {
-   "id": "e-audit-g2",
-   "from": "audit",
-   "to": "g2",
-   "variant": "security",
-   "fromSide": "right",
-   "toSide": "right",
-   "route": "outside-right"
-  },
-  {
-   "id": "e-g2-report",
-   "from": "g2",
-   "to": "report",
-   "label": "승인",
-   "variant": "emphasis"
-  },
-  {
-   "id": "e-registry-slice",
-   "from": "registry",
-   "to": "slice",
-   "label": "귀속 red 반송",
-   "variant": "dashed",
-   "role": "error",
-   "labelSegment": 2,
-   "fromSide": "right",
-   "toSide": "top",
-   "via": [
-    [
-     712,
-     739
-    ],
-    [
-     712,
-     48
-    ],
-    [
-     430,
-     48
-    ]
-   ],
-   "labelDx": 0,
-   "labelDy": 14
-  },
-  {
-   "id": "e-registry-loop",
-   "from": "registry",
-   "to": "loop",
-   "label": "on일 때",
-   "variant": "dashed",
-   "role": "branch"
-  },
-  {
-   "id": "e-rulepack-loop",
-   "from": "rulepack",
-   "to": "loop",
-   "label": "조인",
-   "variant": "dashed",
-   "role": "branch",
-   "labelSegment": 0,
-   "labelDy": -10,
-   "labelDx": 12
-  },
-  {
-   "id": "e-graph-skills",
-   "from": "graph",
-   "to": "skills",
-   "label": "렌더 투영",
-   "variant": "dashed",
-   "fromSide": "right",
-   "toSide": "left",
-   "route": "straight",
-   "labelDy": -24,
-   "labelDx": -16
-  },
-  {
-   "id": "e-graph-rulepack",
-   "from": "graph",
-   "to": "rulepack",
-   "label": "q4 소성",
-   "variant": "dashed",
-   "route": "bottom-channel"
-  },
-  {
-   "id": "e-skills-design",
-   "from": "skills",
-   "to": "red",
-   "label": "에이전트 지식 로드",
-   "variant": "dashed",
-   "role": "branch"
-  },
-  {
-   "id": "e-design-webdesign",
-   "from": "design",
-   "to": "web-design",
-   "label": "별개 커맨드",
-   "variant": "dashed",
-   "role": "branch",
-   "labelDx": -68,
-   "route": "straight",
-   "fromSide": "bottom",
-   "toSide": "top",
-   "labelDy": 24
-  },
-  {
-   "id": "e-webdesign-g1",
-   "from": "web-design",
-   "to": "g1",
-   "label": "화면 명세",
-   "variant": "dashed",
-   "fromSide": "bottom",
-   "toSide": "right",
-   "labelSegment": 2,
-   "labelDx": -40,
-   "via": [
-    [
-     220,
-     540
-    ],
-    [
-     380,
-     540
-    ],
-    [
-     380,
-     119
-    ]
-   ]
-  },
-  {
-   "id": "e-webdesign-design",
-   "from": "web-design",
-   "to": "design",
-   "label": "계약 반송",
-   "variant": "dashed",
-   "role": "error",
-   "labelDx": 58,
-   "fromSide": "right",
-   "toSide": "right",
-   "labelSegment": 1,
-   "via": [
-    [
-     284,
-     491
-    ],
-    [
-     284,
-     367
-    ]
-   ]
-  },
-  {
-   "id": "e-reviews-design",
-   "from": "reviews",
-   "to": "design",
-   "label": "리뷰 노트",
-   "variant": "dashed",
-   "role": "branch",
-   "labelDy": -24
-  }
- ],
- "cards": [
-  {
-   "dot": "cyan",
-   "title": "기술 스택 — 두 세계의 경계",
-   "items": [
-    "정본층(메인테이너 저장소 전용): Turtle(RDF)+RDFS 어휘 · SHACL 검증(pySHACL) · RDFC-1.0 정규화 해시 · SPARQL 질의(rdflib)",
-    "4단 저작 게이트: 파스 → 정본 직렬화 diff=0 → RDFC 해시 불변 → SHACL — 커밋마다 기계 차단",
-    "설치본(플러그인): 표준 라이브러리만 — rulepack.json 인덱스 조회 + 검사기 AST. rdflib 침투 금지(동결 E7)",
-    "DB·서버 없음 — 전부 git 안의 파일. 릴리즈 2.17.0 기준"
-   ]
-  },
-  {
-   "dot": "violet",
-   "title": "온톨로지가 있는 곳",
-   "items": [
-    "스킬 30문서의 참조성 539절 = 그래프의 렌더 투영물(graph-owned 마커) — byte 등가를 도구가 상시 단언",
-    "규범 Work 3,400 · 재진술 연결 616 · alias 대장 28(rule# 21 + 선행 계약 contract# 7)",
-    "규범 수정은 ontology/rules/ 정본에서 → 게이트 → 렌더 재투영 → 원장(LEDGER) — 문서 직접 수정은 훅이 차단",
-    "스킬 md 로드는 설계·구현 에이전트 공통(그림은 인수 간선 하나로 대표) · 위반 레코드는 위반 그래프에 축적 — 월별 집계가 개정 제안 큐"
-   ]
-  },
-  {
-   "dot": "amber",
-   "title": "결정이 이루어지는 곳",
-   "items": [
-    "사용자 게이트 G0·G1·G2 — 닫힌 선택지 + 대가 한 줄, AskUserQuestion 채널, STOP 기록이 정본",
-    "테스트 입장 표가 테스트의 운명을 결정: add/update만 Red, reuse는 anchor 실행만, pending은 G1 반송",
-    "검사기 red는 귀속분(앵커 차분 N∖L)만 반송 — legacy 잔존은 이 빌드에서 면책",
-    "6′ 폐루프는 기본 off(T2 실험 종결 처분) — 켜면 반송 전 rulepack 조인 규범 좌표를 주입해 최대 3회전 재생성"
-   ]
-  },
-  {
-   "dot": "emerald",
-   "title": "dddjango-web — 별개 플러그인",
-   "items": [
-    "/dddjango-web 커맨드가 자체 게이트를 돈다 — G0(배선 검사)·G1(계약 절단)·G2(사용자 육안). 완료 = 백스톱 green + 규율 감사 + 사용자 육안",
-    "에이전트 4: design-architect-web · design-review-web · coder-web · discipline-reviewer-web",
-    "스킬 4: architecture-web · implementation-ui · discipline-web-houserules · discipline-cleancode — 결정적 백스톱 24종(WS/WI/WN/WP)",
-    "경계: 실물 API 계약만 소비한다 — 계약이 부족하면 /dddjango에 발주. 테스트 없음(육안+백스톱)"
-   ]
-  }
- ]
+  "lanes": [
+    {
+      "id": "user",
+      "label": "사용자 · 게이트"
+    },
+    {
+      "id": "coord",
+      "label": "Coordinator"
+    },
+    {
+      "id": "design",
+      "label": "설계자"
+    },
+    {
+      "id": "impl",
+      "label": "구현 에이전트"
+    },
+    {
+      "id": "window",
+      "label": "보존·묶음 창"
+    },
+    {
+      "id": "review",
+      "label": "리뷰어·감사"
+    },
+    {
+      "id": "backstop",
+      "label": "결정적 백스톱"
+    },
+    {
+      "id": "ontology",
+      "label": "온톨로지 (저장소 정본)"
+    }
+  ],
+  "phases": [
+    {
+      "id": "ph0",
+      "label": "Phase 0 · 범위",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "ph1",
+      "label": "Phase 1 · 설계",
+      "fromCol": 1,
+      "toCol": 2
+    },
+    {
+      "id": "ph2",
+      "label": "Phase 2 · 구현 (이중 루프 TDD) → G2 · 보고",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "req",
+    "phase0",
+    "g0",
+    "spec",
+    "pregate",
+    "g1",
+    "slice0",
+    "slice",
+    "align",
+    "audit",
+    "backstop",
+    "g2",
+    "report"
+  ],
+  "nodes": [
+    {
+      "id": "req",
+      "lane": "user",
+      "col": 0,
+      "type": "external",
+      "label": "요청",
+      "sublabel": "기능 · 리팩토링",
+      "tag": "/dddjango · :refactor",
+      "width": 84
+    },
+    {
+      "id": "g0",
+      "lane": "user",
+      "col": 1,
+      "type": "security",
+      "label": "G0 승인",
+      "sublabel": "범위 · 빚 정리"
+    },
+    {
+      "id": "g1",
+      "lane": "user",
+      "col": 3,
+      "type": "security",
+      "label": "G1 승인",
+      "sublabel": "명세 · 입장 표"
+    },
+    {
+      "id": "g2",
+      "lane": "user",
+      "col": 5,
+      "type": "security",
+      "label": "G2 승인",
+      "sublabel": "잔존 · 보존 · 묶음"
+    },
+    {
+      "id": "phase0",
+      "lane": "coord",
+      "col": 0,
+      "type": "backend",
+      "label": "Phase 0",
+      "sublabel": "범위 · 빚 스캔",
+      "width": 84
+    },
+    {
+      "id": "pregate",
+      "lane": "coord",
+      "col": 2,
+      "type": "messagebus",
+      "label": "pre-gate",
+      "sublabel": "막힘 예보 · 반송"
+    },
+    {
+      "id": "report",
+      "lane": "coord",
+      "col": 5,
+      "type": "backend",
+      "label": "보고",
+      "sublabel": "Phase 3 · 돌린 것만"
+    },
+    {
+      "id": "refscan",
+      "lane": "design",
+      "col": 0,
+      "type": "backend",
+      "label": "BC 점검",
+      "sublabel": "R1–R3 → G0",
+      "width": 84
+    },
+    {
+      "id": "spec",
+      "lane": "design",
+      "col": 1,
+      "type": "backend",
+      "label": "설계 명세",
+      "sublabel": "입장 표 · 슬라이스"
+    },
+    {
+      "id": "slice",
+      "lane": "impl",
+      "col": 4,
+      "type": "backend",
+      "label": "기능 구현",
+      "sublabel": "인수 Red → coder"
+    },
+    {
+      "id": "slice0",
+      "lane": "window",
+      "col": 3,
+      "type": "messagebus",
+      "label": "슬라이스 0",
+      "sublabel": "0T 시험 → 0C 코드"
+    },
+    {
+      "id": "align",
+      "lane": "window",
+      "col": 5,
+      "type": "messagebus",
+      "label": "끝 맞춤",
+      "sublabel": "묶음 창 · verify"
+    },
+    {
+      "id": "reviews",
+      "lane": "review",
+      "col": 1,
+      "type": "backend",
+      "label": "리뷰 다발",
+      "sublabel": "ddd·api·db·규율"
+    },
+    {
+      "id": "audit",
+      "lane": "review",
+      "col": 5,
+      "type": "backend",
+      "label": "규율 감사",
+      "sublabel": "discipline-reviewer"
+    },
+    {
+      "id": "backstop",
+      "lane": "backstop",
+      "col": 5,
+      "type": "security",
+      "label": "검사기 27",
+      "sublabel": "귀속 판정 N∖L"
+    },
+    {
+      "id": "graph",
+      "lane": "ontology",
+      "col": 0,
+      "type": "database",
+      "label": "그래프",
+      "sublabel": "정본 · Work 3,713",
+      "width": 84
+    },
+    {
+      "id": "md",
+      "lane": "ontology",
+      "col": 2,
+      "type": "database",
+      "label": "md 투영",
+      "sublabel": "548절 · 30문서"
+    },
+    {
+      "id": "rulepack",
+      "lane": "ontology",
+      "col": 4,
+      "type": "database",
+      "label": "rulepack",
+      "sublabel": "refactor_audit 조회"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-req-phase0",
+      "from": "req",
+      "to": "phase0",
+      "variant": "default",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          26,
+          119
+        ],
+        [
+          26,
+          243
+        ]
+      ]
+    },
+    {
+      "id": "e-phase0-g0",
+      "from": "phase0",
+      "to": "g0",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          158,
+          243
+        ],
+        [
+          158,
+          119
+        ]
+      ]
+    },
+    {
+      "id": "e-phase0-refscan",
+      "from": "phase0",
+      "to": "refscan",
+      "label": "리팩토링",
+      "variant": "dashed",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          88,
+          290
+        ],
+        [
+          26,
+          290
+        ],
+        [
+          26,
+          367
+        ]
+      ],
+      "labelAt": [
+        57,
+        290
+      ]
+    },
+    {
+      "id": "e-g0-spec",
+      "from": "g0",
+      "to": "spec",
+      "label": "위임",
+      "variant": "emphasis",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        220,
+        166
+      ]
+    },
+    {
+      "id": "e-spec-reviews",
+      "from": "spec",
+      "to": "reviews",
+      "label": "리뷰 ⇄ 반영",
+      "variant": "dashed",
+      "role": "branch",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        220,
+        414
+      ]
+    },
+    {
+      "id": "e-spec-pregate",
+      "from": "spec",
+      "to": "pregate",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          300,
+          367
+        ]
+      ]
+    },
+    {
+      "id": "e-pregate-g1",
+      "from": "pregate",
+      "to": "g1",
+      "label": "exit 0",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "left",
+      "via": [
+        [
+          300,
+          119
+        ]
+      ]
+    },
+    {
+      "id": "e-g1-slice0",
+      "from": "g1",
+      "to": "slice0",
+      "label": "ⓐ 있으면",
+      "variant": "emphasis",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        430,
+        166
+      ]
+    },
+    {
+      "id": "e-g1-slice",
+      "from": "g1",
+      "to": "slice",
+      "label": "ⓐ 없으면",
+      "variant": "dashed",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          500,
+          119
+        ]
+      ],
+      "labelAt": [
+        500,
+        243
+      ]
+    },
+    {
+      "id": "e-slice0-slice",
+      "from": "slice0",
+      "to": "slice",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          500,
+          615
+        ]
+      ]
+    },
+    {
+      "id": "e-slice-align",
+      "from": "slice",
+      "to": "align",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          625,
+          491
+        ]
+      ]
+    },
+    {
+      "id": "e-align-audit",
+      "from": "align",
+      "to": "audit",
+      "label": "스위트 1회",
+      "variant": "default",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        625,
+        662
+      ]
+    },
+    {
+      "id": "e-audit-backstop",
+      "from": "audit",
+      "to": "backstop",
+      "variant": "default",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e-backstop-g2",
+      "from": "backstop",
+      "to": "g2",
+      "label": "귀속 0",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          700,
+          863
+        ],
+        [
+          700,
+          119
+        ]
+      ]
+    },
+    {
+      "id": "e-g2-report",
+      "from": "g2",
+      "to": "report",
+      "label": "승인",
+      "variant": "emphasis",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        625,
+        166
+      ]
+    },
+    {
+      "id": "e-graph-md",
+      "from": "graph",
+      "to": "md",
+      "label": "렌더 투영",
+      "variant": "dashed",
+      "route": "straight",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "e-graph-rulepack",
+      "from": "graph",
+      "to": "rulepack",
+      "label": "소성",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          88,
+          1040
+        ],
+        [
+          500,
+          1040
+        ]
+      ],
+      "labelAt": [
+        294,
+        1040
+      ]
+    },
+    {
+      "id": "e-md-reviews",
+      "from": "md",
+      "to": "reviews",
+      "label": "지식 로드",
+      "variant": "dashed",
+      "role": "branch",
+      "fromSide": "top",
+      "toSide": "right",
+      "via": [
+        [
+          300,
+          739
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "기술 스택 — 두 세계의 경계",
+      "items": [
+        "정본층(메인테이너 저장소 전용): Turtle(RDF)+RDFS 어휘 · SHACL 검증(pySHACL) · RDFC-1.0 정규화 해시 · SPARQL 질의(rdflib)",
+        "4단 저작 게이트: 파스 → 정본 직렬화 diff=0 → RDFC 해시 → SHACL — 커밋마다 pre-commit이 기계로 막는다",
+        "설치본(플러그인): 표준 라이브러리만 — 검사기 27(AST·파일 트리 판정) + 결정적 도구(pre-gate · registry_gate · behavior_guard · folder_group · refactor_audit) + rulepack.json 조회. rdflib 금지(동결 E7)",
+        "DB·서버 없음 — 전부 git 안의 파일. 릴리즈 2.28.0 기준"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "온톨로지가 있는 곳",
+      "items": [
+        "커맨드 1 · 에이전트 7 · 스킬 11(SKILL.md+reference) = 30문서의 참조성 548절이 그래프의 렌더 투영물(graph-owned 마커)",
+        "규범 Work 3,713(의무 2,535 · 금지 779 · 예외 200 · 허용 162 · 우선 37) — rulepack.json도 works 3,713",
+        "규범 수정은 ontology/rules/ 정본에서 → 게이트 → 렌더 재투영 → 원장(LEDGER) — graph-owned 절 직접 수정은 훅이 막는다",
+        "rulepack은 리팩토링 모드의 refactor_audit가 리뷰어의 규범 인용을 대조할 때 읽는다 — 6′ 재생성 루프도 읽지만 기본 off"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "결정이 이루어지는 곳",
+      "items": [
+        "G0: 범위 승인 + 빚 질문 — ⓐ 지금 정리(슬라이스 0) · ⓑ 미룸 · ⓐ′ BC별 리팩토링, 결정 출처를 함께 적는다",
+        "G1: 명세·입장 표 승인 — pre-gate --check-report exit 0 뒤에만 상정, red면 설계자에게 반송",
+        "G2: 백스톱 귀속 red(N∖L) 0 · 동작 보존 verify · 묶음 verify를 확인 — legacy 잔존은 고치지 않고 보고",
+        "수정 모드는 G0 → G1′(영향 렌즈만) → G2 · 입장 표 pending은 G1/G1′로 반송"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "리팩토링 입구와 경계",
+      "items": [
+        "/dddjango:refactor <BC>는 같은 Coordinator에 리팩토링 모드로 넘긴다 — R1 빚 → R2 의미 점검(리뷰어 BC_AUDIT) → R2′ → R3 판정(설계자) → G0",
+        "리팩토링 Phase 2는 0T(시험) → 0C(코드) → 0F(따라가기) → 변경 슬라이스, 한 번에 창 하나 — behavior_guard가 창마다 보존을 판정",
+        "의미 묶음 폴더(2.28.0): G0 묶음 빚과 끝 맞춤 이동은 folder_group 묶음 창에서만 — verify --window로 확인",
+        "dddjango-web은 별개 플러그인 — 그 영역 발견은 백스톱이 보고만 한다(화면 흐름은 별도 지도)"
+      ]
+    }
+  ]
 }
