@@ -64,7 +64,9 @@
   폴더(G0 ⓐ — 평평한 `term_c` 를 `term/` 에) 사본으로 돌림 → 사본이 앵커 커밋 «전» 에 `void_a` · `void_b`(이 실행의 형성) · `term_c`(ⓐ)
   를 옮겨 옛 위반(`django.db`)이 L∩N · exit 0 · 예보 줄 0. 유닛: `_domain_service_slot_shape` 묶음 꼴(7.4 의 17) ·
   `_domain_service_selected` 묶음 안 파일 · 묶음 안 승격 본체(18) · `_real_parts` 값 객체 C2 는 승격 본체로 잇지 않음(18′).
-  `--mutation-test`: «`apply_to_copy` 를 앵커 커밋 뒤로» 변이가 이 묶음을 붉게 하는지(계획 «단계 3 변이 회귀»).
+  group-dissolve: 명세가 `term_b` · `term_c` 를 지워 `term/` 이 한 파일로 풀림 → 사본이 `term_a` 를 부모로 · 빈 `term/__init__.py` 지움
+  (`RunPlan.drops`) · exit 0 · 예보 0.
+  `--mutation-test`: «`apply_to_copy` 를 앵커 커밋 뒤로» 변이가 이 묶음을 붉게 하는지(계획 «단계 3 변이 회귀») · 이관 빚 · 빈 묶음 변이.
   실행기 exit 규약: 0 green · 2 귀속 red(결손 병기) · 3 형식 red(문법 · 블록 부재·공허 · add 충돌 · update/remove 대상 기준선 부재) ·
   4 skip(실체화 0·결손 0) · 5 결손 ≥1 ∧ (귀속 0 ∨ 실체화 0) · 1 실행 불능 · `--check-report`: 0 정합 · 3 불비 · 1 리포트/절 부재.
   (아래 재발화 판형의 케이스 이름 E1~E4 는 이 러너의 것 — 승격 계획서의 실행기 변경 항목 번호와 무관.)
@@ -2124,6 +2126,43 @@ def _run_group_legacy_bundle(scratch: Path, failures: "list[str]") -> None:
         print("group-legacy: 이관 빚이 붙든 `void/` — draft 와 pre-gate 사본이 같은 자리(평평) · 묶음 이동 0 · 예보 0 — 기대 일치")
 
 
+def _run_group_dissolve_bundle(scratch: Path, failures: "list[str]") -> None:
+    """합류 확인 — 명세가 `term/` 의 둘(`term_b` · `term_c` 는 평평)을 지워 `term/` 이 한 파일로 풀릴 때(W2), pre-gate 사본도
+    `folder_group.py apply --run-moves` 처럼 남은 빈 `term/__init__.py` 를 지운다(`RunPlan.drops` · 검토 A3). 안 지우면 사본에
+    `__init__.py` 만 남은 `term/` 이 «푼다» 줄로 N∖L 예보된다."""
+    repo: Path = scratch / "repo-group-dissolve"
+    shutil.copytree(FIXTURES / "mini_repo", repo)
+    shutil.copytree(FIXTURES / "group_overlay", repo, dirs_exist_ok=True)
+    _git(repo, "init", "-q")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "fixture-baseline+group-overlay")
+    run: Path = scratch / "group-dissolve-run"
+    run.mkdir()
+    (run / "refactor-scope.md").write_text("실행 · G0 승인 group-dissolve\n\n", encoding="utf-8")
+    spec: Path = run / "design-spec.md"
+    spec.write_text(
+        "# 미니 설계 명세 — orders BC 묶음 풀림 (group-dissolve)\n\n## 파일 계획\n\n<!-- machine: file-plan -->\n```paths\n"
+        f"remove\t{_GROUP_SV}term/term_b.py\t# 죽은 값 객체\nremove\t{_GROUP_SV}term_c.py\t# 죽은 값 객체\n```\n",
+        encoding="utf-8")
+    report: Path = scratch / "pregate-report-group-dissolve.md"
+    proc: "subprocess.CompletedProcess[str]" = _run_pregate(spec, repo, report, ["--keep"])
+    kept: "re.Match[str] | None" = _KEEP_RE.search(proc.stdout)
+    layout: "dict[str, bool]" = {}
+    if kept is not None:
+        copy: Path = Path(kept.group(1)) / "copy"
+        for rel in ("term_a.py", "term/term_a.py", "term/__init__.py"):
+            layout[rel] = (copy / _GROUP_SV / rel).is_file()
+        shutil.rmtree(kept.group(1), ignore_errors=True)
+    forecast: "list[str]" = [ln for ln in proc.stdout.splitlines() if _FORECAST_RULE_RE.match(ln)]
+    want_layout: "dict[str, bool]" = {"term_a.py": True, "term/term_a.py": False, "term/__init__.py": False}
+    if proc.returncode != 0 or forecast or layout != want_layout or "묶음 이동(사본 · 앵커 커밋 전) 1쌍" not in proc.stdout:
+        failures.append(f"group-dissolve 기대 exit 0 · 예보 0 · 묶음 이동 1쌍 · 사본 자리 {want_layout} ≠ 실측 exit "
+                        f"{proc.returncode} · 자리 {layout} · 예보 {forecast}")
+        _dump("group-dissolve", proc)
+    else:
+        print("group-dissolve: 한 파일로 풀린 `term/` — 사본이 term_a 를 부모로 옮기고 빈 `__init__.py` 를 지움 · 예보 0 — 기대 일치")
+
+
 def _sid(path: str) -> str:
     """선언 #541 행의 안정 ID — 실행기 `_stable_id` 와 같은 결합(sha256(규칙#+경로)[:12])을 러너가 독립으로 계산한다."""
     return hashlib.sha256(f"#541+{path}".encode("utf-8")).hexdigest()[:12]
@@ -2142,6 +2181,8 @@ _MUTATIONS: "tuple[tuple[str, str, str], ...]" = (
      "    plan_g = folder_group.plan_for(run, legacy)\n", "    plan_g = folder_group.plan_for(run)\n"),
     ("사본 게이트에 이관 빚 목록을 안 넘김(검토 B2)",
      '        + (["--legacy-debt-file", str(legacy_debt_file)] if legacy_debt_file is not None else []),\n', ",\n"),
+    ("사본이 R 에서 빈 묶음 `__init__.py` 를 안 지움(합류)",
+     "        if (copy / d).is_file():\n            (copy / d).unlink()\n", "        pass\n"),
 )
 
 
@@ -2149,6 +2190,7 @@ def _only_group(scratch: Path) -> "list[str]":
     failures: "list[str]" = _group_unit_checks()
     _run_group_bundle(scratch, failures)
     _run_group_legacy_bundle(scratch, failures)
+    _run_group_dissolve_bundle(scratch, failures)
     return failures
 
 
@@ -2229,6 +2271,7 @@ def main(argv: "list[str]") -> int:
         _run_publish_bundle(scratch, failures)            # F4-93 · #541 선언 예보
         _run_group_bundle(scratch, failures)              # 2.28.0 의미 묶음 — 사본 이동은 앵커 커밋 전(설계 9.3)
         _run_group_legacy_bundle(scratch, failures)       # 검토 B2 — 이관 빚이 붙든 묶음 자리(설계 5절 ⓪)
+        _run_group_dissolve_bundle(scratch, failures)     # 합류 — 풀린 묶음의 빈 `__init__.py` 도 사본에서 지움
 
         if failures:
             print("\nFAIL — pre-gate 픽스처 기대 불일치:")

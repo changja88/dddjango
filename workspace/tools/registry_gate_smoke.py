@@ -2032,6 +2032,51 @@ class GroupMoveGateRegression(unittest.TestCase):
                     self.assertIn(f"묶음 이동 따라 {_SV}{bad}.py", _section(out, "승인 유입"))
                     self.assertEqual(data["attributed_lines"], [])
 
+    def test_merge_inflow_promoted_folder_moved_whole_stays_inflow(self) -> None:
+        # 검토 B1 × B5 — 승인 병합이 들인 «새» 승격 폴더(`resolve_ghost/` · 부품에 `django.db`)를 레인 형성이 통째로 옮긴다. 앵커에
+        # 없던 파일은 5절 계산 `T₀′ → R` 로 가리는데, 그 계산도 승격 폴더를 통째로 넓혀야 부품 줄이 T₀′ 자리에서 유입 증명을 받는다.
+        ds: str = "application/orders/domain_layer/domain_service/"
+        sv_mod: str = "application.orders.domain_layer.shared_value_object"
+
+        def svc(name: str, ret: str, mod: str) -> str:
+            return (f'"""{name} 서비스."""\nfrom {sv_mod}.{mod} import {ret}\n\n\n'
+                    f"def {name}(x: {ret}) -> {ret}:\n    return x\n")
+
+        repo, _pre = _make_repo(self.td, "inflow-promoted")
+        for stem in ("relation_a", "relation_b", "relation_c"):
+            _write(repo, _SV + f"relation/{stem}.py", _fg_vo(stem))
+        _write(repo, _SV + "relation/__init__.py", "")
+        _write(repo, _SV + "moon_phase.py", _fg_vo("moon_phase"))
+        _write(repo, ds + "__init__.py", "")
+        _write(repo, ds + "resolve_relation_a.py", svc("resolve_relation_a", "RelationA", "relation.relation_a"))
+        _write(repo, ds + "compute_moon_phase.py", svc("compute_moon_phase", "MoonPhase", "moon_phase"))
+        anchor: str = _commit_all(repo, "앵커")
+        _git(repo, "checkout", "-q", "-b", "lane")
+        _write(repo, _SV + "moon_phase.py", _fg_vo("moon_phase") + "# 레인\n")
+        _commit_all(repo, "레인 편집")
+        _git(repo, "checkout", "-q", "main")
+        _write(repo, ds + "resolve_ghost/__init__.py", "")
+        _write(repo, ds + "resolve_ghost/resolve_ghost.py", svc("resolve_ghost", "RelationC", "relation.relation_c"))
+        _write(repo, ds + "resolve_ghost/ghost_part.py", '"""부품."""\nfrom django.db import models\n\n_X: str = "x"\n')
+        _commit_all(repo, "상류 — 새 승격 서비스")
+        _git(repo, "checkout", "-q", "lane")
+        proc: "subprocess.CompletedProcess[str]" = _git(repo, "merge", "-q", "--no-ff", "-m", "M main 받음", "main")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        folder: Path = _fg_folder(repo, "inflow-promoted", anchor, merges=(_head(repo),))
+        _write(repo, ds + "resolve_relation_b.py", svc("resolve_relation_b", "RelationB", "relation.relation_b"))
+        _commit_all(repo, "레인 슬라이스 — 셋째 relation 서비스(형성)")
+        rc, out = _fg_tool("apply", repo, "--run", folder, "--run-moves")
+        self.assertEqual(rc, 0, out)
+        part: str = f"{ds}relation/resolve_ghost/ghost_part.py"
+        self.assertIn(f"이동 {ds}resolve_ghost/ghost_part.py -> {part}", out)
+        _commit_all(repo, "끝 맞춤 묶음 창")
+        code, out, data = self.gate(repo, anchor, folder, "--approved-merge-file", str(folder / "approved-merges.txt"))
+        self.assertEqual(code, 0, out)
+        self.assertEqual(_top_lines(_section(out, "귀속(N∖L)")), [], out)
+        inflow: "list[str]" = [ln for ln in _top_lines(_section(out, "승인 유입")) if part in ln]
+        self.assertEqual(_rule_tags(inflow), ["#2", "#8"], out)   # 서비스 칸 — #298 은 값 객체 칸 규칙
+        self.assertEqual(data["attributed_lines"], [])
+
     def test_line_matching_is_one_to_one(self) -> None:
         gate: ModuleType = _gate_module()
         pairs: "dict[str, str]" = {"app/x.py": "app/g/x.py"}
@@ -2222,6 +2267,8 @@ _MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...]], ...]" = (
     ("순수 이동 확인 지움(검토 B1)", (("        if c not in self.pure:", "        if False:"),)),
     ("앵커 밖 T₀′ 파일은 계산과 견주지 않음(검토 B1)",
      (("lane.update({b: c for b, c in fresh.items() if base_final.get(b) == c})", "lane.update(fresh)"),)),
+    ("앵커 밖 승격 폴더를 통째로 넓히지 않음(검토 B1 × B5)",
+     (("dict(folder_group._expand(plan.pairs(plan.base, plan.final), t0p))", "dict(plan.pairs(plan.base, plan.final))"),)),
 )
 
 

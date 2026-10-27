@@ -5249,7 +5249,8 @@ def _group_copy_moves(copy: Path, plan: Plan, folder: Path, legacy: "list[str]")
     이동(«지금 내용» = 사본 + file-plan `add` 이름 · `remove` — `folder_group.py draft --spec` 과 같은 재료)을 한다. 앵커 커밋
     «전» 에 불러 옮긴 파일의 옛 위반이 앵커 스냅숏(L)에도 실린다. 아직 없는 `add` 의 자리는 옮기지 않는다(명세가 묶음 경로로
     적는다). `refactor-scope.md` 는 명세의 산출물 폴더에서 읽는다. 이관 빚 목록의 #656 줄(`legacy`)이 붙든 묶음 자리는
-    `draft --legacy-debt-file` 처럼 지킨다(5절 ⓪). 돌려주는 값은 한 쌍(승격 폴더는 넓힌 쌍)."""
+    `draft --legacy-debt-file` 처럼 지킨다(5절 ⓪). R 에서 `__init__.py` 만 남는 묶음(`RunPlan.drops`)의 그 파일도 지운다
+    (`apply --run-moves` 와 같은 R). 돌려주는 값은 한 쌍(승격 폴더는 넓힌 쌍)."""
     files: "dict[str, str]" = folder_group.scan_tree(copy)[0]
     tags: "dict[str, str]" = {"/".join(_plan_parts(p)): e.tag for p, e in plan.entries.items()}
     now: "dict[str, str]" = {p: t for p, t in files.items() if tags.get(p) != "remove"}
@@ -5261,7 +5262,11 @@ def _group_copy_moves(copy: Path, plan: Plan, folder: Path, legacy: "list[str]")
         scope=scope.read_text(encoding="utf-8") if scope.is_file() else "")
     plan_g = folder_group.plan_for(run, legacy)
     pairs: "list[tuple[str, str]]" = [(a, b) for a, b in plan_g.pairs(plan_g.current, plan_g.final) if (copy / a).is_file()]
-    return folder_group.apply_to_copy(copy, pairs) if pairs else []
+    moved: "list[tuple[str, str]]" = folder_group.apply_to_copy(copy, pairs) if pairs else []
+    for d in plan_g.drops:   # 곁에 남은 것은 명세가 지울(`remove`) 파일뿐 — 그 지움은 앵커 뒤 실물화가 한다
+        if (copy / d).is_file():
+            (copy / d).unlink()
+    return moved
 
 
 def _main(argv: "list[str]") -> int:

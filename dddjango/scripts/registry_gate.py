@@ -558,10 +558,10 @@ def _group_pairs(root: Path, folder: Path, anchor_sha: str, merges: "list[anchor
             dropped[a] = c
     reached: "set[str]" = set(merge_share.values())
     fresh: "dict[str, str]" = {b: c for b, c in lane_all.items() if b not in t0 and b not in reached}
-    if fresh:  # 앵커에 없던 T₀′ 파일(병합이 들인 새 파일) — 5절 계산 `T₀′ 자리 → R` 와 같을 때만
+    if fresh:  # 앵커에 없던 T₀′ 파일(병합이 들인 새 파일) — 5절 계산 `T₀′ 자리 → R` 와 같을 때만(승격 폴더는 통째로 · 검토 B5)
         plan = folder_group.plan_for(folder_group.load_run(root, folder, None),
                                      folder_group.legacy_entries(legacy))
-        base_final: "dict[str, str]" = dict(plan.pairs(plan.base, plan.final))
+        base_final: "dict[str, str]" = dict(folder_group._expand(plan.pairs(plan.base, plan.final), t0p))
         lane.update({b: c for b, c in fresh.items() if base_final.get(b) == c})
     forward: "list[tuple[str, str]]" = sorted(lane.items())
     moves: "dict[str, str]" = folder_group.module_moves(forward)
