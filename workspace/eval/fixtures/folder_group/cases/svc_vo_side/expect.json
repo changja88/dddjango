@@ -1,0 +1,24 @@
+{
+  "기준": "application/orbit/domain_layer/",
+  "까닭": {
+    "domain_service/compose_orbit_summary.py": "부모 3미만",
+    "domain_service/relation/compose_relation_index.py": "이름 relation",
+    "domain_service/relation/zodiac_relation_link.py": "이름 relation",
+    "star_chart/value_object/moon.py": "부모 3미만",
+    "star_chart/value_object/zodiac_a.py": "이름 zodiac",
+    "star_chart/value_object/zodiac_b.py": "이름 zodiac",
+    "star_chart/value_object/zodiac_c.py": "이름 zodiac"
+  },
+  "자리": {
+    "domain_service/compose_orbit_summary.py": "domain_service/compose_orbit_summary.py",
+    "domain_service/relation/compose_relation_index.py": "domain_service/relation/compose_relation_index.py",
+    "domain_service/relation/zodiac_relation_link.py": "domain_service/relation/zodiac_relation_link.py",
+    "star_chart/value_object/moon.py": "star_chart/value_object/moon.py",
+    "star_chart/value_object/zodiac_a.py": "star_chart/value_object/zodiac/zodiac_a.py",
+    "star_chart/value_object/zodiac_b.py": "star_chart/value_object/zodiac/zodiac_b.py",
+    "star_chart/value_object/zodiac_c.py": "star_chart/value_object/zodiac/zodiac_c.py"
+  },
+  "줄": [
+    "[#656] application/orbit/domain_layer/star_chart/value_object/__init__.py: 묶음 `zodiac/` 을(를) 만든다"
+  ]
+}

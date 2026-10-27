@@ -1,0 +1,2 @@
+class StarChartLocked(Exception):
+    pass

@@ -1,0 +1,2 @@
+class InvalidDeepReadingField(Exception):
+    pass

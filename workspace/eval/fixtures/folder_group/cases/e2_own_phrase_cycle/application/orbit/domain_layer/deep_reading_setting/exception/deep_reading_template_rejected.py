@@ -1,0 +1,2 @@
+class DeepReadingTemplateRejected(Exception):
+    pass

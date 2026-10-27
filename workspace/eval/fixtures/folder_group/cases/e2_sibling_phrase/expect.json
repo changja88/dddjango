@@ -1,0 +1,16 @@
+{
+  "기준": "application/orbit/domain_layer/",
+  "까닭": {
+    "star_chart_setting/exception/setting_expired.py": "부모 뜻낱말",
+    "star_chart_setting/exception/star_chart_frozen.py": "부모 3미만",
+    "star_chart_setting/exception/star_chart_hidden.py": "부모 뜻낱말",
+    "star_chart_setting/exception/star_chart_locked.py": "부모 3미만"
+  },
+  "자리": {
+    "star_chart_setting/exception/setting_expired.py": "star_chart_setting/exception/setting_expired.py",
+    "star_chart_setting/exception/star_chart_frozen.py": "star_chart_setting/exception/star_chart_frozen.py",
+    "star_chart_setting/exception/star_chart_hidden.py": "star_chart_setting/exception/star_chart_hidden.py",
+    "star_chart_setting/exception/star_chart_locked.py": "star_chart_setting/exception/star_chart_locked.py"
+  },
+  "줄": []
+}

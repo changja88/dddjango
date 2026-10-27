@@ -313,8 +313,8 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
      'out.append((min(p for p, fp in placement.files.items() if fp.member.slot.parent == parent and fp.group == g), '
      'MAKE.format(g)))', _DM),
     ("#656 «푼다» 주어를 묶음 __init__ 대신 첫 파일로", "folder_group.py",
-     'subject: str = init if init in placement.tree else (inside[0] if inside else f"{parent}/{g}/")',
-     'subject: str = next((q for q in inside if not q.endswith("/__init__.py")), f"{parent}/{g}/")', _DM),
+     'return init if init in inside else (inside[0] if inside else f"{parent}/{g}/")',
+     'return next((q for q in inside if not q.endswith("/__init__.py")), f"{parent}/{g}/")', _DM),
     ("10 이벤트 이름 검사를 */event/*.py 로", _EP,
      'for py in [e for d in sorted(domain.iterdir()) if d.is_dir()\n                   for e in folder_group.group_members(d / "event", "*.py", promotable=False)]:',
      'for py in sorted(domain.glob("*/event/*.py")):', _EP),

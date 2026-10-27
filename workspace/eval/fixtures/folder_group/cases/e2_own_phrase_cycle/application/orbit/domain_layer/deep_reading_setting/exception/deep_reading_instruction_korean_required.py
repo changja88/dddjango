@@ -1,0 +1,2 @@
+class DeepReadingInstructionKoreanRequired(Exception):
+    pass

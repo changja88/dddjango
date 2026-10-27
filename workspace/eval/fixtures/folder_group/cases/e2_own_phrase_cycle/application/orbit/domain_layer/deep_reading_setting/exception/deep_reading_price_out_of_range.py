@@ -1,0 +1,2 @@
+class DeepReadingPriceOutOfRange(Exception):
+    pass

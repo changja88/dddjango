@@ -1,0 +1,2 @@
+class DeepReadingFieldNameRejected(Exception):
+    pass

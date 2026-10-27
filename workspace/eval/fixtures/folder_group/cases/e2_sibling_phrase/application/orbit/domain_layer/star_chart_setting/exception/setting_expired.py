@@ -1,0 +1,2 @@
+class SettingExpired(Exception):
+    pass

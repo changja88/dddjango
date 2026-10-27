@@ -1,0 +1,2 @@
+class DeepReadingMaxOutputTokensOutOfRange(Exception):
+    pass

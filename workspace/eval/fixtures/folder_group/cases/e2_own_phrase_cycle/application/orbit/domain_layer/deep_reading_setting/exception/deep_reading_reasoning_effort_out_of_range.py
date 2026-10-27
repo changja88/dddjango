@@ -1,0 +1,2 @@
+class DeepReadingReasoningEffortOutOfRange(Exception):
+    pass

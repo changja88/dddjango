@@ -1,0 +1,2 @@
+class StarChartHidden(Exception):
+    pass

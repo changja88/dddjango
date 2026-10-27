@@ -19,12 +19,14 @@ import argparse
 import ast
 import base64
 import hashlib
+import io
 import json
 import os
 import re
 import shutil
 import subprocess
 import sys
+import tokenize
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Mapping, NamedTuple, Optional, Set, Tuple
@@ -167,22 +169,32 @@ class Slot(NamedTuple):
         return self.row == SERVICE_ROW
 
 
+def _bc_of(path: str) -> "Optional[str]":
+    """서버 BC 도메인 층(`application/<bc>/domain_layer/…`) 경로의 BC — 검사기 범위(`business_vocab.server_bc_dirs` ·
+    `scan_tree`)와 같다. 자매 web(`web/application/…`) · 시험 거울(`application/<bc>/test/…/domain_layer/…`) · 건너뛰는 폴더 ·
+    숨은 조각이 든 경로는 None(검토 A2 · S4)."""
+    parts: "list[str]" = path.split("/")
+    if len(parts) < 4 or parts[0] != "application" or parts[2] != LAYER:
+        return None
+    if any(x in _SKIP_DIRS or x.startswith(".") or not x for x in parts):
+        return None
+    return parts[1]
+
+
 def slot_of(path: str) -> "Optional[Tuple[Slot, List[str]]]":
     """경로의 묶음 허용 칸과 그 부모 아래 나머지 조각 — 칸 밖이면 None."""
-    parts: "list[str]" = path.split("/")
-    for i in range(1, len(parts) - 1):
-        if parts[i] != LAYER:
-            continue
-        bc: str = parts[i - 1]
-        rest: "list[str]" = parts[i + 1:]
-        head: str = "/".join(parts[:i + 1])
-        if len(rest) >= 2 and rest[0] == SHARED:
-            return Slot(bc, f"{head}/{SHARED}", 73, None), rest[1:]
-        if len(rest) >= 2 and rest[0] == SERVICE:
-            return Slot(bc, f"{head}/{SERVICE}", SERVICE_ROW, None), rest[1:]
-        if len(rest) >= 3 and rest[0] not in (SHARED, SERVICE) and rest[1] in AGG_KINDS:
-            return Slot(bc, f"{head}/{rest[0]}/{rest[1]}", AGG_KINDS[rest[1]], rest[0]), rest[2:]
+    bc: "Optional[str]" = _bc_of(path)
+    if bc is None:
         return None
+    parts: "list[str]" = path.split("/")
+    rest: "list[str]" = parts[3:]
+    head: str = "/".join(parts[:3])
+    if len(rest) >= 2 and rest[0] == SHARED:
+        return Slot(bc, f"{head}/{SHARED}", 73, None), rest[1:]
+    if len(rest) >= 2 and rest[0] == SERVICE:
+        return Slot(bc, f"{head}/{SERVICE}", SERVICE_ROW, None), rest[1:]
+    if len(rest) >= 3 and rest[0] not in (SHARED, SERVICE) and rest[1] in AGG_KINDS:
+        return Slot(bc, f"{head}/{rest[0]}/{rest[1]}", AGG_KINDS[rest[1]], rest[0]), rest[2:]
     return None
 
 
@@ -522,7 +534,7 @@ def _resolve_from(package: str, level: int, module: "Optional[str]") -> str:
 def _parse(text: str) -> "Optional[ast.Module]":
     try:
         return ast.parse(text)
-    except (SyntaxError, ValueError):
+    except (SyntaxError, ValueError, RecursionError, MemoryError):
         return None
 
 
@@ -819,14 +831,6 @@ def place(files: "Mapping[str, str]", dirs: "Iterable[str]" = ()) -> Placement:
     return Placement(out_files, final, existing, died, set(files))
 
 
-def _bc_of(path: str) -> "Optional[str]":
-    parts: "list[str]" = path.split("/")
-    for i in range(1, len(parts)):
-        if parts[i] == LAYER:
-            return parts[i - 1]
-    return None
-
-
 def _aggregates(members: "List[Member]", files: "Mapping[str, str]") -> "Set[str]":
     out: "set[str]" = set()
     for p in files:
@@ -858,9 +862,12 @@ def _place_bc(bc: str, members: "List[Member]", files: "Mapping[str, str]", dirs
     words: "dict[str, Words]" = {}
     for parent, slot in slots.items():
         raw: "frozenset[str]" = frozenset(x for m in by_parent[parent] for x in m.stem.split("_") if x)
+        domain: "frozenset[str]" = _domain_words(slot, raw)
+        # 알려진 구(4.5 의 3) — 그 칸의 영역 낱말만으로 된 구는 영역이다(4.4 · E2 — 자기 애그리거트 이름 · 그 낱말로 된
+        # 이웃 애그리거트 이름 `star_chart` 는 `star_chart_setting/exception/` 안에서 묶음이 아니다 · 검토 A5)
         phrases: "frozenset[Tuple[str, ...]]" = frozenset(
-            tuple(a.split("_")) for a in aggs if "_" in a and a != slot.agg)
-        ctxs[parent] = Ctx(slot, raw, _domain_words(slot, raw), phrases)
+            tuple(a.split("_")) for a in aggs if "_" in a and not all(w in domain for w in a.split("_")))
+        ctxs[parent] = Ctx(slot, raw, domain, phrases)
         for m in by_parent[parent]:
             words[m.path] = words_of(m.stem, ctxs[parent])
     existing_bc: "dict[str, set[str]]" = {p: {d.rsplit("/", 1)[1] for d in dirset if d.rsplit("/", 1)[0] == p}
@@ -875,9 +882,11 @@ def _place_bc(bc: str, members: "List[Member]", files: "Mapping[str, str]", dirs
     for parent, ctx in ctxs.items():
         if ctx.slot.row in VO_RETURN_ROWS:
             vo_side |= universe[parent]
+    own: "dict[str, set[Tuple[str, ...]]]" = {p: set(universe[p]) for p, c in ctxs.items() if c.slot.service}
+    shared: "Optional[str]" = next((p for p, c in ctxs.items() if c.slot.row == 73), None)
     for parent, ctx in ctxs.items():
         if ctx.slot.service:
-            universe[parent] |= vo_side
+            universe[parent] |= vo_side   # 반환 자리(4.7 의 3) 재료 — 이름 맞추기 사전은 `_service_names`
     # 서비스 반환 · 쓰는 곳 재료(바퀴와 상관없이 한 번)
     member_by_path: "dict[str, Member]" = {m.path: m for m in members}
     vo_class: "dict[Tuple[str, str], Member]" = {}
@@ -903,7 +912,7 @@ def _place_bc(bc: str, members: "List[Member]", files: "Mapping[str, str]", dirs
     live: "dict[str, set[Tuple[str, ...]]]" = {p: set(u) for p, u in universe.items()}
     svc_stems: "dict[str, set[str]]" = {p: {m.stem for m in by_parent[p]} for p in slots if slots[p].service}
     while True:
-        assign: "dict[str, _Assign]" = _assign_round(members, words, live, returns, vo_class, users, ctxs)
+        assign: "dict[str, _Assign]" = _assign_round(members, words, live, returns, vo_class, users, own, shared)
         bad: "list[Tuple[int, str, str, Tuple[str, ...], str]]" = []
         for parent in sorted(slots):
             entries: "dict[str, list[_Assign]]" = {}
@@ -937,7 +946,9 @@ def _place_bc(bc: str, members: "List[Member]", files: "Mapping[str, str]", dirs
                     bad.append((n, parent, g, tuple(g.split("_")), why))
         if not bad:
             break
-        worst = min(bad, key=lambda b: (b[0], b[1], b[2]))
+        # 값 객체 칸이 먼저 — 서비스 칸의 사전 · 반환 자리는 값 객체 칸의 살아 있는 단위에 기대므로 그쪽 죽음을 먼저 반영한다
+        # (그다음 (n, 부모, 이름) · 검토 A6)
+        worst = min(bad, key=lambda b: (slots[b[1]].service, b[0], b[1], b[2]))
         live[worst[1]].discard(worst[3])
         died.append((worst[1], worst[2], worst[4], worst[0]))
     for parent in slots:
@@ -955,9 +966,20 @@ def _place_bc(bc: str, members: "List[Member]", files: "Mapping[str, str]", dirs
                 final[parent].add(g)
 
 
+def _service_names(parent: str, live: "Dict[str, Set[Tuple[str, ...]]]", own: "Dict[str, Set[Tuple[str, ...]]]",
+                   shared: "Optional[str]", ret_groups: "Set[str]") -> "Set[Tuple[str, ...]]":
+    """서비스 칸 이름 맞추기 사전(4.7 의 3) — 그 칸의 살아 있는 단위(이름 후보 · 있는 묶음 · 반환으로 서는 묶음) ∪ 같은 BC
+    `shared_value_object/` 의 살아 있는 단위. 애그리거트 값 객체 칸 단위 · 이미 죽은 공유 칸 단위는 들지 않는다(검토 A6)."""
+    mine: "set[Tuple[str, ...]]" = own.get(parent, set()) | {tuple(g.split("_")) for g in ret_groups}
+    if shared is not None:
+        mine = mine | live.get(shared, set())
+    return live[parent] & mine
+
+
 def _assign_round(members: "List[Member]", words: "Dict[str, Words]", live: "Dict[str, Set[Tuple[str, ...]]]",
                   returns: "Dict[str, List[Tuple[str, str]]]", vo_class: "Dict[Tuple[str, str], Member]",
-                  users: "Dict[str, List[Member]]", ctxs: "Dict[str, Ctx]") -> "Dict[str, _Assign]":
+                  users: "Dict[str, List[Member]]", own: "Dict[str, Set[Tuple[str, ...]]]",
+                  shared: "Optional[str]") -> "Dict[str, _Assign]":
     """한 바퀴의 배정 — 값 객체 칸 이름 배정(고정) 뒤 서비스(반환) ↔ 쓰는 곳을 고정점까지(설계 4.9)."""
     assign: "dict[str, _Assign]" = {}
     c7: "list[Member]" = []
@@ -978,8 +1000,11 @@ def _assign_round(members: "List[Member]", words: "Dict[str, Words]", live: "Dic
     ret_g: "dict[str, Optional[str]]" = {}
     for _ in range(len(members) + 2):
         changed: bool = False
-        for m in services:
-            new, rg = _service_assign(m, words[m.path], live[m.slot.parent], returns[m.path], vo_class, assign)
+        for m in sorted(services, key=lambda x: not returns[x.path]):   # 반환 자리 먼저 — 이름 사전이 그 묶음을 안다
+            ret_groups: "set[str]" = {a.group for x in services if returns[x.path] and x.slot.parent == m.slot.parent
+                                      for a in [assign.get(x.path)] if a is not None and a.group is not None}
+            names: "set[Tuple[str, ...]]" = _service_names(m.slot.parent, live, own, shared, ret_groups)
+            new, rg = _service_assign(m, words[m.path], live[m.slot.parent], names, returns[m.path], vo_class, assign)
             ret_g[m.path] = rg
             if assign.get(m.path) != new:
                 assign[m.path] = new
@@ -1011,8 +1036,8 @@ def _named(hit: "Tuple[Tuple[str, ...], str, List[str]]") -> _Assign:
     return _Assign(g, anchor, f"{'머리' if anchor == 'head' else '이름'} {g}")
 
 
-def _service_assign(m: Member, w: Words, live: "Set[Tuple[str, ...]]", refs: "List[Tuple[str, str]]",
-                    vo_class: "Dict[Tuple[str, str], Member]",
+def _service_assign(m: Member, w: Words, live: "Set[Tuple[str, ...]]", names: "Set[Tuple[str, ...]]",
+                    refs: "List[Tuple[str, str]]", vo_class: "Dict[Tuple[str, str], Member]",
                     assign: "Dict[str, _Assign]") -> "Tuple[_Assign, Optional[str]]":
     """서비스 자리(설계 4.7) — 돌려주는 값 객체의 묶음 · 없으면 이름 맞추기. 둘째 값은 쓰는 곳 셈의 자리."""
     if refs:
@@ -1027,7 +1052,7 @@ def _service_assign(m: Member, w: Words, live: "Set[Tuple[str, ...]]", refs: "Li
                 return _Assign(g, "return", f"반환 {refs[0][1]} {g}"), g
             return _Assign(None, "none", "반환 부모"), g
         return _Assign(None, "none", "반환 부모"), None
-    hit = _match(w, live)
+    hit = _match(w, names)
     if hit is not None:
         a2: _Assign = _named(hit)
         return a2, a2.group
@@ -1051,10 +1076,7 @@ def lines(placement: Placement) -> "List[Tuple[str, str]]":
         for g in sorted(fin - ex):
             out.append((f"{parent}/__init__.py", MAKE.format(g)))
         for g in sorted(ex - fin):
-            init: str = f"{parent}/{g}/__init__.py"
-            inside: "list[str]" = sorted(p for p in placement.tree if p.startswith(f"{parent}/{g}/"))
-            subject: str = init if init in placement.tree else (inside[0] if inside else f"{parent}/{g}/")
-            out.append((subject, UNDO.format(g)))
+            out.append((_undo_subject(placement.tree, parent, g), UNDO.format(g)))
     for path, fp in sorted(placement.files.items()):
         if fp.group == fp.member.group:
             continue
@@ -1066,13 +1088,47 @@ def lines(placement: Placement) -> "List[Tuple[str, str]]":
     return sorted(out)
 
 
+def _undo_subject(tree: "Iterable[str]", parent: str, g: str) -> str:
+    """«푼다» 줄의 주어 — 묶음 `__init__.py`, 없으면 안의 첫 경로, 그도 없으면 폴더."""
+    init: str = f"{parent}/{g}/__init__.py"
+    inside: "list[str]" = sorted(p for p in tree if p.startswith(f"{parent}/{g}/"))
+    return init if init in inside else (inside[0] if inside else f"{parent}/{g}/")
+
+
+def empty_init(text: str) -> bool:
+    """빈 묶음 `__init__.py` — 0바이트 · 공백 · 주석 · docstring 뿐(#655 의 `checker_target.skeleton_placeholder` 와 같은
+    술어 · 파싱 불능은 빈 것이 아니다). 묶음을 풀 때 이런 `__init__.py` 만 지운다 — 내용이 있으면 남긴다(코드를 지우지 않는다)."""
+    tree: "Optional[ast.Module]" = _parse(text)
+    if tree is None:
+        return False
+    body: "list[ast.stmt]" = tree.body
+    return not body or (len(body) == 1 and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant)
+                        and isinstance(body[0].value.value, str))
+
+
+def _clash_keys(paths: "Iterable[str]") -> "Dict[Tuple[str, str], List[str]]":
+    """한 묶음 부모에서 묶음 밖 이름이 같은 파일(`x/tarot.py` · `tarot.py`) — 둘이 한 자리로 가므로 기계로 못 옮긴다(검토 A8)."""
+    seen: "dict[Tuple[str, str], list[str]]" = {}
+    for m in members_of(paths):
+        seen.setdefault(_key(m), []).append(m.path)
+    return {k: sorted(v) for k, v in seen.items() if len(v) > 1}
+
+
+def name_clashes(paths: "Iterable[str]") -> "List[Tuple[str, str]]":
+    out: "list[Tuple[str, str]]" = []
+    for _k, ps in sorted(_clash_keys(paths).items()):
+        out += [(ps[0], q) for q in ps[1:]]
+    return out
+
+
 # ── 옮긴 트리(메모리) · import 치환 ────────────────────────────────────────────
 
 def placement_moves(placement: Placement) -> "List[Tuple[str, str]]":
-    """자리대로 옮길 경로 쌍 — 승격은 폴더 통째(부품 포함)."""
+    """자리대로 옮길 경로 쌍 — 승격은 폴더 통째(부품 포함). 이름 겹침 파일은 옮기지 않는다(한 자리에 둘 · 검토 A8)."""
     pairs: "list[Tuple[str, str]]" = []
+    clash: "Dict[Tuple[str, str], List[str]]" = _clash_keys(placement.tree)
     for path, fp in sorted(placement.files.items()):
-        if fp.target == path:
+        if fp.target == path or _key(fp.member) in clash:
             continue
         unit: "Optional[str]" = fp.member.unit_dir
         if unit is None:
@@ -1083,6 +1139,16 @@ def placement_moves(placement: Placement) -> "List[Tuple[str, str]]":
             if p.startswith(unit + "/"):
                 pairs.append((p, new_unit + p[len(unit):]))
     return pairs
+
+
+def placement_drops(placement: Placement) -> "List[str]":
+    """푸는 묶음의 `__init__.py` — 옮긴 뒤 그것만 남고 비었으면(`empty_init`) `move_texts` 가 폴더째 지운다(검토 A3 · A4)."""
+    out: "list[str]" = []
+    for parent in sorted(placement.final):
+        for g in sorted(placement.existing.get(parent, set()) - placement.final[parent]):
+            if f"{parent}/{g}/__init__.py" in placement.tree:
+                out.append(f"{parent}/{g}/__init__.py")
+    return out
 
 
 def module_moves(pairs: "Iterable[Tuple[str, str]]") -> "Dict[str, str]":
@@ -1112,30 +1178,132 @@ def _relative(package: str, target: str) -> "Tuple[int, str]":
     return len(n) - c + 1, ".".join(t[c:])
 
 
-_FROM_RE: "re.Pattern[bytes]" = re.compile(rb"\Afrom\s+((?:\.\s*)*[\w.\s\\]*?)\s+import\b")
-
-
 def _alias_text(a: ast.alias) -> str:
     return f"{a.name} as {a.asname}" if a.asname else a.name
 
 
-def rewrite_source(text: str, old_path: str, new_path: str, moves: "Mapping[str, str]",
-                   string_sub: "Optional[Callable[[str], str]]" = None) -> str:
-    """import 기계 치환(설계 8 — ⓐ 점 경로 · ⓑ `from 패키지 import 모듈` 나눔 · ⓒ 상대 꼴 지킴 · ⓓ 모듈 속성 사슬 ·
-    ⓔ 문자열 속 점 경로). moves 는 옛 모듈 → 새 모듈. 파싱 불능이면 글을 그대로 돌려준다."""
+def _tokens(text: str) -> "Optional[List[tokenize.TokenInfo]]":
+    try:
+        return list(tokenize.generate_tokens(io.StringIO(text).readline))
+    except (tokenize.TokenError, SyntaxError):
+        return None
+
+
+_SKIP_TOKENS: "frozenset[int]" = frozenset({tokenize.NL, tokenize.COMMENT})
+_LINE_START: "frozenset[int]" = frozenset({tokenize.NEWLINE, tokenize.NL, tokenize.INDENT, tokenize.DEDENT,
+                                           tokenize.ENCODING})
+
+
+class _Lines:
+    """한 파일 글의 줄 자리 — ast 의 (줄, 바이트 열) · tokenize 의 (줄, 글자 열) · 바이트 위치를 오간다."""
+
+    def __init__(self, data: bytes) -> None:
+        self.data: bytes = data
+        self.starts: "list[int]" = [0] + [i + 1 for i, b in enumerate(data) if b == 10]
+
+    def off(self, line: int, col: int) -> int:
+        return self.starts[line - 1] + col
+
+    def char_col(self, line: int, col: int) -> int:
+        a: int = self.starts[line - 1]
+        return len(self.data[a:a + col].decode("utf-8", "replace"))
+
+    def byte_of(self, pos: "Tuple[int, int]") -> int:
+        a: int = self.starts[pos[0] - 1]
+        end: int = self.starts[pos[0]] if pos[0] < len(self.starts) else len(self.data)
+        return a + len(self.data[a:end].decode("utf-8", "replace")[:pos[1]].encode("utf-8"))
+
+    def row(self, line: int) -> bytes:
+        a: int = self.starts[line - 1]
+        return self.data[a:self.starts[line]] if line < len(self.starts) else self.data[a:]
+
+
+def _stmt_tokens(toks: "List[tokenize.TokenInfo]", lines: _Lines,
+                 node: ast.ImportFrom) -> "Optional[Tuple[int, int]]":
+    """파일 토큰에서 `from` 문 하나의 (첫 토큰, 끝 토큰) 번호."""
+    first: "Tuple[int, int]" = (node.lineno, lines.char_col(node.lineno, node.col_offset))
+    last: "Tuple[int, int]" = (node.end_lineno or node.lineno,
+                               lines.char_col(node.end_lineno or node.lineno, node.end_col_offset or 0))
+    i: "Optional[int]" = next((k for k, t in enumerate(toks) if t.start == first and t.string == "from"), None)
+    if i is None:
+        return None
+    j: "Optional[int]" = next((k for k in range(i, len(toks)) if toks[k].end == last), None)
+    return None if j is None else (i, j)
+
+
+def _module_span(toks: "List[tokenize.TokenInfo]", i: int) -> "Tuple[int, int]":
+    """`from` 다음 모듈 조각(점 · 이름) 토큰 범위 [a, b] — `from .import x` · `from.x import y` 도 같다."""
+    a: int = i + 1
+    b: int = a
+    while b + 1 < len(toks) and not (toks[b + 1].type == tokenize.NAME and toks[b + 1].string == "import"):
+        b += 1
+    return a, b
+
+
+def _split_block(toks: "List[tokenize.TokenInfo]", i: int, j: int) -> "Optional[str]":
+    """나눠 쓸 `from` 문이 제 줄에 홀로인가 — 아니면 기계 이동 불가 까닭(나누면 같은 줄 다른 문장이 겹치거나 사라진다)."""
+    prev: "Optional[tokenize.TokenInfo]" = toks[i - 1] if i > 0 else None
+    if prev is not None and prev.type not in _LINE_START:
+        return "역슬래시 이음 나눔" if prev.end[0] < toks[i].start[0] else "한 줄 복합문 나눔"
+    nxt: "Optional[tokenize.TokenInfo]" = toks[j + 1] if j + 1 < len(toks) else None
+    if nxt is not None and nxt.type not in (tokenize.NEWLINE, tokenize.COMMENT, tokenize.ENDMARKER):
+        return "한 줄 복합문 나눔"
+    return None
+
+
+def _paren_rows(toks: "List[tokenize.TokenInfo]", i: int, j: int,
+                n_alias: int) -> "Optional[Tuple[int, int, Dict[int, int]]]":
+    """주석 든 괄호 `from` 문의 꼴 — `(` 줄 · `)` 줄 · 사이 줄마다 별칭 하나(또는 주석 · 빈 줄)면 (`(` 줄, `)` 줄,
+    {줄: 별칭 번호}). 그 밖 꼴이면 None."""
+    k: "Optional[int]" = next((x for x in range(i, j + 1) if toks[x].type == tokenize.OP and toks[x].string == "("),
+                              None)
+    if k is None or toks[j].string != ")":
+        return None
+    open_row: int = toks[k].start[0]
+    close_row: int = toks[j].start[0]
+    if any(t.start[0] == open_row and t.type not in _SKIP_TOKENS for t in toks[k + 1:j]):
+        return None
+    if any(t.start[0] == close_row and t.type not in _SKIP_TOKENS for t in toks[k + 1:j]):
+        return None
+    rows: "dict[int, list[tokenize.TokenInfo]]" = {}
+    for t in toks[k + 1:j]:
+        if t.type not in _SKIP_TOKENS:
+            if t.start[0] != t.end[0]:
+                return None
+            rows.setdefault(t.start[0], []).append(t)
+    alias_of: "dict[int, int]" = {}
+    for r in sorted(rows):
+        words: "list[str]" = [t.string for t in rows[r]]
+        if words and words[-1] == ",":
+            words = words[:-1]
+        if not (len(words) == 1 or (len(words) == 3 and words[1] == "as")) or not words[0].isidentifier():
+            return None
+        alias_of[r] = len(alias_of)
+    return (open_row, close_row, alias_of) if len(alias_of) == n_alias else None
+
+
+def _rewrite(text: str, old_path: str, new_path: str, moves: "Mapping[str, str]",
+             string_sub: "Optional[Callable[[str], str]]" = None) -> "Tuple[str, List[Tuple[int, str]]]":
+    """`rewrite_source` 의 몸 — (고친 글, 기계로 못 고친 `from` 문의 (줄, 까닭)). 못 고친 문은 글 그대로 두고 까닭을 낸다 —
+    뜻이 다른 코드를 내지 않는다(검토 A7)."""
     tree: "Optional[ast.Module]" = _parse(text)
     if tree is None:
-        return text
+        return text, []
     data: bytes = text.encode("utf-8")
-    starts: "list[int]" = [0] + [i + 1 for i, b in enumerate(data) if b == 10]
+    lines = _Lines(data)
+    off = lines.off
+    file_toks: "list[Optional[List[tokenize.TokenInfo]]]" = []
 
-    def off(line: int, col: int) -> int:
-        return starts[line - 1] + col
+    def all_tokens() -> "Optional[List[tokenize.TokenInfo]]":
+        if not file_toks:
+            file_toks.append(_tokens(text))
+        return file_toks[0]
 
     old_pkg: str = package_of(old_path)
     new_pkg: str = package_of(new_path)
     moved_file: bool = old_path != new_path
     edits: "list[Tuple[int, int, bytes]]" = []
+    blocks: "list[Tuple[int, str]]" = []
     bindings: "dict[str, str]" = {}
     skip: "set[int]" = set()
     for node in ast.walk(tree):
@@ -1158,10 +1326,12 @@ def rewrite_source(text: str, old_path: str, new_path: str, moves: "Mapping[str,
                 if a.name != "*":
                     bindings[a.asname or a.name] = f"{base}.{a.name}"
             groups: "dict[str, list[ast.alias]]" = {}
+            alias_group: "list[str]" = []
             for a in node.names:
                 full: str = f"{base}.{a.name}"
                 nb: str = moves[full].rpartition(".")[0] if a.name != "*" and full in moves else _fq(base, moves)
                 groups.setdefault(nb, []).append(a)
+                alias_group.append(nb)
             if list(groups) == [base] and not (moved_file and node.level > 0):
                 continue
 
@@ -1171,20 +1341,61 @@ def rewrite_source(text: str, old_path: str, new_path: str, moves: "Mapping[str,
                 level, mod = _relative(new_pkg, nb)
                 return "." * level + mod
 
+            toks: "Optional[List[tokenize.TokenInfo]]" = all_tokens()
+            span: "Optional[Tuple[int, int]]" = _stmt_tokens(toks, lines, node) if toks is not None else None
+            if toks is None or span is None:
+                blocks.append((node.lineno, "import 문 토큰 읽기 불능"))
+                continue
+            i, j = span
+            if len(groups) == 1:
+                a_tok, b_tok = _module_span(toks, i)
+                new_mod: str = modtext(next(iter(groups)))
+                if "".join(t.string for t in toks[a_tok:b_tok + 1]) == new_mod:
+                    continue
+                a_b, b_b = lines.byte_of(toks[a_tok].start), lines.byte_of(toks[b_tok].end)
+                rep: bytes = new_mod.encode("utf-8")
+                if new_mod[-1:].isidentifier() and data[b_b:b_b + 1].decode("utf-8", "replace").isidentifier():
+                    rep += b" "   # `from .import x` → `from .void import x`
+                edits.append((a_b, b_b, rep))
+                continue
+            why: "Optional[str]" = _split_block(toks, i, j)
+            if why is not None:
+                blocks.append((node.lineno, why))
+                continue
             seg_start: int = off(node.lineno, node.col_offset)
             seg_end: int = off(node.end_lineno, node.end_col_offset)
-            if len(groups) == 1:
-                nb = next(iter(groups))
-                m = _FROM_RE.match(data[seg_start:seg_end])
-                new_mod: bytes = modtext(nb).encode("utf-8")
-                if m is not None and m.group(1).replace(b" ", b"") != new_mod:
-                    edits.append((seg_start + m.start(1), seg_start + m.end(1), new_mod))
+            indent: bytes = data[lines.starts[node.lineno - 1]:seg_start]
+            eol: bytes = b"\r\n" if lines.row(node.lineno).endswith(b"\r\n") else b"\n"
+            if not any(t.type == tokenize.COMMENT for t in toks[i:j + 1]):
+                stmts: "list[str]" = [f"from {modtext(nb)} import {', '.join(_alias_text(a) for a in al)}"
+                                      for nb, al in groups.items()]
+                edits.append((seg_start, seg_end, (eol + indent).join(x.encode("utf-8") for x in stmts)))
                 continue
-            line_start: int = starts[node.lineno - 1]
-            indent: bytes = data[line_start:seg_start]
-            stmts: "list[str]" = [f"from {modtext(nb)} import {', '.join(_alias_text(a) for a in al)}"
-                                  for nb, al in groups.items()]
-            edits.append((seg_start, seg_end, (b"\n" + indent).join(s.encode("utf-8") for s in stmts)))
+            shape = _paren_rows(toks, i, j, len(node.names))
+            if shape is None:
+                blocks.append((node.lineno, "주석 든 import 나눔"))
+                continue
+            open_row, close_row, alias_of = shape
+            head_row: bytes = lines.row(open_row)
+            paren_at: int = lines.byte_of(next(t.end for t in toks[i:j + 1] if t.string == "(")) - lines.starts[open_row - 1]
+            tail: bytes = head_row[paren_at:].rstrip(b"\r\n")
+            close_indent: bytes = lines.row(close_row)[:lines.byte_of(toks[j].start) - lines.starts[close_row - 1]]
+            rows_of: "dict[str, list[bytes]]" = {nb: [] for nb in groups}
+            pending: "list[bytes]" = []
+            last_nb: str = alias_group[-1]
+            for r in range(open_row + 1, close_row):
+                if r in alias_of:
+                    last_nb = alias_group[alias_of[r]]
+                    rows_of[last_nb] += pending + [lines.row(r)]
+                    pending = []
+                else:
+                    pending.append(lines.row(r))
+            rows_of[last_nb] += pending
+            parts: "list[bytes]" = []
+            for gi, nb in enumerate(groups):
+                head: bytes = (b"" if gi == 0 else indent) + f"from {modtext(nb)} import (".encode("utf-8")
+                parts.append(head + (tail if gi == 0 else b"") + eol + b"".join(rows_of[nb]) + close_indent + b")")
+            edits.append((seg_start, seg_end, eol.join(parts)))
     for node in ast.walk(tree):
         if isinstance(node, ast.Attribute) and id(node) not in skip:
             chain: "list[str]" = []
@@ -1209,17 +1420,31 @@ def rewrite_source(text: str, old_path: str, new_path: str, moves: "Mapping[str,
             if sub != raw:
                 edits.append((a0, b0, sub.encode("utf-8")))
     if not edits:
-        return text
+        return text, sorted(blocks)
     edits.sort()
     result: bytes = b""
     pos: int = 0
-    for a, b, rep in edits:
+    for a, b, rep_b in edits:
         if a < pos:
             continue  # 겹친 고침(바깥 사슬이 이미 고침) — 앞의 것을 쓴다
-        result += data[pos:a] + rep
+        result += data[pos:a] + rep_b
         pos = b
     result += data[pos:]
-    return result.decode("utf-8")
+    return result.decode("utf-8"), sorted(blocks)
+
+
+def rewrite_source(text: str, old_path: str, new_path: str, moves: "Mapping[str, str]",
+                   string_sub: "Optional[Callable[[str], str]]" = None) -> str:
+    """import 기계 치환(설계 8 — ⓐ 점 경로 · ⓑ `from 패키지 import 모듈` 나눔 · ⓒ 상대 꼴 지킴 · ⓓ 모듈 속성 사슬 ·
+    ⓔ 문자열 속 점 경로). moves 는 옛 모듈 → 새 모듈. 파싱 불능이면 글을 그대로 돌려준다. 모듈 조각은 토큰 자리만 바꾸고
+    (역슬래시 이음 · 띄어 쓰지 않은 `from .import` 꼴 그대로), 나눔은 괄호 안 주석을 제 별칭과 함께 옮긴다. 기계로 뜻을
+    지킬 수 없는 나눔(한 줄 복합문 · 역슬래시로 이은 앞 문장 · 꼴 밖 주석)은 그 문을 그대로 둔다 — `rewrite_blocks` 가 낸다."""
+    return _rewrite(text, old_path, new_path, moves, string_sub)[0]
+
+
+def rewrite_blocks(text: str, old_path: str, new_path: str, moves: "Mapping[str, str]") -> "List[Tuple[int, str]]":
+    """기계로 못 고치는 import 문 (줄, 까닭) — apply 는 이것이 있으면 멈춘다(기계 이동 불가)."""
+    return _rewrite(text, old_path, new_path, moves)[1]
 
 
 def string_substituter(pairs: "Iterable[Tuple[str, str]]") -> "Callable[[str], str]":
@@ -1231,10 +1456,12 @@ def string_substituter(pairs: "Iterable[Tuple[str, str]]") -> "Callable[[str], s
     return lambda s: behavior_guard._sub_string(s, maps)
 
 
-def move_texts(files: "Mapping[str, str]", pairs: "Iterable[Tuple[str, str]]") -> "Dict[str, str]":
+def move_texts(files: "Mapping[str, str]", pairs: "Iterable[Tuple[str, str]]",
+               drops: "Iterable[str]" = ()) -> "Dict[str, str]":
     """경로 → 글 트리에 이동 쌍을 적용한다(설계 8 — `apply` · `apply_to_copy` · 창 판정 · 불변식이 같은 함수를 쓴다).
     옮긴 파일과 옮긴 모듈 이름이 든 파일만 import 를 기계 치환하고, 새 묶음에 빈 `__init__.py` 를 만들고, 이번 이동으로
-    비워진 묶음의 빈 `__init__.py` 를 지운다(내용이 있는 `__init__.py` 는 남긴다)."""
+    비워진 묶음 · `drops`(푸는 묶음 — 이미 `__init__.py` 만 남은 것)의 빈 `__init__.py`(`empty_init`)를 지운다(내용이 있는
+    `__init__.py` 는 남긴다)."""
     pair_list: "list[Tuple[str, str]]" = list(pairs)
     moves: "dict[str, str]" = module_moves(pair_list)
     sub: "Optional[Callable[[str], str]]" = string_substituter(pair_list) if pair_list else None
@@ -1250,17 +1477,20 @@ def move_texts(files: "Mapping[str, str]", pairs: "Iterable[Tuple[str, str]]") -
     before: "set[str]" = group_dirs_of(files)
     for d in sorted(group_dirs_of(out) - before):
         out.setdefault(f"{d}/__init__.py", "")
+    drop_set: "set[str]" = set(drops)
     for d in sorted(before):
+        init: str = f"{d}/__init__.py"
         rest: "list[str]" = [q for q in out if q.startswith(d + "/")]
-        if rest == [f"{d}/__init__.py"] and out[rest[0]] == "" and any(old.startswith(d + "/") for old in where):
-            del out[rest[0]]
+        if rest == [init] and empty_init(out[init]) and (
+                init in drop_set or any(old.startswith(d + "/") for old in where)):
+            del out[init]
     return out
 
 
 def placed_tree(files: "Mapping[str, str]", dirs: "Iterable[str]",
                 placement: Placement) -> "Tuple[Dict[str, str], Set[str]]":
     """자리대로 옮긴 트리(메모리) — 불변식 1 · 2 의 재료."""
-    out: "dict[str, str]" = move_texts(files, placement_moves(placement))
+    out: "dict[str, str]" = move_texts(files, placement_moves(placement), placement_drops(placement))
     kept: "set[str]" = {d for d in dirs if any(q.startswith(d + "/") for q in out)}
     return out, kept | group_dirs_of(out)
 
@@ -1326,6 +1556,14 @@ def _decode(data: bytes) -> str:
     return data.decode("utf-8", "replace")
 
 
+def _text(data: bytes) -> str:
+    """자리 셈의 글 — UTF-8 아니면 빈 글(검사기 `scan_tree` 의 `_read_text` 와 같은 자 · 검토 S1)."""
+    try:
+        return data.decode("utf-8")
+    except UnicodeDecodeError:
+        return ""
+
+
 def base_tree(root: Path, anchor: str, merges: "Iterable[object]" = ()) -> "Dict[str, str]":
     """T₀′(설계 5절) — 앵커 트리에 승인 병합 유입을 덮은 트리(프로젝트 상대 경로 → blob oid).
 
@@ -1350,7 +1588,8 @@ def base_tree(root: Path, anchor: str, merges: "Iterable[object]" = ()) -> "Dict
 
 
 def worktree_bytes(root: Path) -> "Dict[str, bytes]":
-    """작업 트리 파일(추적 + 무시되지 않은 미추적 · 지금 디스크에 있는 것) — 프로젝트 상대 경로."""
+    """작업 트리 파일(추적 + 무시되지 않은 미추적 · 지금 디스크에 있는 것) — 프로젝트 상대 경로. 심링크는 링크 글(git blob 과
+    같은 자)."""
     out: "dict[str, bytes]" = {}
     raw: bytes = _git(root, "ls-files", "-co", "--exclude-standard", "-z")
     for rec in raw.split(b"\0"):
@@ -1360,7 +1599,9 @@ def worktree_bytes(root: Path) -> "Dict[str, bytes]":
         if _excluded(rel):
             continue
         f: Path = root / rel
-        if f.is_file() and not f.is_symlink():
+        if f.is_symlink():
+            out[rel] = os.fsencode(os.readlink(f))  # git 이 담는 그대로(링크 글) — 링크 너머는 읽지 않는다(검토 B7)
+        elif f.is_file():
             out[rel] = f.read_bytes()
     return out
 
@@ -1460,6 +1701,9 @@ class RunPlan(NamedTuple):
     dissolved: "Set[Tuple[str, str]]"       # 이 실행의 해체
     lines_now: "List[Tuple[str, str]]"      # place(지금 내용, B 묶음) 의 #656 줄
     debt_lines: "Set[Tuple[str, str]]"      # ⓐ 로 고른 줄
+    debt_drops: "List[str]"                 # B 가 푸는 묶음의 `__init__.py`(고른 «푼다» 줄)
+    drops: "List[str]"                      # R 에서 지울 빈 묶음 `__init__.py`(S 밖 묶음 · 그것만 남음)
+    clashes: "List[Tuple[str, str]]"        # 이름 겹침(계획 밖 — 기계 이동 불가)
 
     def pairs(self, start: "Dict[Tuple[str, str], str]", end: "Dict[Tuple[str, str], str]") -> "List[Tuple[str, str]]":
         return sorted((start[k], end[k]) for k in start if k in end and start[k] != end[k])
@@ -1477,24 +1721,29 @@ def compute_plan(t0: "Mapping[str, str]", t0p: "Mapping[str, str]", now: "Mappin
                  chosen: "Callable[[List[Tuple[str, str]]], Set[Tuple[str, str]]]",
                  legacy: "Iterable[str]" = ()) -> RunPlan:
     """이 실행의 이동(설계 5절) — t0 · t0p · now 는 domain_layer `.py` 의 경로 → 글."""
+    clashes: "list[Tuple[str, str]]" = sorted(set(name_clashes(t0)) | set(name_clashes(t0p)) | set(name_clashes(now)))
+    clash: "set[Tuple[str, str]]" = set(_clash_keys(t0)) | set(_clash_keys(t0p)) | set(_clash_keys(now))
     p0p: Placement = place(t0p, group_dirs_of(t0p))
     lines0p: "list[Tuple[str, str]]" = lines(p0p)
     picked: "set[Tuple[str, str]]" = chosen(lines0p)
     made: "set[Tuple[str, str]]" = {(w.rsplit("/", 1)[0], m) for w, m in picked if m.startswith("묶음 ") and "만든다" in m}
-    undone: "set[str]" = {w for w, m in picked if "푼다" in m}
+    undone: "set[Tuple[str, str]]" = {(parent, g) for parent in p0p.final
+                                      for g in p0p.existing.get(parent, set()) - p0p.final[parent]
+                                      if (_undo_subject(p0p.tree, parent, g), UNDO.format(g)) in picked}
     debt_pairs: "list[Tuple[str, str]]" = []
-    for path, fp in p0p.files.items():
-        if fp.target == path:
+    for path, fp in p0p.files.items():   # 5절 B — 고른 줄마다 그 줄의 이동만(검토 A1)
+        if fp.target == path or _key(fp.member) in clash:
             continue
         parent: str = fp.member.slot.parent
         own: bool = any(w == path for w, _ in picked)
         make: bool = fp.group is not None and (parent, MAKE.format(fp.group)) in made
-        undo: bool = fp.member.group is not None and any(
-            w in (f"{parent}/{fp.member.group}/__init__.py", path) or w.startswith(f"{parent}/{fp.member.group}/")
-            for w in undone)
-        if own or make or undo:
+        if own or make:
             debt_pairs.append((path, fp.target))
-    b_paths: "dict[str, str]" = move_texts({p: "" for p in t0p}, _expand(debt_pairs, t0p))
+        elif fp.member.group is not None and (parent, fp.member.group) in undone:
+            debt_pairs.append((path, fp.member.flat))   # «푼다» 만 골랐다 — 부모로(미룬 «만든다» · «둔다» 는 하지 않는다)
+    debt_drops: "list[str]" = sorted(f"{parent}/{g}/__init__.py" for parent, g in undone)
+    b_texts: "dict[str, str]" = {p: (t if p.endswith("/__init__.py") else "") for p, t in t0p.items()}
+    b_paths: "dict[str, str]" = move_texts(b_texts, _expand(debt_pairs, t0p), debt_drops)
     b_dirs: "set[str]" = group_dirs_of(b_paths)
     p1: Placement = place(now, b_dirs)
     g0p, g1 = _groups(p0p), _groups(p1)
@@ -1503,9 +1752,10 @@ def compute_plan(t0: "Mapping[str, str]", t0p: "Mapping[str, str]", now: "Mappin
     held: "set[Tuple[str, str]]" = {(parent, g) for parent, g in g1 - g0p   # «만든다» 줄이 이관 빚 — 형성 안 함
                                     if any(sub in f"{parent}/__init__.py: {MAKE.format(g)}" for sub in legacy_list)}
     s_groups: "set[Tuple[str, str]]" = (bset | ((g1 - g0p) - held)) - ((bset & g0p) - g1)
-    base_m: "dict[Tuple[str, str], Member]" = {_key(m): m for m in members_of(t0p)}
-    debt_m: "dict[Tuple[str, str], Member]" = {_key(m): m for m in members_of(b_paths)}
-    p0p_k, p1_k = _keyed(p0p), _keyed(p1)
+    base_m: "dict[Tuple[str, str], Member]" = {_key(m): m for m in members_of(t0p) if _key(m) not in clash}
+    debt_m: "dict[Tuple[str, str], Member]" = {_key(m): m for m in members_of(b_paths) if _key(m) not in clash}
+    p0p_k = {k: fp for k, fp in _keyed(p0p).items() if k not in clash}
+    p1_k = {k: fp for k, fp in _keyed(p1).items() if k not in clash}
     lines_now: "list[Tuple[str, str]]" = lines(p1)
     final: "dict[Tuple[str, str], str]" = {}
     for k, fp in p1_k.items():
@@ -1523,11 +1773,31 @@ def compute_plan(t0: "Mapping[str, str]", t0p: "Mapping[str, str]", now: "Mappin
             final[k] = m.at(fp.group) if fp.group is not None and (m.slot.parent, fp.group) in s_groups else m.flat
         else:
             final[k] = debt_m[k].path  # ② B 자리 그대로
+    current: "dict[Tuple[str, str], str]" = {k: fp.member.path for k, fp in p1_k.items()}
     return RunPlan(
-        anchor={_key(m): m.path for m in members_of(t0)}, base={k: m.path for k, m in base_m.items()},
-        debt={k: m.path for k, m in debt_m.items()}, current={k: fp.member.path for k, fp in p1_k.items()},
+        anchor={_key(m): m.path for m in members_of(t0) if _key(m) not in clash},
+        base={k: m.path for k, m in base_m.items()}, debt={k: m.path for k, m in debt_m.items()}, current=current,
         final=final, formed=(g1 - g0p) & s_groups, dissolved=(bset & g0p) - g1,
-        lines_now=lines_now, debt_lines=picked)
+        lines_now=lines_now, debt_lines=picked, debt_drops=debt_drops,
+        drops=_run_drops(now, current, final, s_groups), clashes=clashes)
+
+
+def _run_drops(now: "Mapping[str, str]", current: "Mapping[Tuple[str, str], str]",
+               final: "Mapping[Tuple[str, str], str]", s_groups: "Set[Tuple[str, str]]") -> "List[str]":
+    """R 에서 지울 묶음 `__init__.py` — 지금 있는 묶음 가운데 S 밖이고(이 실행 · B 가 푸는 묶음 · 이 실행이 만들었다 비운
+    묶음) R 에서 그 `__init__.py` 만 남고 빈 것(검토 A3 · A4). S 의 묶음(미룬 «푼다» 포함)은 지우지 않는다."""
+    moved: "dict[str, str]" = dict(_expand(
+        sorted((current[k], final[k]) for k in current if k in final and current[k] != final[k]), now))
+    r_paths: "set[str]" = {moved.get(p, p) for p in now}
+    out: "list[str]" = []
+    for d in sorted(group_dirs_of(now)):
+        init: str = f"{d}/__init__.py"
+        parent, g = d.rsplit("/", 1)
+        if (parent, g) in s_groups or init not in now or not empty_init(now[init]):
+            continue
+        if [q for q in r_paths if q.startswith(d + "/")] == [init]:
+            out.append(init)
+    return out
 
 
 def _expand(pairs: "Iterable[Tuple[str, str]]", paths: "Iterable[str]") -> "List[Tuple[str, str]]":
@@ -1555,7 +1825,7 @@ MIGRATION_RE: "re.Pattern[str]" = re.compile(r"(?:^|/)migrations/\d{4}_[^/]+\.py
 
 
 def _is_layer_py(path: str) -> bool:
-    return path.endswith(".py") and f"/{LAYER}/" in f"/{path}" and not _excluded(path)
+    return path.endswith(".py") and _bc_of(path) is not None
 
 
 class RunInput(NamedTuple):
@@ -1565,6 +1835,7 @@ class RunInput(NamedTuple):
     t0_oids: "Dict[str, str]"
     t0p_oids: "Dict[str, str]"
     scope: str
+    anchor_paths: "List[str]" = []   # 앵커의 모든 경로(승격 폴더를 통째로 넓히는 재료 · 검토 B5)
 
 
 def _bc_filter(files: "Mapping[str, str]", bcs: "Optional[Set[str]]") -> "Dict[str, str]":
@@ -1586,7 +1857,7 @@ def load_run(root: Path, folder: "Optional[Path]", bcs: "Optional[Set[str]]",
         cur = _bc_filter(files, bcs)
         oids = {p: blob_oid(t.encode("utf-8")) for p, t in cur.items()}
         return RunInput(cur, cur, _bc_filter(now_files, bcs) if now_files is not None else cur, oids, oids,
-                        _read_folder(folder, "refactor-scope.md"))
+                        _read_folder(folder, "refactor-scope.md"), _all_files(root))
     import anchor_diff
     head: str = _git(root, "rev-parse", "--verify", "HEAD^{commit}").decode("ascii").strip()
     anchor_sha: str = _git(root, "rev-parse", "--verify", f"{anchor}^{{commit}}").decode("ascii").strip()
@@ -1602,11 +1873,12 @@ def load_run(root: Path, folder: "Optional[Path]", bcs: "Optional[Set[str]]",
     t0_oids = {p: o for p, o in t0_all.items() if _is_layer_py(p) and (bcs is None or _bc_of(p) in bcs)}
     t0p_oids = {p: o for p, o in t0p_all.items() if _is_layer_py(p) and (bcs is None or _bc_of(p) in bcs)}
     blobs: "dict[str, bytes]" = blob_bytes(root, list(t0_oids.values()) + list(t0p_oids.values()))
-    t0 = {p: _decode(blobs.get(o, b"")) for p, o in t0_oids.items()}
-    t0p = {p: _decode(blobs.get(o, b"")) for p, o in t0p_oids.items()}
+    t0 = {p: _text(blobs.get(o, b"")) for p, o in t0_oids.items()}
+    t0p = {p: _text(blobs.get(o, b"")) for p, o in t0p_oids.items()}
     if now_files is None:
-        now_files = {p: _decode(b) for p, b in worktree_bytes(root).items() if _is_layer_py(p)}
-    return RunInput(t0, t0p, _bc_filter(now_files, bcs), t0_oids, t0p_oids, _read_folder(folder, "refactor-scope.md"))
+        now_files = {p: _text(b) for p, b in worktree_bytes(root).items() if _is_layer_py(p)}
+    return RunInput(t0, t0p, _bc_filter(now_files, bcs), t0_oids, t0p_oids, _read_folder(folder, "refactor-scope.md"),
+                    sorted(t0_all))
 
 
 def plan_for(run: RunInput, legacy: "Iterable[str]" = ()) -> RunPlan:
@@ -1615,16 +1887,17 @@ def plan_for(run: RunInput, legacy: "Iterable[str]" = ()) -> RunPlan:
 
 def expected_moves(root: Path, folder: Path, legacy_debt_file: "Optional[Path]" = None,
                    bcs: "Optional[Iterable[str]]" = None) -> "Dict[str, str]":
-    """앵커 자리 → R(설계 5절 · 9.4 — 게이트가 다시 낸다). 앵커에 없던 파일은 싣지 않는다."""
-    plan: RunPlan = plan_for(load_run(root, folder, set(bcs) if bcs is not None else None),
-                             legacy_entries(legacy_debt_file))
-    return dict(plan.pairs(plan.anchor, plan.final))
+    """앵커 자리 → R(설계 5절 · 9.4 — 게이트가 다시 낸다). 앵커에 없던 파일은 싣지 않는다. 승격 폴더는 통째로 옮겨지므로
+    앵커의 그 폴더 모든 경로 쌍으로 넓힌다(`actual_moves` 가 짝짓는 그대로 · 검토 B5)."""
+    run: RunInput = load_run(root, folder, set(bcs) if bcs is not None else None)
+    plan: RunPlan = plan_for(run, legacy_entries(legacy_debt_file))
+    return dict(_expand(plan.pairs(plan.anchor, plan.final), run.anchor_paths))
 
 
 # ── 이동 하기(디스크) ─────────────────────────────────────────────────────────
 
-def _project_texts(root: Path) -> "Dict[str, str]":
-    """프로젝트의 `.py` 와 루트 설정 파일 — 경로 → 글(읽기 불능 · 링크는 뺀다)."""
+def _project_texts(root: Path, undecodable: "Optional[List[str]]" = None) -> "Dict[str, str]":
+    """프로젝트의 `.py` 와 루트 설정 파일 — 경로 → 글(읽기 불능 · 링크는 뺀다). UTF-8 아닌 `.py` 는 `undecodable` 에 싣는다."""
     out: "dict[str, str]" = {}
     for dirpath, dirnames, filenames in os.walk(root):
         rel_dir: str = os.path.relpath(dirpath, root)
@@ -1638,15 +1911,41 @@ def _project_texts(root: Path) -> "Dict[str, str]":
                 continue
             try:
                 out[rel] = f.read_text(encoding="utf-8")
-            except (OSError, UnicodeDecodeError):
+            except UnicodeDecodeError:
+                if undecodable is not None and name.endswith(".py"):
+                    undecodable.append(rel)
+            except OSError:
                 continue
     return out
 
 
-def rewrite_tree(texts: "Mapping[str, str]", pairs: "List[Tuple[str, str]]") -> "Dict[str, str]":
+def _disk_blocks(root: Path, undecodable: "List[str]", pairs: "List[Tuple[str, str]]", drops: "Iterable[str]",
+                 all_paths: "Iterable[str]") -> "List[str]":
+    """디스크에서만 보이는 기계 이동 불가 — UTF-8 아닌 소스가 옮길 파일이거나 옮길 모듈 이름을 든다(import 를 못 고친다 ·
+    검토 S1) · 푸는 묶음 폴더에 `.py` 아닌 파일이 남는다(지울 수 없어 폴더가 남고 검사기는 그 묶음을 본다 · 검토 S2)."""
+    out: "list[str]" = []
+    moved: "dict[str, str]" = dict(pairs)
+    names: "set[bytes]" = {o.rsplit("/", 1)[1][:-3].encode("utf-8") for o in moved if o.endswith(".py")}
+    for p in sorted(undecodable):
+        if p in moved or any(n in (root / p).read_bytes() for n in names):
+            out.append(f"{p}:1 UTF-8 아닌 소스")
+    paths: "list[str]" = list(all_paths)
+    drop_list: "list[str]" = list(drops)
+    after: "set[str]" = {moved.get(p, p) for p in paths}
+    for d in sorted(group_dirs_of(paths)):
+        if not any(o.startswith(d + "/") for o in moved) and not any(x.startswith(d + "/") for x in drop_list):
+            continue
+        rest: "list[str]" = sorted(q for q in after if q.startswith(d + "/") and q != f"{d}/__init__.py")
+        if rest and not any(q.endswith(".py") for q in rest):
+            out.append(f"{rest[0]}:1 푸는 묶음 폴더의 .py 아닌 파일")
+    return out
+
+
+def rewrite_tree(texts: "Mapping[str, str]", pairs: "List[Tuple[str, str]]",
+                 drops: "Iterable[str]" = ()) -> "Dict[str, str]":
     """이동 뒤 트리 — `.py` 는 `move_texts`, 루트 설정 파일은 같은 자의 경로 치환."""
     py: "dict[str, str]" = {p: t for p, t in texts.items() if p.endswith(".py")}
-    out: "dict[str, str]" = move_texts(py, pairs)
+    out: "dict[str, str]" = move_texts(py, pairs, drops)
     sub = string_substituter(pairs) if pairs else None
     for p, t in texts.items():
         if not p.endswith(".py"):
@@ -1675,6 +1974,7 @@ def hazards(texts: "Mapping[str, str]", pairs: "List[Tuple[str, str]]", bc_names
     moved_mods: "set[str]" = set(moves)
     packages: "set[str]" = {m.rpartition(".")[0] for m in moved_mods} | moved_mods
     moved_paths: "set[str]" = {o for o, _ in pairs}
+    where: "dict[str, str]" = dict(pairs)
     bcs: "set[str]" = set(bc_names)
     blocked: "list[str]" = []
     bindings: "list[str]" = []
@@ -1696,6 +1996,7 @@ def hazards(texts: "Mapping[str, str]", pairs: "List[Tuple[str, str]]", bc_names
         tree: "Optional[ast.Module]" = _parse(text)
         if tree is None:
             continue
+        blocked += [f"{path}:{line} {why}" for line, why in rewrite_blocks(text, path, where.get(path, path), moves)]
         src = Source(path, text)
         imports_moved: bool = any((mod in moved_mods) or (name is not None and f"{mod}.{name}" in moved_mods)
                                   or any(mod.endswith("." + mm) or mod == mm for mm in moved_mods)
@@ -1745,7 +2046,7 @@ def hazards(texts: "Mapping[str, str]", pairs: "List[Tuple[str, str]]", bc_names
                     if dname in ("shared_task", "task") and not (
                             call is not None and any(k.arg == "name" for k in call.keywords)):
                         bindings.append(f"{path}:{line} Celery 기본 작업 이름")
-        owner: "Optional[str]" = _bc_of(path) if f"/{LAYER}/" in f"/{path}" else _bc_under(path, bcs)
+        owner: "Optional[str]" = _bc_of(path) or _bc_under(path, bcs)
         for node in ast.walk(tree):
             if not isinstance(node, (ast.Import, ast.ImportFrom)):
                 continue
@@ -1772,11 +2073,12 @@ def _bc_under(path: str, bcs: "Set[str]") -> "Optional[str]":
     return None
 
 
-def perform(root: Path, pairs: "List[Tuple[str, str]]", use_git: bool) -> "List[str]":
+def perform(root: Path, pairs: "List[Tuple[str, str]]", use_git: bool, drops: "Iterable[str]" = ()) -> "List[str]":
     """디스크에서 옮긴다 — 파일 이동(`git mv` · 미추적은 이름 바꿈) · import · 설정 파일 치환 · 새 묶음 빈 `__init__.py` ·
-    비워진 묶음 지움. 돌려주는 값은 고친 파일(새 경로)."""
+    비워진 묶음과 `drops`(푸는 묶음의 빈 `__init__.py`) 지움. 돌려주는 값은 고친 파일(새 경로)."""
+    drop_list: "list[str]" = list(drops)
     texts: "dict[str, str]" = _project_texts(root)
-    after: "dict[str, str]" = rewrite_tree(texts, pairs)
+    after: "dict[str, str]" = rewrite_tree(texts, pairs, drop_list)
     tracked: "set[str]" = set()
     if use_git:
         tracked = {r.decode("utf-8", "surrogateescape") for r in _git(root, "ls-files", "-z").split(b"\0") if r}
@@ -1801,7 +2103,7 @@ def perform(root: Path, pairs: "List[Tuple[str, str]]", use_git: bool) -> "List[
         (root / p).parent.mkdir(parents=True, exist_ok=True)
         (root / p).write_text(after[p], encoding="utf-8")
         changed.append(p)
-    for old, _new in pairs:
+    for old in [o for o, _new in pairs] + drop_list:
         d: Path = (root / old).parent
         while d != root and d.is_dir():
             cache: Path = d / "__pycache__"
@@ -1814,10 +2116,12 @@ def perform(root: Path, pairs: "List[Tuple[str, str]]", use_git: bool) -> "List[
     return sorted(set(changed))
 
 
-def apply_to_copy(root: Path, pairs: "Iterable[Tuple[str, str]]") -> "List[Tuple[str, str]]":
-    """격리 사본(git 아님)에서 이동 쌍을 그대로 한다 — pre-gate 가 앵커 커밋 전에 부른다(설계 9.3). 넓힌 쌍을 돌려준다."""
+def apply_to_copy(root: Path, pairs: "Iterable[Tuple[str, str]]",
+                  drops: "Iterable[str]" = ()) -> "List[Tuple[str, str]]":
+    """격리 사본(git 아님)에서 이동 쌍을 그대로 한다 — pre-gate 가 앵커 커밋 전에 부른다(설계 9.3). `drops` 는 푸는 묶음의
+    `__init__.py`(`placement_drops` · `RunPlan.drops`) — 옮긴 뒤 그것만 남고 비었으면 폴더째 지운다. 넓힌 쌍을 돌려준다."""
     full: "list[Tuple[str, str]]" = _expand(pairs, _all_files(root))
-    perform(root, full, use_git=False)
+    perform(root, full, use_git=False, drops=drops)
     return full
 
 
@@ -1903,9 +2207,12 @@ def cmd_draft(args: argparse.Namespace) -> int:
                 now_override.setdefault(a, "")
     run: RunInput = load_run(root, folder, bcs, now_override)
     plan: RunPlan = plan_for(run, legacy_entries(Path(args.legacy_debt_file) if args.legacy_debt_file else None))
-    texts: "dict[str, str]" = _project_texts(root)
+    undecodable: "list[str]" = []
+    texts: "dict[str, str]" = _project_texts(root, undecodable)
     remaining: "list[Tuple[str, str]]" = plan.pairs(plan.current, plan.final)
-    hz: Hazards = hazards(texts, _expand(remaining, texts), [d.name for d in business_vocab.server_bc_dirs(root)])
+    all_paths: "list[str]" = _all_files(root)
+    hz: Hazards = hazards(texts, _expand(remaining, all_paths), [d.name for d in business_vocab.server_bc_dirs(root)])
+    disk: "list[str]" = _disk_blocks(root, undecodable, _expand(remaining, all_paths), plan.drops, all_paths)
     out: "list[str]" = [f"줄 {_fmt_line(w, m)}" for w, m in plan.lines_now]
     out += [f"빚 이동 {a} -> {b}" for a, b in plan.pairs(plan.base, plan.debt)]
     this_run: "list[Tuple[str, str]]" = plan.pairs(plan.debt, plan.final)
@@ -1915,7 +2222,8 @@ def cmd_draft(args: argparse.Namespace) -> int:
     out += [f"남은 이동 {a} -> {b}" for a, b in remaining]
     new_keys: "list[Tuple[str, str]]" = sorted(k for k in plan.current if k not in plan.base)
     out += [f"새 파일 {plan.current[k]} -> {plan.final[k]}" for k in new_keys]
-    out += [f"기계 이동 불가 {x}" for x in hz.blocked]
+    out += [f"기계 이동 불가 {x}" for x in hz.blocked + disk]
+    out += [f"기계 이동 불가 이름 겹침 {a} {b}" for a, b in plan.clashes]
     out += [f"경로 결속 {x}" for x in hz.bindings]
     out += [f"다른 BC import {x}" for x in hz.other_bc]
     if folder is not None and _read_folder(folder, "build_anchor").strip():
@@ -1931,10 +2239,15 @@ def cmd_draft(args: argparse.Namespace) -> int:
         out += [f"G1 목록 차이 + {ln}" for ln in sorted(now_set - then)]
         out += [f"G1 목록 차이 - {ln}" for ln in sorted(then - now_set)]
     moved_keys: "set[Tuple[str, str]]" = {k for k in plan.debt if k in plan.final and plan.debt[k] != plan.final[k]}
-    formed_files: int = sum(1 for k in moved_keys if (k[0], _group_of(plan.final[k])) in plan.formed)
-    dissolved_files: int = sum(1 for k in moved_keys if (k[0], _group_of(plan.debt[k])) in plan.dissolved)
-    out.append(f"알림 묶음: 새 파일 {len(new_keys)} · 이 실행의 이동 {len(moved_keys)}(형성 {len(plan.formed)} · "
-               f"해체 {len(plan.dissolved)} · 다시 놓기 {len(moved_keys) - formed_files - dissolved_files}) · "
+    formed_files: int = 0      # 옮긴 파일을 한 번씩만 센다 — 새 묶음으로 가면 형성 · 아니면 풀린 묶음에서 나오면 해체(검토 A9)
+    dissolved_files: int = 0
+    for k in moved_keys:
+        if (k[0], _group_of(plan.final[k])) in plan.formed:
+            formed_files += 1
+        elif (k[0], _group_of(plan.debt[k])) in plan.dissolved:
+            dissolved_files += 1
+    out.append(f"알림 묶음: 새 파일 {len(new_keys)} · 이 실행의 이동 {len(moved_keys)}(형성 {formed_files} · "
+               f"해체 {dissolved_files} · 다시 놓기 {len(moved_keys) - formed_files - dissolved_files}) · "
                f"경로 결속 {len(hz.bindings)} · 다른 BC import {len(hz.other_bc)}")
     if args.summary:
         for bc in sorted(bcs):
@@ -1982,23 +2295,31 @@ def cmd_apply(args: argparse.Namespace) -> int:
     if args.debt:
         pairs = [(plan.current[k], plan.debt[k]) for k in sorted(plan.debt)
                  if k in plan.base and plan.debt[k] != plan.base[k] and plan.current.get(k) == plan.base[k]]
+        drops: "list[str]" = [d for d in plan.debt_drops if d in run.now]
     else:
         pairs = plan.pairs(plan.current, plan.final)
-    full: "list[Tuple[str, str]]" = _expand(pairs, _all_files(root))
-    texts: "dict[str, str]" = _project_texts(root)
+        drops = list(plan.drops)
+    all_paths: "list[str]" = _all_files(root)
+    full: "list[Tuple[str, str]]" = _expand(pairs, all_paths)
+    undecodable: "list[str]" = []
+    texts: "dict[str, str]" = _project_texts(root, undecodable)
     hz: Hazards = hazards(texts, full, [d.name for d in business_vocab.server_bc_dirs(root)])
-    if hz.blocked:
-        for x in hz.blocked:
+    stops: "list[str]" = (hz.blocked + _disk_blocks(root, undecodable, full, drops, all_paths)
+                          + [f"이름 겹침 {a} {b}" for a, b in plan.clashes])
+    if stops:
+        for x in stops:
             print(f"기계 이동 불가 {x}")
-        print(f"요약: apply 멈춤 — 기계 이동 불가 {len(hz.blocked)}건(옮기지 않았다)")
+        print(f"요약: apply 멈춤 — 기계 이동 불가 {len(stops)}건(옮기지 않았다)")
         return 1
-    changed: "list[str]" = perform(root, full, use_git=True)
+    changed: "list[str]" = perform(root, full, use_git=True, drops=drops)
     for a, b in full:
         print(f"이동 {a} -> {b}")
     for c in changed:
         print(f"고침 {c}")
     for x in hz.other_bc:
         print(f"다른 BC import {x}")
+    for d in drops:
+        print(f"풀기 {d}")
     print(f"요약: apply {'빚' if args.debt else '이 실행'} 이동 {len(full)} · 고친 파일 {len(changed)}")
     return 0
 
@@ -2059,6 +2380,7 @@ def cmd_verify_window(root: Path, folder: Path, n: int) -> int:
     moves: "dict[str, str]" = module_moves(pair_list)
     sub = string_substituter(pair_list) if pair_list else None
     now_dirs: "set[str]" = group_dirs_of(now_oids)
+    then_dirs: "set[str]" = group_dirs_of(then_oids)
     reds: "list[str]" = []
     done: "set[str]" = set()
     for old, new in pair_list:
@@ -2077,9 +2399,10 @@ def cmd_verify_window(root: Path, folder: Path, n: int) -> int:
         after: "Optional[str]" = _decode(now_bytes[p]) if p in now_bytes else None
         d: str = p.rsplit("/", 1)[0] if "/" in p else ""
         if p.endswith("/__init__.py") and before is None and after == "" and d in now_dirs:
-            continue
-        if p.endswith("/__init__.py") and after is None and before == "" and d not in now_dirs:
-            continue
+            continue  # 새 묶음의 빈 `__init__.py`
+        if p.endswith("/__init__.py") and after is None and before is not None and empty_init(before) \
+                and d in then_dirs and d not in now_dirs:
+            continue  # 푼 묶음의 빈 `__init__.py`(폴더째 지움 · 묶음 폴더만 — 검토 A4 · B10)
         if before is not None and after is not None:
             if p.endswith(".py") and rewrite_source(before, p, p, moves, sub) == after:
                 continue
@@ -2107,7 +2430,10 @@ def _windows_green(folder: Path) -> "Tuple[List[Dict[str, str]], List[int]]":
     for rec in history:
         last[int(rec["window"])] = rec
     green: "list[Dict[str, str]]" = [last[n]["pairs"] for n in sorted(last) if last[n]["verdict"] == "green"]
-    red: "list[int]" = [n for n in sorted(last) if last[n]["verdict"] != "green"]
+    # red 창은 철회하고 다시 연다(dddjango.md «묶음 창») — 뒤에 green 창이 있으면 다시 연 것으로 본다. 철회하지 않은 그 창의
+    # 이동은 green 창의 쌍으로 이어지지 않아 «창 밖 이동» 이 잡는다(검토 B4).
+    red: "list[int]" = [n for n in sorted(last) if last[n]["verdict"] != "green"
+                        and not any(m > n and last[m]["verdict"] == "green" for m in last)]
     return green, red
 
 
@@ -2120,6 +2446,8 @@ def cmd_verify_run(root: Path, folder: Path, legacy: "Optional[Path]") -> int:
     for k in sorted(plan.current):
         if plan.current[k] != plan.final[k]:
             reds.append(f"자리 다름 `{plan.current[k]}` — 끝 자리 `{plan.final[k]}`(끝 맞춤 묶음 창을 다시 돈다)")
+    for d in plan.drops:
+        reds.append(f"자리 다름 `{d}` — 푼 묶음의 빈 `__init__.py` 가 남았다(끝 맞춤 묶음 창을 다시 돈다)")
     now_oids: "dict[str, str]" = {p: blob_oid(b) for p, b in worktree_bytes(root).items() if _is_layer_py(p)}
     lane: "dict[str, str]" = actual_moves(run.t0p_oids, now_oids)
     merge_share: "dict[str, str]" = actual_moves(run.t0_oids, run.t0p_oids)
@@ -2136,6 +2464,8 @@ def cmd_verify_run(root: Path, folder: Path, legacy: "Optional[Path]") -> int:
         print(f"이동 {a} -> {b}")
     for a, b in sorted(merge_share.items()):
         print(f"병합 몫 {a} -> {b}")
+    for a, b in plan.clashes:
+        print(f"기계 이동 불가 이름 겹침 {a} {b}")
     for r in reds:
         print(f"red: {r}")
     print(f"요약: 묶음 verify {'red' if reds else 'green'} · 이동 {len(lane)} · 병합 몫 {len(merge_share)} · red {len(reds)}")
