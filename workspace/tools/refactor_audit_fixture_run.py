@@ -119,8 +119,41 @@ def _project(td: Path, files: "dict[str, str] | None" = None) -> Path:
 
 
 def run(repo: Path, *args: str, tool: Path = TOOL) -> "tuple[int, str]":
+    if args and args[0] == "deps" and tool == TOOL and "--at" not in args:
+        args = (*args, "--at", _deps_at(args))
+    return _raw_run(repo, *args, tool=tool)
+
+
+def _raw_run(repo: Path, *args: str, tool: Path = TOOL) -> "tuple[int, str]":
+    """인자를 그대로 넘긴다(`--at` 빠짐 사례 · 옛 판)."""
     proc = subprocess.run([sys.executable, str(tool), *args], cwd=repo, capture_output=True, text=True)
     return proc.returncode, proc.stdout + proc.stderr
+
+
+def _deps_at(args: "tuple[str, ...]") -> str:
+    """`--at` 을 적지 않은 기존 deps 사례의 판정 시점 값(설계 A0) — 이 실행 폴더에 끝나지 않은 실행 줄과 G1 확정이 있으면 `dispatch`
+    (2.28.0 의 파견 직전 판정) · 그 밖은 `new`(2.28.0 의 G0 판정과 같은 셈). 새 사례는 값을 손으로 적는다."""
+    out: Path = Path(args[args.index("--out") + 1]).resolve()
+    own: "Path | None" = next((p for p in [out, *out.parents] if p.parent.name == ".dddjango"), None)
+    line: "str | None" = ra._scope_run_line(own) if own is not None else None
+    if own is None or line is None or ra._line_ended(line):
+        return "new"
+    try:
+        return "dispatch" if ra.g1_confirmed(own) is not None else "new"
+    except RuntimeError:                                     # G1 기록 판형 밖 — 도구가 같은 실행 불능을 내게
+        return "dispatch"
+
+
+PR_OLD_SHA: str = "af66e8d71e0ea3865a9999bb91eb3bc2b4ef8b9d"   # dddjango 2.28.0 배포 커밋(태그 dddjango--v2.28.0) — 옛 판 대조는 HEAD 아닌 이 판
+
+
+def _pr_old_tool(td: Path) -> Path:
+    """2.28.0 배포판 refactor_audit.py 사본(한 번만 꺼낸다 · deps 는 다른 모듈을 부르지 않는다)."""
+    tool: Path = td / "pr-old" / "refactor_audit.py"
+    if not tool.is_file():
+        tool.parent.mkdir(parents=True, exist_ok=True)
+        tool.write_text(_git(ROOT, "show", f"{PR_OLD_SHA}:dddjango/scripts/refactor_audit.py"), encoding="utf-8")
+    return tool
 
 
 class Audit:
@@ -1478,6 +1511,115 @@ def changes_cases(fails: "list[str]", td: Path) -> None:
     expect(fails, "RD-C33 changes_snapshot 형식 red 명세 → RuntimeError 계열(fail-closed)", (raised, ""), 0)
 
 
+CC_POLICY: str = "application/demo/test/test_policy.py"
+CC_BIG: str = "application/demo/test/test_big.py"
+CC_SKIP: str = "application/demo/test/test_skip.py"
+CC_WEB: str = "web/home/tests/test_client.py"
+CC_OUT: str = "확인 필요: 실행 정의 밖이거나 skip 인 편집 시험: "
+CC_NEW: str = "확인 필요: 수집 꼴 밖 새 시험 파일: "
+
+
+def _collect_support(lane: "ChangesLane", files: "list[str]", stamp: str = "20261004T110000Z") -> None:
+    """수집 키를 담은 «지원» 기록(behavior_support 판형 — `keys` 노드 → [파일, …]) · 가장 새 기록이라 G1 관문이 이것에 결속한다."""
+    d: Path = lane.folder / "behavior" / "support" / stamp
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "run-definition.json").write_text(json.dumps({"version": 1, "argvs": [["pytest"]], "env": {"PYTEST_ADDOPTS": None},
+                                                       "sources": ["Makefile:1"], "frozen_at": stamp}), encoding="utf-8")
+    (d / "g0-collect.json").write_text(json.dumps({"version": 1, "verdict": "지원", "keys": {
+        f"{f}::test_x": [f, "", "test_x"] for f in files}}), encoding="utf-8")
+
+
+def changes_collect_cases(fails: "list[str]", td: Path) -> None:
+    """설계 A5(S) — G1 관문(`--candidate` · `--gate`)이 결속한 지원 기록의 수집 파일(g0-collect `keys`)과 이 실행이 고칠 시험 모듈(명세
+    file-plan · 다른 BC 편집 · 입장 표 owner/path 가운데 이미 있고 · `python_files` 에 맞고 · 정적 케이스가 있는 것)을 견준다 — 빠진
+    모듈 · 수집 꼴 밖 `add` 새 파일은 «확인 필요» 줄(관문 red 아님 · exit 무변)."""
+    lane = ChangesLane(td, "cc")
+    repo: Path = lane.repo
+    (repo / CC_BIG).write_text("def test_big() -> None:\n    assert True\n", encoding="utf-8")
+    (repo / CC_SKIP).write_text("import pytest\n\npytest.importorskip(\"nope\")\n\n\ndef test_s() -> None:\n    assert True\n",
+                                encoding="utf-8")
+    for rel, body in (("application/demo/test/conftest.py", "import pytest\n\n\n@pytest.fixture\ndef x() -> int:\n    return 1\n"),
+                      ("application/demo/test/factories.py", "def make() -> int:\n    return 1\n"),
+                      ("application/demo/test/data/case.json", "{}\n")):
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / rel).write_text(body, encoding="utf-8")
+    skip_row: str = ("| 선택 의존 시험 기대 | 규칙 계약 | 규칙 오류 | test_skip | update | coder "
+                     f"`{CC_SKIP}::test_s` |\n")
+    plan: str = ("\n<!-- machine: file-plan -->\n```paths\nupdate application/demo/domain_layer/policy.py\n"
+                 "update application/demo/test/conftest.py\nupdate application/demo/test/factories.py\n"
+                 "update application/demo/test/data/case.json\n```\n")
+
+    def spec(extra_rows: str = "") -> None:
+        lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2, adm=V_SPEC_ROWS + skip_row + extra_rows)
+        sp: Path = lane.folder / "design-spec.md"
+        sp.write_text(sp.read_text(encoding="utf-8") + plan, encoding="utf-8")
+    spec()
+    _collect_support(lane, [CC_BIG, CC_SKIP])
+    got = lane.ch("--candidate")
+    expect(fails, "RD-CC1 편집 시험 모듈이 수집 밖(실행 정의가 `--ignore` 로 뺌) → 확인 필요 줄 · 관문 red 아님(exit 0)", got, 0,
+           f"  {CC_OUT}{CC_POLICY}", "확인 필요 1 · red 0 · candidate")
+    expect(fails, "RD-CC1b conftest · 팩토리 · JSON 자료 편집 · 고치지 않는 HTTP 소비 시험 → 견줄 대상 밖(줄 없음)",
+           (got[0] if not any(x in got[1] for x in ("conftest.py", "factories.py", "case.json", CC_WEB)) else 9, got[1]), 0)
+    _collect_support(lane, [CC_POLICY, CC_SKIP])
+    expect(fails, "RD-CC2 retain 행 `경로.py`(케이스 없는 주소)가 수집 밖 → 확인 필요 줄", lane.ch("--candidate"), 0,
+           f"  {CC_OUT}{CC_BIG}", "확인 필요 1 ·")
+    _collect_support(lane, [CC_POLICY, CC_BIG])
+    expect(fails, "RD-CC3 편집 모듈이 importorskip(정의 안이나 모듈 skip — 수집 키 없음) → 확인 필요 줄(red 아님 · 3회 I-3)",
+           lane.ch("--candidate"), 0, f"  {CC_OUT}{CC_SKIP}", "red 0 · candidate")
+    _collect_support(lane, [CC_POLICY, CC_BIG, CC_SKIP])
+    got = lane.ch("--candidate")
+    expect(fails, "RD-CC4 두 타깃 정의(고칠 모듈 모두 수집) → 줄 없음",
+           (got[0] if "확인 필요" not in got[1] else 9, got[1]), 0, "red 0 · candidate")
+    spec(f"| 새 점검 시험 | 규칙 계약 | 규칙 오류 | 없음 | add | coder `application/demo/test/check_new.py::test_c` |\n"
+         f"| 새 하위 폴더 시험 | 규칙 계약 | 규칙 오류 | 없음 | add | coder `application/demo/test/sub/test_new.py::test_n` |\n")
+    got = lane.ch("--candidate")
+    expect(fails, "RD-CC5 `add` 새 파일 `check_new.py`(python_files 밖) → 수집 꼴 밖 줄 · 새 하위 폴더 `test_new.py` → 줄 없음",
+           (got[0] if "sub/test_new.py" not in got[1] else 9, got[1]), 0, f"  {CC_NEW}application/demo/test/check_new.py",
+           "확인 필요 1 ·")
+    digest: str = got[1].split("후보 digest ", 1)[1].split()[0] if "후보 digest " in got[1] else ""
+    (lane.folder / "refactor-scope.md").write_text(lane.scope_base + f"\n## G1 변경 결정 20261004-1930 · 후보 digest {digest}\n\n"
+                                                   "- V2 · 결정 = 바꾼다 · 출처 = 본인 직접(1930)\n", encoding="utf-8")
+    expect(fails, "RD-CC6 --gate 도 같은 확인 필요 줄 · 관문 green 그대로", lane.ch("--gate"), 0,
+           f"  {CC_NEW}application/demo/test/check_new.py", "확인 필요 1 · red 0 · gate")
+    got = lane.ch()
+    expect(fails, "RD-CC7 기본 changes(관문 아님) → 확인 필요 줄 없음", (got[0] if "확인 필요" not in got[1] else 9, got[1]), 0)
+    (repo / "pytest.ini").write_text("[pytest]\npython_files = check_*.py\n", encoding="utf-8")
+    got = lane.ch("--candidate")
+    expect(fails, "RD-CC8 프로젝트 `python_files = check_*.py` → check_new.py 는 수집 꼴 안 · 있는 test_*.py 는 시험 모듈 아님 · "
+           "`add` 새 test_*.py 는 수집 꼴 밖 줄", (got[0] if "check_new.py" not in got[1] and CC_OUT not in got[1] else 9, got[1]), 0,
+           f"  {CC_NEW}application/demo/test/test_thing_api.py", f"  {CC_NEW}application/demo/test/sub/test_new.py",
+           "확인 필요 2 · red 0 · candidate")
+    (repo / "pytest.ini").unlink()
+    # 고칠 시험 모듈의 세 조건(이미 있음 · python_files 맞음 · 정적 케이스 있음)과 출처(file-plan · 다른 BC 편집 목록) — 구현 검토 변이
+    helper_only: str = "application/demo/test/test_helpers.py"      # python_files 맞음 · 정적 케이스 없음
+    not_named: str = "application/demo/test/checks.py"              # 정적 케이스 있음 · python_files 밖
+    plan_only: str = "application/demo/test/test_plan_only.py"      # file-plan 에만 있는 시험 모듈
+    edit_only: str = "application/other/test/test_demo_adapter.py"  # 다른 BC 편집 목록에만 있는 시험 모듈(받는 쪽 시험 · DEPS_FILES)
+    for rel, body in ((helper_only, "def make() -> int:\n    return 1\n"),
+                      (not_named, "def test_like() -> None:\n    assert True\n"),
+                      (plan_only, "def test_p() -> None:\n    assert True\n")):
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / rel).write_text(body, encoding="utf-8")
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE + f"- {edit_only} · 받는 쪽 시험 · V2\n", CH_ROW_M1 + CH_ROW_M2,
+              adm=V_SPEC_ROWS + skip_row)
+    sp: Path = lane.folder / "design-spec.md"
+    sp.write_text(sp.read_text(encoding="utf-8") + plan.replace("update application/demo/test/conftest.py\n",
+                                                                f"update {helper_only}\nupdate {not_named}\nupdate {plan_only}\n"),
+                  encoding="utf-8")
+    got = lane.ch("--candidate")
+    expect(fails, "RD-CC9 file-plan 에만 있는 편집 시험 모듈이 수집 밖 → 확인 필요 줄(출처 file-plan)", got, 0, f"  {CC_OUT}{plan_only}")
+    expect(fails, "RD-CC10 다른 BC 편집 목록에만 있는 편집 시험 모듈이 수집 밖 → 확인 필요 줄(출처 다른 BC 편집 목록)", got, 0,
+           f"  {CC_OUT}{edit_only}")
+    expect(fails, "RD-CC11 python_files 에 맞지만 정적 케이스 없는 모듈 · 정적 케이스 있지만 python_files 밖 모듈 → 줄 없음(시험 모듈 아님)",
+           (got[0] if helper_only not in got[1] and not_named not in got[1] else 9, got[1]), 0, "확인 필요 2 · red 0 · candidate")
+    (repo / "pytest.ini").write_text("[pytest]\ntestpaths = application/demo/test\n", encoding="utf-8")
+    spec("| 밖 자리 새 시험 | 규칙 계약 | 규칙 오류 | 없음 | add | coder `application/demo/checks/test_far.py::test_f` |\n")
+    got = lane.ch("--candidate")
+    expect(fails, "RD-CC12 `add` 새 파일 이름은 python_files 안이나 testpaths 밖 → 수집 꼴 밖 줄(`_collectible` — 이름만 보지 않는다)",
+           got, 0, f"  {CC_NEW}application/demo/checks/test_far.py")
+    (repo / "pytest.ini").unlink()
+
+
 ADM_HEAD: str = "".join(V_SPEC_ROWS.splitlines(keepends=True)[:2])
 ADM_V1_ROW: str = V_SPEC_ROWS.splitlines(keepends=True)[2]
 ADM_REST: str = "".join(V_SPEC_ROWS.splitlines(keepends=True)[3:])
@@ -2284,6 +2426,67 @@ def rename_row_cases(fails: "list[str]", td: Path) -> None:
             ("RD-RN16 개명 새 이름 = 입장 표 update 행 케이스 → red", upd_row, "update 행 케이스와 같다")):
         lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2, adm=V_SPEC_ROWS + one + extra)
         expect(fails, label, lane.ch(), 2, "개명 행 꼴 밖 — 개명 새 이름", needle)
+
+
+CARD_SRC: str = "application/demo/domain_layer/card.py"
+
+
+def _rf_item(path: str = POLICY_TEST, new: str = "card_key") -> dict:
+    return {"kind": "칸", "path": path, "source": CARD_SRC, "class": "Card", "old": "card_id", "new": new}
+
+
+def field_rename_row_cases(fails: "list[str]", td: Path) -> None:
+    """설계 A 4판 A6(F4-116 남은 것) — 개명 항목 세 번째 꼴 «칸» `재조직 — 칸 개명 <운영 경로>::<클래스>.<옛> → <새>` · owner/path =
+    그 칸을 쓰는 시험 파일 하나 → G1 스냅숏 `retain_rows[].renames` 원소 {kind 칸, path 시험 파일, source 운영 경로, class, old, new}
+    (behavior_guard 0F 가 받는 꼴). 꼴 · 경로만 본다(운영 칸이 옛 → 새 로 바뀌었는지 · 밖 계약 클래스는 behavior_guard)."""
+    lane = ChangesLane(td, "rf")
+    lane.support()
+    f = lane.folder
+
+    def retained() -> "list[dict]":
+        return ra.changes_snapshot(f, lane.repo)["retain_rows"]
+
+    d0: str = ra.snapshot_digest(ra.changes_snapshot(f, lane.repo))
+    plain: "list[dict]" = retained()
+    field: str = f"재조직 — 칸 개명 {CARD_SRC}::Card.card_id → card_key"
+    rows: str = _rn_row(field) + _rn_row(f"재조직 — 칸 개명 `{CARD_SRC}::Card.card_id` → `card_key`", path=BIG_TEST)
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2, adm=V_SPEC_ROWS + rows)
+    got: "list[dict]" = retained()
+    want: "list[dict]" = plain + [{"path": p, "case": None, "why": "기대 의미 그대로 — 이름만", "renames": [_rf_item(p)]}
+                                  for p in (POLICY_TEST, BIG_TEST)]
+    expect(fails, "RD-RF9 칸 개명 행(시험 파일마다 한 행 · 같은 칸 두 시험 파일) → `renames` 칸 항목 둘 · 요약 `retain 재조직 3(개명 2)`",
+           (lane.ch()[0] if got == want else 9, json.dumps(got, ensure_ascii=False)), 0)
+    expect(fails, "RD-RF9 요약 · red 0", lane.ch(), 0, "retain 재조직 3(개명 2)", "red 0")
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2)
+    expect(fails, "RD-RF9 칸 개명 행을 지우면 처음 digest 로(칸 행 없는 명세는 digest 무변)",
+           (0 if ra.snapshot_digest(ra.changes_snapshot(f, lane.repo)) == d0 else 9, ""), 0)
+    for label, row, needle in (
+            ("RD-RF10 클래스 없음(`<운영 경로>::<옛> → <새>`) → red(칸 개명 행 꼴 밖)",
+             _rn_row(f"재조직 — 칸 개명 {CARD_SRC}::card_id → card_key"), "칸 개명 행 꼴 밖"),
+            ("RD-RF10 중첩 클래스(`Outer.Card.<옛>`) → red(꼴 밖 — 클래스 하나)",
+             _rn_row(f"재조직 — 칸 개명 {CARD_SRC}::Outer.Card.card_id → card_key"), "칸 개명 행 꼴 밖"),
+            ("RD-RF10 한 행에 칸 개명 둘 → red", _rn_row(f"{field} · {CARD_SRC}::Card.kind → sort"), "칸 개명 행 꼴 밖"),
+            ("RD-RF10 옛 = 새 → red", _rn_row(f"재조직 — 칸 개명 {CARD_SRC}::Card.card_id → card_id"), "옛 = 새"),
+            ("RD-RF10 owner/path 가 시험 파일이 아님(운영 파일) → red", _rn_row(field, path=CARD_SRC),
+             f"칸 개명 행 owner/path 파일 `{CARD_SRC}` 가 시험 파일이 아니다"),
+            ("RD-RF10 운영 경로가 저장소 밖(`../`) → red", _rn_row(f"재조직 — 칸 개명 ../{CARD_SRC}::Card.card_id → card_key"),
+             "저장소 상대 경로가 아니다"),
+            ("RD-RF10 owner/path 가 저장소 밖(`../`) → red", _rn_row(field, path=f"../{POLICY_TEST}"), "저장소 상대 경로가 아니다")):
+        lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2, adm=V_SPEC_ROWS + row)
+        expect(fails, label, lane.ch(), 2, needle)
+    for label, rows, needle in (
+            ("RD-RF11 같은 칸 개명 행 두 번(같은 시험 파일) → red", _rn_row(field) + _rn_row(field), "같은 개명 행이 두 번"),
+            ("RD-RF11 한 칸(운영 경로 · 클래스 · 옛)에 다른 새 이름 둘(다른 시험 파일) → red",
+             _rn_row(field) + _rn_row(f"재조직 — 칸 개명 {CARD_SRC}::Card.card_id → card_ref", path=BIG_TEST), "한 옛 이름에 개명 행 둘")):
+        lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2, adm=V_SPEC_ROWS + rows)
+        expect(fails, label, lane.ch(), 2, needle)
+    upd_row: str = (f"| 규칙 함수 반환 기대 | 규칙 계약 | 규칙 오류 | test_policy | update | coder "
+                    f"`{POLICY_TEST}::Card::card_key` |\n")
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2, adm=V_SPEC_ROWS + _rn_row(field) + upd_row)
+    got = retained()
+    expect(fails, "RD-RF11 칸 개명은 케이스 키가 그대로 — 새 이름 꼴의 update 행 케이스와 겹침 대조 밖(red 0)",
+           (lane.ch()[0] if got[-1].get("renames") == [_rf_item()] else 9, json.dumps(got, ensure_ascii=False)), 0)
+    expect(fails, "RD-RF11 겹침 대조 밖 · red 0", lane.ch(), 0, "red 0")
 
 
 SLICE_PLAN: str = ("\n## 슬라이스 계획\n\n| 슬라이스 | 목적 | 인수 행 | 내부 행 | 완료 조건 |\n|---|---|---|---|---|\n"
@@ -3366,6 +3569,22 @@ def _dispatch_own(repo: Path, own: Path, vs: str) -> None:
     line: str = (own / "refactor-scope.md").read_text(encoding="utf-8").split("\n## G1 변경 결정")[0].rstrip("\n")
     (own / "refactor-scope.md").write_text(line + f"\n\n## G1 변경 결정 2026-10-24 09:50 · 후보 digest {'c' * 12}\n\n"
                                            f"- G1 변경판 확정 2026-10-24 09:55 · digest {digest} · 후보 {'c' * 12}\n", encoding="utf-8")
+    _stale_bases(repo, own)
+
+
+def _stale_bases(repo: Path, own: Path, head: "str | None" = None) -> None:
+    """파견 직전 낡음(설계 A4)의 두 기준 — 이 실행 audit `plan.md` 의 `- HEAD` 와 `pregate-report.md` 예보 절의 기준선 SHA 를 `head`
+    (없으면 지금 HEAD)로 쓴다(낡음 0 의 바탕 — 기존 파견 직전 사례의 기대 exit 를 바꾸지 않는다)."""
+    sha: str = head or _git(repo, "rev-parse", "HEAD").strip()
+    am = re.search(r"모드 리팩토링 · audit (\S+)", (own / "refactor-scope.md").read_text(encoding="utf-8"))
+    bm = re.search(r"(?:^|-)refactor-([a-z0-9-]+)$", own.name)
+    if am:
+        (own / "audit" / am.group(1)).mkdir(parents=True, exist_ok=True)
+        (own / "audit" / am.group(1) / "plan.md").write_text(
+            f"# refactor_audit plan\n\n- BC: `{bm.group(1).replace('-', '_') if bm else 'demo'}`\n- HEAD {sha}\n"
+            "- BC 미커밋 변경 0\n", encoding="utf-8")
+    (own / "pregate-report.md").write_text(f"## pre-gate 예보 — 2026-10-24T09:40:00Z · design-spec.md\n\n- 기준선 SHA: `{sha}` "
+                                           "(--base HEAD)\n- 판정: green\n", encoding="utf-8")
 
 
 def deps_stage_cases(fails: "list[str]", td: Path) -> None:
@@ -3706,7 +3925,8 @@ def deps_face_cases(fails: "list[str]", td: Path) -> None:
     try:
         ra.FACE_CHAIN_CAP = 1
         with contextlib.redirect_stdout(buf):
-            code: int = ra.cmd_deps(ln2.repo, "demo", ln2.own / "deps" / "cap")
+            cap_out: Path = ln2.own / "deps" / "cap"
+            code: int = ra.cmd_deps(ln2.repo, "demo", cap_out, _deps_at(("deps", "demo", "--out", str(cap_out))))
     finally:
         ra.FACE_CHAIN_CAP = saved_cap
     expect(fails, "RD-F118 S-cap3 상한에 닿은 실행 — 출력에 «면 넓힘:» 한 줄 · 그 BC 의 면 밖 파일을 고친 실행도 공급 면 겹침(안전 쪽)",
@@ -4450,6 +4670,690 @@ def deps_http_text_cases(fails: "list[str]", td: Path) -> None:
            "(태그 내용은 원문에서 읽는다)", (0 if '"/x"' not in masked and len(masked) == len(named) else 9, repr(masked[:80])), 0)
 
 
+AT_OWN: str = "20261020-0900-refactor-demo"
+AT_LINE: str = "실행 · G0 승인 20261020-1000 · 모드 리팩토링 · audit 20261020-0901\n"
+AT_LATE: str = "20261028-1000-refactor-other"
+AT_LATE_LINE: str = "실행 · G0 승인 20261028-1100 · 모드 리팩토링 · audit 20261028-1001\n"
+
+
+def _deps_json(folder: Path, tag: str) -> dict:
+    p: Path = folder / "deps" / tag / "deps.json"
+    return json.loads(p.read_text(encoding="utf-8")) if p.is_file() else {}
+
+
+def deps_at_cases(fails: "list[str]", td: Path) -> None:
+    """설계 A0 — deps 판정 시점은 조정자가 `--at new|continue|dispatch` 로 밝힌다(필수 · 빠지면 실행 불능). `continue` 는 끝나지 않은
+    실행 줄 · `dispatch` 는 그 + G1 확정이 있어야 하고 · 이 폴더 refactor-scope.md 를 UTF-8 로 못 읽으면 실행 불능 · `continue` 의 맞물림은
+    G1 확정과 무관하게 실행 줄 G0 승인 값으로(검토 2회 a0 재현 — 옛 판 2 · 2 맞기다림) · `new` 도 다른 트리의 이 실행 사본은 뺀다(2회 s1)."""
+    old: Path = _pr_old_tool(td)
+    repo: Path = _project(td / "at", DEPS_FILES)
+    own: Path = repo / ".dddjango" / AT_OWN
+    own.mkdir(parents=True)
+    scope: Path = own / "refactor-scope.md"
+    out = lambda tag: str(own / "deps" / tag)                 # noqa: E731
+    scope.write_text(AT_LINE, encoding="utf-8")
+    expect(fails, "RD-AT1 `--at` 빠짐 → 실행 불능(exit 1)", _raw_run(repo, "deps", "demo", "--out", out("m")), 1,
+           "요약: refactor_audit 실행 불능 — 인자 오류")
+    expect(fails, "RD-AT1b `--at` 값이 닫힌 셋 밖 → 실행 불능", _raw_run(repo, "deps", "demo", "--out", out("m2"), "--at", "g0"), 1,
+           "인자 오류")
+    scope.write_text(AT_LINE.rstrip("\n") + " · build_anchor a · G2 승인 20261021-1000\n", encoding="utf-8")
+    expect(fails, "RD-AT2 `continue` 인데 이 폴더 실행 줄이 끝남(G2) → 실행 불능", run(repo, "deps", "demo", "--out", out("c1"), "--at",
+           "continue"), 1, "끝나지 않은 실행 줄이 없다")
+    scope.unlink()
+    expect(fails, "RD-AT2b `continue` 인데 refactor-scope.md 없음 → 실행 불능", run(repo, "deps", "demo", "--out", out("c2"), "--at",
+           "continue"), 1, "끝나지 않은 실행 줄이 없다")
+    expect(fails, "RD-AT2c `dispatch` 인데 refactor-scope.md 없음 → 실행 불능", run(repo, "deps", "demo", "--out", out("c3"), "--at",
+           "dispatch"), 1, "끝나지 않은 실행 줄이 없다")
+    scope.write_text(AT_LINE, encoding="utf-8")
+    expect(fails, "RD-AT3 `dispatch` 인데 G1 확정 없음 → 실행 불능", run(repo, "deps", "demo", "--out", out("d1"), "--at", "dispatch"), 1,
+           "`G1 변경판 확정` 줄이 없다")
+    _dispatch_own(repo, own, V1_TEXT)
+    scope.write_bytes(scope.read_bytes() + b"\n- \xff\n")
+    for at in ("dispatch", "new"):
+        expect(fails, f"RD-AT4 이 폴더 refactor-scope.md 를 UTF-8 로 못 읽음 + `{at}` → 실행 불능(삼키지 않는 읽기)",
+               run(repo, "deps", "demo", "--out", out(f"u-{at}"), "--at", at), 1, "UTF-8 로 못 읽는다")
+    # 잇기(G1 전 · Phase 1 중 끊김 · G0 정지 재개) vs 늦게 G0 승인한 이웃(파견 직전) — 검토 2회 a0 재현 꼴
+    scope.write_text(AT_LINE + "\n## G0 정지 20261029-0910\n\n- 모드 리팩토링 · audit 20261020-0901 · 사유: 새 빚 질문 답 없음\n",
+                     encoding="utf-8")
+    shutil.rmtree(own / "behavior")
+    (own / "design-spec.md").unlink()
+    late: Path = repo / ".dddjango" / AT_LATE
+    late.mkdir(parents=True)
+    (late / "refactor-scope.md").write_text(AT_LATE_LINE, encoding="utf-8")
+    _dispatch_own(repo, late, V1_TEXT)
+    expect(fails, "RD-AT5 잇기(G1 전) `continue` vs 늦게 G0 승인한 이웃 → 우리는 그 실행을 뺀다(맞물림 — G1 유무 무관) · exit 0",
+           run(repo, "deps", "demo", "--out", out("s1"), "--at", "continue"), 0, "판정 시점 G0", "늦게 G0 승인한 리팩토링 실행 뺌 1",
+           f"뺌: 이 작업 트리 .dddjango/{AT_LATE} — 앵커 없는 리팩토링 실행 · G0 승인 20261028-1100")
+    expect(fails, "RD-AT5b 같은 · 이웃(파견 직전 `dispatch`)은 먼저 G0 승인한 우리를 센다 → exit 2(맞기다림 풀림 — 0 · 2)",
+           run(repo, "deps", "other", "--out", str(late / "deps" / "s1"), "--at", "dispatch"), 2, f".dddjango/{AT_OWN} — BC demo")
+    expect(fails, "RD-AT5o 같은 · 옛 판(2.28.0 배포 커밋) 우리 쪽은 G0 이라 맞물림 없이 이웃을 센다 → exit 2(옛 판 2 · 2 맞기다림)",
+           _raw_run(repo, "deps", "demo", "--out", out("s1o"), tool=old), 2, f"겹침: 이 작업 트리 .dddjango/{AT_LATE}")
+    shutil.rmtree(late)
+    # `new` — 버린 앞 실행(커밋됨)의 사본이 다른 작업 트리에 있어도 그 사본(같은 폴더 · 같은 실행 줄)은 뺀다
+    scope.write_text(AT_LINE, encoding="utf-8")
+    _dispatch_own(repo, own, V1_TEXT)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "앞 실행 기록(버림)")
+    _git(repo, "worktree", "add", "-q", "-b", "at-copy", str(td / "at-copy"))
+    expect(fails, "RD-AT6 `new` + 다른 작업 트리에 버린 앞 실행 사본(같은 폴더 · 같은 실행 줄) → 그 사본은 빼고 G0 판정 · exit 0",
+           run(repo, "deps", "demo", "--out", out("n1"), "--at", "new"), 0, "판정 시점 G0", "레인 겹침 없음", "활성 실행 0")
+    got: dict = _deps_json(own, "n1")
+    expect(fails, "RD-AT6b deps.json `at` = new · stage G0", (0 if got.get("at") == "new" and got.get("stage") == "G0" else 9,
+                                                              json.dumps({k: got.get(k) for k in ("at", "stage")})), 0)
+    _git(repo, "worktree", "remove", "--force", str(td / "at-copy"))
+
+
+OC_NEW_LINE: str = "실행 · G0 승인 20261029-1000 · 모드 리팩토링 · audit 20261020-0901\n"   # 같은 폴더 새 실행(실행 줄 바뀜)
+OC_OTHER_LINE: str = "실행 · G0 승인 20261021-0900 · 모드 리팩토링 · audit 20261021-0850\n"  # 다른 트리가 같은 이름 폴더로 먼저 G0 승인
+
+
+def deps_own_copy_cases(fails: "list[str]", td: Path) -> None:
+    """구현 검토 결함 1 — 다른 작업 트리의 이 폴더 옛 사본(그 트리의 자기 변경 아님 · MH 판으로 판정)은 이 실행 자신이거나 버린 앞 실행
+    기록이라 활성 실행에서 뺀다(`요약:` `이 폴더 옛 사본 뺌 n`) — 실행 줄이 바뀐 뒤 파견 직전 deps 가 자기와 겹치지 않는다. 같은 이름
+    폴더가 그 트리의 자기 변경으로 돌면 지금처럼 디스크로 판정한다(실행 줄이 다르면 겹침)."""
+    old: Path = _pr_old_tool(td)
+
+    def dp(repo: Path, own: Path, tag: str, tool: "Path | None" = None) -> "tuple[int, str]":
+        if tool is not None:
+            return _raw_run(repo, "deps", "demo", "--out", str(own / "deps" / tag), tool=tool)
+        return run(repo, "deps", "demo", "--out", str(own / "deps" / tag), "--at", "dispatch")
+
+    def lane(name: str) -> "tuple[Path, Path]":
+        repo: Path = _project(td / name, DEPS_FILES)
+        own: Path = repo / ".dddjango" / AT_OWN
+        own.mkdir(parents=True)
+        (own / "refactor-scope.md").write_text(AT_LINE, encoding="utf-8")
+        return repo, own
+    # 재현 1 — 버린 앞 실행 기록(커밋됨)의 사본이 다른 트리에 · 같은 폴더 새 실행 G0 승인(실행 줄 바뀜) 뒤 첫 파견 직전
+    repo, own = lane("oc1")
+    _dispatch_own(repo, own, V1_TEXT)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "앞 실행 기록(버림)")
+    copy: Path = td / "oc1-copy"
+    _git(repo, "worktree", "add", "-q", "-b", "oc1-copy", str(copy))
+    (own / "refactor-scope.md").write_text(OC_NEW_LINE, encoding="utf-8")
+    _dispatch_own(repo, own, V1_TEXT)
+    expect(fails, "RD-OC1 다른 트리에 버린 앞 실행 사본(그 트리 변경 아님) · 새 실행 첫 파견 직전 → 이 폴더 옛 사본 뺌 1 · 겹침 없음(exit 0)",
+           dp(repo, own, "c1"), 0, "레인 겹침 없음", "활성 실행 0", "이 폴더 옛 사본 뺌 1")
+    # 지킴 — 같은 이름 폴더가 다른 트리에서 그 트리의 자기 변경(다른 실행 줄 · 먼저 G0 승인)으로 돎 → 디스크 판정 · 겹침
+    (copy / ".dddjango" / AT_OWN / "refactor-scope.md").write_text(OC_OTHER_LINE, encoding="utf-8")
+    got = dp(repo, own, "c4")
+    expect(fails, "RD-OC4 같은 이름 폴더가 다른 트리의 자기 변경으로 돎(실행 줄 다름) → 그대로 디스크 판정 · 겹침(exit 2)",
+           (got[0] if "(main 판)" not in got[1] else 9, got[1]), 2, f".dddjango/{AT_OWN} — BC demo", "레인 겹침 1 ",
+           "이 폴더 옛 사본 뺌 0")
+    # 재현 2 — 이 실행 기록을 주 작업 트리(= 이 레인)에 커밋 · 그 전에 갈라진 레인에 옛 사본(MH 판 = 이 실행 자신)
+    repo, own = lane("oc2")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "앞 실행 G0 기록")
+    _git(repo, "worktree", "add", "-q", "-b", "oc2-lane", str(td / "oc2-lane"))
+    (own / "refactor-scope.md").write_text(OC_NEW_LINE, encoding="utf-8")
+    _dispatch_own(repo, own, V1_TEXT)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "이 실행 기록 커밋(새 실행 · G1)")
+    _stale_bases(repo, own)
+    expect(fails, "RD-OC2 이 실행 기록 커밋됨 · 다른 레인에 옛 사본(MH 판 = 이 실행) → 이 폴더 옛 사본 뺌 1 · 겹침 없음(exit 0)",
+           dp(repo, own, "c2"), 0, "레인 겹침 없음", "이 폴더 옛 사본 뺌 1")
+    expect(fails, "RD-OC2o 같은 · 옛 판(2.28.0 배포 커밋) → 자기와 겹침(exit 2 — 회귀 아님 · 이 판이 고친 것)",
+           dp(repo, own, "c2o", tool=old), 2, f"(main 판) .dddjango/{AT_OWN} — BC demo")
+    # 재현 3 — 실행 하나뿐 · 기록 커밋 → 다른 레인 생김 → 앵커 커밋 → G1′ 승인 직후 파견 직전
+    repo, own = lane("oc3")
+    _dispatch_own(repo, own, V1_TEXT)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "이 실행 G1 기록")
+    _git(repo, "worktree", "add", "-q", "-b", "oc3-lane", str(td / "oc3-lane"))
+    scope: Path = own / "refactor-scope.md"
+    anchor: str = _git(repo, "rev-parse", "HEAD").strip()
+    scope.write_text(scope.read_text(encoding="utf-8").replace(AT_LINE.rstrip("\n"), AT_LINE.rstrip("\n") + f" · build_anchor {anchor}",
+                                                               1), encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "앵커 기록")
+    expect(fails, "RD-OC3 실행 하나뿐 · 앵커 커밋 뒤 G1′ 직후 파견 직전 · 다른 레인에 앵커 전 사본 → 이 폴더 옛 사본 뺌 1(exit 0)",
+           dp(repo, own, "c3"), 0, "레인 겹침 없음", "이 폴더 옛 사본 뺌 1")
+    # 지킴 — 주 작업 트리의 이 실행 사본(디스크 판정)은 지금처럼 같은 실행 줄로만 뺀다(이 폴더 옛 사본 빼기 밖)
+    repo, own = lane("oc5")
+    _dispatch_own(repo, own, V1_TEXT)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "이 실행 기록")
+    wt: Path = td / "oc5-lane"
+    _git(repo, "worktree", "add", "-q", "-b", "oc5-lane", str(wt))
+    wown: Path = wt / ".dddjango" / AT_OWN
+    expect(fails, "RD-OC5 레인에서 R1 `new` · 주 작업 트리에 이 실행 사본(같은 실행 줄) → 실행 줄 같음으로 뺌 · 옛 사본 뺌 0(exit 0)",
+           run(wt, "deps", "demo", "--out", str(wown / "deps" / "c5"), "--at", "new"), 0, "레인 겹침 없음", "활성 실행 0",
+           "이 폴더 옛 사본 뺌 0")
+
+
+def deps_rerun_cases(fails: "list[str]", td: Path) -> None:
+    """설계 A2(②) — 같은 폴더를 다시 쓰는 새 실행의 R1 은 `--at new` 로 앞 실행 기록(G1 확정 · 명세 다른 BC 편집 목록 · 앞 실행 G0
+    승인 값)을 끊는다 — 옛 판은 앞 실행 G1 확정을 집어 «파견 직전» · 앞 G0 값으로 늦은 이웃을 뺐다(fail-open) · 판형 밖 G1 기록이면
+    실행 불능이었다. 잇기(`dispatch`)는 지금과 같다."""
+    old: Path = _pr_old_tool(td)
+    repo: Path = _project(td / "pr2", DEPS_FILES)
+    own: Path = repo / ".dddjango" / AT_OWN
+    own.mkdir(parents=True)
+    scope: Path = own / "refactor-scope.md"
+    out = lambda tag: str(own / "deps" / tag)                 # noqa: E731
+    late: Path = repo / ".dddjango" / AT_LATE
+    late.mkdir(parents=True)
+    (late / "refactor-scope.md").write_text(AT_LATE_LINE, encoding="utf-8")
+    _dispatch_own(repo, late, V1_TEXT)
+    ended: str = AT_LINE.rstrip("\n") + " · build_anchor a1 · G2 승인 20261021-1000\n"
+    scope.write_text(ended, encoding="utf-8")
+    _dispatch_own(repo, own, V1_TEXT)                         # 앞 실행(G2 끝)의 G1 확정 · 명세가 남음
+    seen: str = f"겹침: 이 작업 트리 .dddjango/{AT_LATE}"
+    gone: str = f"뺌: 이 작업 트리 .dddjango/{AT_LATE}"
+    expect(fails, "RD-PR2 A 앞 실행 G2 끝 · 새 실행 R1 `new` · 늦은 이웃 → G0 판정 · 그 이웃을 센다(exit 2)",
+           run(repo, "deps", "demo", "--out", out("a"), "--at", "new"), 2, "판정 시점 G0", seen)
+    expect(fails, "RD-PR2 Ao 같은 · 옛 판(2.28.0 배포 커밋) → 앞 실행 G1 확정으로 «파견 직전» · 앞 G0 값으로 이웃을 뺀다(exit 0 · fail-open)",
+           _raw_run(repo, "deps", "demo", "--out", out("ao"), tool=old), 0, "판정 시점 파견 직전", gone)
+    scope.write_text(AT_LINE, encoding="utf-8")
+    _dispatch_own(repo, own, V1_TEXT)                         # 버린 앞 실행(G2 없음 · G1 확정 남음)
+    expect(fails, "RD-PR2 B 폐기 뒤 새 실행 R1 `new` → G0 판정 · 늦은 이웃을 센다(exit 2)",
+           run(repo, "deps", "demo", "--out", out("b"), "--at", "new"), 2, "판정 시점 G0", seen)
+    expect(fails, "RD-PR2 Bo 같은 · 옛 판 → 파견 직전 · 이웃 뺌(exit 0)", _raw_run(repo, "deps", "demo", "--out", out("bo"), tool=old), 0,
+           "판정 시점 파견 직전", gone)
+    expect(fails, "RD-PR2 E 잇기 `dispatch` → 지금과 같음(파견 직전 · 늦은 이웃 뺌 · exit 0)",
+           run(repo, "deps", "demo", "--out", out("e"), "--at", "dispatch"), 0, "판정 시점 파견 직전",
+           "늦게 G0 승인한 리팩토링 실행 뺌 1", gone)
+    shutil.rmtree(late)
+    shutil.rmtree(own)
+    own.mkdir(parents=True)
+    scope.write_text(ended + "\n## G1 변경 결정 판형 밖 머리\n\n- G1 변경판 확정 2026-10-24 09:55 · digest 0\n", encoding="utf-8")
+    expect(fails, "RD-PR2 F 앞 실행 G1 기록이 판형 밖 + `new` → 읽지 않는다(실행 불능 아님 · G0 · exit 0)",
+           run(repo, "deps", "demo", "--out", out("f"), "--at", "new"), 0, "판정 시점 G0")
+    expect(fails, "RD-PR2 Fo 같은 · 옛 판 → 앞 실행 G1 기록 판형 밖으로 실행 불능(exit 1)",
+           _raw_run(repo, "deps", "demo", "--out", out("fo"), tool=old), 1, "판형")
+    scope.write_text(ended, encoding="utf-8")
+    (own / "design-spec.md").write_text("# 설계 명세 — demo\n\n## 다른 BC 편집 목록\n\n- application/zeta/a.py · 받는 쪽 어댑터 · V1\n",
+                                        encoding="utf-8")
+    x: Path = repo / ".dddjango" / "20261027-0900-zeta-screen"
+    x.mkdir(parents=True)
+    (x / "refactor-scope.md").write_text("실행 · G0 승인 20261027-0900\n", encoding="utf-8")
+    (x / "design-spec.md").write_text("# x\n\n<!-- machine: file-plan -->\n```paths\nupdate application/zeta/a.py\n```\n",
+                                      encoding="utf-8")
+    expect(fails, "RD-PR2 G 앞 실행 명세 다른 BC 편집 경로를 고치는 무관 실행 + `new` → 우리 경로 아님 · 겹침 없음(exit 0)",
+           run(repo, "deps", "demo", "--out", out("g"), "--at", "new"), 0, "판정 시점 G0", "레인 겹침 없음")
+    expect(fails, "RD-PR2 Go 같은 · 옛 판 → 앞 실행 다른 BC 편집 경로로 겹침(exit 2)",
+           _raw_run(repo, "deps", "demo", "--out", out("go"), tool=old), 2, "경로 application/zeta/a.py")
+
+
+ST_PLAN: str = "application/demo/domain_layer/policy.py"            # 명세 file-plan(대상 BC 안)
+ST_EXTRA: str = "application/demo/domain_layer/extra.py"            # 대상 BC 안 · 설계 범위 밖
+ST_FACE: str = "application/base/driving_layer/open_host_service/base_service.py"   # 좁은 공급 면
+ST_SPEC: str = ("# 설계 명세 — demo\n\n## 바뀌는 것 목록\n\n" + V1_TEXT + "\n## 다른 BC 편집 목록\n\n"
+                f"- {ACL_REL} · 받는 쪽 어댑터 · V1\n\n<!-- machine: file-plan -->\n```paths\nupdate {ST_PLAN}  # S1\n```\n")
+ST_TARGET: str = "→ 처분: main 받기 → 폐기 → 새 실행"
+ST_G1P: str = "→ 처분: 수정 모드 2번(G1′)"
+
+
+class StaleLane:
+    """파견 직전 낡음(설계 A4) 픽스처 — 주 작업 트리(`main` · MH) + 레인 작업 트리(`lane`) · 이 실행(레인 · 앵커 없는 리팩토링 ·
+    G1 확정 · audit `- HEAD` 와 예보 기준선 = 레인 HEAD). `sub` 를 주면 프로젝트 뿌리가 저장소의 하위 폴더다."""
+
+    def __init__(self, td: Path, name: str, files: "dict[str, str] | None" = None, sub: str = "",
+                 line: str = AT_LINE) -> None:
+        self.git_main: Path = td / name / "main"
+        self.git_main.mkdir(parents=True)
+        _git(self.git_main, "init", "-q", "-b", "main")
+        _git(self.git_main, "config", "user.email", "t@t")
+        _git(self.git_main, "config", "user.name", "t")
+        self.main: Path = self.git_main / sub if sub else self.git_main
+        for rel, body in (files or DEPS_FILES).items():
+            (self.main / rel).parent.mkdir(parents=True, exist_ok=True)
+            (self.main / rel).write_text(body, encoding="utf-8")
+        _git(self.git_main, "add", "-A")
+        _git(self.git_main, "commit", "-qm", "base")
+        self.git_lane: Path = td / name / "lane"
+        _git(self.git_main, "worktree", "add", "-q", "-b", "lane", str(self.git_lane))
+        self.lane: Path = self.git_lane / sub if sub else self.git_lane
+        self.own: Path = self.lane / ".dddjango" / AT_OWN
+        self.own.mkdir(parents=True)
+        (self.own / "refactor-scope.md").write_text(line, encoding="utf-8")
+        self.confirm()
+
+    def confirm(self, spec: str = ST_SPEC) -> None:
+        """G1 확정(명세 `spec` 의 digest) · 두 기준 = 지금 레인 HEAD."""
+        _dispatch_own(self.lane, self.own, V1_TEXT)
+        (self.own / "design-spec.md").write_text(spec, encoding="utf-8")
+        digest: str = ra.snapshot_digest(ra.changes_snapshot(self.own, self.lane))
+        scope: Path = self.own / "refactor-scope.md"
+        scope.write_text(re.sub(r"· digest \w+ · 후보", f"· digest {digest} · 후보", scope.read_text(encoding="utf-8")),
+                         encoding="utf-8")
+
+    @staticmethod
+    def commit(tree: Path, rel: str, body: "str | None", msg: str) -> str:
+        p: Path = tree / rel
+        if body is None:
+            p.unlink()
+        else:
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(body, encoding="utf-8")
+        _git(tree, "add", "-A", "--", rel)
+        _git(tree, "commit", "-qm", msg)
+        return _git(tree, "rev-parse", "HEAD").strip()
+
+    def dp(self, tag: str, at: str = "dispatch", tool: "Path | None" = None) -> "tuple[int, str]":
+        if tool is not None:
+            return _raw_run(self.lane, "deps", "demo", "--out", str(self.own / "deps" / tag), tool=tool)
+        return run(self.lane, "deps", "demo", "--out", str(self.own / "deps" / tag), "--at", at)
+
+    def data(self, tag: str) -> dict:
+        return _deps_json(self.own, tag)
+
+
+def _order(text: str, *heads: str) -> bool:
+    """출력 줄머리가 이 차례로 나오는가(모두 있어야 한다)."""
+    at: "list[int]" = [text.find(h) for h in heads]
+    return all(i >= 0 for i in at) and at == sorted(at)
+
+
+def deps_stale_cases(fails: "list[str]", td: Path) -> None:
+    """설계 A4(④) — `--at dispatch` · 앵커 없는 실행만: 대상 낡음(audit `- HEAD` 뒤 `application/<bc>/` 커밋 차분) · 설계 낡음(마지막
+    실행 경계 뒤 마지막 예보 절 기준선 SHA 뒤 file-plan ∪ 다른 BC 편집 ∪ 공급 면 커밋 차분) · 커밋 차분 = `<기준>..HEAD` ∪ (MH ≠ HEAD 면)
+    `<기준>...<MH>` 가운데 기준 대 MH 내용이 다른 것 · pathspec · `--no-renames` · 넓힌 공급 면만이면 보고만 · 기준 모름 처분 · 차례."""
+    old: Path = _pr_old_tool(td)
+    s = StaleLane(td, "t1")
+    expect(fails, "RD-ST0 바탕 — 두 기준 = 레인 HEAD · 바뀜 없음 → 낡음 0(exit 0)", s.dp("t0"), 0, "판정 시점 파견 직전", "낡음 대상 0 · 설계 0")
+    s.commit(s.main, ST_EXTRA, "E: int = 1\n", "다른 레인 착륙(대상 BC)")
+    expect(fails, "RD-ST1 대상 낡음 — main 에만 대상 BC 착륙(레인 미수령) → exit 2 · 처분 main 받기 → 폐기 → 새 실행",
+           s.dp("t1"), 2, f"  대상 낡음: {ST_EXTRA}", ST_TARGET, "낡음 대상 1 · 설계 0")
+    expect(fails, "RD-ST1o 같은 · 옛 판(2.28.0 배포 커밋) → 낡음을 재지 않는다(exit 0)", s.dp("t1o", tool=old), 0, "레인 겹침 없음")
+    _git(s.git_lane, "merge", "-q", "--no-edit", "main")
+    expect(fails, "RD-ST2a main 받기만(audit 다시 안 함) → audit 기준 뒤 레인 HEAD 가 대상 BC 를 바꿈 → 대상 낡음(exit 2)",
+           s.dp("t2a"), 2, f"  대상 낡음: {ST_EXTRA}")
+    _stale_bases(s.lane, s.own)
+    expect(fails, "RD-ST2 main 받은 뒤 새 audit(기준 = 받은 HEAD) → 0", s.dp("t2"), 0, "낡음 대상 0 · 설계 0")
+    (s.lane / ST_EXTRA).write_text("E: int = 3  # 사용자 작업 중\n", encoding="utf-8")
+    (s.lane / "application/demo/domain_layer/draft.py").write_text("D: int = 1\n", encoding="utf-8")
+    expect(fails, "RD-ST3 audit 뒤 대상 BC 사용자 미커밋 · 미추적 → 보지 않는다(exit 0 — 폐기 순환 없음 · 옛 판과 같음)", s.dp("t3"), 0,
+           "낡음 대상 0 · 설계 0")
+    _git(s.git_lane, "checkout", "-q", "--", ".")
+    (s.lane / "application/demo/domain_layer/draft.py").unlink()
+    plan: Path = s.own / "audit" / "20261020-0901" / "plan.md"
+    plan.write_text(plan.read_text(encoding="utf-8").replace("- BC 미커밋 변경 0", "- BC 미커밋 변경 2"), encoding="utf-8")
+    expect(fails, "RD-ST4 audit `BC 미커밋 변경 2` → 0(커밋 차분만 본다)", s.dp("t4"), 0, "낡음 대상 0 · 설계 0")
+    plan.write_text(re.sub(r"- HEAD \w+", "- HEAD " + "d" * 40, plan.read_text(encoding="utf-8")), encoding="utf-8")
+    expect(fails, "RD-ST5 audit `- HEAD` 못 풂 → 대상 기준 모름(exit 2 · 대상 낡음과 같은 처분)", s.dp("t5"), 2,
+           "  대상 기준 모름: ", ST_TARGET)
+    plan.unlink()
+    expect(fails, "RD-ST5b audit plan.md 없음 → 대상 기준 모름(exit 2)", s.dp("t5b"), 2, "  대상 기준 모름: ", "plan.md")
+    # 체리픽 — 레인이 main 착륙분을 체리픽으로 받은 뒤 audit(조상 관계 없음 · 내용 같음)
+    c = StaleLane(td, "t6")
+    landed: str = c.commit(c.main, ST_EXTRA, "E: int = 1\n", "다른 레인 착륙(대상 BC)")
+    acl: str = c.commit(c.main, ACL_REL, DEPS_FILES[ACL_REL] + "\nW: int = 1\n", "다른 레인 착륙(받는 쪽 어댑터)")
+    _git(c.git_lane, "cherry-pick", "-x", landed, acl)
+    c.confirm()
+    expect(fails, "RD-ST6 체리픽으로 받은 착륙(내용 같음) 뒤 audit · 예보 → 대상 · 설계 낡음 0(exit 0)", c.dp("t6"), 0,
+           "낡음 대상 0 · 설계 0")
+    # 설계 낡음
+    d = StaleLane(td, "d1")
+    d.commit(d.lane, ACL_REL, DEPS_FILES[ACL_REL] + "\nW: int = 1\n", "레인에서 다른 BC 편집 파일 커밋")
+    expect(fails, "RD-SD1 설계 낡음 — 다른 BC 편집 파일 커밋(레인) → exit 2 · 처분 G1′", d.dp("d1"), 2, f"  설계 낡음: {ACL_REL}",
+           ST_G1P, "낡음 대상 0 · 설계 1")
+    d = StaleLane(td, "d2")
+    d.commit(d.main, ACL_REL, DEPS_FILES[ACL_REL] + "\nW: int = 1\n", "다른 레인 착륙(받는 쪽 어댑터)")
+    expect(fails, "RD-SD2 설계 낡음 — main 착륙 미수령(다른 BC 편집 파일) → exit 2", d.dp("d2"), 2, f"  설계 낡음: {ACL_REL}", ST_G1P)
+    _git(d.git_lane, "merge", "-q", "--no-edit", "main")
+    expect(fails, "RD-SD2b main 받기만(G1′ 전) → 레인 HEAD 가 설계 기준 뒤 바꿈 → 설계 낡음 그대로(exit 2)", d.dp("d2b"), 2,
+           f"  설계 낡음: {ACL_REL}")
+    report: Path = d.own / "pregate-report.md"
+    head: str = _git(d.lane, "rev-parse", "HEAD").strip()
+    report.write_text(report.read_text(encoding="utf-8") + f"\n## pre-gate 예보 — 2026-10-25T09:40:00Z · design-spec.md\n\n"
+                      f"- 기준선 SHA: `{head}` (--base HEAD)\n- 판정: green\n", encoding="utf-8")
+    expect(fails, "RD-SU4 G1′ 새 예보 절(기준선 = 받은 HEAD) 뒤 → 0", d.dp("u4"), 0, "낡음 대상 0 · 설계 0")
+    d = StaleLane(td, "d3")
+    d.commit(d.main, ST_FACE, DEPS_FILES[ST_FACE] + "\nV: int = 1\n", "다른 레인 착륙(공급 면)")
+    expect(fails, "RD-SD3 설계 낡음 — 좁은 공급 면 파일 착륙 → exit 2", d.dp("d3"), 2, f"  설계 낡음: {ST_FACE}", ST_G1P)
+    d.commit(d.main, "application/third/domain_layer/y.py", DEPS_FILES["application/third/domain_layer/y.py"] + "\nQ: int = 1\n",
+             "범위 밖")
+    _git(d.git_lane, "merge", "-q", "--no-edit", "main")
+    d.confirm()
+    d.commit(d.main, "application/third/domain_layer/y.py", DEPS_FILES["application/third/domain_layer/y.py"] + "\nQ: int = 2\n",
+             "범위 밖(직접 import 자리 · E 밖)")
+    expect(fails, "RD-SD6 E 밖(레인 경로지만 file-plan · 다른 BC 편집 · 공급 면 아님) 착륙 → 0", d.dp("d6"), 0, "낡음 대상 0 · 설계 0")
+    (d.lane / ACL_REL).write_text(DEPS_FILES[ACL_REL] + "\nU: int = 1\n", encoding="utf-8")
+    (d.lane / "application/base/driving_layer/open_host_service/new_face.py").write_text("N: int = 1\n", encoding="utf-8")
+    expect(fails, "RD-SD5 설계 범위 미커밋 · 미추적만 → 0(커밋 차분만 — G1 전 미커밋 되풀이 막음)", d.dp("d5"), 0,
+           "낡음 대상 0 · 설계 0")
+    w = StaleLane(td, "d4", {**DEPS_FILES, "application/base/urls.py":
+                             "from django.urls import path\nurlpatterns = [path(\"x/\", None)]\n"})
+    w.commit(w.main, "application/base/domain_layer/unrelated.py", "U: int = 1\n", "다른 레인 착륙(넓힌 공급 면만)")
+    expect(fails, "RD-SD4 넓힌 공급 면만 바뀜 → 보고만(exit 0 · coder 입력 · G2 배너)", w.dp("d4"), 0,
+           "  설계 낡음(넓힌 공급 면 — 보고만): application/base/domain_layer/unrelated.py",
+           "→ coder 파견 입력 · G2 배너에 싣는다", "낡음 대상 0 · 설계 0 · 보고만 1")
+    w.commit(w.main, ACL_REL, DEPS_FILES[ACL_REL] + "\nW: int = 1\n", "다른 레인 착륙(받는 쪽 어댑터)")
+    expect(fails, "RD-SD4b 넓힌 공급 면 + 다른 BC 편집 파일 함께 → 설계 낡음(exit 2)", w.dp("d4b"), 2, f"  설계 낡음: {ACL_REL}", ST_G1P)
+    # 판정 밖
+    x = StaleLane(td, "x1", line=AT_LINE.rstrip("\n") + " · build_anchor abc\n")
+    x.commit(x.main, ST_EXTRA, "E: int = 1\n", "다른 레인 착륙(대상 BC)")
+    got = x.dp("x1")
+    expect(fails, "RD-SX1 `build_anchor` 있음 → 낡음 판정 밖(exit 0 · 대상 낡음 줄 없음)",
+           (got[0] if "대상 낡음:" not in got[1] else 9, got[1]), 0, "낡음 판정 밖(앵커 뒤)")
+    x = StaleLane(td, "x2")
+    x.commit(x.main, ST_EXTRA, "E: int = 1\n", "다른 레인 착륙(대상 BC)")
+    got = x.dp("x2", at="continue")
+    expect(fails, "RD-SX2 `--at continue`(G1 확정 있음) → 낡음 판정 밖(exit 0 · 대상 낡음 줄 없음)",
+           (got[0] if "대상 낡음:" not in got[1] else 9, got[1]), 0, "판정 시점 파견 직전", "--at continue")
+    # 설계 기준선 모름 — 출력 `설계 기준선 모름(<갈래>): <까닭> → 처분: …` · 갈래 다섯(경계 값 다름 → 폐기 · 그 밖 G1′)
+    u = StaleLane(td, "u1")
+    rep: Path = u.own / "pregate-report.md"
+    rep.write_text("# pre-gate 리포트\n", encoding="utf-8")
+    expect(fails, "RD-SU1 예보 절 없음 → 설계 기준선 모름(예보 절 없음) · 처분 G1′(exit 2)", u.dp("u1"), 2,
+           "  설계 기준선 모름(예보 절 없음): ", ST_G1P)
+    rep.unlink()
+    expect(fails, "RD-SU1b pregate-report.md 없음 → 설계 기준선 모름(예보 절 없음) · G1′(exit 2)", u.dp("u1b"), 2,
+           "  설계 기준선 모름(예보 절 없음): ", ST_G1P)
+    rep.write_text(f"## pre-gate 예보 — 2026-10-24T09:40:00Z · design-spec.md\n\n- 기준선 SHA: `{'d' * 40}` (--base HEAD)\n"
+                   "- 판정: green\n", encoding="utf-8")
+    expect(fails, "RD-SU2 기준선 SHA 못 풂 → 설계 기준선 모름(기준선 SHA 못 풂) · G1′(exit 2)", u.dp("u2"), 2,
+           "  설계 기준선 모름(기준선 SHA 못 풂): ", ST_G1P)
+    rep.write_text("## pre-gate 예보 — 2026-10-24T09:40:00Z · design-spec.md\n\n- 판정: green\n", encoding="utf-8")
+    expect(fails, "RD-SU2b 예보 절에 기준선 SHA 줄 없음 → 설계 기준선 모름(기준선 SHA 못 풂) · G1′(exit 2)", u.dp("u2b"), 2,
+           "  설계 기준선 모름(기준선 SHA 못 풂): ", ST_G1P)
+    head = _git(u.lane, "rev-parse", "HEAD").strip()
+    sec: str = (f"## pre-gate 예보 — 2026-10-24T09:40:00Z · design-spec.md\n\n- 기준선 SHA: `{head}` (--base HEAD)\n"
+                "- 판정: green\n")
+    rep.write_text("- 실행 경계 — 20261019-0000 · 앞 실행 끝\n\n" + sec, encoding="utf-8")
+    expect(fails, "RD-SU3 마지막 실행 경계 값 ≠ 이 실행 G0 승인 값 → 설계 기준선 모름(경계 값 다름) · 처분 폐기(exit 2)", u.dp("u3"), 2,
+           "  설계 기준선 모름(경계 값 다름): ", "→ 처분: 폐기")
+    rep.write_text("- pre-gate 기준선 — a\n- pre-gate 기준선 — b\n\n" + sec, encoding="utf-8")
+    expect(fails, "RD-SU3c 경계 행 없이 pre-gate 기준선 행 둘(앞 실행 흔적) → 설계 기준선 모름(경계 값 다름) · 폐기(exit 2)", u.dp("u3c"),
+           2, "  설계 기준선 모름(경계 값 다름): ", "→ 처분: 폐기")
+    rep.write_text("- 실행 경계 — 20261020-1000 · 이 실행\n\n" + sec, encoding="utf-8")
+    expect(fails, "RD-SU3b 마지막 실행 경계 값 = 이 실행 G0 승인 값 · 그 뒤 예보 절 → 0", u.dp("u3b"), 0, "낡음 대상 0 · 설계 0")
+    rep.write_text(sec + "\n- 실행 경계 — 20261020-1000 · 이 실행\n", encoding="utf-8")
+    expect(fails, "RD-SU6 마지막 실행 경계(이 실행 값) 앞에만 예보 절 · 뒤에 없음 → 설계 기준선 모름(예보 절 없음) · G1′(exit 2 — 경계 앞 절을 "
+           "기준으로 쓰지 않는다)", u.dp("u6"), 2, "  설계 기준선 모름(예보 절 없음): ", ST_G1P)
+    rep.write_bytes(b"\xff\n" + sec.encode())
+    expect(fails, "RD-SU5 pregate-report.md 를 UTF-8 로 못 읽음 → 실행 불능(exit 1 — G1′ 로도 안 풀림)", u.dp("u5"), 1,
+           "UTF-8 로 못 읽는다")
+    rep.write_text(sec, encoding="utf-8")
+    spec_path: Path = u.own / "design-spec.md"
+    spec_text: str = spec_path.read_text(encoding="utf-8")
+    spec_path.unlink()
+    expect(fails, "RD-SU7 이 실행 명세 없음 → 설계 기준선 모름(명세 없음) · G1′(exit 2)", u.dp("u7"), 2,
+           "  설계 기준선 모름(명세 없음): ", ST_G1P)
+    spec_path.write_text(spec_text, encoding="utf-8")
+    u.commit(u.main, "README.md", "main 만\n", "main 이 앞섬(설계 · 대상 범위 밖 — MH ≠ HEAD)")
+    orphan: str = _git(u.lane, "commit-tree", "HEAD^{tree}", "-m", "공통 조상 없는 커밋").strip()
+    rep.write_text(sec.replace(head, orphan), encoding="utf-8")
+    expect(fails, "RD-SU8 예보 기준선이 MH 와 공통 조상 없음(세 점 차분 실패) → 설계 기준선 모름(차분 못 잼) · G1′(exit 2)", u.dp("u8"), 2,
+           "  설계 기준선 모름(차분 못 잼): ", ST_G1P)
+    # 차례 · 경계
+    o = StaleLane(td, "o1")
+    o.commit(o.main, ST_PLAN, DEPS_FILES[ST_PLAN] + "\nZ: int = 1\n", "다른 레인 착륙(file-plan · 대상 BC)")
+    got = o.dp("o1")
+    expect(fails, "RD-SO1 대상 · 설계 낡음 동시 → 두 줄 · 대상 먼저(exit 2)",
+           (got[0] if _order(got[1], "  대상 낡음: ", "  설계 낡음: ") else 9, got[1]), 2, "낡음 대상 1 · 설계 1")
+    xr: Path = o.lane / ".dddjango" / "20261003-0900-tool-screen"
+    xr.mkdir(parents=True)
+    (xr / "refactor-scope.md").write_text("실행 · G0 승인 20261003-0900\n", encoding="utf-8")
+    (xr / "design-spec.md").write_text("# x\n\n<!-- machine: file-plan -->\n```paths\nupdate scripts/tool.py\n```\n", encoding="utf-8")
+    got = o.dp("o2")
+    expect(fails, "RD-SO2 겹침과 낡음 동시 → 겹침 줄이 먼저(파견 정지가 먼저 · exit 2)",
+           (got[0] if _order(got[1], "  겹침: ", "  대상 낡음: ", "  설계 낡음: ") else 9, got[1]), 2)
+    shutil.rmtree(xr)
+    r = StaleLane(td, "o3")
+    _git(r.main, "mv", ST_PLAN, "application/demo/domain_layer/rules.py")
+    _git(r.main, "commit", "-qm", "다른 레인 착륙(대상 BC 개명)")
+    expect(fails, "RD-SO3 개명 착륙 → 옛 · 새 경로 모두(--no-renames)", r.dp("o3"), 2, ST_PLAN, "application/demo/domain_layer/rules.py")
+    expect(fails, "RD-SO3b 같은 · 대상 범위(대상 BC) 안 개명은 대상 낡음 줄에 옛 · 새 경로 둘(변경 2 — 개명 감지면 새 경로 하나)", r.dp("o3b"),
+           2, f"  대상 낡음: {ST_PLAN} · application/demo/domain_layer/rules.py — ", "대상 BC 커밋 변경 2(")
+    sb = StaleLane(td, "o4", sub="srv")
+    sb.commit(sb.git_main, "application/demo/outside.py", "O: int = 1\n", "저장소 뿌리(프로젝트 밖)의 같은 이름 경로")
+    expect(fails, "RD-SO4b 하위 폴더 프로젝트 · 프로젝트 밖 같은 꼴 경로 착륙 → 0(pathspec 은 프로젝트 기준)", sb.dp("o4b"), 0,
+           "낡음 대상 0 · 설계 0")
+    sb.commit(sb.main, ST_EXTRA, "E: int = 1\n", "다른 레인 착륙(대상 BC)")
+    expect(fails, "RD-SO4 하위 폴더 프로젝트 · 대상 BC 착륙 → 대상 낡음(프로젝트 상대 경로 · exit 2)", sb.dp("o4"), 2,
+           f"  대상 낡음: {ST_EXTRA}", ST_TARGET)
+    got = sb.data("o4")
+    expect(fails, "RD-SO4c deps.json stale 칸 — at dispatch · stale_target 1 · stale_design 0",
+           (0 if got.get("at") == "dispatch" and len(got.get("stale_target", [])) == 1 and not got.get("stale_design") else 9,
+            json.dumps({k: got.get(k) for k in ("at", "stale_target", "stale_design")}, ensure_ascii=False)), 0)
+
+
+SUP_DONE: str = "실행 · G0 승인 20261028-0900 · 모드 리팩토링 · audit x · build_anchor abc · G2 승인 20261028-0930\n"
+SUP_RUN: str = "실행 · G0 승인 20261028-1400 · 모드 리팩토링 · audit y\n"
+SUP_DIR: str = "20261028-0900-refactor-base"
+
+
+def deps_supplier_cases(fails: "list[str]", td: Path) -> None:
+    """설계 A3(③) — 공급자 상태를 `_active_runs` 결과(모든 작업 트리 · MH 판 · 끝 표식)에서 고른다: 공급자를 대상 BC 로 하는(audit
+    plan.md BC ∪ 폴더 이름) 리팩토링 실행이 겹침 셈에 들면 `미정리(도는 실행 <폴더>)` · 맞물림으로 뺐으면 `도는 실행(맞물림 — 이 실행
+    뒤) <폴더>`(미정리 셈 밖) · 없으면 지금 규칙(앞 실행 절의 G2 를 정리로 읽던 것 포함)."""
+    old: Path = _pr_old_tool(td)
+    repo: Path = _project(td / "pr3", DEPS_FILES)
+    own: Path = repo / ".dddjango" / "20261028-1000-refactor-demo"
+    own.mkdir(parents=True)
+    bf: Path = repo / ".dddjango" / SUP_DIR
+    bf.mkdir(parents=True)
+    out = lambda tag: str(own / "deps" / tag)                 # noqa: E731
+    running: str = f"내주는 쪽 base(미정리(도는 실행 .dddjango/{SUP_DIR}))"
+    (bf / "refactor-scope.md").write_text(SUP_DONE, encoding="utf-8")
+    expect(fails, "RD-PR3 S6 공급자 앞 실행 G2 끝(도는 실행 없음) → 정리(exit 0)", run(repo, "deps", "demo", "--out", out("s6"), "--at", "new"),
+           0, "내주는 쪽 base(정리(재상정 0))", "미정리 공급자 0")
+    (bf / "refactor-scope.md").write_text(SUP_DONE + "\n## ⓐ 재상정 20261028-0920 — G1 재상정\n\n- M3 · 결정 = 별도 요청\n",
+                                          encoding="utf-8")
+    expect(fails, "RD-PR3 S6b 끝난 실행 몫의 ⓐ 재상정 절(M3) → 정리(재상정 1)", run(repo, "deps", "demo", "--out", out("s6b"), "--at", "new"),
+           0, "내주는 쪽 base(정리(재상정 1))")
+    (bf / "refactor-scope.md").write_text(SUP_RUN, encoding="utf-8")
+    expect(fails, "RD-PR3 S7 공급자 새 실행 도는 중 → 미정리(도는 실행 <폴더>) · 미정리 공급자 1 · 겹침(exit 2)",
+           run(repo, "deps", "demo", "--out", out("s7"), "--at", "new"), 2, running, "미정리 공급자 1")
+    (bf / "refactor-scope.md").write_text(SUP_RUN + "\n# 앞 실행\n\n" + SUP_DONE, encoding="utf-8")
+    expect(fails, "RD-PR3 S8 새 실행 도는 중 + `# 앞 실행` 절에 G2 줄 → 미정리(도는 실행) · 미정리 공급자 1",
+           run(repo, "deps", "demo", "--out", out("s8"), "--at", "new"), 2, running, "미정리 공급자 1")
+    expect(fails, "RD-PR3 S8o 같은 · 옛 판(2.28.0 배포 커밋) → 앞 실행 G2 줄로 정리 · 미정리 공급자 0",
+           _raw_run(repo, "deps", "demo", "--out", out("s8o"), tool=old), 2, "내주는 쪽 base(정리(재상정 0))", "미정리 공급자 0")
+    (bf / "refactor-scope.md").write_text(SUP_DONE + "\n## 재상정 메모\n", encoding="utf-8")
+    expect(fails, "RD-PR3 S9 공급자 새 실행 R0′~G0 승인 전(앞 실행 판 · 새 줄 없음) → 정리 그대로(exit 0)",
+           run(repo, "deps", "demo", "--out", out("s9"), "--at", "new"), 0, "내주는 쪽 base(정리(재상정 0))")
+    # I(= 진단 S10) — 우리 파견 직전(G0 1200 먼저) · 공급자 늦게 G0 승인(1400) → 맞물림으로 뺌 · 표기만 · 미정리 셈 밖
+    (own / "refactor-scope.md").write_text("실행 · G0 승인 20261028-1200 · 모드 리팩토링 · audit 20261028-1001\n", encoding="utf-8")
+    _dispatch_own(repo, own, V1_TEXT)
+    (bf / "refactor-scope.md").write_text(SUP_RUN + "\n# 앞 실행\n\n" + SUP_DONE, encoding="utf-8")
+    expect(fails, "RD-PR3 I 맞물림으로 뺀 늦은 공급자 실행 → `도는 실행(맞물림 — 이 실행 뒤) <폴더>` · 미정리 공급자 0 · exit 0",
+           run(repo, "deps", "demo", "--out", out("i"), "--at", "dispatch"), 0,
+           f"내주는 쪽 base(도는 실행(맞물림 — 이 실행 뒤) .dddjango/{SUP_DIR})", "미정리 공급자 0",
+           f"뺌: 이 작업 트리 .dddjango/{SUP_DIR} — 앵커 없는 리팩토링 실행")
+    got: dict = _deps_json(own, "i")
+    expect(fails, "RD-PR3 Ib deps.json suppliers 칸도 같은 표기", (0 if got.get("suppliers", {}).get("base", "").startswith(
+        "도는 실행(맞물림 — 이 실행 뒤)") else 9, json.dumps(got.get("suppliers"), ensure_ascii=False)), 0)
+    # S11(②+③) — 우리 폴더 재사용(앞 실행 G2 끝 · G1 확정 남음) · 새 실행 R1 `new` · 공급자 도는 중(늦은 G0)
+    scope: Path = own / "refactor-scope.md"
+    scope.write_text(scope.read_text(encoding="utf-8").replace("audit 20261028-1001", "audit 20261028-1001 · build_anchor abc · "
+                                                               "G2 승인 20261028-1300", 1), encoding="utf-8")
+    expect(fails, "RD-PR3 S11 재사용 폴더 새 실행 R1 `new` · 공급자 도는 중 → G0 · 겹침 exit 2 · 미정리(도는 실행) · 미정리 공급자 1",
+           run(repo, "deps", "demo", "--out", out("s11"), "--at", "new"), 2, "판정 시점 G0", running, "미정리 공급자 1")
+    expect(fails, "RD-PR3 S11o 같은 · 옛 판 → 파견 직전으로 읽어 공급자 실행을 빼고 정리(exit 0 · 질문 0)",
+           _raw_run(repo, "deps", "demo", "--out", out("s11o"), tool=old), 0, "내주는 쪽 base(정리(재상정 0))", "미정리 공급자 0")
+    shutil.rmtree(own)
+    own.mkdir(parents=True)
+    # 여러 폴더 — 옛 폴더 G2 끝 + 새 폴더 도는 실행
+    (bf / "refactor-scope.md").write_text(SUP_RUN, encoding="utf-8")
+    older: Path = repo / ".dddjango" / "20261001-0900-refactor-base"
+    older.mkdir(parents=True)
+    (older / "refactor-scope.md").write_text(SUP_DONE, encoding="utf-8")
+    expect(fails, "RD-PR3 M 여러 폴더(옛 폴더 G2 끝 + 새 폴더 도는 실행) → 미정리(도는 실행 새 폴더)",
+           run(repo, "deps", "demo", "--out", out("m"), "--at", "new"), 2, running, "미정리 공급자 1")
+    expect(fails, "RD-PR3 Mo 같은 · 옛 판 → 사전순 첫 G2 폴더로 정리", _raw_run(repo, "deps", "demo", "--out", out("mo"), tool=old), 2,
+           "내주는 쪽 base(정리(재상정 0))")
+    # W — 공급자 실행이 다른 작업 트리에서 돎(이 트리 사본은 앞 실행 G2 끝)
+    wr: Path = _project(td / "pr3w", DEPS_FILES)
+    wbf: Path = wr / ".dddjango" / "refactor-base"
+    wbf.mkdir(parents=True)
+    (wbf / "refactor-scope.md").write_text(SUP_DONE, encoding="utf-8")
+    _git(wr, "add", "-A")
+    _git(wr, "commit", "-qm", "base 앞 실행 G2 끝")
+    lane: Path = td / "pr3w-lane"
+    _git(wr, "worktree", "add", "-q", "-b", "lane-base", str(lane))
+    (lane / ".dddjango" / "refactor-base" / "refactor-scope.md").write_text(SUP_RUN, encoding="utf-8")
+    _git(lane, "add", "-A")
+    _git(lane, "commit", "-qm", "base 새 실행 G0")
+    wown: Path = wr / ".dddjango" / "refactor-demo"
+    wown.mkdir(parents=True)
+    expect(fails, "RD-PR3 W 공급자 새 실행이 다른 작업 트리에서 돎 · 겹침 → 미정리(도는 실행 .dddjango/refactor-base)",
+           run(wr, "deps", "demo", "--out", str(wown / "deps" / "w"), "--at", "new"), 2,
+           "내주는 쪽 base(미정리(도는 실행 .dddjango/refactor-base))", "미정리 공급자 1")
+    expect(fails, "RD-PR3 Wo 같은 · 옛 판 → 이 트리 사본(앞 실행 G2)으로 정리",
+           _raw_run(wr, "deps", "demo", "--out", str(wown / "deps" / "wo"), tool=old), 2, "내주는 쪽 base(정리(재상정 0))")
+    # B — 공급자 실행의 대상 BC 를 audit plan.md 로만 안다(폴더 이름 BC 는 다른 이름)
+    br: Path = _project(td / "pr3b", DEPS_FILES)
+    misc: str = "20261028-0900-refactor-misc"
+    mf: Path = br / ".dddjango" / misc
+    (mf / "audit" / "y").mkdir(parents=True)
+    (mf / "refactor-scope.md").write_text(SUP_RUN, encoding="utf-8")
+    (mf / "audit" / "y" / "plan.md").write_text("# refactor_audit plan\n\n- BC: `base`\n", encoding="utf-8")
+    bown: Path = br / ".dddjango" / "refactor-demo"
+    bown.mkdir(parents=True)
+    expect(fails, "RD-PR3 B 공급자 실행의 대상 BC 가 plan.md 에만(폴더 이름 BC 다름) → 미정리(도는 실행 그 폴더) · 미정리 공급자 1",
+           run(br, "deps", "demo", "--out", str(bown / "deps" / "b"), "--at", "new"), 2,
+           f"내주는 쪽 base(미정리(도는 실행 .dddjango/{misc}))", "미정리 공급자 1")
+    # 받아들인 한계 고정(3회 a3n) — 다른 트리 G2 끝 · 미착륙은 안 보임 · 착륙 뒤 폴더 정리 · squash · 그 가지에서 갈라진 레인 → 겹침 0
+    xd: str = ".dddjango/20261027-0900-refactor-third"
+    done2: str = "실행 · G0 승인 20261027-0900 · 모드 리팩토링 · audit a1 · build_anchor abc · G2 승인 20261027-1500\n"
+
+    def finished(w: Path) -> None:
+        (w / xd).mkdir(parents=True, exist_ok=True)
+        (w / xd / "refactor-scope.md").write_text(done2, encoding="utf-8")
+        y: Path = w / "application/third/domain_layer/y.py"
+        y.write_text(y.read_text(encoding="utf-8") + "\nW: int = 1\n", encoding="utf-8")
+        _git(w, "add", "-A")
+        _git(w, "commit", "-qm", "third 레인 G2 승인")
+
+    def ours(tree: Path) -> Path:
+        o: Path = tree / ".dddjango" / TREE_OWN
+        o.mkdir(parents=True, exist_ok=True)
+        (o / "refactor-scope.md").write_text(TREE_OWN_LINE, encoding="utf-8")
+        _dispatch_own(tree, o, V1_TEXT)
+        return o
+
+    for name in ("P1", "P3", "P4", "P6"):
+        r: Path = _project(td / f"pr3-{name}", DEPS_FILES)
+        w: Path = td / f"pr3-{name}-w"
+        _git(r, "worktree", "add", "-q", "-b", "w", str(w))
+        finished(w)
+        tree: Path = r
+        if name == "P3":                                    # merge 착륙 → main 이 옛 실행 폴더 정리
+            _git(r, "merge", "-q", "--no-ff", "--no-edit", "w")
+            _git(r, "rm", "-rq", xd)
+            _git(r, "commit", "-qm", "끝난 실행 폴더 정리")
+        elif name == "P4":                                  # squash 착륙 → main 이 옛 실행 폴더 정리
+            _git(r, "merge", "-q", "--squash", "w")
+            _git(r, "commit", "-qm", "third 착륙(squash)")
+            _git(r, "rm", "-rq", xd)
+            _git(r, "commit", "-qm", "끝난 실행 폴더 정리")
+        elif name == "P6":                                  # 우리 레인이 그 레인 가지에서 갈라짐
+            tree = td / f"pr3-{name}-l2"
+            _git(r, "worktree", "add", "-q", "-b", "l2", str(tree), "w")
+            shutil.rmtree(tree / xd)
+            _git(tree, "add", "-A")
+            _git(tree, "commit", "-qm", "l2 기록 정리")
+        o = ours(tree)
+        expect(fails, f"RD-PR3 한계 {name} 다른 트리 G2 끝 실행(미착륙 · 착륙 뒤 폴더 정리 · squash · 갈라진 레인) → 겹침 0(exit 0)",
+               run(tree, "deps", "demo", "--out", str(o / "deps" / "p"), "--at", "dispatch"), 0, "레인 겹침 없음")
+        if name == "P1":
+            expect(fails, "RD-PR3 한계 P1o 같은 · 옛 판도 겹침 0(받아들인 한계 — 옛 판과 같음)",
+                   _raw_run(tree, "deps", "demo", "--out", str(o / "deps" / "po"), tool=old), 0, "레인 겹침 없음")
+
+
+DK_CTRL: str = "application/demo/driving_layer/api/thing/thing_controller.py"
+DK_HEAD: str = "from ninja import Field, Schema\nfrom ninja_extra import api_controller, route\n\n\n"
+
+
+def _dk_ctrl(kw: str, tail: str = "", pre: str = "") -> str:
+    """대상 demo 컨트롤러 — 라우트 데코레이터 키워드 `kw` 한 자리만 바꾼다."""
+    return (DK_HEAD + pre + "@api_controller(\"/thing\")\nclass ThingController:\n"
+            f"    @route.get(\"/\", response={{200: dict}}, {kw})\n    def get(self) -> dict:\n        return {{}}\n" + tail)
+
+
+def deps_doc_kwarg_cases(fails: "list[str]", td: Path) -> None:
+    """설계 A1(①) — 설명 글 키워드 인자(`description=` · `summary=`) 값 아래 상수는 HTTP 소비 글이 아니다(f-string 조각 · `_()` 포함) ·
+    호출 인자 · 경로 상수 · `url=` · dict 값(이름이 description 인 dict 키 · `openapi_extra` 안 description 키 포함) · 모듈 상수를
+    `description=` 에 넘긴 꼴 · `title=` 은 그대로 센다. 대상 demo 의 한 자리에 other API 주소(other → demo 실제 변이 있어 demo → other
+    변이 서면 순환 묶음)."""
+    old: Path = _pr_old_tool(td)
+    repo: Path = _project(td / "pr1", F121_FILES)
+    own: Path = repo / ".dddjango" / F121_OWN
+    own.mkdir(parents=True)
+    (own / "refactor-scope.md").write_text("실행 · G0 승인 20261026-0100 · 모드 리팩토링 · audit 20261026-0050\n", encoding="utf-8")
+    single: str = "순환 성분 단독"
+    cycle: str = "지원 안 함: 순환 묶음 demo · other"
+
+    def dp(tag: str, files: "dict[str, str]", tool: "Path | None" = None) -> "tuple[int, str]":
+        """그 파일들을 써 deps demo 를 돌리고 원래대로 되돌린다."""
+        saved: "dict[str, str | None]" = {rel: (repo / rel).read_text(encoding="utf-8") if (repo / rel).is_file() else None
+                                          for rel in files}
+        for rel, body in files.items():
+            (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+            (repo / rel).write_text(body, encoding="utf-8")
+        try:
+            if tool is not None:
+                return _raw_run(repo, "deps", "demo", "--out", str(own / "deps" / tag), tool=tool)
+            return run(repo, "deps", "demo", "--out", str(own / "deps" / tag), "--at", "continue")
+        finally:
+            for rel, body in saved.items():
+                if body is None:
+                    (repo / rel).unlink()
+                else:
+                    (repo / rel).write_text(body, encoding="utf-8")
+    n1: "dict[str, str]" = {DK_CTRL: _dk_ctrl('description="내 세션 확인(GET /api/other-api/sessions/current) 뒤 부른다"')}
+    for tag, label, files in (
+            ("n1", "라우트 description= 산문 속 다른 BC 주소", n1),
+            ("n2", "라우트 summary=", {DK_CTRL: _dk_ctrl('summary="GET /api/other-api/sessions/current 와 짝"')}),
+            ("n3", "Schema Field(description=)", {F121_SCHEMA: DK_HEAD + "class ThingOut(Schema):\n    key: str = Field(..., "
+                                                  "description=\"/api/other-api/1 의 열쇠\")\n"}),
+            ("n4", "description= 이어 쓴 글 · f-string 조각", {DK_CTRL: _dk_ctrl('description=("첫 줄\\n" f"GET /api/other-api/{1}/x 확인")')}),
+            ("n5", "description=_(…) 번역 감싸기", {DK_CTRL: "from django.utils.translation import gettext_lazy as _\n"
+                                                + _dk_ctrl('description=_("GET /api/other-api/1")')}),
+            ("n6", "description= 바이트 글(바이트 · doctest 갈래)", {DK_CTRL: _dk_ctrl('description=b"GET /api/other-api/1"')})):
+        expect(fails, f"RD-PR1 {tag.upper()} {label} → HTTP 소비 아님 · 순환 성분 단독 · exit 0", dp(tag, files), 0, single)
+    expect(fails, "RD-PR1 N1o 같은 · 옛 판(2.28.0 배포 커밋) → 순환 묶음 exit 2(이 판이 고친 것)", dp("n1o", n1, old), 2, cycle)
+    for tag, label, files in (
+            ("k1", "같은 파일 실제 호출(client.get 인자)", {DK_CTRL: _dk_ctrl('description="설명"', "\n\ndef call(client) -> None:\n"
+                                                                       "    client.get(\"/api/other-api/1\")\n")}),
+            ("k2", "경로 상수", {DK_CTRL: _dk_ctrl('description="설명"', "\n\nOTHER_URL: str = \"/api/other-api/1\"\n")}),
+            ("k3", "다른 이름 키워드(url=)", {DK_CTRL: _dk_ctrl('description="설명"', "\n\ndef call(c) -> None:\n"
+                                                                         "    c.request(method=\"GET\", url=\"/api/other-api/1\")\n")}),
+            ("k4", "description 이름의 dict 키(요청 몸)", {DK_CTRL: _dk_ctrl('description="설명"', "\n\ndef call(c) -> None:\n"
+                                                                            "    c.post(\"/x\", json={\"description\": \"/api/other-api/1\"})\n")}),
+            ("k5", "openapi_extra 안 description 키", {DK_CTRL: _dk_ctrl('openapi_extra={"description": "/api/other-api/1"}')}),
+            ("k6", "모듈 상수를 description= 에 넘김", {DK_CTRL: _dk_ctrl("description=DOC", pre="DOC: str = \"GET /api/other-api/1\"\n\n\n")}),
+            ("k7", "title=", {DK_CTRL: _dk_ctrl('title="GET /api/other-api/1"')})):
+        expect(fails, f"RD-PR1 {tag.upper()} {label} → 그대로 HTTP 소비 · 순환 묶음 exit 2(범위 고정)", dp(tag, files), 2, cycle)
+    # 받는 쪽에서 본 같은 셈 · 공급 면 ④
+    side: Path = _project(td / "pr1-side", {**F121_FILES, DK_CTRL: _dk_ctrl(
+        'description="내 세션 확인(GET /api/other-api/sessions/current)"')})
+    for tag, tool, want in (("e1", None, False), ("e1o", old, True)):
+        out: Path = td / "pr1-side-out" / tag
+        if tool is None:
+            run(side, "deps", "other", "--out", str(out), "--at", "new")
+        else:
+            _raw_run(side, "deps", "other", "--out", str(out), tool=tool)
+        got: dict = json.loads((out / "deps.json").read_text(encoding="utf-8")) if (out / "deps.json").is_file() else {}
+        seen: "set[bool]" = {DK_CTRL in got.get("edit_kinds", {}), "demo" in got.get("http_owners", [])}
+        expect(fails, f"RD-PR1 {tag.upper()} deps other — 설명 글만 가진 demo 컨트롤러 → «HTTP 소비자» 갈래 · http_owners "
+               f"{'에 있음(옛 판)' if want else '에 없음'}", (0 if seen == {want} else 9, json.dumps(
+                   {k: got.get(k) for k in ("http_owners", "scc")}, ensure_ascii=False)), 0)
+    face: Path = _project(td / "pr1-face", {
+        **F121_FILES,
+        "application/base/driving_layer/api/a/a_controller.py": FACE_CONTROLLER.format(prefix="/base-a", name="AController"),
+        "application/base/driving_layer/api/b/b_controller.py": FACE_CONTROLLER.format(prefix="/base-b", name="BController"),
+        "application/demo/driven_layer/adapter/base_client.py": "URL: str = \"/api/base-a/items/1\"\n",
+        DK_CTRL: _dk_ctrl('description="옛 창구 /api/base-b/1 대신"'),
+    })
+    for tag, tool, want in (("e2", None, False), ("e2o", old, True)):
+        out = td / "pr1-face-out" / tag
+        if tool is None:
+            run(face, "deps", "demo", "--out", str(out), "--at", "new")
+        else:
+            _raw_run(face, "deps", "demo", "--out", str(out), tool=tool)
+        faces: "list[str]" = (json.loads((out / "deps.json").read_text(encoding="utf-8")).get("supplier_faces", {}).get("base", [])
+                              if (out / "deps.json").is_file() else [])
+        ok: bool = ("application/base/driving_layer/api/a/a_controller.py" in faces
+                    and ("application/base/driving_layer/api/b/b_controller.py" in faces) == want)
+        expect(fails, f"RD-PR1 {tag.upper()} 공급 면 ④ — 대상 운영 코드가 /base-a 를 부르고 description= 에만 /base-b → 면에 b 선언 "
+               f"파일 {'있음(옛 판)' if want else '없음'}", (0 if ok else 9, str(faces)), 0)
+
+
 def map_items_case(fails: "list[str]", td: Path) -> None:
     """설계 §7 `_map_items` — follow · change 창 대응표도 싣는다(test 창은 아니다) · 창 차례는 번호(w2 < w10)."""
     folder: Path = td / "mapf"
@@ -4543,6 +5447,21 @@ def corpus_cases(fails: "list[str]", nov_id: str) -> None:
     expect(fails, "self-test(Claude — 점검 절 실재 · 경로 사상 · 어구 상수 = 규범 문면)", run(ROOT, "--self-test"), 0, "red 0")
 
 
+def _only(names: "list[str]") -> int:
+    """이름 댄 `(fails, td)` 사례 함수만 돈다(고치기 전 붉음 · 고친 뒤 초록 확인)."""
+    fails: "list[str]" = []
+    with tempfile.TemporaryDirectory(prefix="ra-fo-") as tmp:
+        for name in names:
+            globals()[name](fails, Path(tmp) / name)
+    if fails:
+        print("\nFAIL — refactor_audit 고른 사례 기대 불일치:")
+        for f in fails:
+            print("  - " + f.replace("\n", "\n    "))
+        return 1
+    print("\nPASS — refactor_audit 고른 사례 기대 일치")
+    return 0
+
+
 def _only_group() -> int:
     """묶음 사례만(`group_move_cases`) — 변이 시험이 scripts 사본에 대고 돈다."""
     fails: "list[str]" = []
@@ -4614,6 +5533,8 @@ def main() -> int:
         return _mutation_test()
     if "--only-group" in sys.argv[1:]:
         return _only_group()
+    if "--only" in sys.argv[1:-1]:
+        return _only(sys.argv[sys.argv.index("--only") + 1].split(","))
     fails: "list[str]" = []
     try:
         nov = _nov()
@@ -4640,12 +5561,14 @@ def main() -> int:
         change_column_cases(fails, aud)
         other_bc_lane_case(fails, td)
         changes_cases(fails, td)
+        changes_collect_cases(fails, td)
         group_move_cases(fails, td)
         update_rows_cases(fails, td)
         g1_time_cases(fails, td)
         support_rule_cases(fails, td)
         retain_notice_cases(fails, td)
         rename_row_cases(fails, td)
+        field_rename_row_cases(fails, td)
         review_b_cases(fails, td)
         review_b_deps_cases(fails, td)
         review_b4_cases(fails, td)
@@ -4662,6 +5585,12 @@ def main() -> int:
         deps_web_unit_cases(fails, td)
         deps_face_review_cases(fails, td)
         deps_http_text_cases(fails, td)
+        deps_at_cases(fails, td)
+        deps_rerun_cases(fails, td)
+        deps_stale_cases(fails, td)
+        deps_supplier_cases(fails, td)
+        deps_doc_kwarg_cases(fails, td)
+        deps_own_copy_cases(fails, td)
         map_items_case(fails, td)
     corpus_cases(fails, nov[0])
     self_test_negative_case(fails)

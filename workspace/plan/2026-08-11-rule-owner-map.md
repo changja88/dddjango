@@ -568,3 +568,4 @@
 | 655 | ast | scripts/check-layer-skeleton.py | — | 신설 | 10-27 의미 묶음(D60) — 묶음 `__init__.py` 는 내용 없음(0바이트 · docstring · 주석뿐) |
 | 656 | ast | scripts/check-domain-model.py | — | 신설 | 10-27 의미 묶음(D60) — 묶음 자리 = `folder_group.place` 결과(만든다 · 푼다 · 둔다 · 부모에 둔다) |
 | 657 | human | — | agents/discipline-reviewer.md | 신설 | 10-27 의미 묶음(D60 · E4) — 공유 개념 예외는 `shared_value_object/` |
+| 658 | ast | scripts/check-test-config.py | — | 신설 | 10-28 루트 시험 폴더 — 저장소 루트 `tests/` · `test/` 아래 `.py` 파일마다 한 줄(내용 없는 `__init__.py` · 루트 `conftest.py` · `tests/web/` · `test/web/` 밖) · BC `test/` · `framework/test/` 의 루트 `tests` · `test` 패키지 import |

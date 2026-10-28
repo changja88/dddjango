@@ -21,10 +21,10 @@
     "check-ninja-boundary-middleware.py": "e2f4aed8fef47305",
     "check-openapi-error-declaration.py": "aa9c32fcbd8f01a4",
     "check-port-adapter-pairing.py": "66499c55b8e4d59f",
-    "check-public-surface-annotation.py": "1c0e24637ecf31e7",
+    "check-public-surface-annotation.py": "9c7d8007c561a13b",
     "check-response-schema-bypass.py": "0fd510470a0ac985",
     "check-synthetic-infra-exc.py": "f30d0f3e8320ee6b",
-    "check-test-config.py": "d0faf16cbed657c1",
+    "check-test-config.py": "44ecabe867cebf17",
     "check-transaction-boundary.py": "bb98821bacb2b6b0",
     "check-transient-overmapping.py": "35ac532566baaf46",
     "check-usecase-dto-placement.py": "93f42e8a33f79a80"

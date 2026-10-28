@@ -5257,8 +5257,8 @@
           <text data-detail="context" x="625" y="875" class="t-muted" font-size="8" text-anchor="middle">귀속 판정 N∖L</text>
         </g>
 
-        <g id="node-graph" data-node-id="graph" data-node-label="그래프" tabindex="0" role="button" aria-label="Focus 그래프, 정본 · Work 3,713, 온톨로지 (저장소 정본) › Phase 0 · 범위" aria-pressed="false" data-node-kind="database" data-node-sublabel="정본 · Work 3,713" data-node-context="온톨로지 (저장소 정본) › Phase 0 · 범위">
-          <title>그래프 · 정본 · Work 3,713 · 온톨로지 (저장소 정본) › Phase 0 · 범위</title>
+        <g id="node-graph" data-node-id="graph" data-node-label="그래프" tabindex="0" role="button" aria-label="Focus 그래프, 정본 · Work 3,716, 온톨로지 (저장소 정본) › Phase 0 · 범위" aria-pressed="false" data-node-kind="database" data-node-sublabel="정본 · Work 3,716" data-node-context="온톨로지 (저장소 정본) › Phase 0 · 범위">
+          <title>그래프 · 정본 · Work 3,716 · 온톨로지 (저장소 정본) › Phase 0 · 범위</title>
           <rect x="46" y="961" width="84" height="52" rx="6" class="c-mask"/>
           <rect x="46" y="961" width="84" height="52" rx="6" class="c-database" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(52 967) scale(0.6875)">
@@ -5266,7 +5266,7 @@
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
           <text data-node-label data-detail-anchor x="88" y="982" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">그래프</text>
-          <text data-detail="context" x="88" y="999" class="t-muted" font-size="7.4" text-anchor="middle">정본 · Work 3,713</text>
+          <text data-detail="context" x="88" y="999" class="t-muted" font-size="7.4" text-anchor="middle">정본 · Work 3,716</text>
         </g>
 
         <g id="node-md" data-node-id="md" data-node-label="md 투영" tabindex="0" role="button" aria-label="Focus md 투영, 548절 · 30문서, 온톨로지 (저장소 정본) › Phase 1 · 설계" aria-pressed="false" data-node-kind="database" data-node-sublabel="548절 · 30문서" data-node-context="온톨로지 (저장소 정본) › Phase 1 · 설계">
@@ -5568,7 +5568,7 @@
           <li>&bull; 정본층(메인테이너 저장소 전용): Turtle(RDF)+RDFS 어휘 · SHACL 검증(pySHACL) · RDFC-1.0 정규화 해시 · SPARQL 질의(rdflib)</li>
           <li>&bull; 4단 저작 게이트: 파스 → 정본 직렬화 diff=0 → RDFC 해시 → SHACL — 커밋마다 pre-commit이 기계로 막는다</li>
           <li>&bull; 설치본(플러그인): 표준 라이브러리만 — 검사기 27(AST·파일 트리 판정) + 결정적 도구(pre-gate · registry_gate · behavior_guard · folder_group · refactor_audit) + rulepack.json 조회. rdflib 금지(동결 E7)</li>
-          <li>&bull; DB·서버 없음 — 전부 git 안의 파일. 릴리즈 2.28.0 기준</li>
+          <li>&bull; DB·서버 없음 — 전부 git 안의 파일. 릴리즈 2.29.0 기준</li>
         </ul>
       </div>
 
@@ -5579,7 +5579,7 @@
         </div>
         <ul>
           <li>&bull; 커맨드 1 · 에이전트 7 · 스킬 11(SKILL.md+reference) = 30문서의 참조성 548절이 그래프의 렌더 투영물(graph-owned 마커)</li>
-          <li>&bull; 규범 Work 3,713(의무 2,535 · 금지 779 · 예외 200 · 허용 162 · 우선 37) — rulepack.json도 works 3,713</li>
+          <li>&bull; 규범 Work 3,716(의무 2,537 · 금지 780 · 예외 200 · 허용 162 · 우선 37) — rulepack.json도 works 3,716</li>
           <li>&bull; 규범 수정은 ontology/rules/ 정본에서 → 게이트 → 렌더 재투영 → 원장(LEDGER) — graph-owned 절 직접 수정은 훅이 막는다</li>
           <li>&bull; rulepack은 리팩토링 모드의 refactor_audit가 리뷰어의 규범 인용을 대조할 때 읽는다 — 6′ 재생성 루프도 읽지만 기본 off</li>
         </ul>
@@ -5607,6 +5607,7 @@
           <li>&bull; /dddjango:refactor &lt;BC&gt;는 같은 Coordinator에 리팩토링 모드로 넘긴다 — R1 빚 → R2 의미 점검(리뷰어 BC_AUDIT) → R2′ → R3 판정(설계자) → G0</li>
           <li>&bull; 리팩토링 Phase 2는 0T(시험) → 0C(코드) → 0F(따라가기) → 변경 슬라이스, 한 번에 창 하나 — behavior_guard가 창마다 보존을 판정</li>
           <li>&bull; 의미 묶음 폴더(2.28.0): G0 묶음 빚과 끝 맞춤 이동은 folder_group 묶음 창에서만 — verify --window로 확인</li>
+          <li>&bull; 리팩토링 준비(2.29.0): deps 판정 시점(--at) 필수 · 첫 구현 직전 main 착륙분 낡음 확인 · G1 편집 시험 실림 확인 · 칸 개명 행 · 새 시험은 표준 자리에만(#658)</li>
           <li>&bull; dddjango-web은 별개 플러그인 — 그 영역 발견은 백스톱이 보고만 한다(화면 흐름은 별도 지도)</li>
         </ul>
       </div>

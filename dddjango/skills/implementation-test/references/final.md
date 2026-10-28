@@ -408,7 +408,7 @@ log_cli_level = "INFO"
 ### 4.2 conftest.py 계층 구조
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
-conftest.py는 디렉토리별로 배치할 수 있으며, pytest가 테스트 수집 시 각 디렉토리의 conftest.py를 자동으로 로드한다. 하지만 아래 구조는 생성 목록이 아니다. 입장 표의 `owner/path`에 실제 승인된 test artifact가 있는 branch만 만들고, 그 테스트가 실제 공유하는 fixture가 있을 때만 가장 좁은 공통 경로에 `conftest.py`를 둔다. 사용하지 않는 디렉터리·`conftest.py`·예시 test file·빈 package를 만들지 않는다. 의미군 위치의 단일 출처는 `discipline-houserules` §2다.
+conftest.py는 디렉토리별로 배치할 수 있으며, pytest가 테스트 수집 시 각 디렉토리의 conftest.py를 자동으로 로드한다. 하지만 아래 구조는 생성 목록이 아니다. 입장 표의 `owner/path`에 실제 승인된 test artifact가 있는 branch만 만들고, 그 테스트가 실제 공유하는 fixture가 있을 때만 가장 좁은 공통 경로에 `conftest.py`를 둔다. 사용하지 않는 디렉터리·`conftest.py`·예시 test file·빈 package를 만들지 않는다. 의미군 위치의 단일 출처는 `discipline-houserules` §1.2다.
 
 ```
 application/

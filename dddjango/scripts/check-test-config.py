@@ -11,11 +11,28 @@
   `env`·conftest 의 Django 셋업. touched 한정을 걷고 전 설정을 본다 — 깨진 바인딩은
   언제 커밋됐든 지금 깨져 있다(기존 코드도 면제가 아니라 빚).
 
-⑵ 트리 개정 명세 몫 — `test/` 구조 (트리 136~142행 · D56):
+⑵ 트리 개정 명세 몫 — `test/` 구조 · 루트 시험 폴더 (트리 136~142행 · D56):
   #383/#384 `test/` 의 직계 자식은 다섯뿐 — `unit/`·`integration/`·`e2e/`(«테스트» —
        안이 자유)·`factories/`·`fake/`(«재료» — 규칙이 산다). 직계 파일은
        `conftest.py`·`__init__.py` 만(#596 — 파일 이름은 pytest 소유라 폐쇄(#490)
-       비대상, 그래서 이 검사기는 test 파일 «이름»을 검사하지 않는다).
+       비대상, 그래서 이 검사기는 test 파일 «이름»을 검사하지 않는다 — #658 도
+       이름이 아니라 자리로 판정한다).
+  #658 저장소 루트 `tests/`·`test/` 는 시험 자리가 아니다 — 시험은 주인의 표준 시험 자리
+       (BC `test/` · 전역 규칙은 `framework/test/unit/`)에 둔다. ㄱ 그 아래 모든 `.py`
+       (이름 무관 — helpers·factories·fakes·conftest 포함 · 비었거나 docstring·주석뿐인
+       `__init__.py` 만 뺌 — #655 와 같은 술어 · 코드를 품은 `__init__.py` 는 위반)는
+       파일마다 한 줄(G2 귀속이 이미 있는 폴더 안의 새 파일을 보도록). 레포 루트
+       `conftest.py`(공유 fixture 자리)는 폴더 밖이라 보지 않고, 루트 `tests/web/`·
+       `test/web/` 는 web 시험이라 뺀다(web 표준 자리는 dddjango-web 몫). 이름을 고정한
+       두 폴더만 보므로 관할 밖 폴더(일회성 `scripts/` · 도구 폴더)는 애초에 안 본다.
+       ㄴ BC `test/`·`framework/test/` 안 파일이 최상위 `tests`·`test` 패키지(`.py` 가 든 그
+       이름의 루트 폴더가 있을 때 — 없으면 표준 라이브러리 `test` 등 다른 패키지다)를 import
+       하면 그 파일 한 줄 — 루트 fixture·도우미에 기대는 새 의존을 막는다(상대 import 는
+       대상 밖). 폴더 이름은 글자 그대로다(대소문자를 가리지 않는 파일 시스템의 `Tests/` 는
+       대상 밖). 받아들인 한계: 기존 파일의 case·import 덧붙임은 줄이 그대로라 못 가른다 ·
+       `<project>/` 안 시험 폴더(#429)·다른 이름(`testing/`)·루트 직계 시험 파일은 이름
+       판정이 필요해 이 검사 밖(규칙 글·감수 몫) · 루트 시험 폴더 안의 건너뛰는 폴더
+       (`build/`·`dist/`·가상 환경·캐시 — G2 사본도 지운다) 아래 파일은 보지 않는다.
   #385 BC `test/` 에는 그 BC 의 테스트만 — `application.<타BC>.…` import 금지.
   #387 `test/unit/` 은 DB 를 켜지 않는다(`django_db`·django.test TestCase·`.objects`).
   #388 `test/unit/` 은 `factories/` 를 import 하지 않는다(가짜 구현은 `fake/`).
@@ -74,6 +91,13 @@ NEW_LAYERS = {"driving_layer", "application_layer", "domain_layer", "driven_laye
 
 TEST_CHILDREN = {"unit", "integration", "e2e", "factories", "fake"}
 TEST_DIRECT_FILES = {"conftest.py", "__init__.py"}
+
+# #658 — 저장소 루트의 이름 고정 두 폴더(관할 밖 폴더는 이름이 달라 애초에 안 본다) · 그 아래 web 시험 칸.
+ROOT_TEST_DIRS: "tuple[str, ...]" = ("test", "tests")
+ROOT_WEB_TEST_DIR: str = "web"
+ROOT_TEST_MSG: str = "저장소 루트 시험 폴더 — 시험은 주인의 표준 시험 자리(BC `test/` · 전역 규칙은 `framework/test/unit/`)에 둔다"
+ROOT_IMPORT_MSG: str = ("저장소 루트 시험 폴더(`tests` · `test` 패키지)를 import 한다 — 필요한 fixture · 도우미는 이 시험의 표준 자리"
+                        "(`test/conftest.py` · `test/fake/`)에 새로 쓴다")
 
 # settings/ 파일 이름 — 약어(#446 · 규율 ④)와 기능 분할(#445) 블록리스트.
 ABBREV_BAN = {"prod": "production", "dev": "local", "stg": "staging", "stag": "staging", "loc": "local", "tst": "test"}
@@ -342,7 +366,12 @@ def _client_fixture_entrance(mod: ast.Module) -> bool:
     return True
 
 
-def _check_bc_test(bc: Path, bc_rel: Path, out: Findings) -> None:
+def _imports_root_tests(imports: "list[str]", root_pkgs: "frozenset[str]") -> bool:
+    """#658 ㄴ — 절대 import 가운데 최상위 이름이 루트 시험 폴더(실재하는 것만)인 것이 있는가."""
+    return any(p.split(".")[0] in root_pkgs for p in imports)
+
+
+def _check_bc_test(bc: Path, bc_rel: Path, out: Findings, root_pkgs: "frozenset[str]" = frozenset()) -> None:
     test_dir = bc / "test"
     if not test_dir.is_dir():
         return  # 존재는 skeleton #488 소유 — 여기서 중복으로 내지 않는다
@@ -376,6 +405,8 @@ def _check_bc_test(bc: Path, bc_rel: Path, out: Findings) -> None:
             parts = p.split(".")
             if parts[0] == "application" and len(parts) > 1 and parts[1] != bc.name:
                 out.add("#385", rel, f"`{p}` import — BC `test/` 에는 그 BC 의 테스트만 온다(타 BC 는 입구로 검사한다)")
+        if _imports_root_tests(imports, root_pkgs):
+            out.add("#658", rel, ROOT_IMPORT_MSG)
         if top == "unit":
             if _db_signals(mod):
                 out.add("#387", rel, "`test/unit/` 은 DB 를 켜지 않는다 — 포트 자리에는 `fake/` 의 가짜 구현을 꽂는다")
@@ -402,6 +433,45 @@ def _check_bc_test(bc: Path, bc_rel: Path, out: Findings) -> None:
             )
             if not has_factory:
                 out.add("#392", rel, "`factories/` 에는 factory_boy 픽스처만 온다 — 다른 재료는 `fake/` 또는 테스트 안으로")
+
+
+def _root_test_packages(root: Path) -> "frozenset[str]":
+    """#658 — 저장소 루트에 실재하는 시험 폴더 이름(`test` · `tests` — 글자 그대로 · `.py` 가 하나라도 든 것).
+
+    대소문자를 가리지 않는 파일 시스템에서도 `Tests/` 는 고르지 않고, `.py` 없는 자료 폴더는 패키지가 아니다."""
+    try:
+        present: "set[str]" = {e.name for e in root.iterdir() if e.name in ROOT_TEST_DIRS and e.is_dir()}
+    except OSError:
+        return frozenset()
+    return frozenset(name for name in present
+                     if any(not set(f.relative_to(root).parts) & SKIP_DIRS for f in (root / name).rglob("*.py")))
+
+
+def _check_root_tests(root: Path, root_pkgs: "frozenset[str]", out: Findings) -> None:
+    """#658 ㄱ — 루트 시험 폴더 아래 `.py` 파일마다 한 줄 · ㄴ — `framework/test/` 의 루트 시험 import(BC `test/` 는 `_check_bc_test`)."""
+    for name in sorted(root_pkgs):
+        for f in sorted((root / name).rglob("*.py")):
+            rel: Path = f.relative_to(root)
+            if set(rel.parts) & SKIP_DIRS:
+                continue
+            if len(rel.parts) > 2 and rel.parts[1] == ROOT_WEB_TEST_DIR:
+                continue  # web 시험 — web 표준 자리 판정은 dddjango-web 몫
+            if f.name == "__init__.py" and checker_target.skeleton_placeholder(f):
+                continue  # 빈 묶음 표지(0바이트 · docstring · 주석뿐 — #655 와 같은 술어)
+            out.add("#658", rel, ROOT_TEST_MSG)
+    framework_test: Path = root / "framework" / "test"
+    if not root_pkgs or not framework_test.is_dir():
+        return
+    for f in sorted(framework_test.rglob("*.py")):
+        rel = f.relative_to(root)
+        if set(rel.parts) & SKIP_DIRS:
+            continue
+        try:
+            mod: ast.Module = ast.parse(f.read_text(encoding="utf-8"))
+        except (SyntaxError, OSError, UnicodeDecodeError):
+            continue
+        if _imports_root_tests(_imports_of(mod), root_pkgs):
+            out.add("#658", rel, ROOT_IMPORT_MSG)
 
 
 # ── 슬라이스 ⑶ — <project>/settings/ 환경축 ─────────────────────────────────
@@ -481,8 +551,10 @@ def main(argv: list[str]) -> int:
             return 0
 
         _check_binding(target, configs, findings)
+        root_pkgs: "frozenset[str]" = _root_test_packages(target)
         for bc in bcs:
-            _check_bc_test(bc, bc.relative_to(target), findings)
+            _check_bc_test(bc, bc.relative_to(target), findings, root_pkgs)
+        _check_root_tests(target, root_pkgs, findings)
         for d in settings_dirs:
             _check_settings_dir(d, target, findings)
     except Exception as exc:  # 분석 실패는 조용한 통과가 아니다 — fail-closed

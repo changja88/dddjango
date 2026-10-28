@@ -4021,5 +4021,503 @@ class GeneratorWindowReplyRegression(unittest.TestCase):
                       " · 대화 창구의 send 답 타입과 그 구성 dataclass 만 예외)", result.stdout)
 
 
+class PublicSurfaceTestBodyAliasRegression(unittest.TestCase):
+    """F4-126 — #647 은 시험 본문과 모듈 수준 별칭 반환까지 잰다.
+
+    규칙 글(houserules §4 «테스트와 테스트 재료까지 전부» · «반환값 · 클래스 속성 … #647 이 차단»)은 시험을 면제하지 않는다.
+    시험 본문(뿌리 `application/` · `framework/` 아래 `test_*.py` · `conftest.py` · `test/` 의 재료 칸 밖)은 #647 «차단»만 산다 —
+    `Any` 값 자리 전부 · `object` 값 자리는 반환 · 클래스 속성. #493 · #645 · #646 · #650 · ⓓ 후보는 시험 본문에서 내지 않는다(F4-33 은 따로).
+    모듈 수준 별칭(`X: TypeAlias = …` · 맨 대입 · PEP 695 `type X = …` · `TYPE_CHECKING` 갈래)은 깊이 4 까지 펼쳐 같은 자리로 판정하고,
+    상한에 닿거나 재귀하는 가지는 판정 없음 · import 해 온 별칭은 펼치지 않는다.
+    """
+
+    LINE: "re.Pattern[str]" = re.compile(r"^\s*\[(ⓓ?#\d+)\] ([^\s:]+(?::\d+)?): ")
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="field-surface-test-body-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root: Path = Path(self.tmp.name) / "project"
+        self.env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+                        DJR_FINDINGS_JSON=str(Path(self.tmp.name) / "records.jsonl"),
+                        DJR_VIOLATIONS_DIR=str(Path(self.tmp.name) / "violations"))
+
+    def write(self, relative: str, text: str) -> None:
+        path: Path = self.root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(textwrap.dedent(text), encoding="utf-8")
+
+    def rows(self) -> "list[tuple[str, str]]":
+        """(규칙 — 후보는 `ⓓ#N` · 자리 `경로:줄`) 전부 — 출력 순서."""
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / "check-public-surface-annotation.py"), str(self.root)],
+                                capture_output=True, text=True, env=self.env)
+        self.assertEqual(result.stderr, "")
+        self.assertIn(result.returncode, (0, 2), result.stdout)
+        found: "list[tuple[str, str]]" = []
+        for line in result.stdout.splitlines():
+            m = self.LINE.match(line)
+            if m:
+                found.append((m.group(1), m.group(2)))
+        return found
+
+    def test_test_bodies_carry_647_blocks_only(self) -> None:
+        self.write("application/demo/domain_layer/direct.py", """\
+            def direct() -> dict[str, object]:
+                return {}
+            """)
+        bodies: "dict[str, str]" = {
+            # P1 — 시험 파일 반환 자리.
+            "application/demo/test/unit/test_social_login.py": """\
+                def _session_state() -> dict[str, object]:
+                    return {}
+
+
+                def test_session_state_is_empty():
+                    assert _session_state() == {}
+                """,
+            # P2 — conftest · integration 도우미.
+            "application/demo/test/conftest.py": """\
+                def payload() -> dict[str, object]:
+                    return {}
+                """,
+            "application/demo/test/integration/helpers.py": """\
+                def build() -> dict[str, object]:
+                    return {}
+                """,
+            # P3 — 매개변수의 `object` 는 후보도 내지 않는다.
+            "application/demo/test/unit/test_param.py": """\
+                def _check(data: dict[str, object]) -> None:
+                    return None
+
+
+                def test_check() -> None:
+                    _check({})
+                """,
+            # P4 — `Any` 값 자리는 지역 변수에서도 차단.
+            "application/demo/test/unit/test_any.py": """\
+                from typing import Any
+
+
+                def test_any() -> None:
+                    raw: dict[str, Any] = {}
+                    assert raw == {}
+                """,
+            # P5 — 주석 없는 지역 변수 · 반환 타입 없음 · assert 는 시험 본문에서 내지 않는다(F4-33 경계).
+            "application/demo/test/unit/test_plain.py": """\
+                def test_plain():
+                    value = 1
+                    assert value == 1
+                """,
+            # 클래스 속성 자리.
+            "application/demo/test/unit/test_holder.py": """\
+                class _Holder:
+                    state: dict[str, object]
+
+
+                def test_holder() -> None:
+                    assert _Holder.__annotations__
+                """,
+            # 뿌리 `framework/` 의 시험 본문.
+            "framework/test/unit/test_codec.py": """\
+                def _decoded() -> dict[str, object]:
+                    return {}
+                """,
+            # P10 — 뿌리 밖 시험 본문은 대상 밖.
+            "web/shop/tests/test_view.py": """\
+                def _state() -> dict[str, object]:
+                    return {}
+                """,
+        }
+        for relative, text in bodies.items():
+            self.write(relative, text)
+        # 재료 칸(`fake/`)은 지금처럼 전 규칙.
+        self.write("application/demo/test/fake/fake_store.py", """\
+            class FakeStore:
+                def raw(self) -> dict[str, object]:
+                    return {}
+            """)
+        rows = self.rows()
+        self.assertEqual(sorted(r for r in rows if r[1].split(":")[0] in bodies), [
+            ("#647", "application/demo/test/conftest.py:1"),
+            ("#647", "application/demo/test/integration/helpers.py:1"),
+            ("#647", "application/demo/test/unit/test_any.py:5"),
+            ("#647", "application/demo/test/unit/test_holder.py:2"),
+            ("#647", "application/demo/test/unit/test_social_login.py:1"),
+            ("#647", "framework/test/unit/test_codec.py:1"),
+        ])
+        self.assertEqual(sorted(r for r in rows if r[0] == "#647" and r[1].split(":")[0] not in bodies), [
+            ("#647", "application/demo/domain_layer/direct.py:1"),
+            ("#647", "application/demo/test/fake/fake_store.py:2"),
+        ])
+
+    def test_module_aliases_expand_to_the_same_slot(self) -> None:
+        self.write("application/demo/domain_layer/payload.py", """\
+            from typing import TypeAlias
+
+            Payload: TypeAlias = dict[str, object]
+            Quoted: TypeAlias = "dict[str, object]"
+
+
+            def via_alias() -> Payload:
+                return {}
+
+
+            def quoted() -> Quoted:
+                return {}
+            """)
+        self.write("application/demo/test/fake/fake_state.py", """\
+            from typing import TypeAlias
+
+            _State: TypeAlias = dict[str, object]
+
+
+            class FakeState:
+                def state(self) -> _State:
+                    return {}
+            """)
+        self.write("application/demo/domain_layer/record.py", """\
+            type Record = dict[str, object]
+
+
+            def load() -> Record:
+                return {}
+            """)
+        self.write("application/demo/domain_layer/chain.py", """\
+            from __future__ import annotations
+
+            from typing import TYPE_CHECKING, Any, TypeAlias
+
+            Inner: TypeAlias = dict[str, object]
+            Outer: TypeAlias = Inner
+
+            if TYPE_CHECKING:
+                Hidden: TypeAlias = dict[str, Any]
+
+
+            def chained() -> Outer:
+                return {}
+
+
+            def hidden(data: Hidden) -> None:
+                return None
+            """)
+        self.write("application/demo/domain_layer/branches.py", """\
+            from __future__ import annotations
+
+            from typing import TYPE_CHECKING, TypeAlias
+
+            if TYPE_CHECKING:
+                Body: TypeAlias = dict[str, object]
+            else:
+                Body = dict
+
+
+            def body() -> Body:
+                return {}
+            """)
+        self.write("application/demo/domain_layer/slots.py", """\
+            from typing import Any, TypeAlias
+
+            Loose: TypeAlias = Any
+            Opaque: TypeAlias = object
+
+
+            def loose() -> dict[str, Loose]:
+                return {}
+
+
+            def opaque() -> dict[str, Opaque]:
+                return {}
+            """)
+        # P9 — 값 자리가 구체 타입이면 무.
+        self.write("application/demo/domain_layer/counts.py", """\
+            Counts = dict[str, int]
+
+
+            def counts() -> Counts:
+                return {}
+            """)
+        # 시험 본문의 별칭 반환.
+        self.write("application/demo/test/unit/test_alias.py", """\
+            from typing import TypeAlias
+
+            _Session: TypeAlias = dict[str, object]
+
+
+            def _session() -> _Session:
+                return {}
+            """)
+        self.assertEqual(sorted(r for r in self.rows() if r[0] in ("#647", "ⓓ#647")), [
+            ("#647", "application/demo/domain_layer/branches.py:11"),
+            ("#647", "application/demo/domain_layer/chain.py:12"),
+            ("#647", "application/demo/domain_layer/chain.py:16"),
+            ("#647", "application/demo/domain_layer/payload.py:11"),
+            ("#647", "application/demo/domain_layer/payload.py:7"),
+            ("#647", "application/demo/domain_layer/record.py:4"),
+            ("#647", "application/demo/domain_layer/slots.py:11"),
+            ("#647", "application/demo/domain_layer/slots.py:7"),
+            ("#647", "application/demo/test/fake/fake_state.py:7"),
+            ("#647", "application/demo/test/unit/test_alias.py:6"),
+        ])
+
+    def test_alias_expansion_stops_without_verdict(self) -> None:
+        # 재귀 PEP 695 별칭(좋은 픽스처 `JsonValue` 꼴) — 재귀 가지는 판정 없음.
+        self.write("application/demo/domain_layer/json_value.py", """\
+            from collections.abc import Mapping, Sequence
+
+            type JsonScalar = bool | int | float | str | None
+            type JsonValue = JsonScalar | Sequence[JsonValue] | Mapping[str, JsonValue]
+
+
+            def dump() -> JsonValue:
+                return None
+
+
+            def table() -> dict[str, JsonValue]:
+                return {}
+            """)
+        self.write("application/demo/domain_layer/loop.py", """\
+            from typing import TypeAlias
+
+            Ping: TypeAlias = "Pong"
+            Pong: TypeAlias = Ping
+
+
+            def ping() -> Ping:
+                return None
+            """)
+        # 재귀하지 않는 가지는 그대로 판정한다.
+        self.write("application/demo/domain_layer/tree.py", """\
+            type Tree = dict[str, Tree] | dict[str, object]
+
+
+            def tree() -> Tree:
+                return {}
+            """)
+        # 상한 — 별칭 넷까지 펼친다(A2 → A5 는 위반 · A1 → A5 는 다섯째라 판정 없음).
+        self.write("application/demo/domain_layer/deep.py", """\
+            from typing import TypeAlias
+
+            A5: TypeAlias = dict[str, object]
+            A4: TypeAlias = A5
+            A3: TypeAlias = A4
+            A2: TypeAlias = A3
+            A1: TypeAlias = A2
+
+
+            def deep() -> A1:
+                return {}
+
+
+            def near() -> A2:
+                return {}
+            """)
+        # import 해 온 별칭은 펼치지 않는다(한계 고정) · 정의 파일 자체는 쓰는 자리가 없어 무.
+        self.write("application/demo/domain_layer/payload_types.py", """\
+            from typing import TypeAlias
+
+            Payload: TypeAlias = dict[str, object]
+            """)
+        self.write("application/demo/domain_layer/imported.py", """\
+            from application.demo.domain_layer.payload_types import Payload
+
+
+            def imported() -> Payload:
+                return {}
+            """)
+        # 제네릭 별칭의 타입 인자는 대입하지 않는다(한계 고정).
+        self.write("application/demo/domain_layer/boxed.py", """\
+            type Box[T] = dict[str, T]
+
+
+            def boxed() -> Box[object]:
+                return {}
+            """)
+        self.assertEqual(sorted(r for r in self.rows() if r[0] in ("#647", "ⓓ#647")), [
+            ("#647", "application/demo/domain_layer/deep.py:14"),
+            ("#647", "application/demo/domain_layer/tree.py:4"),
+        ])
+
+    def test_alias_union_guard_root_and_rebinding(self) -> None:
+        # 합집합 별칭 — 구성원 하나가 `object` 값 자리면 위반.
+        self.write("application/demo/domain_layer/union_alias.py", """\
+            from typing import TypeAlias
+
+            MaybeRow: TypeAlias = dict[str, object] | None
+
+
+            def maybe_row() -> MaybeRow:
+                return None
+            """)
+        # 반환 루트 `TypeGuard`/`TypeIs` 면제는 별칭으로 담아도 같다 · 가드 아닌 정의가 섞이면 면제 아님.
+        self.write("application/demo/domain_layer/guard.py", """\
+            from __future__ import annotations
+
+            from typing import TYPE_CHECKING, TypeAlias, TypeGuard, TypeIs
+
+            IsRecord: TypeAlias = TypeGuard[dict[str, object]]
+            type IsTable = TypeIs[dict[str, object]]
+            if TYPE_CHECKING:
+                Mixed: TypeAlias = TypeGuard[dict[str, object]]
+            else:
+                Mixed: TypeAlias = dict[str, object]
+
+
+            def is_record(value: object) -> IsRecord:
+                return isinstance(value, dict)
+
+
+            def is_table(value: object) -> IsTable:
+                return isinstance(value, dict)
+
+
+            def is_mixed(value: object) -> Mixed:
+                return isinstance(value, dict)
+            """)
+        # 같은 모듈의 별칭 정의를 import 가 다시 묶으면 펼치지 않는다(import 바인딩).
+        self.write("application/demo/domain_layer/rebound.py", """\
+            from typing import TypeAlias
+
+            Payload: TypeAlias = dict[str, object]
+            from application.demo.domain_layer.payload_types import Payload  # noqa: E402
+
+
+            def rebound() -> Payload:
+                return {}
+            """)
+        self.assertEqual(sorted(r for r in self.rows() if r[0] in ("#647", "ⓓ#647")), [
+            ("#647", "application/demo/domain_layer/guard.py:21"),
+            ("#647", "application/demo/domain_layer/union_alias.py:6"),
+        ])
+
+
+class RootTestFolderRegression(unittest.TestCase):
+    """#658 — 저장소 루트 `tests/` · `test/` 는 시험 자리가 아니다(사용자 2026-10-28 «BC 밖은 없다»).
+
+    ㄱ 그 아래 모든 `.py`(이름 무관 — 비었거나 docstring · 주석뿐인 `__init__.py` 만 뺌 · 루트 `tests/web/` · `test/web/` 는 web 몫)는
+    파일마다 한 줄 · 레포 루트 `conftest.py` 와 관할 밖 폴더(`scripts/` · 도구 폴더)는 보지 않는다.
+    ㄴ BC `test/` · `framework/test/` 안 파일이 그 이름의 루트 폴더가 있는 최상위 `tests` · `test` 패키지를 import 하면 그 파일 한 줄.
+    G2 귀속(N∖L)은 새 파일 · 새 루트 import 파일만 잡고, 기존 파일의 case 덧붙임은 줄이 그대로라 못 잡는다(받아들인 한계).
+    """
+
+    PLACE: str = "저장소 루트 시험 폴더 — 시험은 주인의 표준 시험 자리(BC `test/` · 전역 규칙은 `framework/test/unit/`)에 둔다"
+    IMPORT: str = ("저장소 루트 시험 폴더(`tests` · `test` 패키지)를 import 한다 — 필요한 fixture · 도우미는 이 시험의 표준 자리"
+                   "(`test/conftest.py` · `test/fake/`)에 새로 쓴다")
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="field-root-tests-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root: Path = Path(self.tmp.name) / "project"
+        self.env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+                        DJR_FINDINGS_JSON=str(Path(self.tmp.name) / "records.jsonl"),
+                        DJR_VIOLATIONS_DIR=str(Path(self.tmp.name) / "violations"))
+        for relative, text in {
+            "pytest.ini": "[pytest]\nDJANGO_SETTINGS_MODULE = config.settings.test\n",
+            "application/__init__.py": "",
+            "application/order/__init__.py": "",
+            "application/order/domain_layer/__init__.py": "",
+            "application/order/test/__init__.py": "",
+        }.items():
+            self.write(relative, text)
+
+    def write(self, relative: str, text: str = "") -> None:
+        path: Path = self.root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def lines_658(self) -> "list[str]":
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / "check-test-config.py"), str(self.root)],
+                                capture_output=True, text=True, env=self.env)
+        self.assertEqual(result.stderr, "")
+        self.assertIn(result.returncode, (0, 2), result.stdout)
+        return sorted(line.strip() for line in result.stdout.splitlines() if line.strip().startswith("[#658]"))
+
+    def test_root_test_folders_and_root_imports_are_one_line_per_file(self) -> None:
+        flagged: "dict[str, str]" = {
+            "tests/test_x.py": "def test_x() -> None:\n    assert True\n",
+            "tests/sub/conftest.py": "import pytest\n",
+            "tests/helpers.py": "X: int = 1\n",
+            "test/factories.py": "class OrderFactory:\n    pass\n",
+            "tests/support/__init__.py": "import pytest\n\n\n@pytest.fixture\ndef thing() -> int:\n    return 1\n",
+        }
+        quiet: "dict[str, str]" = {
+            "conftest.py": "import pytest\n",
+            "tests/__init__.py": "",
+            "test/__init__.py": '"""루트 시험 묶음."""\n',
+            "tests/sub/__init__.py": "# 묶음\n",
+            "tests/web/test_w.py": "def test_w() -> None:\n    assert True\n",
+            "test/web/x.py": "X: int = 1\n",
+            "tests/__pycache__/stale.py": "X: int = 1\n",
+            "scripts/test_y.py": "def test_y() -> None:\n    assert True\n",
+            "tools/test_z.py": "def test_z() -> None:\n    assert True\n",
+            # 이름만 비슷한 최상위 패키지 · 상대 import 는 루트 시험 폴더가 아니다.
+            "application/order/test/unit/test_clean.py": ("import testing_support\nimport testsuite\nfrom . import tests as local\n\n\n"
+                                                          "def test_clean() -> None:\n    assert local\n"),
+            # BC 운영 코드는 이 규칙의 대상이 아니다(상대 import).
+            "application/order/domain_layer/checks.py": "from .tests import probe\n",
+        }
+        importers: "dict[str, str]" = {
+            "application/order/test/unit/test_u.py": ("from tests.helpers import X\nimport tests.conftest\n\n\n"
+                                                      "def test_u() -> None:\n    assert X == 1\n"),
+            "framework/test/unit/test_f.py": "from test.factories import OrderFactory\n\n\ndef test_f() -> None:\n    assert OrderFactory\n",
+        }
+        for relative, text in {**flagged, **quiet, **importers}.items():
+            self.write(relative, text)
+        self.assertEqual(self.lines_658(), sorted(
+            [f"[#658] {relative}: {self.PLACE}" for relative in flagged]
+            + [f"[#658] {relative}: {self.IMPORT}" for relative in importers]))
+
+    def test_root_import_needs_the_root_folder(self) -> None:
+        # 루트 폴더가 없으면 그 이름은 루트 시험 폴더가 아니다(표준 라이브러리 `test` 패키지 등).
+        self.write("application/order/test/unit/test_stdlib.py",
+                   "from test import support\nimport tests.helpers\n\n\ndef test_stdlib() -> None:\n    assert support\n")
+        self.write("framework/test/unit/test_f.py", "import test.support\n")
+        self.assertEqual(self.lines_658(), [])
+
+    def test_root_folder_is_the_exact_name_holding_python(self) -> None:
+        # `.py` 없는 자료 폴더 `test/` 는 패키지가 아니다 — `test` import 는 표준 라이브러리다.
+        self.write("test/data/sample.json", "{}\n")
+        self.write("application/order/test/unit/test_stdlib.py",
+                   "from test.support import os_helper\n\n\ndef test_stdlib() -> None:\n    assert os_helper\n")
+        # 이름은 글자 그대로 — 대소문자를 가리지 않는 파일 시스템에서도 `Tests/` 는 `tests/` 가 아니다.
+        self.write("Tests/test_upper.py", "def test_upper() -> None:\n    assert True\n")
+        self.assertEqual(self.lines_658(), [])
+
+    def test_gate_attributes_only_new_root_files_and_new_root_importers(self) -> None:
+        self.write("tests/__init__.py")
+        self.write("tests/test_old.py", "def test_old() -> None:\n    assert True\n")
+        self.write("tests/helpers.py", "X: int = 1\n")
+        self.write("tests/web/conftest.py", "import pytest\n")
+        self.write("application/order/test/unit/test_old_root.py",
+                   "from tests.helpers import X\n\n\ndef test_old_root() -> None:\n    assert X == 1\n")
+        _git(self.root, "init", "-q")
+        _git(self.root, "add", "-A")
+        _git(self.root, "commit", "-q", "-m", "anchor")
+        anchor: str = _git(self.root, "rev-parse", "HEAD")
+        self.write("tests/test_new.py", "def test_new() -> None:\n    assert True\n")
+        self.write("tests/helpers2.py", "Y: int = 2\n")
+        self.write("application/order/test/unit/test_new_root.py",
+                   "from tests.helpers import X\n\n\ndef test_new_root() -> None:\n    assert X == 1\n")
+        self.write("tests/web/test_new_web.py", "def test_new_web() -> None:\n    assert True\n")
+        with (self.root / "tests/test_old.py").open("a", encoding="utf-8") as handle:
+            handle.write("\n\ndef test_old_more() -> None:\n    assert True\n")
+        with (self.root / "application/order/test/unit/test_old_root.py").open("a", encoding="utf-8") as handle:
+            handle.write("\n\ndef test_old_root_more() -> None:\n    assert X == 1\n")
+        env = dict(self.env)
+        env.pop("DJR_FINDINGS_JSON", None)
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / "registry_gate.py"), str(self.root), "--anchor", anchor],
+                                capture_output=True, text=True, env=env)
+        self.assertIn(result.returncode, (0, 2), result.stdout + result.stderr)
+        sections: "list[str]" = result.stdout.split("\n== ")
+        attributed: "list[str]" = next(s for s in sections if s.startswith("귀속(N∖L)")).splitlines()[1:]
+        residual: "list[str]" = next(s for s in sections if s.startswith("legacy 잔존")).splitlines()[1:]
+        self.assertEqual(sorted(line.strip() for line in attributed if "check-test-config.py :: [#658]" in line), [
+            f"check-test-config.py :: [#658] application/order/test/unit/test_new_root.py: {self.IMPORT}",
+            f"check-test-config.py :: [#658] tests/helpers2.py: {self.PLACE}",
+            f"check-test-config.py :: [#658] tests/test_new.py: {self.PLACE}",
+        ])
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("check-test-config.py: 3", [line.strip() for line in residual])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

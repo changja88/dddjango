@@ -262,6 +262,7 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
 - **#58** — `application/**/management/commands/` 를 만들지 않는다.
 - **#187** — 포트 선언에 BC 최상위 칸을 만들지 않는다 — 애그리거트에 안 붙는 포트는 `application_layer/port/` 에만 산다.
 - **#314** — `domain_layer/` 에 `specification/` 폴더를 두지 않는다.
+- **#658** — 저장소 루트의 `tests/` · `test/` 아래에는 `.py` 를 두지 않는다 — 이름과 무관하다(helpers · factories · fakes · conftest 포함 · 내용 없는 `__init__.py`(0바이트 · docstring · 주석뿐 — #655 와 같은 자)만 뺀다). BC `test/` · `framework/test/` 의 파일은 최상위 `tests` · `test` 패키지를 import 하지 않는다. 시험은 주인의 표준 시험 자리(BC `test/` · 전역 규칙은 `framework/test/unit/`)에 둔다. 레포 루트 `conftest.py`(공유 fixture 자리)와 루트 `tests/web/` · `test/web/`(web 시험)은 이 규칙 밖이다.
 
 ### `migrations/` — 생성물만
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->

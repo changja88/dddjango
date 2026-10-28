@@ -7,10 +7,11 @@ FROZEN 이므로 실측은 이 fixture 결정 레인만 쓴다.
 
 케이스: skeleton 7 + 기존 15종×2 + API-error 3종×2(--error-profile auto)
        + 신설 8종×2 + checker_lint 2 + 호출 계약 27 + 수정 사이클 레인 3×2 + 음성 · 양성 단독 레인
-       = exit 대조 116 + 의미 묶음 줄 대조 12(GROUP_CASES — 아래) = 128(실행 표 끝 «케이스» 줄이 실측이다).
+       = exit 대조 116 + 줄 대조 14(GROUP_CASES — 아래) = 130(실행 표 끝 «케이스» 줄이 실측이다).
 
 의미 묶음 줄 대조(2.28.0 · #654~#656 · 설계 7.4): exit 만 보는 레인은 ⓓ 후보 줄(exit 불산입)과
 줄 글자(#656 주어)를 못 본다 — 이 레인은 거름 규칙의 줄 전부를 글자 그대로 기대와 대조한다.
+같은 틀로 위반 픽스처에 더한 줄도 고정한다 — F4-126(#647 시험 본문 · 별칭) · #658(루트 시험 폴더).
 `--mutation` 은 설계 7.4 고침을 하나씩 옛 코드로 되돌린 사본(MUTATIONS)에서 이 레인을 돌려
 변이마다 한 줄 이상 어긋나는지(죽는지) 본다.
 
@@ -141,6 +142,10 @@ RUNTIME_CACHE: "dict[str, tuple[str, ...]]" = {
 }
 
 _D: str = "application/orders/domain_layer/"
+_PO: str = "application/orders/application_layer/order/place_order/"
+_M647: str = ("값 자리가 `{v}` 다 — 키가 정해진 값 묶음은 `TypedDict`(파싱한 JSON 은 `TypeAdapter` 검증 파싱)"
+              " · 조회표는 `dict[K, 구체 V]` · 통과 값은 `JsonValue`")
+_LEAK: str = " — 반환·속성에 남은 `object` 는 좁히지 않은 누수다"
 _ALL: str = ""
 _M652: str = (
     "wiring_material.py 는 결선 재료만 둔다 — `from application.orders.domain_layer.{m} import {c}` 는 허용 import 셋"
@@ -244,6 +249,20 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
      r"^\[#29[12]\] application/[a-z_]+/domain_layer/", (
         f"[#291] {_D}exception.py: BC 바로 밑 `domain_layer/exception.py` 를 두지 않는다 — 도메인 예외의 자리는 애그리거트 밑 `exception/` 과 공유 개념의 `shared_value_object/` 둘이다(#657)",
         "[#292] application/billing/domain_layer/exception: 예외의 자리는 넷으로 갈린다 — 한 애그리거트 업무 규칙은 `domain_layer/<aggregate>/exception/` · 여러 애그리거트가 함께 쓰는 개념은 `shared_value_object/`(#657) · 남에게 공개하는 실패는 OHS `contract/exception/` · 바깥 행위자는 `port/<capability>/exception.py` 다",
+    )),
+    # F4-126 — 시험 본문은 #647 차단만(주석 없는 지역 변수 · 반환 타입 없는 시험 함수 · assert 는 줄 없음) · 모듈 수준 별칭은 펼쳐 같은 자리로.
+    ("public_surface/bad_rules", "check-public-surface-annotation.py", "public_surface/bad_rules",
+     r"(/test/|record_alias_leak\.py)", (
+        f"[#647] {_PO}record_alias_leak.py:7: `payload_of()` 반환 타입의 {_M647.format(v='object')}{_LEAK}",
+        f"[#647] {_PO}record_alias_leak.py:11: `snapshot_of()` 반환 타입의 {_M647.format(v='object')}{_LEAK}",
+        f"[#647] application/orders/test/unit/test_record_leak.py:4: `_session_state()` 반환 타입의 {_M647.format(v='object')}{_LEAK}",
+        f"[#647] application/orders/test/unit/test_record_leak.py:9: `state` 주석의 {_M647.format(v='Any')}",
+    )),
+    # #658 — 루트 시험 폴더 파일 · 루트 시험 import 는 파일마다 한 줄(빈 `tests/__init__.py` · `tests/web/` 은 줄 없음).
+    ("test_config/bad_rules", "check-test-config.py", "test_config/bad_rules", r"^\[#658\]", (
+        "[#658] application/orders/test/unit/test_root_helper.py: 저장소 루트 시험 폴더(`tests` · `test` 패키지)를 import 한다"
+        " — 필요한 fixture · 도우미는 이 시험의 표준 자리(`test/conftest.py` · `test/fake/`)에 새로 쓴다",
+        "[#658] tests/helpers.py: 저장소 루트 시험 폴더 — 시험은 주인의 표준 시험 자리(BC `test/` · 전역 규칙은 `framework/test/unit/`)에 둔다",
     )),
 ]
 

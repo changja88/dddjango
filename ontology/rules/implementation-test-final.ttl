@@ -233,12 +233,18 @@ djr:R-1788 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-1789 a djr:Obligation ;
-    skos:prefLabel "테스트 의미군 위치의 단일 출처는 discipline-houserules §2"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1789@2026-08-22> .
+    skos:prefLabel "테스트 의미군 위치의 단일 출처는 discipline-houserules §1.2"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1789@2026-10-28> .
 
 <https://numchida.com/ns/djr#R-1789@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1789 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1789@2026-10-28> a djr:Expression ;
+    prov:specializationOf djr:R-1789 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1789@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-1790 a djr:Obligation ;
     skos:prefLabel "루트·공통 conftest 는 실제 공유 필요 성립 시에만 사용"@ko ;
@@ -1760,7 +1766,7 @@ djr:R-1932 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:statesNorm djr:R-1786, djr:R-1787, djr:R-1788, djr:R-1789 ;
-    djr:text "\nconftest.py는 디렉토리별로 배치할 수 있으며, pytest가 테스트 수집 시 각 디렉토리의 conftest.py를 자동으로 로드한다. 하지만 아래 구조는 생성 목록이 아니다. 입장 표의 `owner/path`에 실제 승인된 test artifact가 있는 branch만 만들고, 그 테스트가 실제 공유하는 fixture가 있을 때만 가장 좁은 공통 경로에 `conftest.py`를 둔다. 사용하지 않는 디렉터리·`conftest.py`·예시 test file·빈 package를 만들지 않는다. 의미군 위치의 단일 출처는 `discipline-houserules` §2다.\n\n"@ko .
+    djr:text "\nconftest.py는 디렉토리별로 배치할 수 있으며, pytest가 테스트 수집 시 각 디렉토리의 conftest.py를 자동으로 로드한다. 하지만 아래 구조는 생성 목록이 아니다. 입장 표의 `owner/path`에 실제 승인된 test artifact가 있는 branch만 만들고, 그 테스트가 실제 공유하는 fixture가 있을 때만 가장 좁은 공통 경로에 `conftest.py`를 둔다. 사용하지 않는 디렉터리·`conftest.py`·예시 test file·빈 package를 만들지 않는다. 의미군 위치의 단일 출처는 `discipline-houserules` §1.2다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/references/final.md/s022-4.2/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/references/final.md/s022-4.2> ;

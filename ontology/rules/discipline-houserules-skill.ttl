@@ -229,8 +229,8 @@ djr:R-3124 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3125 a djr:Obligation ;
-    skos:prefLabel "승인 artifact 는 기존 프로젝트 테스트 위치나 표준 위치(트리 136~142행)에 둔다"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3125@2026-09-09> .
+    skos:prefLabel "새 시험 파일은 입장 무관 표준 위치(BC test/ 자식 트리 136~142행 · 전역 규칙은 framework/test/unit/)에만 · update·remove 는 제자리(표준 밖 자리는 빚) · 표준 밖 기존 파일에 새 case 금지 · 새 BC 시험은 루트 tests·test 패키지 import 금지(BC test/conftest.py·test/fake/ 에 새로) · BC 밖 시험 옮김은 파이프라인 밖 운영 작업"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3125@2026-10-28> .
 
 <https://numchida.com/ns/djr#R-3125@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3125 ;
@@ -242,6 +242,12 @@ djr:R-3125 a djr:Obligation ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-amendment .
 
+<https://numchida.com/ns/djr#R-3125@2026-10-28> a djr:Expression ;
+    prov:specializationOf djr:R-3125 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3125@2026-09-09> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-redefinition .
+
 djr:R-3126 a djr:Prohibition ;
     skos:prefLabel "구조 규칙 자체는 테스트를 만들거나 기존 테스트를 자동 이동하지 않는다"@ko ;
     djr:currentExpression <https://numchida.com/ns/djr#R-3126@2026-08-22> .
@@ -251,12 +257,18 @@ djr:R-3126 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-3127 a djr:Prohibition ;
-    skos:prefLabel "한 프로젝트 안에서 레이아웃 혼용 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3127@2026-08-22> .
+    skos:prefLabel "한 프로젝트 안에서 표준 밖 새 시험 자리 금지 — 옮겨 가는 동안 옛 자리·표준 자리 공존은 빚(혼용 위반 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3127@2026-10-28> .
 
 <https://numchida.com/ns/djr#R-3127@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3127 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3127@2026-10-28> a djr:Expression ;
+    prov:specializationOf djr:R-3127 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3127@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
 
 djr:R-3128 a djr:Prohibition ;
     skos:prefLabel "혼용 금지 규칙만으로 기존 테스트 이동 권한이 생기지 않는다"@ko ;
@@ -319,8 +331,8 @@ djr:R-3133 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3134 a djr:Obligation ;
-    skos:prefLabel "관찰이 결정 입력인 축은 닫힌 목록 여섯"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3134@2026-09-01> .
+    skos:prefLabel "관찰이 결정 입력인 축은 닫힌 목록 다섯"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3134@2026-10-28> .
 
 <https://numchida.com/ns/djr#R-3134@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3134 ;
@@ -331,6 +343,12 @@ djr:R-3134 a djr:Obligation ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-3134@2026-08-22> ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-clarification .
+
+<https://numchida.com/ns/djr#R-3134@2026-10-28> a djr:Expression ;
+    prov:specializationOf djr:R-3134 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3134@2026-09-01> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3135 a djr:Prohibition ;
     skos:prefLabel "목록 밖 축에서 기존 실물의 관찰은 결정의 입력이 아니다"@ko ;
@@ -1037,14 +1055,14 @@ djr:R-3667 a djr:Exception ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
     djr:statesNorm djr:R-3124, djr:R-3125, djr:R-3126 ;
-    djr:text "2. **승인된 test artifact 가 실제 있을 때만 의미군으로 조직한다.** 중앙 test admission 이 `add/update` 한 artifact 또는 의미 보존 재조직이 별도 승인된 기존 artifact 만, 기존 프로젝트 테스트 위치나 표준 위치(BC `test/` 의 자식 — `final.md` §1 트리 136~142행)에 둔다. 구조 규칙 자체는 test file/case/assertion 을 만들거나 기존 테스트를 자동 이동하지 않는다.\n"@ko .
+    djr:text "2. **승인된 test artifact 가 실제 있을 때만 의미군으로 조직한다.** 새 시험 파일은 — 어느 입장(`add` 케이스를 담을 새 파일 · 승인된 `retain` 재조직의 목적지)에서 만들든 — 표준 위치(BC `test/` 의 자식 — `final.md` §1 트리 136~142행 · 전역 규칙의 시험은 `framework/test/unit/`)에만 만든다. `update` · `remove` 는 기존 파일 그 자리에서 고친다 — 표준 밖 자리는 빚이다. 표준 밖 기존 파일에 새 case 를 더하지 않는다. 새 BC 시험은 루트 시험 폴더(`tests` · `test` 패키지)를 import 하지 않는다 — 루트 fixture · 도우미가 필요하면 그 BC `test/conftest.py` · `test/fake/` 에 새로 쓴다. 이 규칙은 기존 시험을 옮길 권한을 주지 않는다 — BC 밖 시험(루트 시험 폴더 등)의 옮김은 파이프라인 밖 운영 작업이다(리팩토링 실행도 그 옮김을 하지 않는다). 구조 규칙 자체는 test file/case/assertion 을 만들거나 기존 테스트를 자동 이동하지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
     djr:statesNorm djr:R-3127, djr:R-3128 ;
-    djr:text "3. **한 프로젝트 안에서 레이아웃을 혼용하지 않는다.** 이 규칙만으로 기존 테스트 이동 권한이 생기지는 않는다.\n\n"@ko .
+    djr:text "3. **한 프로젝트 안에서 표준 밖 새 시험 자리를 만들지 않는다.** 표준으로 옮겨 가는 동안 옛 자리와 표준 자리가 함께 있는 것은 빚이지 혼용 위반이 아니다. 이 규칙만으로 기존 테스트 이동 권한이 생기지는 않는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
@@ -1058,7 +1076,7 @@ djr:R-3667 a djr:Exception ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
     djr:statesNorm djr:R-3134, djr:R-3135, djr:R-3136, djr:R-3137 ;
-    djr:text "**관찰이 결정 입력인 축은 닫힌 목록이다**(라운드 1 「트리 답습」·라운드 1′ 「배선 답습」의 봉인 — 2026-08-12): ① 오류 wire 계약(12-slot `preserve-established`) ② API 스택 «정체»(근거=소비자 의존) ③ 주석 언어(§5) ④ 도구·러너(§6.1) ⑤ 승인 test artifact 의 기존 위치(§1.2) ⑥ 지원 중 행동 계약. **여기 없는 축 — 파일트리·배선/등록·import 방향·테스트 규율·값 집합 선언·인증 경로·admin 구조·OpenAPI 문서 후가공 … — 에서 기존 실물의 관찰은 결정의 입력이 아니다.** 배선 «값»(#105~#112)은 Ninja 스택 조건부지만, ‹관찰 비입력› 원칙 자체는 무조건이다. 그리고 이 원칙은 **신규 산출물의 형태** 문장이다 — 승인 스코프 밖 기존 실물을 옮기거나 고칠 권한을 만들지 않는다(§1.1 판정 물음: 위반 판정은 빚 기록 권한일 뿐, 이동 권한은 G0 사용자 ⓐ 결정→리팩토링 슬라이스(슬라이스 0 · 리팩토링 모드 변경 슬라이스) 한 경로). 그리고 닫힌 목록의 관찰 금지 대상은 **대상 저장소의 기존 실물**이다 — 이번 슬라이스 산출물의 자기 형상은 이 축의 주어가 아니며, «동명 폴더 승격» 캐스케이드(아래) 판정의 유일한 입력이다.\n\n"@ko .
+    djr:text "**관찰이 결정 입력인 축은 닫힌 목록이다**(라운드 1 「트리 답습」·라운드 1′ 「배선 답습」의 봉인 — 2026-08-12): ① 오류 wire 계약(12-slot `preserve-established`) ② API 스택 «정체»(근거=소비자 의존) ③ 주석 언어(§5) ④ 도구·러너(§6.1) ⑤ 지원 중 행동 계약. **여기 없는 축 — 파일트리·배선/등록·import 방향·테스트 규율·값 집합 선언·인증 경로·admin 구조·OpenAPI 문서 후가공 … — 에서 기존 실물의 관찰은 결정의 입력이 아니다.** 배선 «값»(#105~#112)은 Ninja 스택 조건부지만, ‹관찰 비입력› 원칙 자체는 무조건이다. 그리고 이 원칙은 **신규 산출물의 형태** 문장이다 — 승인 스코프 밖 기존 실물을 옮기거나 고칠 권한을 만들지 않는다(§1.1 판정 물음: 위반 판정은 빚 기록 권한일 뿐, 이동 권한은 G0 사용자 ⓐ 결정→리팩토링 슬라이스(슬라이스 0 · 리팩토링 모드 변경 슬라이스) 한 경로). 그리고 닫힌 목록의 관찰 금지 대상은 **대상 저장소의 기존 실물**이다 — 이번 슬라이스 산출물의 자기 형상은 이 축의 주어가 아니며, «동명 폴더 승격» 캐스케이드(아래) 판정의 유일한 입력이다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b7> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;

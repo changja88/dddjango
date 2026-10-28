@@ -167,3 +167,5 @@ djr:R-3692 djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py
 djr:R-3693 djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
 
 djr:R-3694 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-3716 djr:enforcedBy <https://numchida.com/ns/djr#c/check-test-config.py> .

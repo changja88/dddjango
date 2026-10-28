@@ -22,12 +22,16 @@ Coordinator «리팩토링 모드» 절이 이 도구를 부른다. 리뷰어·a
                                                         명세 «바뀌는 것 목록» · «다른 BC 편집 목록» 검사 — --candidate 는
                                                         g1/<UTC>-candidate.json + 후보 digest · --applied 는 반영 대조 ·
                                                         --gate 는 G1 결정 줄 정합 + 최종 digest
-  refactor_audit.py deps <bc> --out <산출물 폴더>/deps/<시각>/
+  refactor_audit.py deps <bc> --out <산출물 폴더>/deps/<시각>/ --at <new|continue|dispatch>
                                                         BC 의존(SCC · 받는 쪽 · HTTP 소비 · 공유 표면 · 레인 겹침 · 보류) —
                                                         다른 작업 트리 옛 사본은 주 작업 트리 HEAD 판 기록으로 읽고(끝 판정은
-                                                        표식만) · 이 실행에 `G1 변경판 확정` 줄이 없으면 G0(web HTTP 소비로만
-                                                        선 겹침 · 보류는 예보) · 있으면 파견 직전(G1 확정판 밖 동작 V 0 이면
-                                                        그 겹침 · 보류를 세지 않음 · 늦게 G0 승인한 앵커 없는 리팩토링 실행은 안 셈)
+                                                        표식만) · 판정 시점은 조정자가 밝힌다(필수): new = 새 실행(이 폴더 앞 실행
+                                                        기록을 안 씀 · G0) · continue = 잇기(끝나지 않은 실행 줄 필수 · G1 확정
+                                                        유무로 G0/파견 직전 셈 · 맞물림은 이 실행 줄 G0 승인 값) · dispatch =
+                                                        파견 직전(실행 줄 · G1 확정 필수 · 앵커 없으면 대상 · 설계 낡음도 잰다).
+                                                        G0 은 web HTTP 소비로만 선 겹침 · 보류가 예보 · 파견 직전은 G1 확정판
+                                                        밖 동작 V 0 이면 그 겹침 · 보류를 세지 않음 · 늦게 G0 승인한 앵커 없는
+                                                        리팩토링 실행은 안 셈
   refactor_audit.py residual <산출물 폴더> [--candidates <검사기 출력>] [--finalize <시각>]
                                                         G2 의미 항목 잔존(결정적 바닥 → 리뷰어 재확인 묶음) — 리뷰어 확인
                                                         대상이 남은 첫 호출은 exit 0 + `M_m 미정`(판정은 --finalize) ·
@@ -42,6 +46,7 @@ from __future__ import annotations
 import argparse
 import ast
 import base64
+import fnmatch
 import hashlib
 import json
 import os
@@ -2299,6 +2304,12 @@ _RENAME_CASE: "re.Pattern[str]" = re.compile(
     r"([\w./-]+\.py)::([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)\s*(?:→|->)\s*([A-Za-z_]\w*)")
 _RENAME_IDS: "re.Pattern[str]" = re.compile(
     r"([\w./-]+\.py)::([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)\[([^\[\]|·`]+)\]\s*(?:→|->)\s*\[([^\[\]|·`]+)\]")
+# 세 번째 꼴 «칸»(설계 A 4판 A6 · F4-116 남은 것) — `재조직 — 칸 개명 <운영 경로>::<클래스>.<옛> → <새>` · owner/path = 그 칸을 쓰는
+# 시험 파일 하나(시험 파일마다 한 행). 케이스 키는 그대로다(behavior_guard 0F 가 받는다).
+FIELD_KIND: str = "칸"
+_FIELD_HEAD: "re.Pattern[str]" = re.compile(r"\s*재조직\s*[—–-]\s*칸\s+개명\s+(?=`?[\w./-]+\.py::)")
+_FIELD_RENAME: "re.Pattern[str]" = re.compile(
+    r"([\w./-]+\.py)::([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*(?:→|->)\s*([A-Za-z_]\w*)")
 UPDATE_DECISION: str = "update"
 REMOVE_DECISION: str = "remove"
 
@@ -2620,11 +2631,19 @@ def _reorg(row: AdmissionRow) -> bool:
 
 
 def _rename_duplicates(items: "list[dict]") -> "list[str]":
-    """같은 개명 행 두 번 · 한 옛 이름(경로 · 클래스 또는 케이스 · 옛)에 개명 행 둘 → red(옛 → 새 가 하나로 정해지지 않는다)."""
+    """같은 개명 행 두 번 · 한 옛 이름(경로 · 클래스 또는 케이스 · 옛)에 개명 행 둘 → red(옛 → 새 가 하나로 정해지지 않는다). 칸은 한
+    칸(운영 경로 · 클래스 · 옛)의 새 이름이 시험 파일을 건너 하나여야 한다(같은 개명을 시험 파일마다 한 행은 받는다)."""
     seen: "dict[tuple, dict]" = {}
+    fields: "dict[tuple, dict]" = {}
     reds: "list[str]" = []
     for it in items:
-        key: tuple = (it["kind"], it["path"], it.get("class") or it.get("case"), it["old"])
+        if it["kind"] == FIELD_KIND:
+            other: dict = fields.setdefault((it["source"], it["class"], it["old"]), it)
+            if other["new"] != it["new"]:
+                reds.append(f"개명 행 꼴 밖 — 한 옛 이름에 개명 행 둘: 칸 `{it['source']}::{it['class']}.{it['old']}` → "
+                            f"`{other['new']}` · `{it['new']}`")
+                continue
+        key: tuple = (it["kind"], it["path"], it.get("source"), it.get("class") or it.get("case"), it["old"])
         first: "dict | None" = seen.setdefault(key, it)
         if first is not it:
             text: str = "같은 개명 행이 두 번" if first == it else "한 옛 이름에 개명 행 둘"
@@ -2637,6 +2656,8 @@ def _rename_row_clashes(renamed: "list[tuple[dict, str]]", rows: "list[tuple[str
     이름으로 묶인 그 행이 개명으로 그 이름을 받은 다른 케이스에 걸린다(행 둘을 든다)."""
     out: "list[str]" = []
     for item, text in renamed:
+        if item["kind"] == FIELD_KIND:                   # 칸 개명은 케이스 키가 그대로 — 겹침 대조 밖
+            continue
         scope: str = f"{item['class']}::" if item.get("class") else ""
         new: str = (f"{item['path']}::{item['case']}[{item['new']}]" if item["kind"] == "ids"
                     else f"{item['path']}::{scope}{item['new']}")
@@ -2650,7 +2671,10 @@ def _rename_row_clashes(renamed: "list[tuple[dict, str]]", rows: "list[tuple[str
 def _rename_item(row: AdmissionRow) -> "tuple[dict | None, str]":
     """retain 재조직 행의 «개명» 항목(G1 스냅숏 `retain_rows[].renames` 원소 — behavior_guard 0T · 0F 가 기준 판에 먼저 적용) —
     (항목, red 사유). 개명 행이 아니면 (None, ""). 케이스 = {kind 케이스, path, class(없으면 None · 중첩은 `A::B`), old, new} ·
-    ids = {kind ids, path, case(`[클래스::]케이스`), old, new}. 꼴 밖 · 옛 = 새 · owner/path 파일 ≠ 개명 경로면 red."""
+    ids = {kind ids, path, case(`[클래스::]케이스`), old, new} · 칸 = `_field_item`. 꼴 밖 · 옛 = 새 · owner/path 파일 ≠ 개명 경로면 red."""
+    field = _FIELD_HEAD.match(row.candidate)
+    if field is not None:
+        return _field_item(row, row.candidate[field.end():].replace("`", "").strip())
     head = _RENAME_HEAD.match(row.candidate)
     if head is None:
         return None, ""
@@ -2677,6 +2701,27 @@ def _rename_item(row: AdmissionRow) -> "tuple[dict | None, str]":
     if os.path.normpath(row.path or "").replace(os.sep, "/") != norm:
         return None, f"개명 행 owner/path 파일 `{row.path}` ≠ 개명 경로 `{item['path']}`(그 파일이 0F 허용 파일이 된다)"
     return item, ""
+
+
+def _field_item(row: AdmissionRow, rest: str) -> "tuple[dict | None, str]":
+    """칸 개명 행 → {kind 칸, path 시험 파일(owner/path), source 운영 경로, class, old, new}. 꼴 밖(클래스 하나 · 한 행에 하나) · 옛 =
+    새 · 저장소 밖 경로 · owner/path 가 시험 파일이 아니면 red. 운영 칸이 옛 → 새 로 바뀌었는지 · 밖 계약 클래스인지는 behavior_guard 가
+    창에서 본다."""
+    m = _FIELD_RENAME.fullmatch(rest)
+    if m is None:
+        return None, (f"칸 개명 행 꼴 밖 — «{row.candidate[:80]}» 가 `재조직 — 칸 개명 <운영 경로>::<클래스>.<옛> → <새>` 가 아니다"
+                      "(클래스 하나 · 한 행에 하나)")
+    if m.group(3) == m.group(4):
+        return None, f"칸 개명 행 꼴 밖 — «{row.candidate[:80]}» 옛 = 새"
+    source: str = os.path.normpath(m.group(1)).replace(os.sep, "/")
+    path: str = os.path.normpath(row.path or "").replace(os.sep, "/")
+    for where in (source, path):
+        if where == ".." or where.startswith(("../", "/")):
+            return None, f"칸 개명 행 꼴 밖 — «{row.candidate[:80]}» 경로 `{where}` 가 저장소 상대 경로가 아니다"
+    if not _is_test_path(path):
+        return None, (f"칸 개명 행 owner/path 파일 `{row.path}` 가 시험 파일이 아니다(그 칸을 쓰는 시험 파일 하나 — 0F 허용 파일이 "
+                      "된다)")
+    return {"kind": FIELD_KIND, "path": path, "source": source, "class": m.group(2), "old": m.group(3), "new": m.group(4)}, ""
 
 
 def _row_v(row_text: str, case: str, links: "list[tuple[str, str, str]]") -> "str | None":
@@ -3674,6 +3719,49 @@ def _write_candidate(folder: Path, snap: dict, digest: str, spec: SpecChanges, r
     return path
 
 
+COLLECT_OUT: str = "확인 필요: 실행 정의 밖이거나 skip 인 편집 시험: "
+COLLECT_NEW: str = "확인 필요: 수집 꼴 밖 새 시험 파일: "
+
+
+def _collect_notes(project: Path, folder: Path, spec: SpecChanges) -> "list[str]":
+    """G1 관문의 «확인 필요» 줄(설계 A5 — red 아님) — 결속한 지원 기록(가장 새 «지원»)의 수집 파일(g0-collect `keys` 의 파일)과 이 실행이
+    고칠 시험 모듈(명세 file-plan · 다른 BC 편집 목록 · 입장 표 owner/path 가운데 이미 있고 · 프로젝트 `python_files` 에 맞고 · 정적
+    케이스가 있는 것)을 견준다. 빠진 모듈은 «실행 정의 밖이거나 skip» · 입장 표 `add` 행의 없는 파일이 수집 꼴(`python_files` ·
+    `testpaths`) 밖이면 «수집 꼴 밖 새 시험 파일». conftest · 팩토리 · 시험 자료는 수집 파일이 아니라 견주지 않는다."""
+    bg = _guard_module()
+    record: "Path | None" = _latest_support(folder)
+    keys: object = None
+    if record is not None:
+        try:
+            keys = _read_json_escaped(record / "g0-collect.json").get("keys")  # type: ignore[union-attr]
+        except (OSError, ValueError, AttributeError):
+            keys = None
+    collected: "set[str]" = ({k[0] for k in keys.values() if isinstance(k, list) and k and isinstance(k[0], str)}
+                             if isinstance(keys, dict) else set())
+    config: "dict[str, str]" = bg._pytest_config(project)
+    patterns: "list[str]" = list(bg._config_list(config, "python_files") or bg.DEFAULT_TEST_FILES)
+
+    def norm(path: str) -> str:
+        return os.path.normpath(path).replace(os.sep, "/")
+    rows: "list[tuple[str, str]]" = [(r.decision, norm(m.group(1))) for r in spec.rows
+                                     for m in _FILE_ADDR.finditer(r.owner_path.replace("`", " "))]
+    edited: "list[str]" = list(dict.fromkeys([norm(p) for p in _file_plan(spec.text) or []] + [norm(e["path"]) for e in spec.edits]
+                                             + [p for _d, p in rows]))
+    notes: "list[str]" = []
+    for path in edited:
+        f: Path = project / path
+        if (path.startswith("../") or not path.endswith(".py") or not f.is_file()
+                or not any(fnmatch.fnmatchcase(f.name, pat) for pat in patterns)):
+            continue
+        if path not in collected and bg._test_cases(f.read_text(encoding="utf-8", errors="replace"), config):
+            notes.append(f"{COLLECT_OUT}{path}")
+    for decision, path in dict.fromkeys(rows):
+        if decision == "add" and path.endswith(".py") and not path.startswith("../") and not (project / path).exists() \
+                and not bg._collectible(path, config):
+            notes.append(f"{COLLECT_NEW}{path}")
+    return list(dict.fromkeys(notes))
+
+
 def cmd_changes(project: Path, folder: Path, mode: str, applied: "Path | None", baseline: "Path | None") -> int:
     """`changes <폴더> [--candidate | --applied <후보> | --gate] [--baseline <창 open 기록>]`.
 
@@ -3705,8 +3793,11 @@ def cmd_changes(project: Path, folder: Path, mode: str, applied: "Path | None", 
             cand_digest = snapshot_digest(cand_snap)                                # ⓒ 후보 스냅숏 전체 digest
             path: Path = _write_candidate(folder, cand_snap, cand_digest, spec, rows)  # ⓓ 같은 rows 로 곁 자료
             tail = f" · 후보 digest {cand_digest} → {path}"
+    notes: "list[str]" = _collect_notes(project, folder, spec) if mode in ("candidate", "gate") else []
     for w in reds:
         print(f"  red: {w}")
+    for n in notes:
+        print(f"  {n}")
     retained: int = sum(1 for r in spec.rows if r.decision == "retain")
     if mode != "applied" and retained and not any(_reorg(r) for r in spec.rows):
         print(f"  알림: retain 행 {retained} 가운데 재조직 표지 0 — 0F 허용 파일 없음(candidate 칸에 재조직 낱말이 있어야 재조직 행이다)")
@@ -3724,7 +3815,7 @@ def cmd_changes(project: Path, folder: Path, mode: str, applied: "Path | None", 
           f"retain 재조직 {len(spec.retain)}{f'(개명 {renamed})' if renamed else ''} · "
           f"update 케이스 {len(updates)}(V 밖 {sum(1 for u in updates if u['v'] is None)})"
           f" · remove 케이스 {len(removes)}(V 밖 {sum(1 for u in removes if u['v'] is None)})"
-          f"{base_text} · red {len(reds)}{' · ' + mode if mode != 'check' else ''}"
+          f"{base_text}{f' · 확인 필요 {len(notes)}' if notes else ''} · red {len(reds)}{' · ' + mode if mode != 'check' else ''}"
           f"{tail if not reds or mode == 'applied' else ''}")
     return EXIT_RED if reds else EXIT_OK
 
@@ -3779,6 +3870,17 @@ def _doc_ids(tree: ast.AST) -> "set[int]":
             if isinstance(st, ast.Expr) and isinstance(st.value, ast.Constant) and isinstance(st.value.value, str):
                 docs.add(id(st.value))
     return docs
+
+
+_DOC_KWARGS: "frozenset[str]" = frozenset({"description", "summary"})   # 설명 글 키워드 인자(라우트 데코레이터 · Schema Field)
+
+
+def _doc_kwarg_ids(tree: ast.AST) -> "set[int]":
+    """호출의 설명 글 키워드 인자(`description=` · `summary=`) 값 아래 상수 노드 id(f-string 조각 · `_()` 감싸기 포함) — 부르는 글이
+    아니다(HTTP 소비 글에서만 뺀다 · 점 · 경로 참조는 그대로)."""
+    return {id(n) for call in ast.walk(tree) if isinstance(call, ast.Call)
+            for kw in call.keywords if kw.arg in _DOC_KWARGS
+            for n in ast.walk(kw.value) if isinstance(n, ast.Constant)}
 
 
 _LINE_ENDS: str = "\n\r\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029"      # str.splitlines 의 줄 끝 — 지운 글도 줄 번호가 같게
@@ -3916,6 +4018,7 @@ def _json_strings(obj: object) -> "list[str]":
             stack.extend(cur)
     return out
 DEPS_STOP_EXIT: int = EXIT_RED
+DEPS_AT: "tuple[str, ...]" = ("new", "continue", "dispatch")   # deps 판정 시점(조정자가 밝힌다 — 설계 A0)
 
 
 def _git_ro(project: Path, *args: str) -> str:
@@ -4149,6 +4252,7 @@ class DepsScan:
         src_bc, src_spot = self._owner(f)
         src_owner: str = src_bc or f"@{src_spot}"
         docs: "set[int]" = _doc_ids(tree)                  # 문장 자리의 문자열(docstring · 주석 대용)은 참조가 아니다
+        notes: "set[int]" = _doc_kwarg_ids(tree)           # 설명 글 키워드 인자 — HTTP 소비 글 아님(설계 A1)
         mods: "set[str]" = self.imports.setdefault(f, set())
         lits: "list[tuple[int, str]]" = self.literals.setdefault(f, [])
 
@@ -4184,7 +4288,7 @@ class DepsScan:
                     emit(node, "import", tp, None if tp is cand else a.name)
             elif isinstance(node, ast.Constant) and isinstance(node.value, str) and id(node) not in docs:
                 s: str = node.value
-                if "/" in s:
+                if "/" in s and id(node) not in notes:
                     lits.append((node.lineno, s))
                 for m in _DOTTED.finditer(s):
                     if m.group(1) in self.bcs:
@@ -4222,7 +4326,7 @@ class DepsScan:
                      self.auth_label)
             elif isinstance(node, ast.Constant) and isinstance(node.value, (str, bytes)):   # 바이트 상수 · doctest docstring
                 v: str = node.value.decode("latin-1") if isinstance(node.value, bytes) else node.value
-                if "/" in v and (isinstance(node.value, bytes) or ">>>" in v):
+                if "/" in v and (isinstance(node.value, bytes) or ">>>" in v) and id(node) not in notes:
                     lits.append((node.lineno, v))
 
     def _surface_blind(self) -> "dict[str, list[str]]":
@@ -4591,6 +4695,8 @@ class ActiveRun:
         self.refactor_g0: "str | None" = None            # 앵커 없는 리팩토링 실행의 실행 줄 G0 승인 값(맞물림 — §A3)
         self.folder: str = ""                            # 실행 폴더 이름(묶기 · 맞물림 사전순)
         self.refactor: bool = False                      # 리팩토링 모드 실행(엮인 BC 동시 금지 — 공급 BC 도 BC 단위로 센다)
+        self.refactor_bcs: "set[str]" = set()            # 리팩토링 실행의 대상 BC(audit plan.md BC ∪ 폴더 이름 — file-plan BC 와
+                                                         # 섞지 않는다 · 공급자 상태 — 설계 A3)
         self.known: "set[str]" = set()                   # 믿는 고침 목록(이번 실행 승인 명세 file-plan · web 파일 · 미착륙 커밋 경로)
         self.unknown_why: str = ""                       # 기능 실행의 고침 목록을 못 믿는 까닭(빈 글 = 믿음)
 
@@ -4612,6 +4718,7 @@ DECODE_RESUME: str = "그 기록을 UTF-8 로 고친 뒤 다시 시작"
 _RUN_BOUNDARY_HEAD: str = "- 실행 경계 —"
 _PREGATE_BASE_HEAD: str = "- pre-gate 기준선 —"
 _PREGATE_SECTION: "re.Pattern[str]" = re.compile(r"^## pre-gate 예보 — \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z · ")
+_NO_FORECAST: str = "이번 실행 pre-gate 예보가 없다 — 명세가 앞 실행 것일 수 있다"
 
 
 def _spec_doubt(report: str, g0: "str | None") -> str:
@@ -4632,7 +4739,7 @@ def _spec_doubt(report: str, g0: "str | None") -> str:
         if bases > 1:
             return f"pregate-report.md 에 실행 경계 행이 없는데 pre-gate 기준선 행이 {bases} — 명세가 앞 실행 것일 수 있다"
     if not any(_PREGATE_SECTION.match(ln) for ln in lines[bounds[-1] + 1 if bounds else 0:]):
-        return "이번 실행 pre-gate 예보가 없다 — 명세가 앞 실행 것일 수 있다"
+        return _NO_FORECAST
     return ""
 Reader = Callable[[str], "bytes | None"]                 # 실행 폴더 안 기록 이름 → 바이트(없으면 None · 읽기 실패는 OSError)
 
@@ -4702,6 +4809,21 @@ def _scope_run_line(folder: Path) -> "str | None":
         return None
 
 
+def _own_run_line(own: Path) -> "str | None":
+    """이 실행 폴더 refactor-scope.md 의 실행 줄 — 삼키지 않는 읽기(설계 A0): 파일이 없으면 None · 못 열거나 UTF-8 로 못 읽으면
+    실행 불능(판정 시점 · 맞물림을 가를 수 없다 — fail-closed)."""
+    path: Path = own / "refactor-scope.md"
+    if not path.exists() and not path.is_symlink():
+        return None
+    try:
+        return _run_line(path.read_text(encoding="utf-8"))
+    except UnicodeDecodeError as exc:
+        raise ToolError(f"이 실행 폴더 {path} 를 UTF-8 로 못 읽는다({exc.start}바이트 {exc.reason}) — 판정 시점 · 맞물림을 "
+                        f"가를 수 없다") from None
+    except OSError as exc:
+        raise ToolError(f"이 실행 폴더 {path} 를 못 읽는다({type(exc).__name__}) — 판정 시점 · 맞물림을 가를 수 없다") from None
+
+
 def _dddjango_run(read: Reader, name: str, where: str, label: str, bc: str) -> "ActiveRun | None":
     """dddjango 실행 폴더(디스크 사본 · MH 판 기록) — 실행 줄에 G2 승인이 없을 때만 활성(실행 줄 없음 = 끝난 것). 기록을 UTF-8 로 못
     읽으면 그 경로를 단 보류다(실행 줄을 못 읽으면 끝인지 모르므로 활성으로 센다 — F4-108)."""
@@ -4719,9 +4841,13 @@ def _dddjango_run(read: Reader, name: str, where: str, label: str, bc: str) -> "
             g0 = re.search(r"실행 · G0 승인 (\S+)", line)
             run.refactor_g0 = g0.group(1) if g0 else None
         if am:
+            nm = re.search(r"(?:^|-)refactor-([a-z0-9-]+)$", name)
+            if nm:
+                run.refactor_bcs.add(nm.group(1).replace("-", "_"))
             pm = re.search(r"^- BC: `([^`]+)`", _record_text(read, plan_name.replace("*", am.group(1)), where), re.M)
             if pm:
                 run.bcs.add(pm.group(1))
+                run.refactor_bcs.add(pm.group(1))
             fm = re.search(r"-refactor-([a-z0-9-]+)$", name)
             if not run.bcs and fm:
                 run.bcs.add(fm.group(1).replace("-", "_"))
@@ -5103,7 +5229,9 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan", w
     주 작업 트리(`worktree list` 첫 비-bare · HEAD = MH)의 실행 폴더는 디스크 사본으로 판정한다(그 사본은 자기 변경이거나 MH 판과 같다).
     다른 작업 트리 T 의 실행 폴더 d 는 차례로 ① 자기 변경(d 안 경로가 `T ^MH` 머지 아닌 커밋 경로에 있음 · 기록 파일 디스크 바이트가 T
     커밋본과 다름 · 커밋본에 없음 · 디스크에 없음 · d 가 T 커밋본에 없음) → 그 사본 ② MH 에 없음 → «이 트리가 만든 폴더»면 그 사본 ·
-    아니면 MH 에서 지운 실행(뺌) ③ 그 밖 → MH 판 기록((종류, 폴더)마다 한 번 · 주 작업 트리 사본이 MH 판과 같으면 그 판정을 다시 쓴다).
+    아니면 MH 에서 지운 실행(뺌) ③ 이 실행 폴더와 이름이 같은 `.dddjango` 폴더 → 뺌(이 폴더 옛 사본 — MH 판은 이 실행 자신이거나 버린
+    앞 실행 기록이다 · 그 폴더가 정말 다른 곳에서 돌면 ① 로 디스크 판정에 잡힌다) ④ 그 밖 → MH 판 기록((종류, 폴더)마다 한 번 · 주 작업
+    트리 사본이 MH 판과 같으면 그 판정을 다시 쓴다).
     표식 파일을 먼저 견주고 T · MH 표식이 같고 MH 판이 끝이면 나머지 기록은 견주지 않는다. 활성 실행에는 그 트리의 `T ^MH ^THIS` 경로
     (주 작업 트리는 `--first-parent MH ^THIS`)를 덧씌우고, (종류, 폴더 이름)이 같은 활성 실행은 하나로 묶는다."""
     me: Path = project.resolve()
@@ -5117,7 +5245,7 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan", w
     main_judged: "dict[str, ActiveRun | None]" = {}       # 주 작업 트리 디스크 판정(폴더 → 판정)
     need_mh: "dict[tuple[str, str], list[tuple[str, set[str], Path]]]" = {}   # MH 판 판정할 (종류, 폴더) → [(표기, 덧씌울 경로, 사본)]
     holds: "list[ActiveRun]" = []
-    seen: "dict[str, int]" = {"mh": 0, "gone": 0}
+    seen: "dict[str, int]" = {"mh": 0, "gone": 0, "own_old": 0}
     webs: int = 0
     this_mh: "list[str]" = []                              # 이 트리 내주는 쪽 폴더 가운데 MH 판으로 읽을 것
     this_gone: "list[str]" = []                            # 이 트리 내주는 쪽 폴더 가운데 MH 에서 지운 실행
@@ -5235,6 +5363,9 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan", w
                 if run is not None:
                     copies.setdefault((kind, d.name), []).append((where, run, overlay))
                 continue
+            if own_r is not None and root != me and kind == "dddjango" and d.name == own_r.name:
+                seen["own_old"] += 1                       # 이 폴더 옛 사본(그 트리 변경 아님) — 이 실행 자신이거나 버린 앞 실행
+                continue
             seen["mh"] += committed != mh_idx[rel]         # 옛 사본(커밋본 기록이 MH 판과 다름)을 MH 판으로 읽음
             need_mh.setdefault((kind, rel), []).append((where, overlay, d))
             this_mh += [rel] if root == me and rel in (wanted or ()) else []
@@ -5317,6 +5448,7 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan", w
         g0s: "list[str | None]" = [r.refactor_g0 for _t, r, _o in items]
         out.refactor_g0 = None if None in g0s else min(g0s)   # type: ignore[type-var]
         out.refactor = any(r.refactor for _t, r, _o in items)
+        out.refactor_bcs = {b for _t, r, _o in items for b in r.refactor_bcs}
         runs.append(out)
     seen.update(runs=len(copies), copies=sum(len(v) for v in copies.values()))
     return runs, len(trees), webs, seen, scopes
@@ -5553,6 +5685,11 @@ def _supplier_folders(project: Path, supplier: str) -> "list[Path]":
     return sorted({*base.glob(f"*-refactor-{kebab}"), *base.glob(f"refactor-{kebab}")}) if base.is_dir() else []
 
 
+def _refactor_folders(supplier: str, pool: "list[ActiveRun]") -> "list[str]":
+    """활성 실행 가운데 그 공급자를 대상 BC 로 하는 리팩토링 실행의 폴더(`.dddjango/<이름>`) — 설계 A3."""
+    return sorted({f".dddjango/{r.folder}" for r in pool if r.kind == "dddjango" and r.refactor and supplier in r.refactor_bcs})
+
+
 def _supplier_state(project: Path, folders: "list[Path]", scopes: "dict[str, bytes | None]") -> str:
     """직접 공급자의 정리 상태 — 그 폴더들 `refactor-scope.md` 의 G2 승인 리팩토링 실행 · 남은 재상정 수. 기록은 A1 과 같은 판으로
     읽는다(`scopes` 에 있으면 그 판 — None 은 읽지 않음 · 없으면 디스크 사본). 정리 실행이 없는데 UTF-8 로 못 읽은 기록이 있으면
@@ -5585,6 +5722,177 @@ def _supplier_state(project: Path, folders: "list[Path]", scopes: "dict[str, byt
     return "미정리"
 
 
+STALE_TARGET_FIX: str = "→ 처분: main 받기 → 폐기 → 새 실행"
+STALE_DESIGN_FIX: str = "→ 처분: 수정 모드 2번(G1′)"
+STALE_DISCARD_FIX: str = "→ 처분: 폐기"
+STALE_REPORT_FIX: str = "→ coder 파견 입력 · G2 배너에 싣는다"
+# 설계 기준선 모름 갈래(출력 `설계 기준선 모름(<갈래>): <까닭> → 처분: …`) — 경계 값 다름만 폐기 · 그 밖은 G1′
+DOUBT_BOUNDARY: str = "경계 값 다름"                     # 마지막 실행 경계 값 ≠ 이 실행 G0 승인 값 · 경계 없이 기준선 행 둘 이상
+DOUBT_SPEC: str = "명세 없음"                            # 이 실행 명세 없음 · 못 읽음
+DOUBT_FORECAST: str = "예보 절 없음"                     # pregate-report.md 없음 · 마지막 경계 뒤 예보 절 없음
+DOUBT_SHA: str = "기준선 SHA 못 풂"                      # 예보 절에 기준선 SHA 줄 없음 · 커밋으로 못 풂
+DOUBT_DIFF: str = "차분 못 잼"                           # 기준선 뒤 git 차분 실패
+_SHA: "re.Pattern[str]" = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
+
+
+class Stale:
+    """파견 직전 낡음(설계 A4) — 대상 · 설계 줄(출력 차례: 대상 → 설계) · 보고만 줄 · 파견을 세우나."""
+
+    def __init__(self) -> None:
+        self.target: "list[str]" = []                    # 대상 낡음 · 대상 기준 모름
+        self.design: "list[str]" = []                    # 설계 낡음 · 설계 기준선 모름
+        self.report: "list[str]" = []                    # 설계 낡음(넓힌 공급 면 — 보고만)
+        self.skipped: str = ""                           # 판정 밖 까닭(빈 글 = 쟀다)
+
+
+def _commit_of(project: Path, sha: str) -> "str | None":
+    """기록된 SHA(16진 40 · 64)를 이 저장소 커밋으로 푼 이름 — 꼴 밖이거나 못 풀면 None."""
+    if not _SHA.fullmatch(sha):
+        return None
+    try:
+        return _git_ro(project, "rev-parse", "--verify", "--quiet", f"{sha}^{{commit}}").strip() or None
+    except subprocess.CalledProcessError:
+        return None
+
+
+def _diff_names(project: Path, revs: "list[str]", specs: "list[str]") -> "set[str]":
+    """커밋 차분 경로(프로젝트 상대) — pathspec 으로만 좁히고(`--relative` · 글자 비교 없음) `--no-renames` 로 옛 · 새 경로 모두."""
+    if not specs:
+        return set()
+    out: str = _git_ro(project, *_GIT_PINS, "diff", "--name-only", "-z", "--no-renames", "--relative", *revs, "--",
+                       *(f":(literal){p}" for p in specs))
+    return {p for p in out.split("\0") if p}
+
+
+def _stale_changes(project: Path, base: str, head: str, mh: str, specs: "list[str]") -> "tuple[set[str], set[str]]":
+    """(`<기준>..HEAD` 경로, `<기준>...<MH>` 경로 가운데 기준 대 MH 내용이 다른 것) — MH = HEAD 면 둘째는 비었다. 체리픽 · squash 로
+    받은 착륙(조상 아님 · 내용 같음)은 빠진다. git 이 못 하면(머지 기준 없음 등) CalledProcessError."""
+    lane: "set[str]" = _diff_names(project, [base, head], specs)
+    if mh == head:
+        return lane, set()
+    tri: "set[str]" = _diff_names(project, [f"{base}...{mh}"], specs)
+    return lane, _diff_names(project, [base, mh], sorted(tri)) if tri else set()
+
+
+def _target_base(own: Path, line: str) -> "tuple[str | None, str]":
+    """대상 낡음 기준 — 이 실행 audit `plan.md` 의 `- HEAD` 값(없으면 None, 까닭)."""
+    am = re.search(r"모드 리팩토링 · audit (\S+)", line)
+    if not am:
+        return None, "실행 줄에 `모드 리팩토링 · audit <시각>` 이 없다"
+    stamp: str = am.group(1)
+    if "/" in stamp or "\\" in stamp or stamp in (".", ".."):
+        return None, f"실행 줄 audit 값 `{stamp}` 이 폴더 이름이 아니다"
+    plan: Path = own / "audit" / stamp / "plan.md"
+    try:
+        text: str = plan.read_text(encoding="utf-8")
+    except (FileNotFoundError, NotADirectoryError):
+        return None, f"audit plan.md 가 없다 — {plan}"
+    except (OSError, UnicodeDecodeError) as exc:
+        return None, f"audit plan.md 를 못 읽는다({type(exc).__name__}) — {plan}"
+    m = re.search(r"^- HEAD (\S+)[ \t]*$", text, re.M)
+    return (m.group(1), "") if m else (None, f"audit plan.md 에 `- HEAD <SHA>` 줄이 없다 — {plan}")
+
+
+def _design_base(report: str) -> "tuple[str | None, str, str]":
+    """설계 낡음 기준 — 마지막 실행 경계 뒤(없으면 전부) 마지막 `## pre-gate 예보` 절의 첫 `- 기준선 SHA:` 값 · 못 읽으면 (None, 갈래,
+    까닭)."""
+    lines: "list[str]" = report.split("\n")
+    bounds: "list[int]" = [i for i, ln in enumerate(lines) if ln.startswith(_RUN_BOUNDARY_HEAD)]
+    run_lines: "list[str]" = lines[bounds[-1] + 1:] if bounds else lines
+    starts: "list[int]" = [i for i, ln in enumerate(run_lines) if _PREGATE_SECTION.match(ln)]
+    if not starts:
+        return None, DOUBT_FORECAST, _NO_FORECAST
+    base_line: str = next((ln for ln in run_lines[starts[-1]:] if ln.startswith("- 기준선 SHA:")), "")
+    m = re.search(r"`([0-9a-f]+)`", base_line)
+    return (m.group(1), "", "") if m else (None, DOUBT_SHA, "이번 실행 마지막 pre-gate 예보 절에 `- 기준선 SHA: `<SHA>`` 가 없다")
+
+
+def _shown(paths: "list[str]", cap: int = 5) -> str:
+    return " · ".join(paths[:cap]) + (f" 외 {len(paths) - cap}" if len(paths) > cap else "")
+
+
+def _dispatch_stale(project: Path, own: Path, bc: str, line: str, faces: "dict[str, set[str]]",
+                    widened: "dict[str, str]") -> Stale:
+    """파견 직전 낡음(설계 A4) — 대상 낡음: audit `- HEAD` 뒤 `application/<bc>/` 커밋 차분 · 설계 낡음: 이 실행 예보 기준선 뒤 명세
+    file-plan ∪ 다른 BC 편집 목록 ∪ 공급 면 커밋 차분(넓힌 공급 면만 바뀌었으면 보고만) · 기준을 못 읽거나 못 풀면 «모름» 줄.
+    작업 트리 미커밋은 보지 않는다. MH(주 작업 트리 HEAD) · HEAD 를 모르면 실행 불능. 이 실행 pregate-report.md · 명세를 UTF-8 로
+    못 읽으면 실행 불능(G1′ 로도 풀리지 않는다)."""
+    out: Stale = Stale()
+    try:
+        head: str = _git_ro(project, "rev-parse", "--verify", "HEAD").strip()
+        trees: "list[tuple[Path, str]]" = _worktrees(project)
+    except subprocess.CalledProcessError as exc:
+        raise ToolError(f"낡음 판정 — HEAD · 작업 트리 목록을 못 읽는다(git exit {exc.returncode})") from None
+    mh: str = trees[0][1] if trees else head
+    if not _commit_name(head) or not _commit_name(mh):
+        raise ToolError(f"낡음 판정 — HEAD({head or '없음'}) · 주 작업 트리 HEAD({mh or '없음'})가 커밋 이름이 아니다")
+    sha, why = _target_base(own, line)
+    base: "str | None" = _commit_of(project, sha) if sha is not None else None
+    if sha is not None and base is None:
+        why = f"audit `- HEAD {sha[:12]}` 를 이 저장소 커밋으로 못 푼다"
+    if base is not None:
+        try:
+            lane, main = _stale_changes(project, base, head, mh, [f"application/{bc}/"])
+        except subprocess.CalledProcessError as exc:
+            base, why = None, f"audit 기준 {sha[:12]} 뒤 커밋 차분을 못 잰다(git exit {exc.returncode} — {exc.stderr.strip()[:80]})"
+        else:
+            if lane | main:
+                out.target.append(f"대상 낡음: {_shown(sorted(lane | main))} — audit 기준 {base[:12]} 뒤 대상 BC 커밋 변경 "
+                                  f"{len(lane | main)}(레인 {len(lane)} · main 만 {len(main - lane)}) {STALE_TARGET_FIX}")
+    if base is None:
+        out.target.append(f"대상 기준 모름: {why} {STALE_TARGET_FIX}")
+    report_path: Path = own / "pregate-report.md"
+    try:
+        report: "str | None" = report_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        report = None
+    except UnicodeDecodeError as exc:
+        raise ToolError(f"이 실행 {report_path} 를 UTF-8 로 못 읽는다({exc.start}바이트) — 설계 기준선을 가를 수 없다") from None
+    spec_path: Path = own / "design-spec.md"
+    spec_why: str = ""                                   # 명세를 못 쓰는 까닭 — G1′ 가 명세를 다시 쓰므로 실행 불능이 아니다
+    try:
+        spec: "str | None" = spec_path.read_text(encoding="utf-8")
+    except (FileNotFoundError, NotADirectoryError):
+        spec, spec_why = None, "가 없다"
+    except (OSError, UnicodeDecodeError) as exc:
+        spec, spec_why = None, f"를 못 읽는다({type(exc).__name__})"
+    g0 = re.search(r"실행 · G0 승인 (\S+)", line)
+    doubt: str = _spec_doubt(report, g0.group(1) if g0 else None) if report is not None else ""
+    dsha, dkind, dwhy = (_design_base(report) if report is not None
+                         else (None, DOUBT_FORECAST, f"{report_path.name} 가 없다(이번 실행 예보 없음)"))
+
+    def unknown(kind: str, why: str) -> Stale:
+        out.design.append(f"설계 기준선 모름({kind}): {why} {STALE_DISCARD_FIX if kind == DOUBT_BOUNDARY else STALE_DESIGN_FIX}")
+        return out
+    if doubt and doubt != _NO_FORECAST:                  # 명세가 앞 실행 것일 수 있다
+        return unknown(DOUBT_BOUNDARY, doubt)
+    if spec is None:
+        return unknown(DOUBT_SPEC, f"이 실행 명세 {spec_path.name} {spec_why}(설계 범위를 모른다)")
+    if dsha is None:
+        return unknown(dkind, dwhy)
+    dbase: "str | None" = _commit_of(project, dsha)
+    if dbase is None:
+        return unknown(DOUBT_SHA, f"예보 기준선 SHA {dsha[:12]} 를 이 저장소 커밋으로 못 푼다")
+    wide: "set[str]" = {f"application/{x}/" for x in widened}
+    narrow: "set[str]" = (set(_file_plan(spec) or []) | {e["path"] for e in _other_edits(spec, set())[0]}
+                          | {p for x, ps in faces.items() if x not in widened for p in ps})
+    try:
+        lane, main = _stale_changes(project, dbase, head, mh, sorted(narrow | wide))
+    except subprocess.CalledProcessError as exc:
+        return unknown(DOUBT_DIFF, f"예보 기준선 {dbase[:12]} 뒤 커밋 차분을 못 잰다(git exit {exc.returncode} — {exc.stderr.strip()[:80]})")
+    changed: "list[str]" = sorted(lane | main)
+    hit: "list[str]" = _path_hit(narrow, set(changed))
+    if hit:
+        rest: "list[str]" = [c for c in changed if c not in hit]
+        out.design.append(f"설계 낡음: {_shown(hit + rest)} — 예보 기준선 {dbase[:12]} 뒤 설계 범위 커밋 변경 {len(changed)}(레인 "
+                          f"{len(lane)} · main 만 {len(main - lane)}) {STALE_DESIGN_FIX}")
+    elif changed:
+        sup: "list[str]" = sorted({c.split("/")[1] for c in changed if c.count("/") >= 2})
+        out.report.append(f"설계 낡음(넓힌 공급 면 — 보고만): {_shown(changed)} — 공급 BC {' · '.join(sup)} 의 면을 BC 전체로 넓힘("
+                          f"{' · '.join(widened.get(x, '') for x in sup)}) · 예보 기준선 {dbase[:12]} 뒤 {STALE_REPORT_FIX}")
+    return out
+
+
 def _outward_v(own: Path, project: Path, digest: str) -> "tuple[int | None, str]":
     """G1 확정판(지금 명세 스냅숏 — digest 가 마지막 `G1 변경판 확정` digest 와 같을 때만)의 밖 동작 V 수(« + » 복합 포함) — 못 읽거나
     다르면 (None, 사유)(그때는 web HTTP 소비 겹침 · 보류를 그대로 센다)."""
@@ -5597,7 +5905,11 @@ def _outward_v(own: Path, project: Path, digest: str) -> "tuple[int | None, str]
     return sum(1 for v in snap["V"] if "밖 동작" in v["kinds"]), ""
 
 
-def cmd_deps(project: Path, bc: str, out: Path) -> int:
+def cmd_deps(project: Path, bc: str, out: Path, at: str) -> int:
+    """`at`(설계 A0) — new: 이 폴더 앞 실행 기록(G1 확정 · 명세 다른 BC 편집 목록 · G0 승인 값)을 안 쓴다 · continue: 끝나지 않은
+    실행 줄 필수 · 맞물림은 G1 확정 유무와 무관하게 그 줄의 G0 승인 값 · dispatch: 그 + G1 확정 필수 · 앵커 없으면 낡음(A4)."""
+    if at not in DEPS_AT:
+        raise ToolError(f"--at 값은 {' · '.join(DEPS_AT)} 가운데 하나다 — {at}")
     _bc_dir(project, bc)
     scan: DepsScan = DepsScan(project)
     if bc not in scan.bcs:
@@ -5622,17 +5934,23 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
     our_units: "set[str]" = {o for o in http_owners if o.startswith("web/")}
     target: Path = out.resolve()
     own: "Path | None" = next((p for p in [target, *target.parents] if p.parent.name == ".dddjango"), None)
+    own_line: "str | None" = _own_run_line(own) if own is not None else None
+    open_line: "str | None" = None if _line_ended(own_line) else own_line   # 끝나지 않은 이 실행 줄
+    if at != "new" and open_line is None:
+        raise ToolError(f"`--at {at}` 인데 이 실행 폴더({own if own is not None else '--out 이 .dddjango/<폴더> 밖'})에 끝나지 않은 "
+                        f"실행 줄이 없다 — 새 실행이면 `--at new`")
+    g1: "tuple[str, str, str] | None" = g1_confirmed(own) if own is not None and at != "new" else None   # 없으면 G0 · 있으면 파견 직전
+    if at == "dispatch" and g1 is None:
+        raise ToolError(f"`--at dispatch` 인데 이 실행 폴더({own})에 `{G1_CONFIRMED}` 줄이 없다 — G1 전이면 `--at continue`")
     our_paths: "set[str]" = {f"application/{bc}/"} | set(lane)
-    if own is not None and (own / "design-spec.md").is_file():     # G1 뒤 — 이 실행의 다른 BC 편집 목록도 우리 경로다
+    if at != "new" and own is not None and (own / "design-spec.md").is_file():   # G1 뒤 — 이 실행의 다른 BC 편집 목록도 우리 경로다
         our_paths |= {e["path"] for e in _other_edits(_read(own / "design-spec.md"), set())[0]}
     runs, trees, webs, seen, scopes = _active_runs(project, own, bc, scan,
                                                    {f".dddjango/{d.name}" for ds in sup_dirs.values() for d in ds})
-    states: "dict[str, str]" = {s: _supplier_state(project, sup_dirs[s], scopes) for s in suppliers}
-    g1: "tuple[str, str, str] | None" = g1_confirmed(own) if own is not None else None   # 없으면 G0 · 있으면 파견 직전
     g0: bool = own is not None and g1 is None             # 이 실행 폴더가 없으면 판정 시점을 모른다 — 그대로 센다
     outward, outward_why = _outward_v(own, project, g1[1]) if own is not None and g1 is not None else (None, "")
     http_free: bool = g1 is not None and outward == 0     # 밖 동작 V 0 — web 실행의 HTTP 소비로만 선 겹침 · 보류는 세지 않는다
-    own_g0 = re.search(r"실행 · G0 승인 (\S+)", _scope_run_line(own) or "") if own is not None and g1 is not None else None
+    own_g0 = re.search(r"실행 · G0 승인 (\S+)", open_line or "") if at != "new" else None   # 맞물림 — G1 확정 유무와 무관
     mine: "tuple[str, str] | None" = (own_g0.group(1), own.name) if own_g0 and own is not None else None
     overlaps: "list[str]" = []
     holds: "list[str]" = []
@@ -5650,11 +5968,13 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
     forecast_ov_tail: str = "첫 파견 직전 deps 가 다시 본다(G1 확정판 밖 동작 V 0 이면 세지 않고 1 이상이면 겹침)"
     v0_tail: str = "G1 확정판 밖 동작 V 0 — web HTTP 소비로만 선 겹침 · 보류는 세지 않는다"
     counted: "list[ActiveRun]" = []
+    late_runs: "list[ActiveRun]" = []                     # 맞물림으로 뺀 실행(공급자 상태 표기 — 설계 A3)
     for run in runs:
         if mine is not None and run.refactor_g0 is not None and (run.refactor_g0, run.folder) > mine:
             dropped.append(f"{run.label} — 앵커 없는 리팩토링 실행 · G0 승인 {run.refactor_g0}(이 실행 {mine[0]} 보다 늦음) — "
                            f"먼저 G0 승인한 이 실행이 나아가고 그 실행은 이 착륙 뒤 재개")
             late += 1
+            late_runs.append(run)
             continue
         counted.append(run)
         web: bool = run.kind == "dddjango-web"
@@ -5730,7 +6050,21 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
             holds.append(line + rest)
     planned: "list[str]" = [f"{r.label}: {r.consumes[0][:60]}" for r in counted if r.consumes]
     cyc: bool = len(comp) > 1
-    unsettled: "list[str]" = [s for s in suppliers if states[s] == "미정리" or states[s].startswith("못 읽음")]
+    states: "dict[str, str]" = {}
+    for s in suppliers:                                  # 도는 공급자 실행은 활성 실행에서(설계 A3) — 없으면 그 폴더 기록 규칙
+        live, after = _refactor_folders(s, counted), _refactor_folders(s, late_runs)
+        states[s] = (f"미정리(도는 실행 {live[0]}{f' 외 {len(live) - 1}' if len(live) > 1 else ''})" if live else
+                     f"도는 실행(맞물림 — 이 실행 뒤) {' · '.join(after)}" if after else
+                     _supplier_state(project, sup_dirs[s], scopes))
+    stale: Stale = Stale()
+    if at == "dispatch" and own is not None and open_line is not None:
+        if "build_anchor" in open_line:
+            stale.skipped = "앵커 뒤"
+        else:
+            stale = _dispatch_stale(project, own, bc, open_line, faces, widened)
+    else:
+        stale.skipped = f"--at {at}"
+    unsettled: "list[str]" = [s for s in suppliers if states[s].startswith(("미정리", "못 읽음"))]
     data: dict = {"version": 1, "bc": bc, "scc": comp, "scc_all": [c for c in comps if len(c) > 1],
                   "suppliers": {s: states[s] for s in suppliers}, "edit_paths": {p: ks[0] for p, ks in lane.items()},
                   "edit_kinds": {p: list(ks) for p, ks in lane.items()},
@@ -5741,18 +6075,25 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
                   "supplier_faces": {s: sorted(ps) for s, ps in sorted(faces.items())},
                   "forecast_supplier": sup_forecasts, "face_free": face_free, "face_widened": dict(sorted(widened.items())),
                   "overlaps": overlaps, "holds": holds, "worktrees": trees, "web_runs": webs,
-                  "stage": "G0" if g0 else "모름" if own is None else "파견 직전", "outward_v": outward, "outward_v_why": outward_why,
+                  "stage": "G0" if g0 else "모름" if own is None else "파견 직전", "at": at,
+                  "outward_v": outward, "outward_v_why": outward_why,
                   "forecast_holds": forecasts, "forecast_overlaps": forecast_overlaps,
+                  "stale_target": stale.target, "stale_design": stale.design, "stale_report": stale.report,
+                  "stale_skipped": stale.skipped,
                   "dropped": dropped, "active_runs": seen, "parse_errors": scan.parse_errors}
     runs_note: str = (f"활성 실행 {seen['runs']}(사본 {seen['copies']} · 트리 {trees}) · MH 판으로 판정 {seen['mh']} · "
-                      f"MH 에서 지워져 뺌 {seen['gone']}")
+                      f"MH 에서 지워져 뺌 {seen['gone']} · 이 폴더 옛 사본 뺌 {seen['own_old']}")
     stage: str = ("판정 시점 모름(이 실행 폴더 없음) — web HTTP 소비 겹침 · 보류를 그대로 센다" if own is None else
                   f"판정 시점 G0 · 예보 보류 {len(forecasts)} · 예보 겹침 {len(forecast_overlaps)} · "
                   f"예보 보류 가운데 공급 BC 고침 목록 모름 {sup_forecasts}" if g1 is None else
                   f"판정 시점 파견 직전(G1 확정 {g1[0]}) · 밖 동작 V "
                   f"{outward if outward is not None else '모름(web HTTP 소비 겹침 · 보류를 그대로 센다)'}"
-                  + (f" · web HTTP 소비로만 선 겹침 · 보류 뺌 {http_dropped}" if http_free else "")
-                  + (f" · 늦게 G0 승인한 리팩토링 실행 뺌 {late}" if late else ""))
+                  + (f" · web HTTP 소비로만 선 겹침 · 보류 뺌 {http_dropped}" if http_free else ""))
+    stage += f" · 늦게 G0 승인한 리팩토링 실행 뺌 {late}" if late else ""
+    if g1 is not None:
+        stage += (f" · 낡음 판정 밖({stale.skipped})" if stale.skipped else
+                  f" · 낡음 대상 {len(stale.target)} · 설계 {len(stale.design)}"
+                  + (f" · 보고만 {len(stale.report)}" if stale.report else ""))
     out.mkdir(parents=True, exist_ok=True)
     (out / "deps.json").write_text(json.dumps(data, ensure_ascii=False, sort_keys=True, indent=1) + "\n", encoding="utf-8")
     md: "list[str]" = [f"# deps — `{bc}` · {_now()}", "",
@@ -5769,6 +6110,8 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
         md += [f"## {kind} {len(by_kind[kind])}", ""] + [f"- {p}" for p in by_kind[kind]] + [""]
     md += ["## 레인 겹침", ""] + ([f"- {o}" for o in overlaps] or ["- 없음"]) + [""]
     md += ["## 보류", ""] + ([f"- {h}" for h in holds] or ["- 없음"]) + [""]
+    md += ["## 낡음(파견 직전 · 앵커 없는 실행)", ""] + ([f"- {x}" for x in stale.target + stale.design + stale.report]
+                                                   or [f"- {'판정 밖(' + stale.skipped + ')' if stale.skipped else '없음'}"]) + [""]
     md += ["## 예보 보류(G0 — 정지 아님)", ""] + ([f"- {f}" for f in forecasts] or ["- 없음"]) + [""]
     md += ["## 예보 겹침(G0 — 정지 아님)", ""] + ([f"- {f}" for f in forecast_overlaps] or ["- 없음"]) + [""]
     md += ["## 뺀 겹침 · 보류", ""] + ([f"- {d}" for d in dropped] or ["- 없음"]) + [""]
@@ -5779,6 +6122,8 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
         print(f"  겹침: {o}")
     for h in holds:
         print(f"  보류: {h}")
+    for x in stale.target + stale.design + stale.report:
+        print(f"  {x}")
     for f in forecasts:
         print(f"  예보 보류: {f}")
     for f in forecast_overlaps:
@@ -5796,8 +6141,8 @@ def cmd_deps(project: Path, bc: str, out: Path) -> int:
           f"{len(by_kind['공유 표면'])} · 계획된 소비 {len(planned) or '없음'} · 공급 면 {len(faces)} BC · "
           f"{len({p for ps in faces.values() for p in ps})} 자리 · 면 밖 뺌 {face_free} · 레인 겹침 {len(overlaps) or '없음'} · "
           f"보류 {len(holds)} · 본 범위: 작업 트리 {trees} · web 실행 {webs} · 관찰 못 한 활성 실행 {len(holds)} · {runs_note} · "
-          f"{stage}{' · 파싱 못 한 파일 ' + str(len(scan.parse_errors)) if scan.parse_errors else ''} → {out}")
-    return DEPS_STOP_EXIT if cyc or overlaps or holds else EXIT_OK
+          f"--at {at} · {stage}{' · 파싱 못 한 파일 ' + str(len(scan.parse_errors)) if scan.parse_errors else ''} → {out}")
+    return DEPS_STOP_EXIT if cyc or overlaps or holds or stale.target or stale.design else EXIT_OK
 
 
 # ── self-test ────────────────────────────────────────────────────────────────
@@ -5942,6 +6287,9 @@ def main(argv: "list[str]") -> int:
         p.add_argument("--out", required=True)
         if name == "plan":
             p.add_argument("--stage", help="R0′ 기록 — 운영 전 출처(본인 직접(<시각>) | 사용자 원문 <파일:행>(<시각>))")
+        if name == "deps":
+            p.add_argument("--at", required=True, choices=DEPS_AT, help="판정 시점 — new(새 실행) · continue(잇기) · "
+                                                                          "dispatch(파견 직전)")
     for name in ("check", "sections"):
         sub.add_parser(name).add_argument("audit")
     p = sub.add_parser("check-verdict")
@@ -5985,7 +6333,7 @@ def main(argv: "list[str]") -> int:
         if ns.command == "outline":
             return cmd_outline(project, ns.bc, Path(ns.out))
         if ns.command == "deps":
-            return cmd_deps(project, ns.bc, Path(ns.out))
+            return cmd_deps(project, ns.bc, Path(ns.out), ns.at)
         if ns.command == "residual":
             return cmd_residual(project, Path(ns.folder), Path(ns.candidates) if ns.candidates else None, ns.finalize,
                                 Path(ns.gate_json) if ns.gate_json else None)

@@ -1497,6 +1497,127 @@ def rename_rcases() -> "list[dict]":
         {TP: IMPORT_ONLY}, _edit(MOVE, OLD_TO_NEW(IMPORT_ONLY)), {TP: ("묶음 감사", ["<module>"])}, snap=base_rn,
         post=_renamed())
     out += rename_review_rcases()
+    out += field_rename_rcases()
+    return out
+
+
+# 칸 개명(설계 A 4판 A6 · F4-116 남은 것 — 진단 b F1~F9) — `재조직 — 칸 개명 <운영 경로>::<클래스>.<옛> → <새>` 행을 0F 만 받는다
+CARD_P: str = "application/core/card.py"
+CARD: str = "from dataclasses import dataclass\n\n\n@dataclass(frozen=True, kw_only=True)\nclass Card:\n    card_id: str\n"
+CARD_NEW: str = CARD.replace("card_id", "card_key")
+CT: str = ("from application.core.card import Card\n\n\ndef make() -> Card:\n    return Card(card_id=\"a\")\n\n\n"
+           "def test_card() -> None:\n    got: Card = make()\n    assert got == Card(card_id=\"a\")\n    assert got.card_id == \"a\"\n")
+CT_NEW: str = CT.replace("card_id", "card_key")
+FIELD_UNIT: str = "개명 칸 Card.card_id → card_key"
+FIELD_LABEL: str = f"{TP}::칸 {CARD_P}::Card.card_id → card_key"
+
+
+def _rn_field(source: str = CARD_P, path: str = TP) -> dict:
+    """스냅숏 «개명» 항목 — 칸(`재조직 — 칸 개명 <운영 경로>::Card.card_id → card_key` · path = 그 칸을 쓰는 시험 파일)."""
+    return {"kind": "칸", "path": path, "source": source, "class": "Card", "old": "card_id", "new": "card_key"}
+
+
+def field_rename_rcases() -> "list[dict]":
+    """칸 개명 — F1 기대식 · 도우미 · 비교 왼쪽 개명(개별 감사 · 개명 칸 키) · F2 행 없음 red · F3 0T · 0C red · F4 운영 칸이 정확히
+    안 바뀜 red · F5 받는 쪽 Card 인 `.옛` 이 새 판에 남음 red · F6 기준 판에 새 이름 red · F7 개명 + 기대 값 변경 red · F8 별칭 ·
+    모듈 경로 · 클래스 호출로 만든 이름 받음 · 같은 이름 칸의 다른 클래스(안 바꿈) · 못 푼 받는 쪽(내포) red · Schema · Model ·
+    pydantic · 못 푸는 기반 red · 내장 예외 기반(가리지 않은 이름) 받음 · 가린 내장 이름 · * import · Enum · metaclass= red ·
+    변경 창 red 유지 · F9 G2 쪽(g0_keep_exceptions.renamed) 무변."""
+    out: "list[dict]" = []
+
+    def add(label: str, kind: str, files: dict, edit: "Callable[[Path], None]", expect: dict, **kw: object) -> None:
+        out.append({"label": f"칸 개명: {label}", "kind": kind, "files": files, "edit": edit, "expect": expect, **kw})
+
+    snap: dict = _snap(renames=(_rn_field(),))
+    prod: "dict[str, str | None]" = {CARD_P: CARD_NEW}
+    base: "dict[str, str | None]" = {CARD_P: CARD, TP: CT}
+    clean: dict = {"reason": "개명 행 — 이름 밖 편집 없음"}
+    add("F1 0F 도우미 키워드 · 기대식 · 비교 왼쪽 칸 개명 + 칸 행 → 개별 감사(개명 칸 키 하나 · 바꾼 자리 셋 · G2 쪽 무변)", "follow",
+        base, _edit(prod, CT_NEW), {TP: ("개별 감사", [FIELD_UNIT], clean)}, snap=snap,
+        post=_renamed(FIELD_LABEL, notes=(f"`{RUN}/w1 · {TP} · {FIELD_UNIT} · ", "요구 판정: 기대 의미 그대로(개명 — 이름 뜻 · 이름 밖 편집 "
+                                          "없음 · 옛 글자 0자리 · 바꾼 자리 3(줄 5 · 10 · 11))")))
+    add("F2 0F 칸 행 없음 → red(D 확정 — 지금처럼)", "follow", base, _edit(prod, CT_NEW), {TP: ("red", None, {"reason": "D 확정"})},
+        snap=_retain(), post=_renamed())
+    add("F3 0T 칸 행 + 시험만 새 이름(제품 고정) → red", "test", base, _edit({}, CT_NEW),
+        {TP: ("red", None, {"reason": "0T 창은 칸 개명 행을 받지 않는다(제품 고정 — 칸 개명은 0F)"})}, snap=snap, post=_renamed())
+    add("F3 0C 칸 행 + 제품 · 시험 개명 → red", "code", base, _edit(prod, CT_NEW),
+        {TP: ("red", None, {"reason": "0C 창은 개명 행을 받지 않는다(시험 고정 — 칸 개명은 0F)"})}, snap=snap, post=_renamed())
+    kept_old: str = CARD.replace("    card_id: str\n", "    card_id: str\n    card_key: str = \"\"\n")
+    add("F4 운영 클래스에 옛 칸이 남음(새 칸만 더함 — 개명 아님) → red", "follow", base, _edit({CARD_P: kept_old}, CT_NEW),
+        {TP: ("red", None, {"reason": "운영 클래스 칸이 이 창에서 옛 → 새 로 정확히 바뀌지 않았다"})}, snap=snap, post=_renamed())
+    add("F4 운영 칸 주석까지 바뀜(str → int) → red", "follow", base,
+        _edit({CARD_P: CARD_NEW.replace("card_key: str", "card_key: int")}, CT_NEW),
+        {TP: ("red", None, {"reason": "운영 클래스 칸이 이 창에서 옛 → 새 로 정확히 바뀌지 않았다"})}, snap=snap, post=_renamed())
+    add("F5 받는 쪽이 Card 인 `.card_id` 가 새 판에 남음 → red", "follow", base,
+        _edit(prod, CT_NEW.replace("got.card_key", "got.card_id")),
+        {TP: ("red", None, {"reason": "새 판에 남았다"})}, snap=snap, post=_renamed())
+    other: str = "\n\ndef test_other() -> None:\n    other: Card = make()\n    assert other.card_key == \"a\"\n"
+    add("F6 기준 판에 Card 로 풀리는 `.card_key` 가 이미 있음 → red(가림)", "follow", {CARD_P: CARD, TP: CT + other},
+        _edit(prod, CT_NEW + other), {TP: ("red", None, {"reason": "이미 있다(가림 — 줄 16)"})}, snap=snap, post=_renamed())
+    add("F7 칸 개명 + 기대 값 변경(\"a\" → \"b\") 한 창 → red(D 확정 남음)", "follow", base,
+        _edit(prod, CT_NEW.replace("got.card_key == \"a\"", "got.card_key == \"b\"")), {TP: ("red", None, {"reason": "D 확정"})},
+        snap=snap, post=_renamed(FIELD_LABEL))
+    alias: str = ("import application.core.card as card_mod\nfrom application.core.card import Card as C\n\n\n"
+                  "def make() -> C:\n    return card_mod.Card(card_id=\"a\")\n\n\n"
+                  "def test_card() -> None:\n    got: C = make()\n    built = C(card_id=\"a\")\n    assert got == built\n"
+                  "    assert got.card_id == built.card_id\n")
+    add("F8 별칭 import(as C) · 모듈 경로 호출(card_mod.Card) · 클래스 호출로 만든 이름 → 개별 감사", "follow",
+        {CARD_P: CARD, TP: alias}, _edit(prod, alias.replace("card_id", "card_key")), {TP: ("개별 감사", [FIELD_UNIT], clean)},
+        snap=snap, post=_renamed(FIELD_LABEL, notes=("바꾼 자리 4(줄 6 · 11 · 13)",)))
+    deck_p: str = "application/core/deck.py"
+    two: str = ("from application.core.card import Card\nfrom application.core.deck import Deck\n\n\n"
+                "def test_card(given: Card) -> None:\n    got: Card = Card(card_id=\"a\")\n    deck: Deck = Deck(card_id=\"d\")\n"
+                "    assert got.card_id == \"a\"\n    assert deck.card_id == \"d\"\n    assert given.card_id\n")
+    two_new: str = two.replace("Card(card_id=", "Card(card_key=").replace("got.card_id", "got.card_key") \
+        .replace("given.card_id", "given.card_key")
+    add("같은 이름 칸의 다른 클래스(Deck.card_id — 주석으로 가름 · 안 바꿈) · 매개변수 주석 → 개별 감사", "follow",
+        {CARD_P: CARD, deck_p: CARD.replace("class Card", "class Deck"), TP: two}, _edit(prod, two_new),
+        {TP: ("개별 감사", [FIELD_UNIT], clean)}, snap=snap, post=_renamed(FIELD_LABEL, notes=("바꾼 자리 3(줄 6 · 8 · 10)",)))
+    comp: str = CT.replace("    assert got.card_id == \"a\"\n", "    assert [\"a\"] == [c.card_id for c in [got]]\n")
+    add("받는 쪽을 못 풂(내포 대상 c)인 기대식 자리 → 안 바꿈 → red(D 확정 — 보수)", "follow", {CARD_P: CARD, TP: comp},
+        _edit(prod, comp.replace("card_id", "card_key")), {TP: ("red", None, {"reason": "D 확정"})}, snap=snap,
+        post=_renamed(FIELD_LABEL))
+    for what, cls in (("ninja Schema", "from ninja import Schema\n\n\nclass Card(Schema):\n    card_id: str\n"),
+                      ("pydantic 모델", "import pydantic\n\n\nclass Card(pydantic.BaseModel):\n    card_id: str\n"),
+                      ("Django Model", "from django.db import models\n\n\nclass Card(models.Model):\n"
+                                       "    card_id: str = models.CharField(max_length=8)\n")):
+        add(f"운영 클래스가 {what} → red(밖 계약 · DB 구조)", "follow", {CARD_P: cls, TP: CT},
+            _edit({CARD_P: cls.replace("card_id", "card_key")}, CT_NEW),
+            {TP: ("red", None, {"reason": "ninja Schema · pydantic 모델 · Django Model"})}, snap=snap, post=_renamed())
+    based: str = "from application.core.base import ValueObject\n\n\nclass Card(ValueObject):\n    card_id: str\n"
+    add("운영 클래스 기반을 못 풂(다른 파일 ValueObject) → red", "follow", {CARD_P: based, TP: CT},
+        _edit({CARD_P: based.replace("card_id", "card_key")}, CT_NEW), {TP: ("red", None, {"reason": "기반 클래스"})},
+        snap=snap, post=_renamed())
+    domain_error: str = CARD.replace("@dataclass", "class DomainError(Exception):\n    pass\n\n\n@dataclass") \
+        .replace("class Card:", "class Card(DomainError):")
+    for what, cls in (("Exception", CARD.replace("class Card:", "class Card(Exception):")),
+                      ("ValueError", CARD.replace("class Card:", "class Card(ValueError):")),
+                      ("같은 파일 DomainError(Exception) 사슬", domain_error)):
+        add(f"운영 클래스 기반이 내장 예외({what}) → 개별 감사(평범한 뿌리)", "follow", {CARD_P: cls, TP: CT},
+            _edit({CARD_P: cls.replace("card_id", "card_key")}, CT_NEW), {TP: ("개별 감사", [FIELD_UNIT], clean)}, snap=snap,
+            post=_renamed(FIELD_LABEL))
+    head_dc: str = "from dataclasses import dataclass\n"
+    for what, cls in (("import 로 가린 ValueError", CARD.replace(head_dc, head_dc + "\nfrom application.core.errors import ValueError\n")
+                       .replace("class Card:", "class Card(ValueError):")),
+                      ("* import 뒤 Exception", CARD.replace(head_dc, head_dc + "\nfrom application.core.errors import *\n")
+                       .replace("class Card:", "class Card(Exception):")),
+                      ("StrEnum", "from enum import StrEnum\n\n\nclass Card(StrEnum):\n    card_id: str\n"),
+                      ("metaclass=", CARD.replace(head_dc, head_dc + "from abc import ABCMeta\n")
+                       .replace("class Card:", "class Card(metaclass=ABCMeta):"))):
+        add(f"운영 클래스 기반이 {what} → red(못 풂 — 지금처럼)", "follow", {CARD_P: cls, TP: CT},
+            _edit({CARD_P: cls.replace("card_id", "card_key")}, CT_NEW), {TP: ("red", None, {"reason": "기반 클래스"})},
+            snap=snap, post=_renamed())
+    aggregate: str = ("from application.shared.domain_layer.aggregate import AggregateRoot\n\n\n"
+                      "class Card(AggregateRoot):\n    card_id: str\n")
+    add("운영 클래스 기반이 다른 파일 AggregateRoot → red(받는 기반 문구에 내장 예외)", "follow", {CARD_P: aggregate, TP: CT},
+        _edit({CARD_P: aggregate.replace("card_id", "card_key")}, CT_NEW),
+        {TP: ("red", None, {"reason": "기반 클래스 `AggregateRoot` 를 풀지 못했다(밖 계약 · DB 구조인지 모른다 — 같은 파일 클래스 · "
+                                      "object · NamedTuple · Generic · ABC · 내장 예외 만)"})}, snap=snap, post=_renamed())
+    add("변경 창 칸 개명 → red 유지(D 확정 — 칸 개명은 0F 슬라이스로)", "change", base, _edit(prod, CT_NEW),
+        {TP: ("red", None, {"reason": "D 확정"})}, snap=_snap(_v("V1"), renames=(_rn_field(),)), post=_renamed())
+    add("판정 시점 — 운영 칸 그대로 · 시험 파일에 다른 편집만 → 건너뜀(개별 감사 · red 아님)", "follow", base,
+        _edit({}, CT.replace("    got: Card = make()\n", "    # 만든다\n    got: Card = make()\n")),
+        {TP: ("개별 감사", ["test_card"], {"reason": "0C 검사 합격"})}, snap=snap, post=_renamed())
     return out
 
 
@@ -2067,6 +2188,7 @@ def verify_checks() -> "list[str]":
                "묶음 감사 1(묶음 1) · 개별 감사 3 · 승인 변경 2 · red 0 · 자동 초록 0 · 감사 키 일치 6/6",
                "승인 V 1건", "승인 기대 원소 1 중 변경 1", "요약: 동작 보존 green")
     fails += rename_verify_checks()
+    fails += field_rename_verify_checks()
     return fails
 
 
@@ -2217,6 +2339,108 @@ def rename_verify_checks() -> "list[str]":
         _suite(repo, digest)
         expect("remove 행 옛 이름 · 개명 뒤 삭제 verify green", _rguard(repo, "verify"), 0, "개명 행 1 중 적용 1",
                "요약: 동작 보존 green")
+    return fails
+
+
+def field_rename_verify_checks() -> "list[str]":
+    """칸 개명 verify — F9 G2 쪽 무변(g0_keep_exceptions.renamed 없음 · renamed_selection ([], 0)) · 적용 · 감사 뒤 green(개명 행
+    1 중 적용 1) · 어느 창에도 적용 안 된 칸 행 verify red · 앞 창이 운영 파일을 옮긴 뒤 0F 칸 개명(운영 경로도 앞 창 이동을 따라감) ·
+    받는 쪽 풀기(메서드 몸은 클래스 몸 이름을 건너뛴다 포함)."""
+    fails: "list[str]" = []
+    bs = STATE["bs"]
+
+    def expect(label: str, got: "tuple[int, str]", code: int, *needles: str, absent: "tuple[str, ...]" = ()) -> None:
+        missing = [n for n in needles if n not in got[1]]
+        stray = [n for n in absent if n in got[1]]
+        if got[0] != code or missing or stray:
+            fails.append(f"칸 개명 verify {label}: exit {got[0]} (기대 {code} · 없는 글 {missing} · 있으면 안 되는 글 {stray})\n{got[1]}")
+
+    snap: dict = _snap(renames=(_rn_field(),))
+    with tempfile.TemporaryDirectory(prefix="bg-fn1-") as td:
+        repo = _rrepo(Path(td), {CARD_P: CARD, TP: CT})
+        digest = _bind(repo, snap)
+        _rguard(repo, "open", "--kind", "follow", "--mode", "refactor")
+        _write(repo, {CARD_P: CARD_NEW, TP: CT_NEW})
+        _commit(repo)
+        expect("F9 0F 칸 개명 close", _rguard(repo, "close"), 0, "감사 요청 키 1", "개명 행 적용 1")
+        record = _last_close(repo)
+        if "renamed" in (record.get("g0_keep_exceptions") or {}):
+            fails.append(f"F9 칸 개명이 g0_keep_exceptions.renamed 에 실림 — {record['g0_keep_exceptions']}")
+        try:
+            windows = bs._g0_keep_exceptions(_run_dir(repo))
+            g0 = {"keys": {f"{TP}::test_card": [TP, None, "test_card", "test_card"]}, "digests": {TP: "g0"}}
+            g2 = {"keys": {f"{TP}::test_card": [TP, None, "test_card", "test_card"]}, "ok": {f"{TP}::test_card"},
+                  "selected_ids": {f"{TP}::test_card"}, "skipped_ids": set()}
+            chosen = bs.renamed_selection(windows, g2, g0)
+            if any(w["renamed"] for w in windows) or chosen != ([], 0):
+                fails.append(f"F9 G2 쪽 — 창 {windows} · 개명 G2 선택 {chosen}(기대 개명 없음 · ([], 0))")
+        except Exception as exc:                            # noqa: BLE001
+            fails.append(f"F9 behavior_support 창별 접기: {type(exc).__name__}: {exc}")
+        _suite(repo, digest)
+        _audit(repo, 1, _rows(record))
+        expect("칸 개명 적용 · 감사 → verify green", _rguard(repo, "verify"), 0, "개명 행 1 중 적용 1", "요약: 동작 보존 green")
+    with tempfile.TemporaryDirectory(prefix="bg-fn2-") as td:
+        repo = _rrepo(Path(td), {CARD_P: CARD, TP: CT})
+        digest = _bind(repo, snap)
+        _rguard(repo, "open", "--kind", "follow", "--mode", "refactor")
+        _write(repo, {TP: CT.replace("    got: Card = make()\n", "    # 만든다\n    got: Card = make()\n")})
+        _commit(repo)
+        expect("운영 칸 그대로 · 다른 편집만 → close 건너뜀", _rguard(repo, "close"), 0, "감사 요청 키 1", absent=("개명 행 적용",))
+        _audit(repo, 1, _rows(_last_close(repo)))
+        _suite(repo, digest)
+        expect("어느 창에도 적용 안 된 칸 행 → verify red", _rguard(repo, "verify"), 2,
+               f"개명 행인데 개명 없음 — {FIELD_LABEL}", "개명 행 1 중 적용 0")
+    with tempfile.TemporaryDirectory(prefix="bg-fn3-") as td:   # w1 0C 운영 파일 이동 · w2 0F 칸 개명(행 운영 경로 = G1 때 경로)
+        moved = "application/core/domain/card.py"
+        repo = _rrepo(Path(td), {CARD_P: CARD, TP: CT, "application/core/domain/__init__.py": ""})
+        digest = _bind(repo, snap)
+        _rguard(repo, "open", "--kind", "code", "--mode", "refactor")
+        follow_ct: str = CT.replace("application.core.card", "application.core.domain.card")
+        _write(repo, {CARD_P: None, moved: CARD, TP: follow_ct})
+        _commit(repo)
+        expect("w1 0C 운영 파일 이동 · 시험 import 따라감", _rguard(repo, "close"), 0, "감사 요청 키 1", absent=("개명 행 적용",))
+        _audit(repo, 1, _rows(_last_close(repo)))
+        _rguard(repo, "open", "--kind", "follow", "--mode", "refactor")
+        _write(repo, {moved: CARD_NEW, TP: follow_ct.replace("card_id", "card_key")})
+        _commit(repo)
+        expect("w2 0F 칸 개명(운영 경로가 앞 창 이동을 따라감) → 적용", _rguard(repo, "close"), 0, "감사 요청 키 1", "개명 행 적용 1")
+        _audit(repo, 2, _rows(_last_close(repo)))
+        _suite(repo, digest)
+        expect("이동 뒤 칸 개명 verify green", _rguard(repo, "verify"), 0, "창 2(0T 0 · 0C 1 · 0F 1 · 변경 0)", "개명 행 1 중 적용 1",
+               "요약: 동작 보존 green")
+    bg = STATE["bg"]
+    head: str = "from application.core.card import Card\n\n\n"
+    spots: "list[tuple[str, str, list[int]]]" = [       # (꼴, 시험 원문, 바꿀 자리 줄) — 받는 쪽 풀기
+        ("다른 값도 대입한 이름은 못 풂", head + "def test_x(other):\n    got: Card = Card(card_id=\"a\")\n    got = other\n"
+         "    assert got.card_id\n", [5]),
+        ("함수 안에서 클래스 이름을 다시 묶음", head + "def test_x(other):\n    Card = other\n    assert Card(card_id=\"a\")\n", []),
+        ("바깥 함수 이름(클로저)", head + "def test_x() -> None:\n    got: Card = Card(card_id=\"a\")\n\n    def inner() -> str:\n"
+         "        return got.card_id\n    assert inner()\n", [5, 8]),
+        ("문자열 주석", head + "def test_x(make) -> None:\n    got: \"Card\" = make()\n    assert got.card_id\n", [6]),
+        ("상대 import", "from ..card import Card\n\n\ndef test_x() -> None:\n    assert Card(card_id=\"a\")\n", [5]),
+        ("lambda 대상", head + "def test_x() -> None:\n    f = lambda got: got.card_id\n    assert f(Card(card_id=\"a\"))\n", [6]),
+        ("내포 대상이 가림", head + "def test_x(got: Card) -> None:\n    assert [got.card_id for got in [got]]\n", []),
+        ("클래스 몸 · 받는 쪽이 속성 식", head + "class TestX:\n    got: Card = Card(card_id=\"a\")\n\n    def test_x(self) -> None:\n"
+         "        assert self.got.card_id\n", [5]),
+        ("모듈 이름", head + "got: Card = Card(card_id=\"a\")\n\n\ndef test_x() -> None:\n    assert got.card_id\n", [4, 8]),
+        ("for 대상", head + "def test_x(cards: list[Card]) -> None:\n    for got in cards:\n        assert got.card_id\n", []),
+        ("메서드 몸은 클래스 몸 이름을 건너뜀(같은 이름 모듈 이름)", head + "got: Card = Card(card_id=\"a\")\n\n\nclass TestX:\n"
+         "    got = None\n\n    def test_x(self) -> None:\n        assert got.card_id\n", [4, 11])]
+    for what, text, want in spots:
+        try:
+            found: "list[int]" = sorted({s[0] for s in bg._field_sites(bg._parse(text), TP, "application.core.card.Card",
+                                                                          "card_id")})
+        except Exception as exc:                            # noqa: BLE001 — 옛 판(_field_sites 없음)은 다름으로 선다
+            found = [-1]
+            what += f"({type(exc).__name__})"
+        if found != want:
+            fails.append(f"칸 자리 풀기 {what}: 줄 {found}(기대 {want})")
+    try:
+        reds = bg._rename_window("follow", [_rn_field()], CT.encode(), CT_NEW.encode(), TP, ({}, {}))[1]
+    except Exception as exc:                                # noqa: BLE001
+        reds = [f"{type(exc).__name__}: {exc}"]
+    if not any("운영 파일을 읽을 수 없다" in r for r in reds):
+        fails.append(f"_rename_window(sources 없음) + 칸 행 → red 기대 — {reds}")
     return fails
 
 

@@ -53,6 +53,12 @@
        `clean()`×{Form, BaseForm, ModelForm, BaseModelForm} · `deconstruct()`×{Field, *Field}(기저 해소는
        #646 과 같은 별칭 기계). 별도 ⓓ: 반환 주석의 자리표시 `object`(루트 · union 구성원 ·
        tuple/list/Sequence/Iterable/Iterator/set/frozenset/Collection 원소 — 같은 노드에 차단이 있으면 차단만).
+       모듈 수준 별칭(`X: TypeAlias = …` · 맨 대입 · PEP 695 `type X = …` · `if`/`try` 하위 · `TYPE_CHECKING` 갈래)은
+       깊이 4 까지 펼쳐 같은 자리로 판정한다(주석 전체 · 그 안 이름 · 값 자리 이름) — 같은 이름의 정의가 여럿이면
+       하나라도 위반 꼴이면 위반 · 상한에 닿거나 재귀하는 가지는 판정 없음(위반으로 닫지 않는다) · 반환 루트 가드 면제는
+       별칭의 정의가 모두 가드일 때만. 검출 한계: import 해 온 별칭 · 제네릭 별칭(`type X[T] = …`)의 타입 인자 대입 ·
+       컨테이너 이름 별칭(`R = dict` → `R[str, object]`) · 주석 안에서 따옴표로 감싼 안쪽 이름(`list["Payload"]`)은
+       펼치지 않는다.
   #650 (ast+ · ⓓ 전용) `json.load(s)` 결과의 무검증 흐름 — 결과가 놓이는 자리의 «선언 값 타입»이 `object`
        가 아닌 곳(AnnAssign 주석 루트 · Return 의 반환 주석 루트 · 리터럴 컨테이너 요소(그 리터럴이
        AnnAssign/Return 값이면 원소 슬롯 · 호출 인자면 비후보) · 컴프리헨션 요소 · 직접 첨자/속성 접근)로
@@ -60,13 +66,18 @@
        인자·무주석 Assign(#493 몫)은 후보 아님. 좌표 = AnnAssign/Return 문장 줄 · 그 밖 호출 줄.
   #646·#647·#650 은 뿌리 `application/`·`framework/` 아래 파일만 본다(BC 마다 도는 검사기의 BC 고르기와 같은 판 — 자매
        플러그인 구역 `web/application/**`·`web_test/**` · 운영 스크립트 · 뿌리 밖 중첩 컨테이너 `src/application/**` 제외 —
-       기존 5규칙의 대상은 무변).
+       기존 5규칙의 대상은 무변). 그 뿌리 아래 시험 본문은 #647 차단만 산다(아래 «시험 본문»).
 
 문법 외 면제(도구·프로토콜 소유 — 사람이 짓는 자리가 아니다):
   - `migrations/`(#593 이 모양을 소유) · `manage.py`/`wsgi.py`/`asgi.py`(생성 골격).
   - 던더(`__all__` 등)·`urlpatterns` — 인터프리터/Django 가 이름과 형을 소유한다.
-  - `test/` 의 unit/integration/e2e(«테스트 — 안이 자유» #384)와 `test_*.py`·
-    `conftest.py`. 재료 칸(`factories/`·`fake/`)은 규칙이 그대로 산다.
+
+시험 본문 — #647 차단만 산다(F4-126): `test/`·`tests/` 아래 재료 칸 밖(unit/integration/e2e 와 그 밖 —
+  재료 칸 안이라도 unit/integration/e2e 아래면 본문)과 `test_*.py`·`conftest.py` 는 뿌리 `application/`·`framework/`
+  아래에서 #647 «차단»만 잰다 — `Any` 값 자리는 전 자리 · `object` 값 자리는 반환·클래스 속성. #493·#645·#646·#650·
+  #358·#456 과 ⓓ 후보(#647 ⓓ 포함)는 내지 않는다(시험 본문의 #493 은 F4-33 으로 따로). 규칙 글(houserules §4 «테스트와
+  테스트 재료까지 전부»)은 시험을 면제하지 않는다 — #384 «안이 자유»는 트리 모양 규칙이지 타입 면제가 아니다.
+  뿌리 밖 시험 본문은 지금처럼 대상 밖. 재료 칸(`factories/`·`fake/`)은 전 규칙이 그대로 산다.
 
 가드 계약 (명세 조각 ⓐ): 대상 0건 가드(#74) · git 유무와 무관하게 전 파일
 검사(fail-closed — 기존 코드도 면제가 아니라 빚이다).
@@ -204,21 +215,22 @@ def _adopted(target: Path) -> bool:
     return False
 
 
-def _is_target_file(path: Path) -> bool:
+def _file_kind(path: Path) -> "str | None":
+    """검사 갈래 — "full"(전 규칙) · "test"(시험 본문 — 뿌리 아래에서 #647 차단만) · None(문법 외 면제)."""
     parts = set(path.parts)
     if parts & SKIP_DIRS or "migrations" in parts:
-        return False
+        return None
     if path.name in SCAFFOLD_FILES:
-        return False
+        return None
     if path.name.startswith("test_") or path.name == "conftest.py":
-        return False
+        return "test"
     if parts & TEST_DIR_NAMES:
-        # «테스트=자유 · 재료=규칙»(#384) — factories/·fake/ 만 검사한다.
+        # 트리 모양은 «테스트=자유 · 재료=규칙»(#384) — factories/·fake/ 만 전 규칙, 나머지는 시험 본문이다.
         if not (parts & MATERIAL_DIRS):
-            return False
+            return "test"
         if parts & TEST_FREE_DIRS:
-            return False
-    return True
+            return "test"
+    return "full"
 
 
 def _name_of(node: ast.AST) -> str:
@@ -328,23 +340,34 @@ def _is_type_checking(test: ast.AST) -> bool:
         isinstance(test, ast.Attribute) and test.attr == "TYPE_CHECKING")
 
 
-def _alias_defs(mod: ast.Module) -> "dict[str, list[tuple[ast.AST, bool]]]":
+def _alias_defs(mod: ast.Module, *, record: bool = False) -> "dict[str, list[tuple[ast.AST, bool]]]":
     """모듈 수준 별칭 정의 — 이름 → [(값, TYPE_CHECKING 분기 안인가)] 소스 순서.
 
     값 = Assign/AnnAssign 의 Name/Attribute/Subscript · `TYPE_CHECKING` 분기 안 ClassDef 의 첫 기저 + 나머지
     Subscript 기저(mixin-first 형 `class _B(Mixin, admin.ModelAdmin[M])` — 첫 기저를 마지막에 두어 «뒤 정의 우선» 을 보존).
     if/try 하위를 걷고 함수·클래스 본문 안은 보지 않는다. 같은 이름이 import 바인딩과 별칭 양쪽에 있으면
-    소스 순서상 뒤 정의가 이긴다(`_resolved_base` 가 `bindings` 를 먼저 본다)."""
+    소스 순서상 뒤 정의가 이긴다(`_resolved_base` 가 `bindings` 를 먼저 본다).
+
+    `record=True` 는 #647 별칭 펼침 표다 — 타입 식 꼴 값(위 셋 + union `A | B` · 문자열)과 PEP 695 `type X = …` 를 싣고
+    ClassDef 기저는 싣지 않는다(클래스는 별칭이 아니다). 기본 표(#646 · 선언적 클래스 · admin 기저 해소)는 무변이다."""
     out: dict[str, list[tuple[ast.AST, bool]]] = {}
+    type_alias: "type | None" = getattr(ast, "TypeAlias", None)  # PEP 695 `type X = …` — py3.12+
+
+    def type_like(value: "ast.AST | None") -> bool:
+        if isinstance(value, (ast.Name, ast.Attribute, ast.Subscript)):
+            return True
+        return record and (isinstance(value, ast.BinOp)
+                           or (isinstance(value, ast.Constant) and isinstance(value.value, str)))
 
     def walk(stmts: list[ast.stmt], in_tc: bool) -> None:
         for st in stmts:
-            if isinstance(st, (ast.Assign, ast.AnnAssign)) and st.value is not None \
-                    and isinstance(st.value, (ast.Name, ast.Attribute, ast.Subscript)):
+            if isinstance(st, (ast.Assign, ast.AnnAssign)) and st.value is not None and type_like(st.value):
                 for tg in (st.targets if isinstance(st, ast.Assign) else [st.target]):
                     if isinstance(tg, ast.Name):
                         out.setdefault(tg.id, []).append((st.value, in_tc))
-            elif isinstance(st, ast.ClassDef) and in_tc and st.bases:
+            elif record and type_alias is not None and isinstance(st, type_alias) and isinstance(st.name, ast.Name):
+                out.setdefault(st.name.id, []).append((st.value, in_tc))
+            elif isinstance(st, ast.ClassDef) and in_tc and st.bases and not record:
                 lst = out.setdefault(st.name, [])
                 lst.extend((b, True) for b in st.bases[1:] if isinstance(b, ast.Subscript))  # mixin-first 중간 ClassDef
                 lst.append((st.bases[0], True))
@@ -686,9 +709,55 @@ def _leaf(name: str) -> str:
     return name.rsplit(".", 1)[-1]
 
 
-def _record_value(ann: "ast.AST | None", names: set[str], mods: set[str], bindings: dict[str, str]) -> "tuple[str | None, bool]":
+ALIAS_DEPTH: int = 4  # #647 별칭 펼침 상한(`_resolved_bases` 와 같은 깊이) — 닿으면 그 가지는 판정 없음
+
+
+def _alias_of(name: ast.Name, bindings: dict[str, str],
+              aliases: "dict[str, list[tuple[ast.AST, bool]]] | None", seen: "frozenset[str]") -> "list[ast.AST] | None":
+    """펼칠 모듈 수준 별칭이면 그 정의 값 전부 — 별칭이 아님 · import 바인딩 · 재귀(이미 펼친 이름) · 상한이면 None."""
+    if aliases is None or name.id in bindings or name.id not in aliases:
+        return None
+    if name.id in seen or len(seen) >= ALIAS_DEPTH:
+        return None
+    return [value for value, _tc in aliases[name.id]]
+
+
+def _slot_kind(val: ast.AST, names: set[str], mods: set[str], bindings: dict[str, str],
+               aliases: "dict[str, list[tuple[ast.AST, bool]]] | None", seen: "frozenset[str]") -> "str | None":
+    """값 자리 하나 — `Any` · `object` · None. 값 자리 이름이 별칭이면 펼친다(정의 하나라도 `Any` 면 `Any`)."""
+    val = _unstring(val)
+    if _is_any(val, names, mods):
+        return "Any"
+    if not isinstance(val, ast.Name):
+        return None
+    if val.id == "object":
+        return "object"
+    values: "list[ast.AST] | None" = _alias_of(val, bindings, aliases, seen)
+    if values is None:
+        return None
+    kinds: "set[str | None]" = {_slot_kind(v, names, mods, bindings, aliases, seen | {val.id}) for v in values}
+    return "Any" if "Any" in kinds else ("object" if "object" in kinds else None)
+
+
+def _guard_root(ann: ast.AST, bindings: dict[str, str],
+                aliases: "dict[str, list[tuple[ast.AST, bool]]] | None", seen: "frozenset[str]") -> bool:
+    """반환 루트가 `TypeIs`/`TypeGuard[...]` 인가 — 루트가 모듈 별칭이면 펼친다(정의가 모두 가드일 때만 가드)."""
+    root: ast.AST = _unstring(ann)
+    if isinstance(root, ast.Subscript):
+        return _resolved_name(root.value, bindings) in TYPE_GUARDS
+    if not isinstance(root, ast.Name):
+        return False
+    values: "list[ast.AST] | None" = _alias_of(root, bindings, aliases, seen)
+    return bool(values) and all(_guard_root(v, bindings, aliases, seen | {root.id}) for v in values)
+
+
+def _record_value(ann: "ast.AST | None", names: set[str], mods: set[str], bindings: dict[str, str],
+                  aliases: "dict[str, list[tuple[ast.AST, bool]]] | None" = None,
+                  seen: "frozenset[str]" = frozenset()) -> "tuple[str | None, bool]":
     """#647 재료 — 애너테이션 안 `dict/Mapping[…, V]` 의 값 V 가 `Any`/`object` 인가 · (값, 루트인가).
-    `Any` 가 하나라도 있으면 ("Any", top?) · 아니면 `object` 가 있으면 ("object", top?) · 그 밖 (None, False)."""
+    `Any` 가 하나라도 있으면 ("Any", top?) · 아니면 `object` 가 있으면 ("object", top?) · 그 밖 (None, False).
+    `aliases`(`_alias_defs(record=True)`)가 있으면 주석 안 모듈 수준 별칭 이름을 정의 값으로 펼쳐 같은 판정을 한다 —
+    정의가 여럿이면 전부 · 상한(ALIAS_DEPTH) · 재귀 가지는 판정 없음 · import 바인딩 이름은 펼치지 않는다."""
     if ann is None:
         return None, False
     root = _unstring(ann)
@@ -698,15 +767,23 @@ def _record_value(ann: "ast.AST | None", names: set[str], mods: set[str], bindin
             literal_values |= {id(v) for v in ast.walk(n.slice)}
     found: dict[str, bool] = {}
     for n in ast.walk(root):
-        if id(n) in literal_values or not isinstance(n, ast.Subscript):
+        if id(n) in literal_values:
+            continue
+        values: "list[ast.AST] | None" = _alias_of(n, bindings, aliases, seen) if isinstance(n, ast.Name) else None
+        if isinstance(n, ast.Name) and values is not None:
+            for value in values:
+                kind, _top = _record_value(value, names, mods, bindings, aliases, seen | {n.id})
+                if kind is not None:
+                    found[kind] = found.get(kind, False) or (n is root)
+            continue
+        if not isinstance(n, ast.Subscript):
             continue
         if _leaf(_resolved_name(n.value, bindings)) not in RECORD_CONTAINERS:
             continue
         elts = list(n.slice.elts) if isinstance(n.slice, ast.Tuple) else [n.slice]
         if not elts:
             continue
-        val = _unstring(elts[-1])
-        kind = "Any" if _is_any(val, names, mods) else ("object" if isinstance(val, ast.Name) and val.id == "object" else None)
+        kind = _slot_kind(elts[-1], names, mods, bindings, aliases, seen)
         if kind is None:
             continue
         found[kind] = found.get(kind, False) or (n is root)
@@ -1118,14 +1195,18 @@ def _admin_context_policy(mod: ast.Module, rel: Path) -> dict[int, tuple[str, st
 
 def _check_explicit_any(mod: ast.Module, rel: Path, out: Findings, cands: Candidates,
                         bindings: "dict[str, str] | None" = None,
-                        aliases: "dict[str, list[tuple[ast.AST, bool]]] | None" = None) -> None:
+                        aliases: "dict[str, list[tuple[ast.AST, bool]]] | None" = None,
+                        test_body: bool = False) -> None:
     """#645 — 시그니처 bare `Any` 는 위반 · 시그니처 nested 와 변수/속성/클래스 필드의 `Any` 는 ⓓ 후보.
     #647 — 같은 애너테이션에서 먼저 판정한다: `dict/Mapping` 값 자리 `Any` 는 전 자리 차단 · `object` 는
     반환/클래스 속성 차단 · 매개변수/변수 ⓓ(면제 = `TypeIs/TypeGuard` 루트 · 스텁 강제 오버라이드).
     #647 위반이 난 애너테이션은 #645 nested ⓓ 를 생략한다(bare 는 유지 — 슬롯이 다르다). #647 은
-    뿌리 `application/`·`framework/` 아래만 — 뿌리 밖 파일은 #647 이 없으니 nested `Any` 는 #645 ⓓ 다. #493 과 독립이다(«존재»는 #493 · «내용»은 #645/#647)."""
+    뿌리 `application/`·`framework/` 아래만 — 뿌리 밖 파일은 #647 이 없으니 nested `Any` 는 #645 ⓓ 다. #493 과 독립이다(«존재»는 #493 · «내용»은 #645/#647).
+    #647 의 값 판정은 모듈 수준 별칭을 펼친다(`_alias_defs(record=True)` — `aliases` 인자는 오버라이드 면제의 기저 해소용).
+    `test_body` 면 #647 차단만 낸다 — #645 와 ⓓ 후보는 버린다(시험 본문 갈래)."""
     names, mods = _any_bindings(mod)
     bindings = bindings if bindings is not None else _module_bindings(mod)
+    record_aliases: "dict[str, list[tuple[ast.AST, bool]]]" = _alias_defs(mod, record=True)
     in_roots = _in_rule_roots(rel)
     admin_policy = _admin_context_policy(mod, rel)
     parent: dict[ast.AST, ast.AST] = {}
@@ -1139,12 +1220,12 @@ def _check_explicit_any(mod: ast.Module, rel: Path, out: Findings, cands: Candid
         """한 애너테이션에 #647 → #645 순으로 판정한다(#645 문면·심각도는 종전 그대로 — 시그니처 bare 만 위반)."""
         v645 = _explicit_any(ann, names, mods)
         status, reason = admin_policy.get(id(ann), ("ordinary", ""))
-        value, _ = _record_value(ann, names, mods, bindings)
+        value, _ = _record_value(ann, names, mods, bindings, record_aliases)
         fixed_slot = reason == "확인된 admin framework override 슬롯"
         if status == "allow" and ((value is not None and v645 != "bare") or (fixed_slot and (v645 == "nested" or site == "sig-star"))):
             return
         if status == "candidate" and ann is not None:
-            value, _ = _record_value(ann, names, mods, bindings)
+            value, _ = _record_value(ann, names, mods, bindings, record_aliases)
             if in_roots and value is not None and v645 != "bare":
                 hits.append((lineno, "c", "#647", where, f"{label}의 열린 admin context — {reason}", RECORD_Q))
                 return
@@ -1153,9 +1234,8 @@ def _check_explicit_any(mod: ast.Module, rel: Path, out: Findings, cands: Candid
                 return
         blocked647 = False
         if in_roots and ann is not None:
-            value, _top = _record_value(ann, names, mods, bindings)
-            root = _unstring(ann)
-            guard_root = isinstance(root, ast.Subscript) and _resolved_name(root.value, bindings) in TYPE_GUARDS
+            value, _top = _record_value(ann, names, mods, bindings, record_aliases)
+            guard_root = _guard_root(ann, bindings, record_aliases, frozenset())
             if value == "Any":
                 hits.append((lineno, "v", "#647", where, f"{label}의 " + RECORD_MSG.format(v="Any"), ""))
                 blocked647 = True
@@ -1203,6 +1283,8 @@ def _check_explicit_any(mod: ast.Module, rel: Path, out: Findings, cands: Candid
             judge(node.annotation, site, f"{rel}:{node.lineno}", f"`{target}` 주석", node.lineno, False,
                   f"`{target}` 주석에 `Any`(bare)", f"`{target}` 주석에 `Any`(nested)")
     for lineno, kind, rule, where, msg, q in sorted(hits, key=lambda h: (h[0], h[2], h[1])):
+        if test_body and (kind != "v" or rule != "#647"):
+            continue  # 시험 본문은 #647 차단만 산다
         if kind == "v":
             out.add(rule, where, msg)
         else:
@@ -1549,10 +1631,15 @@ def main(argv: list[str]) -> int:
 
     # 숨김 디렉터리(도구·하네스 영역 — `.codex/` 등)는 공개 표면이 아니다(2026-08-14 F-C ·
     # 라운드 3 실측: 클린룸 가드 훅 파일이 #493 귀속으로 오탐). 상대 경로 성분만 본다.
-    files = [
-        p for p in sorted(target.rglob("*.py"))
-        if _is_target_file(p) and not any(seg.startswith(".") for seg in p.relative_to(target).parts[:-1])
-    ]
+    # 시험 본문은 뿌리 `application/`·`framework/` 아래만 «#647 차단만» 갈래로 돈다(F4-126) — 가드·clean 계수는 전 규칙 파일만.
+    walked: "list[tuple[Path, str]]" = []
+    for p in sorted(target.rglob("*.py")):
+        if any(seg.startswith(".") for seg in p.relative_to(target).parts[:-1]):
+            continue
+        kind: "str | None" = _file_kind(p)
+        if kind == "full" or (kind == "test" and _in_rule_roots(p.relative_to(target))):
+            walked.append((p, kind))
+    files: "list[Path]" = [p for p, kind in walked if kind == "full"]
 
     # 대상 0건 가드(#74) — 채택 신호는 있는데 파일이 0건이면 경로 계약이 어긋난 것.
     if not files:
@@ -1567,7 +1654,7 @@ def main(argv: list[str]) -> int:
 
     findings = Findings(defer=True)
     candidates = Candidates(defer=True)
-    for f in files:
+    for f, kind in walked:
         try:
             src = f.read_text(encoding="utf-8")
             mod = ast.parse(src)
@@ -1577,6 +1664,9 @@ def main(argv: list[str]) -> int:
         parts = set(rel.parts)
         bindings = _module_bindings(mod)
         aliases = _alias_defs(mod)
+        if kind == "test":
+            _check_explicit_any(mod, rel, findings, candidates, bindings, aliases, test_body=True)
+            continue
         origins = _origin_bindings(mod)
         _scan_stmts(mod.body, "module", set(), rel, findings, False, bindings, aliases, origins)
         _check_explicit_any(mod, rel, findings, candidates, bindings, aliases)

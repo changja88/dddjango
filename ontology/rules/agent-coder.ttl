@@ -1195,12 +1195,18 @@ djr:R-3670 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3684 a djr:Obligation ;
-    skos:prefLabel "0T·0F 케이스 이름·parametrize 원소 id 는 명세 retain 개명 행대로만(정의 이름·id 리터럴 자리 · 픽스처·도우미 이름 개명 없음 · 개명 파일을 같은 창에서 옮기지 않음)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3684@2026-10-24> .
+    skos:prefLabel "0T·0F 케이스 이름·parametrize 원소 id 는 명세 retain 개명 행대로만(정의 이름·id 리터럴 자리 · 픽스처·도우미 이름 개명 없음 · 개명 파일을 같은 창에서 옮기지 않음) · 0F 칸 개명 행 파일은 그 클래스로 풀리는 옛=·.옛 만 새 이름으로(못 푸는 자리·다른 클래스 칸 안 바꿈)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3684@2026-10-28> .
 
 <https://numchida.com/ns/djr#R-3684@2026-10-24> a djr:Expression ;
     prov:specializationOf djr:R-3684 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3684@2026-10-28> a djr:Expression ;
+    prov:specializationOf djr:R-3684 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3684@2026-10-24> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3708 a djr:Prohibition ;
     skos:prefLabel "묶음 창 — 준 folder_group apply 명령 하나만(--debt|--run-moves) · 손 이동·개명·다른 편집 금지 · 창 밖 묶음 이동 금지 · 새 파일은 file-plan 경로 그대로"@ko ;
@@ -1581,7 +1587,7 @@ djr:R-3709 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
     djr:statesNorm djr:R-3505, djr:R-3506, djr:R-3649, djr:R-3650, djr:R-3651, djr:R-3684 ;
-    djr:text "- **슬라이스 0 창**(2026-09-27): Coordinator 가 창 종류(0T | 0C)를 준다. **0C**(코드 정리)에서는 옮긴·개명한 코드를 따라가는 테스트 치환 편집(import·문자열 속 경로·이름)을 테스트 소유와 무관하게(외부 계약 테스트 포함) 네가 한다 — 테스트의 로직·단언은 바꾸지 않고, 판정은 Coordinator 의 `behavior_guard.py close` 다. **0T**(테스트 정리)에서는 입력된 ⓐ 항목을 고치는 테스트 편집만 테스트 소유와 무관하게 한다 — 새 case 를 더하거나 케이스 이름을 바꾸지 않고, 제품 코드를 편집하지 않는다(루트 pytest 설정 절은 테스트 쪽이다). 어느 창이든 반대쪽 본문(0C 의 테스트 로직 · 0T 의 제품 코드)을 고쳐야 정리가 되면 편집하지 말고 그 사실을 보고한다(리팩토링 모드에서는 그 몫을 명세가 0F · 변경 슬라이스로 둔다). **리팩토링 모드 창**(2026-10-04): **0T**(`test`)의 기대 변경은 명세 입장 표 `update` 행(V 에 딸리지 않은 행)의 케이스에서만 한다(그 밖 확정 기대 변화는 red 다). **0F**(`follow` — 구조 추종)에서는 명세의 `retain` 재조직 행(candidate 칸에 낱말 `재조직`)에 적힌 파일만 «기대 의미 그대로» 고친다(시험 소유 무관 — 기대 원소를 바꾸면 red 다). 0T · 0F 에서 시험 케이스 이름 · parametrize 원소 id 는 명세의 `retain` «개명» 행대로만 바꾼다(정의 이름 · id 리터럴 자리만 — 픽스처 · 도우미 이름은 개명 행이 받지 않고, 개명하는 파일을 같은 창에서 옮기지 않는다 · 2026-10-24). **변경 창**(`change`)에서는 승인 V 의 안(내부 약속 · DB 구조) 몫과 그 시험 `update`/`add`/`remove`(owner coder)를 집행하고, 밖 동작 V 는 acceptance-tester 의 시험 편집 뒤에 제품 코드를 고친다(`update` · `add` 행은 그 Red 뒤 · `remove` 행은 acceptance-tester 가 그 케이스를 지운 결과를 받는다 — 삭제만 있는 V 에 Red 를 만들거나 기다리지 않는다) — «바뀌는 기대» 밖 기대 원소는 바꾸지 않고, 대상 BC 밖 파일은 다른 BC 편집 목록에 적힌 것만 고친다. DB 구조 V 는 `makemigrations` 로 새 마이그레이션 파일을 만들어 승인 연산 호출식과 같게 한다 — 기존 마이그레이션 파일은 고치거나 지우지 않고 `RunPython` · `RunSQL` · `SeparateDatabaseAndState` 는 쓰지 않는다. 리팩토링 모드의 어느 창이든 시험 편집은 close 가 감사 키 또는 red 로 처분한다(자동 초록 없음).\n"@ko .
+    djr:text "- **슬라이스 0 창**(2026-09-27): Coordinator 가 창 종류(0T | 0C)를 준다. **0C**(코드 정리)에서는 옮긴·개명한 코드를 따라가는 테스트 치환 편집(import·문자열 속 경로·이름)을 테스트 소유와 무관하게(외부 계약 테스트 포함) 네가 한다 — 테스트의 로직·단언은 바꾸지 않고, 판정은 Coordinator 의 `behavior_guard.py close` 다. **0T**(테스트 정리)에서는 입력된 ⓐ 항목을 고치는 테스트 편집만 테스트 소유와 무관하게 한다 — 새 case 를 더하거나 케이스 이름을 바꾸지 않고, 제품 코드를 편집하지 않는다(루트 pytest 설정 절은 테스트 쪽이다). 어느 창이든 반대쪽 본문(0C 의 테스트 로직 · 0T 의 제품 코드)을 고쳐야 정리가 되면 편집하지 말고 그 사실을 보고한다(리팩토링 모드에서는 그 몫을 명세가 0F · 변경 슬라이스로 둔다). **리팩토링 모드 창**(2026-10-04): **0T**(`test`)의 기대 변경은 명세 입장 표 `update` 행(V 에 딸리지 않은 행)의 케이스에서만 한다(그 밖 확정 기대 변화는 red 다). **0F**(`follow` — 구조 추종)에서는 명세의 `retain` 재조직 행(candidate 칸에 낱말 `재조직`)에 적힌 파일만 «기대 의미 그대로» 고친다(시험 소유 무관 — 기대 원소를 바꾸면 red 다). 0T · 0F 에서 시험 케이스 이름 · parametrize 원소 id 는 명세의 `retain` «개명» 행대로만 바꾼다(정의 이름 · id 리터럴 자리만 — 픽스처 · 도우미 이름은 개명 행이 받지 않고, 개명하는 파일을 같은 창에서 옮기지 않는다 · 2026-10-24). 0F 의 «칸 개명» 행이 있는 시험 파일에서는 그 클래스로 풀리는 호출의 키워드 `옛=` 과 받는 쪽이 그 클래스로 풀리는 속성 `.옛` 만 새 이름으로 바꾼다(받는 쪽이 그 클래스로 풀리지 않는 자리 · 같은 이름의 다른 클래스 칸은 바꾸지 않는다 · 2026-10-28). **변경 창**(`change`)에서는 승인 V 의 안(내부 약속 · DB 구조) 몫과 그 시험 `update`/`add`/`remove`(owner coder)를 집행하고, 밖 동작 V 는 acceptance-tester 의 시험 편집 뒤에 제품 코드를 고친다(`update` · `add` 행은 그 Red 뒤 · `remove` 행은 acceptance-tester 가 그 케이스를 지운 결과를 받는다 — 삭제만 있는 V 에 Red 를 만들거나 기다리지 않는다) — «바뀌는 기대» 밖 기대 원소는 바꾸지 않고, 대상 BC 밖 파일은 다른 BC 편집 목록에 적힌 것만 고친다. DB 구조 V 는 `makemigrations` 로 새 마이그레이션 파일을 만들어 승인 연산 호출식과 같게 한다 — 기존 마이그레이션 파일은 고치거나 지우지 않고 `RunPython` · `RunSQL` · `SeparateDatabaseAndState` 는 쓰지 않는다. 리팩토링 모드의 어느 창이든 시험 편집은 close 가 감사 키 또는 red 로 처분한다(자동 초록 없음).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s006/b7> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s006> ;
