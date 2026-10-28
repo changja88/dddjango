@@ -197,7 +197,7 @@ your_project/
         ├── application_layer/              # 유스케이스 흐름 (무엇을 언제)
         │   ├── order/                       # <area>
         │   │   └── place_order/
-        │   │       ├── place_order_use_case.py   # 유스케이스 본문 — execute 규약
+        │   │       ├── place_order_use_case.py   # 유스케이스 본문 — execute 규약 · 커지면 같은 이름 폴더로 승격(부품은 유스케이스 아님)
         │   │       ├── place_order_command.py    # 들어가는 자료 (안 쓰는 쪽은 빈 파일)
         │   │       ├── place_order_query.py
         │   │       └── place_order_result.py

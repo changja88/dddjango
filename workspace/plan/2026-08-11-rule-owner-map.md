@@ -569,3 +569,7 @@
 | 656 | ast | scripts/check-domain-model.py | — | 신설 | 10-27 의미 묶음(D60) — 묶음 자리 = `folder_group.place` 결과(만든다 · 푼다 · 둔다 · 부모에 둔다) |
 | 657 | human | — | agents/discipline-reviewer.md | 신설 | 10-27 의미 묶음(D60 · E4) — 공유 개념 예외는 `shared_value_object/` |
 | 658 | ast | scripts/check-test-config.py | — | 신설 | 10-28 루트 시험 폴더 — 저장소 루트 `tests/` · `test/` 아래 `.py` 파일마다 한 줄(내용 없는 `__init__.py` · 루트 `conftest.py` · `tests/web/` · `test/web/` 밖) · BC `test/` · `framework/test/` 의 루트 `tests` · `test` 패키지 import |
+| 659 | ast | scripts/check-transaction-boundary.py | — | 신설 | 10-29 ②′ 쓰기 경계 — 42행 승격 폴더의 본체 · 틀 밖 파일이 저장소 · UoW 를 쥠(ⓐ · 팩토리 포함 · 읽기 포함) · 본체 · 틀이 물린 자원 속성에 닿음(ⓑ) · 발행(ⓒ) · 틀의 범용 트랜잭션 콜백(인자 없는 콜러블을 작업 단위 안에서 부름 · 작업 단위 안 `yield`) |
+| 660 | ast | scripts/check-layer-skeleton.py | — | 신설 | 10-29 ②′ 의존 방향 — 폴더 안 import 그래프(부품 → 본체 · 부품끼리 순환 · ②′ 폴더 틀 · 잎 → 잎 아닌 형제) · 본체가 부품에 `self` · 본체 메서드 · `self` 잡는 lambda · 안쪽 함수 · `partial` 을 넘김 · 부품 인자 주석이 본체 클래스 |
+| 661 | ast | scripts/check-layer-skeleton.py | — | 신설 | 10-29 ②′ 이름 — ②′ 폴더만 · 부품 파일 이름 금지 낱말 · 틀 이름 `<유스케이스 이름>_frame.py` 하나 · 부품 클래스 `…UseCase` · 공개 이름(부품 클래스 · 받는 쪽 셋의 `_` 메서드) |
+| 662 | ast | scripts/check-usecase-dto-placement.py | — | 신설 | 10-29 ②′ 바깥 import — 같은 BC `application_layer/` 밖 시험 아닌 제품 코드가 ②′ 부품 모듈을 import(패키지 경로 통과 · 기존 ② 폴더 밖) |

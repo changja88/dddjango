@@ -14,6 +14,8 @@
   #256 [ast]  애그리거트 폴더엔 폴더와 같은 이름의 <aggregate>.py + 루트 클래스.
   #257 [ast+] 상태 변경은 루트를 지난다 — 확정: 응용·입구의 «속성 접근 후 메서드 호출»
               (order.line.change(...)) / 후보: 끝에 불변식 확인 없는 루트 메서드(Q4).
+              응용 쪽 #257 확정 · #546 · #550 은 유스케이스 본체와 그 칸 승격 폴더(트리 42행)의
+              부품 파일을 함께 본다.
   #258 [ast]  entity/ 직접 참조 금지 — 애그리거트 밖에서 붙잡는 것은 루트뿐.
   #259 [ast+] entity/ 판정은 식별자 — 후보: id 를 가진 value_object(자리 뒤바뀜 신호).
   #260 [ast]  entity/ 클래스는 식별자(id·*_id)를 가진다.
@@ -994,6 +996,13 @@ def _transaction_write_regions(root: Path, py: Path, mod: ast.Module, fn: ast.AS
     return regions, unknown
 
 
+def _use_case_part_file(py: Path) -> bool:
+    """유스케이스 칸(트리 42행) 승격 폴더 `<x>_use_case/` 의 부품 파일인가 — 나누기가 내용 검사를
+    빼돌리지 않게 본체와 같이 본다(`__init__.py` 제외)."""
+    folder = py.parent
+    return folder.name.endswith("_use_case") and py in checker_target.use_case_parts(folder.parent / (folder.name + ".py"))
+
+
 def _check_application_side(root: Path, bc: Path, f: Findings, cand: Candidates) -> None:
     app = bc / "application_layer"
     domain = bc / "domain_layer"
@@ -1028,7 +1037,7 @@ def _check_application_side(root: Path, bc: Path, f: Findings, cand: Candidates)
                 f.add("#542", _rel(root, py, node.lineno),
                       f"유스케이스가 도메인 이벤트 `{node.func.id}` 를 지어낸다 — 사실은 "
                       "«애그리거트»가 상태를 바꾼 그 메서드 안에서 기록한다")
-        if not py.name.endswith("_use_case.py"):
+        if not py.name.endswith("_use_case.py") and not _use_case_part_file(py):
             continue
         for fn in [n for n in ast.walk(mod) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]:
             bindings = _repo_bindings(fn)

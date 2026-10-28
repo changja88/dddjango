@@ -5,9 +5,9 @@
 fixture 에서 exit 2 가 나는지를 전수로 실측하고 표로 남긴다. eval v5 는
 FROZEN 이므로 실측은 이 fixture 결정 레인만 쓴다.
 
-케이스: skeleton 7 + 기존 15종×2 + API-error 3종×2(--error-profile auto)
+케이스: skeleton 9 + 기존 15종×2 + API-error 3종×2(--error-profile auto)
        + 신설 8종×2 + checker_lint 2 + 호출 계약 27 + 수정 사이클 레인 3×2 + 음성 · 양성 단독 레인
-       = exit 대조 116 + 줄 대조 14(GROUP_CASES — 아래) = 130(실행 표 끝 «케이스» 줄이 실측이다).
+       = exit 대조 121 + 줄 대조 19(GROUP_CASES — 아래) = 140(실행 표 끝 «케이스» 줄이 실측이다).
 
 의미 묶음 줄 대조(2.28.0 · #654~#656 · 설계 7.4): exit 만 보는 레인은 ⓓ 후보 줄(exit 불산입)과
 줄 글자(#656 주어)를 못 본다 — 이 레인은 거름 규칙의 줄 전부를 글자 그대로 기대와 대조한다.
@@ -107,6 +107,12 @@ POSITIVE_LANES: "list[tuple[str, str, str]]" = [
     ("check-usecase-dto-placement.py", "usecase_dto", "registrar_only"),
     ("check-usecase-dto-placement.py", "usecase_dto", "orphan_area"),
     ("check-usecase-dto-placement.py", "usecase_dto", "api_only_area"),
+    # ②′ 역할 내 독립 흐름(10-29) — #662 바깥 import · #541 본체 + 틀 · ⓓ#194 흐름 부품(줄은 GROUP_CASES 가 고정).
+    ("check-usecase-dto-placement.py", "usecase_dto", "part_flows"),
+    # ②′ 역할 내 독립 흐름(10-29) — #257 · #546 이 본체 + 부품 파일을 본다(줄은 GROUP_CASES 가 고정).
+    ("check-domain-model.py", "domain_model", "part_flows"),
+    # ②′ 역할 내 독립 흐름(10-29) — #659 쓰기 경계 · 틀 쪽 팔 · #197 본체 + 틀(줄은 GROUP_CASES 가 고정).
+    ("check-transaction-boundary.py", "transaction_boundary", "part_flows"),
     # F4-92 가드 — 위 한계의 경계: 같은 영역의 다른 업무 낱말(`booked` — 폴더 이름에는 없는 낱말)이 `event` 와 함께
     # 새면 그 낱말로 계속 잡는다.
     ("check-business-vocabulary.py", "business_vocabulary", "event_noun_leak_guard"),
@@ -151,6 +157,26 @@ _M652: str = (
     "wiring_material.py 는 결선 재료만 둔다 — `from application.orders.domain_layer.{m} import {c}` 는 허용 import 셋"
     "(`from __future__ import annotations` · `from django.conf import settings` · 자기 BC 값 객체 모듈의 클래스) 밖이다(F2)"
 )
+# transaction_boundary/part_flows — #659 · #197(틀) 문면 조각(검사기 문면 그대로 · 사례마다 42행 승격 폴더 하나).
+_TB_P: str = "application/orders/application_layer/order/"
+_TB_FIX: str = "틀 부품의 이름 있는 메서드로 읽고 쓴다 — 저장소 · UoW 는 본체와 틀만 받는다"
+_TB_HOLD: str = "부품이 쓰기 경계 자원을 쥔다 — {w} 의 주석이 `{r}` 로 풀린다(읽기만 해도 위반). " + _TB_FIX
+_TB_FRAME: str = ("범용 트랜잭션 콜백이다(틀은 갈래를 모른다) — 구간을 본체에 두거나 갈래를 모르는 틀 쓰기 도구를 쓴다"
+                  "(애그리거트를 받는 변경 함수는 된다)")
+_TB_VALUE: str = "값을 내는 주입 도구(시계 같은 것)는 작업 단위 밖에서 값을 구해 넘긴다"
+# skeleton/bad_promoted_flows — #660 · #661 · #643(②′) 문면 조각(검사기 문면 그대로 · 사례마다 42행 승격 폴더 하나).
+_SF: str = "application/orders/application_layer/order/"
+_SF_TOOL: str = "본체 도구는 틀 부품의 공개 메서드로"
+_SF_UP: str = ("부품이 본체 `{b}` 를 import 한다 — 의존은 본체 → 갈래 → 단계 → 틀 → 잎 한 방향이다"
+               "(`TYPE_CHECKING` 아래 · 함수 안 포함) — 타입은 잎 모듈로 · " + _SF_TOOL)
+_SF_DOWN: str = ("{s}이 {k} `{d}` 를 import 한다 — ②′ 폴더의 틀 · 잎은 잎만 import 한다(틀은 갈래 · 단계를 모른다)"
+                 " — 함께 쓰는 정의는 잎으로")
+_SF_PASS: str = "본체가 `{c}` 의 {a}로 {w} 를 넘긴다 — 실행 때 부품 → 본체 호출 고리다(부품이 Protocol 로 받아도 같다) — " + _SF_TOOL
+_SF_WORD: str = "②′ 부품 파일 이름에 금지 낱말 `{w}` — 부품 이름은 업무 낱말이다(틀 부품만 `{f}`)"
+_SF_PUBLIC: str = "{s} 메서드 `{m}` 를 부른다 — {c} 계약은 공개 이름이다(앞 `_` 없음)"
+_SF_PRIVATE: str = ("부품 클래스 `{c}` 가 `_` 로 시작한다 — 부품 클래스는 공개 이름이다(폴더 밖 비공개는 재수출하지 않음과"
+                    " 바깥 import 금지가 지킨다) — 본체 `__init__` 이 만들어 `self` 에 두는 형제 클래스는 ②′ 부품이다"
+                    "(② 로 두려면 `execute` 안에서 만든다)")
 
 # (라벨, 검사기, fixture, 거름(줄에 search 하는 정규식 · 빈 글 = 모든 줄), 기대 줄) — 기대는 리터럴(고침 번호는 설계 7.4).
 GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
@@ -168,6 +194,60 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
         f"[ⓓ#644] {_D}domain_service/pricing/discount_rule/discount_step.py: 행위 칸 승격 부품 201행(>200) — 캐스케이드 판정 의무 (트리 75행)"
         " — 물음: 역할 밖 응집 단위가 있는가 — ①이동/②동명 폴더 승격/③유지 (houserules §1 캐스케이드)",
     )),
+    # ②′ 역할 내 독립 흐름(10-29) — 정상 꼴(틀 · 잎 · 갈래 둘 · 단계 하나) · 단계 → 단계 · 틀과 갈래가 잎을 import ·
+    # 잎의 `_` 타입 · 본체가 `self._frame` 을 넘김 · `self` 를 안 잡는 lambda · 기존 ② 폴더에 실행마다 만드는 `_` 부품은 0 줄.
+    ("skeleton/good_promoted_flows", "check-layer-skeleton.py", "skeleton/good_promoted_flows", _ALL, ()),
+    # ②′ 역할 내 독립 흐름(10-29) — #660 부품 → 본체(`TYPE_CHECKING` 한 벌 · 절대 경로 한 벌) · 틀 · 잎 → 흐름 부품 ·
+    # 순환 · 본체 객체 넘김(주석 · `self` · 본체 메서드 · lambda · 안쪽 함수 · partial · 받는 쪽이 형제 모듈 함수 ·
+    # 모듈 참조 `m.<함수 · 클래스>` — renew_plan) · #661 이름 · 공개 이름(`_` 부품 클래스 — ② 꼴 폴더라도 본체
+    # `__init__` 이 만든 형제 클래스면 ②′ 부품 — collect_fee) · #643 틀 · 잎만 남은 ②′ 폴더.
+    ("skeleton/bad_promoted_flows", "check-layer-skeleton.py", "skeleton/bad_promoted_flows",
+     r"^\[(ⓓ)?#(643|660|661)\]", tuple(
+        f"[#660] {_SF}pack_box/pack_box_use_case/box_fill.py:{n}: " + _SF_UP.format(b="pack_box_use_case.py")
+        for n in (5, 10)
+     ) + tuple(
+        f"[#660] {_SF}{f}: " + _SF_DOWN.format(s=s, k="흐름 부품", d=d)
+        for f, s, d in (("load_truck/load_truck_use_case/load_truck_frame.py:7", "틀 부품", "truck_weight.py"),
+                        ("send_gift/send_gift_use_case/send_gift_frame.py:7", "틀 부품", "gift_card_payment.py"),
+                        ("count_stock/count_stock_use_case/count_memory.py:5", "잎", "shelf_count.py"))
+     ) + (
+        f"[#660] {_SF}merge_cart/merge_cart_use_case: 부품끼리 import 순환(`cart_price.py` · `cart_tax.py`) — "
+        "부품 사이 의존은 한 방향이다(단계 → 단계도 순환 없이) — 함께 쓰는 정의는 잎으로",
+        f"[#660] {_SF}rate_seller/rate_seller_use_case/seller_review.py:7: 부품 `SellerReview.__init__` 의 인자 `owner` "
+        "주석이 본체 클래스 `RateSellerUseCase` 로 풀린다 — 본체 객체를 부품에 넘기지 않는다(Protocol 로 받아도 같다) — " + _SF_TOOL,
+     ) + tuple(
+        f"[#660] {_SF}{u}/{u}_use_case/{u}_use_case.py:{n}: " + _SF_PASS.format(c=c, a=a, w=w)
+        for u, n, c, a, w in (
+            ("close_ticket", 16, "TicketReply(…)", "위치 인자", "본체 객체 `self`"),
+            ("split_bill", 16, "BillShare(…)", "`owner=` 인자", "본체 객체 `self`"),
+            ("return_item", 16, "ItemRefund(…)", "위치 인자", "본체 메서드 `self._retry_refund`"),
+            ("cancel_trip", 22, "self._trip_refund.run(…)", "`on_retry=` 인자", "본체 메서드 `self._retry_cancel`"),
+            ("pay_invoice", 23, "self._invoice_payment.run(…)", "`on_retry=` 인자", "`self` 를 잡는 `lambda`"),
+            ("move_seat", 27, "self._seat_move.run(…)", "`on_retry=` 인자", "`self` 를 쓰는 안쪽 함수 `retry`"),
+            ("print_label", 24, "self._label_print.run(…)", "`on_retry=` 인자", "본체를 품은 `partial(…)`"),
+            ("renew_plan", 27, "renew_by_bank(…)", "위치 인자", "본체 객체 `self`"),
+            ("renew_plan", 28, "plan_notice.send_notice(…)", "`owner=` 인자", "본체 객체 `self`"),
+            ("renew_plan", 29, "receipt.PlanReceipt(…)", "위치 인자", "본체 메서드 `self.charge_again`"),
+        )
+     ) + tuple(
+        f"[#661] {_SF}settle_payment/settle_payment_use_case/{f}: " + _SF_WORD.format(w=w, f="settle_payment_frame.py")
+        for f, w in (("shared_payment.py", "shared"), ("checkout_utils.py", "utils"), ("base_route.py", "base"),
+                     ("payment_step.py", "step"), ("payment_tools.py", "tools"))
+     ) + (
+        f"[#661] {_SF}settle_payment/settle_payment_use_case: `_frame.py` 꼬리 파일이 2개(`payment_frame.py` · "
+        "`settle_payment_frame.py`) — 틀 부품은 폴더에 하나이고 이름은 `settle_payment_frame.py` 다",
+        f"[#661] {_SF}settle_payment/settle_payment_use_case/card_payment.py:6: 부품 클래스 `CardPaymentUseCase` 가 "
+        "`UseCase` 로 끝난다 — 부품은 유스케이스가 아니다(유스케이스는 본체 하나 · 입구 `execute` 하나)",
+        f"[#661] {_SF}refill_stock/refill_stock_use_case/stock_refill.py:6: " + _SF_PRIVATE.format(c="_StockRefill"),
+        f"[#661] {_SF}collect_fee/collect_fee_use_case/payment_channel.py:4: " + _SF_PRIVATE.format(c="_PaymentChannel"),
+        f"[#661] {_SF}refill_stock/refill_stock_use_case/stock_refill.py:12: "
+        + _SF_PUBLIC.format(s="흐름 부품이 틀", m="_commit_refill", c="틀"),
+        f"[#661] {_SF}grant_badge/grant_badge_use_case/grant_badge_use_case.py:19: "
+        + _SF_PUBLIC.format(s="본체가 부품", m="self._badge_grant._run", c="부품"),
+        f"[#661] {_SF}grant_badge/grant_badge_use_case/grant_badge_use_case.py:20: "
+        + _SF_PUBLIC.format(s="본체가 틀", m="_commit_badge", c="틀"),
+        f"[#643] {_SF}archive_note/archive_note_use_case: 틀 · 잎만 남은 ②′ 폴더 — 흐름 부품 0 · 환원 신호(파일 실현으로 되돌린다)",
+     )),
     # 1 ~ 9 · 22 · 25 · #656 — 묶음 · 평평한 상대 import(25)가 있는 맞는 트리는 0 줄.
     ("domain_model/good", "check-domain-model.py", "domain_model/good", _ALL, ()),
     # 놓침 회귀(묶음 안 위반) · #459 걷음(22) · #656 네 줄 꼴(설계 7.3) · 상대 import 거짓 위반 걷힘(25).
@@ -198,6 +278,16 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
         f"[ⓓ#547] {_D}order/order.py: 엔티티 3개 + 무제한 컬렉션 필드 — 루트가 비대하다 — 물음: 이 둘이 «동시에» 일어나면 업무가 정말 막아야 하나",
         f"[ⓓ#547] {_D}shipment/shipment.py: 엔티티 4개 + 무제한 컬렉션 필드 — 루트가 비대하다 — 물음: 이 둘이 «동시에» 일어나면 업무가 정말 막아야 하나",
         "[ⓓ#547] application/orders: `order_repository` 를 여러 <area>/ ['billing_area', 'order'] 가 쓴다 — 경계가 너무 묶였을 신호다(트랜잭션을 늘리지 말고 «경계를 쪼갠다») — 물음: 서로 다른 일을 하는 두 사용자가 이 경계로 충돌하나",
+    )),
+    # ②′ 역할 내 독립 흐름(10-29) — 응용 쪽 내용 검사가 42행 승격 폴더의 본체 + 부품을 본다
+    # (bad_part_rule #257 — 갈래 · bad_frame_two_aggregate_types #546 — 틀 · 본체는 쓰기 없음).
+    ("domain_model/part_flows", "check-domain-model.py", "domain_model/part_flows",
+     r"^\[(ⓓ)?#(257|546|547|550)\]", (
+        "[#257] application/orders/application_layer/order/checkout_order/checkout_order_use_case/card_payment.py:14: "
+        "`order.lines.append(...)` — 애그리거트 상태 변경은 전부 «루트를 지나야» 한다(내부에 손을 넣지 않는다)",
+        "[#546] application/orders/application_layer/order/checkout_order/checkout_order_use_case/checkout_order_frame.py:25: "
+        "명시 transaction 구간에서 서로 다른 애그리거트 리포지토리 ['order', 'stock'] 에 쓰기 둘 — "
+        "한 트랜잭션은 애그리거트 «하나»를 바꾼다(현행 타입 계수)",
     )),
     # 11(#30 종류는 묶음 위 칸) · 12(#44 묶음 안 · 승격 본체 · 주어 실제 경로) · 13(C2 는 승격 면제 없음 — #41 · #481).
     ("naming/bad_rules", "check-naming.py", "naming/bad_rules", r"^\[#(30|41|44|481)\]", (
@@ -244,6 +334,54 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
         "그 묶음 한 칸 안 모듈의 실선언 예외 클래스뿐 — #95)"
         for m in ("domain_service.exception.fee.fee_rejected", "order.exception.order_not_payable",
                   "order.exception.payment.card.card_declined", "order.exception"))),
+    # ②′ 역할 내 독립 흐름(10-29) — #662 ②′ 폴더 부품 모듈의 바깥 import(컨트롤러 · 합성 루트 · `import <경로>` ·
+    # `from <패키지> import <부품 모듈>` 꼴) · 패키지 경로 · 시험 · 기존 ② 폴더 부품은 0 줄 · #541 은 본체 + 틀
+    # (본체가 `after_commit(self._frame.<m>)` 로 등록한 틀 발행 메서드는 커밋 뒤 — pay_order 0 줄) ·
+    # ⓓ#194 는 흐름 부품의 공개 메서드도 본다.
+    ("usecase_dto/part_flows", "check-usecase-dto-placement.py", "usecase_dto/part_flows",
+     r"^\[(ⓓ)?#(662|541|194)\]", tuple(
+        f"[#662] application/orders/{f}: 부품은 유스케이스가 아니다 — ②′ 폴더의 부품 모듈을 `application_layer/` 밖에서 "
+        f"import 하지 않는다(패키지 경로의 `__init__.py` 재수출만 쓴다) — `application.orders.application_layer.order.{m}`"
+        for f, m in (("driving_layer/api/order/checkout_controller.py", "checkout_order.checkout_order_use_case.card_payment"),
+                     ("composition_root/dependency_wiring.py", "checkout_order.checkout_order_use_case.checkout_order_frame"),
+                     ("driving_layer/cron_job/parcel_cron_job.py", "ship_parcel.ship_parcel_use_case.parcel_dispatch"),
+                     ("driving_layer/cron_job/parcel_cron_job.py", "ship_parcel.ship_parcel_use_case.ship_parcel_frame"))
+     ) + (
+        "[#541] application/orders/application_layer/order/ship_parcel/ship_parcel_use_case/ship_parcel_frame.py: "
+        "커밋 «전» 발행이다 — 발행은 `uow.after_commit(...)` 에 «참조»로 넘긴다(직접 `.publish(` 호출 금지)",
+        "[ⓓ#194] application/orders/application_layer/order/ship_parcel/ship_parcel_use_case/parcel_dispatch.py:15: "
+        "조건이 도메인 속성 깊이를 들여다본다 — 업무 규칙이면 도메인으로 내린다 — 물음: Q2(이 판정의 주인이 유스케이스인가)",
+     )),
+    # ②′ 역할 내 독립 흐름(10-29) — #659 승격 부품의 쓰기 경계(ⓐ 쥠 · ⓑ 닿음 · ⓒ 발행) · 틀 쪽 팔(범용 트랜잭션
+    # 콜백) · #197 본체 + 틀 한 단위(틀 클래스 단위 · (i) 꼴 도달 범위가 틀로 이어짐) · #195 는 틀로 넓히지 않음.
+    # 오탐 경계 0 줄: 바깥 port · 스트림 방출 · 변경 함수(주석 있음 · 없음) · 함께 저장 · 본체 구간 · 기존 ② 폴더.
+    ("transaction_boundary/part_flows", "check-transaction-boundary.py", "transaction_boundary/part_flows",
+     r"^\[#(659|197|195)\]", tuple(
+        f"[#659] {_TB_P}{f}:{n}: " + _TB_HOLD.format(w=w, r=r)
+        for f, n, w, r in (
+            ("pay_order/pay_order_use_case/card_payment.py", 10, "매개변수 `order_repository`", "OrderRepository"),
+            ("pay_order/pay_order_use_case/card_payment.py", 12, "주석 대입 `self._order_repository`", "OrderRepository"),
+            ("hold_order/hold_order_use_case/order_hold.py", 13, "매개변수 `order_repository`", "OrderRepository"),
+            ("ship_order/ship_order_use_case/parcel_packing.py", 11, "매개변수 `new_unit_of_work`", "OrdersUnitOfWork"),
+            ("ship_order/ship_order_use_case/parcel_packing.py", 13, "주석 대입 `self._new_unit_of_work`",
+             "OrdersUnitOfWork"),
+            ("refund_order/refund_order_use_case/refund_memory.py", 15, "매개변수 `repository`", "OrderRepository"),
+        )
+     ) + tuple(
+        f"[#659] {_TB_P}close_order/close_order_use_case/close_order_frame.py:{n}: 틀 메서드 `{m}` 이 작업 단위 "
+        f"`with` 안에서 인자 없는 콜러블(매개변수 `work`)을 부른다 — {_TB_FRAME} — {_TB_VALUE}"
+        for n, m in ((21, "run_in_unit_of_work"), (25, "run_with_unit_of_work"))
+     ) + (
+        f"[#659] {_TB_P}cancel_order/cancel_order_use_case/cancel_request.py:13: 부품이 본체 · 틀이 물린 쓰기 경계 속성에 "
+        f"다른 객체 너머로 닿는다(`self._frame.order_repository`). {_TB_FIX}",
+        f"[#659] {_TB_P}confirm_order/confirm_order_use_case/confirm_notice.py:17: 부품이 사실을 발행한다(`.publish(`) — "
+        "발행과 커밋 뒤 등록은 본체와 틀 부품에만 둔다(스트림 방출 `publish_item` 같은 것은 쓰기가 아니다)",
+        f"[#659] {_TB_P}split_order/split_order_use_case/split_order_frame.py:23: 틀 메서드 `transaction` 이 작업 단위 "
+        f"`with` 안에서 yield 한다 — {_TB_FRAME}",
+        f"[#197] {_TB_P}review_order/review_order_use_case/review_order_frame.py:10: 틀 `ReviewOrderFrame` 이 "
+        "UnitOfWork 를 쥐는데 어느 메서드의 도달 범위에도 save/remove/after_commit 이 없다(with 진입만으로는 쓰기가 아니다)"
+        " — 본체 + 틀은 한 유스케이스다: 읽기 전용이면 UnitOfWork 를 받지 않는다",
+     )),
     # 26 — #291 · #292 새 문면.
     ("context_isolation/bad_rules", "check-context-isolation.py", "context_isolation/bad_rules",
      r"^\[#29[12]\] application/[a-z_]+/domain_layer/", (
@@ -294,6 +432,16 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
     ("#655 없음 줄 걷음", _SK, "if not init.is_file():\n        out.add(\"#655\"", "if False:\n        out.add(\"#655\"", _SK),
     ("#655 «docstring · 주석뿐»을 0 바이트만으로", _SK,
      "elif not checker_target.skeleton_placeholder(init):", "elif init.stat().st_size != 0:", _SK),
+    ("#660 본체 객체 `self` 넘김 판정 지움", _SK,
+     "if isinstance(arg, _ast.Name) and arg.id == me:", "if False:", _SK),
+    ("#660 형제 모듈 함수 받는 쪽 지움(클래스만)", _SK,
+     "local |= {a.asname or a.name for a in node.names if _top_callable(mods[sibling], a.name)}",
+     "local |= {a.asname or a.name for a in node.names if _class_def(mods[sibling], a.name) is not None}", _SK),
+    ("#660 TYPE_CHECKING · 함수 안 import 무시(맨 위 문장만)", _SK,
+     "for node in _ast.walk(mod):  # import 간선", "for node in mod.body:  # import 간선", _SK),
+    ("#661 공개 이름 ⓑ 지움", _SK, "    _check_public_calls(kinds, mods, out)\n", "", _SK),
+    ("#643 ②′ 갈래 지움", _SK,
+     "elif kinds is not None and _split(kinds) and not kinds.flow_parts:", "elif False:", _SK),
     ("1 shared 값 객체 파일을 직계 glob 으로", _DM,
      'for py in folder_group.group_members(shared, "*.py", promotable=False):\n                _check_value_object_file',
      'for py in sorted(shared.glob("*.py")):\n                _check_value_object_file', _DM),
@@ -334,6 +482,9 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
     ("#656 «푼다» 주어를 묶음 __init__ 대신 첫 파일로", "folder_group.py",
      'return init if init in inside else (inside[0] if inside else f"{parent}/{g}/")',
      'return next((q for q in inside if not q.endswith("/__init__.py")), f"{parent}/{g}/")', _DM),
+    ("유스케이스 칸 승격 부품 넓힘 되돌림(본체만)", _DM,
+     'if not py.name.endswith("_use_case.py") and not _use_case_part_file(py):',
+     'if not py.name.endswith("_use_case.py"):', _DM),
     ("10 이벤트 이름 검사를 */event/*.py 로", _EP,
      'for py in [e for d in sorted(domain.iterdir()) if d.is_dir()\n                   for e in folder_group.group_members(d / "event", "*.py", promotable=False)]:',
      'for py in sorted(domain.glob("*/event/*.py")):', _EP),
@@ -372,6 +523,8 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
      '                or folder_group.recognize(group, row) != "group":',
      "if not group.is_dir():", _UC),
     ("24 길이 상한 걷음(두 칸 통과)", _UC, "if len(parts) not in (6, 7) or", "if len(parts) < 6 or", _UC),
+    ("#662 스캔 지움", _UC, "_check_part_imports(target, bc, ucs, findings)", "pass", _UC),
+    ("#541 본체가 커밋 뒤 등록한 틀 메서드 무시", _UC, "False, findings, _frame_committed(uc))", "False, findings)", _UC),
     ("26 #291 옛 문면", _CI,
      "도메인 예외의 자리는 애그리거트 밑 `exception/` 과 공유 개념의 `shared_value_object/` 둘이다(#657)",
      "도메인 예외의 표준 자리는 애그리거트 밑 하나뿐이다", _CI),
@@ -380,6 +533,12 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
      "함께 쓰는 개념은 `shared_value_object/`(#657) · 남에게 공개하는 실패는 OHS `contract/exception/` · 바깥 행위자는 "
      "`port/<capability>/exception.py` 다",
      "예외의 자리는 셋으로 갈린다 — 업무 규칙 위반은 `domain_layer/<aggregate>/exception/` 이다", _CI),
+    ("#659 ⓐ 쥠 판정 지움", "check-transaction-boundary.py",
+     "held = sorted(n for n in _annotation_names(ann) if n.endswith(WRITE_BOUNDARY_SUFFIXES))", "held = []",
+     "check-transaction-boundary.py"),
+    ("#659 틀 팔 인자 없는 콜러블 판정 지움", "check-transaction-boundary.py",
+     "if name in thunks or (name in untyped and not inner.args and not inner.keywords):", "if False:",
+     "check-transaction-boundary.py"),
 ]
 
 
@@ -388,7 +547,8 @@ def build_cases() -> "list[tuple[str, list[str], str, int]]":
     cases: list[tuple[str, list[str], str, int]] = []
     sk = "check-layer-skeleton.py"
     for sub, want in (("good_bc", 0), ("bad_legacy_flat", 2), ("bad_missing", 2),
-                      ("good_promoted", 0), ("bad_promoted", 2), ("good_grouped", 0), ("bad_grouped", 2)):
+                      ("good_promoted", 0), ("bad_promoted", 2), ("good_grouped", 0), ("bad_grouped", 2),
+                      ("good_promoted_flows", 0), ("bad_promoted_flows", 2)):
         fx = F / "skeleton" / sub
         cases.append((f"skeleton/{sub}", [sys.executable, str(S / sk), str(fx)], f"skeleton/{sub}", want))
     for script, fixture in PLAIN_PAIRS:

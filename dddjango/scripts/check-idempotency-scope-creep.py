@@ -64,7 +64,6 @@ except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(
 CONTRACT_REF = "선행 계약(architecture-api §13 멱등 스코프) 소유"
 
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango"}
-TEST_DIR_NAMES = {"test", "tests"}
 DJANGO_APP_MARKERS = ("models.py", "apps.py", "views.py", "admin.py")
 NEW_LAYERS = {"driving_layer", "application_layer", "domain_layer", "driven_layer"}
 
@@ -115,9 +114,8 @@ def _has_application_container(root: Path) -> bool:
     return False
 
 
-def _is_test_path(path: Path) -> bool:
-    parts = path.parts
-    return bool(set(parts) & TEST_DIR_NAMES) or path.name.startswith("test_") or path.name == "conftest.py"
+# 시험 경로 판별은 checker_target 한 출처 — 여기 호출은 절대 경로 그대로 넘긴다(판정 무변).
+_is_test_path = checker_target.is_test_path
 
 
 def _prod_py_under_application(root: Path) -> list[Path]:

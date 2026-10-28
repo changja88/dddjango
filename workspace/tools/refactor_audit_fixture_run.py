@@ -473,15 +473,53 @@ def residual_cases(fails: "list[str]", td: Path) -> None:
         "pairs": {"application/demo/domain_layer/big.py": "application/demo/domain_layer/big/big.py"},
         "dirs": {}, "fm": {"application/demo/domain_layer/big.py": "application/demo/domain_layer/big/big.py"}}}]),
         encoding="utf-8")
-    expect(fails, "residual ⓓ 겹침 항목에 --candidates 없음 → 실행 불능", run(repo, "residual", str(folder)), 1, "--candidates")
+    # ⓓ#644(크기 신호)는 ⓓ 겹침 바닥이 아니다 — 크기는 트리거가 아니다. ⓓ 겹침 바닥은 residual_floor_mark_cases(ⓓ#68).
+    def with_bundle(got: "tuple[int, str]") -> "tuple[int, str]":
+        st: str = got[1].split("--finalize ", 1)[1].split()[0] if "--finalize " in got[1] else ""
+        b: Path = folder / "residual" / st / "review-ddd.md"
+        return got[0], got[1] + (b.read_text(encoding="utf-8") if st and b.is_file() else "")
+
+    expect(fails, "residual ⓓ#644 표지 항목에 --candidates 없음 → 실행 불능 아님 · 리뷰어 묶음(M4)",
+           with_bundle(run(repo, "residual", str(folder))), 0, "결정적 잔존 1", "리뷰어 확인 대상 1(ddd)", "### M4")
     cand: Path = td / "cand.txt"
     cand.write_text("[ⓓ#644] application/demo/domain_layer/big/big.py: 행위 칸 200행 초과 — 물음: 분할?\n", encoding="utf-8")
-    expect(fails, "residual 대응표로 옮긴 경로에 같은 ⓓ 가 남음 → 결정적 잔존 · 직전 해소(M2) 무변 → 이월(묶지 않음)",
-           run(repo, "residual", str(folder), "--candidates", str(cand)), 2, "결정적 잔존 2", "해소 유지 1",
-           "리뷰어 확인 대상 0")
+    expect(fails, "residual 대응표로 옮긴 경로에 ⓓ#644 가 남아도 결정적 잔존 아님 → 리뷰어 묶음(M4) · "
+           "직전 해소(M2) 무변 → 이월(묶지 않음)",
+           with_bundle(run(repo, "residual", str(folder), "--candidates", str(cand))), 0, "결정적 잔존 1", "해소 유지 1",
+           "리뷰어 확인 대상 1(ddd)", "### M4")
     thing.write_text(thing.read_text(encoding="utf-8") + "# 반송 편집\n", encoding="utf-8")
-    expect(fails, "residual 직전 해소 항목의 파일을 반송이 건드림 → 이월 없이 다시 묶는다",
-           run(repo, "residual", str(folder), "--candidates", str(cand)), 0, "리뷰어 확인 대상 1(ddd)", "M_m 미정")
+    expect(fails, "residual 직전 해소 항목의 파일을 반송이 건드림 → 이월 없이 다시 묶는다(M2 · M4)",
+           with_bundle(run(repo, "residual", str(folder), "--candidates", str(cand))), 0, "리뷰어 확인 대상 2(ddd)", "M_m 미정",
+           "### M2")
+
+
+def residual_floor_mark_cases(fails: "list[str]", td: Path) -> None:
+    """ⓓ 겹침 바닥 — 크기 신호(ⓓ#644) 밖의 ⓓ 표지(ⓓ#68) 항목은 --candidates 가 있어야 하고, 대응표로 옮긴 경로에 같은 ⓓ 가
+    남으면 결정적 잔존이다."""
+    repo: Path = _project(td / "fmk")
+    big: str = "application/demo/domain_layer/big.py"
+    moved: str = "application/demo/domain_layer/big/big.py"
+    folder, anchor = _res_folder(repo, [row(1, V_B9, where=f"{big}:1").replace("픽스처 위반", "[ⓓ#68] 후보 겹침")],
+                                 ["M1 | ddd-01#1 | 채택 | | "])
+    (folder / "refactor-scope.md").write_text(
+        f"실행 · G0 승인 20260927-0300 · 모드 리팩토링 · audit 20260927-0250 · build_anchor {anchor}\n\n"
+        "- M1 · 결정 = ⓐ · 사유 = 픽스처 · 출처 = 본인 직접(0300)\n", encoding="utf-8")
+    (repo / moved).parent.mkdir()
+    (repo / big).rename(repo / moved)
+    run_dir: Path = folder / "behavior" / "20260927-0300"
+    run_dir.mkdir(parents=True)
+    (run_dir / "w1-open.json").write_text(json.dumps({"kind": "code"}), encoding="utf-8")
+    (run_dir / "w1-close.json").write_text(json.dumps([{"verdict": "green", "map_items": {
+        "pairs": {big: moved}, "dirs": {}, "fm": {big: moved}}}]), encoding="utf-8")
+    expect(fails, "residual ⓓ 겹침 항목(ⓓ#68)에 --candidates 없음 → 실행 불능", run(repo, "residual", str(folder)), 1,
+           "--candidates", "ⓓ#68")
+    cand: Path = td / "fmk" / "cand.txt"
+    cand.write_text(f"[ⓓ#68] {moved}:2: guard 형 raise 가 허용 두 자리(schema_in·domain) 밖에 있다 — 물음: Q2\n",
+                    encoding="utf-8")
+    got = run(repo, "residual", str(folder), "--candidates", str(cand))
+    bottom: str = "".join(p.read_text(encoding="utf-8") for p in (folder / "residual").glob("*/bottom.md"))
+    expect(fails, "residual 대응표로 옮긴 경로에 같은 ⓓ(ⓓ#68)가 남음 → 결정적 잔존", (got[0], got[1] + bottom), 2,
+           "M_m=1(결정적 잔존 1)", "리뷰어 확인 대상 0", "| M1 | 잔존 | 대응표로 옮긴 경로에 ⓓ#68 이 남았다 |")
 
 
 def residual_ground_fp_cases(fails: "list[str]", td: Path) -> None:
@@ -1098,7 +1136,7 @@ def final_cases(fails: "list[str]", td: Path) -> None:
            (0 if cv == "2/0" and "| M3 | ddd-01#3 | 채택 |" in vf12 and "병합 → M1" not in vf12 else 9, vf12 + log12), 0,
            "| M1 | ddd-01#1 | 제외 |", "재분류: M3 병합 대상 M1 이 확정 기록의 채택 항목이 아니다 → 채택")
     # F11 확정 표 칸 이스케이프 — 근거 칸 `\|` · 파일:행 칸 ⓓ 표식 → exit 0 확정 뒤 residual 이 --candidates 없이 실행 불능(ⓓ 가드 유지)
-    rp, fd, cv = lane("f11", [row(1, V_B9, where=P_LOC)], [f"M1 | ddd-01#1 | 채택 | 근거 a \\| b | {P_LOC} [ⓓ#644] "], "M1",
+    rp, fd, cv = lane("f11", [row(1, V_B9, where=P_LOC)], [f"M1 | ddd-01#1 | 채택 | 근거 a \\| b | {P_LOC} [ⓓ#68] "], "M1",
                       ["M1"], final=False)
     pol: Path = rp / P_LOC.split(":")[0]
     pol.write_text(pol.read_text(encoding="utf-8") + "\n# 정리\n", encoding="utf-8")
@@ -5549,6 +5587,7 @@ def main() -> int:
         sections_case(fails, aud, nov[0])
         verdict_cases(fails, aud, nov)
         residual_cases(fails, td)
+        residual_floor_mark_cases(fails, td)
         residual_moved_case(fails, td)
         residual_ground_cases(fails, td)
         residual_ground_fp_cases(fails, td)

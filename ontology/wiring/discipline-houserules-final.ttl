@@ -131,7 +131,7 @@ djr:R-3406 djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py
 
 djr:R-3407 djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
 
-djr:R-3408 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+djr:R-3408 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
 
 djr:R-3409 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
@@ -139,7 +139,8 @@ djr:R-3409 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-revie
 
 djr:R-3410 djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
 
-djr:R-3411 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+djr:R-3411 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-transaction-boundary.py> .
 
 djr:R-3412 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 
@@ -169,3 +170,9 @@ djr:R-3693 djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> 
 djr:R-3694 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 
 djr:R-3716 djr:enforcedBy <https://numchida.com/ns/djr#c/check-test-config.py> .
+
+djr:R-3718 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py>, <https://numchida.com/ns/djr#c/check-usecase-dto-placement.py> .
+
+djr:R-3719 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .

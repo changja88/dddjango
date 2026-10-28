@@ -1,0 +1,1 @@
+PAYMENT_SCALE: int = 100

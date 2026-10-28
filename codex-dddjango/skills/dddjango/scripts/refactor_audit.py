@@ -2063,6 +2063,10 @@ def _rename_only(project: Path, anchor: str, rel: str, pairs: "dict[str, str]") 
         return False
 
 
+# ⓓ 겹침 바닥에서 빼는 크기 신호 — 크기는 트리거가 아니다(houserules SKILL §1). 그 항목은 리뷰어 잔존 확인으로 간다.
+RESIDUAL_SIZE_MARKS: "frozenset[str]" = frozenset({"ⓓ#644"})
+
+
 def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finalize: "str | None",
                  gate_json: "Path | None" = None) -> int:
     audit_ts, adopted, removed, reductions, lines = _scope(folder)
@@ -2106,6 +2110,7 @@ def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finaliz
             carried.append(mid)                  # 직전 확정 판의 해소 — 그 뒤 항목 파일·대응 경로가 그대로면 유지
             continue
         marks: "set[str]" = set(re.findall(r"ⓓ#\d+", " ".join([v.ground, v.where] + [rows[o].gist for o in origin if o in rows])))
+        marks -= RESIDUAL_SIZE_MARKS                         # 크기 신호는 해소 증거도 잔존 증거도 아니다
         if files and not any(f in changed for f in files):
             floor[mid] = "파일 무변(build_anchor..작업 트리)"
             continue

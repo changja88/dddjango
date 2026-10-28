@@ -1,0 +1,9 @@
+from typing import Protocol
+
+
+class OrderUnitOfWork(Protocol):
+    def __enter__(self) -> "OrderUnitOfWork": ...
+
+    def __exit__(self, *exc: object) -> None: ...
+
+    def mark_done(self, target_id: int) -> None: ...

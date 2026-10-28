@@ -10,7 +10,7 @@
 
 ```
 ontology/                 ← 규범 «정본» (그래프)
-├── rules/*.ttl            30 문서 키 — 참조성 규범 548절·Work 3,716의 단일 출처
+├── rules/*.ttl            30 문서 키 — 참조성 규범 548절·Work 3,720의 단일 출처
 ├── vocab/djr.ttl          어휘(RDFS) · shapes/  SHACL · wiring/  경로 글롭·alias 대장 등
 ├── ISSUED                 규범 ID 채번 대장 (append-only)
 └── LEDGER.tsv             산문(prose) 절 기준선 원장 (append-only)

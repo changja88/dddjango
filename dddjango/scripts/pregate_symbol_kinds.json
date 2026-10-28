@@ -10,11 +10,11 @@
     "check-composition-root.py": "9b198045d9d690ec",
     "check-context-isolation.py": "ea4b896dff0fd460",
     "check-db-table.py": "5e7ca1aa515e59bf",
-    "check-domain-model.py": "d751d3cf7bf7be2e",
+    "check-domain-model.py": "13fa4c99df6a8b42",
     "check-error-centralization.py": "026087368e5ff9ab",
     "check-event-publish.py": "f1c54c0d552e6655",
-    "check-idempotency-scope-creep.py": "ab24f922f91bed67",
-    "check-layer-skeleton.py": "a96aef85c533d8f5",
+    "check-idempotency-scope-creep.py": "8d41c3a32fa96c80",
+    "check-layer-skeleton.py": "304ce2dd8e90cfb2",
     "check-mechanism-ownership.py": "601d42d764536590",
     "check-missable-entrance.py": "e346bb84a932ff8a",
     "check-naming.py": "d7a7eaf0acbdff72",
@@ -25,9 +25,9 @@
     "check-response-schema-bypass.py": "0fd510470a0ac985",
     "check-synthetic-infra-exc.py": "f30d0f3e8320ee6b",
     "check-test-config.py": "44ecabe867cebf17",
-    "check-transaction-boundary.py": "bb98821bacb2b6b0",
+    "check-transaction-boundary.py": "0c1e049efbbe7d01",
     "check-transient-overmapping.py": "35ac532566baaf46",
-    "check-usecase-dto-placement.py": "93f42e8a33f79a80"
+    "check-usecase-dto-placement.py": "e74f247a08ac186d"
   },
   "kinds": [
     {

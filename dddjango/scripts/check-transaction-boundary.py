@@ -3,14 +3,17 @@
 
 리포지토리 «파일» 계약(트리 69행)과 유스케이스의 쓰기 규율을 강제한다.
 
-담당 규칙 (rule-owner-map · 총 11 — #343 은 admin 가족이라 check-naming 이관):
+담당 규칙 (rule-owner-map · 총 12 — #343 은 admin 가족이라 check-naming 이관):
   #4   [ast]  `application_layer/**` 의 import 에 django 가 하나라도 있으면 위반 —
               트랜잭션도 시각도 DB 예외도 포트를 거친다(D4+D31).
   #195 [ast]  상태를 바꾸는 유스케이스는 애그리거트를 건너뛰지 않는다 — save/remove
               인자는 «같은 함수 안에서 루트 메서드 호출을 받은» 객체여야 하고, UoW 를
               받았는데 루트 메서드 호출이 0 이어도 위반.
   #197 [ast]  읽기 전용 유스케이스는 UnitOfWork 를 받지 않는다 — `*UnitOfWork` 파라미터가
-              있는데 본문에 `with uow:`·save·remove·after_commit 이 0 이면 위반.
+              있는데 본문에 `with uow:`·save·remove·after_commit 이 0 이면 위반. ②′ 승격 폴더는
+              본체 + 틀(`<x>_frame.py`)을 한 단위로 본다 — 본체 도달 범위는 `self.<틀 속성>.<m>(…)`
+              에서 틀 메서드로 이어지고, UoW 를 쥔 틀 클래스는 클래스 단위로 한 줄이다(#195 는
+              본체 공개 메서드 몸만 그대로).
   #200 [ast]  커밋 뒤 부작용은 `unit_of_work.after_commit(...)` — 응용이
               `transaction.on_commit`·`connection.in_atomic_block` 을 직접 부르면 위반.
   #282 [path] 리포지토리 선언은 폴더가 아니라 `<aggregate>_repository.py` 파일이다.
@@ -26,6 +29,17 @@
               안 문다 — 세는 대상은 «이름»이 아니라 «타입이 온 파일»(predicates ⓓ).
   #599 [ast]  `save_all()` 조건 셋 — ㉠구현이 트랜잭션을 열면 위반(atomic) ㉡맨
               bulk_update(경합 가드 없음)면 위반 ㉢`add_all` 은 열지 않는다.
+  #659 [ast]  유스케이스 칸(트리 42행) 승격 폴더의 쓰기 경계 — 저장소 · UoW(팩토리 포함)는 본체와
+              틀 부품만 받는다. 본체 · 틀 · `__init__.py` 밖 부품(갈래 · 단계 · 잎)이 ⓐ 매개변수 ·
+              주석 대입의 주석으로 그것을 쥐거나(읽기만 해도) ⓑ 본체 · 틀이 그것으로 물린 속성
+              이름에 다른 객체 너머로 닿거나 ⓒ `.publish(` 하면 위반. 틀 쪽 팔 — 틀 메서드가 작업
+              단위 `with` 안에서 인자 없는 콜러블 매개변수를 부르거나 yield 하면 위반(범용 트랜잭션
+              콜백 — 애그리거트를 받는 변경 함수는 통과). 바깥 port 호출 · `publish_item` 은 쓰기가 아니다.
+              한계(fail-open): ⓐ 는 주석 이름 끝만 본다(주석 없는 자원은 놓친다) · ⓑ 는 속성 이름 맞춤이다 ·
+              틀 쪽 팔은 `Callable[..., R]` · Protocol 주석을 인자 없는 콜러블로 보지 않고 `_` 헬퍼 안 호출은
+              따라가지 않는다 · 값을 내는 인자 없는 주입 도구(시계 같은 것)도 같이 잡는다(교정 줄이 작업
+              단위 밖에서 값을 구해 넘기라 한다) · #197 도달 범위는 본체 → 틀 직접 호출만 잇는다(부품 경유는
+              잇지 않는다).
 
 판정의 자(predicates ⓓ): 「무엇이 리포지토리인가」는 이름이 아니라 «타입이
 `<aggregate>_repository.py` 에서 온 것»으로 가른다 — audit_log.save() 는 안 걸린다.
@@ -151,6 +165,14 @@ PURE_COMPARE_OPS = (ast.Eq, ast.NotEq, ast.In, ast.NotIn, ast.Is, ast.IsNot)
 BUILD_ELEMENT_ARG = {"append": 0, "add": 0, "insert": 1}
 BUILD_COLLECTION_METHODS = ("extend", "update")
 
+# #659 — 승격 부품의 쓰기 경계 자원(주석 이름 끝)과 문면 조각.
+WRITE_BOUNDARY_SUFFIXES = ("Repository", "UnitOfWork")
+NESTED_SCOPES = (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef)
+M659_FIX = "틀 부품의 이름 있는 메서드로 읽고 쓴다 — 저장소 · UoW 는 본체와 틀만 받는다"
+M659_FRAME = ("범용 트랜잭션 콜백이다(틀은 갈래를 모른다) — 구간을 본체에 두거나 갈래를 모르는 틀 쓰기 도구를 쓴다"
+              "(애그리거트를 받는 변경 함수는 된다)")
+M659_VALUE = "값을 내는 주입 도구(시계 같은 것)는 작업 단위 밖에서 값을 구해 넘긴다"
+
 
 def _has_adoption_signal(bc_dir: Path) -> bool:
     """채택 신호원 둘(#78) — check-layer-skeleton 과 같은 판."""
@@ -258,7 +280,7 @@ def _annotation_names(node: ast.AST | None) -> set[str]:
         elif isinstance(n, ast.Constant) and isinstance(n.value, str):
             try:
                 names |= _annotation_names(ast.parse(n.value, mode="eval").body)
-            except SyntaxError:
+            except (SyntaxError, ValueError):  # 3.9 는 널 바이트 문자열을 ValueError 로 낸다
                 pass
     return names
 
@@ -404,9 +426,38 @@ def _init_attr_repos(cls: ast.ClassDef) -> set[str]:
     return out
 
 
+def _init_attr_uows(cls: ast.ClassDef) -> set[str]:
+    """__init__ 에서 `<x>.<속성> = <UnitOfWork 애너테이션 파라미터>` 로 물린 속성 이름(팩토리 포함)."""
+    out: set[str] = set()
+    for m in cls.body:
+        if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef)) and m.name == "__init__":
+            uow_params = _uow_param_names(m)
+            for st in ast.walk(m):
+                target = None
+                if isinstance(st, ast.Assign) and len(st.targets) == 1:
+                    target, value = st.targets[0], st.value
+                elif isinstance(st, ast.AnnAssign) and st.value is not None:
+                    target, value = st.target, st.value
+                else:
+                    continue
+                if isinstance(target, ast.Attribute) and isinstance(value, ast.Name) \
+                        and value.id in uow_params:
+                    out.add(target.attr)
+    return out
+
+
+def _uow_context(expr: ast.AST, uow_names: set[str], attr_uows: set[str]) -> bool:
+    """with 항목이 작업 단위를 여는가 — UoW 파라미터 뿌리 또는 UoW 로 물린 속성(팩토리 호출형은 Call 언랩)."""
+    if isinstance(expr, ast.Call):
+        expr = expr.func
+    return (_attr_root(expr) in uow_names
+            or (isinstance(expr, ast.Attribute) and expr.attr in attr_uows))
+
+
 def _uow_write_reach(fn: ast.FunctionDef | ast.AsyncFunctionDef,
                      helpers: "dict[str, ast.FunctionDef | ast.AsyncFunctionDef]",
-                     attr_uows: set[str], attr_repos: set[str]) -> bool:
+                     attr_uows: set[str], attr_repos: set[str],
+                     frames: "dict[str, tuple[dict, dict, set[str], set[str]]] | None" = None) -> bool:
     """#197 도달 범위의 쓰기-사용 판정(스펙 대장 #197 — 부칙 아님·측정 정밀화 2026-08-25).
 
     «with uow» 진입 자체는 쓰기 API 사용이 아니다 — 그래야 읽기 전용+UoW 를 성문 문면대로
@@ -418,15 +469,24 @@ def _uow_write_reach(fn: ast.FunctionDef | ast.AsyncFunctionDef,
     헬퍼→헬퍼 사슬 포함 · kkebi recover 2단 사슬 실증. 어디서도 안 닿는 죽은 헬퍼는
     불산입). with 인식은 factory 호출형(`with self._factory()`)을 Call 언랩으로 받는다 —
     언랩은 uow 별칭 수집에만 쓰인다.
+    ②′ 승격 폴더(frames — 본체 속성 이름 → 틀 클래스의 (메서드 · `_` 헬퍼 · UoW 속성 · 저장소 속성))면
+    본체 쪽 `self.<틀 속성>.<m>(…)` 에서 틀 메서드 `m` 과 그 `_` 헬퍼 닫힘으로 이어 가고, 틀 쪽 몸은
+    틀의 UoW · 저장소 속성을 쓰기 수신자로 센다(본체 + 틀 = 한 유스케이스 — #197 넓힘).
     """
-    scan: "list[ast.FunctionDef | ast.AsyncFunctionDef]" = [fn]
-    seen = {fn.name}
-    frontier = [fn]
+    links = frames or {}
+    owners: "dict[str, tuple[dict, set[str], set[str]]]" = {"": (helpers, attr_uows, attr_repos)}
+    for frame_attr, (_, frame_helpers, frame_uows, frame_repos) in links.items():
+        owners[frame_attr] = (frame_helpers, frame_uows, frame_repos)
+    scan: "list[tuple[str, ast.FunctionDef | ast.AsyncFunctionDef]]" = [("", fn)]
+    seen = {("", fn.name)}
+    frontier = [("", fn)]
     while frontier:
-        cur = frontier.pop()
+        owner, cur = frontier.pop()
+        own_helpers = owners[owner][0]
         for node in ast.walk(cur):
             if not isinstance(node, ast.Call):
                 continue
+            nexts: "list[tuple[str, ast.FunctionDef | ast.AsyncFunctionDef]]" = []
             cands: list[str] = []
             if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) \
                     and node.func.value.id == "self":
@@ -435,24 +495,27 @@ def _uow_write_reach(fn: ast.FunctionDef | ast.AsyncFunctionDef,
                 if isinstance(a, ast.Attribute) and isinstance(a.value, ast.Name) \
                         and a.value.id == "self":
                     cands.append(a.attr)
-            for name in cands:
-                if name in helpers and name not in seen:
-                    seen.add(name)
-                    scan.append(helpers[name])
-                    frontier.append(helpers[name])
-    for g in scan:
+            nexts.extend((owner, own_helpers[name]) for name in cands if name in own_helpers)
+            func = node.func
+            if (not owner and isinstance(func, ast.Attribute) and isinstance(func.value, ast.Attribute)
+                    and isinstance(func.value.value, ast.Name) and func.value.value.id == "self"
+                    and func.value.attr in links and func.attr in links[func.value.attr][0]):
+                nexts.append((func.value.attr, links[func.value.attr][0][func.attr]))
+            for nxt_owner, nxt in nexts:
+                if (nxt_owner, nxt.name) not in seen:
+                    seen.add((nxt_owner, nxt.name))
+                    scan.append((nxt_owner, nxt))
+                    frontier.append((nxt_owner, nxt))
+    for owner, g in scan:
+        _, own_uows, own_repos = owners[owner]
         uow_names = _uow_param_names(g)
         repo_names = _repo_param_names(g)
         aliases: set[str] = set(uow_names)
         for node in ast.walk(g):
             if isinstance(node, ast.With):
                 for item in node.items:
-                    expr = item.context_expr
-                    if isinstance(expr, ast.Call):
-                        expr = expr.func
-                    hit = (_attr_root(expr) in uow_names
-                           or (isinstance(expr, ast.Attribute) and expr.attr in attr_uows))
-                    if hit and isinstance(item.optional_vars, ast.Name):
+                    if _uow_context(item.context_expr, uow_names, own_uows) \
+                            and isinstance(item.optional_vars, ast.Name):
                         aliases.add(item.optional_vars.id)
 
         def _is_uow_repo(nd: ast.AST) -> bool:
@@ -470,7 +533,7 @@ def _uow_write_reach(fn: ast.FunctionDef | ast.AsyncFunctionDef,
                     if (isinstance(recv, ast.Name) and recv.id in repo_names) \
                             or (isinstance(recv, ast.Attribute)
                                 and isinstance(recv.value, ast.Name)
-                                and recv.value.id == "self" and recv.attr in attr_repos) \
+                                and recv.value.id == "self" and recv.attr in own_repos) \
                             or _is_uow_repo(recv):
                         return True
             for a in list(node.args) + [kw.value for kw in node.keywords]:
@@ -846,32 +909,21 @@ def _check_use_case_writes(root: Path, bc: Path, f: Findings) -> None:
     for py in _py_files(app_layer):
         # rglob+이름 필터라 동명 폴더 승격(#490 교체형)의 본체
         # (`<uc>_use_case/<uc>_use_case.py`)도 그대로 걸린다 — slot_glob 등가.
-        # 승격 «부품»의 쓰기 호출 금지(«save 류는 본체에만»)는 승격 형태 규범 가족의
-        # 몫(check-layer-skeleton #638~)이라 여기서 스캔을 넓히지 않는다.
+        # ②′ 부품의 쓰기 경계는 #659 가 여기서 본다.
         if not py.name.endswith("_use_case.py"):
             continue
+        promoted = _promoted_body(py)
+        if promoted:
+            _check_use_case_parts(root, py, f)
         mod = _parse(py)
         if mod is None:
             continue
+        frames = _frame_links(py) if promoted else {}
         collection_factories = _domain_collection_factories(mod, domain_classes)
         classes = [n for n in mod.body if isinstance(n, ast.ClassDef)]
         for cls in classes:
             attr_repos = _init_attr_repos(cls)
-            attr_uows: set[str] = set()
-            for m in cls.body:
-                if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef)) and m.name == "__init__":
-                    uow_params = _uow_param_names(m)
-                    for st in ast.walk(m):
-                        target = None
-                        if isinstance(st, ast.Assign) and len(st.targets) == 1:
-                            target, value = st.targets[0], st.value
-                        elif isinstance(st, ast.AnnAssign) and st.value is not None:
-                            target, value = st.target, st.value
-                        else:
-                            continue
-                        if isinstance(target, ast.Attribute) and isinstance(value, ast.Name) \
-                                and value.id in uow_params:
-                            attr_uows.add(target.attr)
+            attr_uows = _init_attr_uows(cls)
             helpers = {
                 m.name: m for m in cls.body
                 if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))
@@ -880,14 +932,16 @@ def _check_use_case_writes(root: Path, bc: Path, f: Findings) -> None:
             for m in cls.body:
                 if not isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef)) or m.name.startswith("_"):
                     continue
-                _check_execute_body(root, py, m, attr_repos, attr_uows, helpers, collection_factories, f)
+                _check_execute_body(root, py, m, attr_repos, attr_uows, helpers, collection_factories, f,
+                                    frames.get(cls.name))
 
 
 def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFunctionDef,
                         attr_repos: set[str], attr_uows: set[str],
                         helpers: "dict[str, ast.FunctionDef | ast.AsyncFunctionDef]",
                         collection_factories: "dict[str, dict[str, bool]]",
-                        f: Findings) -> None:
+                        f: Findings,
+                        frames: "dict[str, tuple[dict, dict, set[str], set[str]]] | None" = None) -> None:
     repo_names = _repo_param_names(fn)
     uow_names = _uow_param_names(fn)
     has_uow = bool(uow_names or attr_uows)
@@ -1072,7 +1126,8 @@ def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFun
 
     # #197 — UoW 를 받았는데 도달 범위 어디에도 쓰기 API 가 없다(측정 정밀화 2026-08-25).
     # «with uow» 진입 자체는 인정하지 않는다 — 읽기 전용+UoW 는 성문 문면 그대로 위반이다.
-    if has_uow and not _uow_write_reach(fn, helpers, attr_uows, attr_repos):
+    # ②′ 폴더면 도달 범위가 틀 메서드로 이어진다(has_uow 는 본체가 UoW 를 쥘 때만).
+    if has_uow and not _uow_write_reach(fn, helpers, attr_uows, attr_repos, frames):
         f.add("#197", _rel(root, py, fn.lineno),
               f"`{fn.name}` 이 UnitOfWork 를 받는데 도달 범위에 save/remove/after_commit 이 없다"
               "(with 진입만으로는 쓰기가 아니다) — 읽기 전용 유스케이스는 UnitOfWork 를 받지 않는다")
@@ -1090,6 +1145,181 @@ def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFun
     if has_uow and writes and not (method_called or factory_born):
         f.add("#195", _rel(root, py, fn.lineno),
               f"`{fn.name}` 이 UnitOfWork 로 쓰기를 하는데 루트 메서드 호출이 0 이다")
+
+
+# ── #659 — 유스케이스 칸 승격 폴더의 쓰기 경계 · 틀 쪽 팔 · 틀 클래스 단위 #197 ──────
+
+def _promoted_body(py: Path) -> bool:
+    """py 가 유스케이스 칸(트리 42행) 동명 폴더 승격의 본체 `<x>_use_case/<x>_use_case.py` 인가."""
+    if py.parent.name != py.stem:
+        return False
+    return checker_target.use_case_parts(py.parent.parent / py.name)[:1] == [py]
+
+
+def _frame_links(body: Path) -> "dict[str, dict[str, tuple[dict, dict, set[str], set[str]]]]":
+    """②′ 폴더 본체 클래스 이름 → {틀 속성 이름: (메서드 · `_` 헬퍼 · UoW 속성 · 저장소 속성)}.
+
+    본체 클래스 `__init__` 이 틀 클래스를 만들어 물린 속성만 잇는다 — 판별이 서지 않으면(fail-open) 빈 dict.
+    """
+    kinds = checker_target.use_case_part_kinds(body.parent)
+    if kinds is None or not kinds.is_split or kinds.frame is None or kinds.body_class is None:
+        return {}
+    mod = _parse(kinds.frame)
+    if mod is None:
+        return {}
+    frame_classes = {n.name: n for n in mod.body if isinstance(n, ast.ClassDef)}
+    links: "dict[str, tuple[dict, dict, set[str], set[str]]]" = {}
+    for attr, (name, module) in kinds.part_attrs.items():
+        cls = frame_classes.get(name)
+        if module != kinds.frame or cls is None:
+            continue
+        methods = {m.name: m for m in cls.body
+                   if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef)) and m.name != "__init__"}
+        helpers = {n: m for n, m in methods.items() if n.startswith("_")}
+        links[attr] = (methods, helpers, _init_attr_uows(cls), _init_attr_repos(cls))
+    return {kinds.body_class: links} if links else {}
+
+
+def _dotted(node: ast.AST) -> "str | None":
+    parts: list[str] = []
+    while isinstance(node, ast.Attribute):
+        parts.append(node.attr)
+        node = node.value
+    if not isinstance(node, ast.Name):
+        return None
+    parts.append(node.id)
+    return ".".join(reversed(parts))
+
+
+def _scope_nodes(roots: "list[ast.AST]") -> "list[ast.AST]":
+    """roots 와 그 자손 — roots 아래의 중첩 def · lambda · class 안으로는 들어가지 않는다."""
+    out: "list[ast.AST]" = []
+    stack = list(roots)
+    while stack:
+        cur = stack.pop()
+        out.append(cur)
+        stack.extend(c for c in ast.iter_child_nodes(cur) if not isinstance(c, NESTED_SCOPES))
+    return out
+
+
+def _zero_arg_callable(ann: "ast.AST | None") -> bool:
+    """주석이 인자 없는 콜러블(`Callable[[], …]` — 문자열 · `Optional` · `Union` · `|` 안 포함)인가."""
+    if isinstance(ann, ast.Constant) and isinstance(ann.value, str):
+        try:
+            ann = ast.parse(ann.value, mode="eval").body
+        except (SyntaxError, ValueError):  # 3.9 는 널 바이트 문자열을 ValueError 로 낸다
+            return False
+    if isinstance(ann, ast.BinOp) and isinstance(ann.op, ast.BitOr):
+        return _zero_arg_callable(ann.left) or _zero_arg_callable(ann.right)
+    if not isinstance(ann, ast.Subscript):
+        return False
+    head = (ann.value.id if isinstance(ann.value, ast.Name)
+            else ann.value.attr if isinstance(ann.value, ast.Attribute) else "")
+    if head in ("Optional", "Union"):
+        elts = ann.slice.elts if isinstance(ann.slice, ast.Tuple) else [ann.slice]
+        return any(_zero_arg_callable(e) for e in elts)
+    return (head == "Callable" and isinstance(ann.slice, ast.Tuple) and len(ann.slice.elts) == 2
+            and isinstance(ann.slice.elts[0], ast.List) and not ann.slice.elts[0].elts)
+
+
+def _generic_transaction_hit(fn: ast.FunctionDef | ast.AsyncFunctionDef,
+                             attr_uows: set[str]) -> "tuple[str, str] | None":
+    """틀 메서드가 작업 단위 `with` 안에서 인자 없는 콜러블 매개변수를 부르면 ("callback", 이름),
+    yield 하면 ("yield", "") — 범용 트랜잭션 콜백(틀 쪽 팔). 콜러블 쪽이 먼저다.
+
+    인자 없는 콜러블 = `Callable[[], …]` 주석의 매개변수(UoW 팩토리 주석은 뺀다) 또는 주석 없는 매개변수를
+    인자 0 개로 부른 것. 인자를 받는 콜러블(애그리거트를 받는 변경 함수)은 통과한다.
+    """
+    params = [a for a in fn.args.posonlyargs + fn.args.args + fn.args.kwonlyargs
+              if a.arg not in ("self", "cls")]
+    uow_names = _uow_param_names(fn)
+    thunks = {a.arg for a in params if _zero_arg_callable(a.annotation)} - uow_names
+    untyped = {a.arg for a in params if a.annotation is None}
+    yields = False
+    for node in _scope_nodes([fn]):
+        if not isinstance(node, (ast.With, ast.AsyncWith)) \
+                or not any(_uow_context(item.context_expr, uow_names, attr_uows) for item in node.items):
+            continue
+        for inner in _scope_nodes([st for st in node.body if not isinstance(st, NESTED_SCOPES)]):
+            if isinstance(inner, ast.Call) and isinstance(inner.func, ast.Name):
+                name = inner.func.id
+                if name in thunks or (name in untyped and not inner.args and not inner.keywords):
+                    return ("callback", name)
+            if isinstance(inner, (ast.Yield, ast.YieldFrom)):
+                yields = True
+    return ("yield", "") if yields else None
+
+
+def _check_use_case_parts(root: Path, body: Path, f: Findings) -> None:
+    """#659 — 승격 폴더 부품의 쓰기 경계(ⓐ 쥠 · ⓑ 닿음 · ⓒ 발행)와 틀 파일의 틀 쪽 팔 · 틀 클래스 단위 #197."""
+    expected = body.parent.parent / body.name
+    frame = checker_target.use_case_frame(expected)
+    parts = [p for p in checker_target.use_case_parts(expected)[1:] if p != frame]
+    held_attrs: set[str] = set()
+    for owner in (body, frame):
+        owner_mod = _parse(owner) if owner is not None else None
+        for cls in (owner_mod.body if owner_mod is not None else []):
+            if isinstance(cls, ast.ClassDef):
+                held_attrs |= _init_attr_repos(cls) | _init_attr_uows(cls)
+    for part in parts:
+        mod = _parse(part)
+        if mod is None:
+            continue
+        hits: "list[tuple[int, str]]" = []
+        for node in ast.walk(mod):
+            ann, who = None, ""
+            if isinstance(node, ast.arg):
+                ann, who = node.annotation, f"매개변수 `{node.arg}`"
+            elif isinstance(node, ast.AnnAssign):
+                ann, who = node.annotation, f"주석 대입 `{_dotted(node.target) or '…'}`"
+            if ann is not None:
+                held = sorted(n for n in _annotation_names(ann) if n.endswith(WRITE_BOUNDARY_SUFFIXES))
+                if held:
+                    hits.append((node.lineno, f"부품이 쓰기 경계 자원을 쥔다 — {who} 의 주석이 "
+                                              f"`{' · '.join(held)}` 로 풀린다(읽기만 해도 위반). {M659_FIX}"))
+            if isinstance(node, ast.Attribute) and node.attr in held_attrs \
+                    and not (isinstance(node.value, ast.Name) and node.value.id == "self"):
+                reach = _dotted(node) or f"….{node.attr}"
+                hits.append((node.lineno, f"부품이 본체 · 틀이 물린 쓰기 경계 속성에 다른 객체 너머로 닿는다"
+                                          f"(`{reach}`). {M659_FIX}"))
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "publish":
+                hits.append((node.lineno, "부품이 사실을 발행한다(`.publish(`) — 발행과 커밋 뒤 등록은 본체와 틀 "
+                                          "부품에만 둔다(스트림 방출 `publish_item` 같은 것은 쓰기가 아니다)"))
+        for line, msg in sorted(hits):
+            f.add("#659", _rel(root, part, line), msg)
+    if frame is not None:
+        _check_frame(root, frame, f)
+
+
+def _check_frame(root: Path, frame: Path, f: Findings) -> None:
+    """틀 클래스마다 — UoW 를 쥐는데 어느 메서드 도달 범위에도 쓰기가 없으면 #197 한 줄(클래스 단위),
+    메서드가 범용 트랜잭션 콜백이면 #659 한 줄(메서드 단위)."""
+    mod = _parse(frame)
+    if mod is None:
+        return
+    for cls in mod.body:
+        if not isinstance(cls, ast.ClassDef):
+            continue
+        attr_uows = _init_attr_uows(cls)
+        attr_repos = _init_attr_repos(cls)
+        methods = [m for m in cls.body
+                   if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef)) and m.name != "__init__"]
+        helpers = {m.name: m for m in methods if m.name.startswith("_")}
+        holds_uow = bool(attr_uows) or any(_uow_param_names(m) for m in methods)
+        if holds_uow and not any(_uow_write_reach(m, helpers, attr_uows, attr_repos) for m in methods):
+            f.add("#197", _rel(root, frame, cls.lineno),
+                  f"틀 `{cls.name}` 이 UnitOfWork 를 쥐는데 어느 메서드의 도달 범위에도 save/remove/after_commit 이 "
+                  "없다(with 진입만으로는 쓰기가 아니다) — 본체 + 틀은 한 유스케이스다: 읽기 전용이면 UnitOfWork 를 "
+                  "받지 않는다")
+        for m in methods:
+            hit = _generic_transaction_hit(m, attr_uows)
+            if hit is None:
+                continue
+            kind, name = hit
+            what = f"인자 없는 콜러블(매개변수 `{name}`)을 부른다" if kind == "callback" else "yield 한다"
+            value_hint = f" — {M659_VALUE}" if kind == "callback" else ""
+            f.add("#659", _rel(root, frame, m.lineno),
+                  f"틀 메서드 `{m.name}` 이 작업 단위 `with` 안에서 {what} — {M659_FRAME}{value_hint}")
 
 
 # ── #599㉠㉡ — save_all 구현 조건 ───────────────────────────────────────────

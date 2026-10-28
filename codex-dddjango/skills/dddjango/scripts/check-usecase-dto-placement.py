@@ -16,6 +16,9 @@
          커맨드 쪽도 갖는다(빈 파일 허용) · #571 result 는 성공 한 벌만(실패 금지)
          #202/#207 DTO 에 애그리거트·엔티티·ORM 행 금지(값 객체는 그대로 온다)
          #205 DTO 는 자기 유스케이스 폴더 안에서만 · #189 유스케이스끼리 모듈 돌려쓰기 금지
+         #662 ②′ 폴더(유스케이스 칸 승격 — 틀 파일이 있거나 본체가 흐름 부품을 만든다)의 부품
+              모듈은 그 BC 의 `application_layer/` 밖 시험 아닌 제품 코드가 import 하지 않는다
+              (패키지 경로의 `__init__.py` 재수출은 통과 · 기존 ② 폴더의 부품은 안 본다)
          #208 command 는 `schema_in` 과 같은 타입을 쓰지 않는다(driving import 금지)
          #567 `dto` 라는 이름을 쓰지 않는다(schema 는 기술 실물)
   진입점 #635 클래스 하나·`execute` 하나·계약 객체 하나 → result(빈 result 짝은 `-> None`)
@@ -23,6 +26,9 @@
   발행   #539 `pull_events()` 는 유스케이스가 부른다(리포지토리 구현이 부르면 위반)
          #540 도메인 사실을 «그대로» 브로커에 넘기면 위반(옮겨 담기는 유스케이스 몫)
          #541 커밋 «전» 발행 금지 — `.publish(` 직접 호출은 `uow.after_commit` 밖이다
+         (#539~#541 은 유스케이스 본체와 ②′ 틀 `<x>_frame.py` 를 본다 — 본체가
+         `after_commit(self.<틀 속성>.<m>)` 로 등록한 틀 메서드 `<m>` 은 커밋 뒤다 · 갈래 · 단계 · 잎의
+         `.publish(` 는 check-transaction-boundary #659 몫)
   schema #139 제약 선언은 `schema_in.py` 에(컨트롤러의 Field·validator 는 위반)
          #142 요청 스키마는 도메인 객체를 만들지 않는다(#141: 값 객체 import 는 면제)
          #143/#144 `schema_out` 은 result 로 만든다 — 도메인·ORM 타입 노출 금지
@@ -33,7 +39,8 @@
 
 ast+ 후보 채널 (㉰ — 기계가 후보를 좁히고 사람이 물음으로 마무리):
   #68(검증 raise 의 자리) · #103(입구의 값 객체 사용 폭) · #140(제약 0 스키마)
-  #191(use_case 이름은 동사) · #194(유스케이스 안 업무 규칙) · #571(실패 이름의 의미) — «ⓓ 후보» 로 출력하되
+  #191(use_case 이름은 동사) · #194(유스케이스 안 업무 규칙 — 본체 `execute` 와 ②′ 흐름 부품의
+  공개 메서드) · #571(실패 이름의 의미) — «ⓓ 후보» 로 출력하되
   exit 에 산입하지 않는다(판정 마무리는 agents/discipline-reviewer.md 몫).
   #68·#103 후보 스캔은 application_layer·driving_layer 로 한정한다(주 발생지).
 
@@ -408,6 +415,9 @@ def _check_use_case(uc: Path, uc_rel: Path, agg_names: set[str], out: Findings, 
         mod = _parse(entry)
         if mod is not None:
             _check_entry(mod, uc_rel / entry.relative_to(uc), out, cand)
+    kinds = _split_kinds(uc)
+    if kinds is not None:
+        _check_flow_parts(kinds, uc, uc_rel, cand)
 
 
 def _check_entry(mod: ast.Module, rel, out: Findings, cand: Candidates) -> None:
@@ -439,8 +449,12 @@ def _check_entry(mod: ast.Module, rel, out: Findings, cand: Candidates) -> None:
         if not is_none and not any(i.endswith("Result") for i in _ann_idents(r)):
             out.add("#635", rel, "`execute` 는 `<use_case>_result.py` 의 result 를 돌려준다(빈 result 짝이면 `-> None`)")
 
-    # #194 후보 — 유스케이스 안 업무 규칙(조건이 «무엇이 옳은가»를 가르기 시작)
-    for node in ast.walk(execute):
+    _rule_candidate(execute, rel, cand)
+
+
+def _rule_candidate(fn: ast.AST, rel, cand: Candidates) -> None:
+    """#194 후보 — 유스케이스 안 업무 규칙(조건이 «무엇이 옳은가»를 가르기 시작) · 함수 하나에 한 줄까지."""
+    for node in ast.walk(fn):
         if not isinstance(node, ast.If):
             continue
         test = node.test
@@ -450,6 +464,31 @@ def _check_entry(mod: ast.Module, rel, out: Findings, cand: Candidates) -> None:
         if any(isinstance(n, ast.Attribute) and isinstance(n.value, ast.Attribute) for n in ast.walk(test)):
             cand.add("#194", f"{rel}:{node.lineno}", "조건이 도메인 속성 깊이를 들여다본다 — 업무 규칙이면 도메인으로 내린다", "Q2(이 판정의 주인이 유스케이스인가)")
             break
+
+
+def _split_kinds(uc: Path) -> "checker_target.UseCasePartKinds | None":
+    """`<use_case>/` 의 진입점 칸이 ②′ 폴더(틀 파일이 있거나 본체가 흐름 부품을 만든다)로 실현됐으면
+    그 부품 종류 — 파일 실현 · 기존 ② 폴더 · 판별 불가(fail-open)는 None."""
+    if (uc / f"{uc.name}_use_case.py").is_file():
+        return None  # 파일 실현이 승격 폴더를 이긴다(slot_file 판독)
+    kinds = checker_target.use_case_part_kinds(uc / f"{uc.name}_use_case")
+    return kinds if kinds is not None and kinds.is_split else None
+
+
+def _check_flow_parts(kinds: "checker_target.UseCasePartKinds", uc: Path, uc_rel: Path, cand: Candidates) -> None:
+    """#194 후보를 ②′ 흐름 부품(갈래 · 단계)의 공개 메서드에도 — 나누기가 업무 판정을 본체 밖으로 빼돌리지 않게."""
+    for part in sorted(kinds.flow_parts):
+        mod = _parse(part)
+        if mod is None:
+            continue
+        owned = {name for name, module in kinds.part_classes.items() if module == part}
+        rel = uc_rel / part.relative_to(uc)
+        for cls in mod.body:
+            if not isinstance(cls, ast.ClassDef) or cls.name not in owned:
+                continue
+            for fn in cls.body:
+                if isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)) and not fn.name.startswith("_"):
+                    _rule_candidate(fn, rel, cand)
 
 
 # ── DTO 파일 내용 — #202 · #205 · #189 · #208 · #567 ───────────────────────
@@ -504,6 +543,56 @@ def _check_cross_use(app: Path, rel_base, out: Findings) -> None:
                 out.add("#189", rel_base / Path(*rp), f"`<use_case>/` 안 모듈은 그 유스케이스 소유다 — 남의 폴더를 import 하지 않는다(공유는 도메인/port/framework 로 «내리고», 남으면 중복한다) — `{mod_path}`")
 
 
+def _check_part_imports(target: Path, bc: Path, ucs: list[Path], out: Findings) -> None:
+    """#662 — ②′ 폴더의 부품 모듈은 그 BC 의 `application_layer/` 밖 제품 코드가 import 하지 않는다.
+
+    안은 #189, 다른 BC 는 #12 몫이다. 시험 파일(저장소 상대 경로로 판별)은 보지 않는다.
+    import 경로는 `<bc>.application_layer.` 부터 맞춘다(#189 처럼 앞 꾸러미 이름에 묶지 않는다).
+    패키지 경로(`…<x>_use_case`)의 `__init__.py` 재수출은 통과 · 상대 import 는 안 본다.
+    """
+    parts_of: dict[tuple[str, ...], set[str]] = {}  # ②′ 패키지 꼬리 → 부품 모듈 이름(본체 밖)
+    for uc in ucs:
+        kinds = _split_kinds(uc)
+        if kinds is None:
+            continue
+        folder = kinds.body.parent
+        tail = (bc.name, "application_layer") + folder.relative_to(bc / "application_layer").parts
+        parts_of[tail] = {p.stem for p in kinds.leaves | kinds.flow_parts} | (
+            {kinds.frame.stem} if kinds.frame is not None else set())
+    if not parts_of:
+        return
+
+    def _part_hit(dotted: str) -> bool:
+        names = tuple(dotted.split("."))
+        for i in range(1, len(names)):
+            if names[i] == "application_layer" and names[i - 1] == bc.name:
+                tail = names[i - 1:]
+                return tail[:-1] in parts_of and tail[-1] in parts_of[tail[:-1]]
+        return False
+
+    for f in sorted(bc.rglob("*.py")):
+        rp = f.relative_to(bc).parts
+        if set(rp) & SKIP_DIRS or rp[0] == "application_layer":
+            continue
+        if checker_target.is_test_path(f.relative_to(target)):
+            continue
+        mod = _parse(f)
+        if mod is None:
+            continue
+        hits: set[str] = set()
+        for node in ast.walk(mod):
+            if isinstance(node, ast.Import):
+                hits.update(a.name for a in node.names if _part_hit(a.name))
+            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                if _part_hit(node.module):
+                    hits.add(node.module)
+                hits.update(f"{node.module}.{a.name}" for a in node.names if _part_hit(f"{node.module}.{a.name}"))
+        for mod_path in sorted(hits):
+            out.add("#662", bc.relative_to(target) / Path(*rp),
+                    "부품은 유스케이스가 아니다 — ②′ 폴더의 부품 모듈을 `application_layer/` 밖에서 import 하지 않는다"
+                    f"(패키지 경로의 `__init__.py` 재수출만 쓴다) — `{mod_path}`")
+
+
 def _check_dto_names(app: Path, rel_base, out: Findings) -> None:
     """#567 — `dto` 는 Fowler 의 «프로세스 사이» 패턴 이름이라 쓰지 않는다."""
     for f in sorted(app.rglob("*.py")):
@@ -523,12 +612,14 @@ def _check_dto_names(app: Path, rel_base, out: Findings) -> None:
 
 # ── 사실 발행 세 걸음 — #539 · #540 · #541 ──────────────────────────────────
 
-def _check_event_steps(f: Path, rel, is_repository: bool, out: Findings) -> None:
+def _check_event_steps(f: Path, rel, is_repository: bool, out: Findings,
+                       committed: "frozenset[str]" = frozenset()) -> None:
+    """`committed` — 다른 파일(②′ 본체)이 이 파일의 메서드를 `after_commit(…)` 에 등록한 이름(커밋 뒤)."""
     mod = _parse(f)
     if mod is None:
         return
     pulled_names: set[str] = set()
-    callback_names: set[str] = set()  # after_commit 에 «참조»로 등록된 이름 — 그 정의 안은 커밋 후다
+    callback_names: set[str] = set(committed)  # after_commit 에 «참조»로 등록된 이름 — 그 정의 안은 커밋 후다
     for node in ast.walk(mod):
         if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
             fn = node.value.func
@@ -562,6 +653,35 @@ def _check_event_steps(f: Path, rel, is_repository: bool, out: Findings) -> None
                     out.add("#541", rel, "커밋 «전» 발행이다 — 발행은 `uow.after_commit(...)` 에 «참조»로 넘긴다(직접 `.publish(` 호출 금지)")
 
     _scan(mod.body, "<module>")
+
+
+def _frame_committed(uc: Path) -> "frozenset[str]":
+    """②′ 본체가 `after_commit(self.<틀 속성>.<m>)` 로 커밋 뒤에 등록한 틀 메서드 `<m>` — 작업 단위 구간을
+    본체에 두는 (i) 꼴에서 등록은 본체에만 보이므로, 틀 파일을 따로 볼 때(#541) 그 이름을 커밋 뒤로 넘긴다."""
+    kinds = _split_kinds(uc)
+    if kinds is None or kinds.frame is None:
+        return frozenset()
+    frame_attrs = {attr for attr, (_name, module) in kinds.part_attrs.items() if module == kinds.frame}
+    mod = _parse(kinds.body)
+    cls = next((n for n in mod.body if isinstance(n, ast.ClassDef) and n.name == kinds.body_class),
+               None) if mod is not None else None
+    if cls is None or not frame_attrs:
+        return frozenset()
+    names: set[str] = set()
+    for fn in cls.body:
+        if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)) or not fn.args.args:
+            continue
+        me = fn.args.args[0].arg
+        for call in ast.walk(fn):
+            if not (isinstance(call, ast.Call) and isinstance(call.func, ast.Attribute)
+                    and call.func.attr == "after_commit"):
+                continue
+            for arg in call.args:
+                if isinstance(arg, ast.Attribute) and isinstance(arg.value, ast.Attribute) \
+                        and isinstance(arg.value.value, ast.Name) and arg.value.value.id == me \
+                        and arg.value.attr in frame_attrs:
+                    names.add(arg.attr)
+    return frozenset(names)
 
 
 # ── schema · 컨트롤러 — #139 · #140 · #142 · #143 · #144 · #210 · #196 ─────
@@ -710,9 +830,13 @@ def main(argv: list[str]) -> int:
                 entry = checker_target.slot_file(uc / f"{uc.name}_use_case.py")
                 if entry is not None:
                     _check_event_steps(entry, uc_rel / entry.relative_to(uc), False, findings)
+                frame = checker_target.use_case_frame(uc / f"{uc.name}_use_case.py")
+                if frame is not None:  # ②′ 틀 — 쓰기 · 발행 순서를 쥐는 자리라 본체와 같이 본다
+                    _check_event_steps(frame, uc_rel / frame.relative_to(uc), False, findings, _frame_committed(uc))
             _check_cross_use(app, bc_rel / "application_layer", findings)
             _check_dto_names(app, bc_rel / "application_layer", findings)
             _check_boundary_names(app, bc_rel / "application_layer", findings)
+            _check_part_imports(target, bc, ucs, findings)
 
         api = _driving_api(bc)
         if api is not None:

@@ -729,16 +729,22 @@ djr:R-3417 a djr:Obligation ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3418 a djr:Obligation ;
-    skos:prefLabel "캐스케이드 ③ 유지 — 본업 비대·역할 내 초대형은 한 파일"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3418@2026-09-01> .
+    skos:prefLabel "캐스케이드 ③ 유지 — ①·②·②′ 가 모두 아니면 한 파일·역할 내 초대형도 ②′ 가 서지 않으면 한 파일·크기는 트리거 아님"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3418@2026-10-29> .
 
 <https://numchida.com/ns/djr#R-3418@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3418 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3418@2026-10-29> a djr:Expression ;
+    prov:specializationOf djr:R-3418 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3418@2026-09-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3419 a djr:Obligation ;
-    skos:prefLabel "감사 주도 배정 — coder 비발동·판정은 감사자·집행은 발견 반영"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3419@2026-09-09> .
+    skos:prefLabel "감사 주도 배정 — coder 비발동·판정은 감사자·집행은 발견 반영·②′ 열거(부품 종류·들어가는 자리·쓰기 경계 꼴)·전 빌드 ③ 의 ②′ 는 리팩토링 모드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3419@2026-10-29> .
 
 <https://numchida.com/ns/djr#R-3419@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3419 ;
@@ -748,6 +754,12 @@ djr:R-3419 a djr:Obligation ;
     prov:specializationOf djr:R-3419 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-3419@2026-09-01> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-3419@2026-10-29> a djr:Expression ;
+    prov:specializationOf djr:R-3419 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3419@2026-09-09> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3420 a djr:Obligation ;
@@ -942,6 +954,14 @@ djr:R-3667 a djr:Exception ;
     prov:specializationOf djr:R-3667 ;
     djr:revision 1 .
 
+djr:R-3717 a djr:Obligation ;
+    skos:prefLabel "캐스케이드 ②′ 역할 내 독립 흐름 — 유스케이스 칸만·유스케이스 하나 입구 하나·판정 도메인 먼저·갈래끼리 독립·갈래 부품은 클러스터·판정 이동 먼저·집행 전 참조 조사"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3717@2026-10-29> .
+
+<https://numchida.com/ns/djr#R-3717@2026-10-29> a djr:Expression ;
+    prov:specializationOf djr:R-3717 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/SKILL.md> a djr:Document ;
     skos:prefLabel "discipline-houserules-skill"@ko .
 
@@ -1082,15 +1102,15 @@ djr:R-3667 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
-    djr:statesNorm djr:R-3415, djr:R-3416, djr:R-3417, djr:R-3418 ;
-    djr:text "**어댑터 고정 골격** — 세 종류의 BC 어댑터는 `references/final.md` §0·§1의 고정 역할 패키지로 작성한다. 내용이 없어도 골격을 먼저 실현하고 실제 내용 파일 경로를 명세에 적는다. 이 칸에는 아래 승격 캐스케이드를 적용하지 않는다.\n\n**동명 폴더 승격 캐스케이드** — 승격 허용 칸 파일이 커질 때의 분할 판정이다(값·형태는 `references/final.md` §0 이 소유한다 — #490 교체형). 분할은 **크기가 아니라 소관·응집으로** 가른다 — 행 수는 트리거가 아니라 감사 신호다(`discipline-cleancode` §15.1 의 수치 스멜도 신호다). (명세·G0·감사자는 파이프라인 용어다 — 파이프라인 밖에서는 사용자의 명시적 작업 지시가 명세·G0 ⓐ에 준하고, 검수를 맡은 주체가 감사자에 준한다.)\n\n1. **이동(①)** — 커진 부분이 다른 기존 칸의 소관이면 그 칸으로 옮긴다. 단 이동 후보 칸이 실제로 받을 수 있는지(의존 방향 역류 없음·역할 계약 부합)를 확인한 뒤에만, 그리고 목적지가 승인 산출물 목록 안일 때만 — 목록 밖이면 보고(설계 반송)다. ①은 승격 폴더의 부품에도 그대로 적용된다.\n2. **동명 폴더 승격(②)** — 어느 칸 소관도 아닌 «역할 밖 응집 단위»가 생겼으면 승격한다. 술어: 칸의 역할 계약 밖 top-level 정의로서, 자기 상태·수명을 가진 클래스이거나 — 본업 정의가 직접 참조하지 않거나 단일 진입 이름으로만 참조하는 사적 정의들이 **서로만 참조하는 닫힌 성분**을 이루는 무상태 클러스터(예: 모델군+상수+함수 쌍 — 상수 모음만·타입 별칭 모음만·함수 하나는 클러스터가 아니다). 관례 동거는 예외다(Django Model+Manager+QuerySet(+그 불변 예외)·admin panel+inline). 주어가 승격 폴더 내부 부품이면 ②의 실현은 하위 폴더가 아니라 **형제 부품 파일 분할**이다. 승격을 **집행하기 전에**(발견을 집행하는 coder 는 집행 전 · 기존 파일 승격(G0 ⓐ→슬라이스 0)의 제안·실행자는 제안 전), 대상 모듈을 **모듈 객체·모듈 경로 문자열로 참조하는 곳** — 테스트 fixture 의 monkeypatch, `unittest.mock.patch(\"pkg.mod.attr\")` 문자열형, settings 등 dotted-path 문자열 참조, 동적 import — 을 저장소 전수에서 조사해 발견 전건을 승격 슬라이스 스코프에 편입한다. 재수출 `__init__` 의 import 표면 불변은 **읽기 표면**만 보증하고 **패치 표면**은 보증하지 않는다(패치는 패키지 객체에 걸리고 본체 모듈 전역은 그대로 남는다). 스코프 밖 발견이면 집행 전 보고(설계 반송)다 — 감사자의 판정 재료는 현행 유지다.\n3. **유지(③)** — 둘 다 아니면 한 파일(부품이면 한 부품 파일)을 유지한다. 전부 역할 내인 초대형 파일도 ③이다 — 크기는 트리거가 아니다.\n"@ko .
+    djr:statesNorm djr:R-3415, djr:R-3416, djr:R-3417, djr:R-3418, djr:R-3717 ;
+    djr:text "**어댑터 고정 골격** — 세 종류의 BC 어댑터는 `references/final.md` §0·§1의 고정 역할 패키지로 작성한다. 내용이 없어도 골격을 먼저 실현하고 실제 내용 파일 경로를 명세에 적는다. 이 칸에는 아래 승격 캐스케이드를 적용하지 않는다.\n\n**동명 폴더 승격 캐스케이드** — 승격 허용 칸 파일이 커질 때의 분할 판정이다(값·형태는 `references/final.md` §0 이 소유한다 — #490 교체형). 분할은 **크기가 아니라 소관·응집으로** 가른다 — 행 수는 트리거가 아니라 감사 신호다(`discipline-cleancode` §15.1 의 수치 스멜도 신호다). (명세·G0·감사자는 파이프라인 용어다 — 파이프라인 밖에서는 사용자의 명시적 작업 지시가 명세·G0 ⓐ에 준하고, 검수를 맡은 주체가 감사자에 준한다.)\n\n1. **이동(①)** — 커진 부분이 다른 기존 칸의 소관이면 그 칸으로 옮긴다. 단 이동 후보 칸이 실제로 받을 수 있는지(의존 방향 역류 없음·역할 계약 부합)를 확인한 뒤에만, 그리고 목적지가 승인 산출물 목록 안일 때만 — 목록 밖이면 보고(설계 반송)다. ①은 승격 폴더의 부품에도 그대로 적용된다.\n2. **동명 폴더 승격(②)** — 어느 칸 소관도 아닌 «역할 밖 응집 단위»가 생겼으면 승격한다. 술어: 칸의 역할 계약 밖 top-level 정의로서, 자기 상태·수명을 가진 클래스이거나 — 본업 정의가 직접 참조하지 않거나 단일 진입 이름으로만 참조하는 사적 정의들이 **서로만 참조하는 닫힌 성분**을 이루는 무상태 클러스터(예: 모델군+상수+함수 쌍 — 상수 모음만·타입 별칭 모음만·함수 하나는 클러스터가 아니다). 관례 동거는 예외다(Django Model+Manager+QuerySet(+그 불변 예외)·admin panel+inline). 주어가 승격 폴더 내부 부품이면 ②의 실현은 하위 폴더가 아니라 **형제 부품 파일 분할**이다. 승격을 **집행하기 전에**(발견을 집행하는 coder 는 집행 전 · 기존 파일 승격(G0 ⓐ→슬라이스 0)의 제안·실행자는 제안 전), 대상 모듈을 **모듈 객체·모듈 경로 문자열로 참조하는 곳** — 테스트 fixture 의 monkeypatch, `unittest.mock.patch(\"pkg.mod.attr\")` 문자열형, settings 등 dotted-path 문자열 참조, 동적 import — 을 저장소 전수에서 조사해 발견 전건을 승격 슬라이스 스코프에 편입한다. 재수출 `__init__` 의 import 표면 불변은 **읽기 표면**만 보증하고 **패치 표면**은 보증하지 않는다(패치는 패키지 객체에 걸리고 본체 모듈 전역은 그대로 남는다). 스코프 밖 발견이면 집행 전 보고(설계 반송)다 — 감사자의 판정 재료는 현행 유지다.\n2′. **역할 내 독립 흐름(②′)** — 유스케이스 칸(트리 42행)에만 선다. ①·② 가 서지 않는(전부 역할 내) 유스케이스 파일이 입구 하나 안에 서로 독립인 흐름 갈래를 품었으면 동명 폴더로 승격하고 안을 부품으로 나눈다 — 유스케이스는 하나이고 입구도 하나(`execute`)다. 다음이 모두 서야 하고, 하나라도 서지 않으면 ③ 이다.\n   (가) **판정 도메인 먼저** — 본체는 갈래를 도메인 층이 정의한 닫힌 값(Enum · StrEnum · 봉인 합 타입) 하나에 대한 `match` 로만 고른다. 그 값은 도메인 메서드 · 도메인 서비스 호출 하나가 내고(바깥 요청의 종류는 그 호출의 인자로 넘긴다), 본체는 고르려고 상태를 읽거나 비교하지 않는다.\n   (나) **갈래끼리 독립** — 갈래 부품은 본체 `match` 의 `case` 한 곳에서만 들어가고 다른 갈래의 흐름을 부르지 않는다 — 틀 · 넘겨받은 도구를 거쳐 부르는 것도 같다. 두 곳 이상(본체 `case` 포함)이 함께 지나는 흐름은 단계 부품이고, 다른 갈래로 다시 가야 하는 갈래는 갈래가 아니다 — 본체가 도메인 값으로 다시 고른다.\n   (다) **갈래 부품은 클러스터** — 갈래 부품 하나는 ② 의 클러스터(사적 정의 둘 이상이 서로만 참조하는 닫힌 성분)다. 메서드 하나짜리 갈래는 본체에 남고, 한 곳만 부르는 흐름은 부르는 쪽 안 `_` 사설 함수로 남는다(#192).\n   ②′ 승격 뒤 형태(부품 종류 · 의존 방향 · 쓰기 경계 · 이름)는 `references/final.md` §0 이 소유한다. ②′ 판정이 (가) 를 위해 판정 이동(#194 발견)을 먼저 요구하면 발견문에 그 선행 발견을 적고 집행은 판정 이동 → 승격 차례다. 승격을 집행하기 전의 모듈 경로 참조 전수 조사(② 의 문장)는 ②′ 에도 그대로다.\n3. **유지(③)** — ①·②·②′ 가 모두 아니면 한 파일(부품이면 한 부품 파일)을 유지한다. 전부 역할 내인 초대형 파일도 ②′ 가 서지 않으면 ③ 이다 — 크기는 트리거가 아니다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b8> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
     djr:kind djr:kind-norm ;
     djr:order 8 ;
     djr:statesNorm djr:R-3419, djr:R-3420 ;
-    djr:text "**감사 주도 배정** — coder 는 이 캐스케이드를 스스로 발동하지 않는다(승격 허용 칸은 파일형으로 작성한다). 신호는 `check-layer-skeleton` 이 후보 채널(ⓓ)로 무조건 방출한다 — 주어는 행위 칸 실현(controller 2종·service·use_case·repo/bypass/uow 구현·aggregate·domain_service — wiring 제외)과 그 칸의 승격 폴더 내부 .py(`__init__.py` 제외)의 200행 초과이고, 페이로드가 행수·top-level 정의 요약을 동봉한다(AST 산출은 백스톱 소유 — 감사자는 응집·소관·독립 변경 이유만 판정한다). **판정 의무의 주어만** «이번 diff 가 만들었거나 키운(판정 앵커 대비 물리 행수 순증>0) 파일»로 한정하고 그 적용자는 감사자다 — rename·`git mv` 는 «만들었음»으로 발화하고, 전 빌드 ③ 판정 파일은 역할 밖 후보가 새로 생긴 diff 에서만 재판정한다(판별 주체=감사자·판정은 감사 리포트에 기록한다). ①/② 판정은 권고가 아니라 반송 대상 발견이고 — coder 가 판단 없이 집행하며 발견의 클러스터 열거가 부품 파일 신설 근거다 — 신호 밖 허용 칸(schema_in/out 등)의 ② 판정은 홀리스틱 감사에서 허용하되 발견문에 «신호 밖 판정»을 명기한다.\n"@ko .
+    djr:text "**감사 주도 배정** — coder 는 이 캐스케이드를 스스로 발동하지 않는다(승격 허용 칸은 파일형으로 작성한다). 신호는 `check-layer-skeleton` 이 후보 채널(ⓓ)로 무조건 방출한다 — 주어는 행위 칸 실현(controller 2종·service·use_case·repo/bypass/uow 구현·aggregate·domain_service — wiring 제외)과 그 칸의 승격 폴더 내부 .py(`__init__.py` 제외)의 200행 초과이고, 페이로드가 행수·top-level 정의 요약을 동봉한다(AST 산출은 백스톱 소유 — 감사자는 응집·소관·독립 변경 이유만 판정한다). **판정 의무의 주어만** «이번 diff 가 만들었거나 키운(판정 앵커 대비 물리 행수 순증>0) 파일»로 한정하고 그 적용자는 감사자다 — rename·`git mv` 는 «만들었음»으로 발화하고, 전 빌드 ③ 판정 파일은 역할 밖 후보가 새로 생긴 diff 에서만 재판정한다(판별 주체=감사자·판정은 감사 리포트에 기록한다). ①/②/②′ 판정은 권고가 아니라 반송 대상 발견이고 — coder 가 판단 없이 집행하며 발견의 클러스터 열거가 부품 파일 신설 근거다 — 신호 밖 허용 칸(schema_in/out 등)의 ② 판정은 홀리스틱 감사에서 허용하되 발견문에 «신호 밖 판정»을 명기한다. ②′ 발견의 열거는 부품마다 종류(갈래 · 단계 · 틀 · 잎)와 들어가는 자리(본체 `case` · 부르는 부품)를 적고, 쓰기 경계가 갈래 흐름을 감싸는 자리마다 고른 꼴((i) 본체 구간 · (ii) 틀 쓰기 도구)과 그 근거를 적는다. 전 빌드 ③ 판정 파일의 ②′ 는 리팩토링 모드 몫이다 — 위 재판정 조건은 그대로다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b9> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;

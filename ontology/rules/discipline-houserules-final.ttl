@@ -567,24 +567,36 @@ djr:R-3407 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-3408 a djr:Obligation ;
-    skos:prefLabel "재수출 표기(as-alias/__all__)·본체 코드 동거 금지·import 표면 불변·git mv 이력 보존"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3408@2026-09-01> .
+    skos:prefLabel "재수출 표기(as-alias/__all__)·본체 코드 동거 금지·import 표면 불변(앞 _ 이름은 표면 밖)·옮긴 _ 정의를 옛 경로로 가져오는 시험은 같은 창에서 정의 파일 경로로·git mv 이력 보존"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3408@2026-10-29> .
 
 <https://numchida.com/ns/djr#R-3408@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3408 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3408@2026-10-29> a djr:Expression ;
+    prov:specializationOf djr:R-3408 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3408@2026-09-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3409 a djr:Prohibition ;
-    skos:prefLabel "승격 폴더 내부 파일 신설 재량 부정 — 신설 근거는 감사 발견·부품별 #192/#189 적용·정크드로어 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3409@2026-09-01> .
+    skos:prefLabel "승격 폴더 내부 파일 신설 재량 부정 — 신설 근거는 감사 발견·부품별 #192(쓰는 곳 하나면 그 파일 안)/#189 적용·정크드로어 금지·②′ 부품 파일 이름 금지 낱말·부품 클래스 UseCase 꼬리 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3409@2026-10-29> .
 
 <https://numchida.com/ns/djr#R-3409@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3409 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3409@2026-10-29> a djr:Expression ;
+    prov:specializationOf djr:R-3409 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3409@2026-09-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3410 a djr:Obligation ;
-    skos:prefLabel "부품 0 승격 폴더 환원 신호·신규 산출/기존 빚 처분"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3410@2026-09-11> .
+    skos:prefLabel "부품 0 승격 폴더 환원 신호(틀·잎만 남은 ②′ 폴더 포함)·신규 산출/기존 빚 처분"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3410@2026-10-29> .
 
 <https://numchida.com/ns/djr#R-3410@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3410 ;
@@ -596,13 +608,25 @@ djr:R-3410 a djr:Obligation ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-amendment .
 
+<https://numchida.com/ns/djr#R-3410@2026-10-29> a djr:Expression ;
+    prov:specializationOf djr:R-3410 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3410@2026-09-11> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3411 a djr:Obligation ;
-    skos:prefLabel "저장(save)류 쓰기 호출의 본체 한정"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3411@2026-09-01> .
+    skos:prefLabel "저장(save)류 쓰기 호출의 본체 한정·유스케이스 칸 승격 폴더(②·②′)의 쓰기 경계 자원(저장소·UoW)과 사실 발행은 본체·틀 부품만·범용 트랜잭션 콜백·틀 yield 금지·(i) 본체 구간/(ii) 틀 쓰기 도구"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3411@2026-10-29> .
 
 <https://numchida.com/ns/djr#R-3411@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3411 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3411@2026-10-29> a djr:Expression ;
+    prov:specializationOf djr:R-3411 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3411@2026-09-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3412 a djr:Obligation ;
     skos:prefLabel "칸 «파일» 문면의 실현 판독(전역 판독 조항)"@ko ;
@@ -740,6 +764,22 @@ djr:R-3716 a djr:Prohibition ;
     prov:specializationOf djr:R-3716 ;
     djr:revision 1 .
 
+djr:R-3718 a djr:Obligation ;
+    skos:prefLabel "②′ 부품 — ②′ 폴더 판별(틀 파일 또는 본체 __init__ 이 만든 형제 클래스)·유스케이스 아님·바깥 import 금지·네 종류(갈래·단계·틀·잎)·본체가 만듦·실행 기억은 잎·공개 이름(부품 클래스·틀 계약·본체가 부르는 부품 메서드)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3718@2026-10-29> .
+
+<https://numchida.com/ns/djr#R-3718@2026-10-29> a djr:Expression ;
+    prov:specializationOf djr:R-3718 ;
+    djr:revision 1 .
+
+djr:R-3719 a djr:Prohibition ;
+    skos:prefLabel "의존 한 방향(본체→갈래→단계→틀→잎) — 유스케이스 칸 승격 폴더(②·②′) 전부: 부품→본체 import·본체 객체/메서드 넘김·본체 클래스 인자 주석·부품 순환 금지 / ②′ 폴더만: 갈래끼리·틀과 잎의 잎 아닌 형제 import 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3719@2026-10-29> .
+
+<https://numchida.com/ns/djr#R-3719@2026-10-29> a djr:Expression ;
+    prov:specializationOf djr:R-3719 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/references/final.md> a djr:Document ;
     skos:prefLabel "discipline-houserules-final"@ko .
 
@@ -798,8 +838,8 @@ djr:R-3716 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0> ;
     djr:kind djr:kind-norm ;
     djr:order 10 ;
-    djr:statesNorm djr:R-3409, djr:R-3410, djr:R-3411 ;
-    djr:text "승격 폴더는 «트리가 리프로 닫은 폴더»가 아니다 — 내부 재량은 **배열·명명 재량**이지 **파일 신설 재량이 아니다**. 부품 파일의 신설 근거는 감사 판정(동명 폴더 승격 발견)의 클러스터 열거 또는 후속 감사 신호뿐이고, #192(사설 조각은 제 파일 안 `_` 함수)·#189(유스케이스 간 돌려쓰기 금지)가 부품 파일 각각에 그대로 적용되며, 정크드로어 이름(`utils.py`·`helpers.py` 류)은 위반이다. 부품이 0개(본체+`__init__.py` 뿐)가 된 승격 폴더는 위반이다(환원 신호 — 이번 작업 산출이면 발견 반영으로, 기존이면 G0 빚 경로로 환원한다). 저장(save)류 쓰기 호출은 본체에만 둔다.\n"@ko .
+    djr:statesNorm djr:R-3409, djr:R-3410, djr:R-3411, djr:R-3718, djr:R-3719 ;
+    djr:text "승격 폴더는 «트리가 리프로 닫은 폴더»가 아니다 — 내부 재량은 **배열·명명 재량**이지 **파일 신설 재량이 아니다**. 부품 파일의 신설 근거는 감사 판정(동명 폴더 승격 발견)의 클러스터 열거 또는 후속 감사 신호뿐이고, #192(사설 조각은 쓰는 곳이 하나면 그 파일 안 `_` 함수 — ②′ 에서 두 부품 이상이 쓰는 정의는 종류대로 단계 · 틀 부품 · 잎이다)·#189(유스케이스 간 돌려쓰기 금지)가 부품 파일 각각에 그대로 적용되며, 정크드로어 이름(`utils.py`·`helpers.py` 류)은 위반이다. ②′ 승격의 부품 파일 이름은 업무 낱말이다 — 이름을 `_` 로 가른 낱말에 금지 낱말(`common` · `shared` · `base` · `core` · `util` · `utils` · `helper` · `helpers` · `misc` · `manager` · `handler` · `handlers` · `mixin` · `part` · `parts` · `branch` · `branches` · `step` · `steps` · `tools` · `frame`)이 하나라도 있으면 위반이다(`<업무>_utils.py` 같은 겹낱말 포함 · 틀 부품의 고정 이름 `<유스케이스 이름>_frame.py` 만 예외). 부품 클래스 이름은 `UseCase` 로 끝나지 않는다. 부품이 0개(본체+`__init__.py` 뿐)가 된 승격 폴더는 위반이다 — 틀 부품 · 잎만 남은 ②′ 폴더(갈래 · 단계 부품 0)도 같다(환원 신호 — 이번 작업 산출이면 발견 반영으로, 기존이면 G0 빚 경로로 환원한다). 저장(save)류 쓰기 호출은 본체에만 둔다 — 유스케이스 칸(트리 42행) 승격 폴더(② · ②′ 모두)에서는 틀 부품도 본체와 같은 자리여서, 저장 호출 · 이 BC 의 쓰기 경계 자원(저장소 `…Repository` · UoW `…UnitOfWork` 와 그것을 내는 팩토리) · 사실(도메인 이벤트) 발행 · 커밋 뒤 등록은 본체와 틀 부품(틀이 없는 ② 폴더는 본체)에만 둔다. 그 밖의 부품(갈래 · 단계 부품 · 잎 · ② 폴더의 형제 부품)은 그 자원을 매개변수 · 속성으로 받지도, 다른 객체의 속성 너머로 닿지도 않고(읽기 포함), 틀 부품의 이름 있는 메서드를 불러서만 읽고 쓴다(틀이 없는 ② 폴더면 본체가 읽고 쓰고 형제 부품에는 값만 넘긴다) — 한 실행 안의 여러 번 저장(스트림 도중 저장 포함)도 이 길이다. 다른 BC · 바깥 시스템 port 호출과 스트림 방출은 이 규범의 쓰기가 아니다. 틀 부품은 갈래를 모른다 — 콜백 · 컨텍스트를 받아 작업 단위 안에서 무엇이든 돌리게 하는 범용 틀 메서드는 위반이고, 틀 메서드가 작업 단위 안에서 `yield` 하는 생성기(읽기 생성기 포함)도 같은 위반이다(부르는 쪽이 작업 단위 안에서 무엇이든 돌리게 된다). 틀이 다시 읽은 애그리거트 하나에 루트 메서드를 적용하는 변경 함수(애그리거트만 받고, CAS 미스 때 다시 적용된다)는 그것이 아니다. 쓰기 경계가 갈래 흐름을 감싸면 둘 가운데 하나로 쓴다 — (i) 트랜잭션 구간을 본체에 두고 본체가 갈래 부품의 앞 · 뒤 조각을 부른다, (ii) 갈래를 모르는 틀 쓰기 도구(예: 애그리거트 여럿을 한 작업 단위에서 CAS 저장)를 쓰고 읽기 · 판정을 작업 단위 밖으로 옮긴다 — (ii) 는 그렇게 옮겨도 동작이 같을 때(시험이 확인)만이다. 틀 부품의 쓰기에도 유스케이스 쓰기 규범(#195 · #197)이 본체와 같이 걸린다.\n**②′ 승격의 부품** — 부품은 유스케이스가 아니다: `execute` · `…UseCase` 이름 · 합성 루트 등록이 없고, 승격 폴더 밖의 제품 코드(컨트롤러 · 다른 유스케이스 · 합성 루트)는 부품 모듈을 import 하지 않는다(`__init__.py` 재수출은 본체의 공개 이름뿐이다). 부품은 네 종류다 — **갈래 부품**(본체 `match` 의 `case` 한 곳이 부르는 흐름) · **단계 부품**(본체와 부품 가운데 두 곳 이상이 부르는 흐름) · **틀 부품**(갈래 · 단계 부품이 함께 쓰는 실행 도구 — 쓰기 경계 자원 · 사실 발행 · 스트림 · 실패 접기 같은 것 — 폴더에 많아야 하나 · 이름은 `<유스케이스 이름>_frame.py`) · **잎**(두 곳 이상이 쓰는 무상태 정의 — 실행 기억 · 결과 타입 · 순수 함수 · 상수 — 흐름도 실행 도구도 아닌 것). 한 곳만 쓰는 흐름 · 정의는 부품이 아니라 그 곳 안 `_` 사설 정의다(#192). 업무 판정은 잎이 아니라 도메인이다(① · #194). 틀 부품과 잎은 갈래 · 단계 부품이 있을 때만 선다. 부품은 본체가 만든다 — 본체 `__init__` 이 생성자로 받은 의존으로 틀 → 단계 → 갈래 차례로 부품 클래스를 만들어 `self` 속성에 대입하고 필요한 것만 넘긴다(본체 생성자 시그니처와 합성 루트는 그대로다). 본체 `__init__` 이 형제 모듈 클래스를 만들어 `self` 속성에 두는 승격 폴더는 ②′ 폴더다(틀 파일 `<유스케이스 이름>_frame.py` 이 있는 폴더도 ②′ 다) — ② 로 두는 폴더의 형제는 `execute` 안에서 만들거나 함수로 부른다. 실행마다 바뀌는 상태는 잎이 정의한 실행 기억 객체 하나로 인자로 넘기고, 부품은 실행 사이 상태를 두지 않는다. **부품 클래스**(본체 `__init__` 이 만들어 `self` 속성에 대입하는 형제 모듈 클래스) · **틀 계약**(부품이나 본체가 부르는 틀 클래스 메서드) · **본체가 부르는 부품 메서드**는 공개 이름(앞 `_` 없음)이다 — 잎이 정의한 타입 · 상수 · 함수는 형제가 import 해도 `_` 이름이어도 된다. 폴더 밖에 대한 비공개는 재수출하지 않음과 바깥 import 금지가 지킨다. 각 부품에는 캐스케이드가 다시 걸린다 — 부품 안 ②′ 의 실현도 하위 폴더가 아니라 형제 부품 분할이다. 의존은 한 방향이다 — 본체 → 갈래 부품 → 단계 부품 → 틀 부품 → 잎. 본체는 모두를, 갈래 부품은 단계 · 틀 부품과 잎을, 단계 부품은 다른 단계 부품 · 틀 부품 · 잎을, 틀 부품과 잎은 잎만 import 한다(② 로 선 형제 부품도 방향에서는 잎이다). 유스케이스 칸 승격 폴더(② 포함) 전부에서 다음은 위반이다 — 부품 → 본체 import(`TYPE_CHECKING` 아래 · 함수 안 포함), 본체 객체를 부품에 넘기는 것(`self` 를 위치 · 키워드 인자로 — 부품이 Protocol 로 받아도 같다), 부품 함수 · 메서드(생성자 포함)의 인자 주석을 본체 클래스로 다는 것, 본체 메서드를 부품에 넘기는 것(`self.<메서드>` · `self` 를 잡는 `lambda` · 안쪽 함수 · `functools.partial`), 부품끼리의 순환 — 여기서 부품은 형제 모듈의 클래스와 함수를 모두 뜻한다. ②′ 폴더에서만 더 위반이다 — 갈래 → 갈래, 틀 · 잎 → 잎 아닌 형제.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0/b11> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0> ;
@@ -876,7 +916,7 @@ djr:R-3716 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 9 ;
     djr:statesNorm djr:R-3406, djr:R-3407, djr:R-3408 ;
-    djr:text "동명 폴더 승격의 형태: 승격 폴더는 안에 **본체 `<이름>.py`** 와 **재수출 전용 `__init__.py`** 를 반드시 가진다 — 본체 없는 폴더는 위장이고, 형제 `<이름>.py` 와 `<이름>/` 의 공존도 위반이다(파일시스템은 공존을 허용하고 import 는 패키지가 이겨 조용한 위장 중복이 된다). 내부는 **1단 평평**이다 — 하위 폴더는 위반이며, 부품 군집이 폴더를 요구하면 그것은 트리 개정 신호이지 중첩 근거가 아니다. `__init__.py` 재수출은 `from .<모듈> import <이름> as <이름>`(redundant alias) 또는 `__all__` 선언으로 한다(mypy strict `--no-implicit-reexport` 가 인정하는 두 형태) — 본체 코드를 `__init__.py` 에 두지 않고, 폴더 내부 상호 참조는 `__init__` 경유 없이 모듈 직접 상대 import 로 한다. 바깥 import 표면(`...<칸>` 모듈 경로로 공개되는 이름 집합)은 승격·환원 어느 방향이든 불변이어야 하고, 승격은 `git mv` 로 이력을 보존한다.\n"@ko .
+    djr:text "동명 폴더 승격의 형태: 승격 폴더는 안에 **본체 `<이름>.py`** 와 **재수출 전용 `__init__.py`** 를 반드시 가진다 — 본체 없는 폴더는 위장이고, 형제 `<이름>.py` 와 `<이름>/` 의 공존도 위반이다(파일시스템은 공존을 허용하고 import 는 패키지가 이겨 조용한 위장 중복이 된다). 내부는 **1단 평평**이다 — 하위 폴더는 위반이며, 부품 군집이 폴더를 요구하면 그것은 트리 개정 신호이지 중첩 근거가 아니다. `__init__.py` 재수출은 `from .<모듈> import <이름> as <이름>`(redundant alias) 또는 `__all__` 선언으로 한다(mypy strict `--no-implicit-reexport` 가 인정하는 두 형태) — 본체 코드를 `__init__.py` 에 두지 않고, 폴더 내부 상호 참조는 `__init__` 경유 없이 모듈 직접 상대 import 로 한다. 바깥 import 표면(`...<칸>` 모듈 경로로 공개되는 이름 집합)은 승격·환원 어느 방향이든 불변이어야 한다 — 앞 `_` 이름은 표면 밖이다. `_` 정의를 다른 파일로 옮기면, 그 이름을 옛 모듈 경로로 가져오는 시험을 찾아 같은 창(단계)에서 정의를 가진 파일의 경로로 고친다 — 옛 모듈이 그 이름을 다시 import 해서 시험이 우연히 통과해도 같다. 승격은 `git mv` 로 이력을 보존한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s004-1> a djr:Section ;
     djr:headingSnapshot "## §1 표준 트리 — 171행"@ko ;

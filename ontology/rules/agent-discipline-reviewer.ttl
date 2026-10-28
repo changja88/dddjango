@@ -2872,6 +2872,14 @@ djr:R-3713 a djr:Obligation ;
     prov:specializationOf djr:R-3713 ;
     djr:revision 1 .
 
+djr:R-3720 a djr:Obligation ;
+    skos:prefLabel "②′ 감수 물음 — 고르기 값의 도메인 판정(Q2)·갈래끼리 부름(틀·도구 경유 포함)·부품 자격·단계가 도메인 정책인가·잎의 판정·틀 표면·범용 트랜잭션 콜백"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3720@2026-10-29> .
+
+<https://numchida.com/ns/djr#R-3720@2026-10-29> a djr:Expression ;
+    prov:specializationOf djr:R-3720 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/discipline-reviewer.md> a djr:Document ;
     skos:prefLabel "agent-discipline-reviewer"@ko .
 
@@ -3398,8 +3406,8 @@ djr:R-3713 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 44 ;
-    djr:statesNorm djr:R-1093, djr:R-1094, djr:R-1095, djr:R-1096, djr:R-1097, djr:R-1098 ;
-    djr:text "  - 유스케이스·자료 — #68 이 검사의 값은 어디서 왔나(Q2) · #103 이것이 «되돌려 굽기»인가 업무 사용인가 · #140 검증이 다른 자리로 샜나(Q2) · #191 이 이름이 «판정이 되는 물음»인가(Q1) · #194 이 판정의 주인이 유스케이스인가(Q2) · #69 이 검사는 런타임이 아니라 테스트·타입 체커의 몫인가.\n"@ko .
+    djr:statesNorm djr:R-1093, djr:R-1094, djr:R-1095, djr:R-1096, djr:R-1097, djr:R-1098, djr:R-3720 ;
+    djr:text "  - 유스케이스·자료 — #68 이 검사의 값은 어디서 왔나(Q2) · #103 이것이 «되돌려 굽기»인가 업무 사용인가 · #140 검증이 다른 자리로 샜나(Q2) · #191 이 이름이 «판정이 되는 물음»인가(Q1) · #194 이 판정의 주인이 유스케이스인가(Q2) · #69 이 검사는 런타임이 아니라 테스트·타입 체커의 몫인가. ②′ — 갈래 고르기 값은 도메인이 «판정»해 낸 값인가(본체가 고르려고 상태를 읽거나 비교하는가 — Q2) · 부품이 다른 갈래를 골라 부르거나 틀 · 넘겨받은 도구를 거쳐 다른 갈래 흐름을 부르는가 · 메서드 하나짜리 갈래나 한 곳만 쓰는 단계 · 잎이 부품 파일로 섰는가 · 이 단계 부품은 실은 도메인 정책(전략)인가 · 이 잎은 판정을 품었는가 · 틀에 부품이 쓰지 않는 도구나 한 갈래만의 흐름이 들어왔는가 · 틀 메서드가 작업 단위 안에서 무엇이든 돌리는 콜백 · 컨텍스트를 받는가.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b45> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;
