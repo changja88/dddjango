@@ -102,7 +102,7 @@ Claude 정본에 Claude와 Codex 시작 문법을 함께 적고, Codex 사본은
 루트 README는 정본 링크와 두 플러그인의 짧은 비교를 소유하고 상세 템플릿은 복제하지 않는다.
 dddjango-web은 2.0.0(dddart화)에서 `REQUEST_GUIDE.md`를 뺐고, 2.0.1에서 2.0.0 동작 기준으로 새로 썼다.
 
-편집 순서는 Claude 정본 편집 → Codex 파일에 byte 복사 또는 동일 patch → 아래 targeted 비교 → `make verify`다.
+편집 순서는 Claude 정본 편집 → Codex 파일에 byte 복사 또는 동일 patch → 아래 대상 비교다(가이드만 바뀌었으면 여기서 끝 · 다른 경로도 바뀌었으면 §5 «검사 고르기» 의 그 줄 검사).
 
 가이드의 꼴은 사용자가 정했다(2026-10-12) — **번호 칸 틀과 실제 예만** 둔다.
 
@@ -189,18 +189,18 @@ md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금
 
 ### 검사 고르기 — 바뀐 경로로 정한다(2026-10-29)
 
-`make verify` 는 16~25분, `make verify-web` 은 1시간 가까이 걸린다. 커밋 전에 `git diff --name-only <기준>`(커밋 전이면 작업 트리 · staged 의 바뀐 경로)을 아래 표에 대 보고 걸리는 줄의 검사를 모두 돈다. **표에 없는 경로가 하나라도 있거나 애매하면 `make verify` 전체**를 돈다.
+`make verify` 는 16~25분, `make verify-web` 은 1시간 가까이 걸린다. 바뀐 경로(`git diff --name-only <기준>` — 커밋 전이면 작업 트리 · staged)를 아래 표에 대 보고 걸리는 줄의 검사를 모두 **한 번** 돈다. 문서 · 기록만이면 커밋 전에, 플러그인을 바꾼 커밋은 **커밋한 뒤 push 전에** 돈다(옛 판 대조가 `HEAD` 에 묶인 시험처럼 커밋 뒤에야 드러나는 결함을 잡는다 — 커밋 전에 따로 한 번 더 돌지 않고, 붉으면 고침 커밋을 더해 다시 돈다). **표에 없는 경로가 하나라도 있거나 애매하면 `make verify` 전체**를 돈다.
 
 | 바뀐 경로 | 검사 | 시간 |
 |---|---|---|
 | `CLAUDE.md` · `docs/` 의 md · html(아래 둘 빼고) · `workspace/plan/` · `workspace/design/` · `workspace/scratch/` | `PYTHONUTF8=1 python3 workspace/tools/manifest_seal.py --check --draft` | 몇 초 |
 | `docs/file_tree.html` · `docs/mkrev2.py` | 위 + `workspace/tools/tree_mirror_check.py` · `workspace/tools/spec_lint.py` | 1분 안 |
-| `README.md` · `*/REQUEST_GUIDE.md` | 위 + §1 «사람용 작업 요청 가이드» 의 대상 명령(cmp · `request_guide_contract.py` · `reverse_coverage.py`) | 1분 안 |
+| `README.md` · `*/REQUEST_GUIDE.md`(플러그인 폴더 안에 있어도 이 줄 — 런타임이 읽지 않는 사람용 문서) | 위 + §1 «사람용 작업 요청 가이드» 의 대상 명령(cmp · `request_guide_contract.py` · `reverse_coverage.py`) | 1분 안 |
 | `dddjango-web/` · `codex-dddjango-web/` 의 md 만 | `make verify-web` 레시피의 `run_fixtures.sh` 뒤 줄들(self-test · 표지 · 문단 대조 · 미러 대조 — 따로 떼어 돈다 · 별도 타깃은 아직 없다) | 1분쯤 |
 | `dddjango-web/scripts/` · `assets/`(+ Codex 짝) | `make verify-web` 전체 | 약 1시간 |
 | `dddjango/` · `codex-dddjango/` · `ontology/` · `workspace/tools/` · `workspace/eval/` · `workspace/hooks/` · `Makefile` | `make verify` 전체(rulepack · selector 면 + `make verify-mutation`) | 16~25분 |
 
-배포 때는 플러그인을 바꾼 커밋을 **커밋한 뒤 push 전에** 해당 검사를 한 번 돈다(옛 판 대조가 `HEAD` 에 묶인 시험처럼 커밋 뒤에야 드러나는 결함을 잡는다). `make release` 안의 `make verify` 는 배포 관문이라 그대로 돌고, 배포 뒤 봉인 chore 는 봉인 파일만 바꾸므로 봉인 대조(`--check --draft`)로 확인한다 — 배포 사본에서 전체 검사를 한 번 더 돌지 않는다.
+`make release` · `make release-web` 안의 core `make verify` 는 배포 관문이라 그대로 돌고(`verify-web` 은 돌지 않는다), 배포 뒤 봉인 chore 는 봉인 파일만 바꾸므로 봉인 대조(`--check --draft`)로 확인한다 — 배포 사본에서 전체 검사를 한 번 더 돌지 않는다.
 
 Finder 가 만든 `.DS_Store` 가 플러그인 폴더 · `ontology/` 에 생기면 `verify-base-core`(설치본 파일 설명 — «미설명: `.DS_Store`») · 봉인 대조가 붉다. 지우고 다시 돈다(git 은 무시하지만 두 검사는 디스크를 본다). 병렬 일꾼 둘이 `make verify` 를 동시에 돌리면 임시 파일 경합으로 한 칸 흔들릴 수 있다 — 그 칸만 단독으로 다시 돌려 가른다.
 
@@ -215,15 +215,15 @@ make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 �
 
 플러그인별 타깃이 대상 변수(manifest 2곳·태그 접두사)만 지정하고 공통 절차 `_release`를 부른다. main 브랜치·클린 worktree·origin 동기 상태에서만 진행된다. 두 마켓 manifest에 같은 버전을 기록하고, 커밋 → annotated 태그(`dddjango--vX.Y.Z` · `dddjango-web--vX.Y.Z`) → push → GitHub Release까지 한 번에 간다. 한 저장소에 두 릴리즈 시리즈가 태그 접두사로 나란히 쌓인다. 선택지 `0) current`는 버전 그대로 태그만 발행한다(첫 릴리즈·태그 누락 보완용 — manifest 무변경이면 커밋 없이 현재 HEAD에 태그).
 
-`make release-web`은 곧장 `_release`로 간다. 2026-09-16 hyun 지시로 `verify-web`을 `VERIFY_TARGETS`에서 뺐다(막아 세운 결함 0 · 실제 결함은 전부 A8 실사용이 잡았다). 같은 배치에서 **실패한 브라우저 관찰 서브시스템(1.1.13~1.1.19)을 전량 철거**했다 — `verify-web-browser`(K3)·`observe_interactions`·`evidence_debt`·`refreeze.py`·`ledger.py`와 그 계약·hook을 지우고 검사기를 v1.1.12 정적 형태로 되돌렸다(정본: workspace/design/2026-09-16-web-strip-observation-subsystem.md). 웹 쪽 검증이 필요하면 `make verify-web`을 직접 돈다. **release-web 에서 사라진 보증은 Codex byte 미러 대조다** — `codex-dddjango-web/`가 어긋나도 릴리즈가 막지 않으므로, 검사기나 references를 고치면 미러를 손으로 맞춘다(해소 명령은 `codex-dddjango-web/README.md` «동기 절차» · `make verify-web`이 `diff -rq`로 잡는다).
+`make release-web`도 `make release`처럼 대상 변수만 정하고 `_release`로 간다 — `_release` 는 core `make verify` 를 돌고 `verify-web` 은 돌지 않는다. 2026-09-16 hyun 지시로 `verify-web`을 `VERIFY_TARGETS`에서 뺐다(막아 세운 결함 0 · 실제 결함은 전부 A8 실사용이 잡았다). 같은 배치에서 **실패한 브라우저 관찰 서브시스템(1.1.13~1.1.19)을 전량 철거**했다 — `verify-web-browser`(K3)·`observe_interactions`·`evidence_debt`·`refreeze.py`·`ledger.py`와 그 계약·hook을 지우고 검사기를 v1.1.12 정적 형태로 되돌렸다(정본: workspace/design/2026-09-16-web-strip-observation-subsystem.md). 웹 쪽 검증이 필요하면 `make verify-web`을 직접 돈다. **release-web 에서 사라진 보증은 Codex byte 미러 대조다** — `codex-dddjango-web/`가 어긋나도 릴리즈가 막지 않으므로, 검사기나 references를 고치면 미러를 손으로 맞춘다(해소 명령은 `codex-dddjango-web/README.md` «동기 절차» · `make verify-web`이 `diff -rq`로 잡는다).
 
 2.0.0(dddart화)은 1.x의 시안 기계 검사 전부(렌더 숫자 대조·모션·포커스 링·토큰 처분·정체 감사 등)·정확값 토큰 규칙·시각 연결표·`REQUEST_GUIDE.md`·빚 정리·리팩토링 입구·외부 JS 승인 절차를 뺐다(스펙: `workspace/plan/2026-10-06-web-dddart/mapping.md`). 가이드는 2.0.1에서 2.0.0 동작 기준으로 새로 썼다(API 위치 세 꼴 — `http(s)://` 주소·로컬 파일 경로·이 프로젝트 안 path — 와 함께). 2.1.0에서 빚 정리·리팩토링 입구(대상 단위 = BC · root · common · design_system · static 칸 · 옛 배치 최상위 폴더 등)·외부 JS 승인 절차를 새 구조에 맞춰 다시 넣었다(스펙: `workspace/plan/2026-10-06-web-dddart/plan-2.1.0.md`). 시안 기계 검사·정확값 토큰은 되살리지 않는다. 2.2.0에서 구조 검사(백스톱)를 슬라이스가 끝날 때마다도 돌게 했다(`backstop.py --slice-end` — dddart는 G2 직전 한 번 · 스펙: `workspace/plan/2026-10-06-web-dddart/plan-2.2.0.md`). web `refactor_audit.py`의 «상시 답 인식 블록»은 core `dddjango/scripts/refactor_audit.py`와 byte 동일해야 한다 — `make verify-web`이 대조한다(core 블록을 바꾸면 표지 주석째 web·Codex 에 복사).
 
 **릴리즈 창**(core): 배포 전에 타깃 저장소들의 진행 레인(G0 승인 뒤 G2 승인 전)을 센다. 배포를 미루거나 시점을 묻지 않고(2026-10-11 사용자 결정 — 그 전에는 레인 착륙까지 보류했다), 배포 보고에 «pre-gate 재예보 필요» 와 그 레인을 적는다. 특히 `dddjango/scripts/` 가 바뀐 릴리즈는 pre-gate 실행 트리 digest 를 바꾸므로, 진행 중 레인의 마지막 예보가 `--check-report` 에서 «툴체인 stale»이 되어 재예보를 요구한다 — Phase 1 레인은 싼 재실행으로 끝나지만 G1~G2 레인은 Phase 2 재발화가 든다(2026-09-27).
 
-**문서 현행화**: 사용자에게 보이는 동작이 바뀐 판은 릴리즈 전에 `README.md` 와 `docs/master.html` 이 싣는 네 문서(work_flow.html · work_flow_web_guide.html(work_flow_web.html 포함) · file_tree.html · file_tree_web.html)를 그 판 기준으로 고치고, master.html 아래쪽 «기준 판» 줄도 함께 올린다. docs/ 에는 master.html 이 싣는 문서와 그 원본(스펙 · 생성기)만 둔다. **요청 가이드**(`dddjango/REQUEST_GUIDE.md` · `dddjango-web/REQUEST_GUIDE.md`)는 판마다 확인한다 — 사용자가 요청에 쓰는 칸 · 좋은 예 · 나쁜 예 · 플러그인이 스스로 하거나 묻는 일이 바뀌었으면 §1 «사람용 작업 요청 가이드» 규칙대로 고치고(Codex 짝은 byte 복사), 아니면 «바뀔 것 없음» 을 배포 보고에 적는다.
+**문서 현행화**: 사용자에게 보이는 동작이 바뀐 판은 릴리즈 전에 `README.md` 와 `docs/master.html` 이 싣는 네 문서(work_flow.html · work_flow_web_guide.html(work_flow_web.html 포함) · file_tree.html · file_tree_web.html)를 그 판 기준으로 고치고, master.html 아래쪽 «기준 판» 줄도 함께 올린다. web 판은 work_flow_web_guide.html 의 «판마다 바뀐 것» 표에 한 줄을 더한다(§1 dddjango-web). docs/ 에는 master.html 이 싣는 문서와 그 원본(스펙 · 생성기), 이 개발 문서만 둔다(사용자 로컬 파일 빼고). **요청 가이드**(`dddjango/REQUEST_GUIDE.md` · `dddjango-web/REQUEST_GUIDE.md`)는 판마다 확인한다 — 사용자가 요청에 쓰는 칸 · 좋은 예 · 나쁜 예 · 플러그인이 스스로 하거나 묻는 일이 바뀌었으면 §1 «사람용 작업 요청 가이드» 규칙대로 고치고(Codex 짝은 byte 복사), 아니면 «바뀔 것 없음» 을 배포 보고에 적는다.
 
-봉인(`manifest_seal.py --write`)은 봉인 대상 파일(Makefile 등)을 바꾼 커밋 **뒤에** 별도 chore 커밋으로 재발행한다 — 같은 커밋에 넣으면 `sealed_commit`이 변경 이전을 가리켜 strict `--check`가 RED가 된다(`make verify`의 `--draft` 대조는 통과하므로 놓치기 쉽다).
+봉인 ②(§4 «봉인은 두 번»): 판 올림은 마켓 매니페스트(봉인 대상)를 바꾸므로 배포 커밋 **뒤에** 별도 chore 커밋으로 재발행한다 — 변경 · 배포 커밋 안에 든 봉인(①)만으로는 `sealed_commit`이 그 커밋 이전을 가리켜 strict `--check`가 RED가 된다(`make verify`의 `--draft` 대조는 통과하므로 놓치기 쉽다).
 
 
 ## 7. 작업 진행 관례 — 개발 · 현장 보고 수리
@@ -245,7 +245,7 @@ make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 �
 1. **조사** — 문제 · 자료(필요하면 문헌 · 선례) · 대상 코드 지도. 대상 저장소는 읽기만 하고, 사본은 `workspace/scratch/` 에 만든다.
 2. **방향 결정** — 규칙 목적에 닿는 선택만 사용자에게 묻는다.
 3. **설계** — 문제 · 결정 · 규칙 문장 · 검사기 동작 · 한계.
-4. **설계 독립 검토** — 적대 · 과적합 · 다른 코퍼스와의 모순 · 런타임 실현성 관점을 한 바퀴에 함께 본다. 지적은 재현해 처분하고(받음/받지 않음과 까닭), 고친 뒤에는 차단 · 중요 지적이 닫혔는지만 좁게 다시 본다(재검토 바퀴를 늘리지 않는다).
+4. **설계 독립 검토** — 적대 · 과적합 · 다른 코퍼스와의 모순 · 런타임 실현성 관점을 한 바퀴에 함께 본다. 지적은 재현해 처분하고(받음/받지 않음과 까닭), 고친 뒤에는 차단 · 중요 지적이 닫혔는지만 좁게 다시 본다(전체 재검토를 다시 하지 않는다 · 좁은 확인이 셋째에도 차단을 못 닫으면 멈추고 사용자에게 묻는다).
 5. **계획** — 단위 · 맡은 파일 · 확인 명령 · 행동 시험 · 멈출 기준. 큰 판은 계획도 독립 검토를 받는다.
 6. **구현** — 정본(그래프 §3 또는 산문 md) · 렌더 · 미러 · 픽스처. 구현을 맡기면 7.5 지시문을 쓴다.
 7. **행동 시험** — 장난감 저장소나 현장 사본에서 옛 판과 새 판을 나란히 돌린다(옛 판은 배포 커밋 SHA 로 고정 — `HEAD` 금지).
@@ -258,13 +258,13 @@ make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 �
 **장부** — `workspace/eval/field-report-4/` 의 현장 보고 장부에 발주자가 항목을 덧붙인다(`F4-<번호>` · 등록 시각 · 본 것 · 바라는 결과 · 처분). 번호는 다시 쓰지 않는다. 운영자는 처분 줄만 덧붙인다 — `처분 갱신(<시각> · 운영자): 수리됨 = <플러그인> <판>(<배포 시각> · 태그) — <무엇을 고쳤나>`. 장부의 로컬 변경은 커밋하지 않는다.
 
 1. **읽기** — 장부 항목과 레인 기록(읽기만). 읽은 때의 마지막 F4 번호 · 마지막 «덧붙임» 시각을 적어 둔다.
-2. **재현 · 뿌리** — 배포판으로 작게 재현하고 원인을 확정한다: 어느 규칙 · 도구의 어느 줄 · 같은 꼴의 다른 자리 · 자매 플러그인 · 영향 받는 실행.
+2. **재현 · 뿌리** — 배포판(마지막 배포 태그 — scratch 에 클론해 태그로 체크아웃하거나 `git show <태그>:<경로>`)으로 작게 재현하고 원인을 확정한다: 어느 규칙 · 도구의 어느 줄 · 같은 꼴의 다른 자리 · 자매 플러그인 · 영향 받는 실행.
 3. **방향** — 고침이 규칙 목적에 닿으면 재현 표와 함께 사용자에게 묻고, 아니면 진행한다. 레인 쪽 사정(요구 출처 · 기존 규칙으로 풀림)이면 수리가 아니라 그 답을 보고한다(7.1).
-4. **고침 설계 · 검토** — 큰 수리는 7.2 의 3~5 단계. 작은 수리(글 몇 줄 · 검사기 10줄 급)는 고친 뒤 독립 검토 한 번에 과적합 · 모순 관점을 넣는 것으로 갈음한다.
+4. **고침 설계 · 검토** — 큰 수리는 7.2 의 3~5 단계. 작은 수리(글 몇 줄 · 검사기 10줄 급)는 설계 검토를 따로 두지 않고 7 의 독립 검토 한 번에 과적합 · 모순 관점을 넣는다.
 5. **구현 + 되돌아옴 막기** — 고침과 함께 다시 들지 않게 하는 장치를 둔다(검사기 픽스처 · verify 계약 줄 — «걷은 말 없음» · Claude · Codex 문단 대조).
 6. **행동 시험** — 옛 판은 결함을 재현하고 새 판은 해소하는 것을 같은 장난감에서 보인다.
 7. **독립 검토** → 지적 재현 → 모두 처분.
-8. **판 기록** — `plan-<판>.md`(문제 · 고침 · 행동 변화 · 행동 시험 · 한계 · 검토 반영 · 검증 · web 은 `workspace/plan/2026-10-06-web-dddart/`). 계획을 확정할 때 장부를 다시 읽어 1 에서 적은 번호 · 시각 뒤에 새 항목이 붙었는지 본다 — 새 항목은 이번 판에 넣거나 계획 · 노트에 «다음 판» 으로 이름을 적는다. 긴 구간이면 진행 기록을 고칠 때마다 장부의 바뀐 시각도 본다.
+8. **판 기록** — `plan-<판>.md`(문제 · 고침 · 행동 변화 · 행동 시험 · 한계 · 검토 반영 · 검증 · web 은 `workspace/plan/2026-10-06-web-dddart/` · core 는 `workspace/plan/<날짜>-<일 이름>/`). 계획을 확정할 때 장부를 다시 읽어 1 에서 적은 번호 · 시각 뒤에 새 항목이 붙었는지 본다 — 새 항목은 이번 판에 넣거나 계획 · 노트에 «다음 판» 으로 이름을 적는다. 긴 구간이면 진행 기록을 고칠 때마다 장부의 바뀐 시각도 본다.
 9. **검사**(§5) → **문서 · 요청 가이드 확인**(§6) → **배포 직전 장부 다시 읽기**(8 과 같은 방법).
 10. **배포**(7.4) → 장부에 처분 줄 → **보고**(7.6).
 
@@ -272,11 +272,11 @@ make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 �
 
 - **커밋** — 경로를 하나씩 `git add` 한다. 메시지 첫 줄은 `fix(web): … — F4-<번호> (<판> 후보)` · `feat: …` 꼴, 본문은 고친 것 · 검사 · 검토. 공개 글에 쓰지 않는 것은 `CLAUDE.md` §3 «공개 저장소» 목록 하나만 따른다.
 - **배포 절차**:
-  1. 플러그인을 바꾼 커밋을 만든 뒤 push 전에 해당 검사를 돈다(§5 «검사 고르기» · web 판은 `make verify-web`).
+  1. 플러그인을 바꾼 커밋을 만든 뒤 push 전에 §5 «검사 고르기» 표의 검사를 돈다(web scripts · assets 면 `make verify-web` 전체 · web md 만이면 그 표의 줄들). 녹색이면 main 을 push 한다 — 배포에 딸린 push 라 묻지 않는다.
   2. push 한 main 을 `workspace/scratch/release-<판>/CL` 로 새로 클론하고 `.venv` · `.venv-probe` 를 원본으로 링크한 뒤 두 이름을 `.git/info/exclude` 에 적는다(안 적으면 «worktree dirty» 로 멈춘다).
   3. `make release` / `make release-web` — 안에서 core `make verify` 를 돈다.
-  4. `gh release edit <태그> --notes-file <노트>` — 노트는 «바뀐 것 · 도는 실행에 미치는 것 · 받아들인 한계».
-  5. 원본에서 `git pull --ff-only` → `manifest_seal.py --write` → 바뀌면 `chore: manifest 봉인 재발행 — <플러그인> <판> 매니페스트(판 올림) 뒤 정렬` 커밋 · push → `manifest_seal.py --check --draft` 로 확인(§4 «봉인은 두 번»).
+  4. `gh release edit <태그> --notes-file <노트>` — 노트는 «바뀐 것 · 도는 실행에 미치는 것 · 받아들인 한계», 파일은 `workspace/scratch/release-<판>/` 에 둔다.
+  5. 원본에서 `git pull --ff-only` → `PYTHONUTF8=1 python3 workspace/tools/manifest_seal.py --write` → 바뀌면 `chore: manifest 봉인 재발행 — <플러그인> <판> 매니페스트(판 올림) 뒤 정렬` 커밋 · push → `--check --draft` 로 확인(§4 «봉인은 두 번»). 클론 `CL` 은 보고 뒤 지운다(7.1 «작업 자리»).
 - **릴리즈 창**(core) — 진행 레인은 배포 보고에 «pre-gate 재예보 필요» 와 그 레인을 적는다(§6).
 
 ### 7.5 서브에이전트 지시문
@@ -299,8 +299,8 @@ make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 �
 
 ### 7.6 기록 · 보고
 
-- 판 기록(설계 · 계획 · 검토 · `plan-<판>.md`)은 저장소에 커밋한다. 운영자의 재개 기록 · 진행 메모는 `workspace/scratch/`(커밋 안 함). 사건(배포 · 결정 · 단계 끝)마다 진행표(사용자 로컬 파일)를 갱신한다.
-- **배포 보고 꼴**: 판 · 담긴 수리(장부 번호) · 검토 · 검사 결과(마지막 실행 수치) · 받아들인 한계 · 레인 영향(«pre-gate 재예보 필요» 레인) · 요청 가이드(«고침» 또는 «바뀔 것 없음») · 사용자 할 일(설치본 갱신 `/plugin marketplace update changja88-dddjango` → `/reload-plugins`).
+- 판 기록(설계 · 계획 · 검토 · `plan-<판>.md`)은 저장소에 커밋한다. 운영자의 재개 기록 · 진행 메모는 `workspace/scratch/`(커밋 안 함). 사건(배포 · 결정 · 단계 끝)마다 진행표 둘(`workspace/plan/2026-09-26-refactor-path-repair/progress.md` · `workspace/design/ontology-adoption-map.html` — 사용자 로컬 파일)을 갱신한다.
+- **배포 보고 꼴**: 판 · 담긴 수리(장부 번호) · 검토 · 검사 결과(마지막 실행 수치) · 받아들인 한계 · 레인 영향(core 는 «pre-gate 재예보 필요» 레인 · web 은 도는 레인이 언제부터 새 판을 따르나) · 요청 가이드(«고침» 또는 «바뀔 것 없음») · 사용자 할 일(설치본 갱신 `/plugin marketplace update changja88-dddjango` → `/reload-plugins`).
 
 ## 8. 더 읽기
 
