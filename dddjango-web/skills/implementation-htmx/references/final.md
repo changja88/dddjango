@@ -126,7 +126,7 @@ dddjango-web이 쓰는 hx-* 속성은 일곱이다(지속 셸은 셸 템플릿�
 | `hx-swap` | 교체 방식 | 조각 루트를 통째 바꾸면 `outerHTML`, 안쪽만이면 `innerHTML`(기본). 전환이 명세된 교체는 `swap:`/`settle:` 타이밍 수식어(§7) |
 | `hx-trigger` | 발동 이벤트 | 기본 트리거로 충분하면 생략 · 이벤트 이름(+`from:`·`delay:` 수식어)만 — `[조건식]` 금지 · 공유 값 갱신 구독은 `<이벤트> from:body`(§6) · `load`는 임베드 자리 하나만(§7) |
 | `hx-headers` | CSRF 토큰 | 정적 JSON 문자열만(`'{"X-CSRFToken": "{{ csrf_token }}"}'`) — `js:` 접두 금지 |
-| `hx-indicator` | 요청 중 표시 | design_system 로딩 부품의 id(§5) |
+| `hx-indicator` | 요청 중 표시 | design_system 로딩 부품 · 요청 중 모양이 바뀌는 부품(또는 그 안 요소)의 id(§5) |
 
 - **URL은 State의 href**: `hx-get="{{ state.rows_href }}"`·`hx-post="{{ row.leave_href }}"` — VM이 navigator로 만든 href다. `{% url %}`·경로 리터럴을 쓰지 않는다(백스톱 NM13 — implementation-django §2).
 - **요청 사이 가드 자리는 서버에 없다**: VM은 요청 하나 안에서 끝나므로 «처리 중 화면이 사라진 뒤의 VM»이 없다. 브라우저 쪽 수명(교체되는 노드·늦은 완료)을 UI JS가 다룰 때는 implementation-javascript §3·§4가 소유한다 — 이 경계를 잡는 백스톱은 없다(표기 규율로만).
@@ -139,7 +139,7 @@ dddjango-web이 쓰는 hx-* 속성은 일곱이다(지속 셸은 셸 템플릿�
 | 상태 | 표기 |
 |---|---|
 | 데이터 | 페이지 view가 `build()`가 돌려준 State로 첫 렌더 — 첫 화면에는 로딩 상태가 없다(응답이 올 때 이미 데이터가 있다) |
-| 요청 중(조각) | `hx-indicator="#<id>"`가 가리킨 design_system 로딩 부품에 htmx가 `htmx-request` 클래스를 붙인다 — 그 클래스에서 보이게 하는 규칙은 부품 CSS가 소유 |
+| 요청 중(조각) | 요청을 내는 요소(감싼 폼이 보내면 그 폼 — 안쪽 단추에 단 것은 무시된다)의 `hx-indicator="#<id>"`가 가리킨 요소(design_system 로딩 부품 · 요청 중 모양이 바뀌는 부품이나 그 안 요소)에 htmx가 `htmx-request` 클래스를 붙인다 — 그 클래스에서 보이게 하는 규칙은 부품 CSS가 소유하고 접두 클래스와 겹친 선택자로 읽는다(implementation-django «부품 CSS») |
 | 조회 실패(채널 ①) | build의 raise → view(페이지·조각 함수)가 잡아 **같은 section 템플릿**을 맥락 `{"load_error": e, "retry_href": <Bc>Navigator.<화면>_<조각>_href(...)}`로 그린다 — section은 루트 요소(같은 `id`)를 유지하고 그 안에서 `error_feedback.html`을 include(재시도 단추 — §8). 공용 `error_feedback.html`을 조각 응답으로 바로 돌려주지 않는다 |
 | 재조회 중 | 이전 조각을 화면에 둔 채 요청 — 응답이 와야 교체된다(화면이 비지 않는다) |
 

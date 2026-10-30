@@ -224,7 +224,7 @@ select = ["E4", "E7", "E9", "F", "ANN"]
 - 제품 선언이 있으면 design_system 명명은 제품 뿌리를 뗀 상대 경로에 같은 규칙을 적용한다. own 제품 셸은 `root_<제품>_view.html`, 틀 CSS는 같은 stem `root_<제품>_view.css`다.
 - 폴더명은 `repository/`(전체 표기), 파일 접미사는 `_repo.py`(축약) — 혼동 주의.
 - 라우트 path·name 문자열 리터럴은 `<bc>_router.py` 안에서만 등장한다 — `class <Bc>Routes`(클래스 상수)로 묶고 일반 이동의 navigator·root_destination_handler는 이 이름 상수를 참조한다. **기본 홈 주소의 좁은 예외**: 활성 URLconf와 무관하게 반환해야 하는 **프로젝트의 기본 홈 목적지 한 건**만 예외로 둔다. 명세에 소유 BC·router 상수·navigator 메서드를 적고, 그 단일 상수를 소유 navigator가 가공 없이 반환한다. 다른 BC는 그 navigator를 호출한다. 상수 복제·타 BC router 직접 import(IM5)·BC별 기본 주소·개별 화면·조각 주소로의 확대는 금지한다. 나머지 named href의 역참조 실패를 이 주소로 폴백하지 않는다(`NoReverseMatch`를 잡아 아무 주소로 넘기기 금지). URLconf 독립은 href 반환에 URL 이름 등록이 필요 없다는 뜻이며 모든 격리 URLconf에서 그 주소를 GET할 수 있다는 뜻은 아니다. 템플릿은 URL name을 직접 쓰지 않고 State가 준 href를 쓴다.
-- `--typography-*`는 `font` 줄임 묶음 값이다 — 쓰는 쪽은 `font: var(--typography-title)`이고, 같은 규칙에서 그 뒤에 `font-*`를 다시 선언하지 않는다.
+- `--typography-*`는 `font` 줄임 묶음 값이다 — 쓰는 쪽은 `font: var(--typography-title)`이고, 같은 규칙에서 그 뒤에 `font-*`를 다시 선언하지 않는다. 예외는 묶음에 없는 숫자 · 합자 모양(`font-variant-numeric`·`font-variant-ligatures`·`font-feature-settings`) 셋뿐이고, 줄임이 이 값들을 초기값으로 되돌리므로 줄임을 쓴 그 규칙 안 `font` 뒤에 둔다(부모 규칙에 두면 자식의 줄임이 지운다).
 
 ## §5. import 방향 — 계층 매트릭스·교차 BC 4채널·root 방향 규칙
 

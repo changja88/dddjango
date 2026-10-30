@@ -1408,7 +1408,7 @@ def channel_detail_view(request: HttpRequest, channel_id: str) -> HttpResponse:
 }
 ```
 
-- `--typography-*`는 `font` 줄임 묶음 값이다 — 쓰는 쪽은 `font: var(--typography-title)`이고, 같은 규칙에서 그 뒤에 `font-*`를 다시 선언하지 않는다(architecture-ui §8).
+- `--typography-*`는 `font` 줄임 묶음 값이다 — 쓰는 쪽은 `font: var(--typography-title)`이고, 같은 규칙에서 그 뒤에 `font-*`를 다시 선언하지 않는다(architecture-ui §8). 예외는 묶음에 없는 숫자 · 합자 모양(`font-variant-numeric`·`font-variant-ligatures`·`font-feature-settings`) 셋뿐이고, 줄임이 이 값들을 초기값으로 되돌리므로 줄임을 쓴 그 규칙 안 `font` 뒤에 둔다(부모 규칙에 두면 자식의 줄임이 지운다).
 - **리터럴은 foundation 안에서만**: 색(`#…`·`rgb()`·`hsl()`)·글자(`font`·`font-size`·`font-family`·`font-weight`·`line-height`) 리터럴은 `design_system/[<제품>/]foundation/*.css` 밖에서 쓰지 않는다 — 조각 CSS·부품 CSS·템플릿 `style`·`<style>` 전부(백스톱 NM10). 연출 시간도 `--duration-*`·`--easing-*` 토큰이다(architecture-ui §7). `font-size`는 아이콘 글리프에도 foundation 토큰으로 쓴다. 글리프 크기는 `app_spacing.css`의 `--spacing-icon-*`로 정의하고 `font-size: var(--spacing-icon-*)`로 인용한다. `width`·박스 `height` 등 비-typography 크기는 architecture-ui §8의 추출값 직접 인용 규칙을 따른다. 신규 색은 architect가 토큰을 추가한다.
 
 **theme — 문서 전역 기본값** — `design_system/[<제품>/]theme/app_theme.css`가 foundation 토큰으로 브라우저 기본 여백 초기화·웹폰트 `@font-face`·`body` 글꼴·색을 조립한다(architecture-ui §7). 문서 셸이 foundation 7파일 다음에 한 번 링크한다(제품 선언이 있으면 자기 제품 것만 — §2):
@@ -1436,7 +1436,7 @@ body {
 - 제품 선언이 있으면 own theme의 상대 `url()`은 뿌리가 한 칸 깊다 — 위 평면 예의 `../../web/fonts/…`는 `../../../web/fonts/…`로 맞춘다.
 - **웹폰트**: 폰트 파일은 `web/static/fonts/`에 둔다(필요할 때만). 출처는 시안의 원본 폰트 선언·실제 응답이다 — 폰트 URL을 기억으로 조립하지 않는다. `@font-face`의 face 이름 선언은 theme의 일이고, 그 이름을 쓰는 글자 묶음 값은 foundation `--typography-*`다.
 
-**부품 CSS** — design_system component는 템플릿 옆에 같은 stem으로 둔다(`component/dialog/confirm_dialog.html` + `confirm_dialog.css`). 제품 선언이 있으면 평면 공용 마크업을 쓸 수 있고, CSS는 자기 제품 뿌리의 같은 군·같은 이름이다. 클래스 접두는 `<수식>-<군>`이다(`.confirm-dialog`·`.confirm-dialog__title`·`.confirm-dialog--danger`). 상태는 BEM `--` 수식 또는 `[aria-*]`·`[data-*]` 속성 선택자로 쓴다 — `.is-active` 같은 무접두 상태 클래스는 쓰지 않는다(백스톱 NM12). htmx가 붙이는 상태 클래스(`htmx-request`·`htmx-indicator`·`htmx-settling`·`htmx-swapping`·`htmx-added`)만 접두 붙은 클래스와 겹친 선택자(`.spinner-loading.htmx-request`)로 쓸 수 있다:
+**부품 CSS** — design_system component는 템플릿 옆에 같은 stem으로 둔다(`component/dialog/confirm_dialog.html` + `confirm_dialog.css`). 제품 선언이 있으면 평면 공용 마크업을 쓸 수 있고, CSS는 자기 제품 뿌리의 같은 군·같은 이름이다. 클래스 접두는 `<수식>-<군>`이다(`.confirm-dialog`·`.confirm-dialog__title`·`.confirm-dialog--danger`). 상태는 BEM `--` 수식 또는 `[aria-*]`·`[data-*]` 속성 선택자로 쓴다 — `.is-active` 같은 무접두 상태 클래스는 쓰지 않는다(백스톱 NM12). htmx가 붙이는 상태 클래스(`htmx-request`·`htmx-indicator`·`htmx-settling`·`htmx-swapping`·`htmx-added`)만 접두 붙은 클래스와 겹친 선택자(`.spinner-loading.htmx-request`)로 쓸 수 있다 — 접두 클래스와 겹치지 않은 `.htmx-request`를 조상 자리(`.htmx-request .spinner-loading`)에 두지 않는다(바깥 영역의 다른 요청에도 켜진다). 부품이나 부품 안 한 요소만 요청 중에 바꾸려면 요청을 내는 요소(감싼 폼이 보내면 그 폼)의 `hx-indicator`로 그것을 가리키고 겹친 선택자로 읽는다 — 부품을 가리켰으면 `.standard-button.htmx-request .standard-button__busy`처럼 겹친 묶음은 조상 자리여도 된다(implementation-htmx §5):
 
 ```css
 /* design_system/component/dialog/confirm_dialog.css */
