@@ -91,13 +91,13 @@ dddjango · {G0 스코프 | G1 설계 | G2 구현} 승인
 ```sh
 # 울타리 창 열기 — 울타리 폴더를 만들고 출력 경로를 적어 둔다(이 창의 뒤 명령은 모두 그 경로를 <울타리 폴더> 로 쓴다)
 mktemp -d "${TMPDIR:-/tmp}/<폴더명>-fence-XXXXXX"
-# before · after 스냅숏 — 1행 = 작업 트리 SHA · 2행 = 상태 줄(head · ref · venv)
+# before · after 스냅숏 — 1행 = 작업 트리 SHA · 2행 = 상태 줄(head · ref · venv) · index 사본은 트리를 쓴 뒤 바로 지운다
 ( cd "$(git rev-parse --show-toplevel)" || exit 1
   F="<울타리 폴더>"; BF="<BF>"; idx="$F/idx-$$"; mkdir -p "$F/objs"
   cp "$(git rev-parse --git-path index)" "$idx" || exit 1
   env GIT_INDEX_FILE="$idx" GIT_OBJECT_DIRECTORY="$F/objs" BF="$BF" \
       GIT_ALTERNATE_OBJECT_DIRECTORIES="$(git rev-parse --path-format=absolute --git-common-dir)/objects" \
-      sh -c 'git add -A && git add -f -A -- "$BF" && git write-tree' || exit 1
+      sh -c 'git add -A && git add -f -A -- "$BF" && git write-tree'; rc=$?; rm "$idx" </dev/null; [ "$rc" = 0 ] || exit 1
   printf 'head=%s ref=%s venv=%s\n' "$(git rev-parse HEAD)" "$(git symbolic-ref -q HEAD || echo -)" \
     "$(find -H .venv venv -maxdepth 4 -name '*.dist-info' 2>/dev/null | sort | git hash-object --stdin | cut -c1-12)" )
 # 대조 — 바뀐 경로와 종류(A 새 파일 · M 수정 · D 삭제)
@@ -115,7 +115,7 @@ mktemp -d "${TMPDIR:-/tmp}/<폴더명>-fence-XXXXXX"
   n=$(wc -c < "$b"); head -c "$((n))" "$BF/pregate-report.md" | cmp -s - "$b" )
 ```
 
-before/after 의 두 줄을 적고, 울타리 창을 닫을 때 대조한다. 허용 = 이번 울타리 창의 부속 기록 경로(`A` 새 파일만) + 코디네이터 쓰기 목록(울타리 창을 열 때 적는다 · 되도록 창 뒤로 미룬다) + 이번 울타리 창에서 네가 pre-gate 를 다발과 겹쳐 돌렸을 때만(캐시 skip 판정과 skip 행 append 도 띄운 것이다) `pregate-report.md`(`A`, 또는 `M` 이면서 덧붙이기 대조 exit 0 — 앞부분을 고친 수정은 허용 밖)이다. 상태 줄의 칸이 달라도(`head` 이동 · `ref` 전환 · `venv` 패키지 설치) 허용 밖이다. `git add -f -A -- <BF>` 는 `.dddjango/` 를 무시하는 저장소에서도 산출물 폴더를 담는다. 울타리 창 안에서는 작업 트리에 쓰는 코디네이터 명령(검사기 직접 실행 · 시험 · 커밋 · stash)이 0 이다 — 검사기를 꼭 돌려야 하면 `DJR_FINDINGS_JSON=<울타리 폴더>/findings.jsonl` 로 sink 를 저장소 밖에 둔다(이 변수가 있으면 `.dddjango/violations/` 게시가 없다). after 스냅숏·대조·덧붙이기 대조 명령이 실패해도(exit ≠ 0 · 객체 없음) 허용 밖으로 본다. 허용 밖이 나오면 그 울타리 창의 기록을 모두 무효로 하고 멈춰 `STOP_FOR_USER_APPROVAL`(«쓰기 울타리 위반 — <경로 | 상태 head·ref·venv 가운데 바뀐 칸>»)로 올린다(자동 되돌림 없음). 울타리는 작업 트리의 추적·미추적(무시 안 된) 파일 · 산출물 폴더 전부(무시돼도) · 이 작업 트리의 HEAD · 가상환경 패키지 목록을 본다. 그 밖의 무시 경로 · 저장소 밖 쓰기 · 여러 작업 트리가 함께 쓰는 ref·stash 는 보지 않는다 — 함께 쓰는 ref·stash 는 다른 레인이 움직여 거짓 STOP 을 내고, stash·reset 으로 바뀐 작업 트리는 트리 대조가 잡는다. 가상환경을 다른 레인과 심링크로 함께 쓰면 다른 레인의 설치가 `venv` 칸 STOP 을 낼 수 있다 — 빼면 창 안 설치를 못 보므로 빼지 않고, 그 STOP 이 다른 레인 설치인지는 사용자가 판단한다. 그래서 역할의 스크래치는 울타리 폴더 밖에 따로 `mktemp -d "${TMPDIR:-/tmp}/<폴더명>-<역할|lens>-XXXXXX"` 로 만들어 그 경로를 입력에 준다(울타리 증거 `objs/`·index 사본을 역할이 건드리지 않게). G1·G2 배너의 다발 크기 행에 `울타리 차이 = 기록 k개 · 코디네이터 쓰기 j개` 를 덧붙인다.
+before/after 의 두 줄을 적고, 울타리 창을 닫을 때 대조한다. 허용 = 이번 울타리 창의 부속 기록 경로(`A` 새 파일만) + 코디네이터 쓰기 목록(울타리 창을 열 때 적는다 · 되도록 창 뒤로 미룬다) + 이번 울타리 창에서 네가 pre-gate 를 다발과 겹쳐 돌렸을 때만(캐시 skip 판정과 skip 행 append 도 띄운 것이다) `pregate-report.md`(`A`, 또는 `M` 이면서 덧붙이기 대조 exit 0 — 앞부분을 고친 수정은 허용 밖)이다. 상태 줄의 칸이 달라도(`head` 이동 · `ref` 전환 · `venv` 패키지 설치) 허용 밖이다. `git add -f -A -- <BF>` 는 `.dddjango/` 를 무시하는 저장소에서도 산출물 폴더를 담는다. 울타리 창 안에서는 작업 트리에 쓰는 코디네이터 명령(검사기 직접 실행 · 시험 · 커밋 · stash)이 0 이다 — 검사기를 꼭 돌려야 하면 `DJR_FINDINGS_JSON=<울타리 폴더>/findings.jsonl` 로 sink 를 저장소 밖에 둔다(이 변수가 있으면 `.dddjango/violations/` 게시가 없다). after 스냅숏·대조·덧붙이기 대조 명령이 실패해도(exit ≠ 0 · 객체 없음) 허용 밖으로 본다. 허용 밖이 나오면 그 울타리 창의 기록을 모두 무효로 하고 멈춰 `STOP_FOR_USER_APPROVAL`(«쓰기 울타리 위반 — <경로 | 상태 head·ref·venv 가운데 바뀐 칸>»)로 올린다(자동 되돌림 없음). 울타리는 작업 트리의 추적·미추적(무시 안 된) 파일 · 산출물 폴더 전부(무시돼도) · 이 작업 트리의 HEAD · 가상환경 패키지 목록을 본다. 그 밖의 무시 경로 · 저장소 밖 쓰기 · 여러 작업 트리가 함께 쓰는 ref·stash 는 보지 않는다 — 함께 쓰는 ref·stash 는 다른 레인이 움직여 거짓 STOP 을 내고, stash·reset 으로 바뀐 작업 트리는 트리 대조가 잡는다. 가상환경을 다른 레인과 심링크로 함께 쓰면 다른 레인의 설치가 `venv` 칸 STOP 을 낼 수 있다 — 빼면 창 안 설치를 못 보므로 빼지 않고, 그 STOP 이 다른 레인 설치인지는 사용자가 판단한다. 그래서 역할의 스크래치는 창을 열 때 울타리 폴더 밖에 따로 `mktemp -d "${TMPDIR:-/tmp}/<폴더명>-<역할|lens>-XXXXXX"` 로 만들어 경로를 적어 두고 입력에 준다(울타리 증거 `objs/` 를 역할이 건드리지 않게 · 같은 스레드 followup 도 새 창이라 그 창의 새 스크래치를 다시 준다 — 앞 창의 것은 지워졌다). G1·G2 배너의 다발 크기 행에 `울타리 차이 = 기록 k개 · 코디네이터 쓰기 j개` 를 덧붙인다 — 그 수는 창을 닫을 때 한 줄 상태에 남긴다. 울타리 창을 닫아 대조를 끝냈고 이 창에서 다발과 겹쳐 돌린 작업(pre-gate 등)이 끝나 그 출력을 읽고 옮길 것(`group-moves.txt` 등)을 옮겼으면, 이 창의 울타리 폴더와 역할 스크래치 폴더 전부를 창을 열 때 적어 둔 경로 그대로 `rm -r -- "<경로>" </dev/null` 로 지운다(before 스냅숏을 못 떠 호출하지 않은 창의 폴더도 지운다) — 힘 옵션 `-f` 는 쓰지 않고(런타임이 거부하거나 확인 창을 띄운다) `</dev/null` 은 꼭 둔다(git 객체가 읽기 전용이라 터미널이 붙으면 파일마다 묻는다) · 이름 무늬로 찾아 지우지 않는다(같은 폴더명을 쓰는 병렬 세션의 폴더가 있다) · 역할 입력에 울타리 폴더 경로를 넘기지 않는다. 지우기만 하려고 셸을 따로 부르지 않고 그 뒤에 도는 셸 명령 앞에 `rm … ;` 로 붙인다(뒤에 붙이면 그 명령의 exit 을 가린다 · 뒤 명령이 없으면 따로 한 번). 허용 밖으로 멈춘 창의 이 폴더들은 증거라 남기고 STOP 기록에 그 경로들을 적은 뒤, 사용자의 답에 따른 조치가 끝나면 지운다.
 
 ## 시작: 모드 판별
 

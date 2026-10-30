@@ -3066,7 +3066,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s002/b13": {
-      "h": "c3872a7728620d0c",
+      "h": "0e9b5a1f8ff278d8",
       "n": 2,
       "works": [
         "R-3599"
@@ -14961,7 +14961,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "ed9df4136e0eddc876103e2781710a215890e5a4d9546e2408c2d49e8f0025e7"
+      "sha256": "2bdd0ad37ca92a4559583ad9d701428f5cfad5c01ea44e2b482fc88d32de20bb"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -85798,8 +85798,8 @@
       "block_order": 13,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3599@2026-10-01",
-      "label": "쓰기 울타리 대조 — diff-tree --name-status ⊆ 허용(부속 기록 A · 코디네이터 쓰기 목록 · 이번 창에 띄운 pre-gate(캐시 skip 포함)의 pregate-report.md A 또는 덧붙이기 M) · 상태 줄 칸 변동은 허용 밖(공유 가상환경 한계는 사용자 판단) · 창 안 코디네이터 작업 트리 쓰기 0(검사기는 DJR_FINDINGS_JSON 격리) · 위반이면 창 기록 무효·STOP · 보는 범위(공유 ref·stash 제외 까닭) · after·대조 실패도 허용 밖 · 역할 스크래치 = 울타리 폴더 밖 별도 mktemp · 배너 울타리 차이 행",
+      "expression": "https://numchida.com/ns/djr#R-3599@2026-10-30",
+      "label": "쓰기 울타리 대조 — diff-tree --name-status ⊆ 허용(부속 기록 A · 코디네이터 쓰기 목록 · 이번 창에 띄운 pre-gate(캐시 skip 포함)의 pregate-report.md A 또는 덧붙이기 M) · 상태 줄 칸 변동은 허용 밖(공유 가상환경 한계는 사용자 판단) · 창 안 코디네이터 작업 트리 쓰기 0(검사기는 DJR_FINDINGS_JSON 격리) · 위반이면 창 기록 무효·STOP · 보는 범위(공유 ref·stash 제외 까닭) · after·대조 실패도 허용 밖 · 역할 스크래치 = 울타리 폴더 밖 별도 mktemp · 배너 울타리 차이 행 · 창을 닫고 대조·띄운 작업 출력 읽기·옮기기가 끝나면 울타리 폴더·역할 스크래치를 적어 둔 경로로 rm -r(힘 옵션 금지) · 다음 셸 명령 앞에 붙임(허용 밖 STOP 은 답에 따른 조치까지 남김)",
       "norm_kind": "Obligation",
       "order_rank": 1040,
       "overrides": [],

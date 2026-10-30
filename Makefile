@@ -189,6 +189,14 @@ verify-base-core:
 	PYTHONUTF8=1 python3 workspace/tools/manifest_seal.py --self-test; \
 	PYTHONUTF8=1 python3 workspace/tools/ab_score.py --self-test; \
 	diff -rq dddjango/scripts codex-dddjango/skills/dddjango/scripts --exclude=__pycache__; \
+	echo "[verify-base-core] 쓰기 울타리 임시 폴더 지우기 — Claude · Codex 조정자(index 사본 · 창을 닫은 뒤 · 허용 밖은 남김)"; \
+	for f in dddjango/commands/dddjango.md codex-dddjango/skills/dddjango/SKILL.md; do \
+		grep -qF 'rm "$$idx" </dev/null; [ "$$rc" = 0 ] || exit 1' "$$f" && \
+		grep -qF '이 창의 울타리 폴더와 역할 스크래치 폴더 전부를 창을 열 때 적어 둔 경로 그대로 `rm -r -- "<경로>" </dev/null` 로 지운다' "$$f" && \
+		grep -qF '그 뒤에 도는 셸 명령 앞에 `rm … ;` 로 붙인다' "$$f" && \
+		grep -qF '허용 밖으로 멈춘 창의 이 폴더들은 증거라 남기고' "$$f" && \
+		! grep -qE '(^|[^a-z])rm( +-[A-Za-z-]+)* +-([A-Za-z]*f|-force)' "$$f" || { echo "ERROR: $$f 의 쓰기 울타리 임시 폴더 지우기 글이 없거나 rm 힘 옵션이 있음"; exit 1; }; \
+	done; \
 	echo "[verify-base-core] REQUEST_GUIDE byte 미러 대조"; \
 	cmp -s dddjango/REQUEST_GUIDE.md codex-dddjango/REQUEST_GUIDE.md || { echo "ERROR: dddjango REQUEST_GUIDE 누락 또는 Codex byte 미러 불일치"; exit 1; }; \
 	echo "[verify-base-core] 요청 가이드 검증기 self-test"; \
