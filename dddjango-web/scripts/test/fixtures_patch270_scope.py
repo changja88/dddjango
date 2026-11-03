@@ -7,35 +7,32 @@
         고르는 선택지 · 깊은 tests/web · build-state 오류 · pytest 설정 첫 파일 · 셸이 풀 낱말(앞 대입 · $ · ~ · 글롭) ·
         중괄호 펼침 · 긴 이름 선택지 · 설정 따옴표 오류 · web 시험 경로 조상 · 자손 · 산출물 폴더 자리
   C  소비자 — import · 점 경로 · 경로 글자 · web 전체를 읽음 · 한 걸음 · settings · 루트 urls 제외 · 기록 폴더 · 걸리지 않는 꼴
-  S  --since — 닫힘 미러 · 템플릿 이름 · 공용 부품 · 루트 셸(= web 시험 전체) · import 로만 부르는 W 시험 · 미추적 W 시험 ·
-        web 전체 소비자 · 바뀐 지원 모듈 · 계층 중 시험 · G2 더할 시험 · fail-fast 떼기 · 일꾼 · 앞 대입 단계 줄 · W 밖 지원 모듈 ·
-        conftest(그 지원 모듈을 import 하는 conftest 포함) · 사용자 git 설정(grep.fullName · 전역 속성 -diff) · 병합 유입
-        (승인 병합이 상류판 그대로 들인 경로만 뺌 · 충돌 해소 · 미승인 · 목록 오류는 셈)
+  S  --since — 미추적 W 시험 · 바뀐 지원 모듈 · 계층 중 시험 · G2 더할 시험(소비자 전부) · fail-fast 떼기 · 일꾼 · 앞 대입
+        단계 줄 · W 밖 지원 모듈 · conftest(그 지원 모듈을 import 하는 conftest 포함) · 병합 유입(승인 병합이 상류판 그대로
+        들인 경로만 뺌 · 충돌 해소 · 미승인 · 목록 오류는 셈) · 슬라이스 끝 시험 줄 없음(2.9.0 걷음 — 되돌아옴 막기: 이 장면
+        하나와 모든 --test-scope 출력)
   P  프로젝트 전체 필요 — web 밖 파일 · 전역 진입점(표준 · settings 가 부르는 web. 모듈) · 진입점 아래 BC 파일 · settings 없음 ·
         루트 conftest · 문서 · 기록 폴더 · web 시험 경로 아래 파일 · 승인 병합 유입 · 하위 폴더 루트 · 한글 파일 이름
   U  사용 오류 · MUT 고침 되돌림 변형(이 판 scripts 를 임시 폴더에 복사해 한 자리를 되돌리면 지정 장면이 붉다)
 임시 git 저장소만 만들고 끝나면 지운다(네트워크 · 브라우저 · 시험 실행 없음). 인자로 묶음 글자(W C S P U)를 주면 그 묶음만 돈다."""
 import json
-import re
 import shlex
 import shutil
 import sys
 import tempfile
-from contextlib import contextmanager
 from pathlib import Path
 
 TEST = Path(__file__).resolve().parent
 SCRIPTS = TEST.parent
 sys.path.insert(0, str(TEST))
-import fixtures_patch230 as fx  # noqa: E402
 from fixtures_patch230 import Proj, git, mkbc, mkstd, run_script  # noqa: E402
 
 PASS = FAIL = 0
+SCOPE_RUNS = 0  # scope() 로 돈 --test-scope 실행 수
+SLICE_END_SEEN = []  # 출력에 «슬라이스 끝 시험» 이 든 실행의 인자(2.9.0 에 걷은 줄 — 되돌아옴 막기)
 RUN = '.dddjango-web/20261020-0000-scope'
 ORDER_PAGE = 'web/application/order/presentation_layer/view/order_list_view.html'
-ORDER_VM = 'web/application/order/application_layer/view_model/order_list_vm.py'
 SHELL = 'web/root/scaffold/view/root_view.html'
-BUTTON = 'web/design_system/component/button/primary_button.html'
 
 
 def check(name, ok, detail=''):
@@ -55,7 +52,12 @@ def state(p, command, extra=None, run=RUN):
 
 
 def scope(root, *args, scripts=SCRIPTS, run=RUN):
-    return run_script(scripts / 'backstop.py', root, '--test-scope', run, *args)
+    global SCOPE_RUNS
+    code, out = run_script(scripts / 'backstop.py', root, '--test-scope', run, *args)
+    SCOPE_RUNS += 1
+    if '슬라이스 끝 시험' in out:
+        SLICE_END_SEEN.append(' '.join(str(a) for a in args) or '(--since 없음)')
+    return code, out
 
 
 def lines(out, head):
@@ -64,29 +66,6 @@ def lines(out, head):
 
 def has(out, text):
     return any(text in line for line in out.splitlines())
-
-
-@contextmanager
-def user_gitconfig(folder, *pairs):
-    """도구 실행 환경에만 임시 전역 git 설정(이름 · 메일 + pairs)을 건다 — 시스템 설정 끔 · 끝나면 되돌린다(실행하는 사람의
-    전역 설정은 읽지도 바꾸지도 않는다)."""
-    folder.mkdir(parents=True, exist_ok=True)
-    path = folder / 'gitconfig'
-    text = ['[user]', '\tname = t', '\temail = t@t']
-    for key, value in pairs:
-        section, _dot, leaf = key.partition('.')
-        text += ['[%s]' % section, '\t%s = %s' % (leaf, value)]
-    path.write_text('\n'.join(text) + '\n', encoding='utf-8')
-    saved = {k: fx.ENV.get(k) for k in ('GIT_CONFIG_GLOBAL', 'GIT_CONFIG_NOSYSTEM')}
-    fx.ENV.update(GIT_CONFIG_GLOBAL=str(path), GIT_CONFIG_NOSYSTEM='1')
-    try:
-        yield
-    finally:
-        for k, v in saved.items():
-            if v is None:
-                fx.ENV.pop(k, None)
-            else:
-                fx.ENV[k] = v
 
 
 def base_project(root, with_tests_web=True):
@@ -237,7 +216,8 @@ def bundle_w(tmp):
     code, out = scope(q.root)
     check('W11 web/ · web_test 없음 → 0 · web_test(없음)', code == 0 and has(out, 'web 시험 경로: web_test(없음)'), out)
     code, out = scope(q.root, '--since', 'HEAD')
-    check('W11b web/ 없이 --since → 0 · 줄 0', code == 0 and has(out, '계층 중 시험 줄 0 · 슬라이스 끝 시험 줄 0'), out)
+    check('W11b web/ 없이 --since → 0 · 줄 0',
+          code == 0 and has(out, '[test-scope] 계층 중 시험 줄 0 · G2 더할 시험 줄 0 · 프로젝트 전체 필요 0'), out)
 
 
 # ---------------------------------------------------------------- C 소비자
@@ -348,109 +328,82 @@ def bundle_s(tmp):
             ok, out = False, '%s\n%s' % (error, out)
         check(name, ok, 'exit %d\n%s' % (code, out))
 
-    def end(out):
-        got = lines(out, '슬라이스 끝 시험 1:')
-        return got[0] if got else ''
-
-    run('S1 BC 템플릿 → 그 BC 미러 + 템플릿 이름을 쓰는 tests/web 시험',
-        lambda: p.append(ORDER_PAGE, '<!-- x -->'),
-        lambda out: 'web_test/application/order' in end(out) and 'tests/web/test_order_page.py' in end(out)
-        and 'web_test/application/board' not in end(out))
-    run('S2 공용 부품 → include 하는 다른 BC 화면 미러',
-        lambda: p.append(BUTTON, '<span></span>'),
-        lambda out: 'web_test/application/board' in end(out) and 'web_test/application/order' not in end(out))
-    run('S3 루트 셸 → = web 시험 전체(W 시험이 모두 닫힘에 닿을 때)',
-        lambda: (p.append(SHELL, '<!-- shell -->'), p.w('tests/web/test_pages.py', 'SHELL = "root/scaffold/view/root_view.html"'),
-                 [git(p.root, 'rm', '-q', rel) for rel in ('tests/web/test_vm_import.py', 'tests/web/test_helper_user.py')]),
-        lambda out: has(out, '[test-scope] 슬라이스 끝 시험 = web 시험 전체')
-        and ' tests/web web_test ' in ' ' + end(out) + ' ')
-    run('S4 (I9) import 로만 부르는 W 시험이 슬라이스 끝에',
-        lambda: p.append(ORDER_VM, '# x'),
-        lambda out: 'tests/web/test_vm_import.py' in end(out))
-    run('S5 미추적 W 시험이 닫힘 경로 글자를 씀 → 슬라이스 끝에',
-        lambda: (p.append(ORDER_VM, '# y'),
-                 p.w('tests/web/test_new_path.py', 'P = "web/application/order/application_layer/view_model/order_list_vm.py"',
-                     'def test_p() -> None:', '    assert P')),
-        lambda out: 'tests/web/test_new_path.py' in end(out))
-    run('S6 (I6) 라우터 .py 만 → web 전체 소비자가 슬라이스 끝에',
-        lambda: p.append('web/application/order/order_router.py', '# z'),
-        lambda out: 'tests/rag/test_snapshot.py' in end(out))
-    run('S7 바뀐 _support.py → 그것을 import 하는 W 시험',
+    run('S5 미추적 W 시험 → 계층 중 시험 줄에',
+        lambda: p.w('tests/web/test_new_path.py', 'def test_p() -> None:', '    assert True'),
+        lambda out: 'tests/web/test_new_path.py' in lines(out, '계층 중 시험 1:')[0])
+    run('S7 바뀐 W 안 _support.py → 계층 중 시험 줄 0(지원 모듈은 시험 파일이 아니다)',
         lambda: p.append('tests/web/_support.py', '# s'),
-        lambda out: 'tests/web/test_helper_user.py' in end(out) and not lines(out, '계층 중 시험 1:'))
+        lambda out: has(out, '[test-scope] 계층 중 시험 줄 0 ·'))
     run('S8 바뀐 시험 파일만 → 계층 중 시험 줄(옵션 그대로)',
         lambda: p.append('tests/web/test_order_page.py', '# t'),
         lambda out: lines(out, '계층 중 시험 1:') == [
             '[test-scope] 계층 중 시험 1: pytest tests/web/test_order_page.py -x --maxfail=1 --import-mode=importlib '
             '--ds=config.settings'])
-    run('S9 (S6) 슬라이스 끝 · G2 줄은 fail-fast 를 뗀다',
+    run('S9 (S6) G2 줄은 fail-fast 를 뗀다 · 계층 중 줄은 둔다',
         lambda: p.append('tests/test_unrelated.py', '# u'),
-        lambda out: '-x' not in end(out).split() and '--maxfail=1' not in end(out)
-        and '--maxfail=1' not in lines(out, 'G2 더할 시험 1:')[0] and '-x' in lines(out, '계층 중 시험 1:')[0].split())
+        lambda out: '-x' not in lines(out, 'G2 더할 시험 1:')[0].split() and '--maxfail=1' not in lines(out, 'G2 더할 시험 1:')[0]
+        and '-x' in lines(out, '계층 중 시험 1:')[0].split())
     run('S10 G2 더할 시험 = 소비자 전부 + 바뀐 W 밖 시험',
         lambda: p.append('tests/test_unrelated.py', '# v'),
         lambda out: 'tests/rag/test_snapshot.py' in lines(out, 'G2 더할 시험 1:')[0]
         and 'tests/test_unrelated.py' in lines(out, 'G2 더할 시험 1:')[0])
-    # S13 ~ S15 일꾼 — 계층 중 시험 줄은 -n0(G-5 나) · 슬라이스 끝 시험 줄은 최대 6(사용자 결정 — auto · logical 은 그대로 두고
-    # pytest 낱말 바로 뒤에 --maxprocesses=6(이미 6 이하면 그대로 · 단계의 더 큰 값은 뺌) · 6 보다 큰 수는 -n 6 · 6 이하 ·
-    # 지정 없음은 그대로) · G2 더할 시험 줄은 프로젝트 명령 그대로. end_head = pytest 낱말 바로 뒤에 들어간 낱말
+    # S19 되돌아옴 막기 — 2.8.x 러너가 «슬라이스 끝 시험 = web 시험 전체» 와 «슬라이스 끝 시험 1:» 을 함께 내던 바꿈(루트 셸 +
+    # 남은 W 시험이 모두 셸에 닿음)에서도 그 줄이 없고 계층 중 · G2 줄과 요약 줄은 그대로다
+    run('S19 (2.9.0) 루트 셸 + W 시험 바꿈 → 슬라이스 끝 시험 줄 없음 · 계층 중 · G2 · 요약 줄',
+        lambda: (p.append(SHELL, '<!-- shell -->'), p.w('tests/web/test_pages.py', 'SHELL = "root/scaffold/view/root_view.html"'),
+                 [git(p.root, 'rm', '-q', rel) for rel in ('tests/web/test_vm_import.py', 'tests/web/test_helper_user.py')]),
+        lambda out: '슬라이스 끝 시험' not in out
+        and lines(out, '계층 중 시험 1:') == ['[test-scope] 계층 중 시험 1: pytest tests/web/test_pages.py -x --maxfail=1 '
+                                             '--import-mode=importlib --ds=config.settings']
+        and 'tests/rag/test_snapshot.py' in lines(out, 'G2 더할 시험 1:')[0]
+        and has(out, '[test-scope] 계층 중 시험 줄 1 · G2 더할 시험 줄 1 · 프로젝트 전체 필요 0'))
+    # S13 ~ S15 일꾼 — 계층 중 시험 줄은 -n0(G-5 나 · 일꾼 지정만 바꾸고 --maxprocesses · 앞 대입은 그대로) · G2 더할 시험 줄은
+    # 프로젝트 명령 그대로
     layer_n0 = 'pytest -n0 tests/web/test_order_page.py '
     ds = ' --ds=config.settings'
-    for label, command, ini, layer_want, end_workers, end_head, g2_workers in (
+    for label, command, ini, layer_want, g2_workers in (
             ('S13 단계의 -n auto', 'pytest web_test tests/web -n auto --import-mode=importlib' + ds, None,
-             layer_n0 + '--import-mode=importlib --ds=config.settings', ['--maxprocesses=6', '-n', 'auto'],
-             ['--maxprocesses=6'], ['-n', 'auto']),
+             layer_n0 + '--import-mode=importlib --ds=config.settings', ['-n', 'auto']),
             ('S13b 단계의 --numprocesses=12', 'pytest --numprocesses=12 web_test tests/web' + ds, None,
-             layer_n0 + '--ds=config.settings', ['-n', '6'], ['-n', '6'], ['--numprocesses=12']),
+             layer_n0 + '--ds=config.settings', ['--numprocesses=12']),
             ('S13c (A-S1) 단계의 -n auto --maxprocesses=12', 'pytest -n auto --maxprocesses=12 web_test tests/web' + ds, None,
-             'pytest -n0 --maxprocesses=12 tests/web/test_order_page.py --ds=config.settings',
-             ['--maxprocesses=6', '-n', 'auto'], ['--maxprocesses=6'], ['-n', 'auto', '--maxprocesses=12']),
-            ('S13d (A-S1) 단계의 -n auto --maxprocesses 4(6 이하)', 'pytest -n auto --maxprocesses 4 web_test tests/web' + ds, None,
-             'pytest -n0 --maxprocesses 4 tests/web/test_order_page.py --ds=config.settings',
-             ['-n', 'auto', '--maxprocesses', '4'], [], ['-n', 'auto', '--maxprocesses', '4']),
-            ('S13e (A-S1) 앞 대입으로 auto 일꾼 4 — 늘리지 않는다', 'PYTEST_XDIST_AUTO_NUM_WORKERS=4 pytest -n auto web_test tests/web' + ds,
-             None, 'PYTEST_XDIST_AUTO_NUM_WORKERS=4 pytest -n0 tests/web/test_order_page.py --ds=config.settings',
-             ['--maxprocesses=6', '-n', 'auto'], ['--maxprocesses=6'], ['-n', 'auto']),
-            ('S14 단계의 --numprocesses=4(6 이하)', 'pytest --numprocesses=4 web_test tests/web' + ds, None,
-             layer_n0 + '--ds=config.settings', ['--numprocesses=4'], [], ['--numprocesses=4']),
-            ('S14b 단계의 -n 4(6 이하)', 'pytest -n 4 web_test tests/web' + ds, None,
-             layer_n0 + '--ds=config.settings', ['-n', '4'], [], ['-n', '4']),
-            ('S15 addopts 에만 -n 4', 'pytest web_test tests/web' + ds, 'addopts = -n 4',
-             layer_n0 + '--ds=config.settings', [], [], []),
+             'pytest -n0 --maxprocesses=12 tests/web/test_order_page.py --ds=config.settings', ['-n', 'auto', '--maxprocesses=12']),
+            ('S13d (A-S1) 단계의 -n auto --maxprocesses 4(띄어 쓴 값)', 'pytest -n auto --maxprocesses 4 web_test tests/web' + ds,
+             None, 'pytest -n0 --maxprocesses 4 tests/web/test_order_page.py --ds=config.settings',
+             ['-n', 'auto', '--maxprocesses', '4']),
+            ('S13e (A-S1) 앞 대입으로 auto 일꾼 4', 'PYTEST_XDIST_AUTO_NUM_WORKERS=4 pytest -n auto web_test tests/web' + ds,
+             None, 'PYTEST_XDIST_AUTO_NUM_WORKERS=4 pytest -n0 tests/web/test_order_page.py --ds=config.settings', ['-n', 'auto']),
+            ('S14 단계의 --numprocesses=4', 'pytest --numprocesses=4 web_test tests/web' + ds, None,
+             layer_n0 + '--ds=config.settings', ['--numprocesses=4']),
+            ('S14b 단계의 -n 4', 'pytest -n 4 web_test tests/web' + ds, None, layer_n0 + '--ds=config.settings', ['-n', '4']),
+            ('S15 addopts 에만 -n 4', 'pytest web_test tests/web' + ds, 'addopts = -n 4', layer_n0 + '--ds=config.settings', []),
             ('S15b addopts 에만 -n auto', 'pytest web_test tests/web' + ds, 'addopts = -n auto',
-             layer_n0 + '--ds=config.settings', ['--maxprocesses=6'], ['--maxprocesses=6'], []),
+             layer_n0 + '--ds=config.settings', []),
             ('S15d (A-S1) addopts 에 -n auto --maxprocesses=4', 'pytest web_test tests/web' + ds, 'addopts = -n auto --maxprocesses=4',
-             layer_n0 + '--ds=config.settings', [], [], []),
+             layer_n0 + '--ds=config.settings', []),
             ('S15e (A-S1) addopts 에만 -n 12', 'pytest web_test tests/web' + ds, 'addopts = -n 12',
-             layer_n0 + '--ds=config.settings', ['-n', '6'], ['-n', '6'], []),
+             layer_n0 + '--ds=config.settings', []),
             ('S15c 일꾼 지정 없음(한 줄 실행)', 'pytest web_test tests/web' + ds, None,
-             'pytest tests/web/test_order_page.py --ds=config.settings', [], [], [])):
+             'pytest tests/web/test_order_page.py --ds=config.settings', [])):
         p.reset(base)
         state(p, command)
         if ini:
             p.w('pytest.ini', '[pytest]', ini)
         p.append('tests/web/test_order_page.py', '# n')
         code, out = scope(p.root, '--since', base)
-        ends = [shlex.split(line.split(': ', 1)[1]) for line in lines(out, '슬라이스 끝 시험 1:')]
         g2s = [shlex.split(line.split(': ', 1)[1]) for line in lines(out, 'G2 더할 시험 1:')]
 
         def workers(words):
             return [w for i, w in enumerate(words) if w.startswith('-n') and not w.startswith('--')
                     or w.startswith('--numprocesses') or w.startswith('--maxprocesses')
                     or (i and words[i - 1] in ('-n', '--maxprocesses'))]
-
-        def head(words):
-            at = words.index('pytest') + 1
-            return words[at:at + len(end_head)]
-        check('%s → 슬라이스 끝 %s · G2 %s · 계층 중 줄' % (label, ' '.join(end_workers) or '지정 없음',
-                                                   ' '.join(g2_workers) or '지정 없음'),
+        check('%s → G2 %s · 계층 중 줄' % (label, ' '.join(g2_workers) or '지정 없음'),
               code == 0 and lines(out, '계층 중 시험 1:') == ['[test-scope] 계층 중 시험 1: ' + layer_want]
-              and len(ends) == 1 and workers(ends[0]) == end_workers and head(ends[0]) == end_head
               and len(g2s) == 1 and workers(g2s[0]) == g2_workers, out)
     p.reset(base)
     state(p, 'pytest --ds=config.settings')
     code, out = scope(p.root, '--since', base)
-    check('S11 넓음이면 --since 줄 없음', code == 2 and not lines(out, '계층 중 시험 줄') and not lines(out, '슬라이스 끝'), out)
+    check('S11 넓음이면 --since 줄 없음', code == 2 and not lines(out, '계층 중 시험 줄') and not lines(out, 'G2 더할 시험'), out)
     p.reset(base)
     # S16 (F1) 앞 이름=값 대입은 계층 중 줄에서도 대입으로 남는다
     state(p, 'PYTEST_ADDOPTS="-p no:cacheprovider" pytest web_test tests/web --ds=config.settings')
@@ -464,8 +417,7 @@ def bundle_s(tmp):
     # S17 (F2) W 밖 지원 모듈 · conftest 를 바꾸면 그것을 쓰는 W 밖 시험이 G2 더할 시험에
     run('S17a (F2) 바뀐 W 밖 지원 모듈 → 그것을 import 하는 W 밖 시험이 G2 더할 시험에',
         lambda: p.append('tests/api/factories.py', '# f'),
-        lambda out: 'tests/api/test_orders.py' in ' '.join(lines(out, 'G2 더할 시험'))
-        and 'tests/api/test_orders.py' not in end(out))
+        lambda out: 'tests/api/test_orders.py' in ' '.join(lines(out, 'G2 더할 시험')))
     run('S17b (F2) 바뀐 W 밖 conftest → 그 폴더가 G2 더할 시험에',
         lambda: p.append('tests/api/conftest.py', '# c'),
         lambda out: ' tests/api ' in ' ' + ' '.join(lines(out, 'G2 더할 시험')) + ' ')
@@ -490,18 +442,6 @@ def bundle_s(tmp):
     check('S17d (A-I2) 루트 conftest 가 바뀐 W 밖 지원 모듈을 import → 프로젝트 전체 필요',
           code == 0 and has(out, '[test-scope] 프로젝트 전체 필요 — 루트 conftest 가 import 하는 지원 모듈 tests/common/builders.py'),
           out)
-    # S18 (A-I1) 슬라이스 끝 ③(닫힘 글자를 쓰는 W 시험 — git grep)은 사용자 git 설정에 흔들리지 않는다
-    p.reset(base)
-    p.append(ORDER_PAGE, '<!-- x -->')
-    attrs = tmp / 'user-attributes'
-    attrs.write_text('*.py -diff\n', encoding='utf-8')
-    with user_gitconfig(tmp / 'cfg-attr', ('core.attributesFile', str(attrs))):
-        code, out = scope(p.root, '--since', base)
-    check('S18b (A-I1) 사용자 전역 속성 *.py -diff — 템플릿 이름을 쓰는 tests/web 시험이 그대로 슬라이스 끝에',
-          code == 0 and 'tests/web/test_order_page.py' in end(out), out)
-    code, out = grep_fullname_scene(tmp / 'sub', tmp / 'cfg-fullname')
-    check('S18a (A-I1) 하위 폴더 루트 + 사용자 grep.fullName=true — 템플릿 이름을 쓰는 tests/web 시험이 그대로 슬라이스 끝에',
-          code == 0 and 'tests/web/test_order_page.py' in end(out), out)
     # S12 (R-B1 · R-S2) 병합 유입 — 승인 병합이 상류판 그대로 들인 경로만 바뀐 파일에서 뺀다
     for label, approve, resolve, inside in (
             ('S12 (R-B1) 승인 병합이 상류판 그대로 들인 tests/test_y.py · web 밖 파일 — 바뀐 파일 아님', 'ok', False, False),
@@ -513,8 +453,7 @@ def bundle_s(tmp):
         code, out = scope(p.root, '--since', base)
         g2 = ' '.join(lines(out, 'G2 더할 시험'))
         wide = has(out, '프로젝트 전체 필요 — application/billing.py')
-        ok = (code == 0 and 'web_test/application/order' in ' '.join(lines(out, '슬라이스 끝 시험'))
-              and wide == inside and (('tests/test_y.py' in g2) == (inside and not resolve)))
+        ok = code == 0 and wide == inside and (('tests/test_y.py' in g2) == (inside and not resolve))
         if approve == 'bad':
             ok = ok and has(out, '[test-scope] 알림 — 승인 병합 판정 불가')
         check(label, ok, 'merge %s\n%s' % (merge, out))
@@ -530,23 +469,6 @@ def conftest_support(p):
         'def cart() -> dict:', '    return make_cart()')
     p.w('tests/shop/test_cart.py', 'def test_cart(cart: dict) -> None:', '    assert cart["items"] == []')
     return p.commit('conftest support')
-
-
-def grep_fullname_scene(top, cfg, scripts=SCRIPTS):
-    """하위 폴더 루트(저장소 뿌리 밑 svc/) · BC 템플릿 한 줄 바꿈 · tests/web 시험이 그 템플릿 이름 글자를 씀 — 사용자 전역
-    grep.fullName=true 아래 --since 실행 → (exit, 출력)."""
-    q = mkstd(top / 'svc', git_top=top)
-    q.w('tests/__init__.py', '')
-    q.w('tests/web/test_pages.py', 'def test_pages() -> None:', '    assert True')
-    q.w('tests/web/test_order_page.py', 'PAGE = "application/order/presentation_layer/view/order_list_view.html"', '',
-        'def test_order_page() -> None:', '    assert PAGE')
-    state(q, 'pytest web_test tests/web --import-mode=importlib --ds=config.settings')
-    git(top, 'add', '-A')
-    git(top, 'commit', '-qm', 'base')
-    base = git(top, 'rev-parse', 'HEAD')
-    q.append(ORDER_PAGE, '<!-- x -->')
-    with user_gitconfig(cfg, ('grep.fullName', 'true')):
-        return scope(q.root, '--since', base, scripts=scripts)
 
 
 def merge_case(p, approve, resolve):
@@ -715,30 +637,12 @@ def mut_merge(approve, inside):
     return scene
 
 
-def mut_workers(command, want):
-    def scene(tmp, scripts):
-        p, base = since_project(tmp)
-        state(p, command)
-        base = p.commit('workers')
-        p.append('tests/web/test_order_page.py', '# n')
-        code, out = scope(p.root, '--since', base, scripts=scripts)
-        ends = lines(out, '슬라이스 끝 시험 1:')
-        return not (ends and want in ends[0]), out
-    return scene
-
-
 def mut_s17c(tmp, scripts):
     p, base = since_project(tmp)
     base = conftest_support(p)
     p.append('tests/shop/factories.py', '# f')
     code, out = scope(p.root, '--since', base, scripts=scripts)
     return ' tests/shop ' not in ' ' + ' '.join(lines(out, 'G2 더할 시험')) + ' ', out
-
-
-def mut_s18a(tmp, scripts):
-    code, out = grep_fullname_scene(tmp / 'sub', tmp / 'cfg', scripts=scripts)
-    got = [line for line in out.splitlines() if line.startswith('[test-scope] 슬라이스 끝 시험 1:')]
-    return not (got and 'tests/web/test_order_page.py' in got[0]), out
 
 
 def mut_s17a(tmp, scripts):
@@ -761,19 +665,6 @@ MUTANTS = [
      mut_merge(None, True)),
     ('단계 줄 낱말을 통째로 감쌈(앞 대입이 명령 이름이 됨)', "            out.append(_shell_word(word))\n",
      "            out.append(shlex.quote(word))\n", 'W9c', mut_w9c),
-    ('슬라이스 끝 일꾼 상한을 뺌', "    slice_end = lines('슬라이스 끝 시험', end, False, cap=SLICE_END_WORKERS)",
-     "    slice_end = lines('슬라이스 끝 시험', end, False)", 'S13',
-     mut_workers('pytest web_test tests/web -n auto --ds=config.settings', ': pytest --maxprocesses=6 ')),
-    ('6 이하 일꾼도 상한으로 바꿈(늘림)', "        if value is not None and value.isdigit() and int(value) > cap:\n",
-     "        if value is not None and value.isdigit():\n", 'S14b',
-     mut_workers('pytest -n 4 web_test tests/web --ds=config.settings', ': pytest -n 4 ')),
-    ('auto 를 -n 6 으로 바꿈(auto 가 6 보다 적은 기계에서 늘림)',
-     "            return ['--maxprocesses=%d' % cap], set(self.maxprocesses_at)\n",
-     "            return ['-n', str(cap)], set(self.xdist)\n", 'S13',
-     mut_workers('pytest web_test tests/web -n auto --ds=config.settings', ': pytest --maxprocesses=6 ')),
-    ('git grep 의 사용자 설정 고정을 뺌',
-     "    out = _git(root, '-c', 'grep.fullName=false', '-c', 'core.attributesFile=', 'grep', '--untracked', '-I', '-l', '-F', '-z',\n",
-     "    out = _git(root, 'grep', '--untracked', '-I', '-l', '-F', '-z',\n", 'S18a', mut_s18a),
     ('W 밖 지원 모듈을 import 하는 conftest 폴더를 G2 에서 뺌',
      "            g2.add(folder_of)\n", "            pass\n", 'S17c', mut_s17c),
     ('W 밖 지원 모듈을 import 하는 시험을 G2 에서 뺌',
@@ -823,6 +714,9 @@ def main():
         if not only or 'U' in only:
             bundle_u(tmp / 'U')
             bundle_mut(tmp / 'MUT')
+    if SCOPE_RUNS:
+        check('되돌아옴 막기 (2.9.0) — --test-scope 출력 %d번 어디에도 «슬라이스 끝 시험» 없음' % SCOPE_RUNS,
+              not SLICE_END_SEEN, '든 실행 %d: %s' % (len(SLICE_END_SEEN), ' | '.join(SLICE_END_SEEN[:8])))
     print('2.7.0 시험 범위 픽스처: PASS %d / FAIL %d' % (PASS, FAIL))
     return 1 if FAIL else 0
 

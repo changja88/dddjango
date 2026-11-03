@@ -169,6 +169,14 @@ def main() -> int:
                        "검사기 · 게이트 · pre-gate · 감사가 같은 `place` · `expected_moves` · `actual_moves` 를 부르고 "
                        "`draft` · `apply` · `verify` 명령이 조정자 · coder 의 묶음 창 재료다 · "
                        "folder_group_fixture_run 이 픽스처 · git 시나리오 · 변이로 행동 고정")
+            elif rel.name == "test_watch.py":
+                why = ("멈춘 시험 깨우기 감시 도구(2026-11-04 · 2.31.0 — R-3668 · R-3670 리비전 2) — 시험 명령을 새 묶음으로 띄워 "
+                       "출력 · 시험 기록이 10분 무변화면 결과 줄 «멈춤 의심»으로 깨우고(시험은 끄지 않음) attach · stop · list 로 "
+                       "다시 지켜보기 · 내 묶음 확인 사다리 · 남은 묶음 목록을 맡는다 · dddjango-web 판과 byte 동일 · "
+                       "test_watch_fixture_run 이 행동 고정")
+            elif key == "scripts/watch_probe/test_watch_probe.py":
+                why = ("멈춘 시험 깨우기 탐침(2026-11-04 — 판정 없는 기록기) — test_watch.py 가 `PYTEST_PLUGINS` 로 싣고 "
+                       "시험마다 시작 · 끝 한 줄만 적는다(스레드 없음 · 자기 디렉터리만 PYTHONPATH 에) · test_watch_fixture_run 이 행동 고정")
             elif rel.name == "anchor_diff.py":
                 why = "scope-render 직접 계열 판정 차분 공용 모듈(2026-08-15 r2″ — registry 2·5·6·15·16번 --anchor 소비·registry_gate 동형 N∖L·빚 채널) — anchor_diff_smoke 가 행동 고정"
             else:

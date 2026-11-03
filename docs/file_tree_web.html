@@ -1553,7 +1553,7 @@
           <dt>목적</dt><dd><p>프로젝트 뿌리, <code>web/</code> 의 형제다(뿌리 <code>test/</code> 는 백엔드 트리와 헷갈려 쓰지 않는다). 명세 <b>시험 입장 표</b>대로 둔다 — 행위마다 그 고장을 잡는 시험 하나가 맡고, 같은 고장을 층마다 되풀이하지 않는다.</p></dd>
           <dt>들어오는 것</dt><dd><p><code>web/application/&lt;bc&gt;/&lt;계층&gt;/&lt;sut&gt;.py</code> → <code>web_test/application/&lt;bc&gt;/&lt;계층&gt;/&lt;sut&gt;_test.py</code>. 같은 BC 시험이 함께 쓰는 헬퍼는 <code>_support.py</code> 한 곳. 브라우저 테스트 <code>&lt;화면&gt;_browser_test.py</code> 는 셋뿐이다 — 승인된 JS 동작이 걸린 행위 · 명세에 <code>완성 그림:</code> 행이 있는 화면의 완성 화면 갈무리(<code>test_&lt;화면&gt;_render_capture</code>) · 지속 셸의 셸 시험 <code>root/scaffold/view/root_view_browser_test.py</code>. 브라우저는 pytest-playwright 공용 고정물 <code>page</code> 로만 연다(TG4).</p></dd>
           <dt class="no">안 들어오는 것</dt><dd><p>빈 미러 폴더 · 빈 테스트 파일(<b>sparse</b> — 골격 완비의 명시적 예외) · 200 만 보는 스모크(행위 검증이 아니다) · 제품 고장을 따로 잡지 않는 시험(사설 구조 · 상수 되적기 · 시험 장치 자기 검사 · 바이트 고정 — discipline-test §4).</p><p>그림 비교(픽셀 diff) · 미디어 재생 자동 시험(영상 · 소리 재생은 G2 사용자 확인) · 색 · 여백 · 글꼴 값 단언(G2 화면 확인) · 하위 프로세스나 외부 E2E 러너 · 자체 고정물로 띄우는 브라우저(TG4).</p></dd>
-          <dt class="wy">이 모양이 된 까닭</dt><dd><p>빈 슬롯을 채우려는 유혹이 헛테스트를 부른다. 테스트 명령은 G0 에서 web 시험 경로만 모으는 한 줄(<code>test_command</code>)로 확정한다 — coder-web 은 계층 중 · 슬라이스 끝에 <code>--test-scope</code> 가 낸 좁힌 실행만 돌고, Coordinator 는 G2 앞 그 명령을 한 번 돈다(도구가 «프로젝트 전체 필요»를 내면 그 대신 프로젝트 전체 한 번).</p></dd>
+          <dt class="wy">이 모양이 된 까닭</dt><dd><p>빈 슬롯을 채우려는 유혹이 헛테스트를 부른다. 테스트 명령은 G0 에서 web 시험 경로만 모으는 한 줄(<code>test_command</code>)로 확정한다 — coder-web 은 계층 중에 <code>--test-scope</code> 가 낸 좁힌 실행만 돌고(2.9.0 부터 슬라이스 끝 시험은 없다), Coordinator 는 G2 앞 그 명령을 한 번 돈다(도구가 «프로젝트 전체 필요»를 내면 그 대신 프로젝트 전체 한 번).</p></dd>
         </dl>
         <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">6칸</span></div>
         <ol class="rowdocs">
@@ -1887,7 +1887,7 @@ class OrderListState: rows: tuple[OrderRowState, ...]; detail_href: str</code></
       <tr><th class="mono">--debt-scan</th><td>G0 (빚 스캔)</td><td><code>web/</code> 전체를 «모두 새 것»으로 보고 ST · MD · IM · NM · PU · WV 를 돌려 키(검사, 경로)마다 <code>C&lt;n&gt;</code> 을 매겨 <code>debt-g0.json</code> 으로 얼린다(CY · TG · PJ · SH · CS 는 빚 밖). 범위는 <b>손대는 파일 + 부르는 곳</b>.</td></tr>
       <tr><th class="mono">--debt-scan --refactor</th><td>리팩토링 입구 G0</td><td>빚 스캔과 같고, 일반 스캔이 넘기는 기존 단위의 골격 미비(ST4)도 빚으로 낸다.</td></tr>
       <tr><th class="mono">--all --only sh · cs</th><td>G0 (지속 셸 · 부품 CSS 점검)</td><td>이미 있는 지속 셸 꼴과 문서의 부품 CSS 실림을 전수로 본다 — 빚 질문 · 지문과 무관하고, 결과는 G0 배너와 설계자에게 넘긴다(부품 CSS 는 명세 «부품 CSS 표»로 잇는다).</td></tr>
-      <tr><th class="mono">--test-scope</th><td>G0 · 슬라이스 끝 · G2 앞</td><td>시험은 돌지 않는다. G0 의 <code>test_command</code> 가 web 시험 경로를 빠짐없이 모으는지 넓이를 재고(넓음 · 좁음은 exit 2 — 그 명령을 쓰지 않는다), <code>--since</code> 와 함께면 바뀐 파일에서 슬라이스 끝에 돌 좁힌 시험과 G2 에 더할 시험을 낸다.</td></tr>
+      <tr><th class="mono">--test-scope</th><td>G0 · 계층 중 · G2 앞</td><td>시험은 돌지 않는다. G0 의 <code>test_command</code> 가 web 시험 경로를 빠짐없이 모으는지 넓이를 재고(넓음 · 좁음은 exit 2 — 그 명령을 쓰지 않는다), <code>--since</code> 와 함께면 바뀐 파일에서 계층 중에 돌 좁힌 시험과 G2 에 더할 시험을 낸다(2.9.0 부터 슬라이스 끝 시험 줄은 내지 않는다).</td></tr>
       <tr><th class="mono">--debt-residual</th><td>G2 (빚 잔존)</td><td>같은 의미론으로 다시 스캔해 G0 에서 «지금 정리»로 고른 키가 사라졌는지 센다.</td></tr>
       <tr><th class="mono">--subst-check</th><td>슬라이스 0 끝</td><td>web/ 밖 테스트 변경이 옛 경로·이름 → 새 경로·이름 치환뿐인지 본다(단언은 그대로).</td></tr>
     </tbody>
@@ -1904,7 +1904,7 @@ class OrderListState: rows: tuple[OrderRowState, ...]; detail_href: str</code></
 
   <aside class="note settled">
     <span class="lbl">green 판정 — 테스트가 있다</span>
-    <p>coder-web 은 계층마다 <code>py_compile</code> · <code>manage.py check</code>(+ ruff) 를 실제로 돌려 <b>베이스라인 대비 신규 0</b> 을 확인하고, 테스트가 생기면 계층 중에는 새로 쓰거나 고친 시험만, 슬라이스 끝에는 <code>--test-scope</code> 가 고른 시험(좁힌 실행)이 통과해야 슬라이스를 닫는다. Coordinator 는 G2 앞 한 번 — G0 에서 확정한 <code>test_command</code>(web 시험 전체)와 도구가 고른 G2 더할 시험, 도구가 «프로젝트 전체 필요»를 내면 그 대신 프로젝트 전체 한 번 — 을 돈다. 자기 보고를 믿지 않는다.</p>
+    <p>coder-web 은 계층마다 <code>py_compile</code> · <code>manage.py check</code>(+ ruff) 를 실제로 돌려 <b>베이스라인 대비 신규 0</b> 을 확인하고, 테스트가 생기면 계층 중에 새로 쓰거나 고친 시험(<code>--test-scope</code> 가 고른 좁힌 실행)만 돌고, 마지막 편집 뒤에 돈 그 실행이 통과해야 슬라이스를 닫는다(2.9.0 부터 슬라이스 끝 시험은 없다). Coordinator 는 G2 앞 한 번 — G0 에서 확정한 <code>test_command</code>(web 시험 전체)와 도구가 고른 G2 더할 시험, 도구가 «프로젝트 전체 필요»를 내면 그 대신 프로젝트 전체 한 번 — 을 돈다. 자기 보고를 믿지 않는다.</p>
   </aside>
 
   <aside class="note">

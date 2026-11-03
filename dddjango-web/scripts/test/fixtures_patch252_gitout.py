@@ -923,6 +923,11 @@ EXPECTED_LAUNCH = {
     ('src/subst.py', '_switch_record.commits', 'git'): 1,
     ('src/switch_check.py', 'Git.call', 'git'): 1,
     ('src/switch_check.py', 'Runner.run', 'argv=argv'): 1,              # 사용자 시험 명령(0T)
+    ('test_watch.py', '_git', 'git'): 1,                              # 2.9.0 감시 폴더 자리(rev-parse)
+    ('test_watch.py', '_launch', 'sh'): 1,                            # 2.9.0 감시할 시험 명령(사용자 셸 글 하나)
+    ('test_watch.py', '_process_table', 'ps'): 1,                     # 2.9.0 묶음 구성원 표
+    ('test_watch.py', '_start_time', 'ps'): 1,                        # 2.9.0 지도자 시작 시각(내 묶음 확인)
+    ('test_watch.py', '_has_marker', 'ps'): 1,                        # 2.9.0 구성원 환경의 표지(내 묶음 확인)
 }
 
 

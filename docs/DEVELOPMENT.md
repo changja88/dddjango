@@ -88,9 +88,10 @@ dddjango-web 은 2.0.0 부터 Flutter 판 dddart 와 같은 절차 · 구조(간
 1. **구조 검사를 슬라이스가 끝날 때마다도 돈다**(2.2.0 · `backstop.py --slice-end`) — dddart 는 G2 직전에만.
 2. **한 web 앱의 여러 제품**(2.3.0) — 선택형 제품 선언 `web/product_registry.json` 과 제품별 design_system 뿌리 · 문서 셸.
 3. **지속 셸의 ‹뒤로›는 지나온 차례**(2.6.0) — 탭마다 따로 쌓지 않는다. 떠난 화면은 보관해 돌아오면 그대로다.
-4. **시험 범위**(2.7.0) — coder-web 은 계층 중에는 새로 쓰거나 고친 시험만, 슬라이스 끝에는 러너 `backstop.py --test-scope --since` 가 낸 시험만 돌고, web 시험 전체는 G2 앞 한 번(web 밖 비시험 파일이나 web 전역 진입점을 바꾼 실행만 프로젝트 전체 한 번). 근거 시험은 슬라이스 끝 줄에 더하지 않고 단계 줄마다 따로 돈다(2.8.4).
+4. **시험 범위**(2.7.0 · 2.9.0) — coder-web 은 계층마다 러너 `backstop.py --test-scope --since` 가 낸 «새로 쓰거나 고친 시험»만 돌고(2.9.0 에서 슬라이스 끝 시험을 걷었다), web 시험 전체는 G2 앞 한 번(web 밖 비시험 파일이나 web 전역 진입점을 바꾼 실행만 프로젝트 전체 한 번). 근거 시험은 좁힌 실행 줄에 더하지 않고 단계 줄마다 따로 돈다(2.8.4). G2 전수에서 실패한 시험은 그것만 모아 한 번 다시 돈다(2.9.0).
 5. **시험 입장 표**(2.8.0) — 설계자가 명세 `## 시험 입장 표` 에 행마다 판정(`add` · `update` · `reuse` · `reject`)과 걷음 칸을 적고 coder-web 은 `add` · `update` 행대로만 쓴다. render-smoke 필수 산출 없음 · 색 · 여백 · 글꼴은 `G2 화면 확인`. 갈래는 build-state `test_rule`.
 6. **실행 끝 커밋은 합치지 않는다**(2.8.3) — core 처럼 실행이 만든 커밋을 그대로 둔다.
+7. **멈춘 시험 깨우기**(2.9.0 · core 2.31.0 과 같은 도구) — 오래 걸리는 시험은 감시 도구 `scripts/test_watch.py` 로 돌려, 10분 동안 출력이 없으면 coder · Coordinator 를 깨우고 정해진 순서로 확인한 뒤에만 끈다(느린 시험을 실패시키지 않음). dddart 에는 없다.
 
 판마다 무엇이 바뀌었는지는 `docs/work_flow_web_guide.html` 의 «판마다 바뀐 것» 표(한 줄씩)와 판 기록 `workspace/plan/2026-10-06-web-dddart/plan-<판>.md`(문제 · 결정 · 고침 · 행동 변화 · 한계 · 검토 반영 · 검증)를 본다. 판 내력은 이 문서나 `CLAUDE.md` 에 쌓지 않는다.
 
@@ -185,7 +186,7 @@ md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금
 | `make verify-mutation` | rulepack·selector를 건드린 커밋 |
 | `make verify-firing` | 설치본 cache 발화 증명 (개발 중엔 `ALLOW_STALE=1`) |
 | `make verify-runready` | 실런(A/B 평가) 진입 직전에만 — verify + 변이 + 발화 + 봉인 엄격 대조 |
-| `make verify-web` | dddjango-web 픽스처(백스톱·빚·치환·SDK·리팩토링 판정·추출 도구)·refactor_audit self-test·상시 답 블록 core 대조·리팩토링 입구 표지 대조·Codex 미러 대조(scripts·assets·지식 스킬 12 references) — **수동 전용**(2026-09-16 `VERIFY_TARGETS`에서 제외) |
+| `make verify-web` | dddjango-web 픽스처(백스톱·빚·치환·SDK·리팩토링 판정·추출 도구)·refactor_audit self-test·상시 답 블록 core 대조·리팩토링 입구 표지 대조·Codex 미러 대조(scripts·assets·지식 스킬 12 references)·감시 도구(`test_watch.py` · `watch_probe/`) dddjango ↔ dddjango-web byte 대조 — **수동 전용**(2026-09-16 `VERIFY_TARGETS`에서 제외) · 감시 도구 시험이 `.venv-probe` 의 pytest 로 돌아 없으면 FAIL(`make probe-env`) |
 
 ### 검사 고르기 — 바뀐 경로로 정한다(2026-10-29)
 

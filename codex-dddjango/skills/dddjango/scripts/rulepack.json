@@ -375,7 +375,7 @@
       ]
     },
     "dddjango/agents/coder.md/s004/b10": {
-      "h": "2aef2de5ce654ce4",
+      "h": "9965d68bbc7b29ea",
       "n": 1,
       "works": [
         "R-2524",
@@ -4058,7 +4058,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s007/b9": {
-      "h": "3365ef853c18ac63",
+      "h": "dbd31e4a2d768bc1",
       "n": 1,
       "works": [
         "R-0293",
@@ -14913,7 +14913,7 @@
     },
     {
       "path": "ontology/rules/agent-coder.ttl",
-      "sha256": "8f31801d3ab0a080d44079907a47c003970898cf2dc6aaec5c701db4feba1599"
+      "sha256": "3bc6f9edf7f7775aa91591be4fdaa2805ecd22b9278d1fbf7200a511fd347c48"
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
@@ -14961,7 +14961,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "2bdd0ad37ca92a4559583ad9d701428f5cfad5c01ea44e2b482fc88d32de20bb"
+      "sha256": "6504ae4c529fbc4a9644a52ceea8ea95cd49ac0aa928fe0632a297c04e5da7c1"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -87090,8 +87090,8 @@
       "block_order": 10,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3668@2026-10-23",
-      "label": "돌고 있는 시험 멈추기 — 긴 시험은 명령 앞 PGID 표시(echo \"PGID=$$\" >&2;) · 낡은 시험 실행은 TaskStop · kill · kill -9 대신 끝 알림 전 배경 명령 하나로 kill -INT -- -<PGID> 뒤 묶음이 끝날 때까지 최대 2분 확인 · 그 끝 알림 기다림 · 2분 뒤에도 남으면 kill -TERM · 그래도면 TaskStop · 곧 끝날 실행은 멈추지 않음",
+      "expression": "https://numchida.com/ns/djr#R-3668@2026-11-04",
+      "label": "돌고 있는 시험 멈추기 · 멈춘 시험 깨우기 — 관련 테스트 · 기능/수정 모드 전체 suite 는 test_watch.py run 으로 배경에서(출력을 모으는 behavior_guard 는 감싸지 않음) · 결과 줄로 판정(끝 exit · 멈춤 의심 = 10분 무변화 · 끊김 · 끝 코드 모름 · 도구 오류 · 느린 시험 실패 없음) · 멈춤 의심 → attach 한 번 → 멈춤 확정이면 test_watch.py stop · 오래 도는 노드만 -n0 한 번(또 멈추면 결함) · 통과면 한 번 다시(흔들림 보고 · 또 멈추면 판정 불가) · 결과 줄 없으면 list → attach · 감사 앞 · G2 직전 · Phase 3 살아 있는 묶음 0 · 감싸지 않는 실행은 PGID 사다리(INT → 2분 → TERM → TaskStop)",
       "norm_kind": "Obligation",
       "order_rank": 1257,
       "overrides": [],
@@ -87124,8 +87124,8 @@
       "block_order": 10,
       "checkers": [],
       "document": "dddjango/agents/coder.md",
-      "expression": "https://numchida.com/ns/djr#R-3670@2026-10-23",
-      "label": "coder 돌고 있는 시험 멈추기 — 긴 시험은 명령 앞 PGID 표시 · 낡은 시험 실행은 kill · kill -9 로 바로 끝내지 않고 끝 알림 전 배경 명령 하나로 kill -INT -- -<PGID> 뒤 묶음이 끝날 때까지 최대 2분 확인 · 그 끝 알림 기다림 · 2분 뒤에도 남으면 kill -TERM · 그래도면 kill -KILL -- -<PGID> · 곧 끝날 실행은 멈추지 않음",
+      "expression": "https://numchida.com/ns/djr#R-3670@2026-11-04",
+      "label": "coder 돌고 있는 시험 멈추기 · 멈춘 시험 깨우기 — 배경으로 돌리는 시험(BC 범위 래칫 · 소비자 경로 · 인수 테스트)은 test_watch.py run 으로 · 결과 줄로 판정(끝 exit · 멈춤 의심 = 10분 무변화 · 끊김 · 끝 코드 모름 · 도구 오류 · 느린 시험 실패 없음) · 멈춤 의심 → attach 한 번 → 멈춤 확정이면 test_watch.py stop · 오래 도는 노드만 -n0 한 번(또 멈추면 결함 — 고치거나 보고) · 통과면 한 번 다시(흔들림 보고 · 또 멈추면 미실행) · 결과 줄 없으면 list → attach · 완료 보고 전 살아 있는 묶음 0 · 멈춤 · 끊김 · 도구 오류는 수정 시도 한도 밖 · 감싸지 않는 실행은 PGID 사다리(INT → 2분 → TERM → KILL)",
       "norm_kind": "Obligation",
       "order_rank": 150,
       "overrides": [],

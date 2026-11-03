@@ -33,7 +33,7 @@
 #   테스트 치환뿐인지 본다(--names·--except·--build 는 그 전용).
 #   시험 범위(src/scope.py — G0 test_command 고르기 · coder-web 좁힌 실행 · G2 한 번): --test-scope 는 산출물 폴더
 #   build-state.json 의 test_command · test_web_paths 를 읽어 넓이를 확인하고(시험은 돌지 않는다), --since <커밋> 이면
-#   계층 중 · 슬라이스 끝 · G2 더할 시험 줄과 프로젝트 전체 필요 줄을 낸다(--since 는 그 전용).
+#   계층 중 · G2 더할 시험 줄과 프로젝트 전체 필요 줄을 낸다(--since 는 그 전용).
 #   모드끼리, 그리고 --diff-base·--all·--only·--design-build·--update-baseline 과 함께 쓰지 않는다.
 # 제품 선언(web/product_registry.json — src/products.py · 2.3.0): 한 web 앱에 화면 제품이 여럿일 때의 design_system 뿌리 · 문서 셸 ·
 #   화면 범위. 새 검사 ID 는 없다 — ST10 · ST4 · NM10~NM12 · IM2 · IM26 · IM13 이 제품 분기를 갖고, 선언이 없으면 2.2.x 와 같다.

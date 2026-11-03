@@ -8,8 +8,8 @@
 #     설정 addopts 는 판정하지 않는다(프로젝트 기본).
 #   소비자 — W · web/ · docs/ 밖 시험 쪽 파일 가운데 web 을 부르는 파일(늘 계산 · AST 상수 · import 만).
 #   --since <커밋> — 바뀐 파일(그 커밋 뒤 첫 부모 사슬의 비병합 커밋 ∪ 병합이 들인 바꿈 ∪ 커밋 안 된 바꿈 ∪ 미추적
-#     비무시 — 승인 병합이 상류판 그대로 들인 경로만 뺀다)로 계층 중 시험 · 슬라이스 끝 시험 · G2 더할 시험 · 프로젝트
-#     전체 필요 줄을 단계마다 test_command 꼴로 낸다.
+#     비무시 — 승인 병합이 상류판 그대로 들인 경로만 뺀다)로 계층 중 시험 · G2 더할 시험 · 프로젝트 전체 필요 줄을
+#     단계마다 test_command 꼴로 낸다.
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ from pathlib import Path, PurePosixPath
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from .check_tests import _recorded, _support_name, conventional_test_path, js_in_test_tree
-from .common import GIT_PINS, BackstopContext, _resolve, bc_dir_of, module_candidates
+from .common import GIT_PINS, _resolve, module_candidates
 
 # pytest 의 값 받는 선택지(표 밖 긴 선택지 뒤 프로젝트 안 경로는 판정 불가 — 뜻 모름)
 VALUED_SHORT: Set[str] = {'-c', '-p', '-m', '-k', '-n', '-o', '-W', '-r'}
@@ -45,7 +45,6 @@ STANDARD_ENTRIES: Tuple[str, ...] = (
     'web/root/handler/root_request_handler.py', 'web/root/handler/root_error_handler.py',
     'web/root/initializer/root_initializer.py', 'web/root/scaffold/view_model/root_vm.py')
 DEFAULT_PATTERNS: List[str] = ['test_*.py', '*_test.py']
-SLICE_END_WORKERS: int = 6  # 슬라이스 끝 시험 줄의 xdist 일꾼 상한(프로젝트 명령이 더 적으면 그대로 · 늘리지 않는다)
 WEB_ALL: str = '<web 전체>'
 _PLACEHOLDER: str = '\x00경로\x00'
 _ENV_RE = re.compile(r'^[A-Za-z_][A-Za-z0-9_]*=')
@@ -71,30 +70,11 @@ class Stage:
     fail_fast: Set[int] = field(default_factory=set)  # 떼어낼 낱말 자리
     xdist: Set[int] = field(default_factory=set)  # -n · --numprocesses 낱말 자리
     pytest_at: int = 0  # pytest 낱말 바로 뒤 자리
-    workers: Optional[str] = None  # 단계의 -n 값(마지막)
-    maxprocesses: Optional[str] = None  # 단계의 --maxprocesses 값
-    maxprocesses_at: Set[int] = field(default_factory=set)  # --maxprocesses 낱말 자리
     addopts_workers: Optional[str] = None  # 설정 addopts 의 -n 값(없으면 None)
-    addopts_max: Optional[str] = None  # 설정 addopts 의 --maxprocesses 값
 
-    def _capped(self, cap: int) -> Tuple[List[str], Set[int]]:
-        """일꾼 상한 cap — (pytest 낱말 바로 뒤에 넣을 낱말, 뺄 단계 낱말 자리). 단계 값이 이기고(없으면 addopts) ·
-        auto · logical 은 그대로 두고 `--maxprocesses=<cap>`(--maxprocesses 가 이미 cap 이하면 그대로 · 단계의 더 큰 값은 뺀다 —
-        xdist 가 둘 가운데 작은 쪽을 써 어느 기계에서도 늘지 않는다) · cap 보다 큰 수는 `-n <cap>` · 그 밖은 그대로."""
-        value = self.workers if self.xdist else self.addopts_workers
-        if value in ('auto', 'logical'):
-            limit = self.maxprocesses if self.maxprocesses_at else self.addopts_max
-            if limit is not None and limit.isdigit() and int(limit) <= cap:
-                return [], set()
-            return ['--maxprocesses=%d' % cap], set(self.maxprocesses_at)
-        if value is not None and value.isdigit() and int(value) > cap:
-            return ['-n', str(cap)], set(self.xdist)
-        return [], set()
-
-    def render(self, paths: List[str], keep_fail_fast: bool = True, serial: bool = False,
-               cap: Optional[int] = None) -> str:
-        """시험 경로 자리를 paths 로 둔 줄. serial 이면 일꾼 지정을 `-n0` 으로, cap 이면 일꾼을 cap 까지로(`_capped`) — 넣는
-        낱말은 pytest 낱말 바로 뒤 · 일꾼 지정이 없는 단계는 그대로."""
+    def render(self, paths: List[str], keep_fail_fast: bool = True, serial: bool = False) -> str:
+        """시험 경로 자리를 paths 로 둔 줄. serial 이면 일꾼 지정을 `-n0` 으로 — 넣는 낱말은 pytest 낱말 바로 뒤 · 일꾼
+        지정이 없는 단계는 그대로."""
         out: List[str] = []
         placed = False
         path_slots = {i for i, _p in self.paths}
@@ -103,8 +83,6 @@ class Stage:
         drop: Set[int] = set()
         if serial and has_workers:
             workers, drop = ['-n0'], set(self.xdist)
-        elif cap is not None:
-            workers, drop = self._capped(cap)
         for i, word in enumerate(self.words):
             if workers and i == self.pytest_at:
                 out.extend(workers)
@@ -145,9 +123,8 @@ def _shell_word(word: str) -> str:
     return shlex.quote(word)
 
 
-def _git(root: Path, *args: str, ok: Tuple[int, ...] = (0,), stdin: Optional[str] = None) -> str:
-    r = subprocess.run(['git', *GIT_PINS, '-C', str(root), '-c', 'diff.relative=false', *args], capture_output=True,
-                       input=stdin.encode('utf-8') if stdin is not None else None)
+def _git(root: Path, *args: str, ok: Tuple[int, ...] = (0,)) -> str:
+    r = subprocess.run(['git', *GIT_PINS, '-C', str(root), '-c', 'diff.relative=false', *args], capture_output=True)
     if r.returncode not in ok:
         raise ScopeError('git %s 실패' % ' '.join(args[:2]))
     return r.stdout.decode('utf-8', 'surrogateescape')
@@ -292,10 +269,6 @@ def _option(stage: Stage, name: str, value: str, used: List[int], root: Path) ->
         stage.fail_fast.update(used)
     elif name in ('-n', '--numprocesses'):
         stage.xdist.update(used)
-        stage.workers = value
-    elif name == '--maxprocesses':
-        stage.maxprocesses = value
-        stage.maxprocesses_at.update(used)
 
 
 # ---------------------------------------------------------------- pytest 설정(첫 파일)
@@ -337,10 +310,9 @@ def _pytest_options(root: Path, config: Optional[str] = None) -> Tuple[Dict[str,
     return {}, root
 
 
-def _xdist_of(words: List[str]) -> Tuple[Optional[str], Optional[str]]:
-    """설정 addopts 낱말의 일꾼 지정(`-n` · `--numprocesses`) · `--maxprocesses` 마지막 값 — 없으면 None."""
+def _xdist_of(words: List[str]) -> Optional[str]:
+    """설정 addopts 낱말의 일꾼 지정(`-n` · `--numprocesses`) 마지막 값 — 없으면 None."""
     workers: Optional[str] = None
-    limit: Optional[str] = None
     for i, w in enumerate(words):
         name, eq, value = w.partition('=')
         following = words[i + 1] if i + 1 < len(words) else ''
@@ -348,9 +320,7 @@ def _xdist_of(words: List[str]) -> Tuple[Optional[str], Optional[str]]:
             workers = w[2:] or following
         elif name == '--numprocesses':
             workers = value if eq else following
-        elif name == '--maxprocesses':
-            limit = value if eq else following
-    return workers, limit
+    return workers
 
 
 def _words(value: object) -> List[str]:
@@ -759,59 +729,11 @@ def changed_files(root: Path, since: str, folder: Path) -> Tuple[List[str], List
     return sorted(p for p in names if not _recorded(p)), notes
 
 
-def _unit_of(rel: str, areas: Set[str]) -> Optional[str]:
-    """web-상대 파일 → web_test 미러 단위(BC · root · common · design_system · 옛 배치 맨 위 폴더 · 조각 CSS 는 소유자)."""
-    s = rel.split('/')
-    if s[0] == 'application':
-        return bc_dir_of(rel, areas) or ('/'.join(s[:2]) if len(s) > 2 else None)
-    if s[0] == 'static':
-        if len(s) >= 4 and s[1] == 'application':
-            return '/'.join(['application'] + s[2:-1])
-        if len(s) == 3 and s[1] == 'root':
-            return 'root'
-        return None
-    if s[0] in ('root', 'common', 'design_system'):
-        return s[0]
-    if len(s) == 1 or s[0] == 'locale':
-        return None
-    return s[0]
-
-
-def _closure_names(rel: str) -> List[str]:
-    """닫힘 파일을 시험이 부르는 글자 — 저장소 상대 경로 · 템플릿 이름 · static 이름 · 점 경로."""
-    names = ['web/' + rel]
-    if rel.endswith('.html'):
-        names.append(rel)
-    if rel.startswith('static/'):
-        names.append('web/' + rel[len('static/'):])
-    if rel.startswith('design_system/'):
-        names.append(rel)
-    if rel.endswith('.py'):
-        dotted = 'web.' + rel[:-3].replace('/', '.')
-        if dotted.endswith('.__init__'):
-            dotted = dotted[:-len('.__init__')]
-        if dotted.count('.') >= 1:
-            names.append(dotted)
-    return names
-
-
-def _grep(root: Path, patterns: Set[str], paths: List[str]) -> Set[str]:
-    if not patterns or not paths:
-        return set()
-    # 사용자 git 설정 grep.fullName 이 켜져 있어도 적중 경로는 프로젝트 루트 기준이다 · 사용자 전역 속성(core.attributesFile)의
-    # `-diff` 가 글 파일을 바이너리로 보이게 해 `-I` 가 건너뛰지 않게 그 파일을 끈다(debt.reference_lines 와 같다)
-    out = _git(root, '-c', 'grep.fullName=false', '-c', 'core.attributesFile=', 'grep', '--untracked', '-I', '-l', '-F', '-z',
-               '-f', '-', '--', *paths, ok=(0, 1), stdin='\n'.join(sorted(patterns)) + '\n')
-    return {p for p in out.split('\0') if p}
-
-
 def since_lines(project: Project, stages: List[Stage], web_paths: List[str], items: List[Consumer],
-                entries: Set[str], since: str, folder: Path, web_files: Set[str], web_dirs: Set[str]) -> List[str]:
+                entries: Set[str], since: str, folder: Path) -> List[str]:
     root = project.root
     changed, out = changed_files(root, since, folder)
     present = [p for p in changed if (root / p).is_file()]
-    w_existing = [w for w in web_paths if (root / w).exists()]
-    w_tests = {p for p in project.files if project.runnable(p) and any(_under(p, w) for w in web_paths)}
 
     def in_w(rel: str) -> bool:
         return any(_under(rel, w) for w in web_paths)
@@ -820,71 +742,7 @@ def since_lines(project: Project, stages: List[Stage], web_paths: List[str], ite
     changed_support = [p for p in present if p.endswith('.py') and project.test_side(p) and not project.runnable(p)
                        and PurePosixPath(p).name != 'conftest.py']
     changed_conftests = [p for p in changed if PurePosixPath(p).name == 'conftest.py' and project.test_side(p)]
-
-    # 바뀐 web 파일의 거꾸로 참조 닫힘(바뀐 web 파일이 없으면 BackstopContext 를 만들지 않는다 — 닫힘이 빈다)
-    closure: Set[str] = set()
-    areas: Set[str] = set()
-    seeds = {p[len('web/'):] for p in changed if p.startswith('web/')}
-    if seeds and (root / 'web').is_dir():
-        ctx = BackstopContext.build(root, None, True)
-        areas = ctx.areas
-        reverse: Dict[str, Set[str]] = {}
-        for f in ctx.files:
-            for edge in ctx.edges_of(f):
-                if edge.internal and edge.target:
-                    reverse.setdefault(edge.target, set()).add(f)
-        closure = set(seeds)
-        stack = list(seeds)
-        while stack:
-            for src in reverse.get(stack.pop(), ()):
-                if src not in closure:
-                    closure.add(src)
-                    stack.append(src)
-    end: Set[str] = set()
-    for rel in closure:  # ① 닫힘 단위의 web_test 미러
-        unit = _unit_of(rel, areas)
-        if unit and (root / 'web_test' / unit).is_dir():
-            end.add('web_test/' + unit)
-    if closure:  # ② 닫힘 모듈을 import 하는 W 시험 · ③ 닫힘 글자를 쓰는 W 파일
-        for rel in sorted(w_tests):
-            tree = project.tree(rel)
-            for node in ast.walk(tree) if tree is not None else []:
-                hit: Set[str] = set()
-                if isinstance(node, ast.Import):
-                    for a in node.names:
-                        if a.name.split('.')[0] == 'web':
-                            hit |= set(_resolve(a.name.split('.')[1:], [], web_files, web_dirs))
-                elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module and node.module.split('.')[0] == 'web':
-                    hit |= set(_resolve(node.module.split('.')[1:], [a.name for a in node.names], web_files, web_dirs))
-                if hit & closure:
-                    end.add(rel)
-                    break
-        patterns = {name for rel in closure for name in _closure_names(rel)}
-        end |= {p for p in _grep(root, patterns, w_existing) if p in w_tests}
-    end |= set(changed_tests)  # ④ 바뀐 시험 파일(W 안 · 밖)
-    if changed_support:  # ⑤ 바뀐 지원 모듈을 import 하는 W 시험 · 바뀐 conftest 폴더의 시험
-        support = set(changed_support)
-        end |= {t for t in w_tests if _imports_of(project, t) & support}
-    for conftest in changed_conftests:  # 루트 conftest 는 W 전체(프로젝트 전체는 G2 몫) · 지운 폴더는 넣지 않는다
-        folder_of = posixpath.dirname(conftest)
-        if not folder_of:
-            end |= set(w_existing)
-        elif (root / folder_of).is_dir():
-            end.add(folder_of)
-    root_conftest_consumer = False
-    for item in items:  # ⑥ 닫힘에 닿는 소비자 · 닫힘이 비지 않으면 web 전체를 읽는 소비자
-        if item.path == 'conftest.py':
-            root_conftest_consumer = True
-            continue
-        touches = closure and (WEB_ALL in item.targets or any(
-            t in closure or any(c.startswith(t.rstrip('/') + '/') for c in closure) for t in item.targets if t != WEB_ALL))
-        if touches:
-            end |= set(item.runs)
-    whole = False
-    selected = {t for t in w_tests if any(_under(t, e) for e in end)}
-    if w_tests and w_tests <= selected:
-        whole = True
-        end = {e for e in end if not in_w(e)} | set(w_existing)
+    root_conftest_consumer = any(item.path == 'conftest.py' for item in items)
     # G2 더할 시험 — 소비자 전부 · 바뀐 W 밖 시험 파일 · 바뀐 W 밖 지원 모듈을 import 하는 W 밖 시험 · conftest 폴더(한 걸음 ·
     # 루트 conftest 면 프로젝트 전체 필요) · 바뀐 W 밖 conftest 폴더(루트 conftest 는 프로젝트 전체 필요)
     g2: Set[str] = {r for item in items if item.path != 'conftest.py' for r in item.runs}
@@ -923,23 +781,19 @@ def since_lines(project: Project, stages: List[Stage], web_paths: List[str], ite
         project_wide.append('루트 conftest 가 web 을 부름')
     project_wide += ['루트 conftest 가 import 하는 지원 모듈 %s' % rel for rel in support_root_conftest]
 
-    def lines(name: str, paths: Set[str], keep: bool, serial: bool = False, cap: Optional[int] = None) -> List[str]:
+    def lines(name: str, paths: Set[str], keep: bool, serial: bool = False) -> List[str]:
         if not paths:
             return []
         quoted = [shlex.quote(p) for p in _ancestors_only(paths)]
-        return ['[test-scope] %s %d: %s' % (name, s.index, s.render(quoted, keep, serial, cap)) for s in stages]
+        return ['[test-scope] %s %d: %s' % (name, s.index, s.render(quoted, keep, serial)) for s in stages]
 
     layer = lines('계층 중 시험', set(changed_tests), True, serial=True)  # 좁은 계층 실행은 일꾼 하나가 빠르다(G-5)
     out += layer
-    if whole:
-        out.append('[test-scope] 슬라이스 끝 시험 = web 시험 전체')
-    slice_end = lines('슬라이스 끝 시험', end, False, cap=SLICE_END_WORKERS)  # 일꾼 최대 6(사용자 결정)
-    out += slice_end
     more = lines('G2 더할 시험', g2, False)
     out += more
     out += ['[test-scope] 프로젝트 전체 필요 — %s' % why for why in project_wide]
-    out.append('[test-scope] 계층 중 시험 줄 %d · 슬라이스 끝 시험 줄 %d · G2 더할 시험 줄 %d · 프로젝트 전체 필요 %d'
-               % (len(layer), len(slice_end), len(more), len(project_wide)))
+    out.append('[test-scope] 계층 중 시험 줄 %d · G2 더할 시험 줄 %d · 프로젝트 전체 필요 %d'
+               % (len(layer), len(more), len(project_wide)))
     return out
 
 
@@ -980,7 +834,7 @@ def run_scope(root: Path, folder_arg: str, since: Optional[str]) -> Tuple[int, L
         raise ScopeError('git 저장소 아님')
     stages = parse_command(command, root)
     for stage in stages:
-        stage.addopts_workers, stage.addopts_max = _xdist_of(_words(_pytest_options(root, stage.config)[0].get('addopts', '')))
+        stage.addopts_workers = _xdist_of(_words(_pytest_options(root, stage.config)[0].get('addopts', '')))
     options, _folder = _pytest_options(root, next((s.config for s in stages if s.config), None))
     patterns = _words(options.get('python_files', '')) or list(DEFAULT_PATTERNS)
     project = Project(root, patterns)
@@ -1013,7 +867,7 @@ def run_scope(root: Path, folder_arg: str, since: Optional[str]) -> Tuple[int, L
         return 2, out
     if since is not None:
         entries = _global_entries(project, settings, urlconf)
-        out += since_lines(project, stages, web_paths, items, entries, since, folder, web_files, web_dirs)
+        out += since_lines(project, stages, web_paths, items, entries, since, folder)
     out.append('[test-scope] 판정 — web 시험 경로만 · 소비자 %d — exit 0' % len(items))
     return 0, out
 
