@@ -49,4 +49,6 @@
 
 ## 검증
 
-(배포 때 채움)
+- 커밋 82aa4f30 뒤 push 전: `make verify-web` 녹색 — 픽스처 전부 FAIL 0(감시 도구 73 · 시험 범위 120 · 바깥 실행 자리 177 · 2.3.0 956 등) · self-test 두 런타임 red 0 · 문단 Claude · Codex 대조 · 걷은 말 · 깨우기 문단 · web ↔ dddjango 도구 byte 대조. `make verify-mutation` 변이 전건 red.
+- 배포 `make release-web`(깨끗한 클론) 안 `make verify` 6/6(964초) · 태그 `dddjango-web--v2.9.0` · release ee7e8653.
+- 요청 가이드: 바뀔 것 없음(요청에 쓰는 칸 · 좋은 예 · 나쁜 예 · 플러그인이 묻는 일 그대로 — 시험 실행 순서는 플러그인 안의 일).

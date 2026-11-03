@@ -22,4 +22,6 @@ dddjango-web 2.9.0 판 기록의 «멈춘 시험 깨우기» 와 같다. dddjang
 
 ## 검증
 
-(배포 때 채움)
+- 커밋 82aa4f30 뒤 push 전: `make verify` 6/6(1079초) · `make verify-mutation` 변이 전건 red · `make verify-web` 녹색(감시 도구 시험 73 · FAIL 0). 온톨로지 게이트 90/90 · 렌더 동기 red 0 · 질의 골든 일치.
+- 배포 `make release`(깨끗한 클론) 안 `make verify` 6/6(961초) · 태그 `dddjango--v2.31.0` · release 0f402bfa · 봉인 재발행 ab9f29c9(`--check --draft` green).
+- 요청 가이드: 바뀔 것 없음(요청에 쓰는 칸 · 좋은 예 · 나쁜 예 · 플러그인이 묻는 일 그대로).
