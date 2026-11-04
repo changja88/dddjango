@@ -66,10 +66,10 @@
 <body>
 <main>
   <header>
-    <p class="eyebrow">01 · DDDJANGO-WEB 2.9.0 / 동작 흐름</p>
+    <p class="eyebrow">01 · DDDJANGO-WEB 2.9.1 / 동작 흐름</p>
     <h1>간소화 DDD + MVVM 으로 화면을 짓는 웹 빌더의 협력 구조</h1>
     <p class="lead">Coordinator 가 진행을 맡고, 에이전트 7개가 명세 · 리뷰 · 코드 · 감수를 나눠 소유합니다. 새 화면은 범위(G0) → 설계(G1) → 구현(G2) 세 단계마다 사용자 승인을 받고 넘어갑니다. 2.1.0 에서 <b>기존 코드 정리(빚)</b> · <b>외부 JS 승인 절차</b> · <b>리팩토링 입구</b>가 돌아왔고, 그 뒤로 <b>슬라이스 끝 구조 검사</b> · <b>지속 탭 셸</b> · <b>좁혀 도는 시험</b> · <b>시험 입장 표</b>가 더해졌습니다.</p>
-    <div class="notice"><span class="status">2.9.0</span>dddjango-web 2.9.0 의 Coordinator · 에이전트 7 · 스킬 12 · <code>REQUEST_GUIDE.md</code> 를 기준으로 그렸습니다. 2.1.0 이후 판마다 바뀐 것은 <a href="#changes">아래 표</a>에 모았습니다. 1.x 의 구조(화면 영역 · client · 에이전트 4 · 스킬 5)는 2.0.0 에서 dddart 판 구조로 바뀌었습니다.</div>
+    <div class="notice"><span class="status">2.9.1</span>dddjango-web 2.9.1 의 Coordinator · 에이전트 7 · 스킬 12 · <code>REQUEST_GUIDE.md</code> 를 기준으로 그렸습니다. 2.1.0 이후 판마다 바뀐 것은 <a href="#changes">아래 표</a>에 모았습니다. 1.x 의 구조(화면 영역 · client · 에이전트 4 · 스킬 5)는 2.0.0 에서 dddart 판 구조로 바뀌었습니다.</div>
     <nav aria-label="문서 목차">
       <a href="#flow">협력 흐름</a><a href="#journey">요청에서 끝까지</a><a href="#modes">진행 방식 넷</a><a href="#skills">스킬 12 × 에이전트 7</a><a href="#owners">역할과 산출물</a><a href="#tests">시험</a><a href="#debt">기존 코드 정리</a><a href="#sdk">외부 JS 승인</a><a href="#refactor">리팩토링 입구</a><a href="#runtime">기술별 책임</a><a href="#changes">판마다 바뀐 것</a>
     </nav>
@@ -242,6 +242,7 @@
         <tr><th scope="row">2.8.4</th><td>근거 시험(<code>reuse</code> · 걷음)을 슬라이스 끝 시험 줄에 붙이지 않고 단계마다 따로 돈다 — 붙이면 pytest 가 나머지 시험을 조용히 뺐다</td><td>슬라이스 끝 시험이 빠짐없이 돈다</td></tr>
         <tr><th scope="row">2.8.5</th><td>글자 토큰(<code>font</code> 줄임) 뒤에 숫자 · 합자 모양(<code>font-variant-numeric</code> 등)을 쓸 수 있다 · 요청 중 표시는 요청을 내는 요소(폼)의 <code>hx-indicator</code> 로 가리킨 부품에서 겹친 선택자로 읽고, 접두 없는 <code>.htmx-request</code> 를 조상 자리에 두지 않는다</td><td>숫자가 흔들리지 않는다 · 바깥 새로 고침에 단추 링이 함께 켜지지 않는다</td></tr>
         <tr><th scope="row">2.9.0</th><td>슬라이스 끝 시험을 없앤다 — 층마다 고친 시험만 돌고 web 시험 전체는 G2 앞 한 번 · G2 에서 실패한 시험만 모아 한 번 다시(흔들림 보고 · 이번 실행이 쓴 시험은 반송) · 오래 걸리는 시험은 감시 도구 <code>test_watch.py</code> 로 — 10분 출력 없음이면 깨워 오래 도는 시험 이름을 알리고 정해진 순서로 확인한 뒤에만 끈다(느린 시험 실패 없음)</td><td>공용 부품 하나를 고친 슬라이스가 web 시험 거의 전부(실측 44분)를 돌지 않는다 · 멈춘 시험을 몇 시간씩 기다리지 않는다</td></tr>
+        <tr><th scope="row">2.9.1</th><td>요청 가이드만 고친다 — 적는 항목은 뭉뚱그리지 않는다 · <code>제외:</code> 는 오해해 만들 수 있는 것만 · «대신 쓴 요청» 표시를 빼고 미룸에만 <code>사용자 원문:</code> 을 붙인다 · 칸 안에 날짜 · 인용 · 남의 속사정 · 지어낸 낱말 · 번호 참조 · 구현 세부를 적지 않는다. 실행 규칙 · 검사기는 그대로.</td></tr>
       </tbody>
     </table></div>
     <p class="caption">작은 고침 판은 묶어 적었습니다. 판마다의 계획서는 저장소 <code>workspace/plan/2026-10-06-web-dddart/</code> 에 있습니다.</p>
@@ -249,7 +250,7 @@
 
   <footer class="sources">
     <p><strong>읽어 확인한 기준(2.9.0):</strong> <code>dddjango-web/commands/dddjango-web.md</code>(Phase 0~3 · 수정 · 트리비얼 · 리팩토링 모드) · <code>commands/refactor.md</code> · <code>agents/*.md</code> 7개의 역할 · 입출력 · <code>skills:</code> 목록 · <code>skills/*/SKILL.md</code> 12개 · <code>skills/discipline-houserules/references/final.md</code> · <code>scripts/backstop.py</code> 옵션 · <code>REQUEST_GUIDE.md</code> · <code>.claude-plugin/plugin.json</code>(2.8.5).</p>
-    <p>2026-11-04 · dddjango-web 2.9.0 기준</p>
+    <p>2026-11-04 · dddjango-web 2.9.1 기준</p>
   </footer>
 </main>
 </body>
