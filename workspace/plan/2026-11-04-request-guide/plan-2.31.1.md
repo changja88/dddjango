@@ -60,4 +60,7 @@
 
 ## 검증
 
-(배포 때 채움)
+- 커밋 d303eaca 전: 가이드 byte 대조(Codex 짝 둘) · `request_guide_contract.py` PASS · `reverse_coverage.py` 미설명 0 · 봉인 `--check --draft` green.
+- `make release-web`(깨끗한 클론) 안 `make verify` 6/6(1112초) · 태그 `dddjango-web--v2.9.1` · release 072af05b.
+- `make release`(깨끗한 클론) 안 `make verify` 6/6(1039초) · 태그 `dddjango--v2.31.1` · release 5206931e. push 단계에서 GitHub 일시 오류(Internal Server Error)로 멈춰, 같은 클론에서 레시피의 남은 두 걸음(push · `gh release create`)을 같은 명령으로 이었다.
+- 요청 가이드: 고침(이 판의 내용).
