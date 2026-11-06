@@ -3842,6 +3842,147 @@ class PublicSurfaceRootRegression(unittest.TestCase):
         ])
 
 
+class PublishDeviceWordRegression(unittest.TestCase):
+    """F4-142 — #506 은 클래스 이름을 낱말로 나눠 본다. 앞글자만 같은 값 객체(`BusySlots`)는 발행 장치가 아니다."""
+
+    def caught(self, *names: str) -> "list[str]":
+        with tempfile.TemporaryDirectory(prefix="field-publish-device-") as tmp:
+            root: Path = Path(tmp) / "project"
+            path: Path = root / "application/orders/domain_layer/shared_value_object/names.py"
+            path.parent.mkdir(parents=True)
+            path.write_text("".join(f"class {name}:\n    pass\n\n\n" for name in names), encoding="utf-8")
+            env: "dict[str, str]" = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", DJR_FINDINGS_JSON=str(Path(tmp) / "records.jsonl"),
+                                         DJR_VIOLATIONS_DIR=str(Path(tmp) / "violations"))
+            result = subprocess.run([sys.executable, "-B", str(SCRIPTS / "check-domain-model.py"), str(root)],
+                                    capture_output=True, text=True, env=env)
+        self.assertEqual(result.stderr, "")
+        return re.findall(r"\[#506\] .*발행 장치 `(\w+)`", result.stdout)
+
+    def test_names_only_starting_with_a_device_word_are_not_devices(self) -> None:
+        self.assertEqual(self.caught("BusySlots", "Busy", "BusinessHours", "Signaling", "Omnibus"), [])
+
+    def test_device_words_are_caught_wherever_they_stand_in_the_name(self) -> None:
+        names: "tuple[str, ...]" = ("Bus", "Bus2", "EventBus", "EventBuses", "EventBusses", "EventBusImpl", "HTTPBus", "_EventBus", "eventBus",
+                                    "HandlerRegistry", "HandlerRegistries", "EventDispatcher", "Dispatchers", "DomainSignal", "Signals",
+                                    "SignalHandler", "EventSignaler", "EventSignalers", "EventSignaller", "EventSignallers")
+        self.assertEqual(self.caught(*names), list(names))
+
+    def test_domain_nouns_holding_a_device_word_stay_caught(self) -> None:
+        """받아들인 한계 — 끝 낱말만 보면 풀리지만 `EventBusImpl` · `SignalHandler` 같은 진짜 장치를 놓친다."""
+        names: "tuple[str, ...]" = ("SignalStrength", "BusRoute", "RegistryEntry")
+        self.assertEqual(self.caught(*names), list(names))
+
+
+class StarImportRebindRegression(unittest.TestCase):
+    """F4-145 — star import 로 이미 묶인 이름의 재대입은 첫 대입이 아니다(달면 mypy no-redef).
+
+    묶이는 이름은 파이썬 규칙대로 대상 저장소 안의 출처 파일에서 읽는다 — `__all__` 이 있으면 그 목록, 없으면 `_` 로 시작하지 않는 모듈 수준 이름.
+    그 밖의 이름은 #493 이 그대로 난다. 기대값은 mypy 2.4.1 --strict 와 같되 둘이 다르다: 출처가 다시 import 한 이름(strict 는 안 묶음 · 파이썬은 묶음 ·
+    여기는 파이썬을 따른다)과 대상 밖 모듈의 star(mypy 는 읽어서 no-redef · 여기는 못 읽어 #493 — 모순이 남는 받아들인 한계).
+    """
+
+    BASE: str = ("from os import sep as reimported\n\nfrom .common import *\n\nPUBLIC: float = 1.0\n_PRIVATE: float = 1.0\n"
+                 "if PUBLIC > 0:\n    IN_BRANCH: int = 1\n\n\ndef helper() -> int:\n    LOCAL: int = 1\n    return LOCAL\n")
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="field-star-rebind-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root: Path = Path(self.tmp.name) / "project"
+        self.env: "dict[str, str]" = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", DJR_FINDINGS_JSON=str(Path(self.tmp.name) / "records.jsonl"),
+                                          DJR_VIOLATIONS_DIR=str(Path(self.tmp.name) / "violations"))
+        self.write("config/settings/common.py", "CHAINED: int = 1\n")
+        self.write("config/settings/base.py", self.BASE)
+        self.write("config/settings/listed.py", '__all__ = ["LISTED"]\nLISTED: int = 1\nUNLISTED: int = 2\n')
+
+    def write(self, relative: str, text: str = "") -> None:
+        path: Path = self.root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def run_checker(self) -> str:
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / "check-public-surface-annotation.py"), str(self.root)],
+                                capture_output=True, text=True, env=self.env, timeout=60)
+        self.assertEqual(result.stderr, "")
+        return result.stdout
+
+    def first_assignments(self) -> "list[tuple[str, str]]":
+        return re.findall(r"\[#493\] ([\w/.]+:\d+): 모듈 변수 `(\w+)`", self.run_checker())
+
+    def test_names_the_star_import_bound_are_rebinds(self) -> None:
+        self.write("config/settings/testing.py", 'from .base import *\n\nPUBLIC = 0.1\nCHAINED = 2\nIN_BRANCH = 2\nreimported = "x"\n')
+        self.write("config/settings/absolute.py", "from config.settings.base import *\n\nPUBLIC = 0.2\n")
+        self.write("config/settings/from_listed.py", "from .listed import *\n\nLISTED = 5\n")
+        self.write("config/settings/in_try.py", "try:\n    from .base import *\nexcept ImportError:\n    pass\n\nPUBLIC = 0.3\n")
+        self.write("config/deep/nested.py", "from ..settings.base import *\n\nPUBLIC = 0.4\n")
+        self.write("config/packaged/__init__.py", "PACKAGED: int = 1\n")
+        self.write("config/from_package.py", "from .packaged import *\n\nPACKAGED = 2\n")
+        self.write("config/packaged/inner.py", "from . import *\n\nPACKAGED = 3\n")
+        self.write("config/cycle_a.py", "from .cycle_b import *\n\nIN_B = 2\n")
+        self.write("config/cycle_b.py", "from .cycle_a import *\n\nIN_B: int = 1\n")
+        self.write("config/all_forms/in_tuple.py", '__all__ = ("IN_TUPLE",)\nIN_TUPLE: int = 1\n')
+        self.write("config/all_forms/from_tuple.py", "from .in_tuple import *\n\nIN_TUPLE = 2\n")
+        self.write("config/all_forms/annotated.py", '__all__: list[str] = ["IN_ANNOTATED"]\nIN_ANNOTATED: int = 1\n')
+        self.write("config/all_forms/from_annotated.py", "from .annotated import *\n\nIN_ANNOTATED = 2\n")
+        self.write("config/all_forms/private.py", '__all__ = ["_LISTED_PRIVATE"]\n_LISTED_PRIVATE: int = 1\n')
+        self.write("config/all_forms/from_private.py", "from .private import *\n\n_LISTED_PRIVATE = 2\n")
+        self.assertEqual(self.first_assignments(), [])
+
+    def test_names_the_star_import_did_not_bind_stay_first_assignments(self) -> None:
+        self.write("config/settings/testing.py", "from .base import *\n\n_PRIVATE = 0.1\nLOCAL = 3\nNEW_NAME = 1\n")
+        self.write("config/settings/from_listed.py", "from .listed import *\n\nUNLISTED = 6\n")
+        self.write("config/settings/before.py", "PUBLIC = 0.2\n\nfrom .base import *\n")
+        self.write("config/settings/unknown.py", "from nowhere_pkg import *\n\nSOME = 1\n")
+        self.write("config/settings/stdlib.py", "from math import *\n\npi = 3.0\n")
+        self.write("config/settings/broken.py", "def (\n")
+        self.write("config/settings/from_broken.py", "from .broken import *\n\nAFTER_BROKEN = 1\n")
+        (self.root / "config/settings/garbled.py").write_bytes(b"\xff\xfe = 1\n")
+        self.write("config/settings/from_garbled.py", "from .garbled import *\n\nAFTER_GARBLED = 1\n")
+        self.write("config/settings/dynamic.py", '__all__ = [*["DYNAMIC"]]\nDYNAMIC: int = 1\n')
+        self.write("config/settings/from_dynamic.py", "from .dynamic import *\n\nDYNAMIC = 2\n")
+        self.write("config/settings/str_all.py", '__all__ = "STR_ALL"\nSTR_ALL: int = 1\n')
+        self.write("config/settings/from_str_all.py", "from .str_all import *\n\nSTR_ALL = 2\n")
+        self.write("config/both/__init__.py", "IN_PACKAGE: int = 1\n")
+        self.write("config/both.py", "IN_MODULE: int = 1\n")
+        self.write("config/from_both.py", "from .both import *\n\nIN_PACKAGE = 2\nIN_MODULE = 2\n")
+        self.write("config/escape.py", "from ...above import *\n\nESCAPED = 1\n")
+        (Path(self.tmp.name) / "above.py").write_text("ESCAPED: int = 1\n", encoding="utf-8")
+        self.assertEqual(self.first_assignments(), [
+            ("config/escape.py:3", "ESCAPED"),
+            ("config/from_both.py:4", "IN_MODULE"),
+            ("config/settings/before.py:1", "PUBLIC"),
+            ("config/settings/from_broken.py:3", "AFTER_BROKEN"),
+            ("config/settings/from_dynamic.py:3", "DYNAMIC"),
+            ("config/settings/from_garbled.py:3", "AFTER_GARBLED"),
+            ("config/settings/from_listed.py:3", "UNLISTED"),
+            ("config/settings/from_str_all.py:3", "STR_ALL"),
+            ("config/settings/stdlib.py:3", "pi"),
+            ("config/settings/testing.py:3", "_PRIVATE"),
+            ("config/settings/testing.py:4", "LOCAL"),
+            ("config/settings/testing.py:5", "NEW_NAME"),
+            ("config/settings/unknown.py:3", "SOME"),
+        ])
+
+    def test_long_expression_in_a_star_file_does_not_kill_the_checker(self) -> None:
+        """검사기가 죽으면 게이트는 앵커 · 현재 양쪽의 같은 fail-closed 줄을 지워 조용한 green 이 된다."""
+        self.write("config/settings/testing.py", f"from .base import *\n\nPUBLIC = {' + '.join(['1'] * 800)}\nNEW_NAME = 1\n")
+        self.assertEqual(self.first_assignments(), [("config/settings/testing.py:4", "NEW_NAME")])
+
+    def test_star_import_mesh_finishes(self) -> None:
+        """게이트에는 시간 상한이 없다 — 서로 star 로 부르는 모듈들이 경로 수만큼 다시 읽히면 끝나지 않는다."""
+        names: "list[str]" = [f"m{index}" for index in range(10)]
+        for name in names:
+            imports: str = "".join(f"from .{other} import *\n" for other in names if other != name)
+            self.write(f"config/mesh/{name}.py", f"{imports}\nIN_{name.upper()}: int = 1\n")
+        self.write("config/mesh/user.py", "from .m0 import *\n\nIN_M9 = 2\nNEW_NAME = 1\n")
+        self.assertEqual(self.first_assignments(), [("config/mesh/user.py:4", "NEW_NAME")])
+
+    def test_other_passes_still_see_the_star_import_as_written(self) -> None:
+        """이름을 편 사본은 #493 몫이다 — 출처가 `Any` 를 import 했다고 이 파일의 `Any` 검사가 꺼지지 않는다."""
+        self.write("config/typed.py", "from typing import Any\n\nVALUE: int = 1\n")
+        self.write("config/use_any.py", "from .typed import *\n\n\ndef load(data: Any) -> None:\n    return None\n")
+        self.assertIn("[#645] config/use_any.py:4:", self.run_checker())
+
+
 class GeneratorWindowReplyRegression(unittest.TestCase):
     """F4-123 — OHS 대화 창구(공개 함수가 `Generator[<Op>Response, <답>]`)의 send 답 타입과 그 구성 dataclass 는 그 연산의 요청 파일에 둔다
     (implementation-python §13.5 예외 · 2026-10-26). 답을 이름으로 적든 별칭(진입 · 요청 파일 · PEP 695 · `TypeAlias` · 맨 대입 합)으로 적든

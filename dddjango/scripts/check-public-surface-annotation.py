@@ -446,6 +446,75 @@ def _record_syntax_bindings(node: ast.AST, bound: set[str]) -> None:
             bound.update(n.names)
 
 
+def _star_source(node: ast.ImportFrom, importer: Path, target: Path) -> "Path | None":
+    """`from … import *` 의 출처 파일 — 상대는 importer 에서 · 절대는 target 부터 importer 폴더까지 찾는다(대상 밖은 찾지 않는다)."""
+    inside: list[Path] = [p for p in importer.parents if p == target or target in p.parents]
+    bases: list[Path] = inside[node.level - 1:node.level] if node.level else inside[::-1]
+    dotted: list[str] = node.module.split(".") if node.module else []
+    for base in bases:
+        package: Path = base.joinpath(*dotted) / "__init__.py"
+        if package.is_file():
+            return package
+        module: Path = base.joinpath(*dotted[:-1], f"{dotted[-1]}.py") if dotted else package
+        if module.is_file():
+            return module
+    return None
+
+
+def _literal_all(mod: ast.Module) -> "set[str] | None":
+    """모듈 수준 `__all__` 의 이름들 — 없으면 None · 글자 목록으로 못 읽으면 빈 집합(모르는 이름은 묶였다고 치지 않는다)."""
+    for st in mod.body:
+        targets: list[ast.expr] = st.targets if isinstance(st, ast.Assign) else [st.target] if isinstance(st, ast.AnnAssign) else []
+        if any(isinstance(t, ast.Name) and t.id == "__all__" for t in targets):
+            try:
+                names: object = ast.literal_eval(st.value)
+            except (ValueError, TypeError):
+                return set()
+            return {n for n in names if isinstance(n, str)} if isinstance(names, (list, tuple)) else set()
+    return None
+
+
+def _star_exports(source: Path, target: Path, memo: dict[Path, set[str]]) -> set[str]:
+    """파이썬이 star import 로 묶는 이름 — `__all__` 이 있으면 그 목록 · 없으면 `_` 로 시작하지 않는 모듈 수준 이름.
+
+    `memo` 는 파일 하나를 검사하는 동안의 기억이다 — 출처마다 한 번만 읽고, 읽는 중인 출처(순환)와 못 읽는 출처는 묶는 이름 없음이다."""
+    if source in memo:
+        return memo[source]
+    memo[source] = set()
+    try:
+        mod: ast.Module = ast.parse(source.read_text(encoding="utf-8"))
+    except (SyntaxError, OSError, UnicodeDecodeError):
+        return memo[source]
+    listed: "set[str] | None" = _literal_all(mod)
+    if listed is not None:
+        memo[source] = listed
+        return listed
+    _expand_star_imports(mod, source, target, memo)
+    bound: set[str] = set()
+    # 첫 대입 판정과 같은 걷기로 이름만 모은다 — 기록을 내지 않는 Findings(defer)에 담긴 줄은 버린다.
+    _scan_stmts(mod.body, "module", bound, source, Findings(defer=True), False, {})
+    memo[source] = {name for name in bound if not name.startswith("_")}
+    return memo[source]
+
+
+def _expand_star_imports(mod: ast.Module, file: Path, target: Path, memo: dict[Path, set[str]]) -> None:
+    """`from m import *` 자리에 그 import 가 묶는 이름을 다 적어 `from m import a, b` 꼴로 편다(제자리) — 출처를 못 찾은 star 는 묶는 이름 없음(fail-closed)."""
+    stars: list[ast.ImportFrom] = [n for n in ast.walk(mod) if isinstance(n, ast.ImportFrom) and n.names[0].name == "*"]
+    for node in sorted(stars, key=lambda star: star.lineno):  # 파이썬이 도는 소스 차례로 읽는다 — 순환에서 먼저 읽은 잘린 답이 기억되는 차례가 같아진다
+        source: "Path | None" = _star_source(node, file, target)
+        names: set[str] = _star_exports(source, target, memo) if source is not None else set()
+        node.names = [ast.alias(name=name) for name in sorted(names)]
+
+
+def _first_assignment_tree(mod: ast.Module, src: str, file: Path, target: Path) -> ast.Module:
+    """#493 걷기에 줄 나무 — star import 가 있으면 다시 파싱한 나무에 이름을 편다. 다른 패스는 쓰인 그대로의 `mod` 를 본다."""
+    if not any(isinstance(n, ast.ImportFrom) and n.names[0].name == "*" for n in ast.walk(mod)):
+        return mod
+    expanded: ast.Module = ast.parse(src)
+    _expand_star_imports(expanded, file, target, {file: set()})
+    return expanded
+
+
 def _is_functional_type_decl(value: ast.AST, scope: str, bound: set[str], origins: dict[str, str]) -> bool:
     """값이 `typing`·`typing_extensions` 의 함수 꼴 타입 생성자 호출인가(`X = TypedDict("X", {…})` 꼴).
 
@@ -1668,7 +1737,7 @@ def main(argv: list[str]) -> int:
             _check_explicit_any(mod, rel, findings, candidates, bindings, aliases, test_body=True)
             continue
         origins = _origin_bindings(mod)
-        _scan_stmts(mod.body, "module", set(), rel, findings, False, bindings, aliases, origins)
+        _scan_stmts(_first_assignment_tree(mod, src, f, target).body, "module", set(), rel, findings, False, bindings, aliases, origins)
         _check_explicit_any(mod, rel, findings, candidates, bindings, aliases)
         _check_stub_generic_bases(mod, src, rel, findings, candidates, origins, bindings, aliases)
         _check_json_load(mod, rel, candidates, origins, bindings)

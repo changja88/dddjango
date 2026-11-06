@@ -722,6 +722,14 @@ def _check_domain_services(root: Path, bc: Path, ds: Path, f: Findings, cand: Ca
                       "모듈 레벨 가변 전역 — 도메인 서비스는 무상태다")
 
 
+# #506 — 이름을 낱말로 나눠 본다: `EventBus` 는 걸리고 앞글자만 같은 `BusySlots` · `BusinessHours` 는 걸리지 않는다.
+PUBLISH_DEVICE_WORDS: frozenset[str] = frozenset({
+    "Registry", "Registries", "Dispatcher", "Dispatchers", "Bus", "Buses", "Busses",
+    "Signal", "Signals", "Signaler", "Signalers", "Signaller", "Signallers",
+})
+CAMEL_WORD: re.Pattern[str] = re.compile(r"[A-Z][a-z]*")
+
+
 # ── 도메인 전역 — #8 · #253 · #258 · #265/#266 · #505 · #506 · #548 · #315 ──
 
 def _check_domain_wide(root: Path, bc: Path, all_bcs: list[Path], f: Findings) -> None:
@@ -776,7 +784,7 @@ def _check_domain_wide(root: Path, bc: Path, all_bcs: list[Path], f: Findings) -
                         f.add("#8", _rel(root, py, node.lineno),
                               f"`{m}` — domain_layer 의 밖으로 나가는 import 는 0 이다")
             if isinstance(node, ast.ClassDef):
-                if any(w in node.name for w in ("Registry", "Dispatcher", "Bus", "Signal")):
+                if PUBLISH_DEVICE_WORDS & set(CAMEL_WORD.findall(node.name)):
                     f.add("#506", _rel(root, py, node.lineno),
                           f"발행 장치 `{node.name}` — 배달은 framework/broker/ 몫이라 "
                           "domain_layer 에 살지 않는다")
