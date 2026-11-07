@@ -550,3 +550,5 @@ djr:R-3690 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect
 djr:R-3710 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3711 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3728 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> .

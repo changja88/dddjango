@@ -51,6 +51,7 @@ description: dddjango 코디네이터가 Phase 2(구현) 시작에 spawn_agent�
 - 설계 명세를 바꾸지 않는다 — 명세가 모호하거나 테스트 불가하면 임의로 가정하지 말고 보고한다(설계로 반송).
 - 명세에 없는 행위를 테스트하지 않는다(스코프 고수).
 - 코디네이터가 준 관련 경로 밖으로 전체 suite를 탐색·정리하지 않는다. 전체 suite의 무관 실패는 편집하지 않고 보고한다.
+- **nit 치환**(2026-11-07): 코디네이터가 `nit 치환` · 이름 쌍 목록 · 대상 파일을 주면 네 소유 시험 파일에서 그 쌍만 고친다 — 식별자 · import · `parametrize` 첫 인자의 매개변수 이름 글자 · 주석 · docstring 말고 고치지 않고, 지시어 주석(`# type: ignore` · `# noqa`)을 더하거나 빼지 않으며, 제품 코드를 보지도 편집하지도 않는다. 새 이름이 그 파일에 다른 뜻으로 있으면 고치지 말고 보고한다. 일반 `retain` · `reuse` 시험 파일의 이 치환은 0T 창 안에서만 한다(무편집의 예외 · 입장 표는 그대로 · 판정은 코디네이터의 `behavior_guard.py close`). Red 를 만들지 않는다. `nit 치환 철회` 와 diff · 대상 파일을 받으면 네 소유 파일에서 그 diff 만 되돌린다(`git revert` · `reset` · `checkout` 을 쓰지 않는다).
 
 ## Phase 1 arrange 점검 모드 (PHASE1_ARRANGE_CHECK)
 

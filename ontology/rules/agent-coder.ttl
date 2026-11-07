@@ -1236,6 +1236,14 @@ djr:R-3709 a djr:Obligation ;
     prov:specializationOf djr:R-3709 ;
     djr:revision 1 .
 
+djr:R-3733 a djr:Obligation ;
+    skos:prefLabel "nit 치환 — 쌍 목록만 · 식별자 · import · parametrize 첫 인자 글자 · 주석 · docstring 만 · 지시어 주석 불변 · 새 이름 충돌이면 보고 · retain · reuse 시험은 0T 창 안"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3733@2026-11-07> .
+
+<https://numchida.com/ns/djr#R-3733@2026-11-07> a djr:Expression ;
+    prov:specializationOf djr:R-3733 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/coder.md> a djr:Document ;
     skos:prefLabel "agent-coder"@ko .
 
@@ -1605,5 +1613,5 @@ djr:R-3709 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
-    djr:statesNorm djr:R-3708, djr:R-3709 ;
-    djr:text "- **묶음 창**(2026-10-27): Coordinator 가 «묶음 창»으로 파견하면 준 명령 하나 — `scripts/folder_group.py apply . --run <산출물 폴더> --debt` 또는 `--run-moves`(이관 빚 목록이 있으면 `--legacy-debt-file <목록>`) — 만 Coordinator 가 준 경로 그대로 돌린다(cwd 는 대상 프로젝트 루트). 손으로 옮기거나 이름을 바꾸거나 다른 편집(import 정리 · 서식 · 테스트 포함)을 하지 않고, 묶음 창 밖에서는 묶음 이동을 하지 않는다 — 새 파일은 file-plan 경로 그대로 만든다(묶음 자리로는 끝 맞춤 묶음 창이 옮긴다). 출력이 `요약: apply 멈춤 — 기계 이동 불가 …` 이면 아무것도 고치지 말고 그 출력을 그대로 보고한다. 판정은 Coordinator 의 `behavior_guard.py close` 와 `folder_group.py verify --window` 다.\n"@ko .
+    djr:statesNorm djr:R-3708, djr:R-3709, djr:R-3733 ;
+    djr:text "- **묶음 창**(2026-10-27): Coordinator 가 «묶음 창»으로 파견하면 준 명령 하나 — `scripts/folder_group.py apply . --run <산출물 폴더> --debt` 또는 `--run-moves`(이관 빚 목록이 있으면 `--legacy-debt-file <목록>`) — 만 Coordinator 가 준 경로 그대로 돌린다(cwd 는 대상 프로젝트 루트). 손으로 옮기거나 이름을 바꾸거나 다른 편집(import 정리 · 서식 · 테스트 포함)을 하지 않고, 묶음 창 밖에서는 묶음 이동을 하지 않는다 — 새 파일은 file-plan 경로 그대로 만든다(묶음 자리로는 끝 맞춤 묶음 창이 옮긴다). 출력이 `요약: apply 멈춤 — 기계 이동 불가 …` 이면 아무것도 고치지 말고 그 출력을 그대로 보고한다. 판정은 Coordinator 의 `behavior_guard.py close` 와 `folder_group.py verify --window` 다.\n- **nit 치환**(2026-11-07): Coordinator 가 `nit 치환` · 이름 쌍 목록 · 대상 파일을 주면 그 쌍만 고친다 — 식별자 · import · `parametrize` 첫 인자의 매개변수 이름 글자 · 주석 · docstring 말고 고치지 않고, 지시어 주석(`# type: ignore` · `# noqa`)을 더하거나 빼지 않는다. 새 이름이 그 파일에 다른 뜻으로 있으면 고치지 말고 보고한다. 일반 `retain` · `reuse` 시험 파일의 이 치환은 0T 창 안에서만 하고(무편집의 예외 · 입장 표는 그대로 · 판정은 Coordinator 의 `behavior_guard.py close`), 0T 창 입력이면 제품 코드를 편집하지 않는다. `nit 치환 철회` 와 diff · 대상 파일을 받으면 그 파일에서 그 diff 만 되돌린다(`git revert` · `reset` · `checkout` 을 쓰지 않는다).\n"@ko .

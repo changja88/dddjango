@@ -198,3 +198,5 @@ djr:R-3616 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3652 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/behavior_guard.py> .
+
+djr:R-3734 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-acceptance-tester> .

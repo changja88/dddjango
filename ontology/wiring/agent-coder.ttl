@@ -320,3 +320,5 @@ djr:R-3684 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-revie
 djr:R-3708 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3709 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3733 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder> .
