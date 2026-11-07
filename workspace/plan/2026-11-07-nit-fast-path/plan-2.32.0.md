@@ -1,6 +1,6 @@
 # dddjango 2.32.0 — 낱말 · 이름 nit 빠른 길
 
-상태: 후보. 설계 전문은 `design.md`, 규칙 글의 최종 문장은 `dddjango/commands/dddjango.md` · `dddjango/agents/discipline-reviewer.md`.
+상태: 배포 끝(2026-11-07 14:54 · 태그 dddjango--v2.32.0 · 커밋 6f5ccc29 · release f0bbe3a7). 설계 전문은 `design.md`, 규칙 글의 최종 문장은 `dddjango/commands/dddjango.md` · `dddjango/agents/discipline-reviewer.md`.
 
 ## 문제
 
@@ -60,4 +60,8 @@ nit 절차는 «반영 0 이 기본» 을 전제로 짰다. 현장에서 «nit �
 
 ## 검증
 
-(마지막 실행 수치를 커밋 뒤에 적는다.)
+- `make verify` — 6/6 green(배포 사본 957초 · 그 앞 원본 커밋 뒤 1170초) · `make verify-mutation` — exit 0(변이 12 · 74 · registry_gate 11 · behavior_guard 9 · refactor_audit 5 전부 red 확인).
+- 소성물 대조: `ontology_gate` 90파일 green · `ontology_render_sync` red 0 · `rulepack_smoke` 15/15(G12 포함).
+- 장부: 계획 확정 때와 배포 직전 모두 마지막 F4-152(2026-11-07 12:50 판) · F4-146 ~ F4-152 는 다음 판 후보.
+- 요청 가이드: 바뀔 것 없음(nit 절차를 싣지 않고, 사용자가 요청에 쓰는 칸이 그대로다). 자매 플러그인: 재리뷰 상한 · 확인 회차 구조가 없어 바뀔 것 없음.
+- 레인 영향: `dddjango/scripts/` 에서 `rulepack.json` 만 바뀌어 pre-gate 실행 트리 digest 가 그대로다 — 재예보가 필요 없다.
