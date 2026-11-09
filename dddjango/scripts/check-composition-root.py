@@ -294,16 +294,17 @@ def _parse_config(argv: list[str]) -> Config:
         required=code_profile or preserve_profile,
         issues=issues,
     )
+    # anchor-baseline 모드에선 앵커 트리에 없는 api · URLconf 모듈(새 scope 의 API 인스턴스 · URLconf)이 걷혀 없는 것이 정상이다.
     api_module = _one(
         "--api-module",
         namespace.api_module,
-        required=code_profile or preserve_profile,
+        required=(code_profile or preserve_profile) and not namespace.anchor_baseline,
         issues=issues,
     )
     urlconf_module = _one(
         "--urlconf-module",
         namespace.urlconf_module,
-        required=code_profile,
+        required=code_profile and not namespace.anchor_baseline,
         issues=issues,
     )
     if namespace.anchor is not None and namespace.anchor_baseline:
@@ -1449,12 +1450,12 @@ def _is_root_api_annotation(annotation: ast.expr, parsed: ParsedSource) -> bool:
 def _analyze_registrar(
     parsed: ParsedSource,
     spec: RegistrarSpec,
-    selected_api_module: str,
+    selected_api_module: str | None,
     analysis: list[str],
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
 ) -> None:
-    facts = _all_import_facts(parsed)
+    facts = _all_import_facts(parsed) if selected_api_module is not None else []
     for fact in facts:
         if (
             fact.module == selected_api_module
@@ -1714,8 +1715,8 @@ def _composition_semantics(
         except UsageError as exc:
             analysis.append(str(exc))
 
-    api_path = Path(config.api_module or "")
-    api_source = parsed.get(api_path)
+    api_path: Path | None = Path(config.api_module) if config.api_module is not None else None
+    api_source = parsed.get(api_path) if api_path is not None else None
     selected_api_object: str | None = None
     if api_source is not None:
         try:
@@ -1742,7 +1743,7 @@ def _composition_semantics(
                     rule="#437",
                 )
 
-    selected_api_module = _module_name(api_path)
+    selected_api_module: str | None = _module_name(api_path) if api_path is not None else None
     for spec in specs:
         source = parsed.get(spec.relative_path)
         if source is not None:

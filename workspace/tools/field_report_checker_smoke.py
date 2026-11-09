@@ -700,6 +700,59 @@ class BookAdmin(TranslatableAdmin):
                                 text=True, capture_output=True)
         return result.returncode, result.stdout + result.stderr
 
+    def test_skill_retry_after_example_passes_the_controller_contract(self) -> None:
+        """F4-154 · F4-39 — 배포 스킬 예시(implementation-django-ninja §6.2 오류 머리 catch)의 문장 차례가 #15 검사기를 지난다.
+
+        예시의 except 본문을 good 픽스처의 새 503 창구에 그대로 옮겨 심는다(이름만 픽스처 것으로). 예시가 다시
+        «머리 → 생성 → 반환» 으로 돌아가면 이 시험이 붉다 — 거꾸로 심은 대조는 늘 막혀야 시험이 뜻이 있다."""
+        final_md = ROOT / "dddjango/skills/implementation-django-ninja/references/final.md"
+        blocks = [b for b in re.findall(r"```python\n(.*?)```", final_md.read_text(encoding="utf-8"), re.S)
+                  if 'response["Retry-After"]' in b]
+        self.assertEqual(len(blocks), 1, "Retry-After 예시 블록이 하나여야 한다")
+        handlers = [n for n in ast.walk(ast.parse(blocks[0])) if isinstance(n, ast.ExceptHandler)]
+        self.assertEqual(len(handlers), 1)
+        errors = {n.func.id for stmt in handlers[0].body for n in ast.walk(stmt)
+                  if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id.endswith("Error")}
+        body: list[str] = []
+        for stmt in handlers[0].body:
+            line = ast.unparse(stmt)
+            for name in errors:
+                line = line.replace(f"{name}()", "LessonBusyError()")
+            body.append(re.sub(r"Status\([^,]+, error\)", "Status(error.status, error)", line))
+        self.assertEqual(len(body), 3, body)
+        args = ["--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py",
+                "--controller-module", CODE, "--scope-bc", "lesson", "--error-bc", "lesson"]
+        for label, lines, expected in (("예시 차례", body, 0), ("머리 먼저(옛 예시)", [body[1], body[0], body[2]], 2)):
+            with self.subTest(case=label):
+                shutil.rmtree(self.root / "application", ignore_errors=True)
+                shutil.rmtree(self.root / ".git", ignore_errors=True)
+                shutil.copytree(FIXTURES / "api_error_controller_code/good", self.root, dirs_exist_ok=True)
+                use_cases = "application/lesson/application_layer/use_cases.py"
+                self.write(use_cases, (self.root / use_cases).read_text()
+                           + "\n\nclass LessonBusy(Exception):\n    pass\n\n\ndef retry_lesson(lesson_id: int):\n"
+                             "    return {\"id\": lesson_id}\n")
+                schema = "application/lesson/driving_layer/api/bc_error_schema.py"
+                self.write(schema, (self.root / schema).read_text()
+                           + "\n\nclass LessonBusyError(LessonErrorSchema):\n    code: LessonErrorCode = LessonErrorCode.CONFLICT\n"
+                             "    title: str = \"Lesson busy\"\n    status: int = 503\n"
+                             "    detail: str = \"The lesson is busy. Retry later.\"\n")
+                source = (self.root / CODE).read_text()
+                source = "from django.http import HttpResponse\n" + source.replace(
+                    "from application.lesson.application_layer.use_cases import LessonMissing, get_lesson",
+                    "from application.lesson.application_layer.use_cases import LessonBusy, LessonMissing, get_lesson, retry_lesson",
+                ).replace(
+                    "from application.lesson.driving_layer.api.bc_error_schema import LessonNotFoundError",
+                    "from application.lesson.driving_layer.api.bc_error_schema import LessonBusyError, LessonNotFoundError",
+                )
+                source += ("\n\n@router.post(\"/{lesson_id}/retry\", response={200: dict, 503: LessonBusyError})\n"
+                           "def retry_lesson_controller(request, response: HttpResponse, lesson_id: int):\n"
+                           "    try:\n        lesson = retry_lesson(lesson_id)\n    except LessonBusy:\n"
+                           + "".join(f"        {line}\n" for line in lines) + "    return lesson\n")
+                self.write(CODE, source)
+                self.commit()
+                code, output = self.cli([], selectors=args)
+                self.assertEqual(code, expected, output)
+
     def test_anchor_collects_existing_tree_and_code_findings(self) -> None:
         self.mixed_fixture()
         anchor = self.commit()

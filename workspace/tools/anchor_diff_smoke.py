@@ -1173,6 +1173,122 @@ class BaselineSliceRegression(unittest.TestCase):
         self.assertNotIn("LessonLegacyErrorCode", out)
 
 
+class NewScopeApiModuleRegression(unittest.TestCase):
+    """F4-151 — 앵커에 없는 새 API 인스턴스(`--api-module` · #16 은 `--urlconf-module` 도)의 scope 렌더도 기준선이 선다(#2 · #5 · #15 · #16).
+
+    앵커 재실행은 앵커에 없는 경로 selector 를 걷는다. 단일 값 selector 를 필수로 받던 판은 기준선이 positional 로 떨어져
+    그 scope 의 옛 위반이 모두 신규였다. 옛 위반은 기존분이고, 기존 파일에 새로 낸 위반과 새 API 모듈 자체의 위반은 신규로 남는다."""
+
+    ctrl: str = "application/lesson/driving_layer/controller.py"
+    registrar: str = "application/lesson/driving_layer/api/api_router.py"
+    internal_api: str = "from ninja_extra import NinjaExtraAPI\n\ninternal_api = NinjaExtraAPI()\n"
+    internal_urls: str = ("from config.internal_api import internal_api\n"
+                          "from application.lesson.driving_layer.api.api_router import register_lesson_api\n\n"
+                          "register_lesson_api(internal_api)\n"
+                          "urlpatterns = []\n")
+    registrar_old: str = ("from .controller import LessonController\n\n"
+                          "def register_lesson_api(api):\n"
+                          "    api.register_controllers(LessonController)\n\n"
+                          "def lesson_helper(api):\n"
+                          "    return api\n")
+    sel: list[str] = ["--error-profile", "dddjango-code-json", "--scope", "internal-v1",
+                      "--api-module", "config/internal_api.py", "--controller-module", ctrl,
+                      "--scope-bc", "lesson", "--error-bc", "lesson"]
+    sel16: list[str] = ["--error-profile", "dddjango-code-json", "--scope", "internal-v1",
+                        "--api-module", "config/internal_api.py", "--urlconf-module", "config/internal_urls.py",
+                        "--registrar-module", registrar]
+    c572: str = BaselineSliceRegression.c572
+    c404: str = BaselineSliceRegression.c404
+    old15: set[str] = {
+        "[#62] " + ctrl + ":N: bare catch forbidden: except:",
+        "[#62] " + ctrl + ":N: catch must be direct own-BC application/domain exception: except Exception:",
+        "[#59] " + ctrl + ":N: custom Ninja exception_handler forbidden: @router.exception_handler(LessonMissing)",
+    }
+    old16: str = "[#107] " + registrar + ":N: additional public registrar function — def lesson_helper(api):"
+
+    def setUp(self) -> None:
+        import tempfile
+        self.temp = tempfile.TemporaryDirectory(prefix="new-scope-api-")
+        self.addCleanup(self.temp.cleanup)
+        self.td: Path = Path(self.temp.name)
+
+    def lane(self, name: str, base: "Path | None", anchor: dict[str, str], change: dict[str, str]) -> "tuple[Path, str]":
+        import shutil
+        repo: Path = self.td / name
+        if base is not None:
+            shutil.copytree(base, repo)
+        for rel, source in anchor.items():
+            _write(repo, rel, source)
+        self.assertEqual(_git(repo, "init", "-q").returncode, 0)
+        sha: str = _commit_all(repo, "anchor")
+        for rel, source in change.items():
+            _write(repo, rel, source)
+        _commit_all(repo, "lane")
+        return repo, sha
+
+    def assert_diff(self, result: "tuple[int, str]", code: int, new: set[str], existing: set[str]) -> None:
+        actual, out = result
+        normalize = lambda lines: {re.sub(r":\d+(?=:|\b)", ":N", line) for line in lines}
+        self.assertEqual(actual, code, out)
+        self.assertIn("기준선=selector 렌더 재실행):", out)
+        self.assertNotIn("positional 기준선", out)
+        self.assertEqual(normalize(_section(out, "신규분")), new, out)
+        self.assertEqual(normalize(_section(out, "앵커 기존분")), existing, out)
+
+    def test_reg02_old_schema_violation_is_existing_and_new_one_stays_new(self) -> None:
+        anchor = {**_T_FILES, _LESSON_SCHEMA_REL: _LESSON_BASE_DEFAULT_SRC}
+        args = [*self.sel, "--project-code-error-module", "framework/ninja/framework_error_schema.py",
+                "--project-code-error-module", _LESSON_SCHEMA_REL]
+        repo, sha = self.lane("c02", None, anchor, {"config/internal_api.py": self.internal_api})
+        self.assert_diff(_run(CENT, repo, [*args, "--anchor", sha]), 0, set(), {self.c572})
+        repo, sha = self.lane("c02new", None, anchor, {"config/internal_api.py": self.internal_api,
+                                                       _LESSON_SCHEMA_REL: _LESSON_BASE_DEFAULT_SRC + _LESSON_RAW_CONCRETE_SRC})
+        code, out = _run(CENT, repo, [*args, "--anchor", sha])
+        self.assertEqual(code, 2, out)
+        self.assertIn("기준선=selector 렌더 재실행):", out)
+        self.assertTrue(_section(out, "신규분") and all("lesson_expired" in ln for ln in _section(out, "신규분")), out)
+        self.assertEqual({re.sub(r":\d+(?=:|\b)", ":N", ln) for ln in _section(out, "앵커 기존분")}, {self.c572}, out)
+
+    def test_reg05_old_missing_response_is_existing_and_new_api_module_violation_stays_new(self) -> None:
+        anchor = {**_T_FILES, self.ctrl: BaselineSliceRegression.missing}
+        repo, sha = self.lane("c05", None, anchor, {"config/internal_api.py": self.internal_api})
+        self.assert_diff(_run(OPENAPI, repo, [*self.sel, "--anchor", sha]), 0, set(), {self.c404})
+        post = self.internal_api + "SCHEMA = internal_api.get_openapi_schema()\n"
+        repo, sha = self.lane("c05api", None, anchor, {"config/internal_api.py": post})
+        self.assert_diff(_run(OPENAPI, repo, [*self.sel, "--anchor", sha]), 2,
+                         {"[#63] config/internal_api.py:N: openapi-postprocess: 선택 API receiver의 get_openapi_schema 직접 호출/후처리"},
+                         {self.c404})
+
+    def test_reg15_old_controller_violations_are_existing_and_new_handler_stays_new(self) -> None:
+        base: Path = F / "api_error_controller_code/bad_rules"
+        repo, sha = self.lane("c15", base, {}, {"config/internal_api.py": self.internal_api})
+        self.assert_diff(_run(CONTRACT, repo, [*self.sel, "--anchor", sha]), 0, set(), self.old15)
+        more: str = (base / self.ctrl).read_text(encoding="utf-8") + (
+            "\n\n@router.exception_handler(KeyError)\ndef handle_key(request, exc):\n    pass\n")
+        repo, sha = self.lane("c15new", base, {}, {"config/internal_api.py": self.internal_api, self.ctrl: more})
+        self.assert_diff(_run(CONTRACT, repo, [*self.sel, "--anchor", sha]), 2,
+                         {"[#59] " + self.ctrl + ":N: custom Ninja exception_handler forbidden: @router.exception_handler(KeyError)"},
+                         self.old15)
+
+    def test_reg16_old_registrar_violation_is_existing_and_new_ones_stay_new(self) -> None:
+        base: Path = F / "composition_selector/good"
+        change: dict[str, str] = {"config/internal_api.py": self.internal_api, "config/internal_urls.py": self.internal_urls}
+        repo, sha = self.lane("c16", base, {self.registrar: self.registrar_old}, change)
+        self.assert_diff(_run(COMP, repo, [*self.sel16, "--anchor", sha]), 0, set(), {self.old16})
+        api_bad: str = ("from ninja_extra import NinjaExtraAPI\n"
+                        "from application.lesson.driving_layer.controller import LessonController\n\n"
+                        "internal_api = NinjaExtraAPI()\n"
+                        "internal_api.register_controllers(LessonController)\n")
+        more: str = self.registrar_old + "\ndef lesson_helper_two(api):\n    return api\n"
+        repo, sha = self.lane("c16new", base, {self.registrar: self.registrar_old},
+                              {**change, "config/internal_api.py": api_bad, self.registrar: more})
+        self.assert_diff(_run(COMP, repo, [*self.sel16, "--anchor", sha]), 2, {
+            "[#107] " + self.registrar + ":N: additional public registrar function — def lesson_helper_two(api):",
+            "[#109] config/internal_api.py:N: register_controllers outside canonical registrar owner — "
+            "internal_api.register_controllers(LessonController)",
+        }, {self.old16})
+
+
 class ApprovedInflowRepo:
     """설계 v3 §7의 실제 검사기용 git 재료. 모든 쓰기는 시험 임시 폴더 안이다."""
 

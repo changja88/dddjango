@@ -619,8 +619,8 @@ djr:R-0068 a djr:Prohibition ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-0069 a djr:Obligation ;
-    skos:prefLabel "승인된 BC 오류 머리(retryable 503 Retry-After · 사건 값 머리)의 주입 HttpResponse header 설정 절차"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0069@2026-10-11> .
+    skos:prefLabel "승인된 BC 오류 머리(retryable 503 Retry-After · 사건 값 머리)의 주입 HttpResponse header 설정 절차(오류 생성 → 머리 → 반환)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0069@2026-11-09> .
 
 <https://numchida.com/ns/djr#R-0069@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0069 ;
@@ -631,6 +631,12 @@ djr:R-0069 a djr:Obligation ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-0069@2026-08-19> ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-0069@2026-11-09> a djr:Expression ;
+    prov:specializationOf djr:R-0069 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0069@2026-10-11> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0070 a djr:Prohibition ;
     skos:prefLabel "오류 응답 helper·handler·builder 생성·호출 금지(추출 금지)"@ko ;
@@ -2457,12 +2463,18 @@ djr:R-3465 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-3618 a djr:Obligation ;
-    skos:prefLabel "build_ 공유 결선 재료의 wiring_material.py 소유 · 재료 함수 모양 · 모듈째 수입"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3618@2026-10-04> .
+    skos:prefLabel "build_ 공유 결선 재료의 wiring_material.py 소유 · 재료 파일 꼴(docstring · 별칭 없는 import 셋 · 재료 함수뿐) · 값 객체 모듈 꼴(future · dataclass import · 클래스 앞 _ 상수와 re · frozen dataclass 클래스 하나 · 몸체) · 재료 함수 꼴(async · 매개변수 · 데코레이터 없음 · 이름 · 반환 주석 = 값 객체 클래스 하나 또는 str·int·bool·float 하나 · return 한 문장) · 이름 한 번 묶기 · 모듈째 수입"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3618@2026-11-09> .
 
 <https://numchida.com/ns/djr#R-3618@2026-10-04> a djr:Expression ;
     prov:specializationOf djr:R-3618 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3618@2026-11-09> a djr:Expression ;
+    prov:specializationOf djr:R-3618 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3618@2026-10-04> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3619 a djr:Exception ;
     skos:prefLabel "build_ 마다의 구현 선택 반복은 R-1515 중복이 아니다"@ko ;
@@ -2874,7 +2886,7 @@ djr:R-3655 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 21 ;
     djr:statesNorm djr:R-0724, djr:R-0725, djr:R-3618, djr:R-3619 ;
-    djr:text "- **매요청 호출**: 컨트롤러 메서드에서 `use_case = build_place_order()` 후 `use_case.execute(command)`. 모듈 레벨 전역 인스턴스로 import 시점에 만들지 않는다(import 부작용·테스트 오버라이드 회피).\n- 여러 `build_<use_case>()` 가 같은 **결선 재료** — 교체 대상이 아닌 공유 생성 지식(설정 값 읽기, 설정 값으로 자기 BC 값 객체 만들기) — 를 쓰면 그 지식은 같은 BC 의 `composition_root/wiring_material.py` 의 재료 함수 하나에 둔다. 재료 파일은 `django.conf.settings` 와, 자기 BC `domain_layer` 의 값 객체 모듈 중 «docstring · import · `@dataclass(frozen=True …)` 클래스 하나»로만 된 모듈의 그 클래스만 import 한다(그 모듈 안에서 클래스 · `dataclass` · `classmethod` · `create` 이름은 정해진 한 자리에서만 묶인다). 재료 함수는 매개변수와 데코레이터가 없고 이름이 `_`·`build_` 로 시작하지 않으며, 본문은 `return` 한 문장이다. 돌려주는 식은 셋 중 하나다 — `settings.<대문자 이름>`, 그 값과 리터럴 상수를 인자로 값 객체를 만든 것, 같은 인자로 값 객체의 `create` 를 부른 것. 설정 값 변환(`int(…)` 등)과 그 밖의 식은 쓰지 않는다 — 변환은 `build_` 본문이나 값 객체 안에서 한다. `dependency_wiring.py` 는 재료 파일을 모듈째(`from application.<bc>.composition_root import wiring_material`) 들여 `wiring_material.<재료>()` 로 부르고, 그 밖의 파일(시험 포함)은 재료 파일을 import 하거나 언급하지 않는다. 어느 구현을 어느 포트에 꽂는지와 유스케이스 생성은 `dependency_wiring.py` 의 `build_` 에만 둔다 — use case 마다 선택이 반복되는 것은 중복이 아니다(교체 지점은 `build_` 마다 보인다). 여러 `build_` 가 같은 하위 유스케이스 조립을 쓰면 그 하위 유스케이스의 `build_<use_case>()` 를 두고 부른다. 시험은 `build_` 를 부른다(설정은 `override_settings`).\n"@ko .
+    djr:text "- **매요청 호출**: 컨트롤러 메서드에서 `use_case = build_place_order()` 후 `use_case.execute(command)`. 모듈 레벨 전역 인스턴스로 import 시점에 만들지 않는다(import 부작용·테스트 오버라이드 회피).\n- 여러 `build_<use_case>()` 가 같은 **결선 재료** — 교체 대상이 아닌 공유 생성 지식(설정 값 읽기, 설정 값으로 자기 BC 값 객체 만들기) — 를 쓰면 그 지식은 같은 BC 의 `composition_root/wiring_material.py` 의 재료 함수 하나에 둔다. 재료 파일에는 docstring · import · 재료 함수만 두고, import 는 별칭 없이 한 줄에 이름 하나씩 `from __future__ import annotations` · `from django.conf import settings` 와 자기 BC `domain_layer` 의 값 객체 칸(`<애그리거트>/value_object/` · `shared_value_object/`)의 모듈 파일에서 그 클래스를 들이는 것뿐이다. 여기서 리터럴은 `str` · `int` · `float` · `bool` · `None` 상수 하나다(음수 · bytes 는 아니다). 그 값 객체 모듈은 docstring · import · 클래스 앞의 `_` 상수(리터럴, 또는 `re.compile(<str 리터럴>[, re.<대문자 플래그> | …])` — 이때는 `import re` 를 별칭 없이 둔다) · `@dataclass(frozen=True …)` 클래스 하나로만 되고, `from __future__ import annotations` 와 `from dataclasses import dataclass`(별칭 없음)를 둔다. 그 클래스는 기반 클래스 없이 데코레이터 `dataclass(…)` 하나만 달고(키워드는 `frozen=True` 와 `slots` · `kw_only` 의 `True`/`False` 뿐), 몸체는 docstring · 필드 선언(기본값은 리터럴) · 메서드(`async` 아님 · 데코레이터는 `create` 의 `@classmethod` 하나만 · dunder 는 `__post_init__` 하나만 · 매개변수 기본값은 리터럴)뿐이다(그 모듈 안에서 클래스 · `dataclass` · `classmethod` · `create` 이름은 정해진 한 자리에서만 묶인다). 재료 함수는 `async` 가 아니고 매개변수와 데코레이터가 없으며, 이름이 `_`·`build_` 로 시작하지 않고 `settings` · `str` · `int` · `bool` · `float` 와 다르다. 재료 파일에서 `settings` · import 한 클래스 이름 · 재료 함수 이름은 각각 한 번만 묶인다. 반환 주석은 import 한 값 객체 클래스 이름 하나 또는 `str` · `int` · `bool` · `float` 하나다 — `str | None` 같은 합 타입이나 문자열 주석은 쓰지 않고, 없을 수 있는 설정 값은 빈 문자열 같은 빈 값으로 둔다. 본문은 docstring(둘 수 있다)과 `return` 한 문장이다. 돌려주는 식은 셋 중 하나다 — `settings.<대문자 이름>`, 그 값과 리터럴을 인자로 값 객체를 만든 것, 같은 인자로 값 객체의 `create` 를 부른 것(`*` · `**` 펼침 없음). 설정 값 변환(`int(…)` 등)과 그 밖의 식은 쓰지 않는다 — 변환은 `build_` 본문이나 값 객체 안에서 한다. `dependency_wiring.py` 는 재료 파일을 모듈째(`from application.<bc>.composition_root import wiring_material`) 들여 `wiring_material.<재료>()` 로 부르고, 그 밖의 파일(시험 포함)은 재료 파일을 import 하거나 언급하지 않는다. 어느 구현을 어느 포트에 꽂는지와 유스케이스 생성은 `dependency_wiring.py` 의 `build_` 에만 둔다 — use case 마다 선택이 반복되는 것은 중복이 아니다(교체 지점은 `build_` 마다 보인다). 여러 `build_` 가 같은 하위 유스케이스 조립을 쓰면 그 하위 유스케이스의 `build_<use_case>()` 를 두고 부른다. 시험은 `build_` 를 부른다(설정은 `override_settings`).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b22> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
@@ -3592,13 +3604,13 @@ djr:R-3655 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 27 ;
     djr:statesNorm djr:R-0068, djr:R-0069, djr:R-3654, djr:R-3655 ;
-    djr:text "승인된 BC 오류 헤더도 같은 controller가 소유하되 `Status` 생성자에 header를 넘기지 않고, 머리\n이름은 고정 문자열이며 값은 정적 값 또는 승인 사건 값 꼴이다.\n명세가 BC 오류 머리(retryable 503의 `Retry-After` · 사건 값 머리)를 승인했다면 controller\nmethod가 주입된 응답용(temporal) Django `HttpResponse`를 받아 선택된 mapping branch에서 header를 설정한 뒤 두 인자 `Status`를\n반환한다. exception path의 구체 catch는 그 branch의 한 형태다.\nmanaged catch가 `as`로 잡은 자기 BC 구체 예외 하나의 승인 필드 값(사건 값)은 slot 10이 승인한\n선언 필드(그 예외 클래스 본문의 `f: T` — `discipline-houserules` 의 타입 어노테이션 절이 정한 꼴 — 또는\n`__init__`의 `self.f: T = …` · 상속 필드 아님)만 읽어 공통 shape의 유일한 일반 `str` 설명 칸 keyword\n값과 승인 머리 값에만 싣고, 꼴은\n`str` 필드 `n.f` · `datetime` 필드 `n.f.astimezone(UTC).isoformat()` · `int` 필드 f-string `{n.f}`\n뿐이며, 식별자 · status · 그 밖의 칸 · 머리 이름 · helper에는 싣지 않는다.\n승인 필드가 `T | None`이면 값이 없다는 까닭만으로 예외를 나누지 않고 catch 본문을\n`if <n>.<f> is not None:`과 `else:` 한 문장으로 두며, 두 가지는 각각 같은 concrete · 같은 코드 ·\n같은 실제 status 값으로 오류 생성 → 머리 → 반환을 따르고, `T | None` 필드는 검사식이 본 그 필드만\n값 있는 가지에서만 읽는다(값이 늘 있는 다른 승인 필드는 어느 가지에서든 읽을 수 있다) — 이 분기는\n값을 보일지 생략할지 고르는 응답 구성이라 입구 로직이 아니며, 다른 조건 · 중첩 · `else` 없는 꼴 ·\nhelper는 쓰지 않는다.\n\n"@ko .
+    djr:text "승인된 BC 오류 헤더도 같은 controller가 소유하되 `Status` 생성자에 header를 넘기지 않고, 머리\n이름은 고정 문자열이며 값은 정적 값 또는 승인 사건 값 꼴이다.\n명세가 BC 오류 머리(retryable 503의 `Retry-After` · 사건 값 머리)를 승인했다면 controller\nmethod가 주입된 응답용(temporal) Django `HttpResponse`를 받아 선택된 mapping branch에서 오류를 만든 다음 header를 설정하고 두 인자 `Status`를\n반환한다(차례는 오류 생성 → 머리 → 반환이다). exception path의 구체 catch는 그 branch의 한 형태다.\nmanaged catch가 `as`로 잡은 자기 BC 구체 예외 하나의 승인 필드 값(사건 값)은 slot 10이 승인한\n선언 필드(그 예외 클래스 본문의 `f: T` — `discipline-houserules` 의 타입 어노테이션 절이 정한 꼴 — 또는\n`__init__`의 `self.f: T = …` · 상속 필드 아님)만 읽어 공통 shape의 유일한 일반 `str` 설명 칸 keyword\n값과 승인 머리 값에만 싣고, 꼴은\n`str` 필드 `n.f` · `datetime` 필드 `n.f.astimezone(UTC).isoformat()` · `int` 필드 f-string `{n.f}`\n뿐이며, 식별자 · status · 그 밖의 칸 · 머리 이름 · helper에는 싣지 않는다.\n승인 필드가 `T | None`이면 값이 없다는 까닭만으로 예외를 나누지 않고 catch 본문을\n`if <n>.<f> is not None:`과 `else:` 한 문장으로 두며, 두 가지는 각각 같은 concrete · 같은 코드 ·\n같은 실제 status 값으로 오류 생성 → 머리 → 반환을 따르고, `T | None` 필드는 검사식이 본 그 필드만\n값 있는 가지에서만 읽는다(값이 늘 있는 다른 승인 필드는 어느 가지에서든 읽을 수 있다) — 이 분기는\n값을 보일지 생략할지 고르는 응답 구성이라 입구 로직이 아니며, 다른 조건 · 중첩 · `else` 없는 꼴 ·\nhelper는 쓰지 않는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b28> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
     djr:kind djr:kind-code ;
     djr:order 28 ;
-    djr:text "```python\nfrom django.http import HttpResponse\n\n\n@route.post(\n    \"/retry\",\n    response={200: OrderOut, 503: OrderTemporarilyUnavailableError},\n    summary=\"주문 재시도\",\n    description=\"일시 경합이면 재시도 시점을 안내한다.\",\n)\ndef retry_order(\n    self,\n    request,\n    response: HttpResponse,\n    payload: RetryOrderIn,\n) -> OrderOut | Status[OrderTemporarilyUnavailableError]:\n    command = RetryOrderCommand(order_id=payload.order_id)\n    use_case = build_retry_order()\n\n    try:\n        order = use_case.execute(command)\n    except OrderContention:\n        response[\"Retry-After\"] = \"1\"\n        error = OrderTemporarilyUnavailableError()\n        return Status(status.HTTP_503_SERVICE_UNAVAILABLE, error)\n\n    return OrderOut.from_result(order)\n```\n\n" .
+    djr:text "```python\nfrom django.http import HttpResponse\n\n\n@route.post(\n    \"/retry\",\n    response={200: OrderOut, 503: OrderTemporarilyUnavailableError},\n    summary=\"주문 재시도\",\n    description=\"일시 경합이면 재시도 시점을 안내한다.\",\n)\ndef retry_order(\n    self,\n    request,\n    response: HttpResponse,\n    payload: RetryOrderIn,\n) -> OrderOut | Status[OrderTemporarilyUnavailableError]:\n    command = RetryOrderCommand(order_id=payload.order_id)\n    use_case = build_retry_order()\n\n    try:\n        order = use_case.execute(command)\n    except OrderContention:\n        error = OrderTemporarilyUnavailableError()\n        response[\"Retry-After\"] = \"1\"\n        return Status(status.HTTP_503_SERVICE_UNAVAILABLE, error)\n\n    return OrderOut.from_result(order)\n```\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b29> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;

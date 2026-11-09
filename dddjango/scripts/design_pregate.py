@@ -132,8 +132,10 @@ first-parent 사슬의 참여 머지가 들여온 verbatim 변경(추가·수정
 반환 우주를 가를 수 없으면 선언 후보(비차단). update 는 실물과 서명이 같은 메서드를 제외한다.
 도메인 저장소(검사기 선택 그대로 — 채택 BC `domain_layer/<애그리거트>/*_repository.py`) add/update 의 명시 메서드 서명은
 번들 `check-transaction-boundary.py` 의 저장소 계약 판정을 선언만 담은 분석 투영(스크래치 `repository-declarations/`)에
-그대로 돌려 #355(반환)·#597(쓰기 이름)을 선언 확정으로 예보한다(F4-73 — 물리 전사 아님 · 사본 실물 무접촉). update 는
-전사 전 기준선 실물 대비 새 메서드·반환이 바뀐 메서드만(#597 은 새 이름만 · 기준선 실물이 같은 클래스에 같은 판정문을 이미
+그대로 돌려 #355(반환)·#597 · #599(쓰기 이름)·#287(쓰기 인자 — 필드 단위 갱신 이름 · 인자 둘 이상 · 원시값 인자)을 선언 확정으로
+예보한다(F4-73 · F4-48 — 물리 전사 아님 · 사본 실물 무접촉 · #283 은 투영에 데코레이터가 없어 싣지 않는다). update 는
+전사 전 기준선 실물 대비 새 메서드 · 반환이 바뀐 메서드(#355) · 인자(이름 · 주석 · 개수)가 바뀐 메서드(#287)만(#597 · #599 는 새
+이름만 · 기준선 실물이 같은 클래스에 같은 판정문을 이미
 내는 줄은 기존 빚이라 뺀다: 다른 클래스의 같은 이름은 새 위반이다 — 이 구석은 행 번호만 지운 줄 집합으로 견주는 G2 registry
 차분보다 엄격하다) · 검사기 후보(bool/int)와 반환 이름 출처 미해소(import 무기재·별칭·상충·`import *` · 명세가 적지 않아
 기준선에만 있는 프로젝트 출처 — 표준 라이브러리 import 는 확정 근거로 둔다)·기준선 비교 불능(클래스·메서드 중복 · 그
@@ -154,6 +156,13 @@ file-plan update 칸에서 symbols 의 공개 메서드 · 모듈 함수 가운�
 차분이 지우는 실검사기 새 줄 — F4-73 의 소유자 열쇠처럼 G2 보다 엄격한 구석 · #304 · #305 기존 빚 메서드의 개명은 G2 0 인 거짓 확정이
 될 수 있다). 기준선 읽기 · 파싱 불능과 같은 이름 클래스 · 메서드 · 함수
 중복은 후보다. #301 · #302 · #303 · #310 · #311 은 싣지 않는다. add 칸은 스텁이 registry 에 실려 귀속된다.
+조립 파일 최상단 이름(F4-155 · #85): 검사기 선택(`application/<bc>/composition_root/dependency_wiring.py` — 4계층 폴더가 하나라도
+있는 BC · BC 고르기는 계획 경로로 바로 맞춤) ∩ file-plan update 칸에서 기준선 실물에 symbols 의 함수 · alias 행을 덧붙인 선언 투영
+(스크래치 `composition-wiring/<n>/{base,decl}/` — 기준선 실물도 같은 판정)으로 번들 `check-composition-root.py` 의
+`_check_dependency_wiring()` 을 부르고, 투영의 #85 줄 가운데 G2 registry 차분과 같은 줄 키(줄 번호를 `:N` 으로 지운 «파일 · 규칙 ·
+판정문» — 함수 줄은 경로에 줄 번호가 없고 대입 · 문 줄은 줄 번호만 다르다)가 기준선에 없는 것만 선언 확정이다(기준선에 이미 최상단
+대입 · 문이 있는 파일에 더한 대입은 G2 처럼 기존 줄). 기준선 읽기 · 파싱 불능은 후보 · 클래스 행 · 본문 · #86 · 그 밖 조립 · 등록
+파일(event_wiring · wiring_material · api_router · urls · api)의 update 는 S5 다.
 번역 출처 칸(F4-115 · #474 · #62): 창구가 검사기 OHS 선택(`…/application/<bc>/driving_layer/open_host_service/**/*_service.py` —
 `_tree_bcs2` 의 BC 고르기를 계획 경로로 바로 맞춤)과 같은 행만 판정한다. `Exception` · `BaseException` 출처는 `as` 와 무관하게 최소 catch 투영을 검사기 트리 슬라이스(`_slice_check_controller_ast`)
 에 돌려 #62 선언 확정이다. 그 밖 출처는 검사기 조건 그대로(절대 ImportFrom · 모듈 마디 `domain_layer` · 전 깊이 · 지역 이름 =
@@ -2567,16 +2576,19 @@ def check_in_argument_forecast(plan: Plan, copy: Path) -> list[DeclarationFindin
     return out
 
 
-# ── #355 · #597 예보(F4-73) — 도메인 저장소 add/update 메서드 서명 ─────────────────────────────────────────
+# ── #355 · #597 · #599 · #287 예보(F4-73 · F4-48) — 도메인 저장소 add/update 메서드 서명 ─────────────────────────────
 # 대상 선택(`_find_bcs` 의 BC 고르기는 계획 경로로 바로 맞춘다 — `_checker_bc` · F4-115 → `_has_adoption_signal` →
 # `_check_repository_files`)·판정(`_check_repository_contract`)·진단문은 번들 검사기를 그대로 부른다 — 판정·상수·표를 여기 복제하지
 # 않는다(검사기 무변). 출처 해소는 확정/후보 경계에만 쓴다.
 TRANSACTION_CHECKER: Path = SCRIPTS_DIR / "check-transaction-boundary.py"
 _TRANSACTION_CHECKER_MODULE: "ModuleType | None" = None
-_REPOSITORY_RULES: "frozenset[str]" = frozenset({"#355", "#597"})
+_REPOSITORY_RULES: "frozenset[str]" = frozenset({"#355", "#597", "#599", "#287"})
+# update 기존 메서드(기준선 클래스 직계 정의)에서 다시 판정하는 규칙 — 쓰기 이름(#597 · #599)은 새 이름만 본다.
+_REPOSITORY_RETURN_RULES: "frozenset[str]" = frozenset({"#355"})
+_REPOSITORY_ARGUMENT_RULES: "frozenset[str]" = frozenset({"#287"})
 _REPOSITORY_QUESTION: str = "값 객체면 그 domain import 를 boundary-imports 에 적었는가 · 이 반환이 의도한 계약인가"
 _REPOSITORY_BASELINE_QUESTION: str = "구현 뒤에도 이 출처 그대로인가(그렇다면 그 import·선언을 명세에 적는다)"
-_REPOSITORY_NEW_QUESTION: str = "이 서명이 새로 들이거나 반환을 바꾸는가"
+_REPOSITORY_NEW_QUESTION: str = "이 서명이 새로 들이거나 인자 · 반환을 바꾸는가"
 _REPOSITORY_NESTED_QUESTION: str = "구현 뒤 이 메서드를 클래스 직계에 두는가(두면 검사기가 그 자리에서 판정한다)"
 # 출처를 말한 곳 — 기준선 실물은 «지금»이고, 후상태를 말하는 것은 명세의 명시 선언(boundary-imports 행 · symbols 선언)뿐이다.
 _ORIGIN_BASELINE: str = "baseline"
@@ -2631,7 +2643,7 @@ def _transaction_checker() -> ModuleType:
 
 
 def repository_baseline(copy: Path, plan: Plan) -> "dict[str, bytes | None]":
-    """#355·#597 예보의 비교 기준선 — 명세 전사(`materialize`) «전» 사본(기준선 트리 ⊕ 승인 유입 ⊕ dirty overlay)에서
+    """#355·#597·#599·#287 예보의 비교 기준선 — 명세 전사(`materialize`) «전» 사본(기준선 트리 ⊕ 승인 유입 ⊕ dirty overlay)에서
     update 저장소 후보(`*_repository.py`) 실물 bytes 를 잡는다. 호스트의 나중 HEAD 는 다시 읽지 않는다. 읽기 불능·부재는
     None 이다(새 서명인지 가를 수 없다 → 후보)."""
     baseline: "dict[str, bytes | None]" = {}
@@ -2793,7 +2805,8 @@ def _repository_entry_forecast(ck: ModuleType, entry: PlanEntry, path: str, scra
                                stdlib: "Container[str]") -> list[DeclarationFinding]:
     """한 저장소 파일(`path` = 정규화한 계획 경로) — 선언만 담은 분석 투영(기준선/명시 import + 대상 메서드 서명)을
     `scratch/repository-declarations/` 아래 원래 상대 경로로 쓰고 검사기 `_check_repository_contract()` 를 부른다. update
-    대상 = 기준선 클래스에 없는 메서드(#355·#597) · 반환이 바뀐 메서드(#355만). 그 가운데 기준선 실물(사본 —
+    대상 = 기준선 클래스에 없는 메서드(#355·#597·#599·#287) · 반환이 바뀐 메서드(#355) · 인자(이름 · 주석 · 개수 —
+    `_argument_key`)가 바뀐 메서드(#287) — 거름은 투영 행마다 단 규칙 표지다. 그 가운데 기준선 실물(사본 —
     `scratch/repository-baseline/`)에 같은 판정을 돌려 «그 클래스 자기» 에게 이미 나오는 (클래스, 메서드, 규칙, 판정문)은 새
     위반이 아니므로 뺀다 — 같은 클래스의 같은 메서드를 철자·감싸개만 바꿔 다시 적은 기존 빚뿐이다. 소유자는 클래스 직계
     정의로만 선다(검사기가 판정하는 자리). 같은 판정문이 그 파일 안에서 확인되는 상속 사슬의 조상에게만 있으면 물려받은 빚을
@@ -2837,20 +2850,19 @@ def _repository_entry_forecast(ck: ModuleType, entry: PlanEntry, path: str, scra
     table, opaque = _repository_bindings(real, stated, entry)
     opaque = opaque or opaque_rows
     lines: "list[str]" = imports + [""]
-    # 투영 행 → (클래스, 메서드, #355 대상, #597 대상, 불확정 사유, 그 사유의 확인 질문)
-    rows: "dict[int, tuple[str, str, bool, bool, str, str]]" = {}
+    # 투영 행 → (클래스, 메서드, 그 행에서 보는 규칙, 불확정 사유, 그 사유의 확인 질문)
+    rows: "dict[int, tuple[str, str, frozenset[str], str, str]]" = {}
     lineage: "dict[str, list[str]]" = {}  # 명세 클래스 → 자기 + 그 파일 안에서 확인되는 조상(가까운 순 · 조상과만 겹치면 후보)
     for symbol in entry.declarations:
         if symbol.kind != "class":
             continue
         lineage[symbol.name] = [symbol.name] + _in_file_ancestors(symbol.base, real_classes, table)
-        members: "list[tuple[Method, bool, bool, str, str]]" = []
+        members: "list[tuple[Method, frozenset[str], str, str]]" = []
         for method in symbol.methods:
             fn: "ast.FunctionDef | None" = _method_def(method.name, method.params, method.ret)
             if fn is None or method.name.startswith("__"):
                 continue
-            check355: bool = True
-            check597: bool = True
+            checked: "frozenset[str]" = _REPOSITORY_RULES
             reason: str = unclear
             question: str = _REPOSITORY_NEW_QUESTION
             if entry.tag == "update" and not reason:
@@ -2869,17 +2881,17 @@ def _repository_entry_forecast(ck: ModuleType, entry: PlanEntry, path: str, scra
                                   "있다(구현 뒤 자리에 따라 판정이 갈린다)")
                         question = _REPOSITORY_NESTED_QUESTION
                     elif defs:
-                        check597 = False
                         old_ret: "str | None" = _norm_annotation(defs[0].returns) if defs[0].returns is not None else None
                         new_ret: "str | None" = _norm_annotation(fn.returns) if fn.returns is not None else None
-                        check355 = old_ret != new_ret
-            if check355 or check597:
-                members.append((method, check355, check597, reason, question))
+                        checked = ((_REPOSITORY_RETURN_RULES if old_ret != new_ret else frozenset())
+                                   | (_REPOSITORY_ARGUMENT_RULES if _argument_key(defs[0]) != _argument_key(fn) else frozenset()))
+            if checked:
+                members.append((method, checked, reason, question))
         if not members:
             continue
         lines.append(f"class {symbol.name}:")
-        for method, check355, check597, reason, question in members:
-            rows[len(lines) + 1] = (symbol.name, method.name, check355, check597, reason, question)
+        for method, checked, reason, question in members:
+            rows[len(lines) + 1] = (symbol.name, method.name, checked, reason, question)
             lines.append(f"    def {method.name}(self{', ' if method.params else ''}{method.params})"
                          f"{' -> ' + method.ret if method.ret else ''}: ...")
         lines.append("")
@@ -2937,11 +2949,11 @@ def _repository_entry_forecast(ck: ModuleType, entry: PlanEntry, path: str, scra
         if item.rule not in _REPOSITORY_RULES:
             continue
         line_text: str = item.where.rsplit(":", 1)[-1]
-        row: "tuple[str, str, bool, bool, str, str] | None" = rows.get(int(line_text)) if line_text.isdigit() else None
+        row: "tuple[str, str, frozenset[str], str, str] | None" = rows.get(int(line_text)) if line_text.isdigit() else None
         if row is None:
             continue
-        owner_class, method_name, check355, check597, reason, question = row
-        if not (check355 if item.rule == "#355" else check597):
+        owner_class, method_name, checked, reason, question = row
+        if item.rule not in checked:
             continue
         # 그 클래스 자기의 기존 줄과 같은 판정문이면 새 위반이 아니다(그 클래스의 기존 빚을 다시 적은 것). 그 파일 안에서
         # 확인되는 조상과만 같으면 물려받은 빚인지 이 클래스의 새 위반인지 가를 수 없다 — 지우지 않고 후보로 낸다(처음 겹친
@@ -3048,18 +3060,20 @@ class _ShadowAwareStdlib:
 
 def check_repository_forecast(plan: Plan, copy: Path, scratch: Path,
                               baseline: "dict[str, bytes | None]") -> list[DeclarationFinding]:
-    """F4-73 — 도메인 저장소 add/update 의 명시 메서드 서명을 번들 검사기의 #355(반환)·#597(쓰기 이름) 판정으로 선언 예보한다.
+    """F4-73 · F4-48 — 도메인 저장소 add/update 의 명시 메서드 서명을 번들 검사기의 #355(반환)·#597 · #599(쓰기 이름 — `add_all`
+    은 #599)·#287(쓰기 인자 — 필드 단위 갱신 이름 · 인자 둘 이상 · 원시값 인자) 판정으로 선언 예보한다.
 
     대상 파일 = 검사기 선택(채택 BC 의 `domain_layer/<애그리거트>/*_repository.py`)과 같은 경로 ∩ file-plan add/update(계획 경로는
     `_plan_parts` 로 정규화해 견준다 — 앞 `./` · 겹친 `/`). 선택은 계획 경로로 BC 를 바로 맞춘다(`_repository_selected` — 사본 전체
     훑기 없음 · F4-115). add 는 명시 메서드 전부(자기 스텁을
-    기준선으로 쓰지 않는다) · update 는 `baseline`(materialize 전 실물) 대비 새 메서드와 반환 주석이 바뀐 메서드(#597 은 새
-    이름만)에서 기준선 실물이 같은 클래스에 같은 판정문을 이미 내는 줄을 뺀 것(그 파일 안에서 확인되는 조상에게만 있으면 후보).
+    기준선으로 쓰지 않는다) · update 는 `baseline`(materialize 전 실물) 대비 새 메서드(네 규칙) · 반환 주석이 바뀐 메서드(#355) ·
+    인자(이름 · 주석 · 개수)가 바뀐 메서드(#287 — 도메인 서비스 채널과 같은 `_argument_key`)에서 기준선 실물이 같은 클래스에 같은
+    판정문을 이미 내는 줄을 뺀 것(그 파일 안에서 확인되는 조상에게만 있으면 후보). #597 · #599 는 새 이름만이다.
     분석 파일은 `scratch/repository-declarations/`(선언 투영)·
     `scratch/repository-baseline/`(기준선 사본)에만 쓰고 사본 실물은 바꾸지 않는다. 검사기 위반은 그대로 선언 확정 · 검사기
     후보(bool/int)는 선언 후보 · 반환 이름 출처 미해소(import 무기재·별칭·상충·`import *` · 기준선에만 있는 프로젝트 출처 —
-    구현이 같은 이름을 domain 에서 들이면 통과한다)나 기준선 비교 불능은 선언 후보로 낮춘다. #283·#287·#599 등은 이 채널에
-    싣지 않는다."""
+    구현이 같은 이름을 domain 에서 들이면 통과한다)나 기준선 비교 불능은 선언 후보로 낮춘다. #283 은 싣지 않는다 — 투영에
+    데코레이터를 적지 않아(symbols 메서드 행에 데코레이터 칸이 없다) 모든 메서드가 «@abstractmethod 없음» 거짓 줄이 된다."""
     # (정규화한 경로, 원문 표기) — 파서는 원문 표기를 키로 두고, 검사기 선택은 사본 상대 POSIX 경로다.
     planned: "list[tuple[str, str]]" = sorted(
         ("/".join(_plan_parts(e.path)), e.path) for e in plan.entries.values()
@@ -3200,12 +3214,15 @@ def _ohs_selected(ck: ModuleType, copy: Path, parts: "tuple[str, ...]") -> bool:
 
 
 def forecast_scope(plan: Plan, copy: Path) -> "dict[str, str]":
-    """update 칸 미시뮬레이션 사유에 붙일 선언 예보 범위(F4-115 · 리포트 문면 전용) — 실제 예보 대상 칸에만: 검사기 선택 안의
-    update 도메인 서비스 칸에 symbols 선언이 있으면 «선언한 서명만 예보» · 검사기 선택 안의 update OHS 창구 칸에 번역 출처 칸이
-    적힌 행이 있으면 «번역 출처 칸만 예보». 키 = 계획 원문 경로. materialize «전» 에 잰다(update 칸 실물은 그대로다)."""
+    """update 칸 미시뮬레이션 사유에 붙일 선언 예보 범위(F4-115 · F4-155 · 리포트 문면 전용) — 실제 예보 대상 칸에만: 검사기 선택
+    안의 update 도메인 서비스 칸에 symbols 선언이 있으면 «선언한 서명만 예보» · 검사기 선택 안의 update 조립 파일 칸에 symbols 함수 ·
+    alias 행이 있으면 «최상단 함수 · alias 이름만 예보» · 검사기 선택 안의 update OHS 창구 칸에 번역 출처 칸이 적힌 행이 있으면
+    «번역 출처 칸만 예보». 키 = 계획 원문 경로. materialize «전» 에 잰다(update 칸 실물은 그대로다)."""
     scope: "dict[str, str]" = {}
     for _path, written, _real in _domain_service_targets(plan, copy)[1]:
         scope[written] = "; 선언한 서명만 예보 · 본문 미검증"
+    for _path, written in _wiring_targets(plan, copy)[1]:
+        scope[written] = "; 최상단 함수 · alias 이름만 예보(#85) · 본문 미검증"
     sourced: "list[PlanEntry]" = [e for e in plan.entries.values() if e.tag == "update" and _ohs_catch_slot(_plan_parts(e.path))
                                   and any(row.source for row in e.translations)]
     if sourced:
@@ -3217,28 +3234,34 @@ def forecast_scope(plan: Plan, copy: Path) -> "dict[str, str]":
 
 
 def forecast_baseline(copy: Path, plan: Plan) -> "dict[str, bytes | None]":
-    """F4-115 선언 예보의 비교 기준선 — 명세 전사(`materialize`) «전» 사본(기준선 트리 ⊕ 승인 유입 ⊕ dirty overlay)에서 update
-    도메인 서비스 · OHS 창구 칸의 실물 bytes(승격 칸은 본체)를 한 번에 잡는다. 읽기 불능 · 부재 · 링크는 None 이다. 키 = 계획
-    원문 경로."""
+    """F4-115 · F4-155 선언 예보의 비교 기준선 — 명세 전사(`materialize`) «전» 사본(기준선 트리 ⊕ 승인 유입 ⊕ dirty overlay)에서
+    update 도메인 서비스 · OHS 창구 칸의 실물 bytes(승격 칸은 본체) · 조립 파일 칸의 실물 bytes(검사기는 그 파일만 읽는다 — 승격
+    본체를 보지 않는다)를 한 번에 잡는다. 읽기 불능 · 부재 · 링크는 None 이다. 키 = 계획 원문 경로."""
     baseline: "dict[str, bytes | None]" = {}
     for entry in plan.entries.values():
         parts: "tuple[str, ...]" = _plan_parts(entry.path)
-        if entry.tag != "update" or not (_domain_service_slot_shape(parts) or _ohs_catch_slot(parts)):
+        wiring: bool = _wiring_slot(parts)
+        if entry.tag != "update" or not (_domain_service_slot_shape(parts) or _ohs_catch_slot(parts) or wiring):
             continue
-        real: "Path | None" = _slot_real(copy, parts)
+        real: "Path | None" = copy.joinpath(*parts) if wiring else _slot_real(copy, parts)
         try:
-            baseline[entry.path] = real.read_bytes() if real is not None and not real.is_symlink() else None
+            baseline[entry.path] = (real.read_bytes() if real is not None and real.is_file() and not real.is_symlink()
+                                    else None)
         except OSError:
             baseline[entry.path] = None
     return baseline
 
 
-def _signature_key(fn: "ast.FunctionDef | ast.AsyncFunctionDef") -> str:
-    """검사기 #304 · #305 · #307 · #308 의 판정 재료로 견준 서명 — 수신자(`self` · `cls`) 뺀 위치 · 키워드 인자의 이름과 주석,
-    반환 주석(`_norm_annotation` — 문자열 주석은 식으로 펼친다)."""
+def _argument_key(fn: "ast.FunctionDef | ast.AsyncFunctionDef") -> str:
+    """수신자(`self` · `cls`) 뺀 위치 · 키워드 인자의 이름과 주석(`_norm_annotation` — 문자열 주석은 식으로 펼친다) — 검사기 #287 ·
+    #304 · #305 · #307 이 세는 인자와 같다(`*args` · `**kwargs` · 기본값은 보지 않는다)."""
     args = [a for a in (*fn.args.posonlyargs, *fn.args.args, *fn.args.kwonlyargs) if a.arg not in ("self", "cls")]
-    parts: "list[str]" = [f"{a.arg}:{_norm_annotation(a.annotation) if a.annotation is not None else '-'}" for a in args]
-    return "|".join(parts) + "->" + (_norm_annotation(fn.returns) if fn.returns is not None else "-")
+    return "|".join(f"{a.arg}:{_norm_annotation(a.annotation) if a.annotation is not None else '-'}" for a in args)
+
+
+def _signature_key(fn: "ast.FunctionDef | ast.AsyncFunctionDef") -> str:
+    """검사기 #304 · #305 · #307 · #308 의 판정 재료로 견준 서명 — 인자(`_argument_key`)와 반환 주석(`_norm_annotation`)."""
+    return _argument_key(fn) + "->" + (_norm_annotation(fn.returns) if fn.returns is not None else "-")
 
 
 def _def_owners(module: ast.Module) -> "dict[int, tuple[str, str]]":
@@ -3441,6 +3464,141 @@ def check_domain_service_forecast(plan: Plan, copy: Path, scratch: Path,
         assert ck is not None
         out += _domain_service_entry_forecast(ck, plan.entries[written], path, real, scratch / "domain-service" / str(n),
                                               baseline.get(written))
+    return out
+
+
+# ── #85 예보(F4-155) — update 조립 파일(`composition_root/dependency_wiring.py`) 최상단 이름 ─────────────────────────────────
+# 대상 선택(`_find_bc_dirs` → `_has_any_layer` → `composition_root/` 폴더 → `dependency_wiring.py` 파일 — BC 고르기는 계획 경로로
+# 바로 맞춘다) · 판정(`_check_dependency_wiring`) · 진단문은 번들 검사기를 그대로 부른다(검사기 무변 · 사본 실물 무접촉). 기존 빚
+# 열쇠는 G2 registry 차분의 줄 키(`registry._normalize` — 줄 번호를 `:N` 으로 지운 «파일 · 규칙 · 판정문»)다 — 함수 줄은 경로에
+# 줄 번호가 없어 투영 행에 줄로 맞출 수 없고, 최상단 대입 · 문 줄은 기준선 실물과 줄 번호만 다르다.
+COMPOSITION_CHECKER: Path = SCRIPTS_DIR / "check-composition-root.py"
+_WIRING_RULES: "frozenset[str]" = frozenset({"#85"})
+_WIRING_QUESTION: str = "구현 뒤 이 이름을 조립 파일 최상단에 두는가(두면 검사기가 #85 를 낸다)"
+
+
+def _wiring_slot(parts: "tuple[str, ...]") -> bool:
+    """검사기 #85 가 판정하는 조립 파일 꼴 `application/<bc>/composition_root/dependency_wiring.py` — 앞 거름."""
+    return len(parts) == 4 and parts[0] == "application" and parts[2:] == ("composition_root", "dependency_wiring.py")
+
+
+def _wiring_targets(plan: Plan, copy: Path) -> "tuple[ModuleType | None, list[tuple[str, str]]]":
+    """F4-155 대상 칸 — update ∧ symbols 함수 · alias 행 있음 ∧ 검사기 선택(`_find_bc_dirs`(이름이 `SKIP_DIRS` 인 폴더 뺌) →
+    `_has_any_layer` → `composition_root/` 폴더 → `dependency_wiring.py` 파일). 반환: (검사기 — 꼴에 맞는 칸이 없으면 적재하지
+    않고 None, [(정규화한 계획 경로, 원문 표기)])."""
+    planned: "list[tuple[str, str]]" = sorted(
+        ("/".join(_plan_parts(e.path)), e.path) for e in plan.entries.values()
+        if e.tag == "update" and _wiring_slot(_plan_parts(e.path))
+        and (e.declaration_aliases or any(s.kind == "function" for s in e.declarations)))
+    if not planned:
+        return None, []
+    ck: ModuleType = _bundled_checker(COMPOSITION_CHECKER, "_pregate_composition_root")
+    targets: "list[tuple[str, str]]" = []
+    for path, written in planned:
+        parts: "tuple[str, ...]" = PurePosixPath(path).parts
+        bc: "Path | None" = None if parts[1] in ck.SKIP_DIRS else _checker_bc(copy, parts, 1, ck.SKIP_DIRS)
+        if bc is not None and ck._has_any_layer(bc) and (bc / "composition_root").is_dir() and copy.joinpath(*parts).is_file():
+            targets.append((path, written))
+    return ck, targets
+
+
+def _wiring_entry_forecast(ck: ModuleType, entry: PlanEntry, path: str, cell: Path,
+                           prior: "bytes | None") -> list[DeclarationFinding]:
+    """한 update 조립 파일 칸(`path` = 정규화한 계획 경로).
+
+    투영 = 기준선 실물 그대로 + symbols 의 alias 행(대입문 — TYPE_CHECKING 쌍은 `if TYPE_CHECKING: … else: …`) · 함수 행(`def
+    이름(파라미터) -> 반환: ...`)을 뒤에 덧붙인 것. `cell/base/`(기준선 실물) · `cell/decl/`(투영) 두 빈 폴더에 원래 상대 경로로
+    쓰고 검사기 `_check_dependency_wiring()` 을 부른 뒤 `cell` 을 지운다. 투영의 #85 줄 가운데 줄 키(G2 registry 차분과 같은
+    `registry._normalize`)가 기준선 줄 키에 없는 것만 선언 확정이다 — 기준선에 있던 함수를 다시 적거나, 기준선에 이미 최상단
+    대입 · 문이 있는 파일에 대입을 더하면 G2 처럼 기존 줄이다. 소유자는 덧붙인 행이다(대입 · 문 줄은 줄 범위 · 함수 줄은 줄
+    번호가 없어 판정문의 함수 이름). 기준선 읽기 · 파싱 불능이면 덧붙인 행만 투영해 후보로 낸다. 클래스 행 · 본문은 보지 않는다."""
+    unclear: str = "기준선 실물을 읽거나 파싱하지 못했다(기존 줄인지 가를 수 없다)"
+    base_text: str = ""
+    base_count: int = 0
+    if prior is not None:
+        try:
+            base_text = prior.decode("utf-8")
+            base_count = len(ast.parse(base_text).body)
+            unclear = ""
+        except (UnicodeError, SyntaxError, ValueError, RecursionError):
+            base_text, base_count = "", 0
+    rows: "list[tuple[str, str]]" = []  # (소유자 이름, 덧붙일 최상단 문 하나)
+    stated: "list[tuple[str, str]]" = (
+        [(a.name, f"if TYPE_CHECKING:\n    {a.statement}\nelse:\n    {a.runtime}" if a.type_checking else a.statement)
+         for a in entry.declaration_aliases]
+        + [(s.name, f"def {s.name}({s.params}){' -> ' + s.ret if s.ret else ''}: ...")
+           for s in entry.declarations if s.kind == "function"])
+    for owner, text in stated:
+        try:
+            if len(ast.parse(text).body) == 1:
+                rows.append((owner, text))
+        except SyntaxError:
+            continue
+    if not rows:
+        return []
+    head: str = base_text if not base_text or base_text.endswith("\n") else base_text + "\n"
+    projection: str = head + "\n\n" + "\n\n\n".join(text for _owner, text in rows) + "\n"
+    try:
+        appended: "list[ast.stmt]" = ast.parse(projection).body[base_count:]
+    except SyntaxError as exc:
+        raise RunError(f"조립 파일 선언 분석 투영 파싱 불능 — {path}: {exc}") from exc
+    if len(appended) != len(rows):
+        raise RunError(f"조립 파일 선언 분석 투영의 최상단 문 수가 덧붙인 행과 다르다 — {path}")
+    spans: "list[tuple[int, int, str]]" = [
+        (node.lineno, node.end_lineno or node.lineno, owner) for node, (owner, _text) in zip(appended, rows)]
+    functions: "list[str]" = [owner for node, (owner, _text) in zip(appended, rows) if isinstance(node, ast.FunctionDef)]
+    rel: Path = Path(path)
+
+    def judged(folder: str, body: bytes) -> list:
+        """분석 파일을 `cell/<folder>/` 아래 원래 상대 경로로 쓰고 검사기 조립 파일 판정(#85 위반)을 받는다(방출 0)."""
+        target: Path = cell / folder / path
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(body)
+            if target.read_bytes() != body:
+                raise OSError("되읽은 내용이 다르다")
+        except OSError as exc:
+            raise RunError(f"조립 파일 선언 분석 파일 쓰기·읽기 불능 — {folder}/{path}: {exc}") from exc
+        found = ck.Findings(defer=True)
+        cand = ck.Candidates(defer=True)
+        ck._check_dependency_wiring(target, rel, found, cand)
+        return [e for e in found.entries if e.rule in _WIRING_RULES]
+
+    try:
+        known: "set[str]" = ({registry._normalize(e.line, ()) for e in judged("base", prior)}
+                             if prior is not None and not unclear else set())
+        hits: list = judged("decl", projection.encode("utf-8"))
+    finally:
+        shutil.rmtree(cell, ignore_errors=True)
+    out: list[DeclarationFinding] = []
+    for item in hits:
+        if registry._normalize(item.line, ()) in known:
+            continue
+        at: str = item.where.rsplit(":", 1)[-1] if ":" in item.where else ""
+        owner: str = (next((o for lo, hi, o in spans if lo <= int(at) <= hi), "-") if at.isdigit()
+                      else next((o for o in functions if item.msg.startswith(f"`{o}()`")), "-"))
+        detail: str = f"{item.msg} — 예보 불확정: {unclear} — 물음: {_WIRING_QUESTION}" if unclear else item.msg
+        finding: DeclarationFinding = DeclarationFinding(item.rule, path, owner, detail, not unclear)
+        if finding not in out:
+            out.append(finding)
+    return out
+
+
+def check_wiring_forecast(plan: Plan, copy: Path, scratch: Path,
+                          baseline: "dict[str, bytes | None]") -> list[DeclarationFinding]:
+    """F4-155 — update 조립 파일(`application/<bc>/composition_root/dependency_wiring.py`)의 symbols 함수 · alias 행을 번들
+    `check-composition-root.py` 의 #85(최상단에는 import 와 `build_*` 팩토리만) 판정으로 선언 예보한다.
+
+    대상 = 검사기 선택과 같은 경로 ∩ file-plan update ∩ symbols 함수 · alias 행 있음(`_wiring_targets`). add 칸은 스텁이 registry 에
+    실려 이미 귀속되므로 넣지 않는다. `baseline` = `forecast_baseline`(materialize 전 실물). 대상 칸이 없으면 검사기를 적재하지
+    않는다. #86(결선 함수 안 조건) 후보 · 그 밖 조립 · 등록 파일(event_wiring · wiring_material · api_router · urls · api)은 싣지
+    않는다."""
+    ck, targets = _wiring_targets(plan, copy)
+    out: list[DeclarationFinding] = []
+    for n, (path, written) in enumerate(targets):
+        assert ck is not None
+        out += _wiring_entry_forecast(ck, plan.entries[written], path, scratch / "composition-wiring" / str(n),
+                                      baseline.get(written))
     return out
 
 
@@ -4805,15 +4963,19 @@ BLIND_SPOTS: "tuple[str, ...]" = (
     "provenance 차분이다.",
     "S5 미시뮬레이션: update는 실존 OHS 서비스의 명시 새 모듈 함수·안전한 import·파일 수준 raise helper만 "
     "전사하고, 정적으로 해소된 module pytestmark 최종 목록을 반영한다. add/update 명시 선언 후상태는 별도 검사하며 선언 예보 — 도메인 저장소 "
-    "메서드 서명의 #355·#597(update 는 기준선 대비 새·반환 변경 메서드만) · 도메인 서비스 공개 메서드·함수 서명의 #304·#305·#307·#308(update "
-    "는 기준선 대비 새·서명 변경만 · 기존 빚 열쇠 = 파일·규칙·판정문) · OHS 창구 번역 출처 칸의 #474(`as`)·#62(`Exception`) — 은 S5 가 아니다. "
+    "메서드 서명의 #355·#597·#599·#287(update 는 기준선 대비 새 메서드 · 반환이 바뀐 메서드(#355) · 인자(이름·주석·개수)가 바뀐 메서드(#287)만 — "
+    "#597·#599 는 새 이름만) · 도메인 서비스 공개 메서드·함수 서명의 #304·#305·#307·#308(update "
+    "는 기준선 대비 새·서명 변경만 · 기존 빚 열쇠 = 파일·규칙·판정문) · 조립 파일(`composition_root/dependency_wiring.py`) update 칸 symbols "
+    "함수·alias 행의 #85(기준선에 없던 줄만 — 줄 키는 G2 와 같다: 기준선에 최상단 대입·문이 이미 있으면 새 대입도 기존 줄) · OHS 창구 번역 출처 "
+    "칸의 #474(`as`)·#62(`Exception`) — 은 S5 가 아니다. "
     "두 채널(pre-gate 선언 예보 · G2 registry)의 기존 빚 기준이 다르다: G2 는 줄 번호만 지운 «파일·규칙·판정문» 집합 차분이고, 선언 예보는 그보다 "
     "엄격한 구석이 있다(저장소는 다른 클래스의 같은 판정문도 새 위반 · 도메인 서비스는 기존 줄의 소유자를 이 명세가 고쳐 그 줄이 사라지거나 함수 "
     "이름이 다르면 대개 새 위반 — #304·#305 기존 빚 메서드의 개명은 G2 0 인 거짓 확정이 될 수 있다 · 같은 함수 이름이 다른 자리에 있으면 후보 · "
     "번역 출처 칸은 기준선 창구의 같은 규칙 빚 catch 가 그 행의 published 예외를 내거나 그 예외를 내는 catch 를 가를 수 없으면 후보 — "
     "빚 catch 를 고치는 것이면 기존 빚이고 새 catch 나 다른 catch 면 새 줄이다(#474 는 묶음 이름이 다르면 G2 가 막는다)). 번역 출처 칸 무기재·낡은 출처 칸·"
     "번역 없는 catch·그 밖 본문 규칙, 기존 "
-    "signature/body·decorator/alias/class 본문 변경, 효과 무기재, 지원 밖 marker/base/client와 후행 remove(@Ln)는 미검증으로 위 목록 병기 · update "
+    "signature/body·decorator/alias/class 본문 변경, 조립 파일의 클래스 행·본문과 그 밖 조립·등록 파일(event_wiring·wiring_material·"
+    "api_router·urls·api) update 의 최상단 꼴 규칙, 효과 무기재, 지원 밖 marker/base/client와 후행 remove(@Ln)는 미검증으로 위 목록 병기 · update "
     "칸 import 규칙(#288·#303 등)은 S3.",
     "S6 정형 보충(apps.py name/label·모델 Meta.db_table·마이그레이션 칸): 결손 시 규약 유도값을 합성한다 — 기계 블록 "
     "전사가 있으면 전사 우선이지만, «산문»으로만 규약 밖 값을 계획한 일탈은 예보 표면 밖이다.",
@@ -5494,9 +5656,10 @@ def _main(argv: "list[str]") -> int:
             print(f"묶음 이동(사본 · 앵커 커밋 전) {len(group_moved)}쌍: "
                   + " · ".join(f"{a} -> {b}" for a, b in group_moved[:6])
                   + (f" 외 {len(group_moved) - 6}" if len(group_moved) > 6 else ""))
-        # 저장소 선언 예보(#355·#597)의 비교 기준선 — 명세 전사 «전» 실물(F4-73).
+        # 저장소 선언 예보(#355·#597·#599·#287)의 비교 기준선 — 명세 전사 «전» 실물(F4-73 · F4-48).
         repository_material: "dict[str, bytes | None]" = repository_baseline(copy, plan)
-        # 도메인 서비스 서명(#304·#305·#307·#308) · 번역 출처 칸(#474·#62) 선언 예보의 비교 기준선 — 같은 자리(F4-115).
+        # 도메인 서비스 서명(#304·#305·#307·#308) · 번역 출처 칸(#474·#62) · 조립 파일 최상단 이름(#85) 선언 예보의 비교 기준선 —
+        # 같은 자리(F4-115 · F4-155).
         forecast_material: "dict[str, bytes | None]" = forecast_baseline(copy, plan)
         declared_scope: "dict[str, str]" = forecast_scope(plan, copy)
 
@@ -5516,6 +5679,7 @@ def _main(argv: "list[str]") -> int:
         declarations = (check_declarations(plan, copy) + check_in_argument_forecast(plan, copy)
                         + check_repository_forecast(plan, copy, scratch, repository_material)
                         + check_domain_service_forecast(plan, copy, scratch, forecast_material)
+                        + check_wiring_forecast(plan, copy, scratch, forecast_material)
                         + catch_findings
                         + check_publish_path_forecast(plan, copy))
         declaration_count = len({(item.rule, item.path) for item in declarations if item.confirmed})

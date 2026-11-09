@@ -919,7 +919,8 @@ def main(argv: list[str]) -> int:
     ]
     bcs: list[Path] = []
     for c in containers:
-        bcs.extend(p for p in sorted(c.iterdir()) if p.is_dir() and not p.name.startswith("."))
+        bcs.extend(p for p in sorted(c.iterdir())
+                   if p.is_dir() and not p.name.startswith(".") and p.name not in SKIP_DIRS)
     signaled = [b for b in bcs if _has_adoption_signal(b)]
     fw_dir = target / "framework"
 

@@ -300,7 +300,7 @@
       ]
     },
     "dddjango/agents/acceptance-tester.md/s006/b4": {
-      "h": "095726a1085caa12",
+      "h": "0f2b442c5ca534df",
       "n": 2,
       "works": [
         "R-3615"
@@ -1077,7 +1077,7 @@
       ]
     },
     "dddjango/agents/design-architect.md/s005/b33": {
-      "h": "ca3d95763ede703c",
+      "h": "fc96676cdb52f215",
       "n": 3,
       "works": [
         "R-3424",
@@ -1094,7 +1094,7 @@
       ]
     },
     "dddjango/agents/design-architect.md/s005/b35": {
-      "h": "d13281c013ae2da1",
+      "h": "beb306f8a7fa954e",
       "n": 1,
       "works": [
         "R-3426"
@@ -1125,7 +1125,7 @@
       ]
     },
     "dddjango/agents/design-architect.md/s005/b39": {
-      "h": "b8162d157d3314b3",
+      "h": "ab03da005cef0bdf",
       "n": 1,
       "works": [
         "R-3610"
@@ -3405,7 +3405,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s006/b12": {
-      "h": "0e8e660a9909b0df",
+      "h": "415538546881b1e3",
       "n": 2,
       "works": [
         "R-3607",
@@ -3524,7 +3524,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s006/b9": {
-      "h": "e75b2f82af318df1",
+      "h": "6565c129c2b9c911",
       "n": 2,
       "works": [
         "R-3432",
@@ -10460,7 +10460,7 @@
       ]
     },
     "dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b21": {
-      "h": "0b917526ed55984b",
+      "h": "f101f991cf228bea",
       "n": 2,
       "works": [
         "R-0724",
@@ -10982,7 +10982,7 @@
       ]
     },
     "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b27": {
-      "h": "5fde6b95b1c78be8",
+      "h": "12c16f90b2a61767",
       "n": 18,
       "works": [
         "R-0068",
@@ -14923,7 +14923,7 @@
   "built_from": [
     {
       "path": "ontology/rules/agent-acceptance-tester.ttl",
-      "sha256": "de8432dec30c17981f476d1bcb6f7a0aaa8a4d0c3452b1bd9928fbdfe9ffc5b5"
+      "sha256": "344d892516773bbb282502291814c70ccd3f187a3b4decaad825818ca2c4bb7b"
     },
     {
       "path": "ontology/rules/agent-coder.ttl",
@@ -14931,7 +14931,7 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "a73e5271449b77bee5ec0b0d24e010b17650d1e16d314e63503fd50410d42c3b"
+      "sha256": "d8bb56af06bfc9d2961c63cdd1426853037f27fb0108b4cc6010abde6db9e18f"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
@@ -14975,7 +14975,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "58276560daf39aebd96a633154c694db9a6d4dcc7f79979343ef0c374c9b1626"
+      "sha256": "3811005f0eac7536a9f0292f7a42b11ee06074550b507410377ba93ddb549fab"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -15007,7 +15007,7 @@
     },
     {
       "path": "ontology/rules/implementation-django-ninja-final.ttl",
-      "sha256": "1d9c7757ce20d4d4d1aef387475cba4a65658f5b44455b424a6aa2437cfe3cd8"
+      "sha256": "287f70002d08cff58d10615188d8956b97638ba0bd0627dab5fc18f57bb26398"
     },
     {
       "path": "ontology/rules/implementation-django-ninja-skill.ttl",
@@ -24116,8 +24116,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-0069@2026-10-11",
-      "label": "승인된 BC 오류 머리(retryable 503 Retry-After · 사건 값 머리)의 주입 HttpResponse header 설정 절차",
+      "expression": "https://numchida.com/ns/djr#R-0069@2026-11-09",
+      "label": "승인된 BC 오류 머리(retryable 503 Retry-After · 사건 값 머리)의 주입 HttpResponse header 설정 절차(오류 생성 → 머리 → 반환)",
       "norm_kind": "Obligation",
       "order_rank": 2930,
       "overrides": [],
@@ -82769,8 +82769,8 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3426@2026-10-25",
-      "label": "공개 심볼과 add/update 선언 후상태·본문 미검증 분리 · 포트 자료 방향 포인터 · update 도메인 서비스 서명 바꿈 기재",
+      "expression": "https://numchida.com/ns/djr#R-3426@2026-11-09",
+      "label": "공개 심볼과 add/update 선언 후상태·본문 미검증 분리 · 포트 자료 방향 포인터 · update 도메인 서비스 · 도메인 저장소 서명 바꿈 기재 · update 조립 파일의 최상단 함수(사설 포함)·모듈 별칭·최상단 대입(상수 포함) 전부 기재(alias 행 문법 밖 대입은 두지 않음)",
       "norm_kind": "Obligation",
       "order_rank": 443,
       "overrides": [],
@@ -82932,7 +82932,7 @@
       "block_order": 9,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3435@2026-10-25",
+      "expression": "https://numchida.com/ns/djr#R-3435@2026-11-09",
       "label": "격리 사본 결정적 투영물·명시 후상태와 기존 본문 미검증",
       "norm_kind": "Permission",
       "order_rank": 1203,
@@ -85962,8 +85962,8 @@
       "block_order": 13,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3607@2026-10-01",
-      "label": "arrange 점검(G1 전) — 입력 = 슬라이스 계획의 인수 행 · Coordinator 측정 sha(필수) · acceptance-tester PHASE1_ARRANGE_CHECK 를 ⓘ 첫 슬라이스 계획 다발 · ⓘⓘ 재리뷰 상한 ⓑ 확인 다발 · ⓘⓘ′ 배너 직전 단독 · ⓘⓘⓘ G1′ 재리뷰 다발에 · 울타리 창 안 · ARRANGE_BLOCKED = architect 반송 · 상한 해제·일반 루프(막힘 풀릴 때까지 매 재리뷰 다발 합류) · 이견은 1회 재호출 뒤 STOP · 상한 기준 ① 밖 · 이번 실행 명세의 계획 누락·인수/내부 미구분·입장 표와 분류 불일치는 반송(구형만 해당 없음) · 배너 1행",
+      "expression": "https://numchida.com/ns/djr#R-3607@2026-11-09",
+      "label": "arrange 점검(G1 전) — 입력 = 슬라이스 계획의 인수 행 · Coordinator 측정 sha(필수) · acceptance-tester PHASE1_ARRANGE_CHECK 를 ⓘ 첫 슬라이스 계획 다발 · ⓘⓘ 재리뷰 상한 ⓑ 확인 다발 · ⓘⓘ′ 배너 직전 단독 · ⓘⓘⓘ G1′ 재리뷰 다발에 · 울타리 창 안 · ARRANGE_BLOCKED = architect 반송 · 상한 해제·일반 루프(막힘 풀릴 때까지 매 재리뷰 다발 합류) · 이견은 1회 재호출 뒤 STOP · 상한 기준 ① 밖 · 이번 실행 명세의 계획 누락·인수/내부 미구분·입장 표와 분류 불일치(add/update 가운데 acceptance-tester 몫 = 인수 행 · reuse·retain·remove 는 인수 행 아님)는 반송(구형만 해당 없음) · 배너 1행",
       "norm_kind": "Obligation",
       "order_rank": 1213,
       "overrides": [],
@@ -86013,8 +86013,8 @@
       "block_order": 39,
       "checkers": [],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3610@2026-10-20",
-      "label": "슬라이스 계획 절(항상) — 표 «슬라이스 | 목적 | 인수 행 | 내부 행 | 완료 조건»(인수 행 = acceptance-tester 몫 add/update)(S1 부터 · 슬라이스 0 은 Coordinator) · 완료 조건의 시험 = 그 슬라이스의 BC 시험 경로 · 인수 행 시험 · 까닭을 단 소비자 경로(coder 래칫 예외와 같은 찾기 — BC 밖 시험 쪽이 import 하는 길 포함 — + 리뷰 · 설계가 근거 줄로 짚은 길) · 전체 suite 한 벌은 소비자 경로가 곧 전체일 때만 · 다른 영역 붉음을 이 명세 밖에서 고치기로 사용자가 정했으면 ## G2 전체 확인 절(시험 id · 예외 타입과 실패 줄 · 처분 · 사용자 답 출처 · 리팩토링 명세에는 두지 않음) · 파일의 슬라이스는 file-plan 행 끝 주석 # S<n> · # S<처음>→S<끝> · 슬라이스 0 행 # S0 로만(주석 전체가 이 꼴 · 파서 무변) · 산문은 까닭만",
+      "expression": "https://numchida.com/ns/djr#R-3610@2026-11-09",
+      "label": "슬라이스 계획 절(항상) — 표 «슬라이스 | 목적 | 인수 행 | 내부 행 | 완료 조건»(인수 행 = acceptance-tester 몫 add/update · 내부 행 = 그 밖 — 하는 역할은 owner · 기능 모드 명시 승인 retain 재조직 행 = 그 시험 파일을 바꾸는 슬라이스의 내부 행)(S1 부터 · 슬라이스 0 은 Coordinator) · 완료 조건의 시험 = 그 슬라이스의 BC 시험 경로 · 인수 행 시험 · 까닭을 단 소비자 경로(coder 래칫 예외와 같은 찾기 — BC 밖 시험 쪽이 import 하는 길 포함 — + 리뷰 · 설계가 근거 줄로 짚은 길) · 전체 suite 한 벌은 소비자 경로가 곧 전체일 때만 · 다른 영역 붉음을 이 명세 밖에서 고치기로 사용자가 정했으면 ## G2 전체 확인 절(시험 id · 예외 타입과 실패 줄 · 처분 · 사용자 답 출처 · 리팩토링 명세에는 두지 않음) · 파일의 슬라이스는 file-plan 행 끝 주석 # S<n> · # S<처음>→S<끝> · 슬라이스 0 행 # S0 로만(주석 전체가 이 꼴 · 파서 무변) · 산문은 까닭만",
       "norm_kind": "Obligation",
       "order_rank": 450,
       "overrides": [],
@@ -86098,8 +86098,8 @@
       "block_order": 4,
       "checkers": [],
       "document": "dddjango/agents/acceptance-tester.md",
-      "expression": "https://numchida.com/ns/djr#R-3615@2026-10-01",
-      "label": "arrange 점검 도구 — Read·Grep·Glob 없으면 Bash 읽기 명령 닫힌 목록만(읽기 필터 cut·sort·uniq·awk 표준 출력만 · 제품 경로는 test -e · ls -d 와 그 조건·반복) · 쓰기는 기록 한 파일(Write·Edit) · python·python3·git·해시·시험·설치·리다이렉트 쓰기 0 · 계산 0(sha 는 입력값 · 없으면 «입력 없음»)",
+      "expression": "https://numchida.com/ns/djr#R-3615@2026-11-09",
+      "label": "arrange 점검 도구 — Read·Grep·Glob 없으면 Bash 읽기 명령 닫힌 목록만(find 는 찾기 조건만 · 읽기 필터 cut·sort·uniq·awk·head·tail·tr 표준 출력만 · 제품 경로는 test -e · ls -d 와 그 조건·반복 · echo·printf 는 명령 치환·리다이렉트 없이 · cd 는 산출물 폴더로만) · 쓰기는 기록 한 파일(Write·Edit) · python·python3·git·해시·시험·설치·리다이렉트 쓰기 0 · 계산 0(sha 는 입력값 · 없으면 «입력 없음»)",
       "norm_kind": "Prohibition",
       "order_rank": 94,
       "overrides": [],
@@ -86152,8 +86152,8 @@
         "check-composition-root.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-3618@2026-10-04",
-      "label": "build_ 공유 결선 재료의 wiring_material.py 소유 · 재료 함수 모양 · 모듈째 수입",
+      "expression": "https://numchida.com/ns/djr#R-3618@2026-11-09",
+      "label": "build_ 공유 결선 재료의 wiring_material.py 소유 · 재료 파일 꼴(docstring · 별칭 없는 import 셋 · 재료 함수뿐) · 값 객체 모듈 꼴(future · dataclass import · 클래스 앞 _ 상수와 re · frozen dataclass 클래스 하나 · 몸체) · 재료 함수 꼴(async · 매개변수 · 데코레이터 없음 · 이름 · 반환 주석 = 값 객체 클래스 하나 또는 str·int·bool·float 하나 · return 한 문장) · 이름 한 번 묶기 · 모듈째 수입",
       "norm_kind": "Obligation",
       "order_rank": 2802,
       "overrides": [],
@@ -86860,8 +86860,8 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3653@2026-10-10",
-      "label": "도메인 저장소 add/update 메서드 서명의 선언 #355·#597 예보 — 검사기 판정 그대로 · update 는 기준선 대비 새·반환 변경만(#597 은 새 이름만) · bool/int·출처 미해소·기준선 비교 불능은 후보",
+      "expression": "https://numchida.com/ns/djr#R-3653@2026-11-09",
+      "label": "도메인 저장소 add/update 메서드 서명의 선언 #287·#355·#597·#599 예보 · update 조립 파일 최상단 이름의 선언 #85 예보 — 검사기 판정 그대로 · 저장소 update 는 기준선 대비 새 메서드와 반환(#355) · 인자(#287)가 바뀐 메서드만(#597·#599 는 새 이름만) · 조립 파일은 기준선 실물 최상단 정의 ∪ symbols 함수·alias 행 · 기준선에 없던 줄만 · bool/int·출처 미해소·기준선 비교 불능은 후보",
       "norm_kind": "Obligation",
       "order_rank": 440,
       "overrides": [],

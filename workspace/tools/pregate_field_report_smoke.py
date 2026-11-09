@@ -3,6 +3,8 @@
 
 update 전사 유실, 기존 바인딩 덮기, 무명시 raise 추론, support로 marker 전파를 잡는다.
 F4-115 — update 도메인 서비스 서명 · OHS 번역 출처 칸의 선언 예보를 CLI · `--check-report` 처분과 2.26.1 배포판 대조로 고정한다.
+F4-48 · F4-155 — 저장소 쓰기 인자(#287) · `add_all`(#599) · update 조립 파일 최상단 이름(#85)의 선언 예보를 2.32.0 배포판 대조와
+구현 뒤 실검사기의 G2 줄 키 차분으로 고정한다.
 """
 from __future__ import annotations
 
@@ -63,6 +65,30 @@ CATCHING = ('"""Existing service."""\nfrom __future__ import annotations\n\n'
             'def read_plant_query(name: str) -> str:\n    try:\n        return _read(name)\n'
             '    except PlantUnreadable:\n        raise PlantUnavailableException() from None\n\n\n'
             'def _read(name: str) -> str:\n    raise PlantUnreadable(name)\n')
+# F4-48 — 저장소 채널의 #287(쓰기 인자 — 필드 단위 갱신 이름 · 인자 둘 이상 · 원시값) · #599(`add_all`) · 인자만 바뀐 기존 메서드.
+# F4-155 — update 조립 파일의 symbols 함수 · alias 행 #85. «옛 판» 은 2.32.0 배포 커밋 고정(HEAD 금지 — 이 고침을 커밋한 뒤에도 옛 판이다).
+_RELEASED_2320_COMMIT = "f0bbe3a7"
+QUESTIONNAIRE_DOMAIN = "application/consult/domain_layer/questionnaire"
+QUESTIONNAIRE_REPOSITORY = f"{QUESTIONNAIRE_DOMAIN}/questionnaire_repository.py"
+QUESTIONNAIRE_HEAD = ('from abc import ABC, abstractmethod\n\n'
+                      'from application.consult.domain_layer.questionnaire.questionnaire import Questionnaire\n\n\n'
+                      'class QuestionnaireRepository(ABC):\n')
+# 기준선 메서드 — `save_answers` 는 이미 #287(인자 둘)을 내는 기존 빚이다.
+QUESTIONNAIRE_METHODS = {'save': 'save(questionnaire: Questionnaire) -> None',
+                         'save_answers': 'save_answers(questionnaire: Questionnaire, version: int) -> None'}
+WIRING = "application/chat/composition_root/dependency_wiring.py"
+WIRING_HEAD = 'from application.chat.application_layer.send.send_use_case import SendUseCase\n'
+# 기준선 조립 파일 — 사설 함수 `_legacy_accounts` 는 이미 #85 를 내는 기존 빚이다.
+WIRING_ORIGINAL = (WIRING_HEAD + '\n\ndef _legacy_accounts() -> dict:\n    return {}\n\n\n'
+                   'def build_send_use_case() -> SendUseCase:\n    return SendUseCase()\n')
+
+
+def questionnaire_source(methods=()) -> str:
+    """기준선 저장소에 명세 메서드 행을 겹친 실물(같은 이름은 바꿈 · 새 이름은 더함)."""
+    rows = dict(QUESTIONNAIRE_METHODS)
+    rows.update({m.split('(', 1)[0]: m for m in methods})
+    return QUESTIONNAIRE_HEAD + '\n'.join(f'    @abstractmethod\n    def {m.replace("(", "(self, ", 1)}: ...\n'
+                                          for m in rows.values())
 
 
 def spec_text(paths, symbols=(), imports=(), exceptions=(), owner="") -> str:
@@ -1297,6 +1323,112 @@ class BookAdmin(TranslatableAdmin):
                                  '--error-profile', 'auto'], capture_output=True, text=True, env=self.env)
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn(f'[#474] {SERVICE}:', result.stdout)
+
+    def real_new_messages(self, path: str, checker: str, rule: str, after: str) -> "list[str]":
+        """구현 뒤 실물 `after` 와 기준선에 실검사기를 돌려 G2 registry 차분과 같은 줄 키(`:N`)로 기준선에 없던 `rule` 줄의 판정문을 낸다."""
+        def messages(content: str) -> "dict[str, str]":
+            impl = self.root / 'impl'
+            if impl.exists():
+                shutil.rmtree(impl)
+            shutil.copytree(self.source, impl, ignore=shutil.ignore_patterns('.git'))
+            self.write(impl, path, content)
+            env = dict(self.env, DJR_FINDINGS_JSON=str(self.root / 'impl-findings.jsonl'),
+                       DJR_VIOLATIONS_DIR=str(self.root / 'impl-violations'))
+            result = subprocess.run([sys.executable, '-B', str(SCRIPTS / checker), str(impl)], env=env,
+                                    capture_output=True, text=True)
+            self.assertIn(result.returncode, (0, 2), result.stdout + result.stderr)
+            found = [line.strip() for line in result.stdout.splitlines() if line.strip().startswith(f'[{rule}] {path}')]
+            return {pg.registry._normalize(line, ()): line.split(': ', 1)[1] for line in found}
+        before, now = messages((self.source / path).read_text()), messages(after)
+        return sorted(now[key] for key in set(now) - set(before))
+
+    def test_f48_repository_write_arguments_block_new_and_changed_methods(self):
+        # 현장 꼴(update 저장소의 새 쓰기 메서드 · 인자를 늘린 기존 메서드 — 2.32.0 은 선언 0 · G2 에서야 #287) · `add_all`(#599) ·
+        # 그대로 다시 적기 · 기존 빚(인자 둘) 다시 적기와 인자 이름만 바꾸기는 0(G2 도 0).
+        self.write(self.source, QUESTIONNAIRE_REPOSITORY, questionnaire_source())
+        self.write(self.source, f'{QUESTIONNAIRE_DOMAIN}/questionnaire.py', 'class Questionnaire:\n    pass\n')
+        _git(self.source, 'add', '-A')
+        _git(self.source, 'commit', '-qm', 'questionnaire repository fixture')
+        old_scripts = self.scripts_at(_RELEASED_2320_COMMIT)
+        import_row = f'{QUESTIONNAIRE_REPOSITORY}  from application.consult.domain_layer.questionnaire.questionnaire import Questionnaire'
+        for label, methods, rules in [
+            ('새 이름', ['save_status(questionnaire: Questionnaire, status: str) -> None',
+                        'update_title(questionnaire_id: int, title: str) -> None',
+                        'add_all(questionnaires: list[Questionnaire]) -> None'], {'#287', '#599'}),
+            ('기존 메서드 인자 늘림', ['save(questionnaire: Questionnaire, version: int) -> None'], {'#287'}),
+            ('기존 빚 인자 하나 더', ['save_answers(questionnaire: Questionnaire, version: int, note: str) -> None'], {'#287'}),
+            ('그대로', list(QUESTIONNAIRE_METHODS.values()), set()),
+            ('기존 빚 인자 이름만 바꿈', ['save_answers(questionnaire: Questionnaire, revision: int) -> None'], set()),
+        ]:
+            with self.subTest(form=label):
+                text = spec_text([f'update {QUESTIONNAIRE_REPOSITORY}'],
+                                 [f'{QUESTIONNAIRE_REPOSITORY}::QuestionnaireRepository(ABC)',
+                                  *[f'{QUESTIONNAIRE_REPOSITORY}::QuestionnaireRepository.{m}' for m in methods]], [import_row])
+                old, _ = self.cli(text, scripts=old_scripts)
+                self.assertEqual(old.returncode, 4, old.stdout + old.stderr)
+                run, report = self.cli(text)
+                self.assertEqual(run.returncode, 2 if rules else 4, run.stdout + run.stderr)
+                self.assertIn('실체화 0', run.stdout)
+                confirmed = pg._subsection(report, '선언 확정')
+                self.assertEqual(set(pg._REPORT_ID_RE.findall(confirmed)),
+                                 {pg._stable_id(f'[{rule}] {QUESTIONNAIRE_REPOSITORY}') for rule in rules}, confirmed)
+                self.assertIn('- (없음)', pg._subsection(report, '선언 후보'))
+                expected = []
+                for rule in sorted({'#287', '#599'}):
+                    real = self.real_new_messages(QUESTIONNAIRE_REPOSITORY, 'check-transaction-boundary.py', rule,
+                                                  questionnaire_source(methods))
+                    self.assertEqual(bool(real), rule in rules, (rule, real))
+                    expected += real
+                for message in expected:
+                    self.assertIn(message, confirmed)
+                self.assertEqual(pg.check_report(text, report)[0], 3 if rules else 0)
+                self.assertEqual((self.source / QUESTIONNAIRE_REPOSITORY).read_text(), questionnaire_source())
+        self.assertFalse(Path(self.env['DJR_FINDINGS_JSON']).exists())
+
+    def test_f155_wiring_update_top_level_names_block_without_materialization(self):
+        # 현장 꼴(update 조립 파일에 사설 함수 · 최상단 대입을 symbols 에 적음 — 2.32.0 은 S5 · G2 에서야 #85) · 기준선에 이미 있는
+        # 사설 함수 다시 적기 · 최상단 대입이 이미 있는 파일에 대입 더하기는 0(G2 줄 키가 같다 — 줄 번호만 다른 거짓 red 없음).
+        self.write(self.source, 'application/chat/application_layer/send/send_use_case.py', 'class SendUseCase:\n    pass\n')
+        self.write(self.source, 'application/chat/domain_layer/__init__.py', '')
+        old_scripts = self.scripts_at(_RELEASED_2320_COMMIT)
+        build = f'{WIRING}::build_send_use_case() -> SendUseCase'
+        assigned = WIRING_HEAD + '\nDEFAULT_PROVIDER = "kakao"\n' + WIRING_ORIGINAL[len(WIRING_HEAD):]
+        for label, original, rows, added, owners in [
+            ('함수', WIRING_ORIGINAL, [build, f'{WIRING}::_social_accounts() -> dict'],
+             '\n\ndef _social_accounts() -> dict:\n    return {}\n', ['_social_accounts']),
+            ('alias', WIRING_ORIGINAL, [f'{WIRING}::alias ACCOUNTS = dict[str, str]', build],
+             '\nACCOUNTS = dict[str, str]\n', ['ACCOUNTS']),
+            ('주석 alias', WIRING_ORIGINAL, [f'{WIRING}::alias Accounts: TypeAlias = dict[str, str]', build],
+             '\nAccounts: TypeAlias = dict[str, str]\n', ['Accounts']),
+            ('기준선 사설 함수 다시 적기', WIRING_ORIGINAL, [f'{WIRING}::_legacy_accounts() -> dict', build], '', []),
+            ('최상단 대입이 이미 있는 파일에 대입', assigned, [f'{WIRING}::alias ACCOUNTS = dict[str, str]', build],
+             '\nACCOUNTS = dict[str, str]\n', []),
+        ]:
+            with self.subTest(form=label):
+                self.write(self.source, WIRING, original)
+                _git(self.source, 'add', '-A')
+                _git(self.source, 'commit', '-qm', f'wiring {label}', '--allow-empty')
+                text = spec_text([f'update {WIRING}'], rows, [f'{WIRING}  {WIRING_HEAD.strip()}'])
+                old, _ = self.cli(text, scripts=old_scripts)
+                self.assertEqual(old.returncode, 4, old.stdout + old.stderr)
+                run, report = self.cli(text)
+                self.assertEqual(run.returncode, 2 if owners else 4, run.stdout + run.stderr)
+                self.assertIn('실체화 0', run.stdout)
+                self.assertIn(f'최상단 함수 · alias 이름만 예보(#85) · 본문 미검증): {WIRING}', report)
+                confirmed = pg._subsection(report, '선언 확정')
+                stable = pg._stable_id(f'[#85] {WIRING}')
+                self.assertEqual(pg._REPORT_ID_RE.findall(confirmed), [stable] if owners else [], confirmed)
+                real = self.real_new_messages(WIRING, 'check-composition-root.py', '#85', original + added)
+                self.assertEqual(len(real), 1 if owners else 0, real)
+                for owner, message in zip(owners, real):
+                    self.assertIn(f'{owner}: {message}', confirmed)
+                self.assertIn('- (없음)', pg._subsection(report, '선언 후보'))
+                self.assertEqual(pg.check_report(text, report)[0], 3 if owners else 0)
+                if owners:
+                    code, problems, info = pg.check_report(text, report + f'\n- `{stable}` **ignored** 빚 매칭 검토\n')
+                    self.assertEqual((code, info['declarations']), (0, '1'), problems)
+                self.assertEqual((self.source / WIRING).read_text(), original)
+        self.assertFalse(Path(self.env['DJR_FINDINGS_JSON']).exists())
 
 
 # 숨김 뺀 기준선 바로 앞 배포판(dddjango 2.24.2) — «지금 판과 같은 결과» 대조의 옛 판(HEAD 금지).

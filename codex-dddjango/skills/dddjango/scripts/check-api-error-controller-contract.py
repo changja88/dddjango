@@ -400,8 +400,10 @@ def _parse_config(argv: list[str]) -> Config:
         )
     explicit = profile in {"dddjango-code-json", "preserve-established"}
     scope = _one("--scope", namespace.scope, required=explicit, issues=issues)
+    # anchor-baseline 모드에선 앵커 트리에 없는 api 모듈(새 scope 의 API 인스턴스)이 걷혀 없는 것이 정상이다.
     api_raw = _one(
-        "--api-module", namespace.api_module, required=explicit, issues=issues
+        "--api-module", namespace.api_module,
+        required=explicit and not namespace.anchor_baseline, issues=issues
     )
     controller_raw = _unique(
         "--controller-module", namespace.controller_module, issues

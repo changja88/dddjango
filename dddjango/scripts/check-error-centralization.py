@@ -410,8 +410,10 @@ def _parse_config(argv: list[str]) -> Config:
     explicit = profile in {"dddjango-code-json", "preserve-established"}
     code_profile = profile == "dddjango-code-json"
     scope = _one("--scope", namespace.scope, required=explicit, issues=issues)
+    # anchor-baseline 모드에선 앵커 트리에 없는 api 모듈(새 scope 의 API 인스턴스)이 걷혀 없는 것이 정상이다.
     api_module = _one(
-        "--api-module", namespace.api_module, required=explicit, issues=issues
+        "--api-module", namespace.api_module,
+        required=explicit and not namespace.anchor_baseline, issues=issues
     )
     controllers = _unique("--controller-module", namespace.controller_module, issues)
     scope_bcs = _unique("--scope-bc", namespace.scope_bc, issues)
@@ -681,7 +683,7 @@ def _source_plan(
     preserve_paths = {Path(raw) for raw in config.preserve_error_modules}
     source_paths: set[Path] = set()
 
-    common_selected = [Path(config.api_module or "")]
+    common_selected = [Path(config.api_module)] if config.api_module is not None else []
     common_selected.extend(Path(raw) for raw in config.controller_modules)
     common_selected.extend(code_paths)
     common_selected.extend(preserve_paths)

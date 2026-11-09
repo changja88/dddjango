@@ -781,12 +781,18 @@ djr:R-3614 a djr:Prohibition ;
     djr:revisionKind djr:revision-clarification .
 
 djr:R-3615 a djr:Prohibition ;
-    skos:prefLabel "arrange 점검 도구 — Read·Grep·Glob 없으면 Bash 읽기 명령 닫힌 목록만(읽기 필터 cut·sort·uniq·awk 표준 출력만 · 제품 경로는 test -e · ls -d 와 그 조건·반복) · 쓰기는 기록 한 파일(Write·Edit) · python·python3·git·해시·시험·설치·리다이렉트 쓰기 0 · 계산 0(sha 는 입력값 · 없으면 «입력 없음»)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3615@2026-10-01> .
+    skos:prefLabel "arrange 점검 도구 — Read·Grep·Glob 없으면 Bash 읽기 명령 닫힌 목록만(find 는 찾기 조건만 · 읽기 필터 cut·sort·uniq·awk·head·tail·tr 표준 출력만 · 제품 경로는 test -e · ls -d 와 그 조건·반복 · echo·printf 는 명령 치환·리다이렉트 없이 · cd 는 산출물 폴더로만) · 쓰기는 기록 한 파일(Write·Edit) · python·python3·git·해시·시험·설치·리다이렉트 쓰기 0 · 계산 0(sha 는 입력값 · 없으면 «입력 없음»)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3615@2026-11-09> .
 
 <https://numchida.com/ns/djr#R-3615@2026-10-01> a djr:Expression ;
     prov:specializationOf djr:R-3615 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3615@2026-11-09> a djr:Expression ;
+    prov:specializationOf djr:R-3615 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3615@2026-10-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3616 a djr:Obligation ;
     skos:prefLabel "arrange 판정·산출 — 인수 행별 재료·출처(기준선|S≤n 계획|뒤 슬라이스|명세 없음 — 이름만 있고 값·꼴·시그니처 없으면 명세 없음) · 제품 쪽 import 차례 · 뒤 슬라이스·명세 없음 = 막힘 · 기록 머리(기록 토큰 · 입력 sha 옮김)·표·판정 1행(가능|ARRANGE_BLOCKED k) · 인용 없는 가능 무효 · 응답 기록 행 · TREE_CONTRACT_MISMATCH 금지"@ko ;
@@ -1126,7 +1132,7 @@ djr:R-3734 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
     djr:statesNorm djr:R-3615 ;
-    djr:text "**도구·쓰기**: 읽기는 Read·Grep·Glob 가 있으면 그것으로 하고, 없으면 Bash 의 읽기 명령만 쓴다 — 허용 목록은 닫혀 있다: 명세·시험 쪽 파일에 `cat` · `sed -n` · `head` · `tail` · `wc` · `grep`·`rg`(재귀 검색은 시험 쪽 폴더에만) · `ls` · `find -name`(시험 쪽 폴더에만) 과 그 출력에 거는 읽기 전용 필터 `cut` · `sort` · `uniq` · `awk`(표준 출력만 — 리다이렉트·`system()`·파일 쓰기 금지), 제품 경로에 `test -e` · `ls -d`(실존 확인만 — 이것을 쓰는 셸 조건·반복 `if`·`for` 포함). 그 밖의 명령(`python`·`python3` · `git` · 해시 명령 · 시험 실행 · 설치 · 리다이렉트 쓰기 포함)은 쓰지 않는다. 쓰기는 받은 부속 기록 경로 한 파일만 Write·Edit 로 한다(처음은 새 파일 — 이미 있으면 쓰지 않고 보고한다). 이 모드에서 너는 아무것도 계산하지 않는다 — 기록의 `판정 명세 sha256` 은 입력의 값을 그대로 옮긴다. 입력에 그 값이 없으면 재지 말고 `판정 명세 sha256 입력 없음` 으로 적고 응답에 알린다.\n\n"@ko .
+    djr:text "**도구·쓰기**: 읽기는 Read·Grep·Glob 가 있으면 그것으로 하고, 없으면 Bash 의 읽기 명령만 쓴다 — 허용 목록은 닫혀 있다: 명세·시험 쪽 파일에 `cat` · `sed -n` · `head` · `tail` · `wc` · `grep`·`rg`(재귀 검색은 시험 쪽 폴더에만) · `ls` · `find`(시험 쪽 폴더에만 · 조건은 `-name`·`-path`·`-type`·`-maxdepth`·`-size` 와 그 `!`·`-o` 묶음만 — `-exec`·`-delete` 같은 동작은 쓰지 않는다) 과 그 출력에 파이프로 거는 읽기 전용 필터 `cut` · `sort` · `uniq` · `awk` · `head` · `tail` · `tr`(표준 출력만 — 리다이렉트·`system()`·파일 쓰기 금지), 제품 경로에 `test -e` · `ls -d`(실존 확인만 — 이것을 쓰는 셸 조건·반복 `if`·`for` 포함), 출력을 가르는 `echo` · `printf`(글자만 — 명령 치환 `$(…)`·백틱·리다이렉트 없이), 부속 기록이 있는 `<산출물 폴더>` 로만 가는 `cd`(제품 폴더로 들어가 상대 경로로 읽거나 검색하지 않는다). 그 밖의 명령(`python`·`python3` · `git` · 해시 명령 · 시험 실행 · 설치 · 리다이렉트 쓰기 포함)은 쓰지 않는다. 쓰기는 받은 부속 기록 경로 한 파일만 Write·Edit 로 한다(처음은 새 파일 — 이미 있으면 쓰지 않고 보고한다). 이 모드에서 너는 아무것도 계산하지 않는다 — 기록의 `판정 명세 sha256` 은 입력의 값을 그대로 옮긴다. 입력에 그 값이 없으면 재지 말고 `판정 명세 sha256 입력 없음` 으로 적고 응답에 알린다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006> ;

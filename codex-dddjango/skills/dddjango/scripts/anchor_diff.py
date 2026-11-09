@@ -21,8 +21,10 @@ G2 를 통과할 수 없었다(같은 게이트를 다른 레인은 «해석»�
   (「커밋 뒤 검사」로 위반 전량을 기존분으로 세탁하는 우회 차단 — registry_gate 동형).
 - 앵커 재실행은 `--anchor-baseline` 모드다: 앵커에 없는 경로 selector 와
   BC 뿌리의 부재가 확인된 `--scope-bc`·`--error-bc` 이름 selector 를 argv 에서
-  걷는다. 검사기는 이 모드에서 path-repeat selector 의 필수 개수를 완화하고
-  빈 scope BC 집합을 허용하되 분석은 계속한다. 앵커에 없는 정규화 진단문은
+  걷는다. 검사기는 이 모드에서 path-repeat selector 의 필수 개수와 단일 값 경로
+  selector(`--api-module` · `--urlconf-module` — 새 scope 의 API 인스턴스 · URLconf)의
+  필수를 완화하고(걷힌 모듈은 선택 source 에서 빠진다) 빈 scope BC 집합을 허용하되
+  분석은 계속한다. 앵커에 없는 정규화 진단문은
   신규로 남는다. 이 모드는 비-git 스냅숏 전용이다(git 저장소 TARGET 에선 사용
   오류 — 실전 렌더 계약 완화로의 오용 차단).
 - 앵커 재실행이 사용/분석 오류(exit 1)면 빈 골격 --error-bc 를 걷고 그 영역 아래 줄을 제외하여

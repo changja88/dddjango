@@ -7,7 +7,7 @@ FROZEN 이므로 실측은 이 fixture 결정 레인만 쓴다.
 
 케이스: skeleton 9 + 기존 15종×2 + API-error 3종×2(--error-profile auto)
        + 신설 8종×2 + checker_lint 2 + 호출 계약 27 + 수정 사이클 레인 3×2 + 음성 · 양성 단독 레인
-       = exit 대조 121 + 줄 대조 19(GROUP_CASES — 아래) = 140(실행 표 끝 «케이스» 줄이 실측이다).
+       = exit 대조 121 + 줄 대조 21(GROUP_CASES — 아래) = 142(실행 표 끝 «케이스» 줄이 실측이다).
 
 의미 묶음 줄 대조(2.28.0 · #654~#656 · 설계 7.4): exit 만 보는 레인은 ⓓ 후보 줄(exit 불산입)과
 줄 글자(#656 주어)를 못 본다 — 이 레인은 거름 규칙의 줄 전부를 글자 그대로 기대와 대조한다.
@@ -141,6 +141,8 @@ RUNTIME_CACHE: "dict[str, tuple[str, ...]]" = {
     "skeleton/good_grouped": (
         "application/orders/domain_layer/shared_value_object/removed/__pycache__/gone.cpython-39.pyc",
         "application/orders/domain_layer/domain_service/pricing/old/__pycache__/gone.cpython-39.pyc",
+        # F4-147 — application/ 에 __init__.py 가 있으면 생기는 캐시 폴더(BC 가 아니다).
+        "application/__pycache__/__init__.cpython-39.pyc",
     ),
     "composition_root/bad_rules": (
         "application/orders/domain_layer/order/value_object/stale/__pycache__/stale_amount.cpython-39.pyc",
@@ -179,6 +181,7 @@ _SF_PRIVATE: str = ("부품 클래스 `{c}` 가 `_` 로 시작한다 — 부품 
                     "(② 로 두려면 `execute` 안에서 만든다)")
 
 # (라벨, 검사기, fixture, 거름(줄에 search 하는 정규식 · 빈 글 = 모든 줄), 기대 줄) — 기대는 리터럴(고침 번호는 설계 7.4).
+_PURE562: str = " — 한 글자라도 나오면 위반(Shared Kernel 차단 기계)"
 GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
     # 19 · 20 — 묶음 · C2 · 묶음 안 승격 · 캐시만 남은 폴더(부모 · 묶음 안)는 0 줄.
     ("skeleton/good_grouped", "check-layer-skeleton.py", "skeleton/good_grouped", _ALL, ()),
@@ -402,6 +405,23 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
         " — 필요한 fixture · 도우미는 이 시험의 표준 자리(`test/conftest.py` · `test/fake/`)에 새로 쓴다",
         "[#658] tests/helpers.py: 저장소 루트 시험 폴더 — 시험은 주인의 표준 시험 자리(BC `test/` · 전역 규칙은 `framework/test/unit/`)에 둔다",
     )),
+    # F4-152 · F4-140 — 받는 쪽이 파이썬 타입으로 정해진 메서드 호출 · 묶지 않은 내장 이름은 0 줄 ·
+    # 모르는 받는 쪽 · 꺼낸 원소 · 속성 읽기 · 묶인 `any` · star import 는 그대로 · 판정할 수 없는 주석(빈 `Optional[()]`)은
+    # 죽지 않고 옛 판처럼 센다.
+    ("business_vocabulary/python_defined_names", "check-business-vocabulary.py",
+     "business_vocabulary/python_defined_names", r"^\[#562\]", (
+        "[#562] framework/pure/attribute_read.py: pure/ 에 업무 어휘 ['price', 'unit']" + _PURE562,
+        "[#562] framework/pure/element_receiver.py: pure/ 에 업무 어휘 ['title']" + _PURE562,
+        "[#562] framework/pure/empty_union.py: pure/ 에 업무 어휘 ['title']" + _PURE562,
+        "[#562] framework/pure/shadowed_any.py: pure/ 에 업무 어휘 ['any']" + _PURE562,
+        "[#562] framework/pure/star_import.py: pure/ 에 업무 어휘 ['title']" + _PURE562,
+        "[#562] framework/pure/unknown_receiver.py: pure/ 에 업무 어휘 ['title']" + _PURE562,
+    )),
+    # F4-153 — 두 단 아래 표준 broker 포트의 가짜는 0 줄 · 선언 없는 가짜는 그대로.
+    ("business_vocabulary/broker_port_fake", "check-business-vocabulary.py",
+     "business_vocabulary/broker_port_fake", r"^\[#623\]", (
+        "[#623] framework/test/fake/ghost_port.py: `ghost_port` 에 대응하는 framework 선언이 없다 — fake 와 선언은 1:1 이다",
+    )),
 ]
 
 # 설계 7.4 고침을 하나씩 옛 코드로 되돌린 변이(+ 계획 단계 2 의 둘) — (이름, 파일, 옛 글, 새 글, 돌릴 검사기).
@@ -539,6 +559,13 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
     ("#659 틀 팔 인자 없는 콜러블 판정 지움", "check-transaction-boundary.py",
      "if name in thunks or (name in untyped and not inner.args and not inner.keywords):", "if False:",
      "check-transaction-boundary.py"),
+    ("F4-147 BC 열거에서 캐시 폴더 거름 걷음", _SK, " and p.name not in SKIP_DIRS)", ")", _SK),
+    ("F4-152 파이썬이 정한 이름 빼기 걷음", "check-business-vocabulary.py",
+     "        if id(node) in python_defined:\n            continue\n", "", "check-business-vocabulary.py"),
+    ("F4-153 포트 선언을 한 단만 찾음", "check-business-vocabulary.py",
+     'port_stems = {p.stem for p in _py_files(fw)\n                      if p.stem.endswith("_port") and t not in p.parents}',
+     'port_stems = {p.stem for cap in fw.iterdir() if cap.is_dir()\n                      for p in cap.glob("*_port.py")}',
+     "check-business-vocabulary.py"),
 ]
 
 

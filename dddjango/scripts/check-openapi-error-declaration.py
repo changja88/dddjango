@@ -335,8 +335,10 @@ def _parse_config(argv: list[str]) -> Config:
     explicit = profile in {"dddjango-code-json", "preserve-established"}
     strict_content = profile == "dddjango-code-json"
     scope = _one("--scope", namespace.scope, required=explicit, issues=issues)
+    # anchor-baseline 모드에선 앵커 트리에 없는 api 모듈(새 scope 의 API 인스턴스)이 걷혀 없는 것이 정상이다.
     api_module = _one(
-        "--api-module", namespace.api_module, required=explicit, issues=issues
+        "--api-module", namespace.api_module,
+        required=explicit and not namespace.anchor_baseline, issues=issues
     )
     controller_modules = _unique(
         "--controller-module", namespace.controller_module, issues
@@ -534,7 +536,7 @@ def _code_inventory(root: Path) -> CodeInventory:
 def _code_source_paths(config: Config) -> tuple[CodeInventory, tuple[Path, ...]]:
     inventory = _code_inventory(config.root)
     inventory_paths = set(inventory.relative_paths)
-    required = [Path(config.api_module or "")]
+    required = [Path(config.api_module)] if config.api_module is not None else []
     required.extend(Path(raw) for raw in config.controller_modules)
     required.append(COMMON_ERROR_PATH)
     if config.error_bcs:
@@ -3362,8 +3364,10 @@ def _code_findings(
     config: Config,
 ) -> tuple[list[str], list[Finding], set[tuple[str, str, int]]]:
     parsed_by_path = _parse_code_sources(config)
-    api = parsed_by_path[Path(config.api_module or "")]
-    findings, selected_imports = _api_module_findings(api)
+    findings: list[Finding] = []
+    selected_imports: frozenset[str] = frozenset()
+    if config.api_module is not None:
+        findings, selected_imports = _api_module_findings(parsed_by_path[Path(config.api_module)])
     controller_operations: list[Operation] = []
     for raw in config.controller_modules:
         controller = parsed_by_path[Path(raw)]

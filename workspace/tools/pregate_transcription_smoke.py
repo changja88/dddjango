@@ -521,7 +521,8 @@ class RepositoryForecastTest(unittest.TestCase):
             (["delete_many(ids: frozenset[UUID]) -> None"], [("#597", True)]),
             (["store(record: FortuneRecord) -> None", "persist_all(records: list[FortuneRecord]) -> None"],
              [("#597", True), ("#597", True)]),
-            (["add_all(records: list[FortuneRecord]) -> None", "update_score(record_id: UUID, score: int) -> None"], []),
+            (["add_all(records: list[FortuneRecord]) -> None", "update_score(record_id: UUID, score: int) -> None"],
+             [("#287", True), ("#599", True)]),
         ]:
             with self.subTest(methods=methods):
                 self.assertEqual(self.outcome(methods), expected)

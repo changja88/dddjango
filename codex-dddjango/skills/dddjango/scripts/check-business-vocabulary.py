@@ -110,9 +110,312 @@ def _framework_dirs(root: Path) -> list[Path]:
     return [fw] if fw.is_dir() else []
 
 
-def _identifier_tokens(mod: ast.Module) -> set[str]:
+# ── 뜻을 파이썬이 정하는 이름 — F4-152 · F4-140 ──────────────────────────────
+# 받는 쪽이 파이썬 타입으로 «정해진» 메서드 호출(`value.items()` — 주석 · 타입 별칭 · 리터럴 · 내장 생성자 · 그런 값에서 꺼낸 값)과
+# 파일 안에서 묶지 않은 내장 이름(`any(...)` · `-> object`)은 업무 어휘가 아니다. 받는 쪽 타입을 모르면(업무 객체 · 주석 없는
+# 인자 · `import *` 가 있는 파일) 그대로 센다 — `lesson.title()` 의 `title` 은 계속 잡는다.
+_UNKNOWN: int = 0
+_SHALLOW: int = 1  # 그 값 자신만 파이썬 타입이다(원소는 모른다 — `dict[str, object]`)
+_DEEP: int = 2     # 그 값과 거기서 꺼낸 값이 모두 파이썬 타입이다(`dict[str, int]` · 리터럴 · JSON 값 별칭)
+
+_PY_SCALAR_TYPES = frozenset({"str", "bytes", "bytearray", "int", "float", "complex", "bool"})
+_PY_CONTAINER_TYPES = frozenset({"dict", "list", "set", "frozenset", "tuple"})
+_TYPING_MODULES = frozenset({"typing", "typing_extensions", "collections.abc"})
+_TYPING_CONTAINERS = frozenset({
+    "Dict", "List", "Set", "FrozenSet", "Tuple", "Mapping", "MutableMapping", "Sequence", "MutableSequence",
+    "AbstractSet", "MutableSet", "Iterable", "Iterator", "Collection", "KeysView", "ItemsView", "ValuesView",
+})
+_TYPING_UNIONS = frozenset({"Optional", "Union"})
+_TYPING_WRAPPERS = frozenset({"Final", "ClassVar", "Annotated", "Required", "NotRequired", "ReadOnly"})
+_DEEP_CALLS = frozenset({  # 인자와 상관없이 파이썬 값을 낸다
+    "str", "int", "float", "bool", "bytes", "complex", "len", "repr", "ascii", "chr", "ord", "hex", "oct", "bin",
+    "format", "hash", "id", "range", "isinstance", "issubclass", "callable", "hasattr", "any", "all",
+})
+_CONTAINER_CALLS = frozenset({"dict", "list", "set", "frozenset", "tuple", "sorted", "reversed", "enumerate", "zip",
+                              "bytearray"})
+
+
+def _value_bindings(mod: ast.Module) -> dict[str, list[tuple[str, ast.AST | None]]]:
+    """이름마다 그 이름을 묶는 자리 — 파일 전체에서 범위를 가르지 않는다(한 자리라도 모르면 그 이름은 모른다)."""
+    out: dict[str, list[tuple[str, ast.AST | None]]] = {}
+    covered: set[int] = set()
+
+    def bind(name: str, kind: str, node: ast.AST | None = None) -> None:
+        out.setdefault(name, []).append((kind, node))
+
+    def targets(target: ast.AST, kind: str, node: ast.AST) -> None:
+        for n in ast.walk(target):
+            if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Store):
+                covered.add(id(n))
+                bind(n.id, kind, node)
+
+    for node in ast.walk(mod):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+            a: ast.arguments = node.args
+            for arg in (*a.posonlyargs, *a.args, *a.kwonlyargs):
+                bind(arg.arg, "annotation", arg.annotation)
+            for arg in (a.vararg, a.kwarg):
+                if arg is not None:
+                    bind(arg.arg, "unknown")
+            if not isinstance(node, ast.Lambda):
+                bind(node.name, "unknown")
+        elif isinstance(node, ast.ClassDef):
+            bind(node.name, "unknown")
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            covered.add(id(node.target))
+            bind(node.target.id, "annotation", node.annotation)
+        elif isinstance(node, ast.Assign):
+            for t in node.targets:
+                if isinstance(t, ast.Name):
+                    covered.add(id(t))
+                    bind(t.id, "value", node.value)
+                else:
+                    targets(t, "element", node.value)
+        elif isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name):
+            covered.add(id(node.target))
+            bind(node.target.id, "value",
+                 ast.BinOp(left=ast.Name(id=node.target.id, ctx=ast.Load()), op=node.op, right=node.value))
+        elif isinstance(node, ast.NamedExpr):
+            covered.add(id(node.target))
+            bind(node.target.id, "value", node.value)
+        elif isinstance(node, (ast.For, ast.AsyncFor, ast.comprehension)):
+            targets(node.target, "element", node.iter)
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            for alias in node.names:
+                bind((alias.asname or alias.name).split(".")[0], "unknown")
+        elif isinstance(node, (ast.Global, ast.Nonlocal)):
+            for name in node.names:
+                bind(name, "unknown")
+        elif isinstance(node, ast.ExceptHandler) and node.name:
+            bind(node.name, "unknown")
+        elif type(node).__name__ in ("MatchAs", "MatchStar", "TypeVar", "ParamSpec", "TypeVarTuple") \
+                and getattr(node, "name", None):
+            bind(node.name, "unknown")
+        elif type(node).__name__ == "MatchMapping" and getattr(node, "rest", None):
+            bind(node.rest, "unknown")
+    for node in ast.walk(mod):
+        if isinstance(node, ast.Name) and isinstance(node.ctx, (ast.Store, ast.Del)) and id(node) not in covered:
+            bind(node.id, "unknown")  # with · del · 타입 별칭 이름 같은 다른 묶임
+    return out
+
+
+class _ModuleNames:
+    """모듈 하나의 묶임 · import 출처 · 모듈 수준 타입 별칭(`type X = …` 별칭 따라가기는 3.12+ 해석기에서만)."""
+
+    def __init__(self, root: Path, path: Path, mod: ast.Module) -> None:
+        self.path: Path = path
+        self.binds: dict[str, list[tuple[str, ast.AST | None]]] = _value_bindings(mod)
+        self.star: bool = False
+        self.typing_names: dict[str, str] = {}                  # 지역 이름 → typing 계열 원래 이름
+        self.framework_names: dict[str, tuple[Path, str]] = {}  # 지역 이름 → (framework 모듈 파일, 원래 이름)
+        self.aliases: dict[str, ast.expr] = {}
+        for node in ast.walk(mod):
+            if not isinstance(node, ast.ImportFrom):
+                continue
+            base: str | None = _absolute_module(root, path, node)
+            for a in node.names:
+                self.star = self.star or a.name == "*"
+                if base in _TYPING_MODULES:
+                    self.typing_names[a.asname or a.name] = a.name
+                elif base is not None and base.split(".")[0] == "framework":
+                    target: Path | None = _module_file(root, base)
+                    if target is not None:
+                        self.framework_names[a.asname or a.name] = (target, a.name)
+        type_alias = getattr(ast, "TypeAlias", None)  # `type X = …` (3.12+)
+        for node in mod.body:
+            if type_alias is not None and isinstance(node, type_alias) and not getattr(node, "type_params", None):
+                self.aliases[node.name.id] = node.value
+            elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.value is not None \
+                    and self.type_name(node.annotation) == ("typing", "TypeAlias"):
+                self.aliases[node.target.id] = node.value
+            elif isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name) \
+                    and isinstance(node.value, (ast.Name, ast.Subscript, ast.BinOp)):
+                self.aliases[node.targets[0].id] = node.value
+
+    def bound(self, name: str) -> bool:
+        return name in self.binds
+
+    def type_name(self, node: ast.AST) -> tuple[str, object] | None:
+        """주석 자리 이름의 출처 — ("builtin"|"typing", 이름) · ("alias", (파일, 이름)) · 모르면 None."""
+        if not isinstance(node, ast.Name):
+            return None
+        if node.id in self.typing_names:
+            return ("typing", self.typing_names[node.id])
+        if node.id in self.framework_names:
+            return ("alias", self.framework_names[node.id])
+        if node.id in self.aliases:
+            return ("alias", (self.path, node.id))
+        if not self.bound(node.id) and node.id in vocab.PY_BUILTIN_NAMES:
+            return ("builtin", node.id)
+        return None
+
+
+def _absolute_module(root: Path, path: Path, node: ast.ImportFrom) -> str | None:
+    if not node.level:
+        return node.module
+    try:
+        parts: list[str] = list(path.parent.relative_to(root).parts)
+    except ValueError:
+        return None
+    if node.level - 1 > len(parts):
+        return None
+    base: list[str] = parts[: len(parts) - (node.level - 1)]
+    return ".".join(base + ([node.module] if node.module else [])) or None
+
+
+def _module_file(root: Path, dotted: str) -> Path | None:
+    rel: Path = Path(*dotted.split("."))
+    for cand in (root / rel.with_suffix(".py"), root / rel / "__init__.py"):
+        if cand.is_file():
+            return cand
+    return None
+
+
+class _PyDefined:
+    """파일마다 «뜻을 파이썬이 정하는» 노드(묶지 않은 내장 이름 · 정해진 받는 쪽의 파이썬 타입 속성)를 고른다."""
+
+    def __init__(self, root: Path) -> None:
+        self.root: Path = root
+        self._modules: dict[Path, _ModuleNames | None] = {}
+
+    def _names(self, path: Path, mod: ast.Module | None = None) -> _ModuleNames | None:
+        if path not in self._modules:
+            parsed: ast.Module | None = mod if mod is not None else _parse(path)
+            self._modules[path] = _ModuleNames(self.root, path, parsed) if parsed is not None else None
+        return self._modules[path]
+
+    def nodes(self, path: Path, mod: ast.Module) -> frozenset[int]:
+        """판정할 수 없으면(깊은 식 · 이상한 주석) 빈 집합 — 그 파일은 옛 판처럼 이름을 다 센다."""
+        try:
+            return self._nodes(path, mod)
+        except (ValueError, IndexError, RecursionError):
+            return frozenset()
+
+    def _nodes(self, path: Path, mod: ast.Module) -> frozenset[int]:
+        names: _ModuleNames | None = self._names(path, mod)
+        if names is None or names.star:
+            return frozenset()
+        env: dict[str, int] = {name: _DEEP for name in names.binds}
+        for _ in range(len(env) + 2):  # 가장 큰 고정점 — 묶는 자리 하나라도 모르면 모른다
+            new: dict[str, int] = {name: min(self._binding(kind, node, names, env) for kind, node in items)
+                                   for name, items in names.binds.items()}
+            if new == env:
+                break
+            env = new
+        out: set[int] = set()
+        for node in ast.walk(mod):
+            if isinstance(node, ast.Name) and not names.bound(node.id) and node.id in vocab.PY_BUILTIN_NAMES:
+                out.add(id(node))
+            elif isinstance(node, ast.Attribute) and node.attr in vocab.PY_TYPE_METHODS:
+                receiver: ast.expr = node.value
+                if isinstance(receiver, ast.Name) and not names.bound(receiver.id) \
+                        and receiver.id in _PY_SCALAR_TYPES | _PY_CONTAINER_TYPES:
+                    out.add(id(node))  # `str.title` · `dict.fromkeys(…)` — 받는 쪽이 내장 타입 자신
+                elif self._value(receiver, names, env) >= _SHALLOW:
+                    out.add(id(node))
+        return frozenset(out)
+
+    def _binding(self, kind: str, node: ast.AST | None, names: _ModuleNames, env: dict[str, int]) -> int:
+        if kind == "annotation":
+            return self._annotation(node, names)
+        if kind == "value":
+            return self._value(node, names, env)
+        if kind == "element":  # 풀어 받기 · for · 컴프리헨션 — 꺼낸 값은 통째로 파이썬 값일 때만 정해진다
+            return _DEEP if self._value(node, names, env) == _DEEP else _UNKNOWN
+        return _UNKNOWN
+
+    def _alias(self, path: Path, name: str, stack: frozenset[tuple[Path, str]]) -> int:
+        if (path, name) in stack:
+            return _DEEP  # 자기를 가리키는 재귀 별칭(JSON 값) — 나머지 갈래가 정한다
+        names: _ModuleNames | None = self._names(path)
+        if names is None or names.star:
+            return _UNKNOWN
+        if name in names.aliases:
+            return self._annotation(names.aliases[name], names, stack | {(path, name)})
+        if name in names.framework_names:
+            return self._alias(*names.framework_names[name], stack | {(path, name)})
+        return _UNKNOWN
+
+    def _annotation(self, node: ast.AST | None, names: _ModuleNames,
+                    stack: frozenset[tuple[Path, str]] = frozenset()) -> int:
+        if isinstance(node, ast.Constant):
+            if node.value is None or node.value is Ellipsis:
+                return _DEEP
+            if isinstance(node.value, str):  # 앞선 참조 `"NoticeOut"`
+                try:
+                    return self._annotation(ast.parse(node.value, mode="eval").body, names, stack)
+                except SyntaxError:
+                    return _UNKNOWN
+            return _UNKNOWN
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+            return min(self._annotation(node.left, names, stack), self._annotation(node.right, names, stack))
+        if isinstance(node, ast.Name):
+            kind = names.type_name(node)
+            if kind is not None and kind[0] == "alias":
+                return self._alias(*kind[1], stack)
+            if kind is not None and kind[1] in _PY_SCALAR_TYPES:
+                return _DEEP
+            if kind is not None and (kind[1] in _PY_CONTAINER_TYPES or kind[1] in _TYPING_CONTAINERS):
+                return _SHALLOW
+            return _UNKNOWN
+        if isinstance(node, ast.Subscript):
+            kind = names.type_name(node.value)
+            params: list[ast.expr] = list(node.slice.elts) if isinstance(node.slice, ast.Tuple) else [node.slice]
+            if kind is None or kind[0] == "alias" or not params:
+                return _UNKNOWN
+            if kind[1] == "Literal":
+                return _DEEP
+            if kind[1] in _TYPING_UNIONS:
+                return min(self._annotation(p, names, stack) for p in params)
+            if kind[1] in _TYPING_WRAPPERS:
+                return self._annotation(params[0], names, stack)
+            if kind[1] in _PY_CONTAINER_TYPES or kind[1] in _TYPING_CONTAINERS:
+                return _DEEP if all(self._annotation(p, names, stack) == _DEEP for p in params) else _SHALLOW
+        return _UNKNOWN
+
+    def _value(self, node: ast.AST | None, names: _ModuleNames, env: dict[str, int]) -> int:
+        def deep(*items: ast.AST | None) -> bool:
+            return all(item is None or self._value(item, names, env) == _DEEP for item in items)
+
+        def plain(items: list[ast.expr]) -> list[ast.expr]:
+            return [i.value if isinstance(i, ast.Starred) else i for i in items]
+
+        if isinstance(node, (ast.Constant, ast.JoinedStr, ast.Compare)):
+            return _DEEP
+        if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+            return _DEEP if deep(*plain(node.elts)) else _SHALLOW
+        if isinstance(node, ast.Dict):
+            return _DEEP if deep(*node.keys, *node.values) else _SHALLOW
+        if isinstance(node, (ast.ListComp, ast.SetComp, ast.GeneratorExp)):
+            return _DEEP if deep(node.elt) else _SHALLOW
+        if isinstance(node, ast.DictComp):
+            return _DEEP if deep(node.key, node.value) else _SHALLOW
+        if isinstance(node, ast.Name):
+            return env.get(node.id, _UNKNOWN)
+        if isinstance(node, ast.BinOp):
+            return _DEEP if deep(node.left, node.right) else _UNKNOWN
+        if isinstance(node, ast.Subscript):
+            return _DEEP if deep(node.value) else _UNKNOWN
+        if isinstance(node, ast.Attribute):
+            return _DEEP if node.attr in vocab.PY_TYPE_METHODS and deep(node.value) else _UNKNOWN
+        if isinstance(node, ast.Call):
+            args: list[ast.expr] = plain(node.args) + [k.value for k in node.keywords]
+            func: ast.expr = node.func
+            if isinstance(func, ast.Name) and not names.bound(func.id):
+                if func.id in _DEEP_CALLS:
+                    return _DEEP
+                if func.id in _CONTAINER_CALLS:
+                    return _DEEP if deep(*args) else _SHALLOW
+            elif isinstance(func, ast.Attribute) and func.attr in vocab.PY_TYPE_METHODS:
+                return _DEEP if deep(func.value, *args) else _UNKNOWN
+        return _UNKNOWN
+
+
+def _identifier_tokens(mod: ast.Module, python_defined: frozenset[int] = frozenset()) -> set[str]:
     out: set[str] = set()
     for node in ast.walk(mod):
+        if id(node) in python_defined:
+            continue
         if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
             out |= vocab.tokens(node.name)
         elif isinstance(node, ast.Name):
@@ -287,7 +590,7 @@ def _scrub_for_name_scan(source: str, keep_words: set) -> str:
 # ── 격리 — #46 · #47 · #52 · #416 · #426 · #425 · #615~#619 · #587 ─────────
 
 def _check_isolation(root: Path, fw: Path, union: set, bc_names: set, agg_camels: set,
-                     f: Findings, cand: Candidates) -> None:
+                     f: Findings, cand: Candidates, py_defined: _PyDefined) -> None:
     for py in _py_files(fw):
         rel_parts = py.relative_to(fw).parts
         in_test = rel_parts and rel_parts[0] == "test"
@@ -332,7 +635,7 @@ def _check_isolation(root: Path, fw: Path, union: set, bc_names: set, agg_camels
                       f"framework 파일에 BC 이름 {name_hits} — BC 하나를 지웠을 때 바뀌는 파일은 "
                       "공용 칸으로 올리지 않는다")
         # 업무 어휘 — 계약 자리는 확정, 그 밖은 후보(#448 — 물음 소유).
-        idents = _identifier_tokens(mod)
+        idents = _identifier_tokens(mod, py_defined.nodes(py, mod))
         hit = sorted(idents & union)
         if hit:
             cap_dir = fw / rel_parts[0] if rel_parts else fw
@@ -477,8 +780,9 @@ def _check_framework_test(root: Path, fw: Path, f: Findings) -> None:
                           "framework/test 에 팩토리 — 팩토리는 모델을 알아 여기 못 온다(#392·#620)")
     fake = t / "fake"
     if fake.is_dir():
-        port_stems = {p.stem for cap in fw.iterdir() if cap.is_dir()
-                      for p in cap.glob("*_port.py")}
+        # 선언은 framework 어디든(test/ 밖) — 표준 broker 포트는 broker/internal|external/ 두 단 아래다(트리 146 · 149행).
+        port_stems = {p.stem for p in _py_files(fw)
+                      if p.stem.endswith("_port") and t not in p.parents}
         for py in sorted(fake.glob("*.py")):
             if py.name == "__init__.py":
                 continue
@@ -509,7 +813,7 @@ def _check_framework_test(root: Path, fw: Path, f: Findings) -> None:
 # ── pure — #560 · #561 · #562 ──────────────────────────────────────────────
 
 
-def _check_pure(root: Path, fw: Path, union: set, f: Findings) -> None:
+def _check_pure(root: Path, fw: Path, union: set, f: Findings, py_defined: _PyDefined) -> None:
     pure = fw / "pure"
     if not pure.is_dir():
         return
@@ -534,7 +838,7 @@ def _check_pure(root: Path, fw: Path, union: set, f: Findings) -> None:
                         f.add("#560", _rel(root, py, node.lineno),
                               f"`{m}` — pure/ 는 밖의 저장소 파일을 import 하지 않는다"
                               "(같은 pure/ 안만 예외)")
-        idents = _identifier_tokens(mod)
+        idents = _identifier_tokens(mod, py_defined.nodes(py, mod))
         hit = sorted(idents & union)  # 동음 낱말(json · keys 등)은 all_vocab 이 이미 뺐다
         if hit:
             f.add("#562", _rel(root, py),
@@ -625,12 +929,13 @@ def main(argv: list[str]) -> int:
                          "저장소 루트 패키지가 표준 라이브러리 모듈명과 겹친다 — import 가 가려진다")
 
     fws = _framework_dirs(root)
+    py_defined = _PyDefined(root)
     for fw in fws:
         _check_structure(root, fw, tech, findings, cand)
-        _check_isolation(root, fw, union, bc_names, agg_camels, findings, cand)
+        _check_isolation(root, fw, union, bc_names, agg_camels, findings, cand, py_defined)
         _check_contract_evolution(root, fw, findings, cand)
         _check_framework_test(root, fw, findings)
-        _check_pure(root, fw, union, findings)
+        _check_pure(root, fw, union, findings, py_defined)
     _check_bc_side(root, findings)
 
     # #434 — <project>/ 의 접힌 규칙 파일.

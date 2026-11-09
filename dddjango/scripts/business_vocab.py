@@ -117,6 +117,48 @@ FRAMEWORK_HOMONYMS = frozenset({
 })
 
 
+# 뜻을 파이썬이 정하는 이름(F4-152 · F4-140) — framework 쪽 업무 어휘 검사가 «받는 쪽이 파이썬 타입으로 정해진 메서드 호출»과
+# «파일 안에서 묶지 않은 내장 이름»을 업무 어휘로 세지 않을 때의 재료. 검사기를 돌리는 인터프리터에서 뽑지 않고 글자로 박는다
+# (판 · site 적재에 따라 결과가 갈리지 않게 — 3.9 ~ 3.15 합집합). site 가 더하는 이름(help · exit · quit · license · credits ·
+# copyright)은 넣지 않는다.
+PY_BUILTIN_NAMES = frozenset({
+    "abs", "aiter", "all", "anext", "any", "ascii", "bin", "bool", "breakpoint", "bytearray", "bytes", "callable", "chr",
+    "classmethod", "compile", "complex", "delattr", "dict", "dir", "divmod", "enumerate", "eval", "exec", "filter", "float",
+    "format", "frozendict", "frozenset", "getattr", "globals", "hasattr", "hash", "hex", "id", "input", "int", "isinstance",
+    "issubclass", "iter", "len", "list", "locals", "map", "max", "memoryview", "min", "next", "object", "oct", "open", "ord",
+    "pow", "print", "property", "range", "repr", "reversed", "round", "sentinel", "set", "setattr", "slice", "sorted",
+    "staticmethod", "str", "sum", "super", "tuple", "type", "vars", "zip",
+    "Ellipsis", "NotImplemented",
+    "ArithmeticError", "AssertionError", "AttributeError", "BaseException", "BaseExceptionGroup", "BlockingIOError",
+    "BrokenPipeError", "BufferError", "BytesWarning", "ChildProcessError", "ConnectionAbortedError", "ConnectionError",
+    "ConnectionRefusedError", "ConnectionResetError", "DeprecationWarning", "EOFError", "EncodingWarning", "EnvironmentError",
+    "Exception", "ExceptionGroup", "FileExistsError", "FileNotFoundError", "FloatingPointError", "FutureWarning",
+    "GeneratorExit", "IOError", "ImportCycleError", "ImportError", "ImportWarning", "IndentationError", "IndexError",
+    "InterruptedError", "IsADirectoryError", "KeyError", "KeyboardInterrupt", "LookupError", "MemoryError",
+    "ModuleNotFoundError", "NameError", "NotADirectoryError", "NotImplementedError", "OSError", "OverflowError",
+    "PendingDeprecationWarning", "PermissionError", "ProcessLookupError", "PythonFinalizationError", "RecursionError",
+    "ReferenceError", "ResourceWarning", "RuntimeError", "RuntimeWarning", "StopAsyncIteration", "StopIteration",
+    "SyntaxError", "SyntaxWarning", "SystemError", "SystemExit", "TabError", "TimeoutError", "TypeError",
+    "UnboundLocalError", "UnicodeDecodeError", "UnicodeEncodeError", "UnicodeError", "UnicodeTranslateError",
+    "UnicodeWarning", "UserWarning", "ValueError", "Warning", "ZeroDivisionError",
+})
+
+# str · bytes · bytearray · dict · list · set · frozenset · tuple · int · float · complex · bool 의 공개 속성 이름(3.9 ~ 3.15 합집합 ·
+# collections.abc 컨테이너의 메서드는 이 안에 든다).
+PY_TYPE_METHODS = frozenset({
+    "add", "append", "as_integer_ratio", "bit_count", "bit_length", "capitalize", "casefold", "center", "clear",
+    "conjugate", "copy", "count", "decode", "denominator", "difference", "difference_update", "discard", "encode",
+    "endswith", "expandtabs", "extend", "find", "format", "format_map", "from_bytes", "from_number", "fromhex", "fromkeys",
+    "get", "hex", "imag", "index", "insert", "intersection", "intersection_update", "is_integer", "isalnum", "isalpha",
+    "isascii", "isdecimal", "isdigit", "isdisjoint", "isidentifier", "islower", "isnumeric", "isprintable", "isspace",
+    "issubset", "issuperset", "istitle", "isupper", "items", "join", "keys", "ljust", "lower", "lstrip", "maketrans",
+    "numerator", "partition", "pop", "popitem", "real", "remove", "removeprefix", "removesuffix", "replace", "resize",
+    "reverse", "rfind", "rindex", "rjust", "rpartition", "rsplit", "rstrip", "setdefault", "sort", "split", "splitlines",
+    "startswith", "strip", "swapcase", "symmetric_difference", "symmetric_difference_update", "take_bytes", "title",
+    "to_bytes", "translate", "union", "update", "upper", "values", "zfill",
+})
+
+
 def all_vocab(root: Path) -> set[str]:
     """서버 BC 합집합 — framework · broker 쪽 업무 어휘 검사(#47·#587·#617·#562·#518 · 후보 #448·#425 · ⓓ#36)의 재료.
 
