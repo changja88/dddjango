@@ -142,6 +142,7 @@ Operation 구현 기준:
   `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 오류
   `(status, schema)` tuple, raw `Response`/dict, 오류 helper/factory/serializer/mapper,
   등록 handler/decorator로 우회하지 않는다(§6.2).
+- `dddjango-code-json` 표면에서 빈 값 · 범위 같은 입력 확인은 입력 Schema 선언(`Field` 제약 · `Query` · `Header` · `Path`)으로 둔다 — 응답은 framework 422 다. operation 본문에서 application call 앞의 분기로 오류를 반환하거나 raise 하지 않는다(§6.3 의 `raise HttpError(406)` · `raise HttpError(415)` 만 예외). 로그인과 권한은 framework 인증 틀(§4)이, 요청의 뜻 판정은 유스케이스가 맡는다(controller 는 그 뒤에 catch 한다). 승인된 `400` 을 바꾸는 일은 G1 에서 계약 변경(`400` → `422`) 또는 사용자 승인 빚 목록으로 간다.
 - **operation을 문서화한다** — `summary`·`description`·`tags`를 decorator 인자로 주어 Swagger UI의 그룹과 설명을 채운다. 외부 client가 읽는 계약 문서다.
 - **반환 타입을 명시한다** — `-> object`처럼 정보 없는 타입을 쓰지 않는다. 직렬화 자체는 `response=`가 결정하지만, 반환 타입 annotation은 사람·mypy를 위한 계약 표현이다. 직접 반환하는 성공 Schema와 BC `ErrorSchema`/`Status`를 실제 흐름에 맞게 표현한다. **반환 주석의 `Status` 상자는 하나다** — `-> Status[Out | ErrA | ErrB]`(성공·오류 union 을 한 `Status` 안에) 또는 `-> Out | Status[Err]`. `Status[A] | Status[B]`(상자 둘)는 쓰지 않는다: `Status[T]` 의 `T` 는 불변이라 concrete 값을 직접 넣는 순간 mypy strict 가 `[return-value]` 로 막히고, 값 변수를 base 로 주석해 통과시킨 형태도 같은 금지다 — 형태 자체를 금지한다(#648).
 - 선언된 JSON 성공은 Schema 또는 `Status`로 반환한다. `FileResponse`,
@@ -427,7 +428,7 @@ operation 수준에 auth를 연결할 수 있다. 프로젝트의 기존 auth me
 Authorization은 authenticated caller가 action/object에 접근할 수 있는지
 판정한다.
 
-- 단일 endpoint에만 해당하는 단순 gate는 adapter에서 연결할 수 있다.
+- 단일 endpoint에만 해당하는 단순 gate는 adapter에서 `auth=` · permission 틀로 연결할 수 있다.
 - 여러 entry point에서 재사용되는 object/action rule은 service/domain policy로
   옮긴다.
 - authenticated caller가 권한이 없으면 `403`으로 응답한다.

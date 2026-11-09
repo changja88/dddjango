@@ -7,7 +7,7 @@ FROZEN 이므로 실측은 이 fixture 결정 레인만 쓴다.
 
 케이스: skeleton 9 + 기존 15종×2 + API-error 3종×2(--error-profile auto)
        + 신설 8종×2 + checker_lint 2 + 호출 계약 27 + 수정 사이클 레인 3×2 + 음성 · 양성 단독 레인
-       = exit 대조 121 + 줄 대조 21(GROUP_CASES — 아래) = 142(실행 표 끝 «케이스» 줄이 실측이다).
+       = exit 대조 121 + 줄 대조 24(GROUP_CASES — 아래) = 145(실행 표 끝 «케이스» 줄이 실측이다).
 
 의미 묶음 줄 대조(2.28.0 · #654~#656 · 설계 7.4): exit 만 보는 레인은 ⓓ 후보 줄(exit 불산입)과
 줄 글자(#656 주어)를 못 본다 — 이 레인은 거름 규칙의 줄 전부를 글자 그대로 기대와 대조한다.
@@ -402,7 +402,8 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
     # #658 — 루트 시험 폴더 파일 · 루트 시험 import 는 파일마다 한 줄(빈 `tests/__init__.py` · `tests/web/` 은 줄 없음).
     ("test_config/bad_rules", "check-test-config.py", "test_config/bad_rules", r"^\[#658\]", (
         "[#658] application/orders/test/unit/test_root_helper.py: 저장소 루트 시험 폴더(`tests` · `test` 패키지)를 import 한다"
-        " — 필요한 fixture · 도우미는 이 시험의 표준 자리(`test/conftest.py` · `test/fake/`)에 새로 쓴다",
+        " — 필요한 fixture 는 이 시험의 BC `test/conftest.py` 에, 도우미는 쓰는 시험 폴더(`unit/` · `integration/` · `e2e/`) 안에 새로 쓴다"
+        "(`test/fake/` 는 포트의 가짜 구현 자리다)",
         "[#658] tests/helpers.py: 저장소 루트 시험 폴더 — 시험은 주인의 표준 시험 자리(BC `test/` · 전역 규칙은 `framework/test/unit/`)에 둔다",
     )),
     # F4-152 · F4-140 — 받는 쪽이 파이썬 타입으로 정해진 메서드 호출 · 묶지 않은 내장 이름은 0 줄 ·
@@ -416,6 +417,29 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
         "[#562] framework/pure/shadowed_any.py: pure/ 에 업무 어휘 ['any']" + _PURE562,
         "[#562] framework/pure/star_import.py: pure/ 에 업무 어휘 ['title']" + _PURE562,
         "[#562] framework/pure/unknown_receiver.py: pure/ 에 업무 어휘 ['title']" + _PURE562,
+    )),
+    # F4-62 ① · F4-138 — BC `test/` 직계 conftest.py 는 #490 대상이 아니다(다른 칸의 conftest · 직계의 다른 파일은 그대로).
+    ("skeleton/bc_test_conftest", "check-layer-skeleton.py", "skeleton/bc_test_conftest", r"^\[#490\]", (
+        "[#490] application/orders/domain_layer/conftest.py: 트리가 이 층에 이름을 준 파일이 아니다",
+        "[#490] application/orders/test/helpers.py: 트리가 이 층에 이름을 준 파일이 아니다",
+    )),
+    # F4-62 ① — BC `test/` 직계 conftest.py 의 autouse=True 만 #383(autouse=False · 인자 없는 · 아래 폴더의 conftest 는 0 줄) ·
+    # F4-138 추기 — e2e 의 자기 BC cron_job 입구 import 는 #390 이 아니다(다른 driving_layer import 는 그대로).
+    ("test_config/bc_conftest_entrances", "check-test-config.py", "test_config/bc_conftest_entrances", r"^\[#(383|390)\]", (
+        "[#383] application/orders/test/conftest.py: `database_for_every_test` — BC `test/conftest.py` 의 `autouse=True` 고정물은 unit 까지 함께 켠다"
+        "(폴더 이름만 보고 무엇을 켜는지 알아야 한다) — 쓰는 시험이 인자로 받게 하거나 그 폴더의 `conftest.py` 로 옮긴다",
+        "[#390] application/orders/test/e2e/test_place_order_direct.py: `application.orders.driving_layer.api.order.order_controller` import"
+        " — `test/e2e/` 는 blackbox 다(입구에서 출구까지 한 흐름 통째로): 자기 BC 구현 칸 import 는 입구 우회 신호다",
+    )),
+    # F4-94 — 자기 event_wiring → 자기 event_router 한 쌍만 #101 부칙(`from … import event_router` · 함수 안 import).
+    # 구독 함수 · 이름이 섞인 import · 다른 결선 파일은 그대로.
+    ("composition_root/event_router_wiring", "check-composition-root.py", "composition_root/event_router_wiring", r"^\[#101\]", (
+        "[#101] application/billing/composition_root/event_wiring.py:1: `application.billing.driving_layer.event_subscription` — "
+        "BC 안쪽과 composition_root 은 자기 BC 의 driving 층을 import 하지 않는다(rd-2 · 타 BC 는 open_host_service 만 — #13/#102)",
+        "[#101] application/shipping/composition_root/dependency_wiring.py:1: `application.shipping.driving_layer.event_subscription.event_router` — "
+        "BC 안쪽과 composition_root 은 자기 BC 의 driving 층을 import 하지 않는다(rd-2 · 타 BC 는 open_host_service 만 — #13/#102)",
+        "[#101] application/shipping/composition_root/event_wiring.py:3: `application.shipping.driving_layer.event_subscription.parcel_sent_subscription` — "
+        "BC 안쪽과 composition_root 은 자기 BC 의 driving 층을 import 하지 않는다(rd-2 · 타 BC 는 open_host_service 만 — #13/#102)",
     )),
     # F4-153 — 두 단 아래 표준 broker 포트의 가짜는 0 줄 · 선언 없는 가짜는 그대로.
     ("business_vocabulary/broker_port_fake", "check-business-vocabulary.py",
@@ -562,6 +586,19 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
     ("F4-147 BC 열거에서 캐시 폴더 거름 걷음", _SK, " and p.name not in SKIP_DIRS)", ")", _SK),
     ("F4-152 파이썬이 정한 이름 빼기 걷음", "check-business-vocabulary.py",
      "        if id(node) in python_defined:\n            continue\n", "", "check-business-vocabulary.py"),
+    ("F4-138 test/ 직계 conftest 면제 걷음", _SK, 'if row.r == _BC_TEST_ROW and f.name == "conftest.py":', "if False:", _SK),
+    ("F4-62 autouse 막기 걷음", "check-test-config.py", 'if rel_in.as_posix() == "conftest.py":', "if False:", "check-test-config.py"),
+    ("F4-138 추기 cron_job 입구 빼기 걷음", "check-test-config.py", "and parts_own[2:4] != CRON_JOB_ENTRANCE", "and True",
+     "check-test-config.py"),
+    ("F4-94 event_router 쌍 부칙 걷음", "check-composition-root.py", "if (lineno, path_str) in allowed:", "if False:",
+     "check-composition-root.py"),
+    ("F4-94 섞인 이름도 받음", "check-composition-root.py",
+     "ends_with(node.module, package) and all(alias.name == _EVENT_ROUTER_NAME for alias in node.names)",
+     "ends_with(node.module, package) and any(alias.name == _EVENT_ROUTER_NAME for alias in node.names)",
+     "check-composition-root.py"),
+    ("F4-94 event_wiring 밖에도 부칙", "check-composition-root.py",
+     'if seg == "composition_root" and f == base / "event_wiring.py"', 'if seg == "composition_root"',
+     "check-composition-root.py"),
     ("F4-153 포트 선언을 한 단만 찾음", "check-business-vocabulary.py",
      'port_stems = {p.stem for p in _py_files(fw)\n                      if p.stem.endswith("_port") and t not in p.parents}',
      'port_stems = {p.stem for cap in fw.iterdir() if cap.is_dir()\n                      for p in cap.glob("*_port.py")}',

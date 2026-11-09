@@ -317,7 +317,7 @@ def _folder(repo: Repo, name: str, anchor: str, merges: "list[str]" = (), scope:
     folder = repo.root / ".dddjango" / name
     folder.mkdir(parents=True)
     (folder / "build_anchor").write_text(anchor + "\n", encoding="utf-8")
-    (folder / "refactor-scope.md").write_text(f"실행 · G0 승인 {name}\n\n{scope}", encoding="utf-8")
+    (folder / "refactor-scope.md").write_text(f"실행 · G0 승인 {name} · build_anchor {anchor}\n\n{scope}", encoding="utf-8")
     if merges:
         (folder / "approved-merges.txt").write_text("".join(f"{m} 받음\n" for m in merges), encoding="utf-8")
     return folder
@@ -682,6 +682,52 @@ def scen_legacy(fg, scripts: Path, run: Run, td: Path) -> None:
     run.eq("⓪ 새 파일 줄 이관 빚 — verify --run green", (rc, _starting(out, "red")), (0, []))
     rc, out = _tool(scripts, "draft", repo.root, "--bc", "orbit", "--run", folder)
     run.eq("목록 없으면 새 파일은 있는 묶음으로", _starting(out, "새 파일"), [f"새 파일 {SV}void_c.py -> {SV}void/void_c.py"])
+
+
+def scen_run_line(fg, scripts: Path, run: Run, td: Path) -> None:
+    """F4-157 — 재사용한 폴더에 남은 앞 실행의 `build_anchor` 를 이번 실행 것으로 쓰지 않는다. 이번 실행 앵커는 `refactor-scope.md`
+    의 실행 줄(`# 앞 실행` 앞)이 정한다: 줄이 없는 옛 폴더 = 파일 · 줄에 앵커 없음 = 앵커 없음 · 줄과 파일이 다름 = 실행 불능."""
+    repo = Repo(td / "reuse")
+    repo.write({SV + "__init__.py": "", SV + "moon_phase.py": _vo("moon_phase")})
+    stale = repo.commit("앞 실행 앵커")
+    repo.git("checkout", "-q", "-b", "old")
+    made = [SV + f"void_{x}.py" for x in "abc"]
+    repo.write({path: _vo(Path(path).stem) for path in made})
+    repo.commit("앞 실행 구현")
+    repo.git("checkout", "-q", "main")
+    repo.git_root.joinpath("README").write_text("상류\n", encoding="utf-8")
+    repo.commit("상류 전진")
+    repo.git("merge", "-q", "--no-ff", "--no-edit", "old")
+    head = repo.git("rev-parse", "HEAD")
+    folder = _folder(repo, "reuse", stale)
+    scope = folder / "refactor-scope.md"
+    prior = f"실행 · G0 승인 앞 · build_anchor {stale} · G2 승인 앞\n"
+    no_anchor = f"실행 · G0 승인 지금\n\n# 앞 실행\n\n{prior}"
+    fresh = (0, [], [])
+    def draft() -> "tuple[int, list[str], list[str]]":
+        rc, out = _tool(scripts, "draft", repo.root, "--bc", "orbit", "--run", folder)
+        return rc, _starting(out, "새 파일"), _starting(out, "남은 이동")
+    scope.write_text(no_anchor, encoding="utf-8")
+    run.eq("F4-157 줄에 앵커 없음 — 앞 실행 파일을 쓰지 않는다(새 파일 · 남은 이동 0)", draft(), fresh)
+    (folder / "approved-merges.txt").write_text("", encoding="utf-8")
+    run.eq("F4-157 줄에 앵커 없음 + 승인 목록 있음 — 실행 불능 아님", draft(), fresh)
+    (folder / "approved-merges.txt").unlink()
+    rc, out = _tool(scripts, "apply", repo.root, "--run", folder, "--debt")
+    run.eq("F4-157 apply — 줄에 앵커 없으면 창 밖", (rc, any("이번 실행의 build_anchor 없음" in ln for ln in out)), (1, True))
+    scope.write_text("이 규칙 이전 폴더 — 실행 줄 없음\n", encoding="utf-8")
+    rc, added, left = draft()
+    run.eq("F4-157 실행 줄 없는 옛 폴더 — 파일을 따른다(새 파일 3 · 남은 이동 3)", (rc, len(added), len(left)), (0, 3, 3))
+    scope.write_text(f"기록\n\n# 앞 실행\n\n실행 · G0 승인 앞 · build_anchor {head}\n", encoding="utf-8")
+    run.eq("F4-157 `# 앞 실행` 절의 실행 줄은 이번 실행 줄이 아니다", draft()[0], 0)
+    scope.write_text(f"실행 · G0 승인 지금 · build_anchor {head}\n\n# 앞 실행\n\n{prior}", encoding="utf-8")
+    rc, out = _tool(scripts, "draft", repo.root, "--bc", "orbit", "--run", folder)
+    run.eq("F4-157 줄의 SHA ≠ 파일 SHA — 실행 불능", (rc, any("앵커 불일치" in ln for ln in out)), (1, True))
+    (folder / "build_anchor").write_text(head + "\n", encoding="utf-8")
+    scope.write_text(f"실행 · G0 승인 지금 · build_anchor {head[:12]}\n\n# 앞 실행\n\n{prior}", encoding="utf-8")
+    run.eq("F4-157 이번 실행 앵커 — 짧은 SHA 줄 · 파일 일치", draft(), fresh)
+    (folder / "build_anchor").unlink()
+    rc, out = _tool(scripts, "draft", repo.root, "--bc", "orbit", "--run", folder)
+    run.eq("F4-157 줄에 앵커가 있는데 파일 없음 — 실행 불능", (rc, any("앵커 불일치" in ln for ln in out)), (1, True))
 
 
 # ── 검토 고침(2.28.0 검토 A · B) — 메모리 ─────────────────────────────────────────
@@ -1070,6 +1116,7 @@ def run_all(scripts: Path, fail_fast: bool = False) -> "tuple[Run, object]":
              ("검토 메모리", lambda td: check_review_memory(fg, run)),
              ("병합", lambda td: scen_merge(fg, scripts, run, td)), ("다시 옮김", lambda td: scen_chain(fg, scripts, run, td)),
              ("빚", lambda td: scen_debt(fg, scripts, run, td)), ("이관 빚", lambda td: scen_legacy(fg, scripts, run, td)),
+             ("실행 줄 앵커", lambda td: scen_run_line(fg, scripts, run, td)),
              ("검토 범위", lambda td: scen_review_scope(fg, scripts, run, td)),
              ("검토 풀기", lambda td: scen_review_dissolve(fg, scripts, run, td)),
              ("검토 겹침", lambda td: scen_review_clash(fg, scripts, run, td)),
@@ -1233,6 +1280,17 @@ _MUTATIONS: "tuple[tuple[str, str, str], ...]" = (
     ("S2 푸는 묶음 폴더에 남는 파일을 막지 않음", 'out.append(f"{rest[0]}:1 푸는 묶음 폴더의 .py 아닌 파일")', "pass"),
     ("S3 파서 «너무 깊음» 을 잡지 않음", "except (SyntaxError, ValueError, RecursionError, MemoryError):",
      "except (SyntaxError, ValueError):"),
+    # F4-157 — 이번 실행 앵커 판정을 하나씩 걷는다
+    ("F4-157 앞 실행 앵커 파일을 그대로 씀", "anchor: str = run_anchor(folder)", 'anchor: str = _read_folder(folder, "build_anchor").strip()'),
+    ("F4-157 줄에 앵커 없어도 파일을 씀", 'if stated is None:\n        return ""', "if stated is None:\n        return written"),
+    ("F4-157 옛 폴더도 앵커 없음으로", "if line is None:\n        return written", 'if line is None:\n        return ""'),
+    ("F4-157 줄과 파일이 달라도 받음", "if not written or not (written.startswith(sha) or sha.startswith(written)):", "if False:"),
+    ("F4-157 파일이 없어도 받음", "if not written or not (written.startswith(sha) or sha.startswith(written)):",
+     "if written and not (written.startswith(sha) or sha.startswith(written)):"),
+    ("F4-157 앞 실행 절의 실행 줄도 읽음", '_RUN_LINE_RE.search(_this_run_text(_read_folder(folder, "refactor-scope.md")))',
+     '_RUN_LINE_RE.search(_read_folder(folder, "refactor-scope.md"))'),
+    ("F4-157 apply 가 앞 실행 파일로 창을 엶", 'if not run_anchor(folder):\n        raise FolderGroupError(f"{folder}: 이번 실행의 build_anchor 없음 — apply',
+     'if not _read_folder(folder, "build_anchor"):\n        raise FolderGroupError(f"{folder}: 이번 실행의 build_anchor 없음 — apply'),
 )
 
 

@@ -1304,11 +1304,17 @@ djr:R-0593 a djr:Obligation ;
 
 djr:R-0594 a djr:Prohibition ;
     skos:prefLabel "어댑터의 핵심 정책 소유 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0594@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-0594@2026-11-09> .
 
 <https://numchida.com/ns/djr#R-0594@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0594 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0594@2026-11-09> a djr:Expression ;
+    prov:specializationOf djr:R-0594 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0594@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0595 a djr:Permission ;
     skos:prefLabel "CQRS는 보조 패턴으로 취급·일부 BC에만 선택 적용(Greg Young 인용=규칙)"@ko ;
@@ -2833,7 +2839,7 @@ djr:R-3449 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
     djr:statesNorm djr:R-0592, djr:R-0593, djr:R-0594 ;
-    djr:text "**어댑터 배치 기준:**\n- Django view, Ninja router, DRF view/serializer, template view, form, management command, Celery task, message handler는 **인터페이스 어댑터**다.\n- ORM 리포지토리, 외부 SDK 클라이언트, 브로커 publisher, cache/filesystem 구현은 **인프라 어댑터**다.\n- 어댑터는 입력 검증, 인증 연결, DTO 변환, 유스케이스 호출, 응답 매핑을 담당할 수 있지만 핵심 정책을 소유하지 않는다.\n\n"@ko .
+    djr:text "**어댑터 배치 기준:**\n- Django view, Ninja router, DRF view/serializer, template view, form, management command, Celery task, message handler는 **인터페이스 어댑터**다.\n- ORM 리포지토리, 외부 SDK 클라이언트, 브로커 publisher, cache/filesystem 구현은 **인프라 어댑터**다.\n- 어댑터는 입력 Schema 선언, 인증 연결, DTO 변환, 유스케이스 호출, 응답 매핑을 담당할 수 있지만 핵심 정책을 소유하지 않는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s039-5.4> a djr:Section ;
     djr:headingSnapshot "### 5.4 CQRS (커맨드-쿼리 책임 분리)"@ko ;

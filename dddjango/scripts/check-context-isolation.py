@@ -31,7 +31,9 @@ Kernel 없음)·#83(BC 삭제 내성)은 아래 각론 진단이 집행한다.
          #117 두 번째 ErrorCode 컨테이너 금지 · #291/#292 예외의 자리 넷 · #431 부작용 등록 금지
 
 ast+ 후보 채널 (㉰ — exit 불산입, 마무리는 discipline-reviewer):
-  #151(창구 이름 — 기술·타 BC 토큰은 «확정» 위반) · #153(도메인 예외 속성 접근은 «확정»,
+  #151(창구 이름 — 기술·타 BC 토큰은 «확정» 위반) · #153(도메인 예외 속성 접근은 «확정» — 잡은 도메인 예외의 공개 필드를
+  `raise <자기 BC contract/exception 클래스>(kw=n.f) [from None]` 한 문장으로 옮기는 꼴(설계에서 승인한 사건 값 · F4-105)만
+  비켜 준다 · 판정은 `checker_target.ohs_event_value_handler` 가 #474 와 함께 진다 · 프로필 무관,
   출처가 확인된 usecase 실행 수가 1이 아니거나 출처·반복 횟수가 미해소이면 후보;
   builder 준비·미호출 nested 정의는 실행 수에 불산입) · #171(접미사뿐인 예외 이름) · #347(admin feature 의
   애그리거트 쓰기) · #11(경계 애너테이션의 Model/QuerySet 은 «확정», 그 외 후보)
@@ -369,7 +371,7 @@ def _domain_imported_names(mod: ast.Module) -> set[str]:
 
 
 def _check_ohs(ohs: Path, bc: Path, bc_rel: Path, agg_names: set[str], container_bcs: set[str],
-               out: Findings, cand: Candidates) -> None:
+               out: Findings, cand: Candidates, root: "Path | None" = None) -> None:
     rel0 = bc_rel / ohs.relative_to(bc)
     dirs, files = _entries(ohs)
     for f in files:
@@ -404,7 +406,7 @@ def _check_ohs(ohs: Path, bc: Path, bc_rel: Path, agg_names: set[str], container
         ops: set[str] = set()
         sends: "dict[str, set[str]]" = {}
         if entry is not None:
-            ops = _check_ohs_service(entry, srel / entry.relative_to(svc), out, cand)
+            ops = _check_ohs_service(entry, srel / entry.relative_to(svc), out, cand, root, bc.name)
             sends = _window_send_types(entry)
 
         contract = svc / "contract"
@@ -664,7 +666,8 @@ def _ohs_execution_count(entry: Path, mod: ast.Module, fn: ast.AST) -> tuple[int
     return count, unknown
 
 
-def _check_ohs_service(entry: Path, rel, out: Findings, cand: Candidates) -> set[str]:
+def _check_ohs_service(entry: Path, rel, out: Findings, cand: Candidates,
+                       root: "Path | None" = None, own_bc: str = "") -> set[str]:
     mod = _parse(entry)
     if mod is None:
         return set()
@@ -709,10 +712,12 @@ def _check_ohs_service(entry: Path, rel, out: Findings, cand: Candidates) -> set
                     out.add("#164", rel, f"도메인 예외를 raw 로 전파하지 않는다 — `{exc_name}` 은 `contract/exception/` 타입으로 번역해 던진다(#295)")
             if isinstance(sub, ast.ExceptHandler) and sub.name:
                 handler_types = _ann_idents(sub.type)
-                if handler_types & domain_names:
+                if handler_types & domain_names and not (
+                    root is not None and checker_target.ohs_event_value_handler(sub, mod, root, own_bc)
+                ):
                     for inner in ast.walk(sub):
                         if isinstance(inner, ast.Attribute) and isinstance(inner.value, ast.Name) and inner.value.id == sub.name:
-                            out.add("#153", rel, f"도메인 예외는 «타입»으로만 쓴다 — `{sub.name}.{inner.attr}` 속성 접근은 계약이 도메인 모양에 얹힌 것이다")
+                            out.add("#153", rel, f"도메인 예외는 «타입»으로만 쓴다 — `{sub.name}.{inner.attr}` 속성 접근은 계약이 도메인 모양에 얹힌 것이다" + checker_target.OHS_EVENT_VALUE_FORM_NOTE)
                             break
         exec_calls, unknown_execution = _ohs_execution_count(entry, mod, fn)
         if exec_calls != 1 or unknown_execution:
@@ -1111,10 +1116,37 @@ def _cross_bc_port_names(acl: Path | None) -> set[str]:
         mod = _parse(f)
         if mod is None:
             continue
+        ctor_only: set[str] = _constructor_only_port_names(mod)
         for node in ast.walk(mod):
             if isinstance(node, ast.ImportFrom) and node.module and "port" in node.module.split("."):
-                names.update(a.asname or a.name for a in node.names if a.name.endswith("Port"))
+                names.update(a.asname or a.name for a in node.names
+                             if a.name.endswith("Port") and (a.asname or a.name) not in ctor_only)
     return names
+
+
+def _constructor_only_port_names(mod: ast.Module) -> set[str]:
+    """`__init__` 매개변수 주석과 그 `self.<칸>: <포트> = <매개변수>` 대입 주석 안에서만 쓰인 이름 — 어댑터가 구현하는 포트가 아니라
+    주입받은 의존이다(파일마다 판정 — 다른 어댑터가 상속하거나 `returns` 로 쓰면 그 파일에서 #14 로 살아난다)."""
+    allowed: set[int] = set()
+    for fn in ast.walk(mod):
+        if not (isinstance(fn, ast.FunctionDef) and fn.name == "__init__" and fn.args.args):
+            continue
+        params = [*fn.args.posonlyargs, *fn.args.args, *fn.args.kwonlyargs]
+        names = {arg.arg for arg in params}
+        for arg in params:
+            if arg.annotation is not None:
+                allowed.update(id(sub) for sub in ast.walk(arg.annotation))
+        receiver = (fn.args.posonlyargs + fn.args.args)[0].arg
+        for statement in fn.body:
+            if (isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Attribute)
+                    and isinstance(statement.target.value, ast.Name) and statement.target.value.id == receiver
+                    and isinstance(statement.value, ast.Name) and statement.value.id in names):
+                allowed.update(id(sub) for sub in ast.walk(statement.annotation))
+    uses: dict[str, list[ast.Name]] = {}
+    for node in ast.walk(mod):
+        if isinstance(node, ast.Name):
+            uses.setdefault(node.id, []).append(node)
+    return {name for name, found in uses.items() if all(id(use) in allowed for use in found)}
 
 
 def _check_uow_cross(bc: Path, bc_rel: Path, cross_ports: set[str], out: Findings) -> None:
@@ -1564,7 +1596,7 @@ def main(argv: list[str]) -> int:
 
         ohs = bc / "driving_layer" / "open_host_service"
         if ohs.is_dir():
-            _check_ohs(ohs, bc, bc_rel, agg_names, container_bcs, findings, cand)
+            _check_ohs(ohs, bc, bc_rel, agg_names, container_bcs, findings, cand, target)
 
         acl = _acl_dir(bc)
         if acl is not None:

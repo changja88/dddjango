@@ -198,6 +198,7 @@ def _check_promoted(dir_path: Path, crow: "tree.Row", out: Findings, cand: Candi
 #         부품 클래스 `…UseCase` · `_` 부품 클래스 · 틀 · 부품의 `_` 메서드를 바깥에서 부름.
 
 _USE_CASE_ROW = 42
+_BC_TEST_ROW = 136
 _PART_WORDS = frozenset({
     "common", "shared", "base", "core", "util", "utils", "helper", "helpers", "misc", "manager", "handler",
     "handlers", "mixin", "part", "parts", "branch", "branches", "step", "steps", "tools", "frame",
@@ -792,8 +793,11 @@ def _check_level(dir_path: Path, row: "tree.Row", bindings: dict[str, str], out:
                 out.add("#490", f, "어댑터 역할 파일 이름이 표준 트리의 모양과 다르다")
     if not has_file_placeholder:
         for f in files:
-            if f.name not in fixed_files:
-                out.add("#490", f, "트리가 이 층에 이름을 준 파일이 아니다")
+            if f.name in fixed_files:
+                continue
+            if row.r == _BC_TEST_ROW and f.name == "conftest.py":
+                continue  # pytest 가 이름을 정한 파일 · 통합과 e2e 가 함께 쓰는 고정물의 자리(#596 부칙 — 트리 행은 안 늘린다)
+            out.add("#490", f, "트리가 이 층에 이름을 준 파일이 아니다")
 
 
 def _check_banned_paths(bc_dir: Path, out: Findings) -> None:

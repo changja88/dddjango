@@ -16,7 +16,8 @@
        안이 자유)·`factories/`·`fake/`(«재료» — 규칙이 산다). 직계 파일은
        `conftest.py`·`__init__.py` 만(#596 — 파일 이름은 pytest 소유라 폐쇄(#490)
        비대상, 그래서 이 검사기는 test 파일 «이름»을 검사하지 않는다 — #658 도
-       이름이 아니라 자리로 판정한다).
+       이름이 아니라 자리로 판정한다). BC `test/` 직계 `conftest.py` 의 `autouse=True`
+       고정물은 #383 위반이다 — unit 까지 함께 켜서 폴더 이름이 무엇을 켜는지 말하지 못하게 된다.
   #658 저장소 루트 `tests/`·`test/` 는 시험 자리가 아니다 — 시험은 주인의 표준 시험 자리
        (BC `test/` · 전역 규칙은 `framework/test/unit/`)에 둔다. ㄱ 그 아래 모든 `.py`
        (이름 무관 — helpers·factories·fakes·conftest 포함 · 비었거나 docstring·주석뿐인
@@ -37,7 +38,8 @@
   #387 `test/unit/` 은 DB 를 켜지 않는다(`django_db`·django.test TestCase·`.objects`).
   #388 `test/unit/` 은 `factories/` 를 import 하지 않는다(가짜 구현은 `fake/`).
   #389 `test/integration/` 은 진짜 DB 를 켠다 — DB 신호가 하나도 없는 test 파일은 위반.
-  #390 `test/e2e/` 는 입구를 거친다 — TestClient/Client·cron_job 신호가 없으면 위반.
+  #390 `test/e2e/` 는 입구를 거친다 — TestClient/Client·cron_job 신호가 없으면 위반
+       (자기 BC `driving_layer.cron_job` import 는 입구라 구현 칸 import 로 세지 않는다).
   #391 `factories/` 는 `integration/` «안»이 아니라 그 형제다.
   #392 `factories/` 에는 factory_boy 픽스처만 온다.
 
@@ -96,8 +98,8 @@ TEST_DIRECT_FILES = {"conftest.py", "__init__.py"}
 ROOT_TEST_DIRS: "tuple[str, ...]" = ("test", "tests")
 ROOT_WEB_TEST_DIR: str = "web"
 ROOT_TEST_MSG: str = "저장소 루트 시험 폴더 — 시험은 주인의 표준 시험 자리(BC `test/` · 전역 규칙은 `framework/test/unit/`)에 둔다"
-ROOT_IMPORT_MSG: str = ("저장소 루트 시험 폴더(`tests` · `test` 패키지)를 import 한다 — 필요한 fixture · 도우미는 이 시험의 표준 자리"
-                        "(`test/conftest.py` · `test/fake/`)에 새로 쓴다")
+ROOT_IMPORT_MSG: str = ("저장소 루트 시험 폴더(`tests` · `test` 패키지)를 import 한다 — 필요한 fixture 는 이 시험의 BC `test/conftest.py` 에, "
+                        "도우미는 쓰는 시험 폴더(`unit/` · `integration/` · `e2e/`) 안에 새로 쓴다(`test/fake/` 는 포트의 가짜 구현 자리다)")
 
 # settings/ 파일 이름 — 약어(#446 · 규율 ④)와 기능 분할(#445) 블록리스트.
 ABBREV_BAN = {"prod": "production", "dev": "local", "stg": "staging", "stag": "staging", "loc": "local", "tst": "test"}
@@ -308,6 +310,22 @@ def _migration_oracle_signal(mod: ast.Module) -> str | None:
     return None
 
 
+def _autouse_fixture_names(mod: ast.Module) -> "list[str]":
+    """`autouse=<참 또는 모르는 값>` 을 준 데코레이터가 달린 함수 이름(`autouse=False` 만 뺀다)."""
+    names: "list[str]" = []
+    for node in ast.walk(mod):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        for deco in node.decorator_list:
+            if isinstance(deco, ast.Call) and any(
+                kw.arg == "autouse" and not (isinstance(kw.value, ast.Constant) and kw.value.value is False)
+                for kw in deco.keywords
+            ):
+                names.append(node.name)
+                break
+    return names
+
+
 def _entrance_signals(mod: ast.Module) -> bool:
     for node in ast.walk(mod):
         if isinstance(node, (ast.Name, ast.Attribute)):
@@ -328,6 +346,8 @@ CLIENT_FIXTURES: "frozenset[str]" = frozenset({"client", "async_client"})
 IMPL_LAYERS: "frozenset[str]" = frozenset(
     {"domain_layer", "application_layer", "driving_layer", "driven_layer", "composition_root"}
 )
+# 그 가운데 입구로 치는 자리(#390 — `_entrance_signals` 가 입구 신호로 받는 cron_job 입구).
+CRON_JOB_ENTRANCE: "list[str]" = ["driving_layer", "cron_job"]
 
 
 def _flows_into_call(fn: "ast.FunctionDef | ast.AsyncFunctionDef", names: "set[str]") -> bool:
@@ -397,6 +417,9 @@ def _check_bc_test(bc: Path, bc_rel: Path, out: Findings, root_pkgs: "frozenset[
         except (SyntaxError, OSError, UnicodeDecodeError):
             continue
         top = rel_in.parts[0] if len(rel_in.parts) > 1 else ""
+        if rel_in.as_posix() == "conftest.py":
+            for name in _autouse_fixture_names(mod):
+                out.add("#383", rel, f"`{name}` — BC `test/conftest.py` 의 `autouse=True` 고정물은 unit 까지 함께 켠다(폴더 이름만 보고 무엇을 켜는지 알아야 한다) — 쓰는 시험이 인자로 받게 하거나 그 폴더의 `conftest.py` 로 옮긴다")
         signal = _migration_oracle_signal(mod)
         if signal is not None:
             out.add("#637", rel, f"migration 산출물을 오라클로 삼는 테스트는 만들지 않는다 — `migrations/` 는 Django 가 생성한 것이라 파일·operation·적용 순서·과거 state·DDL 자체를 검증하지 않는다(신호: {signal})")
@@ -424,6 +447,7 @@ def _check_bc_test(bc: Path, bc_rel: Path, out: Findings, root_pkgs: "frozenset[
                 if (
                     parts_own[0] == "application" and len(parts_own) > 2
                     and parts_own[1] == bc.name and parts_own[2] in IMPL_LAYERS
+                    and parts_own[2:4] != CRON_JOB_ENTRANCE
                 ):
                     out.add("#390", rel, f"`{p}` import — `test/e2e/` 는 blackbox 다(입구에서 출구까지 한 흐름 통째로): 자기 BC 구현 칸 import 는 입구 우회 신호다")
         if top == "factories" and f.name != "__init__.py":

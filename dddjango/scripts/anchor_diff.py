@@ -799,7 +799,7 @@ _SUBJECT_LINENO_RE: "re.Pattern[str]" = re.compile(r"(?::(?:\d+|N))+$")
 
 
 def _skeleton_error_bcs(snapshot: Path, argv: "list[str]") -> "list[str]":
-    """argv 의 `--error-bc` 값 가운데 스냅숏에서 오류 모듈이 «빈 골격»인 BC(출현 순 · 중복 제거)."""
+    """argv 의 `--error-bc` 값 가운데 스냅숏에서 오류 모듈이 «빈 골격»이거나 BC 뿌리는 있는데 파일이 없는 BC(출현 순 · 중복 제거 · F4-40)."""
     out: "list[str]" = []
     i: int = 0
     while i < len(argv):
@@ -811,9 +811,10 @@ def _skeleton_error_bcs(snapshot: Path, argv: "list[str]") -> "list[str]":
         elif token.startswith("--error-bc="):
             value = token.partition("=")[2]
         i += 1
-        if value and value not in out and re.fullmatch(r"[a-z][a-z0-9_]*", value) \
-                and checker_target.skeleton_placeholder(snapshot / _ERROR_MODULE.format(bc=value)):
-            out.append(value)
+        if value and value not in out and re.fullmatch(r"[a-z][a-z0-9_]*", value):
+            module: Path = snapshot / _ERROR_MODULE.format(bc=value)
+            if (not module.exists() and not _bc_root_absent(snapshot, value)) or checker_target.skeleton_placeholder(module):
+                out.append(value)
     return out
 
 
@@ -832,6 +833,36 @@ def _subject_file(normalized_line: str) -> "str | None":
     return plain
 
 
+_FILE_ANALYSIS_RE: "re.Pattern[str]" = re.compile(r"(?:^|[\s:])[\w./-]+\.py:\d+")
+_BASELINE_UNREAD_MARK: str = "[anchor-baseline] unread-file-analysis "
+
+
+def settle_baseline_analysis(issues: "list[str]") -> "list[str]":
+    """기준선 재실행이 exit 1 로 무너져야 할 못 읽음만 돌려주고, 버린 파일:줄 곳 수는 표지 한 줄로 stderr 에 남긴다.
+
+    앵커 사본의 파일 한 자리를 가리키는 못 읽음은 그 파일의 판정만 비울 뿐이므로 읽은 진단으로 기준선을 세운다(같은 scope 의
+    무관한 BC 가 전량 신규로 강등되지 않게 · F4-59 ①). 지금 쪽 실행은 이 함수를 부르지 않는다. 동적 오류 모양 증명 토큰과
+    파일을 가리키지 않는 못 읽음은 그대로 막는다."""
+    blocking: "list[str]" = [
+        issue for issue in issues
+        if issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED ") or _FILE_ANALYSIS_RE.search(issue) is None
+    ]
+    places: "set[str]" = {
+        match.group(0).strip(" :") for issue in issues if issue not in blocking
+        for match in (_FILE_ANALYSIS_RE.search(issue),) if match is not None
+    }
+    if places:
+        print(f"{_BASELINE_UNREAD_MARK}{len(places)}", file=sys.stderr)
+    return blocking
+
+
+def _split_baseline_unread(lines: "list[str]") -> "tuple[list[str], int]":
+    """기준선 출력에서 못 읽은 곳 표지를 떼어 (진단 줄, 곳 수)로 돌려준다."""
+    kept: "list[str]" = [line for line in lines if not line.startswith(_BASELINE_UNREAD_MARK)]
+    unread: int = sum(int(line[len(_BASELINE_UNREAD_MARK):]) for line in lines if line.startswith(_BASELINE_UNREAD_MARK))
+    return kept, unread
+
+
 @dataclass
 class _Baseline:
     code: int                 # 기준선으로 쓴 실행의 exit(불능이면 마지막 실패 exit)
@@ -840,6 +871,7 @@ class _Baseline:
     error: "str | None" = None          # selector 렌더가 서지 않았을 때 그 실행의 마지막 줄
     dropped: "tuple[str, ...]" = ()     # (나) 로 --error-bc 를 걷은 BC
     aliases: "tuple[tuple[str, str], ...]" = ()   # selector 렌더에 쓴 (지금 이름, 사본 이름) — 승인 머지가 가져온 BC 이름 바꾸기
+    unread: int = 0                     # 기준선 재실행이 버틴 «파일을 가리키는 못 읽음» 곳 수(F4-59 ①)
 
     def alias_note(self) -> str:
         return ", ".join(f"{now}→{old}" for now, old in self.aliases)
@@ -865,8 +897,9 @@ def _baseline_lines(script: Path, snap: Path, argv: "list[str]", path_flags: "fr
             return renamed
         return plain
     code, lines = _run_lines(_baseline_argv(script, snap, argv, path_flags))
+    lines, unread = _split_baseline_unread(lines)
     if code in (0, 2):
-        return _Baseline(code, lines, "selector 렌더 재실행")
+        return _Baseline(code, lines, "selector 렌더 재실행", unread=unread)
     error: "str | None" = next((l.strip() for l in reversed(lines) if l.strip()), None)
     auto: bool = dict(REGISTRY).get(script.name, False)
     pcode: int
@@ -878,6 +911,7 @@ def _baseline_lines(script: Path, snap: Path, argv: "list[str]", path_flags: "fr
         alines: "list[str]"
         acode, alines = _run_lines(_baseline_argv(script, snap, argv, path_flags,
                                                   drop_error_bcs=frozenset(skeleton)))
+        alines, aunread = _split_baseline_unread(alines)
         if acode in (0, 2):
             roots: "tuple[str, ...]" = (str(snap) + "/", str(snap))
             kept: "list[str]" = []
@@ -893,10 +927,10 @@ def _baseline_lines(script: Path, snap: Path, argv: "list[str]", path_flags: "fr
             if pcode in (0, 2):
                 return _Baseline(acode, plines + kept,
                                  f"selector 렌더 재실행(빈 골격 --error-bc 걷음: {names} · 그 영역 아래 줄 제외) + positional 기준선",
-                                 None, tuple(skeleton))
+                                 None, tuple(skeleton), unread=aunread)
             return _Baseline(acode, kept,
                              f"selector 렌더 재실행(빈 골격 --error-bc 걷음: {names} · 그 영역 아래 줄 제외)",
-                             None, tuple(skeleton))
+                             None, tuple(skeleton), unread=aunread)
     if pcode in (0, 2):
         return _Baseline(pcode, plines,
                          "positional 기준선(selector 렌더 불능 강등 — selector-lane 진단은 전량 신규 취급)", error)
@@ -1788,6 +1822,8 @@ def partition_exit(
         print(f"  기준선 영역 이름 대응(승인 머지가 가져온 BC 이름 바꾸기 — 앵커 사본은 그 이름으로 렌더): {base.alias_note()}")
     if base.error is not None:
         print(f"  기준선 오류: {base.error}")
+    if base.unread:
+        print(f"  기준선 못 읽은 자리 {base.unread}곳 — 그 자리의 판정이 비어 있어 같은 줄이 신규로 잡힐 수 있다")
     if anchor_pruned:
         print(f"  기준선 정보: 앵커 사본에서 숨김 경로의 사본 밖 심링크 {len(anchor_pruned)}개를 뺐다(판정 무관): "
               + anchor_pruned[0] + (f" 외 {len(anchor_pruned) - 1}" if len(anchor_pruned) > 1 else ""))

@@ -1732,7 +1732,7 @@ def _fg_folder(repo: Path, name: str, anchor: str, rows: str = "", merges: "tupl
     folder: Path = repo / ".dddjango" / name
     folder.mkdir(parents=True)
     (folder / "build_anchor").write_text(anchor + "\n", encoding="utf-8")
-    (folder / "refactor-scope.md").write_text(f"실행 · G0 승인 {name}\n\n{rows}", encoding="utf-8")
+    (folder / "refactor-scope.md").write_text(f"실행 · G0 승인 {name} · build_anchor {anchor}\n\n{rows}", encoding="utf-8")
     if merges:
         (folder / "approved-merges.txt").write_text("".join(f"{m} 받음\n" for m in merges), encoding="utf-8")
     return folder

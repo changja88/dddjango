@@ -2472,7 +2472,7 @@ def _sub_flow(base: Path, sub: str, scenario: str) -> "tuple[int, str, dict, lis
     folder: Path = root / ".dddjango" / "nc"
     folder.mkdir(parents=True)
     (folder / "build_anchor").write_text(run_git("rev-parse", "HEAD"), encoding="utf-8")
-    (folder / "refactor-scope.md").write_text("실행 · G0 승인 nc\n\n", encoding="utf-8")
+    (folder / "refactor-scope.md").write_text(f"실행 · G0 승인 nc · build_anchor {run_git('rev-parse', 'HEAD').strip()}\n\n", encoding="utf-8")
     # 미커밋 레인 편집(커밋하지 않는 실행 — dddjango.md:163) · 프로젝트 밖 뿌리 파일 변경(창 기록 밖)
     _write(root, {_SUB_SV + "void_c.py": _sub_vo("void_c"), _SUB_SV + "moon_phase.py": _sub_vo("moon_phase") + "\nPHASES: int = 8\n"})
     if scenario == "dirty-test":                          # 창 열기 전 미커밋 시험 편집 — 창 안에서는 그대로(창 기준 원문 = 지금)

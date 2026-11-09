@@ -166,12 +166,12 @@ GET /products?q=keyboard                     # 검색
 
 | 코드 | 의미 | API 용도 |
 |------|------|----------|
-| 400 | Bad Request | 잘못된 요청 형식, 유효성 검증 실패 |
+| 400 | Bad Request | 잘못된 요청 형식(깨진 JSON 등) |
 | 401 | Unauthorized | **인증** 필요 (누구인지 모름) |
 | 403 | Forbidden | **인가** 부족 (누구인지는 알지만 권한 없음) |
 | 404 | Not Found | 자원 없음 (또는 존재를 숨기기 위해) |
 | 409 | Conflict | 자원 충돌 (중복 생성, 동시 수정) |
-| 422 | Unprocessable Entity | 문법은 맞지만 의미적으로 처리 불가 |
+| 422 | Unprocessable Entity | 입력 Schema 검증 실패(framework), 문법은 맞지만 의미적으로 처리 불가 |
 | 429 | Too Many Requests | Rate Limit 초과 |
 
 **서버 오류 (5xx):**

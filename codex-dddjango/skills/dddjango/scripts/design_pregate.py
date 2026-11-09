@@ -168,7 +168,11 @@ file-plan update 칸에서 symbols 의 공개 메서드 · 모듈 함수 가운�
 에 돌려 #62 선언 확정이다. 그 밖 출처는 검사기 조건 그대로(절대 ImportFrom · 모듈 마디 `domain_layer` · 전 깊이 · 지역 이름 =
 asname|name) ① 그 창구 boundary-imports ② update 면 기준선 실물 ③ 이 명세 symbols 의 같은 이름 클래스(하나뿐) ④ 내장 예외 순서로
 처음 찾은 출처에서 멈춰 가른다 — `as` ∧ 도메인 = 최소 투영의 #474 선언 확정 · `as` ∧ 가를 수 없음 = 선언 후보 · 비도메인 · 내장 ·
-`as` 없음 = 0. 기존 빚 열쇠: update 창구 기준선 실물을 같은 슬라이스로 판정해 그 규칙 줄을 낸 catch(빚 catch — #474 는 같은
+`as` 없음 = 0. 값 칸(F4-105 · `<= X as` 뒤 탭 또는 공백 2+ `값 <필드>`)은 그 필드가 published 예외의 symbols 또는 기준선 실물에
+G2 와 같은 잣대(`checker_target.ohs_event_value_handler` — 자기 BC `contract/exception` 클래스에 바로 선언한 공개 `str` · `str | None` 필드)로
+있고 잡는 예외에도 옮길 `str` 필드가 있으면 그 행을 판정에서 뺀다(값 칸 = published 필드 이름 · #62 는 그대로 · 메모만 · 잡는 예외가 기준선에 없으면
+메모 · 서지 않으면 값 칸 없는 `as` 와 같고 까닭을 글로 붙인다 — 코드 꼴은 G2 #474 · #153 이 본다).
+기존 빚 열쇠: update 창구 기준선 실물을 같은 슬라이스로 판정해 그 규칙 줄을 낸 catch(빚 catch — #474 는 같은
 출처를 잡는 것 · #62 는 이름 무관 catch-all)가 있으면 행의 published 예외를 기준선에서 누가 내는지로 가른다 — 빚 catch 가 냄 = 선언
 후보(그 catch 를 고치는 행) · 빚 없는 catch 가 냄 = 선언 확정(새 줄) · 둘 다 아님 = 선언 후보(빚 catch 의 자리 · 묶음 이름을 적는다).
 검사기는 출처 칸이 있는 행이 있을 때만 적재한다. update 창구 행마다 채널 메모(출처 칸 없음 = S5 입구 catch 미검증 — 앞 거름 꼴로만 ·
@@ -246,10 +250,14 @@ NO_SUBSTITUTE: str = ("예보는 Phase 2 step 6(G2 registry 게이트)의 실행
                       "어떤 형태로도 대체·축약하지 않는다.")
 COVER_NOTE: str = ("커버: P/S/I급 결정 계약 표면(보수 추정 — 유일한 판정자는 백테스트·"
                    "관찰 실측이다). C급·④형은 표면 밖.")
-# 계획 경로 선검증(D3) — `_IGNORE_COPY` 조용 소실 방지 + 숨김 세그먼트 전면 거절.
+# 계획 경로 선검증(D3) — `_IGNORE_COPY` 조용 소실 방지 + 숨김 세그먼트 거절. 마지막 성분만 숨김이고 `.py` 가 아닌 제품 파일
+# (`env/.env.sample` · `deploy/.dockerignore` · `.gitignore`)은 받는다 — 숨김 폴더 · 숨김 `.py` 는 검사기가 못 보고, 아래 이름은 하네스 영역이며
+# `.env` · `.env.<이름>` 은 비밀 값 파일이다(견본 셋만 받는다).
 FORBIDDEN_SEGMENTS: "frozenset[str]" = frozenset({
     "build", "dist", "staticfiles", "node_modules", "site-packages", "venv", ".dddjango",
 })
+HARNESS_LEAF_NAMES: "frozenset[str]" = frozenset({".git", ".mcp.json"})
+ENV_SAMPLE_NAMES: "frozenset[str]" = frozenset({".env.sample", ".env.example", ".env.template"})
 # 기계 블록 마커 → 펜스 언어(§4). 이 어휘 밖의 machine 마커는 형식 red(fail-closed).
 MACHINE_FENCES: "dict[str, str]" = {
     "file-plan": "paths",
@@ -297,8 +305,10 @@ _ALIAS_RE: "re.Pattern[str]" = re.compile(
 _IMPORT_ROW_RE: "re.Pattern[str]" = re.compile(
     r"^(\S+)(?:\t+| {2,})((?:from\s+\S+\s+import\s+.+|import\s+\S.*))$")
 # 셋째 칸(선택 · F4-115) = 번역 출처 `<= <잡는 예외 맨 이름>[ as]` — 점 이름 · `as <이름>` · `AS` · `<-` 는 형식 red.
+# 넷째 칸(선택 · F4-105) = `as` 뒤 탭 또는 공백 2+ `값 <필드>` — published 예외로 옮겨 싣는 승인 필드 한 개. `as` 없는 값 칸은 형식 red.
 _EXC_ROW_RE: "re.Pattern[str]" = re.compile(
-    r"^([A-Za-z_]\w*)(?:\t+| {2,})(\S+)(?:(?:\t+| {2,})<=[ \t]+([A-Za-z_]\w*)([ \t]+as)?)?\s*$")
+    r"^([A-Za-z_]\w*)(?:\t+| {2,})(\S+)"
+    r"(?:(?:\t+| {2,})<=[ \t]+([A-Za-z_]\w*)(?:([ \t]+as)(?:(?:\t+| {2,})값[ \t]+([A-Za-z_]\w*))?)?)?\s*$")
 _ANN_MARKERS_RE: "re.Pattern[str]" = re.compile(r"\[markers:\s*([^\]]*)\]")
 _ANN_BASE_RE: "re.Pattern[str]" = re.compile(r"\[base:\s*([^\]]*)\]")
 _ANN_CLIENT_RE: "re.Pattern[str]" = re.compile(r"\[client:\s*(yes|no)\s*\]")
@@ -384,6 +394,7 @@ class Translation:
     published: str
     source: str
     bound: bool  # `as` — 창구가 잡은 예외 값을 쓴다(로그 인자 · 메시지 · `from <이름>` · 속성)
+    value: str = ""  # 값 칸(F4-105) — published 예외로 옮겨 싣는 승인 필드 이름("" 면 없음)
 
 
 @dataclass
@@ -489,11 +500,15 @@ def _path_reject_reason(path: str) -> "str | None":
     parts: "tuple[str, ...]" = PurePosixPath(path).parts
     if ".." in parts:
         return "`..` 세그먼트 금지"
-    for seg in parts:
-        if seg.startswith("."):
-            return f"숨김 세그먼트 `{seg}` 금지(도구·하네스 영역 — 검사 표면 아님)"
+    for at, seg in enumerate(parts):
         if seg in FORBIDDEN_SEGMENTS:
             return f"금지 세그먼트 `{seg}` (`_IGNORE_COPY` 조용 소실 방지)"
+        if (seg == ".env" or seg.startswith(".env.")) and seg not in ENV_SAMPLE_NAMES:
+            return f"`{seg}` 금지(비밀 값 파일 — 계획에는 견본 `.env.sample` · `.env.example` · `.env.template` 만 올린다)"
+        if seg.startswith("."):
+            product_leaf: bool = at == len(parts) - 1 and not seg.endswith(".py") and seg not in HARNESS_LEAF_NAMES
+            if not product_leaf:
+                return f"숨김 세그먼트 `{seg}` 금지(도구·하네스 영역 — 검사 표면 아님)"
     return None
 
 
@@ -815,7 +830,7 @@ def _parse_exception_map(rows: "list[str]", plan: Plan, errors: "list[str]") -> 
         m: "re.Match[str] | None" = _EXC_ROW_RE.match(line)
         if m is None:
             errors.append(f"exception-map 행 파싱 불가: `{line}` — "
-                          "`<예외 이름><탭|2+공백><창구 파일 경로>[<탭|2+공백><= <잡는 예외 맨 이름>[ as]]` 형식이어야 한다")
+                          "`<예외 이름><탭|2+공백><창구 파일 경로>[<탭|2+공백><= <잡는 예외 맨 이름>[ as[<탭|2+공백>값 <필드>]]]` 형식이어야 한다")
             continue
         exc: str = m.group(1)
         path: str = m.group(2)
@@ -828,7 +843,8 @@ def _parse_exception_map(rows: "list[str]", plan: Plan, errors: "list[str]") -> 
             continue
         if exc not in entry.raises:
             entry.raises.append(exc)
-        entry.translations.append(Translation(published=exc, source=m.group(3) or "", bound=m.group(4) is not None))
+        entry.translations.append(Translation(published=exc, source=m.group(3) or "", bound=m.group(4) is not None,
+                                              value=m.group(5) or ""))
 
 
 def _cells(row: str) -> "list[str]":
@@ -3103,6 +3119,7 @@ API_ERROR_CHECKER: Path = SCRIPTS_DIR / "check-api-error-controller-contract.py"
 _BUNDLED_CHECKERS: "dict[str, ModuleType]" = {}
 _DOMAIN_SERVICE_RULES: "frozenset[str]" = frozenset({"#304", "#305", "#307", "#308"})
 _CATCH_ALL_NAMES: "frozenset[str]" = frozenset({"Exception", "BaseException"})
+_OHS_VALUE_RULE: str = "OHS 창구는 잡은 도메인 예외 값을 값 칸(`값 <published 필드>`)으로 승인한 필드만 published 예외로 옮긴다"
 # 검사기 #474 · #62 의 OHS 선택(`_tree_bcs2` → `<bc>/driving_layer/open_host_service` → `rglob("*_service.py")`)의 경로 꼴 —
 # 앞 거름(기준선 잡기 · 검사기 적재 여부)이고 실제 선택은 `_ohs_selected` 다.
 _OHS_CATCH_RE: "re.Pattern[str]" = re.compile(
@@ -3702,6 +3719,83 @@ def _baseline_catches(module: ast.Module) -> "list[_BaselineCatch]":
     return found
 
 
+def _declared_params(text: str) -> "list[ast.arg]":
+    """필드 행 · 메서드 인자 글을 파이썬 매개변수로 읽는다(콤마 든 타입 · 기본값 그대로) — 못 읽으면 빈 목록."""
+    try:
+        node: ast.stmt = ast.parse(f"def _({text}): ...").body[0]
+    except SyntaxError:
+        return []
+    return [*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs] if isinstance(node, ast.FunctionDef) else []
+
+
+def _symbol_str_field(symbol: Symbol, field_name: str) -> "bool | None":
+    """symbols 클래스의 `field_name` 이 `str` · `str | None` 공개 필드인가(G2 잣대) — 필드 행과 `__init__` 메서드 행의 매개변수를 함께 보고
+    (`self.f: T` 대입이 되는 자리) 둘 다 있으면 모두 맞아야 한다. 어디에도 없으면 None."""
+    rows: "list[str]" = [*symbol.fields, *(m.params for m in symbol.methods if m.name == "__init__")]
+    answers: "list[bool]" = [arg.annotation is not None and ct._is_str_annotation(arg.annotation)
+                             for row in rows for arg in _declared_params(row) if arg.arg == field_name]
+    return (all(answers) and not field_name.startswith("_")) if answers else None
+
+
+def _import_origin(stmt: str, local: str) -> "str | None":
+    """`_catch_origin` 이 돌려준 import 문에서 지역 이름 `local` 의 원 경로(`모듈.클래스`) — 절대 `from … import` 만."""
+    try:
+        nodes: "list[ast.stmt]" = ast.parse(stmt).body if stmt else []
+    except SyntaxError:
+        return None
+    for node in nodes:
+        if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            for alias in node.names:
+                if (alias.asname or alias.name) == local:
+                    return f"{node.module}.{alias.name}"
+    return None
+
+
+def _value_cell_verdict(plan: Plan, entry: PlanEntry, row: Translation, source_stmt: str, copy: Path,
+                        baseline: "dict[str, bytes | None]") -> "tuple[str, str]":
+    """값 칸이 G2 비켜 주기(`checker_target.ohs_event_value_handler`)와 같은 답인가(F4-105) — (서지 않는 까닭, 메모에 덧붙일 글). 까닭이 ""
+    이면 통과다. 값 칸은 published 필드 이름이다: 자기 BC `contract/exception` 클래스에 바로 선언한 공개 `str` · `str | None` 필드여야 한다(이 명세
+    symbols 의 필드 행 · `__init__` 매개변수, 거기 없으면 기준선 실물). 잡는 예외는 기준선에 있을 때 같은 잣대로 본다 — 옮길 `str` 필드가
+    하나도 없으면 서지 않고, 같은 이름이 없으면(`kw=n.f` 의 이름이 다른 번역) 메모만 남긴다."""
+    parts: "tuple[str, ...]" = _plan_parts(entry.path)
+    own_bc: str = parts[parts.index("application") + 1]
+    absent: str = f"값 칸 `{row.value}` 이 published 예외 `{row.published}` 의 `str` · `str | None` 공개 필드에 없다(값 칸에는 published 필드 이름을 적는다)"
+    origin: "str | None" = _import_origin(_catch_origin(plan, entry, row.published, baseline.get(entry.path))[2], row.published)
+    if origin is not None and not ct._own_published_exception(origin, own_bc):
+        return f"published 예외 `{row.published}` 가 자기 BC `contract/exception` 클래스가 아니다", ""
+    stated: "list[bool]" = []
+    for other in plan.entries.values():
+        for symbol in other.declarations:
+            verdict: "bool | None" = (_symbol_str_field(symbol, row.value)
+                                      if symbol.kind == "class" and symbol.name == row.published else None)
+            if verdict is not None:
+                stated.append(verdict)
+    if stated:
+        if not all(stated):
+            return absent, ""
+    else:
+        fields: "frozenset[str] | None" = ct._exception_str_fields(copy, origin) if origin is not None else None
+        if fields is None or row.value not in fields:
+            return absent, ""
+    caught: "str | None" = _import_origin(source_stmt, row.source)
+    unseen: str = " · 잡는 예외가 기준선에 없어 그쪽 필드는 G2 가 본다"
+    if caught is None:
+        return "", unseen
+    if not ct._own_domain_exception(caught, own_bc):
+        return f"잡는 예외 `{row.source}` 가 자기 BC domain_layer 예외가 아니다", ""
+    caught_file: str = "/".join(caught.split(".")[:-1]) + ".py"
+    if any(e.tag == "add" and "/".join(_plan_parts(e.path)) == caught_file for e in plan.entries.values()):
+        return "", unseen
+    caught_fields: "frozenset[str] | None" = ct._exception_str_fields(copy, caught)
+    if caught_fields is None:
+        return "", unseen
+    if not caught_fields:
+        return f"잡는 예외 `{row.source}` 에 그 클래스가 바로 선언한 `str` · `str | None` 공개 필드가 없다", ""
+    if row.value not in caught_fields:
+        return "", f" · 잡는 예외에 같은 이름 필드가 없다 — 옮기는 `n.<f>` 가 `str` 필드인지는 G2 가 본다(그쪽 필드: {', '.join(sorted(caught_fields))})"
+    return "", ""
+
+
 def check_catch_forecast(plan: Plan, copy: Path, scratch: Path,
                          baseline: "dict[str, bytes | None]") -> "tuple[list[DeclarationFinding], list[str]]":
     """F4-115 A2 — 예외 번역표 행의 선택 «번역 출처» 칸(`<= <잡는 예외>[ as]`)을 번들 `check-api-error-controller-contract.py` 의
@@ -3742,7 +3836,7 @@ def check_catch_forecast(plan: Plan, copy: Path, scratch: Path,
             ck: ModuleType = _bundled_checker(API_ERROR_CHECKER, "_pregate_api_error_contract")
             found = ck.Findings(defer=True)
             cand = ck.Candidates(defer=True)
-            ck._slice_check_controller_ast(target, Path(path), found, cand, keys, [], True, None)
+            ck._slice_check_controller_ast(target, Path(path), found, cand, keys, [], True, None, copy)
         finally:
             shutil.rmtree(cell, ignore_errors=True)
         if len(keys) != len(found.entries):  # 사건 좌표를 맞출 수 없으면 줄마다 «모름» — 기존 빚 쪽(후보)으로 기운다
@@ -3795,7 +3889,7 @@ def check_catch_forecast(plan: Plan, copy: Path, scratch: Path,
         if rule == "#474":
             bound: str = ", ".join(sorted({f"`{c.bound}`" for c in debt if c.bound})) or "(없음)"
             g2: str = f"묶음 이름이 {bound} 와 다르면 G2 registry 가 새 줄로 막고 같으면 집합 차분이 지울 수 있다"
-            fix: str = "기존 빚이면 이번에 고치는가(OHS 는 잡은 도메인 예외 값을 쓰지 않는다 — R-3690)"
+            fix: str = f"기존 빚이면 이번에 고치는가({_OHS_VALUE_RULE} — R-3690)"
             pool_word: str = "같은 출처를 잡는 "
         else:
             g2 = "#62 판정문은 고정이라 G2 registry 집합 차분이 새 줄도 지울 수 있다"
@@ -3826,7 +3920,7 @@ def check_catch_forecast(plan: Plan, copy: Path, scratch: Path,
             api = api or _bundled_checker(API_ERROR_CHECKER, "_pregate_api_error_contract")
             selected = _ohs_selected(api, copy, _real_parts(copy, parts))
         for row in entry.translations:
-            written: str = f"`<= {row.source}{' as' if row.bound else ''}`"
+            written: str = f"`<= {row.source}{' as' if row.bound else ''}{f'  값 {row.value}' if row.value else ''}`"
             if not row.source:
                 if entry.tag == "update" and shaped:
                     memos.append(f"S5 입구 catch 미검증(번역 출처 칸 무기재 — 이 행의 catch 꼴을 더하거나 바꾸면 "
@@ -3845,9 +3939,16 @@ def check_catch_forecast(plan: Plan, copy: Path, scratch: Path,
                     out.append(DeclarationFinding("#62", path, owner, f"{item.msg} — 번역 출처 칸 {written}{note}", confirmed))
                 continue
             kind, why, stmt = _catch_origin(plan, entry, row.source, baseline.get(entry.path))
+            refused: str = ""
+            if row.value:
+                refused, tail = _value_cell_verdict(plan, entry, row, stmt, copy, baseline)
+                if not refused:
+                    memos.append(f"번역 출처 칸 값 `{row.value}` — published 예외 필드와 맞다(공개 예외로 옮겨 싣는 값은 설계 승인 필드만 · "
+                                 f"코드 꼴은 G2 #474 · #153 이 본다{tail}): {owner} · {path}")
+                    continue
             if not row.bound:
                 if entry.tag == "update" and kind in ("domain", "unresolved"):
-                    memos.append(f"S5 입구 catch 확인(출처 칸 `as` 없음 — OHS 는 잡은 도메인 예외 값을 쓰지 않는다(R-3690) · 이 "
+                    memos.append(f"S5 입구 catch 확인(출처 칸 `as` 없음 — {_OHS_VALUE_RULE}(R-3690) · 이 "
                                  "catch 가 잡은 값을 쓰면(로그 · 메시지 · `from` · 속성) 출처 칸에 `as` 를 적는다 — #474): "
                                  f"{owner} · {path}")
                 continue
@@ -3858,14 +3959,14 @@ def check_catch_forecast(plan: Plan, copy: Path, scratch: Path,
                     if item.rule != "#474":
                         continue
                     confirmed, note = debt_judgement(entry, path, "#474", row.source, row.published)
-                    out.append(DeclarationFinding("#474", path, owner, f"{item.msg} — 번역 출처 칸 {written}(출처 {why}){note}",
+                    miss: str = f" — {refused}" if refused else ""
+                    out.append(DeclarationFinding("#474", path, owner, f"{item.msg} — 번역 출처 칸 {written}(출처 {why}){miss}{note}",
                                                   confirmed))
             elif kind == "unresolved":
                 out.append(DeclarationFinding(
                     "#474", path, owner,
                     f"번역 출처 칸 {written} 은 잡은 예외 값을 쓴다 — 예보 불확정: 잡는 예외의 출처를 가를 수 없다({why}) — 물음: "
-                    "이 예외가 domain_layer 것인가(그러면 그 import 를 boundary-imports 에 적는다 · OHS 는 잡은 도메인 예외 값을 "
-                    "쓰지 않는다 — #474)", False))
+                    f"이 예외가 domain_layer 것인가(그러면 그 import 를 boundary-imports 에 적는다 · {_OHS_VALUE_RULE} — #474)", False))
     deduped: list[DeclarationFinding] = []
     for finding in out:
         if finding not in deduped:

@@ -213,6 +213,7 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
 - 최상위는 셋이다 — `application/<bounded_context>/`(BC 마다 하나) · `framework/`(저장소에 하나) · `<project>/`(Django 프로젝트 패키지).
 - 폴더 이름이 끝에 `/` 를 달고, `admin/`·`templates/` 아래처럼 한 행이 하위 경로를 품기도 한다.
 - 기계 사본은 `scripts/standard_tree.py` — 검사기들이 import 하는 유일한 트리 데이터다.
+- BC `test/` 바로 아래 `conftest.py` 한 파일은 트리 행 없이 둘 수 있다(골격 폐쇄 #490 의 부칙) — `integration/` · `e2e/` 가 함께 쓰는 고정물 자리다. 이 파일의 고정물은 `autouse=True` 로 두지 않는다(#383 — unit 까지 함께 켠다).
 
 ## §2 골격 규칙
 

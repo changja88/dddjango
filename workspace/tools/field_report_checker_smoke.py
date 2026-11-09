@@ -2040,6 +2040,9 @@ def ev_single(ctor_kw: str = "", headers: tuple[str, ...] = (), extra: tuple[str
 # 실행: auto = `--error-profile auto` · cj = code-json(+flag) · bl = code-json(+flag) --anchor-baseline · pre = preserve(flag 없음 — usage 기대 사례만 flag).
 # usage 기대는 (1, "stderr 조각").
 T474 = ev_tree("suspended")
+T474_OHS = T474 + (
+    " (승인한 사건 값을 옮기는 꼴만 비켜 준다: 잡은 구체 예외 하나 · 양쪽 클래스에 직접 선언된 `str` / `str | None` 필드 · "
+    "본문은 `raise 공개예외(kw=n.f) [from None]` 한 문장)")
 EV_CASES: dict[str, tuple[dict[str, str], list[str], dict[str, tuple[int, object]]]] = {
     "base": (ev_files(), [], {"auto": (0, []), "cj": (0, []), "bl": (0, []), "pre": (0, [])}),
     "P1": (ev_files(ev_arm(EV_P1)), [EV_UNTIL], {"auto": (0, []), "cj": (0, []), "bl": (0, [])}),
@@ -2350,9 +2353,9 @@ def find_login_block_query(request: object, response: HttpResponse) -> dict[str,
         return Status(403, suspended_error)
 ''', f"{EV_A}/driving_layer/open_host_service/__init__.py": "",
         f"{EV_A}/driving_layer/open_host_service/session_user/__init__.py": ""}), [EV_DECIDED],
-        {"auto": (2, [("#474", "suspended.decided_at", T474, EV_OHS)]),
-         "cj": (2, [("#474", "suspended.decided_at", T474, EV_OHS)]),
-         "bl": (2, [("#474", "suspended.decided_at", T474, EV_OHS)])}),
+        {"auto": (2, [("#474", "suspended.decided_at", T474_OHS, EV_OHS)]),
+         "cj": (2, [("#474", "suspended.decided_at", T474_OHS, EV_OHS)]),
+         "bl": (2, [("#474", "suspended.decided_at", T474_OHS, EV_OHS)])}),
     "N16b": (ev_files(**{EV_HOOK: '''from datetime import UTC
 
 from django.http import HttpRequest, HttpResponse
@@ -2547,13 +2550,13 @@ if _LOGIN_BLOCKED_REASON_HEADER:
         request: HttpRequest, response: HttpResponse, use_case: AuthenticateAccountUseCase, command: AuthenticateAccountCommand
     ) -> None:
 ''' + textwrap.indent(EV_UNMANAGED_READ, " " * 8) + "\n"), [], EV_UNMANAGED_RUNS),
-    # N33f — `except*` handler 는 managed catch 가 아니다: 트리 #474 가 그대로 서고, code lane 은 수집 실행에서 분석 오류로
-    # 멈춘다(통과가 아니다). `except*` 는 `except` 와 한 try 에 섞지 못하고 본문에 `return` 을 못 둔다.
+    # N33f — `except*` handler 는 managed catch 가 아니다: 트리 #474 가 그대로 서고, code lane 은 파일을 가리키는 못 읽음이라
+    # 기준선 재실행에서도 #474 를 내고 버틴다(F4-59 ①). `except*` 는 `except` 와 한 try 에 섞지 못하고 본문에 `return` 을 못 둔다.
     "N33f": ({EV_CTRL: ev_controller(ev_arm('marker: str = "x"\nresponse["Login-Blocked-Code"] = suspended.reason_code\n').replace(
         "        except AccountSuspended as suspended:", "        except* AccountSuspended as suspended:")).replace(
         "        except InvalidCredentials:\n            invalid_credentials: AccountsErrorSchema = InvalidCredentialsError()\n"
         "            return Status(403, invalid_credentials)\n", "")},
-        [], {"auto": (2, EV_UNMANAGED_474), "cj": (2, EV_UNMANAGED_474), "bl": (1, "except* direct grammar unsupported")}),
+        [], {"auto": (2, EV_UNMANAGED_474), "cj": (2, EV_UNMANAGED_474), "bl": (2, EV_UNMANAGED_474)}),
 })
 assert "    @router.post(" in EV_CASES["N33e"][0][EV_CTRL] and "\nif _LOGIN_BLOCKED_REASON_HEADER:\n" in EV_CASES["N33e"][0][EV_CTRL]
 assert "except* AccountSuspended as suspended:" in EV_CASES["N33f"][0][EV_CTRL]
@@ -4594,8 +4597,8 @@ class RootTestFolderRegression(unittest.TestCase):
     """
 
     PLACE: str = "저장소 루트 시험 폴더 — 시험은 주인의 표준 시험 자리(BC `test/` · 전역 규칙은 `framework/test/unit/`)에 둔다"
-    IMPORT: str = ("저장소 루트 시험 폴더(`tests` · `test` 패키지)를 import 한다 — 필요한 fixture · 도우미는 이 시험의 표준 자리"
-                   "(`test/conftest.py` · `test/fake/`)에 새로 쓴다")
+    IMPORT: str = ("저장소 루트 시험 폴더(`tests` · `test` 패키지)를 import 한다 — 필요한 fixture 는 이 시험의 BC `test/conftest.py` 에, "
+                   "도우미는 쓰는 시험 폴더(`unit/` · `integration/` · `e2e/`) 안에 새로 쓴다(`test/fake/` 는 포트의 가짜 구현 자리다)")
 
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory(prefix="field-root-tests-")
@@ -4711,6 +4714,144 @@ class RootTestFolderRegression(unittest.TestCase):
         ])
         self.assertEqual(result.returncode, 2)
         self.assertIn("check-test-config.py: 3", [line.strip() for line in residual])
+
+
+class OhsPublishedValueRegression(unittest.TestCase):
+    """F4-105 — OHS catch 가 승인 사건 값을 published 예외로 옮기는 꼴만 #474 · #153 을 비켜 간다(현장 꼴을 일반 이름으로)."""
+
+    SERVICE = "application/lesson/driving_layer/open_host_service/grading/grading_service.py"
+    DOMAIN = "application/lesson/domain_layer/grade/exception/grade_output_invalid.py"
+    PUBLISHED = "application/lesson/driving_layer/open_host_service/grading/contract/exception/grade_output_invalid_exception.py"
+    HEADER = ("from application.lesson.domain_layer.grade.exception.grade_output_invalid import GradeOutputInvalid\n"
+              "from application.lesson.driving_layer.open_host_service.grading.contract.exception.grade_output_invalid_exception "
+              "import GradeOutputInvalidException\n")
+    GOOD = "raise GradeOutputInvalidException(received_text=caught.received_text) from None"
+    CAUGHT = """class GradeOutputInvalid(Exception):
+    def __init__(self, received_text: str | None) -> None:
+        super().__init__(received_text)
+        self.received_text: str | None = received_text
+        self.code: int = 0
+"""
+    PUBLIC = """class GradeOutputInvalidException(Exception):
+    def __init__(self, received_text: str | None) -> None:
+        super().__init__(received_text)
+        self.received_text: str | None = received_text
+        self.code: int = 0
+"""
+
+    def setUp(self) -> None:
+        tmp = tempfile.TemporaryDirectory(prefix="field-ohs-value-")
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.write(self.DOMAIN, self.CAUGHT)
+        self.write(self.PUBLISHED, self.PUBLIC)
+
+    def write(self, rel: str, source: str = "") -> Path:
+        target = self.root / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(source, encoding="utf-8")
+        return target
+
+    def rules(self, raised: str, header: "str | None" = None) -> "tuple[list[str], list[str]]":
+        body = (header if header is not None else self.HEADER) + (
+            "def grade_command(request):\n    try:\n        run(request)\n"
+            f"    except GradeOutputInvalid as caught:\n        {raised}\n    return None\n")
+        py = self.write(self.SERVICE, body)
+        found, cand = isolation.Findings(defer=True), isolation.Candidates(defer=True)
+        isolation._check_ohs_service(py, Path(self.SERVICE), found, cand, self.root, "lesson")
+        tree, tree_cand = controller.Findings(defer=True), controller.Candidates(defer=True)
+        controller._slice_check_controller_ast(py, Path(self.SERVICE), tree, tree_cand, [], [], True, ohs_root=self.root)
+        return [e.rule for e in found.entries], [e.rule for e in tree.entries]
+
+    def test_published_value_forms_pass_both_rules(self) -> None:
+        for raised in (self.GOOD, self.GOOD.replace(" from None", "")):
+            with self.subTest(raised=raised):
+                self.assertEqual(self.rules(raised), ([], []))
+
+    def test_other_forms_keep_the_lines(self) -> None:
+        cases = {
+            "from caught": self.GOOD.replace("from None", "from caught"),
+            "str(caught)": "raise GradeOutputInvalidException(received_text=str(caught)) from None",
+            "whole caught": "raise GradeOutputInvalidException(received_text=caught) from None",
+            "not a declared field": "raise GradeOutputInvalidException(received_text=caught.args) from None",
+            "int field": "raise GradeOutputInvalidException(received_text=caught.code) from None",
+            "unknown keyword": "raise GradeOutputInvalidException(other=caught.received_text) from None",
+            "positional": "raise GradeOutputInvalidException(caught.received_text) from None",
+            "log first": "log(caught.received_text)\n        " + self.GOOD,
+        }
+        for label, raised in cases.items():
+            with self.subTest(label=label):
+                rules_153, rules_474 = self.rules(raised)
+                self.assertIn("#474", rules_474)
+                if label not in ("str(caught)", "whole caught"):
+                    self.assertIn("#153", rules_153)
+
+    def test_only_own_bc_domain_and_contract_exception_qualify(self) -> None:
+        other_domain = self.HEADER.replace("application.lesson.domain_layer", "application.other.domain_layer")
+        self.write(self.DOMAIN.replace("lesson", "other"), self.CAUGHT)
+        other_contract = self.HEADER.replace("open_host_service.grading.contract.exception", "open_host_service.grading.contract.request")
+        self.write(self.PUBLISHED.replace("/exception/", "/request/"), self.PUBLIC)
+        for label, header, rule in (("other BC domain", other_domain, "#474"), ("not contract/exception", other_contract, "#153")):
+            with self.subTest(label=label):
+                rules_153, rules_474 = self.rules(self.GOOD, header)
+                self.assertIn(rule, rules_474 if rule == "#474" else rules_153)
+
+    def test_rejected_form_names_the_condition(self) -> None:
+        py = self.write(self.SERVICE, self.HEADER + (
+            "def grade_command(request):\n    try:\n        run(request)\n"
+            "    except GradeOutputInvalid as caught:\n        raise GradeOutputInvalidException(received_text=caught.args) from None\n"))
+        found, cand = isolation.Findings(defer=True), isolation.Candidates(defer=True)
+        isolation._check_ohs_service(py, Path(self.SERVICE), found, cand, self.root, "lesson")
+        tree, tree_cand = controller.Findings(defer=True), controller.Candidates(defer=True)
+        controller._slice_check_controller_ast(py, Path(self.SERVICE), tree, tree_cand, [], [], True, ohs_root=self.root)
+        for entry in (*found.entries, *tree.entries):
+            self.assertIn("`raise 공개예외(kw=n.f) [from None]` 한 문장", entry.msg)
+
+    def test_controller_slice_without_ohs_root_is_unchanged(self) -> None:
+        py = self.write(self.SERVICE, self.HEADER + (
+            "def grade_command(request):\n    try:\n        run(request)\n"
+            f"    except GradeOutputInvalid as caught:\n        {self.GOOD}\n    return None\n"))
+        tree, tree_cand = controller.Findings(defer=True), controller.Candidates(defer=True)
+        controller._slice_check_controller_ast(py, Path(self.SERVICE), tree, tree_cand, [], [], True, None)
+        self.assertEqual([e.rule for e in tree.entries], ["#474"])
+
+
+class AclConstructorPortRegression(unittest.TestCase):
+    """F4-131 — ACL 어댑터가 생성자로만 받는 포트는 «크로스-BC 포트»가 아니다(파일마다 · 현장 꼴은 본문 주석까지)."""
+
+    FIELD = ("from application.conv.application_layer.port.clock.clock_port import ClockPort\n"
+             "from application.conv.application_layer.port.summary.summary_port import SummaryPort\n\n\n"
+             "class PartnerSummaryAdapter(SummaryPort):\n"
+             "    def __init__(self, *, clock: ClockPort) -> None:\n"
+             "        self._clock: ClockPort = clock\n\n"
+             "    def summarize(self, text: str) -> str:\n"
+             "        return f\"{self._clock.now()}:{text}\"\n")
+
+    def setUp(self) -> None:
+        tmp = tempfile.TemporaryDirectory(prefix="field-acl-ctor-")
+        self.addCleanup(tmp.cleanup)
+        self.acl = Path(tmp.name) / "anticorruption_layer"
+        (self.acl / "partner").mkdir(parents=True)
+
+    def ports(self, **files: str) -> set[str]:
+        for name, source in files.items():
+            (self.acl / "partner" / f"{name}.py").write_text(source, encoding="utf-8")
+        return isolation._cross_bc_port_names(self.acl)
+
+    def test_field_shape_body_annotation_is_constructor_only(self) -> None:
+        self.assertEqual(self.ports(summary_adapter=self.FIELD), {"SummaryPort"})
+
+    def test_plain_assignment_is_constructor_only(self) -> None:
+        self.assertEqual(self.ports(summary_adapter=self.FIELD.replace("self._clock: ClockPort = clock", "self._clock = clock")), {"SummaryPort"})
+
+    def test_other_uses_keep_the_port(self) -> None:
+        returns = self.FIELD + "\n    def clock(self) -> ClockPort:\n        return self._clock\n"
+        self.assertEqual(self.ports(summary_adapter=returns), {"ClockPort", "SummaryPort"})
+        self.assertEqual(
+            self.ports(summary_adapter=self.FIELD,
+                       clock_adapter="from application.conv.application_layer.port.clock.clock_port import ClockPort\n\n\n"
+                                     "class PartnerClockAdapter(ClockPort):\n    pass\n"),
+            {"ClockPort", "SummaryPort"})
 
 
 if __name__ == "__main__":

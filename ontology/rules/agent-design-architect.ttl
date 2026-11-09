@@ -1949,8 +1949,8 @@ djr:R-3429 a djr:Obligation ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3430 a djr:Obligation ;
-    skos:prefLabel "예외 번역표 기계 블록 — published 예외↔raise 창구 표 · 선택 번역 출처 칸"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3430@2026-10-25> .
+    skos:prefLabel "예외 번역표 기계 블록 — published 예외↔raise 창구 표 · 선택 번역 출처 칸 · `as` 뒤 선택 값 칸(published 필드 이름)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3430@2026-11-09> .
 
 <https://numchida.com/ns/djr#R-3430@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3430 ;
@@ -1966,6 +1966,12 @@ djr:R-3430 a djr:Obligation ;
     prov:specializationOf djr:R-3430 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-3430@2026-09-10> ;
     djr:revision 3 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-3430@2026-11-09> a djr:Expression ;
+    prov:specializationOf djr:R-3430 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3430@2026-10-25> ;
+    djr:revision 4 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3431 a djr:Prohibition ;
@@ -2187,20 +2193,32 @@ djr:R-3688 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3689 a djr:Obligation ;
-    skos:prefLabel "OHS 창구 catch 꼴을 더하거나 바꾸면(번역 대상이 같아도 · 본문만 바뀌어도) 번역 출처 칸을 지금 꼴로 · 기존 published 예외로 가는 번역도 · `as` = 잡은 값을 씀 · 무기재 = S5 · 도메인 출처 `as` = #474 확정 · `Exception`/`BaseException` = #62 확정 · 기준선 빚 catch 가 그 published 예외를 내거나 가를 수 없으면 후보 · OHS 밖 행 = 판정 0"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3689@2026-10-25> .
+    skos:prefLabel "OHS 창구 catch 꼴을 더하거나 바꾸면(번역 대상이 같아도 · 본문만 바뀌어도) 번역 출처 칸을 지금 꼴로 · 기존 published 예외로 가는 번역도 · `as` = 잡은 값을 씀 · 값 칸 = 옮겨 싣는 published 필드 이름 · 무기재 = S5 · 도메인 출처 값 칸 없는 `as` = #474 확정 · `Exception`/`BaseException` = #62 확정 · 기준선 빚 catch 가 그 published 예외를 내거나 가를 수 없으면 후보 · OHS 밖 행 = 판정 0"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3689@2026-11-09> .
 
 <https://numchida.com/ns/djr#R-3689@2026-10-25> a djr:Expression ;
     prov:specializationOf djr:R-3689 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3689@2026-11-09> a djr:Expression ;
+    prov:specializationOf djr:R-3689 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3689@2026-10-25> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3690 a djr:Prohibition ;
-    skos:prefLabel "OHS 창구는 잡은 도메인 예외 값을 읽지 않는다(#474) — 실패 글은 그 예외를 내는 유스케이스가 남긴다"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3690@2026-10-25> .
+    skos:prefLabel "OHS 창구는 잡은 도메인 예외 값을 읽지 않는다(#474 · #153) — 잡은 예외 · published 예외에 직접 선언된 `str` · `str | None` 필드를 `raise <published>(kw=n.f)` 한 문장으로 옮기는 사건 값 꼴만 예외(값 칸 = kw) · 실패 글은 그 예외를 내는 유스케이스가 남긴다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3690@2026-11-09> .
 
 <https://numchida.com/ns/djr#R-3690@2026-10-25> a djr:Expression ;
     prov:specializationOf djr:R-3690 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3690@2026-11-09> a djr:Expression ;
+    prov:specializationOf djr:R-3690 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3690@2026-10-25> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3710 a djr:Obligation ;
     skos:prefLabel "묶음 허용 칸 새 파일 경로 = Coordinator 가 준 draft 출력의 새 파일 자리 · 묶음 경로는 승격 표기 아님 · 그 밖 묶음 판정 없음"@ko ;
@@ -2224,6 +2242,30 @@ djr:R-3728 a djr:Obligation ;
 
 <https://numchida.com/ns/djr#R-3728@2026-11-07> a djr:Expression ;
     prov:specializationOf djr:R-3728 ;
+    djr:revision 1 .
+
+djr:R-3736 a djr:Prohibition ;
+    skos:prefLabel "slot 6 — `dddjango-code-json` 입력 모양 실패는 입력 Schema 선언의 framework 422 · common shape 로 맞추지 않는다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3736@2026-11-09> .
+
+<https://numchida.com/ns/djr#R-3736@2026-11-09> a djr:Expression ;
+    prov:specializationOf djr:R-3736 ;
+    djr:revision 1 .
+
+djr:R-3737 a djr:Prohibition ;
+    skos:prefLabel "slot 10 — 입력 모양 실패(빈 값 · 범위)를 `400` 행으로 적지 않는다(blocker) · 입력 Schema 선언 → framework 422 · 승인된 `400` 변경은 계약 변경 또는 사용자 승인 빚"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3737@2026-11-09> .
+
+<https://numchida.com/ns/djr#R-3737@2026-11-09> a djr:Expression ;
+    prov:specializationOf djr:R-3737 ;
+    djr:revision 1 .
+
+djr:R-3738 a djr:Prohibition ;
+    skos:prefLabel "file-plan 숨김 경로 — 마지막 성분만 숨김이고 `.py` 아닌 파일만 허용 · 숨김 폴더 경유 · 숨김 `.py` · `.dddjango` · `.git` · `.mcp.json` · 비밀 값 파일 `.env` · `.env.<이름>`(견본 `.env.sample` · `.env.example` · `.env.template` 만 허용) = 형식 위반"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3738@2026-11-09> .
+
+<https://numchida.com/ns/djr#R-3738@2026-11-09> a djr:Expression ;
+    prov:specializationOf djr:R-3738 ;
     djr:revision 1 .
 
 <https://numchida.com/ns/djr#d/dddjango/agents/design-architect.md> a djr:Document ;
@@ -2377,8 +2419,8 @@ djr:R-3728 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 11 ;
-    djr:statesNorm djr:R-1614, djr:R-1615, djr:R-1616, djr:R-1617, djr:R-1618 ;
-    djr:text "10. **`prepared error mapping`**: `dddjango-code-json`이면 concrete domain/application exception 또는 조회의 `None` → concrete `ErrorSchema`(무인자 · 또는 설명 칸 keyword 하나), 또는 승인 값으로 명시적으로 채운 BC base `ErrorSchema` → controller의 direct `Status(<승인된 HTTP status 표현>, error)` chain과 각 output의 slot-6 body(설명 칸은 문구 틀)/approved header, 그리고 잡은 예외의 승인 필드 값(사건 값)을 쓰는 output 행마다 «사건 값» 칸 — 필드(`<예외 모듈>.<클래스>.<필드>`와 타입 `str`·`int`·`datetime`, 값이 없을 수 있으면 `| None`) · 자리(설명 문구 틀 · 머리 이름) · 값의 뜻과 출처(예외 생성부 · 던지는 자리 파일:행) · 공개 까닭(내부 정보 · 개인정보가 아닌 까닭) · 머리 계약(값 꼴 — 날짜는 RFC 3339 `+00:00` · 값 없음(머리 생략)의 뜻 · 화면이 읽는 법) — 을 표로 기록한다(칸이 비면 사건 값은 0이다). internal failure type과 output object를 명확히 구분한다. 여러 internal failures가 하나의 public ErrorCode로 수렴할 수 있다. 이미 잡은 IntegrityError의 승인된 알려진 제약 실패는 구체 계약 예외로, 나머지는 승인된 일반 저장소 실패 계약으로 번역한다. repository 실패 계약은 domain 소유, capability port 실패 계약은 해당 port 소유다. 이 내부 정규화는 공개 HTTP 오류 승인이 아니므로 일반 저장소 실패의 외부 응답은 기존 safe 500을 유지한다. 새 ErrorCode/ErrorSchema/4xx/503을 만들지 않는다. 잡지 않은 unknown 인프라 오류를 새로 catch-all하지 않는다. 안정된 public meaning이 별도로 승인된 경우에만 그 외부 계약에 맞는 controller mapping을 한다. 이미 선언된 계약 예외의 관찰 후 재던짐은 허용한다. `preserve-established`이면 관찰된 profile-native preparation/mapping artifact·behavior 또는 evidence가 있는 `none | not applicable`을 기록하고 code-profile chain을 강제하지 않는다.\n"@ko .
+    djr:statesNorm djr:R-1614, djr:R-1615, djr:R-1616, djr:R-1617, djr:R-1618, djr:R-3737 ;
+    djr:text "10. **`prepared error mapping`**: `dddjango-code-json`이면 concrete domain/application exception 또는 조회의 `None` → concrete `ErrorSchema`(무인자 · 또는 설명 칸 keyword 하나), 또는 승인 값으로 명시적으로 채운 BC base `ErrorSchema` → controller의 direct `Status(<승인된 HTTP status 표현>, error)` chain과 각 output의 slot-6 body(설명 칸은 문구 틀)/approved header, 그리고 잡은 예외의 승인 필드 값(사건 값)을 쓰는 output 행마다 «사건 값» 칸 — 필드(`<예외 모듈>.<클래스>.<필드>`와 타입 `str`·`int`·`datetime`, 값이 없을 수 있으면 `| None`) · 자리(설명 문구 틀 · 머리 이름) · 값의 뜻과 출처(예외 생성부 · 던지는 자리 파일:행) · 공개 까닭(내부 정보 · 개인정보가 아닌 까닭) · 머리 계약(값 꼴 — 날짜는 RFC 3339 `+00:00` · 값 없음(머리 생략)의 뜻 · 화면이 읽는 법) — 을 표로 기록한다(칸이 비면 사건 값은 0이다). 입력 모양 실패(빈 값 · 범위 같은 입력 확인)는 입력 Schema 선언 → framework 422 이므로 이 표에 `400` 행으로 적지 않는다(적으면 blocker 다 — 승인된 `400` 을 바꾸는 일은 계약 변경 또는 사용자 승인 빚 목록으로 명세에 적는다). internal failure type과 output object를 명확히 구분한다. 여러 internal failures가 하나의 public ErrorCode로 수렴할 수 있다. 이미 잡은 IntegrityError의 승인된 알려진 제약 실패는 구체 계약 예외로, 나머지는 승인된 일반 저장소 실패 계약으로 번역한다. repository 실패 계약은 domain 소유, capability port 실패 계약은 해당 port 소유다. 이 내부 정규화는 공개 HTTP 오류 승인이 아니므로 일반 저장소 실패의 외부 응답은 기존 safe 500을 유지한다. 새 ErrorCode/ErrorSchema/4xx/503을 만들지 않는다. 잡지 않은 unknown 인프라 오류를 새로 catch-all하지 않는다. 안정된 public meaning이 별도로 승인된 경우에만 그 외부 계약에 맞는 controller mapping을 한다. 이미 선언된 계약 예외의 관찰 후 재던짐은 허용한다. `preserve-established`이면 관찰된 profile-native preparation/mapping artifact·behavior 또는 evidence가 있는 `none | not applicable`을 기록하고 code-profile chain을 강제하지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b12> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
@@ -2552,8 +2594,8 @@ djr:R-3728 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 34 ;
-    djr:statesNorm djr:R-3425 ;
-    djr:text "- **파일 계획 정규 블록**: `<!-- machine: file-plan -->` 마커 + ```paths 펜스. 1행 = `<태그> <경로>`(태그 선행·공백 구분·경로는 project-relative — 태그는 `add|update|remove[@Ln]|empty`)이고 `#` 주석만 허용한다. 브레이스 전개·`·` 병렬·`*`/`…` 축약·미해소 `<placeholder>`·승격 폴더 표기(경로는 언제나 `<칸>.py` — 동명 폴더 승격은 구현 캐스케이드 소유 · 묶음 경로 `<부모>/<묶음>/<파일>.py` 는 승격 표기가 아니다)·**동일 경로의 태그 이중 서술**은 전부 형식 위반이다(이중 서술은 파서 결정 불능을 낳는다). glyph 트리 삽화를 남기려면 블록에서 렌더해 생성하거나 파서의 삽화↔블록 차분 판정을 받는다 — 같은 계획의 이중 표현이 서로 어긋나는 드리프트 축을 봉쇄한다. **태그의 뜻은 기준선 기준이다**(G1 시점 HEAD — Phase 2 재발화 시 `--base` 기준선 · 2026-09-03 차단 승격 · 재발화에 `--approved-merge-file` 이 동반되면 실존은 «기준선 ⊕ 승인 유입»이다 — 유입이 더한 경로는 실존 · 지운 경로는 부재 · 2026-09-27): `add` = 기준선에 없는 경로(실존하면 형식 red «add 충돌» — 유입이 더한 경로면 «승인 유입 add 충돌») · `update` = 기준선에 실존하는 경로(부재면 형식 red «update 대상 부재» — 그 경로는 `add` 로 적는다 · 유효 승격 형태 `<칸>/__init__.py` ∧ `<칸>/<칸>.py` 의 기준선 실존은 실존이다) · `remove[@Ln]` = 기준선 실존 경로(비후행 remove 의 부재는 형식 red «remove 대상 부재» — 예외 없음 · 후행 `@Ln` 은 판정 밖 · `--base` 기준선은 이동하지 않으므로(재발화 판형 ②) 기실현 remove 는 실존이다 · 기준선에도 없는(승인 전에 이미 지워진) 경로는 remove 행을 거둔다) · `empty` = 새 빈 파일(add 와 같은 «새 파일» 태그 — 기준선 실존이면 형식 red «empty 충돌» · 기실현이면 `update`). 구형 명세에 블록을 소급 작성할 때 기실현 경로는 전부 `update` 다 — 실체화 0도 적법하며 선언 검증은 계속 수행한다(`add` 를 `update` 로 바꿔 red 를 피하는 것은 형식 red 로 잡힌다). 비후행 remove를 전사한 뒤 그 경로들의 조상 중 최종 사본에서 빈 부모 디렉터리만 정리한다(dirty overlay 선삭제 포함). 남은 파일(0B·init·미추적·add/empty 포함)이 있거나 후행 remove 실물이 남으면 보존하며, 무관한 빈 디렉터리와 symlink 경유 경로는 정리하지 않는다. 폴더 정리는 파일 실체화 건수와 별도로 보고한다 — 파일 실효 조치가 없어도 선언 검증과 기존 실존 판정을 수행한 뒤 확정 없는 경우 skip한다. remove만 있는 BC를 신규 골격으로 다시 만들지 않는다.\n"@ko .
+    djr:statesNorm djr:R-3425, djr:R-3738 ;
+    djr:text "- **파일 계획 정규 블록**: `<!-- machine: file-plan -->` 마커 + ```paths 펜스. 1행 = `<태그> <경로>`(태그 선행·공백 구분·경로는 project-relative — 태그는 `add|update|remove[@Ln]|empty`)이고 `#` 주석만 허용한다. 점으로 시작하는 성분은 마지막 성분만 숨김이고 `.py` 가 아닌 파일(`env/.env.sample`)일 때만 적을 수 있다 — 숨김 폴더를 지나는 경로 · 숨김 `.py` · `.dddjango` · `.git` · `.mcp.json` 과 비밀 값 파일 `.env` · `.env.<이름>`(견본 `.env.sample` · `.env.example` · `.env.template` 만 받는다)은 형식 위반이다. 브레이스 전개·`·` 병렬·`*`/`…` 축약·미해소 `<placeholder>`·승격 폴더 표기(경로는 언제나 `<칸>.py` — 동명 폴더 승격은 구현 캐스케이드 소유 · 묶음 경로 `<부모>/<묶음>/<파일>.py` 는 승격 표기가 아니다)·**동일 경로의 태그 이중 서술**은 전부 형식 위반이다(이중 서술은 파서 결정 불능을 낳는다). glyph 트리 삽화를 남기려면 블록에서 렌더해 생성하거나 파서의 삽화↔블록 차분 판정을 받는다 — 같은 계획의 이중 표현이 서로 어긋나는 드리프트 축을 봉쇄한다. **태그의 뜻은 기준선 기준이다**(G1 시점 HEAD — Phase 2 재발화 시 `--base` 기준선 · 2026-09-03 차단 승격 · 재발화에 `--approved-merge-file` 이 동반되면 실존은 «기준선 ⊕ 승인 유입»이다 — 유입이 더한 경로는 실존 · 지운 경로는 부재 · 2026-09-27): `add` = 기준선에 없는 경로(실존하면 형식 red «add 충돌» — 유입이 더한 경로면 «승인 유입 add 충돌») · `update` = 기준선에 실존하는 경로(부재면 형식 red «update 대상 부재» — 그 경로는 `add` 로 적는다 · 유효 승격 형태 `<칸>/__init__.py` ∧ `<칸>/<칸>.py` 의 기준선 실존은 실존이다) · `remove[@Ln]` = 기준선 실존 경로(비후행 remove 의 부재는 형식 red «remove 대상 부재» — 예외 없음 · 후행 `@Ln` 은 판정 밖 · `--base` 기준선은 이동하지 않으므로(재발화 판형 ②) 기실현 remove 는 실존이다 · 기준선에도 없는(승인 전에 이미 지워진) 경로는 remove 행을 거둔다) · `empty` = 새 빈 파일(add 와 같은 «새 파일» 태그 — 기준선 실존이면 형식 red «empty 충돌» · 기실현이면 `update`). 구형 명세에 블록을 소급 작성할 때 기실현 경로는 전부 `update` 다 — 실체화 0도 적법하며 선언 검증은 계속 수행한다(`add` 를 `update` 로 바꿔 red 를 피하는 것은 형식 red 로 잡힌다). 비후행 remove를 전사한 뒤 그 경로들의 조상 중 최종 사본에서 빈 부모 디렉터리만 정리한다(dirty overlay 선삭제 포함). 남은 파일(0B·init·미추적·add/empty 포함)이 있거나 후행 remove 실물이 남으면 보존하며, 무관한 빈 디렉터리와 symlink 경유 경로는 정리하지 않는다. 폴더 정리는 파일 실체화 건수와 별도로 보고한다 — 파일 실효 조치가 없어도 선언 검증과 기존 실존 판정을 수행한 뒤 확정 없는 경우 skip한다. remove만 있는 BC를 신규 골격으로 다시 만들지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b35> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
@@ -2582,7 +2624,7 @@ djr:R-3728 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 38 ;
     djr:statesNorm djr:R-3430, djr:R-3689, djr:R-3690 ;
-    djr:text "- **예외 번역표 기계 블록**: 이 명세가 이미 요구하는 예외 번역 산출물(도메인→published 매핑)을 `<!-- machine: exception-map -->` 마커의 ```exceptions 펜스(1행 = `<published 예외>` + 탭 또는 공백 2+ + `<raise 창구 파일>` + 선택 셋째 칸 탭 또는 공백 2+ + `<= <잡는 예외 맨 이름>[ as]` — 번역 출처: 창구가 그 예외를 잡아 이 published 예외로 바꾼다 · `as` = 잡은 값을 쓴다(로그 인자·메시지·`from <이름>`·속성) · 점 이름·`as <이름>`·`AS`·`<-` 는 형식 red · 셋째 칸이 없는 행은 종전 그대로)로 성문한다 — 번역표에 없는 published 예외는 어느 창구도 raise 하지 않는 «죽은 계약»으로 예보된다. add 창구 외에는, 명시 신규 함수가 실제 전사된 update OHS 서비스 파일에 한해 같은 파일 수준 raise helper로 전사한다. exception-map은 함수 주소가 아니므로 특정 함수의 raise 위치를 증명하지 않는다. 신규 함수가 없는 update 본문 변경과 산문에만 적힌 raise는 계속 S5이며, contract 안의 raise 진탐을 면제하지 않는다. **번역 출처 칸**: OHS 창구 catch 의 꼴(잡는 예외·잡은 값을 쓰는지)을 이 명세가 더하거나 바꾸면 — 번역 대상이 같아도·catch 본문만 바뀌어도(로그 줄 더함 포함)·기존 published 예외로 가는 번역도 — 그 행을 적고 출처 칸을 지금 꼴로 고쳐 적는다. 무기재는 S5 미검증이다. pre-gate 는 창구가 검사기 OHS 선택(`…/application/<bc>/driving_layer/open_host_service/**/*_service.py`)과 같은 행만 판정한다 — 출처가 `Exception`·`BaseException` 이면 `as` 와 무관하게 선언 #62 확정, 그 밖 출처는 창구 boundary-imports → update 기준선 실물 → 이 명세 symbols 의 같은 이름 클래스 순으로 처음 찾은 import 로 가르고 절대 `…domain_layer…` 출처에 `as` 면 선언 #474 확정 · 출처를 가를 수 없는데 `as` 면 후보다. update 창구는 기준선 실물을 같은 판정으로 돌려 그 규칙 줄을 낸 catch(빚 catch — #474 는 그 출처를 잡는 것 · #62 는 이름과 무관한 catch-all)가 있으면 행의 published 예외를 기준선에서 누가 내는지로 고칠 catch 를 가린다: 빚 catch 가 내면 후보(그 catch 를 고치는 것이면 기존 빚) · 빚 없는 catch(#474 는 같은 출처를 잡는 것)가 내면 확정(새 줄) · 둘 다 아니면 후보다. 후보는 빚 catch 의 자리와 묶음 이름을 적는다 — 그 catch 를 고치는 행이면 기존 빚이고 새 catch 나 다른 catch 면 실검사기 새 줄이다(#474 는 묶음 이름이 다르면 G2 가 막는다 · 같은 이름이나 #62 는 G2 집합 차분이 지울 수 있다). OHS 밖 행의 출처 칸은 판정 0 이다(2026-10-25). **OHS 창구는 잡은 도메인 예외를 타입으로만 잡아 published 예외로 번역한다 — 잡은 값을 읽지 않는다**(로그 인자·메시지·`from <이름>`·속성 — #474 · OHS 에는 사건 값 예외가 없다). 실패 글을 남겨야 하면 그 예외를 내는 유스케이스가 남기고 다시 낸다(2026-10-25).\n\n"@ko .
+    djr:text "- **예외 번역표 기계 블록**: 이 명세가 이미 요구하는 예외 번역 산출물(도메인→published 매핑)을 `<!-- machine: exception-map -->` 마커의 ```exceptions 펜스(1행 = `<published 예외>` + 탭 또는 공백 2+ + `<raise 창구 파일>` + 선택 셋째 칸 탭 또는 공백 2+ + `<= <잡는 예외 맨 이름>[ as]` + `as` 뒤 선택 값 칸 공백 2+ + `값 <필드>`(예 `<= OutputRejected as  값 received_text`) — 번역 출처: 창구가 그 예외를 잡아 이 published 예외로 바꾼다 · `as` = 잡은 값을 쓴다(로그 인자·메시지·`from <이름>`·속성) · 값 칸의 `<필드>` = 잡은 값을 옮겨 싣는 published 예외의 필드 이름 · 점 이름·`as <이름>`·`AS`·`<-` 는 형식 red · 셋째 칸이 없는 행은 종전 그대로)로 성문한다 — 번역표에 없는 published 예외는 어느 창구도 raise 하지 않는 «죽은 계약»으로 예보된다. add 창구 외에는, 명시 신규 함수가 실제 전사된 update OHS 서비스 파일에 한해 같은 파일 수준 raise helper로 전사한다. exception-map은 함수 주소가 아니므로 특정 함수의 raise 위치를 증명하지 않는다. 신규 함수가 없는 update 본문 변경과 산문에만 적힌 raise는 계속 S5이며, contract 안의 raise 진탐을 면제하지 않는다. **번역 출처 칸**: OHS 창구 catch 의 꼴(잡는 예외·잡은 값을 쓰는지)을 이 명세가 더하거나 바꾸면 — 번역 대상이 같아도·catch 본문만 바뀌어도(로그 줄 더함 포함)·기존 published 예외로 가는 번역도 — 그 행을 적고 출처 칸을 지금 꼴로 고쳐 적는다. 무기재는 S5 미검증이다. pre-gate 는 창구가 검사기 OHS 선택(`…/application/<bc>/driving_layer/open_host_service/**/*_service.py`)과 같은 행만 판정한다 — 출처가 `Exception`·`BaseException` 이면 `as` 와 무관하게 선언 #62 확정, 그 밖 출처는 창구 boundary-imports → update 기준선 실물 → 이 명세 symbols 의 같은 이름 클래스 순으로 처음 찾은 import 로 가르고 절대 `…domain_layer…` 출처에 값 칸 없는 `as` 면 선언 #474 확정(값 칸이 있고 그 published 예외의 symbols 또는 기준선 실물에 같은 이름의 `str` · `str | None` 필드가 있으면 통과) · 출처를 가를 수 없는데 `as` 면 후보다. update 창구는 기준선 실물을 같은 판정으로 돌려 그 규칙 줄을 낸 catch(빚 catch — #474 는 그 출처를 잡는 것 · #62 는 이름과 무관한 catch-all)가 있으면 행의 published 예외를 기준선에서 누가 내는지로 고칠 catch 를 가린다: 빚 catch 가 내면 후보(그 catch 를 고치는 것이면 기존 빚) · 빚 없는 catch(#474 는 같은 출처를 잡는 것)가 내면 확정(새 줄) · 둘 다 아니면 후보다. 후보는 빚 catch 의 자리와 묶음 이름을 적는다 — 그 catch 를 고치는 행이면 기존 빚이고 새 catch 나 다른 catch 면 실검사기 새 줄이다(#474 는 묶음 이름이 다르면 G2 가 막는다 · 같은 이름이나 #62 는 G2 집합 차분이 지울 수 있다). OHS 밖 행의 출처 칸은 판정 0 이다(2026-10-25). **OHS 창구는 잡은 도메인 예외를 타입으로만 잡아 published 예외로 번역한다 — 잡은 값을 읽지 않는다**(로그 인자·메시지·`from <이름>`·속성 — #474 · #153). 예외는 사건 값 한 꼴이다 — 자기 BC `domain_layer` 구체 예외 하나를 `as n` 으로 잡아 본문이 `raise <자기 BC contract/exception 클래스>(<kw>=n.<f>)`(뒤에 `from None` 만 허용) 한 문장이고, `<f>` 와 `<kw>` 가 각각 잡은 예외 · published 예외 클래스에 직접 선언된(`f: T` · `__init__` 의 `self.f: T` — 상속 필드는 세지 않는다) 공개 `str` 또는 `str | None` 필드일 때뿐이며, 이 행의 값 칸에 `값 <kw>`(published 필드 이름)를 적어 G1 승인을 받는다. `str(n)` · 예외를 통째로 쓰기 · `from n` 은 그대로 위반이다. 실패 글을 남겨야 하면 그 예외를 내는 유스케이스가 남기고 다시 낸다(2026-10-25).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b39> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
@@ -2623,8 +2665,8 @@ djr:R-3728 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
-    djr:statesNorm djr:R-1602, djr:R-1603, djr:R-1604, djr:R-1605, djr:R-1606 ;
-    djr:text "6. **`common FrameworkErrorSchema shape/approval`**: `dddjango-code-json`이면 plugin 기본 property 없이, 기존 scope는 관찰된 common `ErrorSchema`을 기준선으로 삼고 신규 scope는 제안한 exact field set과 각 type·required/default/nullable·Field metadata·model config/legacy Config·validator/serializer/computed field/Pydantic hook inventory와 effective semantics·wire 직렬화, 어느 field를 BC ErrorCode로 좁힐지, project-relative canonical path를 기록한다. 신규 shape 생성과 현재 기준선의 property·type·존재성·변환 규칙·의미 변경은 일반 G1 승인과 분리해 명시적 사용자 승인을 받아야 한다. 변경이면 slot 5가 `approved-change`이고 이 slot에 별도 승인 evidence가 있어야 G1을 완료할 수 있다. `preserve-established`이면 관찰된 profile-native wire/media type/schema/handler shape와 approval evidence 또는 `none | not applicable`을 기록한다. 관찰된 RFC/schema/handler를 보존할 수 있지만 새 recipe로 일반화하지 않는다.\n"@ko .
+    djr:statesNorm djr:R-1602, djr:R-1603, djr:R-1604, djr:R-1605, djr:R-1606, djr:R-3736 ;
+    djr:text "6. **`common FrameworkErrorSchema shape/approval`**: `dddjango-code-json`이면 plugin 기본 property 없이, 기존 scope는 관찰된 common `ErrorSchema`을 기준선으로 삼고 신규 scope는 제안한 exact field set과 각 type·required/default/nullable·Field metadata·model config/legacy Config·validator/serializer/computed field/Pydantic hook inventory와 effective semantics·wire 직렬화, 어느 field를 BC ErrorCode로 좁힐지, project-relative canonical path를 기록한다. 신규 shape 생성과 현재 기준선의 property·type·존재성·변환 규칙·의미 변경은 일반 G1 승인과 분리해 명시적 사용자 승인을 받아야 한다. 변경이면 slot 5가 `approved-change`이고 이 slot에 별도 승인 evidence가 있어야 G1을 완료할 수 있다. 입력 모양 실패(빈 값 · 범위 같은 입력 확인)는 입력 Schema 선언이 내는 framework 422 이며 이 shape 로 맞추지 않는다. `preserve-established`이면 관찰된 profile-native wire/media type/schema/handler shape와 approval evidence 또는 `none | not applicable`을 기록한다. 관찰된 RFC/schema/handler를 보존할 수 있지만 새 recipe로 일반화하지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b8> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;

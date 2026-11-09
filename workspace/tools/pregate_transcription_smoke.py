@@ -1045,8 +1045,10 @@ CATALOG_BASELINE = ('"""Garden catalog open host service."""\nfrom __future__ im
 CATALOG_LOGGED = CATALOG_BASELINE.replace(
     "    except PlantUnreadable:\n",
     "    except PlantUnreadable as unreadable:\n        print(unreadable)\n")
-CAUGHT_DETAIL = "도메인 예외를 `as _caught` 로 묶어 참조했다 — 입구 파일은 도메인 예외를 «타입»으로만 쓴다"
-STALE_MEMO = "S5 입구 catch 확인(출처 칸 `as` 없음 — OHS 는 잡은 도메인 예외 값을 쓰지 않는다(R-3690)"
+CAUGHT_DETAIL = ("도메인 예외를 `as _caught` 로 묶어 참조했다 — 입구 파일은 도메인 예외를 «타입»으로만 쓴다"
+                 " (승인한 사건 값을 옮기는 꼴만 비켜 준다: 잡은 구체 예외 하나 · 양쪽 클래스에 직접 선언된 `str` / `str | None` 필드 · "
+                 "본문은 `raise 공개예외(kw=n.f) [from None]` 한 문장)")
+STALE_MEMO = "S5 입구 catch 확인(출처 칸 `as` 없음 — OHS 창구는 잡은 도메인 예외 값을 값 칸(`값 <published 필드>`)으로 승인한 필드만 published 예외로 옮긴다(R-3690)"
 BLANK_MEMO = "S5 입구 catch 미검증(번역 출처 칸 무기재"
 OUTSIDE_MEMO = "번역 출처 칸 판정 밖(검사기 OHS 창구 아님 — 판정 0)"
 
@@ -1460,7 +1462,7 @@ class CatchForecastTest(GardenFixture):
             with self.subTest(row=bad):
                 _, errors = pg.parse_spec(catch_spec([f"update {CATALOG_SERVICE}"], [f"PlantUnavailableException  {CATALOG_SERVICE}  {bad}"]))
                 self.assertEqual(len(errors), 1, errors)
-                self.assertIn("[<탭|2+공백><= <잡는 예외 맨 이름>[ as]]", errors[0])
+                self.assertIn("[<탭|2+공백><= <잡는 예외 맨 이름>[ as[<탭|2+공백>값 <필드>]]]", errors[0])
         for good, source, bound in (("<= PlantUnreadable", "PlantUnreadable", False), ("<=\tPlantUnreadable  as", "PlantUnreadable", True),
                                     ("", "", False)):
             with self.subTest(row=good):

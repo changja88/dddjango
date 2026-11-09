@@ -994,6 +994,14 @@ djr:R-3658 a djr:Obligation ;
     prov:specializationOf djr:R-3658 ;
     djr:revision 1 .
 
+djr:R-3739 a djr:Obligation ;
+    skos:prefLabel "slot 10 — 입력 모양 실패(빈 값 · 범위)의 `400` 행 · application call 앞 분기 설계 = blocker · 입력 Schema 선언 → framework 422 · 승인된 `400` 변경은 계약 변경 또는 사용자 승인 빚 목록 확인"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3739@2026-11-09> .
+
+<https://numchida.com/ns/djr#R-3739@2026-11-09> a djr:Expression ;
+    prov:specializationOf djr:R-3739 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/design-review-api.md> a djr:Document ;
     skos:prefLabel "agent-design-review-api"@ko .
 
@@ -1254,8 +1262,8 @@ djr:R-3658 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 11 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b11> ;
-    djr:statesNorm djr:R-2674, djr:R-2675, djr:R-2676, djr:R-2677, djr:R-2678, djr:R-3658 ;
-    djr:text "10. **`prepared error mapping`**: `dddjango-code-json`은 concrete domain/application exception 또는 조회의 `None` → concrete `ErrorSchema`(무인자 · 또는 설명 칸 keyword 하나), 또는 승인 값으로 명시적으로 채운 BC base `ErrorSchema` → direct `Status(<승인된 HTTP status 표현>, error)` chain과 slot-6 body(설명 칸은 문구 틀)/approved header, 잡은 예외의 승인 필드 값(사건 값)을 쓰는 output의 «사건 값» 칸(필드 · 자리 · 값의 뜻과 출처 · 공개 까닭 · 머리 계약)이 완전한지 본다. internal failure type과 output object를 혼동하면 blocker다. 공개 문자열은 `str(exc)`를 자동 사용하거나 sensitive data를 노출하면 안 된다. 이미 잡은 IntegrityError의 승인된 알려진 제약 실패는 구체 계약 예외로, 나머지는 승인된 일반 저장소 실패 계약으로 번역한다. repository 실패 계약은 domain 소유, capability port 실패 계약은 해당 port 소유다. 이 내부 정규화는 공개 HTTP 오류 승인이 아니므로 일반 저장소 실패의 외부 응답은 기존 safe 500을 유지한다. 새 ErrorCode/ErrorSchema/4xx/503을 만들지 않는다. 잡지 않은 unknown 인프라 오류를 새로 catch-all하지 않는다. 안정된 public meaning이 별도로 승인된 경우에만 그 외부 계약에 맞는 controller mapping을 한다. 이미 선언된 계약 예외의 관찰 후 재던짐은 허용한다. `preserve-established`는 observed profile-native preparation/mapping 또는 evidenced `none | not applicable`인지 보고 code-profile chain을 강제하지 않는다. slot 10 사건 값 칸마다 그 필드에 들어가는 값의 뜻과 출처를 예외 생성부 · 던지는 자리와 대조하고(승인한 업무 값만 — `str(다른 예외)` · 내부 값 금지), 메시지와 머리의 대응과 머리 계약(이름 · 꼴 · 생략의 뜻 · 소비법 — slot 10 · 12 · operation `description`)을 확인한다 — registry #15는 승인 목록 밖 필드 읽기까지만 막는다.\n"@ko .
+    djr:statesNorm djr:R-2674, djr:R-2675, djr:R-2676, djr:R-2677, djr:R-2678, djr:R-3658, djr:R-3739 ;
+    djr:text "10. **`prepared error mapping`**: `dddjango-code-json`은 concrete domain/application exception 또는 조회의 `None` → concrete `ErrorSchema`(무인자 · 또는 설명 칸 keyword 하나), 또는 승인 값으로 명시적으로 채운 BC base `ErrorSchema` → direct `Status(<승인된 HTTP status 표현>, error)` chain과 slot-6 body(설명 칸은 문구 틀)/approved header, 잡은 예외의 승인 필드 값(사건 값)을 쓰는 output의 «사건 값» 칸(필드 · 자리 · 값의 뜻과 출처 · 공개 까닭 · 머리 계약)이 완전한지 본다. 입력 모양 실패(빈 값 · 범위 같은 입력 확인)를 이 표의 `400` 행이나 slot 11 의 application call 앞 분기로 설계하면 blocker다 — 입력 Schema 선언 → framework 422 가 표준 길이고, 승인된 `400` 을 바꾸는 일이면 계약 변경 또는 사용자 승인 빚 목록이 명세에 있어야 한다. internal failure type과 output object를 혼동하면 blocker다. 공개 문자열은 `str(exc)`를 자동 사용하거나 sensitive data를 노출하면 안 된다. 이미 잡은 IntegrityError의 승인된 알려진 제약 실패는 구체 계약 예외로, 나머지는 승인된 일반 저장소 실패 계약으로 번역한다. repository 실패 계약은 domain 소유, capability port 실패 계약은 해당 port 소유다. 이 내부 정규화는 공개 HTTP 오류 승인이 아니므로 일반 저장소 실패의 외부 응답은 기존 safe 500을 유지한다. 새 ErrorCode/ErrorSchema/4xx/503을 만들지 않는다. 잡지 않은 unknown 인프라 오류를 새로 catch-all하지 않는다. 안정된 public meaning이 별도로 승인된 경우에만 그 외부 계약에 맞는 controller mapping을 한다. 이미 선언된 계약 예외의 관찰 후 재던짐은 허용한다. `preserve-established`는 observed profile-native preparation/mapping 또는 evidenced `none | not applicable`인지 보고 code-profile chain을 강제하지 않는다. slot 10 사건 값 칸마다 그 필드에 들어가는 값의 뜻과 출처를 예외 생성부 · 던지는 자리와 대조하고(승인한 업무 값만 — `str(다른 예외)` · 내부 값 금지), 메시지와 머리의 대응과 머리 계약(이름 · 꼴 · 생략의 뜻 · 소비법 — slot 10 · 12 · operation `description`)을 확인한다 — registry #15는 승인 목록 밖 필드 읽기까지만 막는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006/b12> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006> ;

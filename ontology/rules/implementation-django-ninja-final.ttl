@@ -1865,12 +1865,18 @@ djr:R-0762 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0763 a djr:Permission ;
-    skos:prefLabel "단일 endpoint 단순 gate의 adapter 연결 허용"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0763@2026-08-22> .
+    skos:prefLabel "단일 endpoint 단순 gate의 adapter 연결 허용(`auth=` · permission 틀로)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0763@2026-11-10> .
 
 <https://numchida.com/ns/djr#R-0763@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0763 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0763@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-0763 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0763@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0764 a djr:Obligation ;
     skos:prefLabel "다중 entry point 재사용 rule의 service/domain policy 이관"@ko ;
@@ -2500,6 +2506,14 @@ djr:R-3655 a djr:Obligation ;
     prov:specializationOf djr:R-3655 ;
     djr:revision 1 .
 
+djr:R-3735 a djr:Prohibition ;
+    skos:prefLabel "`dddjango-code-json` 표면의 입력 확인(빈 값 · 범위)은 입력 Schema 선언 · framework 422 — operation 본문의 application call 앞 분기로 오류 반환 · raise 금지(§6.3 406 · 415 만 예외) · 로그인 · 권한은 framework 인증 틀 · 요청의 뜻 판정은 유스케이스 · 승인된 400 변경은 G1 계약 변경 또는 사용자 승인 빚"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3735@2026-11-09> .
+
+<https://numchida.com/ns/djr#R-3735@2026-11-09> a djr:Expression ;
+    prov:specializationOf djr:R-3735 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> a djr:Document ;
     skos:prefLabel "implementation-django-ninja-final"@ko .
 
@@ -2678,8 +2692,8 @@ djr:R-3655 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 11 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b29> ;
-    djr:statesNorm djr:R-0684, djr:R-0685 ;
-    djr:text "- known domain/application exception은 컨트롤러가 구체적으로 catch하고, 준비된\n  concrete `ErrorSchema`(무인자 · 또는 설명 칸 keyword 하나 — §6.2 사건 값)를\n  `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 오류\n  `(status, schema)` tuple, raw `Response`/dict, 오류 helper/factory/serializer/mapper,\n  등록 handler/decorator로 우회하지 않는다(§6.2).\n"@ko .
+    djr:statesNorm djr:R-0684, djr:R-0685, djr:R-3735 ;
+    djr:text "- known domain/application exception은 컨트롤러가 구체적으로 catch하고, 준비된\n  concrete `ErrorSchema`(무인자 · 또는 설명 칸 keyword 하나 — §6.2 사건 값)를\n  `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 오류\n  `(status, schema)` tuple, raw `Response`/dict, 오류 helper/factory/serializer/mapper,\n  등록 handler/decorator로 우회하지 않는다(§6.2).\n- `dddjango-code-json` 표면에서 빈 값 · 범위 같은 입력 확인은 입력 Schema 선언(`Field` 제약 · `Query` · `Header` · `Path`)으로 둔다 — 응답은 framework 422 다. operation 본문에서 application call 앞의 분기로 오류를 반환하거나 raise 하지 않는다(§6.3 의 `raise HttpError(406)` · `raise HttpError(415)` 만 예외). 로그인과 권한은 framework 인증 틀(§4)이, 요청의 뜻 판정은 유스케이스가 맡는다(controller 는 그 뒤에 catch 한다). 승인된 `400` 을 바꾸는 일은 G1 에서 계약 변경(`400` → `422`) 또는 사용자 승인 빚 목록으로 간다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b12> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
@@ -3185,7 +3199,7 @@ djr:R-3655 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
     djr:statesNorm djr:R-0763 ;
-    djr:text "- 단일 endpoint에만 해당하는 단순 gate는 adapter에서 연결할 수 있다.\n"@ko .
+    djr:text "- 단일 endpoint에만 해당하는 단순 gate는 adapter에서 `auth=` · permission 틀로 연결할 수 있다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2> ;

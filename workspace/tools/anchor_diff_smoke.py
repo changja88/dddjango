@@ -2582,7 +2582,7 @@ class RenamedBcBaselineRegression(unittest.TestCase):
         self.assertIn("기준선 오류: [check-composition-root] 사용 오류: preserve-established의 --urlconf-module/--registrar-module", old[1])
         self.assertEqual(new, old)
         # #15 · 다른 영역(accounts)이 개명된 영역의 오류 클래스를 import — 지금 이름 렌더가 `re-export provenance 분석 불능` 으로
-        # 서지 않는 꼴. 대응은 #2 에만 넘기므로 #15 는 2.22.2 와 글자 같다(풀리지 않음 — 뒤 판 후보).
+        # 서지 않는 꼴. 대응은 #2 에만 넘기지만, 파일을 가리키는 못 읽음은 기준선 재실행이 버티므로(F4-59 ①) selector 렌더로 선다.
         def xref(rr: ApprovedInflowRepo, other: str) -> None:
             prefix: str = "".join(word.title() for word in other.split("_"))
             rr.write("application/accounts/driving_layer/api/place/place_controller.py",
@@ -2606,7 +2606,10 @@ class RenamedBcBaselineRegression(unittest.TestCase):
         r.write("lane2.txt", "lane\n"); r.commit("lane follow-up")
         new, old = self.run_both(r, anchor, (merge,), self.argv(*bcs, inventory=False), CONTRACT)
         self.assertIn("re-export provenance 분석 불능", old[1])
-        self.assertEqual(new, old)
+        self.assertEqual(new[0], 0, new[1])
+        self.assertIn("신규분(앵커 이후) 0건", new[1])
+        self.assertNotIn("기준선 오류:", new[1])
+        self.assertNotIn("영역 이름 대응", new[1])
 
     def test_R8_real_shape_two_old_bcs_gone_one_new(self) -> None:
         """현장 모양 — 옛 영역 둘(내용 있는 오류 모듈 하나 · 빈 골격 하나)이 사라지고 새 영역 하나: 개명 + 삭제 / 개명 + 흡수."""
@@ -3346,12 +3349,122 @@ def main() -> int:
         shutil.rmtree(private, ignore_errors=True)
 
 
+class BaselineLadderHoldsRegression(unittest.TestCase):
+    """기준선 사다리가 무관한 BC 때문에 positional 로 무너지지 않는다 — F4-59 ①(앵커 쪽 파일 못 읽음) · F4-40(앵커에 오류 모듈 없는 BC)."""
+
+    UNREAD: str = ("result = get_lesson(lesson_id)\nif not result:\n    error = LessonNotFoundError()\n"
+                   "    return Status(404, error)\nreturn result")
+    NORMAL: str = ("try:\n    result = get_lesson(lesson_id)\nexcept LessonMissing:\n    error = LessonNotFoundError()\n"
+                   "    return Status(error.status, error)\nreturn result")
+    LEGACY: str = ('result = get_lesson(lesson_id)\nif result.kind == "x":\n    error = LessonNotFoundError()\n'
+                   "    return Status(404, error)\nreturn result")
+
+    def setUp(self) -> None:
+        tmp = tempfile.TemporaryDirectory(prefix="dddjango-baseline-hold-")
+        self.addCleanup(tmp.cleanup)
+        self.td: Path = Path(tmp.name)
+        import api_error_backstop_matrix as matrix
+        self.matrix = matrix
+
+    @staticmethod
+    def _renamed(source: str) -> str:
+        return source.replace("lesson", "relay").replace("Lesson", "Relay")
+
+    def files(self, lesson: str, relay: str) -> "dict[str, str]":
+        matrix = self.matrix
+        out: "dict[str, str]" = matrix._f496_files(matrix._f496_body(lesson))
+        for rel, src in matrix._f496_files(matrix._f496_body(relay)).items():
+            if rel.startswith("application/lesson/"):
+                out[self._renamed(rel)] = self._renamed(src)
+        return out
+
+    @staticmethod
+    def argv(*bcs: str) -> "list[str]":
+        args: "list[str]" = ["--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py"]
+        for bc in bcs:
+            args += ["--controller-module", f"application/{bc}/driving_layer/controller.py", "--scope-bc", bc, "--error-bc", bc]
+        return args
+
+    def lane(self, name: str, anchor_files: "dict[str, str]", run_files: "dict[str, str]") -> "tuple[Path, str]":
+        repo: Path = self.td / name
+        for rel, src in anchor_files.items():
+            _write(repo, rel, src)
+        self.assertEqual(_git(repo, "init", "-q").returncode, 0)
+        anchor: str = _commit_all(repo, "anchor")
+        for rel, src in run_files.items():
+            _write(repo, rel, src)
+        _commit_all(repo, "lane")
+        return repo, anchor
+
+    def test_59_anchor_side_unreadable_file_keeps_selector_baseline(self) -> None:
+        files_anchor = self.files(self.UNREAD, self.LEGACY)
+        files_run = self.files(self.NORMAL, self.LEGACY)
+        repo, anchor = self.lane("f59", files_anchor, {k: v for k, v in files_run.items() if files_anchor.get(k) != v})
+        code, out = _run(CONTRACT, repo, [*self.argv("lesson", "relay"), "--anchor", anchor])
+        self.assertEqual(code, 0, out)
+        self.assertIn("기준선=selector 렌더 재실행", out)
+        self.assertIn("기준선 못 읽은 자리 1곳", out)
+        self.assertIn("신규분(앵커 이후) 0건", out)
+        self.assertIn("Result variant/outcome failure branch forbidden", out)
+
+    def test_59_current_side_unreadable_stays_exit_1(self) -> None:
+        anchor_files = self.files(self.UNREAD, self.LEGACY)
+        repo, anchor = self.lane("cur", anchor_files, {"config/note.py": "X = 1\n"})
+        code, out = _run(CONTRACT, repo, [*self.argv("lesson", "relay"), "--anchor", anchor])
+        self.assertEqual(code, 1, out)
+        self.assertIn("Result candidate predicate 분석 불능", out)
+
+    def test_59_real_new_lines_stay_new_after_anchor_side_unreadable(self) -> None:
+        anchor_files = self.files(self.UNREAD, self.NORMAL)
+        run_files = self.files(self.NORMAL, self.LEGACY)
+        repo, anchor = self.lane("new", anchor_files, {k: v for k, v in run_files.items() if anchor_files.get(k) != v})
+        code, out = _run(CONTRACT, repo, [*self.argv("lesson", "relay"), "--anchor", anchor])
+        self.assertEqual(code, 2, out)
+        self.assertIn("기준선=selector 렌더 재실행", out)
+        self.assertIn("신규분(앵커 이후) 1건", out)
+
+    def test_59_openapi_gathers_past_first_unreadable_operation(self) -> None:
+        matrix = self.matrix
+        unread: str = matrix.F496_OPENAPI_HEAD + "_E = LessonNotFoundError\n_E |= LessonConflictError\n" + matrix.F496_OPENAPI_OP
+        normal: str = matrix.F496_OPENAPI_HEAD + matrix.F496_OPENAPI_OP.replace("404: _E}", "404: LessonNotFoundError}")
+        legacy: str = matrix.F496_OPENAPI_HEAD + matrix.F496_OPENAPI_OP.replace(
+            "404: _E}", "404: LessonNotFoundError, 409: LessonConflictError}")
+        anchor_files: "dict[str, str]" = matrix._f496_files(unread)
+        run_files: "dict[str, str]" = matrix._f496_files(normal)
+        for rel, src in matrix._f496_files(legacy).items():
+            if rel.startswith("application/lesson/"):
+                anchor_files[self._renamed(rel)] = self._renamed(src)
+                run_files[self._renamed(rel)] = self._renamed(src)
+        repo, anchor = self.lane("f59o", anchor_files, {k: v for k, v in run_files.items() if anchor_files.get(k) != v})
+        code, out = _run(OPENAPI, repo, [*self.argv("lesson", "relay"), "--anchor", anchor])
+        self.assertEqual(code, 0, out)
+        self.assertIn("기준선=selector 렌더 재실행", out)
+        self.assertIn("신규분(앵커 이후) 0건", out)
+
+    def test_40_new_bc_without_error_module_in_anchor_keeps_existing_lines(self) -> None:
+        matrix = self.matrix
+        new_controller: "dict[str, str]" = {
+            self._renamed(rel): self._renamed(src)
+            for rel, src in matrix._f496_files(matrix._f496_body(self.NORMAL)).items()
+            if rel.startswith("application/lesson/")}
+        anchor_files: "dict[str, str]" = dict(matrix._f496_files(matrix._f496_body(self.LEGACY)))
+        anchor_files["application/relay/__init__.py"] = ""
+        anchor_files["application/relay/driving_layer/__init__.py"] = ""
+        anchor_files["application/relay/driving_layer/api/__init__.py"] = ""
+        repo, anchor = self.lane("f40", anchor_files, new_controller)
+        code, out = _run(CONTRACT, repo, [*self.argv("lesson", "relay"), "--anchor", anchor])
+        self.assertEqual(code, 0, out)
+        self.assertIn("빈 골격 --error-bc 걷음: relay", out)
+        self.assertIn("신규분(앵커 이후) 0건", out)
+        self.assertIn("앵커 기존분(잔존) ", out)
+
+
 def _main() -> int:
     suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case) for case in (
         BaselineBcArgvRegression, EmptyScopeBcRegression, BcSelectorPartitionRegression, SisterAnchorRegression,
         UnnumberedDebtRegression, BaselineSliceRegression, ApprovedInflowPartitionRegression,
         BcRenamePairingRegression, RenamedBcBaselineRegression, AnchorSnapshotEscapeRegression,
-        SnapshotLinkHelperRegression, HiddenSnapshotRegression))
+        SnapshotLinkHelperRegression, HiddenSnapshotRegression, BaselineLadderHoldsRegression))
     result = unittest.TextTestRunner(verbosity=2).run(
         suite)
     if not result.wasSuccessful():

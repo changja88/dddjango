@@ -39,12 +39,21 @@ overlap 절 — #62·#474 는 handler 행, ⓓ#125 는 route 함수 def 행 좌�
   |                    |                | C2 `caught exception read outside the approved event-value form`(응용 · 계약) |
   | preserve-established | 모든 읽기에 #474(그대로) · `--event-value` 는 사용 오류 | 판정 0(그대로) |
   비켜 주기는 api/<area>/<area>_controller.py 진입점(승격 본체 포함)의 managed catch(operation 본문의 `try` handler —
-  code lane 이 보는 바로 그 handler)에만 — route 아닌 메서드 · 모듈 함수 · 중첩 함수의 catch 와 webhook · OHS
-  `*_service.py` 는 그대로다.
+  code lane 이 보는 바로 그 handler)에만 — route 아닌 메서드 · 모듈 함수 · 중첩 함수의 catch 와 webhook 은 그대로다.
+  OHS `*_service.py`(F4-105 · 프로필 무관)는 `except <자기 BC domain_layer 예외 하나> as n:` 의 본문이
+  `raise <자기 BC contract/exception 클래스>(kw=n.f) [from None]` 한 문장이고 `f` · `kw` 가 양쪽의 공개 `str` · `str | None` 필드일 때만
+  비켜 준다(`checker_target.ohs_event_value_handler` — #153 과 공용). `str(n)` · 통째 쓰기 · `from n` 은 그대로 위반이다.
   머리 대입(키 · 값)에 실을 수 있는 것은 승인 필드 읽기 꼴뿐이다 — 잡은 예외를 통째로 쓰면(`f"{n}"` · `"%s" % n` · `n`)
   호출이 없어도 막는다(가지 문법 줄 + 응용 catch 는 C2 · 도메인 catch 는 트리 #474 — 구현 검토 보완).
   사건 값을 읽는 응용 catch 에서는 람다 본문처럼 평가되지 않는 자리의 통째 쓰기(`message=(lambda: str(n))()`)도 C2 다
   (도메인 catch 는 트리 #474 — 재검토 보완). 사건 값을 읽지 않는 응용 catch 의 같은 꼴은 그대로다(기계 밖 — 감수 몫).
+
+호출 앞 입력 검사(2026-11-09 F4-130 · 사용자 결정 «나.» — code-json code lane):
+  쓰임새 호출(뿌리 이름이 자기 BC `composition_root` · `application_layer` import 인 호출 · 응용 층 자료 생성 `*Command` · `*Query` ·
+  `*Result` 와 맨 `build_*()` 제외 · 빌더로 묶인 이름의 호출 · `sync_to_async(<쓰임새>)` · 뿌리가 import 아닌 `.execute`/`use_case` 경로 포함)이
+  그 `if` · `match` 앞에 없으면 «호출 앞» 이다(앞선 `for` · `while` · `with` 안의 분기 포함). 호출 앞 분기는 오류 동작이 없거나 §6.3 표준 길
+  `raise HttpError(406 · 415)` 이면 통과, 그 밖의 오류 반환 · `raise` 는 위반 한 줄(`PRE_CALL_INPUT_CHECK_FORBIDDEN`) — 입력 Schema ·
+  framework 인증 틀 · 유스케이스 catch 로 옮긴다. 쓰임새 호출 뒤는 바꾸지 않는다(None 길 · exception path · #571 · 못 읽음 exit 1).
 
 그래프 좌표(T2-2): 규범 정본 = 온톨로지 그래프(`ontology/rules/`) · 이 검사기의 #N ↔ Work 조인은
   alias 대장(`ontology/wiring/aliases.ttl`)이 소유한다. 조인 확정: 없음(대장 미등재 — #74 소유자
@@ -144,6 +153,17 @@ RESULT_VARIANT_BRANCH_FORBIDDEN = (
     "Result variant/outcome failure branch forbidden — known failures take the "
     "exception path; a use-case result carries only the success shape (#571)"
 )
+# 2026-11-09 F4-130 — 호출 앞 입력 검사(사용자 결정 «나.»). `_analyze_results` 가 판정한다.
+PRE_CALL_INPUT_CHECK_FORBIDDEN = (
+    "pre-call input check — 쓰임새 호출 앞에서 오류를 돌려주는 분기는 두지 않는다: "
+    "입력의 모양 · 범위는 입력 Schema(`Field` 제약 · `Query` · `Header` · `Path`)로 선언해 framework 422 로, "
+    "로그인과 권한은 framework 인증 틀로, 요청의 뜻 판정은 유스케이스로 내려 그 뒤 catch 로 옮긴다"
+    "(이미 승인된 400 을 고쳐 이 줄이 새로 잡혔으면 G1 에서 계약 변경 400 → 422 또는 사용자 승인 빚 목록으로 간다)"
+)
+PRE_CALL_STANDARD_RAISE_STATUSES = frozenset({406, 415})
+USE_CASE_ROOT_LAYERS = frozenset({"composition_root", "application_layer"})
+APPLICATION_DATA_CLASS_SUFFIXES = ("Command", "Query", "Result")
+APPLICATION_DATA_MODULE_SUFFIXES = ("_command", "_query", "_result")
 # 2026-10-11 F4-80 — 잡은 예외의 승인 필드 값(사건 값). code-json 은 `--event-value`(slot 10 «사건 값» 칸 렌더)
 # 목록과 꼴 맞는 읽기를 대조한다(C1 — 도메인 = #474 · 응용 = 계약) · 응용 예외의 꼴 밖 읽기는 C2(계약).
 EVENT_VALUE_NOT_APPROVED = "caught exception field read not approved by slot 10"
@@ -4673,9 +4693,10 @@ def _branch_has_error_behavior(
     language: ErrorLanguage,
     error_assignments: dict[str, set[int]],
     analysis: list[str],
+    ignored_raises: frozenset[int] = frozenset(),
 ) -> bool:
     for node in _iter_lexical_nodes(statements):
-        if isinstance(node, ast.Raise) or _raw_error_terminal(operation, node):
+        if (isinstance(node, ast.Raise) and id(node) not in ignored_raises) or _raw_error_terminal(operation, node):
             return True
         if isinstance(node, ast.Call):
             if _known_constructor(operation, node, language, analysis) is not None:
@@ -4937,6 +4958,186 @@ def _analyze_result_match(
     return True
 
 
+def _operation_import_bindings(operation: Operation) -> dict[str, Binding]:
+    """operation 본문에서 보이는 import 이름 — 지역 이름이 가리지 않은 모듈 수준 import + 함수 안 import."""
+    bindings: dict[str, Binding] = {
+        name: binding
+        for name, binding in operation.body_bindings.items()
+        if binding.kind in {"module_import", "symbol_import"} and name not in operation.local_names
+    }
+    for node in _iter_lexical_nodes(operation.node.body):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            bindings.update(_import_bindings(operation.parsed.relative_path, node))
+    return bindings
+
+
+def _chain_head(node: ast.AST) -> ast.AST | None:
+    """호출 사슬의 맨 앞 점 경로 — `a.b().c` 의 `a.b`. 이름으로 시작하지 않으면 None."""
+    while _expression_name(node) is None:
+        if isinstance(node, ast.Call):
+            node = node.func
+        elif isinstance(node, (ast.Attribute, ast.Subscript, ast.Await)):
+            node = node.value
+        else:
+            return None
+    return node
+
+
+def _own_use_case_origin(parts: list[str], owner_bc: str) -> bool:
+    return (
+        len(parts) >= 4
+        and parts[0] == "application"
+        and parts[1] == owner_bc
+        and parts[2] in USE_CASE_ROOT_LAYERS
+        and not parts[-2].endswith(APPLICATION_DATA_MODULE_SUFFIXES)
+        and not any(part[0].isupper() and part.endswith(APPLICATION_DATA_CLASS_SUFFIXES) for part in parts[3:])
+    )
+
+
+def _is_bare_builder(expression: ast.AST, operation: Operation, imports: dict[str, Binding]) -> bool:
+    """사슬이 이어지지 않은 맨 `build_*` 경로(`composition_root` 출처) — 쓰임새를 만들 뿐 부르지 않는다."""
+    if _expression_name(expression) is None:
+        return False
+    binding = _resolve_binding(expression, imports)
+    if binding is None:
+        return False
+    parts = binding.origin.split(".")
+    return _own_use_case_origin(parts, operation.owner_bc) and parts[2] == "composition_root" and parts[-1].startswith("build_")
+
+
+def _is_use_case_reference(
+    expression: ast.AST, operation: Operation, imports: dict[str, Binding], builders: set[str]
+) -> bool:
+    """이 식이 쓰임새 호출의 대상인가 — import 뿌리는 자기 BC 출처로, 빌더로 묶인 이름은 그대로, import 가 아닌 뿌리
+    (`self` · 매개변수 · 모듈 변수)는 `.execute` 또는 `use_case` 낱말이 있는 점 경로일 때만(`filters.query.strip()` 은 아니다)."""
+    head = _chain_head(expression)
+    if head is None:
+        return False
+    dotted = (_expression_name(head) or "").split(".")
+    if dotted[0] in builders:
+        return True
+    binding = _resolve_binding(head, imports)
+    if binding is None:
+        return isinstance(expression, ast.Attribute) and (
+            expression.attr == "execute" or any("use_case" in part for part in dotted)
+        )
+    return _own_use_case_origin(binding.origin.split("."), operation.owner_bc) and not _is_bare_builder(
+        expression, operation, imports
+    )
+
+
+def _calls_use_case(
+    call: ast.Call, operation: Operation, imports: dict[str, Binding], builders: set[str]
+) -> bool:
+    """호출 자체가 쓰임새 호출이거나, 인자로 쓰임새 함수를 받는 호출(`sync_to_async(<쓰임새>)`)인가."""
+    if _is_use_case_reference(call.func, operation, imports, builders):
+        return True
+    for argument in (*call.args, *(keyword.value for keyword in call.keywords)):
+        if (
+            isinstance(argument, (ast.Name, ast.Attribute))
+            and not (_expression_name(argument) or "").rpartition(".")[2][:1].isupper()
+            and _is_use_case_reference(argument, operation, imports, builders)
+        ):
+            return True
+    return False
+
+
+def _first_use_case_statement(
+    operation: Operation, body: list[ast.stmt], imports: dict[str, Binding]
+) -> int:
+    """쓰임새 호출이 처음 나오는 문장의 차례(없으면 `len(body)`) — 그보다 앞의 문장은 «호출 앞» 이다.
+
+    `use_case = build_x()` 는 세지 않고 그 이름의 호출(`use_case.execute(…)`)을 센다. `raise` 의 예외 생성도 세지 않는다."""
+    builders: set[str] = set()
+    for index, statement in enumerate(body):
+        raised = {
+            id(node.exc)
+            for node in _iter_lexical_nodes([statement])
+            if isinstance(node, ast.Raise) and node.exc is not None
+        }
+        for node in _iter_lexical_nodes([statement]):
+            if isinstance(node, ast.Call) and id(node) not in raised and _calls_use_case(node, operation, imports, builders):
+                return index
+        assignment = _call_assignment(statement)
+        if assignment is not None and _is_bare_builder(assignment[1].func, operation, imports):
+            builders.add(assignment[0])
+    return len(body)
+
+
+def _pre_call_nested_branches(statements: list[ast.stmt]) -> list[ast.AST]:
+    """호출 앞 `for` · `while` · `with` 안의 가장 바깥 `if` · `match`."""
+    branches: list[ast.AST] = []
+    for statement in statements:
+        if not isinstance(statement, (ast.For, ast.AsyncFor, ast.While, ast.With, ast.AsyncWith)):
+            continue
+        covered: set[int] = set()
+        for node in _iter_lexical_nodes([*statement.body, *getattr(statement, "orelse", [])]):
+            if id(node) in covered or not (isinstance(node, ast.If) or (MATCH is not None and isinstance(node, MATCH))):
+                continue
+            branches.append(node)
+            covered.update(id(descendant) for descendant in _iter_lexical_nodes([node]))
+    return branches
+
+
+def _pre_call_standard_raises(statement: ast.stmt, imports: dict[str, Binding]) -> frozenset[int]:
+    """§6.3 의 표준 길 `raise HttpError(406 | 415, …)`(위치 · `status_code=` · 전체 경로 · 상태는 리터럴) — 호출 앞이어도 비켜 준다."""
+    standard: set[int] = set()
+    for node in _iter_lexical_nodes([statement]):
+        if not isinstance(node, ast.Raise) or not isinstance(node.exc, ast.Call):
+            continue
+        call = node.exc
+        binding = _resolve_binding(call.func, imports)
+        status = call.args[0] if call.args else next(
+            (keyword.value for keyword in call.keywords if keyword.arg == "status_code"), None
+        )
+        if (
+            binding is not None
+            and binding.origin == "ninja.errors.HttpError"
+            and isinstance(status, ast.Constant)
+            and status.value in PRE_CALL_STANDARD_RAISE_STATUSES
+        ):
+            standard.add(id(node))
+    return frozenset(standard)
+
+
+def _report_pre_call_branch(
+    operation: Operation,
+    statement: ast.stmt,
+    imports: dict[str, Binding],
+    language: ErrorLanguage,
+    error_assignments: dict[str, set[int]],
+    analysis: list[str],
+    findings: list[Finding],
+    seen: set[tuple[Path, int, str]],
+    allowed_error_calls: set[int],
+    allowed_status_calls: set[int],
+) -> None:
+    """호출 앞 `if` · `match` 판정 — 오류 동작이 있으면 위반 한 줄, 없으면 통과. 표준 406 · 415 는 오류 동작으로 세지 않는다.
+
+    위반 가지 안의 생성 · Status 는 «catch 로 옮겨라» 로 읽히는 소유 진단을 내지 않게 이 한 줄로 갈음한다."""
+    if not _branch_has_error_behavior(
+        operation,
+        [statement],
+        language,
+        error_assignments,
+        analysis,
+        _pre_call_standard_raises(statement, imports),
+    ):
+        return
+    _append_finding(
+        findings,
+        seen,
+        operation.parsed,
+        statement,
+        PRE_CALL_INPUT_CHECK_FORBIDDEN,
+        requires_static_error_shape=True,
+    )
+    for node in _iter_lexical_nodes([statement]):
+        if isinstance(node, ast.Call):
+            allowed_error_calls.add(id(node))
+            allowed_status_calls.add(id(node))
+
+
 def _analyze_results(
     operation: Operation,
     language: ErrorLanguage,
@@ -4950,6 +5151,8 @@ def _analyze_results(
     error_assignments = _known_error_assignments(operation, language, analysis)
     approved_branches: set[int] = set()
     examined_matches: set[int] = set()
+    imports = _operation_import_bindings(operation)
+    first_use_case = _first_use_case_statement(operation, body, imports)
     categories = (
         "Result arm must directly construct FrameworkErrorSchema and return Status",
         "Result arm delegates error construction to helper/factory/serializer",
@@ -4960,6 +5163,9 @@ def _analyze_results(
     # 그 사이에 올 수 있는 문장은 `outcome = result.<field>` 별칭 한 줄뿐이다.
     index = 0
     while index < len(body) - 1:
+        if index < first_use_case:  # 호출 앞의 호출 대입은 Result 분기를 소유하지 못한다(아래 호출 앞 판정 몫)
+            index += 1
+            continue
         assignment = _call_assignment(body[index])
         if assignment is None or _known_constructor(
             operation, assignment[1], language, analysis
@@ -5042,6 +5248,20 @@ def _analyze_results(
             continue
         if id(statement) in approved_branches:
             continue
+        if index < first_use_case:
+            _report_pre_call_branch(
+                operation,
+                statement,
+                imports,
+                language,
+                error_assignments,
+                analysis,
+                findings,
+                seen,
+                allowed_error_calls,
+                allowed_status_calls,
+            )
+            continue
         if not _candidate_branch(
             operation, statement, language, error_assignments, analysis
         ):
@@ -5093,9 +5313,42 @@ def _analyze_results(
             requires_static_error_shape=True,
         )
 
+    for branch in _pre_call_nested_branches(body[:first_use_case]):
+        examined_matches.add(id(branch))
+        _report_pre_call_branch(
+            operation,
+            branch,
+            imports,
+            language,
+            error_assignments,
+            analysis,
+            findings,
+            seen,
+            allowed_error_calls,
+            allowed_status_calls,
+        )
+    pre_call_matches: set[int] = {
+        id(statement)
+        for statement in body[:first_use_case]
+        if MATCH is not None and isinstance(statement, MATCH)
+    }
     for node in _iter_lexical_nodes(operation.node.body):
         if MATCH is not None and isinstance(node, MATCH):
             if id(node) in examined_matches:
+                continue
+            if id(node) in pre_call_matches:
+                _report_pre_call_branch(
+                    operation,
+                    node,
+                    imports,
+                    language,
+                    error_assignments,
+                    analysis,
+                    findings,
+                    seen,
+                    allowed_error_calls,
+                    allowed_status_calls,
+                )
                 continue
             if _candidate_branch(
                 operation, node, language, error_assignments, analysis
@@ -8144,7 +8397,8 @@ def _run(config: Config) -> tuple[list[str], list[Finding]]:
 #   #132 라우트 데코·인증·상태 코드는 «컨트롤러 파일»에만
 #   #474 입구 파일은 도메인 예외를 «타입»으로만 — except … as e 의 e 참조 금지
 #        (예외 하나 — auto · code-json 의 api 컨트롤러 managed catch 가 승인된 사건 값 꼴로 선언된 공개 필드를
-#        읽는 것(F4-80). 승인 목록 대조는 code-json code lane 의 C1 몫 · preserve · webhook · OHS 는 예외 없음)
+#        읽는 것(F4-80) · OHS `*_service.py` 의 catch 가 승인 필드를 published 예외로 옮기는 꼴(F4-105 · 프로필 무관).
+#        승인 목록 대조는 code-json code lane 의 C1 몫 · preserve · webhook 은 예외 없음)
 #   #59·#62 는 전역 핸들러·except Exception — 입구 파일의 catch-all 을 #62 로 잡고,
 #        전역(project) 쪽은 기존 code-profile 기계가 담당한다.
 
@@ -8289,7 +8543,9 @@ def _slice_check_controller_ast(
     candidate_keys: "list[tuple[str, str, int] | None]",
     is_controller: bool,
     root: "Path | None" = None,
+    ohs_root: "Path | None" = None,
 ) -> None:
+    # ohs_root 는 OHS `*_service.py` 에서만 온다 — #474 는 `checker_target.ohs_event_value_handler` 꼴을 비켜 준다(F4-105 · 프로필 무관).
     # root 가 있으면(auto · code-json 의 api/<area>/<area>_controller.py 진입점 — webhook · OHS 제외) #474 는 managed
     # catch(operation 본문의 `try` handler — code lane 이 보는 바로 그 handler)의 꼴 맞는 사건 값 읽기(F4-80 — 승인
     # 대조는 code lane 몫)를 비켜 준다. route 아닌 메서드 · 모듈 함수 · operation 안 중첩 함수의 catch 는 code lane 이
@@ -8369,6 +8625,12 @@ def _slice_check_controller_ast(
                 msg = "`except Exception`/bare — 폴백은 도메인·응용 base 단위 catch 로 한정한다(base 는 상한이다 — code-json managed controller 는 concrete/구체 tuple 만 catch 한다: ninja §6.2)"
                 findings.add("#62", where, msg)
                 finding_keys.append(("#62", rel.as_posix(), node.lineno))
+            if (
+                ohs_root is not None
+                and len(rel.parts) > 1
+                and checker_target.ohs_event_value_handler(node, mod, ohs_root, rel.parts[1])
+            ):
+                continue
             if node.name and set(caught_names) & domain_names:
                 in_form: "set[int]" = set()
                 if root is not None and id(node) in managed:
@@ -8392,6 +8654,8 @@ def _slice_check_controller_ast(
                     ):
                         sub_where = f"{rel}:{sub.lineno}"
                         msg = f"도메인 예외를 `as {node.name}` 로 묶어 참조했다 — 입구 파일은 도메인 예외를 «타입»으로만 쓴다"
+                        if ohs_root is not None:
+                            msg += checker_target.OHS_EVENT_VALUE_FORM_NOTE
                         # locator 는 참조 행이지만 사건 좌표는 handler 행이다
                         # (overlap 절 — locator 가 달라도 같은 incident).
                         findings.add("#474", sub_where, msg)
@@ -8481,7 +8745,7 @@ def _tree_slice2(
                 for p in sorted(ohs.rglob("*_service.py")):
                     _slice_check_controller_ast(
                         p, p.relative_to(root), findings, candidates,
-                        finding_keys, candidate_keys, True,
+                        finding_keys, candidate_keys, True, ohs_root=root,
                     )
     return findings, candidates, finding_keys, candidate_keys
 
@@ -8590,6 +8854,8 @@ def main(argv: list[str]) -> int:
             except UsageError:
                 _print_tree_blocks(tree_findings, tree_candidates)
                 raise
+            if config.anchor_baseline:
+                analysis = anchor_diff.settle_baseline_analysis(analysis)
             dynamic_proof_only = bool(analysis) and all(
                 issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED ")
                 for issue in analysis

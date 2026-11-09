@@ -229,8 +229,8 @@ djr:R-3124 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3125 a djr:Obligation ;
-    skos:prefLabel "새 시험 파일은 입장 무관 표준 위치(BC test/ 자식 트리 136~142행 · 전역 규칙은 framework/test/unit/)에만 · update·remove 는 제자리(표준 밖 자리는 빚) · 표준 밖 기존 파일에 새 case 금지 · 새 BC 시험은 루트 tests·test 패키지 import 금지(BC test/conftest.py·test/fake/ 에 새로) · BC 밖 시험 옮김은 파이프라인 밖 운영 작업"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3125@2026-10-28> .
+    skos:prefLabel "새 시험 파일은 입장 무관 표준 위치(BC test/ 자식 트리 136~142행 · 전역 규칙은 framework/test/unit/)에만 · update·remove 는 제자리(표준 밖 자리는 빚) · 표준 밖 기존 파일에 새 case 금지 · 새 BC 시험은 루트 tests·test 패키지 import 금지(fixture 는 BC test/conftest.py · 도우미는 쓰는 시험 폴더 안에 새로 · test/fake/ 는 포트 가짜 구현 자리) · BC 밖 시험 옮김은 파이프라인 밖 운영 작업"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3125@2026-11-09> .
 
 <https://numchida.com/ns/djr#R-3125@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3125 ;
@@ -247,6 +247,12 @@ djr:R-3125 a djr:Obligation ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-3125@2026-09-09> ;
     djr:revision 3 ;
     djr:revisionKind djr:revision-redefinition .
+
+<https://numchida.com/ns/djr#R-3125@2026-11-09> a djr:Expression ;
+    prov:specializationOf djr:R-3125 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3125@2026-10-28> ;
+    djr:revision 4 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3126 a djr:Prohibition ;
     skos:prefLabel "구조 규칙 자체는 테스트를 만들거나 기존 테스트를 자동 이동하지 않는다"@ko ;
@@ -1075,7 +1081,7 @@ djr:R-3717 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
     djr:statesNorm djr:R-3124, djr:R-3125, djr:R-3126 ;
-    djr:text "2. **승인된 test artifact 가 실제 있을 때만 의미군으로 조직한다.** 새 시험 파일은 — 어느 입장(`add` 케이스를 담을 새 파일 · 승인된 `retain` 재조직의 목적지)에서 만들든 — 표준 위치(BC `test/` 의 자식 — `final.md` §1 트리 136~142행 · 전역 규칙의 시험은 `framework/test/unit/`)에만 만든다. `update` · `remove` 는 기존 파일 그 자리에서 고친다 — 표준 밖 자리는 빚이다. 표준 밖 기존 파일에 새 case 를 더하지 않는다. 새 BC 시험은 루트 시험 폴더(`tests` · `test` 패키지)를 import 하지 않는다 — 루트 fixture · 도우미가 필요하면 그 BC `test/conftest.py` · `test/fake/` 에 새로 쓴다. 이 규칙은 기존 시험을 옮길 권한을 주지 않는다 — BC 밖 시험(루트 시험 폴더 등)의 옮김은 파이프라인 밖 운영 작업이다(리팩토링 실행도 그 옮김을 하지 않는다). 구조 규칙 자체는 test file/case/assertion 을 만들거나 기존 테스트를 자동 이동하지 않는다.\n"@ko .
+    djr:text "2. **승인된 test artifact 가 실제 있을 때만 의미군으로 조직한다.** 새 시험 파일은 — 어느 입장(`add` 케이스를 담을 새 파일 · 승인된 `retain` 재조직의 목적지)에서 만들든 — 표준 위치(BC `test/` 의 자식 — `final.md` §1 트리 136~142행 · 전역 규칙의 시험은 `framework/test/unit/`)에만 만든다. `update` · `remove` 는 기존 파일 그 자리에서 고친다 — 표준 밖 자리는 빚이다. 표준 밖 기존 파일에 새 case 를 더하지 않는다. 새 BC 시험은 루트 시험 폴더(`tests` · `test` 패키지)를 import 하지 않는다 — 루트 fixture · 도우미가 필요하면 fixture 는 그 BC `test/conftest.py` 에, 도우미는 쓰는 시험 폴더(`unit/` · `integration/` · `e2e/`) 안에 새로 쓴다(`test/fake/` 는 포트의 가짜 구현 자리다). 이 규칙은 기존 시험을 옮길 권한을 주지 않는다 — BC 밖 시험(루트 시험 폴더 등)의 옮김은 파이프라인 밖 운영 작업이다(리팩토링 실행도 그 옮김을 하지 않는다). 구조 규칙 자체는 test file/case/assertion 을 만들거나 기존 테스트를 자동 이동하지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;

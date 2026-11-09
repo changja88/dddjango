@@ -1658,10 +1658,15 @@ def _row_id(row: str) -> "Optional[str]":
     return m.group(1) if m else None
 
 
+def _this_run_text(scope_text: str) -> str:
+    """`refactor-scope.md` 의 이번 실행 몫 — 새 실행이 옮겨 둔 `# 앞 실행` 절 앞."""
+    return scope_text.split("# 앞 실행", 1)[0]
+
+
 def chosen_debt_lines(scope_text: str, candidates: "Iterable[Tuple[str, str]]") -> "Set[Tuple[str, str]]":
     """G0 ⓐ 로 고른 #656 줄 — `refactor-scope.md` 이번 실행 몫(`# 앞 실행` 절 앞)의 `… · 결정 = ⓐ` 줄이 그 줄 글자를
     인용하거나, 그 줄이 든 표 행 · 목록 행의 첫 칸(항목 ID)을 든 것. ⓐ′ · ⓑ 는 고르지 않는다."""
-    current: "list[str]" = scope_text.split("# 앞 실행", 1)[0].splitlines()
+    current: "list[str]" = _this_run_text(scope_text).splitlines()
     heads: "list[str]" = []
     ids: "set[str]" = set()
     for row in current:
@@ -1848,10 +1853,32 @@ def _read_folder(folder: "Optional[Path]", name: str) -> str:
     return (folder / name).read_text(encoding="utf-8")
 
 
+_RUN_LINE_RE: "re.Pattern[str]" = re.compile(r"^\s*[-*]?\s*실행 · G0 승인 .*$", re.M)
+_RUN_LINE_ANCHOR_RE: "re.Pattern[str]" = re.compile(r"\bbuild_anchor\s+`?([^\s·`]+)")
+
+
+def run_anchor(folder: "Optional[Path]") -> str:
+    """이번 실행의 앵커(없으면 빈 문자열) — 재사용한 폴더의 `build_anchor` 파일은 앞 실행 것일 수 있다. `refactor-scope.md` 이번 실행
+    몫의 실행 줄이 판정한다: 실행 줄이 없는 옛 폴더 = 파일을 따른다 · 줄에 `build_anchor <SHA>` 없음 = 앵커 없음(앞 실행 파일을 쓰지
+    않는다) · 줄의 SHA 와 파일이 다르거나 파일이 없음 = 실행 불능(앞자리가 같으면 같은 커밋이다 — 줄은 짧은 SHA 일 수 있다)."""
+    written: str = _read_folder(folder, "build_anchor").strip()
+    line = _RUN_LINE_RE.search(_this_run_text(_read_folder(folder, "refactor-scope.md")))
+    if line is None:
+        return written
+    stated = _RUN_LINE_ANCHOR_RE.search(line.group(0))
+    if stated is None:
+        return ""
+    sha: str = stated.group(1)
+    if not written or not (written.startswith(sha) or sha.startswith(written)):
+        raise FolderGroupError(f"앵커 불일치 — {folder}/refactor-scope.md 실행 줄의 build_anchor {sha} ≠ build_anchor 파일 "
+                               f"{written or '(없음)'} — 실행 줄과 파일을 같은 커밋으로 맞춘다")
+    return written
+
+
 def load_run(root: Path, folder: "Optional[Path]", bcs: "Optional[Set[str]]",
              now_files: "Optional[Mapping[str, str]]" = None) -> RunInput:
-    """5절 재료 — 산출물 폴더에 `build_anchor` 가 있으면 git 앵커 · 승인 병합으로 T₀ · T₀′, 없으면 작업 트리가 곧 T₀ = T₀′."""
-    anchor: str = _read_folder(folder, "build_anchor").strip()
+    """5절 재료 — 이번 실행의 앵커(`run_anchor`)가 있으면 git 앵커 · 승인 병합으로 T₀ · T₀′, 없으면 작업 트리가 곧 T₀ = T₀′."""
+    anchor: str = run_anchor(folder)
     if not anchor:
         files, _dirs = scan_tree(root)
         cur = _bc_filter(files, bcs)
@@ -2226,7 +2253,7 @@ def cmd_draft(args: argparse.Namespace) -> int:
     out += [f"기계 이동 불가 이름 겹침 {a} {b}" for a, b in plan.clashes]
     out += [f"경로 결속 {x}" for x in hz.bindings]
     out += [f"다른 BC import {x}" for x in hz.other_bc]
-    if folder is not None and _read_folder(folder, "build_anchor").strip():
+    if folder is not None and run_anchor(folder):
         sub = string_substituter(remaining) if remaining else None
         dirty: "set[str]" = _dirty_paths(root)
         for name in CONFIG_FILES:
@@ -2288,8 +2315,8 @@ def _dirty_paths(root: Path) -> "Set[str]":
 def cmd_apply(args: argparse.Namespace) -> int:
     root: Path = Path(args.root).resolve()
     folder: Path = Path(args.run).resolve()
-    if not _read_folder(folder, "build_anchor").strip():
-        raise FolderGroupError(f"{folder}/build_anchor 없음 — apply 는 Phase 2 묶음 창 안에서만 돈다")
+    if not run_anchor(folder):
+        raise FolderGroupError(f"{folder}: 이번 실행의 build_anchor 없음 — apply 는 Phase 2 묶음 창 안에서만 돈다")
     run: RunInput = load_run(root, folder, None)
     plan: RunPlan = plan_for(run, legacy_entries(Path(args.legacy_debt_file) if args.legacy_debt_file else None))
     if args.debt:
@@ -2438,8 +2465,8 @@ def _windows_green(folder: Path) -> "Tuple[List[Dict[str, str]], List[int]]":
 
 
 def cmd_verify_run(root: Path, folder: Path, legacy: "Optional[Path]") -> int:
-    if not _read_folder(folder, "build_anchor").strip():
-        raise FolderGroupError(f"{folder}/build_anchor 없음")
+    if not run_anchor(folder):
+        raise FolderGroupError(f"{folder}: 이번 실행의 build_anchor 없음")
     run: RunInput = load_run(root, folder, None)
     plan: RunPlan = plan_for(run, legacy_entries(legacy))
     reds: "list[str]" = []

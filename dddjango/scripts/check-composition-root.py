@@ -1829,7 +1829,9 @@ def _code_overlap_keys(
 #        dependency_wiring.py 의 모듈째 import 한 줄 · `wiring_material.<재료>()` 호출에만
 #   #498/#500/#501 event_wiring.py 는 꽂기만(표 금지·이름 있는 최상단 함수만·DB 금지)
 #   #101 BC 안쪽·composition_root 은 자기 BC 의 driving 층을 import 하지 않는다(타 BC 의
-#        open_host_service 소비는 #13·#102 축 — 2026-08-31 자기-BC 한정 부칙)
+#        open_host_service 소비는 #13·#102 축 — 2026-08-31 자기-BC 한정 부칙 · 자기
+#        event_wiring.py → 자기 event_subscription/event_router 한 쌍은 #498·#508 의 결선이라
+#        면제 — 2026-11-09 부칙 · 구독 함수 import 는 그대로 위반)
 #   #105/#112 api/ 직계 파일 둘뿐 · 등록 파일 이름은 api_router.py(접두 금지)
 #   #107/#108/#109/#111 api_router.py 의 등록 함수 하나·전역 API import 금지·
 #        top-level 부작용 등록 금지·등록 밖 일 금지
@@ -2652,6 +2654,31 @@ def _imports_other_bc_driving(path_str: str, own_bc: str) -> bool:
     return False
 
 
+_EVENT_SUBSCRIPTION_PATH = ("driving_layer", "event_subscription")
+_EVENT_ROUTER_NAME = "event_router"
+
+
+def _own_event_router_imports(mod: ast.Module, own_bc: str) -> set[tuple[int, str]]:
+    """#101 부칙의 한 쌍 — 자기 `composition_root/event_wiring.py` 가 자기 `event_subscription/event_router` 를 가져오는 import 의
+    (줄, `_slice_imports` 경로). `from …event_subscription import event_router` 는 다른 이름이 섞이면 뺀다(구독 함수 import 는 그대로 #101)."""
+    package = (own_bc, *_EVENT_SUBSCRIPTION_PATH)
+    router = (*package, _EVENT_ROUTER_NAME)
+
+    def ends_with(path_str: str, tail: tuple[str, ...]) -> bool:
+        return tuple(path_str.split(".")[-len(tail):]) == tail
+
+    found: set[tuple[int, str]] = set()
+    for node in ast.walk(mod):
+        if isinstance(node, ast.Import):
+            found.update((node.lineno, alias.name) for alias in node.names if ends_with(alias.name, router))
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            if ends_with(node.module, router) or (
+                ends_with(node.module, package) and all(alias.name == _EVENT_ROUTER_NAME for alias in node.names)
+            ):
+                found.add((node.lineno, node.module))
+    return found
+
+
 def _check_inner_driving_imports(bc: Path, bc_rel: Path, findings: Findings) -> None:
     for seg in _INNER_SEGMENTS:
         base = bc / seg
@@ -2664,11 +2691,18 @@ def _check_inner_driving_imports(bc: Path, bc_rel: Path, findings: Findings) -> 
             mod = _slice_parse(f)
             if mod is None:
                 continue
+            allowed = (
+                _own_event_router_imports(mod, bc.name)
+                if seg == "composition_root" and f == base / "event_wiring.py"
+                else set()
+            )
             for lineno, path_str in _slice_imports(mod):
                 if not (set(path_str.split(".")) & _DRIVING_SEGMENTS):
                     continue
                 if _imports_other_bc_driving(path_str, bc.name):
                     continue  # 타 BC driving — 허용면(open_host_service · ACL)은 #13/#102 소관
+                if (lineno, path_str) in allowed:
+                    continue  # 표준 결선 — event_wiring 이 구독 표를 꽂는다(#498 · #508 · 2026-11-09 부칙)
                 findings.add(
                     "#101",
                     f"{bc_rel / f.relative_to(bc)}:{lineno}",

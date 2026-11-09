@@ -6901,6 +6901,18 @@ F496_RESULT_BRANCH: Final = "Result variant/outcome failure branch forbidden"
 F496_PREDICATE: Final = "Result candidate predicate 분석 불능"
 F496_UNSUPPORTED: Final = "unsupported Result/error candidate predicate"
 F496_OPENAPI_PROVENANCE: Final = "required response schema provenance 분석 불능"
+F4130_PRE_CALL: Final = "pre-call input check"
+F4130_CASE_PREFIX: Final = "f4130-"
+F4130_HELPERS: Final = """from application.lesson.application_layer.use_cases import get_lesson as _get_lesson
+
+
+def page_query(raw: str) -> str | None:
+    return raw or None
+
+
+def lookup(lesson_id: int):
+    return _get_lesson(lesson_id)
+"""
 F496_OPENAPI_MISMATCH: Final = "직접 반환 BC 오류와 response= 선언 계약 불일치"
 
 
@@ -6969,22 +6981,87 @@ return result""", 1, F496_UNSUPPORTED, "guard · 떨어진 결과 이름 자체"
     error = LessonNotFoundError()
     return Status(404, error)
 result = get_lesson(lesson_id)
-return result""", 1, F496_UNSUPPORTED, "guard · 호출 전 입력 검사")
+return result""", 2, F4130_PRE_CALL, "F4-130 뒤집음 · 호출 앞 입력 검사 = 위반(옛 exit 1)")
     c15("f496-c5b-precall-param-constant", """if kind == NOT_CALCULATED:
     error = LessonNotFoundError()
     return Status(404, error)
 result = get_lesson(lesson_id)
-return result""", 1, F496_UNSUPPORTED, "guard · 매개변수 상수 비교")
+return result""", 2, F4130_PRE_CALL, "F4-130 뒤집음 · 매개변수 상수 비교")
     c15("f496-c5c-precall-not", """if not lesson_id:
     error = LessonNotFoundError()
     return Status(404, error)
 result = get_lesson(lesson_id)
-return result""", 1, F496_UNSUPPORTED, "guard · `not` 호출 전")
+return result""", 2, F4130_PRE_CALL, "F4-130 뒤집음 · `not` 호출 전")
     c15("f496-c5d-other-name-after-call", """result = get_lesson(lesson_id)
 if request.auth:
     error = LessonNotFoundError()
     return Status(404, error)
 return result""", 1, F496_PREDICATE, "guard · 호출 뒤 다른 이름")
+    # F4-130 — 호출 앞 입력 검사 판정(쓰임새 호출 정의 · 호출 앞 판정 표 · 메시지). C-7 의 `f4130-` 접두 예외와 짝이다.
+    error_arm = "    error = LessonIncompleteError()\n    return Status(400, error)"
+    call_after = "\nresult = get_lesson(lesson_id)\nreturn result"
+
+    def pre(name: str, body: str, code: int, fragment: str, note: str) -> None:
+        source = F496_CONTROLLER_HEAD.replace(
+            "from ninja import Router, Status\n",
+            "from ninja import Router, Status\nfrom ninja.errors import AuthenticationError, HttpError\n"
+            "from application.lesson.driving_layer.page_helpers import lookup, page_query\n"
+            "from application.lesson.application_layer.lesson.lesson_query import LessonQuery\n"
+            "import application.lesson.composition_root.wiring as wiring\n"
+            "import ninja.errors\nfrom asgiref.sync import sync_to_async\n", 1,
+        ) + "".join(f"    {line}\n" if line else "\n" for line in body.splitlines())
+        cases.append(Case(name, with_files(
+            ("application/lesson/application_layer/lesson/__init__.py", ""),
+            ("application/lesson/application_layer/lesson/lesson_query.py", "class LessonQuery:\n    pass\n"),
+            ("application/lesson/composition_root/__init__.py", ""),
+            ("application/lesson/composition_root/wiring.py", "def build_x():\n    return None\n"),
+            ("application/lesson/driving_layer/page_helpers.py", F4130_HELPERS),
+            base=_f496_files(source)), controller, controller_args(), code, fragment, note=note))
+
+    pre("f4130-field-strip-then-not", f"query: str = request.filters.query.strip()\nif not query:\n{error_arm}" + call_after, 2, F4130_PRE_CALL,
+        "red-first · 현장 꼴 `query = filters.query.strip()` 뒤 `if not query:`(옛 exit 1)")
+    pre("f4130-literal-compare", f'if kind == "x":\n{error_arm}' + call_after, 2, F4130_PRE_CALL, "옛 exit 2(헛걸음 지적) → 호출 앞 전용 글")
+    pre("f4130-other-name-after-helper", f'account = page_query(kind)\nif kind == "x":\n{error_arm}' + call_after, 2, F4130_PRE_CALL, "다른 이름 참조")
+    pre("f4130-match", 'match kind:\n    case "x":\n        return Status(400, LessonIncompleteError())' + call_after, 2, F4130_PRE_CALL, "match")
+    pre("f4130-raise-http-400", 'if not kind:\n    raise HttpError(400, "bad")' + call_after, 2, F4130_PRE_CALL, "우회로 막기")
+    pre("f4130-raise-auth-error", "if request.user is None:\n    raise AuthenticationError" + call_after, 2, F4130_PRE_CALL,
+        "operation 본문의 인증 raise 는 비켜 주지 않는다")
+    pre("f4130-raise-http-406-ok", 'if not kind:\n    raise HttpError(406, "Not acceptable")' + call_after, 0, "", "§6.3 표준 길")
+    pre("f4130-raise-http-415-ok", 'if kind == "x":\n    raise HttpError(415, "Unsupported")' + call_after, 0, "", "§6.3 표준 길")
+    pre("f4130-raise-http-variable-status", 'if not kind:\n    raise HttpError(lesson_id, "bad")' + call_after, 2, F4130_PRE_CALL, "상태는 리터럴일 때만 비켜 준다")
+    pre("f4130-benign-default-ok", 'if kind is None:\n    kind = ""' + call_after, 0, "", "오류 없는 호출 앞 `is None`(옛 exit 2 오탐)")
+    pre("f4130-success-early-ok", "if kind is None:\n    return Status(200, {})" + call_after, 0, "", "성공 조기 반환(옛 exit 2 오탐)")
+    pre("f4130-helper-none-path", f"page = page_query(kind)\nif page is None:\n{error_arm}" + call_after, 2, F4130_PRE_CALL,
+        "도움 호출 + None 길(옛 exit 0) — None 길은 쓰임새 호출 결과만")
+    pre("f4130-same-file-helper-calls-use-case", f"page = lookup(lesson_id)\nif page is None:\n{error_arm}\nreturn page", 2, F4130_PRE_CALL,
+        "받아들인 한계 — 도움 안에서 쓰임새를 부르면 호출 앞으로 나온다(driving 도움)")
+    pre("f4130-dto-then-check", f"command = LessonQuery(kind=kind)\nif not kind:\n{error_arm}" + call_after, 2, F4130_PRE_CALL, "응용 층 자료 생성은 쓰임새 호출이 아니다")
+    pre("f4130-dto-parse-none", f"page = LessonQuery.parse(kind)\nif page is None:\n{error_arm}" + call_after, 2, F4130_PRE_CALL, "자료 클래스로 None 길 세탁 막기")
+    pre("f4130-no-use-case-call", f"if not kind:\n{error_arm}\nreturn {{}}", 2, F4130_PRE_CALL, "쓰임새 호출 없는 operation")
+    pre("f4130-module-alias-chain-ok", "result = wiring.build_x().execute(lesson_id)\nif result is None:\n    error = LessonNotFoundError()\n    return Status(404, error)\nreturn result",
+        0, "", "모듈 별칭 사슬은 쓰임새 호출(호출 뒤 None 길)")
+    pre("f4130-local-import-ok", "from application.lesson.composition_root.wiring import build_x\nresult = build_x().execute(lesson_id)\nif result is None:\n"
+        "    error = LessonNotFoundError()\n    return Status(404, error)\nreturn result", 0, "", "함수 안 import 도 쓰임새 호출")
+    pre("f4130-builder-then-execute-ok", "use_case = wiring.build_x()\nresult = use_case.execute(lesson_id)\nif result is None:\n    error = LessonNotFoundError()\n"
+        "    return Status(404, error)\nreturn result", 0, "", "builder 뒤 호출 — 호출 뒤")
+    # 구현 검토 1 — 빌더는 쓰임새 호출이 아니다(M2) · 뿌리가 import 아닌 쓰임새 호출(M3) · 반복 · with 안(M4) · 표준 406 표기(S1).
+    pre("f4130-builder-then-check", f"use_case = wiring.build_x()\nif not kind:\n{error_arm}\nresult = use_case.execute(lesson_id)\nreturn result",
+        2, F4130_PRE_CALL, "빌더만 부른 뒤 입력 검사(옛 exit 1)")
+    pre("f4130-builder-then-helper-none", f"use_case = wiring.build_x()\npage = page_query(kind)\nif page is None:\n{error_arm}\nreturn use_case.execute(page)",
+        2, F4130_PRE_CALL, "빌더 한 줄로 None 길 세탁 막기(옛 exit 0)")
+    pre("f4130-injected-use-case-none-ok", "result = request.use_case.execute(lesson_id)\nif result is None:\n    error = LessonNotFoundError()\n"
+        "    return Status(404, error)\nreturn result", 0, "", "뿌리가 import 아닌 쓰임새 호출 뒤 None 길")
+    pre("f4130-sync-to-async-none-ok", "result = sync_to_async(get_lesson)(lesson_id)\nif result is None:\n    error = LessonNotFoundError()\n"
+        "    return Status(404, error)\nreturn result", 0, "", "인자로 쓰임새 함수를 받는 호출")
+    pre("f4130-for-nested-raise", 'for part in kind:\n    if not part:\n        raise HttpError(400, "bad")' + call_after, 2, F4130_PRE_CALL,
+        "호출 앞 반복 안의 입력 검사(옛 exit 0)")
+    pre("f4130-with-nested-raise", 'with request.lock:\n    if not kind:\n        raise HttpError(400, "bad")' + call_after, 2, F4130_PRE_CALL,
+        "호출 앞 with 안")
+    pre("f4130-for-nested-no-error-ok", "for part in kind:\n    if not part:\n        continue" + call_after, 0, "", "오류 없는 반복 안 분기")
+    pre("f4130-raise-http-406-keyword-ok", 'if not kind:\n    raise HttpError(status_code=406, message="Not acceptable")' + call_after, 0, "", "표준 길 키워드 꼴")
+    pre("f4130-raise-http-406-path-ok", 'if not kind:\n    raise ninja.errors.HttpError(406, "Not acceptable")' + call_after, 0, "", "표준 길 전체 경로")
+    pre("f4130-after-call-unread-stays", "readiness = inspect_lesson(lesson_id)\nmissing = readiness.missing\nif missing:\n"
+        "    return Status(400, LessonIncompleteError())\nreturn {}", 2, F496_RESULT_BRANCH, "guard · F4-34 현장 꼴은 호출 뒤 #571 그대로")
     # C-8 — 차분 없는 code 프로필 선점 실행의 안내 한 줄(auto 는 무변 — C-7 바이트 비교가 박는다).
     preempt_files = with_files(("application/lesson/driving_layer/api/legacy/__init__.py", ""),
                                ("application/lesson/driving_layer/api/legacy/legacy_controller.py", F496_LEGACY_TREE_FINDING),
@@ -7091,6 +7168,8 @@ def controller_invariant_failures(cases: list[Case]) -> list[str]:
                 continue
             if F496_PREDICATE in old.stderr or F496_UNSUPPORTED in old.stderr:
                 continue
+            if case.name.startswith(F4130_CASE_PREFIX):
+                continue  # F4-130 호출 앞 입력 검사 — 옛 exit 2 · exit 0 · 분석 불능 없는 꼴까지 뜻이 바뀐다
             failures.append(f"[C-7 {case.name}] 2.23.0 과 출력이 다른데 옛 출력에 분석 불능 글이 없다\n"
                             f"old exit={old.returncode}\n{old.stdout}{old.stderr}\nnew exit={new.returncode}\n{new.stdout}{new.stderr}")
     return failures

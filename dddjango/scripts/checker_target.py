@@ -439,3 +439,116 @@ def use_case_part_kinds(folder: Path) -> "UseCasePartKinds | None":
         leaves=frozenset(p for p in siblings if p != frame and p not in flow_parts),
         is_split=frame is not None or bool(flow_parts),
     )
+
+
+# ── OHS 창구의 사건 값 옮기기 — #474(check-api-error-controller-contract) · #153(check-context-isolation) 공용 · F4-105 ──
+# 승인 표면은 G1 의 exception-map 값 칸과 published 예외의 선언 필드다 — 프로필과 무관하다(check-context-isolation 은 프로필을 안 쓴다).
+
+OHS_EVENT_VALUE_FORM_NOTE: str = (
+    " (승인한 사건 값을 옮기는 꼴만 비켜 준다: 잡은 구체 예외 하나 · 양쪽 클래스에 직접 선언된 `str` / `str | None` 필드 · "
+    "본문은 `raise 공개예외(kw=n.f) [from None]` 한 문장)"
+)
+
+
+def _module_import_origins(mod: ast.Module) -> "dict[str, str]":
+    """모듈 맨 위 `from <절대 경로> import <이름>` 의 지역 이름 → 원 경로 — 모듈 수준에서 다시 묶이는 이름은 뺀다."""
+    origins: "dict[str, str]" = {}
+    rebound: "set[str]" = set()
+    for node in mod.body:
+        if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            for alias in node.names:
+                local = alias.asname or alias.name
+                if local in origins:
+                    rebound.add(local)
+                origins[local] = f"{node.module}.{alias.name}"
+        elif isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            rebound.add(node.name)
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            rebound.update(t.id for t in targets if isinstance(t, ast.Name))
+    return {name: origin for name, origin in origins.items() if name not in rebound}
+
+
+def _is_str_annotation(node: ast.AST) -> bool:
+    """주석이 `str` 또는 `str | None` 인가."""
+    def is_str(part: ast.AST) -> bool:
+        return isinstance(part, ast.Name) and part.id == "str"
+
+    def is_none(part: ast.AST) -> bool:
+        return isinstance(part, ast.Constant) and part.value is None
+
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+        return (is_str(node.left) and is_none(node.right)) or (is_none(node.left) and is_str(node.right))
+    return is_str(node)
+
+
+def _exception_str_fields(root: Path, origin: str) -> "frozenset[str] | None":
+    """예외 클래스(그 모듈에 바로 정의 — 재수출 · 상속 밖)의 공개 `str` · `str | None` 필드. 모듈 · 클래스를 못 읽으면 None."""
+    module, _, class_name = origin.rpartition(".")
+    base = root.joinpath(*module.split("."))
+    mod = _parse_module(base.with_suffix(".py")) or _parse_module(base / "__init__.py")
+    classes = [n for n in mod.body if isinstance(n, ast.ClassDef) and n.name == class_name] if mod is not None else []
+    if len(classes) != 1:
+        return None
+    declared: "dict[str, bool]" = {}
+
+    def declare(name: str, annotation: ast.AST) -> None:
+        if not name.startswith("_"):
+            declared[name] = declared.get(name, True) and _is_str_annotation(annotation)
+
+    for statement in classes[0].body:
+        if isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name):
+            declare(statement.target.id, statement.annotation)
+        elif isinstance(statement, ast.FunctionDef) and statement.name == "__init__" and statement.args.args:
+            receiver = statement.args.args[0].arg
+            for node in _own_scope(statement):
+                if (isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Attribute)
+                        and isinstance(node.target.value, ast.Name) and node.target.value.id == receiver):
+                    declare(node.target.attr, node.annotation)
+    return frozenset(name for name, is_str in declared.items() if is_str)
+
+
+def _own_domain_exception(origin: str, own_bc: str) -> bool:
+    parts = origin.split(".")
+    return len(parts) >= 4 and parts[:2] == ["application", own_bc] and parts[2] == "domain_layer"
+
+
+def _own_published_exception(origin: str, own_bc: str) -> bool:
+    parts = origin.split(".")
+    return parts[:4] == ["application", own_bc, "driving_layer", "open_host_service"] \
+        and parts[5:7] == ["contract", "exception"] and len(parts) >= 8
+
+
+def ohs_event_value_handler(handler: ast.ExceptHandler, mod: ast.Module, root: Path, own_bc: str) -> bool:
+    """OHS catch 가 승인된 사건 값을 published 예외로 옮기는 꼴인가 — 이 꼴만 #474 · #153 을 비켜 간다.
+
+    `except <자기 BC domain_layer 예외 하나> as n:` 의 본문이 `raise <자기 BC contract/exception 클래스>(kw=n.f, …) [from None]`
+    한 문장이고, 인자는 모두 keyword 이며 `n.f` 꼴이고, `f` 가 잡은 예외의 공개 필드 · `kw` 가 published 클래스의
+    선언 필드(`str` · `str | None`)일 때만이다. `str(n)` · 통째 쓰기 · `from n` · 다른 문장이 끼면 그대로 위반이다."""
+    if handler.name is None or not isinstance(handler.type, ast.Name) or len(handler.body) != 1:
+        return False
+    raised = handler.body[0]
+    if not isinstance(raised, ast.Raise) or not isinstance(raised.exc, ast.Call) or not isinstance(raised.exc.func, ast.Name):
+        return False
+    if raised.cause is not None and not (isinstance(raised.cause, ast.Constant) and raised.cause.value is None):
+        return False
+    call = raised.exc
+    if call.args or not call.keywords:
+        return False
+    origins = _module_import_origins(mod)
+    caught = origins.get(handler.type.id)
+    published = origins.get(call.func.id)
+    if caught is None or published is None or not _own_domain_exception(caught, own_bc) \
+            or not _own_published_exception(published, own_bc):
+        return False
+    caught_fields = _exception_str_fields(root, caught)
+    published_fields = _exception_str_fields(root, published)
+    if caught_fields is None or published_fields is None:
+        return False
+    for keyword in call.keywords:
+        value = keyword.value
+        if (keyword.arg not in published_fields
+                or not (isinstance(value, ast.Attribute) and isinstance(value.value, ast.Name)
+                        and value.value.id == handler.name and value.attr in caught_fields)):
+            return False
+    return True

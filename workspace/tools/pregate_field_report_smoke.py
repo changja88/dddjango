@@ -5,6 +5,7 @@ update 전사 유실, 기존 바인딩 덮기, 무명시 raise 추론, support�
 F4-115 — update 도메인 서비스 서명 · OHS 번역 출처 칸의 선언 예보를 CLI · `--check-report` 처분과 2.26.1 배포판 대조로 고정한다.
 F4-48 · F4-155 — 저장소 쓰기 인자(#287) · `add_all`(#599) · update 조립 파일 최상단 이름(#85)의 선언 예보를 2.32.0 배포판 대조와
 구현 뒤 실검사기의 G2 줄 키 차분으로 고정한다.
+F4-137 · F4-105(pre-gate) · F4-37 · F4-44(`check-error-centralization.py` git inventory) — 2.33.0 배포판 대조로 고정한다.
 """
 from __future__ import annotations
 
@@ -68,6 +69,43 @@ CATCHING = ('"""Existing service."""\nfrom __future__ import annotations\n\n'
 # F4-48 — 저장소 채널의 #287(쓰기 인자 — 필드 단위 갱신 이름 · 인자 둘 이상 · 원시값) · #599(`add_all`) · 인자만 바뀐 기존 메서드.
 # F4-155 — update 조립 파일의 symbols 함수 · alias 행 #85. «옛 판» 은 2.32.0 배포 커밋 고정(HEAD 금지 — 이 고침을 커밋한 뒤에도 옛 판이다).
 _RELEASED_2320_COMMIT = "f0bbe3a7"
+# F4-137 · F4-105 · F4-37 · F4-44 대조의 옛 판 — 2.33.0 배포 커밋 고정(HEAD 금지).
+_RELEASED_2330_COMMIT = "a4f005ec"
+_PLANT_EXCEPTION = f"{SERVICE_DIR}/contract/exception/plant_unavailable_exception.py"
+_PLANT_EXCEPTION_FIELD = ('class PlantUnavailableException(Exception):\n    def __init__(self, plant_name: str) -> None:\n'
+                          '        super().__init__(plant_name)\n        self.plant_name: str = plant_name\n')
+_PLANT_UNREADABLE_FIELD = _PLANT_EXCEPTION_FIELD.replace('PlantUnavailableException', 'PlantUnreadable')
+_COMMON_ERROR = "framework/ninja/framework_error_schema.py"
+_LESSON_ERROR = "application/lesson/driving_layer/api/bc_error_schema.py"
+_LESSON_CONTROLLER = "application/lesson/driving_layer/api/lesson/lesson_controller.py"
+_LESSON_OLD_MODULE = "application/lesson/application_layer/lesson/old_backfill.py"
+# #2 렌더가 통과하는 최소 프로젝트 — 공용 FrameworkErrorSchema · BC 오류 모듈 · 컨트롤러 하나.
+_LESSON_PROJECT = {
+    "framework/__init__.py": "", "framework/ninja/__init__.py": "",
+    _COMMON_ERROR: 'from ninja import Schema\n\n\nclass FrameworkErrorSchema(Schema):\n    code: str\n    title: str\n    status: int\n    detail: str\n',
+    "config/__init__.py": "", "config/api.py": 'from ninja_extra import NinjaExtraAPI\n\napi = NinjaExtraAPI()\n',
+    "application/__init__.py": "", "application/lesson/__init__.py": "",
+    "application/lesson/application_layer/__init__.py": "", "application/lesson/application_layer/lesson/__init__.py": "",
+    "application/lesson/application_layer/lesson/use_cases.py":
+        'class LessonMissing(Exception):\n    pass\n\n\ndef get_lesson(lesson_id: int) -> dict[str, int]:\n    return {"id": lesson_id}\n',
+    _LESSON_OLD_MODULE: "X: int = 1\n",
+    "application/lesson/driving_layer/__init__.py": "", "application/lesson/driving_layer/api/__init__.py": "",
+    _LESSON_ERROR: ('from enum import StrEnum\nfrom framework.ninja.framework_error_schema import FrameworkErrorSchema\n\n\n'
+                    'class LessonErrorCode(StrEnum):\n    NOT_FOUND = "lesson_not_found"\n\n\n'
+                    'class LessonErrorSchema(FrameworkErrorSchema):\n    code: LessonErrorCode\n\n\n'
+                    'class LessonNotFoundError(LessonErrorSchema):\n    code: LessonErrorCode = LessonErrorCode.NOT_FOUND\n'
+                    '    title: str = "Lesson not found"\n    status: int = 404\n    detail: str = "The lesson does not exist."\n'),
+    "application/lesson/driving_layer/api/lesson/__init__.py": "",
+    _LESSON_CONTROLLER: ('from ninja import Router, Status\n'
+                         'from application.lesson.application_layer.lesson.use_cases import LessonMissing, get_lesson\n'
+                         'from application.lesson.driving_layer.api.bc_error_schema import LessonNotFoundError\n\nrouter = Router()\n\n\n'
+                         '@router.get("/{lesson_id}", response={200: dict, 404: LessonNotFoundError})\n'
+                         'def get_lesson_controller(request, lesson_id: int):\n    try:\n        lesson = get_lesson(lesson_id)\n'
+                         '    except LessonMissing:\n        error = LessonNotFoundError()\n        return Status(error.status, error)\n'
+                         '    return lesson\n'),
+}
+_ERROR_ARGS = ["--error-profile", "dddjango-code-json", "--scope", "lesson", "--api-module", "config/api.py",
+               "--controller-module", _LESSON_CONTROLLER, "--scope-bc", "lesson", "--error-bc", "lesson"]
 QUESTIONNAIRE_DOMAIN = "application/consult/domain_layer/questionnaire"
 QUESTIONNAIRE_REPOSITORY = f"{QUESTIONNAIRE_DOMAIN}/questionnaire_repository.py"
 QUESTIONNAIRE_HEAD = ('from abc import ABC, abstractmethod\n\n'
@@ -1313,7 +1351,7 @@ class BookAdmin(TranslatableAdmin):
         run, report = self.cli(text)
         self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
         self.assertIn('- (없음)', pg._subsection(report, '선언 확정'))
-        self.assertIn('채널 메모: S5 입구 catch 확인(출처 칸 `as` 없음 — OHS 는 잡은 도메인 예외 값을 쓰지 않는다(R-3690) · 이 '
+        self.assertIn(f'채널 메모: S5 입구 catch 확인(출처 칸 `as` 없음 — {pg._OHS_VALUE_RULE}(R-3690) · 이 '
                       'catch 가 잡은 값을 쓰면(로그 · 메시지 · `from` · 속성) 출처 칸에 `as` 를 적는다 — #474): '
                       f'PlantUnavailableException ← PlantUnreadable · {SERVICE}', report)
         self.assertEqual(pg.check_report(text, report)[0], 0)
@@ -1323,6 +1361,230 @@ class BookAdmin(TranslatableAdmin):
                                  '--error-profile', 'auto'], capture_output=True, text=True, env=self.env)
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn(f'[#474] {SERVICE}:', result.stdout)
+
+    def test_f137_hidden_last_component_non_python_is_a_plan_path(self):
+        # 마지막 성분만 숨김이고 `.py` 가 아니면 제품 파일이다. 숨김 폴더 · 숨김 `.py`(검사기가 못 본다) · 하네스 이름은 거절 유지.
+        for path in ('env/.env.sample', '.env.example', 'deploy/.env.template', 'deploy/.dockerignore', '.gitignore', '.editorconfig'):
+            with self.subTest(path=path):
+                self.assertIsNone(pg._path_reject_reason(path))
+        for path, reason in (('.github/workflows/ci.yml', '숨김'), ('.claude/settings.json', '숨김'),
+                             ('application/garden/.hidden.py', '숨김'), ('application/.cache/module.py', '숨김'),
+                             ('.dddjango/run/note.md', '금지'), ('.dddjango', '금지'), ('.git', '숨김'), ('sub/.git', '숨김'),
+                             ('.mcp.json', '숨김'), ('tools/.mcp.json', '숨김'),
+                             ('.env', '비밀 값'), ('env/.env', '비밀 값'), ('.env.local', '비밀 값'), ('deploy/.env.production', '비밀 값')):
+            with self.subTest(path=path):
+                self.assertIn(reason, pg._path_reject_reason(path))
+        self.write(self.source, 'env/.env.sample', 'TOKEN=example\n')
+        _git(self.source, 'add', '-A')
+        _git(self.source, 'commit', '-qm', 'env sample')
+        text = spec_text(['update env/.env.sample'])
+        old, _ = self.cli(text, scripts=self.scripts_at(_RELEASED_2330_COMMIT))
+        self.assertEqual(old.returncode, 3, old.stdout + old.stderr)
+        self.assertIn('숨김 세그먼트', old.stdout)
+        run, _ = self.cli(text)
+        self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
+        self.assertNotIn('숨김 세그먼트', run.stdout)
+
+    def test_f105_value_cell_passes_when_the_published_exception_has_the_field(self):
+        # 값 칸 — 승인 필드를 공개 예외로 옮겨 싣는 번역. published 예외의 기준선 실물(이번 실행이 안 고치는 파일) · symbols 에
+        # 같은 이름 필드가 있으면 #474 를 내지 않는다.
+        self.garden_fixture()
+        self.write(self.source, _PLANT_EXCEPTION, _PLANT_EXCEPTION_FIELD)
+        self.write(self.source, UNREADABLE, _PLANT_UNREADABLE_FIELD)
+        _git(self.source, 'add', '-A')
+        _git(self.source, 'commit', '-qm', 'published exception field')
+        cell = f'PlantUnavailableException  {SERVICE}  <= PlantUnreadable as  값 plant_name'
+        text = spec_text([f'update {SERVICE}'], exceptions=[cell])
+        old, _ = self.cli(text, scripts=self.scripts_at(_RELEASED_2330_COMMIT))
+        self.assertEqual(old.returncode, 3, old.stdout + old.stderr)
+        self.assertIn('exception-map 행 파싱 불가', old.stdout)
+        run, report = self.cli(text)
+        self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
+        self.assertIn('- (없음)', pg._subsection(report, '선언 확정'))
+        self.assertIn(f'번역 출처 칸 값 `plant_name` — published 예외 필드와 맞다(공개 예외로 옮겨 싣는 값은 설계 승인 필드만 · '
+                      f'코드 꼴은 G2 #474 · #153 이 본다): PlantUnavailableException ← PlantUnreadable · {SERVICE}', report)
+        self.assertEqual(pg.check_report(text, report)[0], 0)
+        # 같은 행의 필드가 예외에 없으면 값 칸 없는 `as` 와 같고 왜인지 글로 알린다.
+        missing = spec_text([f'update {SERVICE}'], exceptions=[cell.replace('plant_name', 'received_text')])
+        run, report = self.cli(missing)
+        self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+        self.assertIn('값 칸 `received_text` 이 published 예외 `PlantUnavailableException` 의 `str` · `str | None` 공개 필드에 없다',
+                      pg._subsection(report, '선언 확정'))
+        # `Exception` 출처는 값 칸이 있어도 #62 그대로.
+        wide = spec_text([f'update {SERVICE}'], exceptions=[cell.replace('PlantUnreadable', 'Exception')])
+        run, report = self.cli(wide)
+        self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+        self.assertIn('[#62]', pg._subsection(report, '선언 확정'))
+
+    def value_cell_answer(self, published: str, caught: str, field: str = 'plant_name') -> "tuple[int, str]":
+        self.garden_fixture()
+        self.write(self.source, _PLANT_EXCEPTION, published)
+        self.write(self.source, UNREADABLE, caught)
+        _git(self.source, 'add', '-A')
+        _git(self.source, 'commit', '-qm', 'value cell fields')
+        run, report = self.cli(spec_text([f'update {SERVICE}'],
+                                         exceptions=[f'PlantUnavailableException  {SERVICE}  <= PlantUnreadable as  값 {field}']))
+        return run.returncode, pg._subsection(report, '선언 확정') + report
+
+    def test_f105_value_cell_answers_like_g2(self):
+        # 값 칸 = published 필드 이름 · G2(`checker_target.ohs_event_value_handler`)가 비켜 주지 않는 꼴은 G1 에서 먼저 #474 다.
+        pub, caught = _PLANT_EXCEPTION_FIELD, _PLANT_UNREADABLE_FIELD
+        base_field = 'class Base(Exception):\n    plant_name: str\n\n\nclass {n}(Base):\n    pass\n'
+        renamed = pub.replace('plant_name', 'shown_name')
+        for label, published, cause, field, reason in (
+                ('published int', pub.replace(': str', ': int'), caught, 'plant_name', '공개 필드에 없다'),
+                ('published 주석 없음', pub.replace('self.plant_name: str', 'self.plant_name'), caught, 'plant_name', '공개 필드에 없다'),
+                ('published Optional', pub.replace(': str', ': Optional[str]'), caught, 'plant_name', '공개 필드에 없다'),
+                ('published 상위 클래스', base_field.format(n='PlantUnavailableException'), caught, 'plant_name', '공개 필드에 없다'),
+                ('caught 필드 없음', pub, 'class PlantUnreadable(Exception):\n    pass\n', 'plant_name', '바로 선언한'),
+                ('caught int', pub, caught.replace(': str', ': int'), 'plant_name', '바로 선언한'),
+                ('caught 상위 클래스', pub, base_field.format(n='PlantUnreadable'), 'plant_name', '바로 선언한'),
+                ('값 = 도메인 필드', renamed, caught, 'plant_name', '값 칸에는 published 필드 이름을 적는다')):
+            with self.subTest(form=label):
+                code, text = self.value_cell_answer(published, cause, field)
+                self.assertEqual(code, 2, text)
+                self.assertIn('[#474]', text)
+                self.assertIn(reason, text)
+        for label, published, cause, field, memo in (
+                ('str | None', pub.replace(': str', ': str | None'), caught, 'plant_name', '번역 출처 칸 값 `plant_name`'),
+                ('값 = published 필드(이름이 다른 번역)', renamed, caught, 'shown_name', '잡는 예외에 같은 이름 필드가 없다')):
+            with self.subTest(form=label):
+                code, text = self.value_cell_answer(published, cause, field)
+                self.assertEqual(code, 4, text)
+                self.assertIn(memo, text)
+
+    def test_f105_value_cell_reads_the_init_parameters_of_an_added_published_exception(self):
+        # 새 published 예외를 클래스 행 + `__init__` 메서드 행으로 선언한 꼴 — 매개변수도 필드 행과 같은 잣대(`str` · `str | None` · `_` 시작 거절).
+        self.garden_fixture()
+        self.write(self.source, UNREADABLE, _PLANT_UNREADABLE_FIELD)
+        _git(self.source, 'add', '-A')
+        _git(self.source, 'commit', '-qm', 'caught field')
+        gone = f'{SERVICE_DIR}/contract/exception/plant_gone_exception.py'
+        head = f'{gone}::PlantGoneException(Exception)'
+
+        def answer(field: str, *rows: str) -> str:
+            run, report = self.cli(spec_text([f'update {SERVICE}', f'add {gone}'], [*rows],
+                                             exceptions=[f'PlantGoneException  {SERVICE}  <= PlantUnreadable as  값 {field}']))
+            self.assertIn(run.returncode, (0, 2, 4), run.stdout + run.stderr)
+            return report
+
+        init = f'{gone}::PlantGoneException.__init__(self, {{}}) -> None'
+        for label, field, rows in (
+                ('str 매개변수', 'plant_name', [head, init.format('plant_name: str')]),
+                ('str | None 매개변수', 'plant_name', [head, init.format('plant_name: str | None = None')]),
+                ('self 없는 메서드 행', 'plant_name', [head, f'{gone}::PlantGoneException.__init__(plant_name: str) -> None']),
+                ('제네릭 뒤 매개변수', 'plant_name', [head, init.format('extra: dict[str, int], plant_name: str')]),
+                ('필드 행과 매개변수가 같은 답', 'plant_name', [f'{head} {{plant_name: str}}', init.format('plant_name: str')])):
+            with self.subTest(form=label):
+                report = answer(field, *rows)
+                self.assertNotIn('[#474]', report)
+                self.assertIn(f'번역 출처 칸 값 `{field}` — published 예외 필드와 맞다', report)
+        for label, field, rows in (
+                ('int 매개변수', 'plant_name', [head, init.format('plant_name: int')]),
+                ('주석 없는 매개변수', 'plant_name', [head, init.format('plant_name')]),
+                ('다른 이름 매개변수', 'plant_name', [head, init.format('other_name: str')]),
+                ('`_` 시작 매개변수', '_plant_name', [head, init.format('_plant_name: str')]),
+                ('필드 행 str · 매개변수 int', 'plant_name', [f'{head} {{plant_name: str}}', init.format('plant_name: int')]),
+                ('필드 행 int · 매개변수 str', 'plant_name', [f'{head} {{plant_name: int}}', init.format('plant_name: str')])):
+            with self.subTest(form=label):
+                self.assertIn('[#474]', pg._subsection(answer(field, *rows), '선언 확정'))
+
+    def test_f105_value_cell_with_a_caught_exception_this_run_adds_is_a_memo(self):
+        self.garden_fixture()
+        self.write(self.source, _PLANT_EXCEPTION, _PLANT_EXCEPTION_FIELD)
+        _git(self.source, 'add', '-A')
+        _git(self.source, 'commit', '-qm', 'published field')
+        fresh = 'application/garden/domain_layer/plant/exception/plant_withered.py'
+        text = spec_text([f'update {SERVICE}', f'add {fresh}'], [f'{fresh}::PlantWithered(Exception)'],
+                         [f'{SERVICE}  from application.garden.domain_layer.plant.exception.plant_withered import PlantWithered'],
+                         [f'PlantUnavailableException  {SERVICE}  <= PlantWithered as  값 plant_name'])
+        run, report = self.cli(text)
+        self.assertNotIn('[#474]', report, run.stdout + run.stderr)
+        self.assertIn('잡는 예외가 기준선에 없어 그쪽 필드는 G2 가 본다', report)
+
+    def test_f105_baseline_approved_catch_is_not_read_as_debt(self):
+        # S5 — 기준선의 승인 꼴 catch(`raise P(f=n.f) from None`)는 #474 빚이 아니다: 값 칸 없는 `as` 행은 후보로 내려가지 않고 확정이다.
+        self.garden_fixture()
+        self.write(self.source, _PLANT_EXCEPTION, _PLANT_EXCEPTION_FIELD)
+        self.write(self.source, UNREADABLE, _PLANT_UNREADABLE_FIELD)
+        self.write(self.source, SERVICE, CATCHING.replace(
+            '    except PlantUnreadable:\n        raise PlantUnavailableException() from None\n',
+            '    except PlantUnreadable as unreadable:\n        raise PlantUnavailableException(plant_name=unreadable.plant_name) from None\n'))
+        _git(self.source, 'add', '-A')
+        _git(self.source, 'commit', '-qm', 'approved value catch')
+        run, report = self.cli(spec_text([f'update {SERVICE}'], exceptions=[f'PlantUnavailableException  {SERVICE}  <= PlantUnreadable as']))
+        self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+        self.assertIn('[#474]', pg._subsection(report, '선언 확정'))
+        self.assertNotIn('예보 불확정', report)
+
+    def test_f105_value_cell_reads_symbols_and_rejects_malformed_cells(self):
+        self.garden_fixture()
+        self.write(self.source, UNREADABLE, _PLANT_UNREADABLE_FIELD)
+        _git(self.source, 'add', '-A')
+        _git(self.source, 'commit', '-qm', 'caught field')
+        gone = f'{SERVICE_DIR}/contract/exception/plant_gone_exception.py'
+        text = spec_text([f'update {SERVICE}', f'add {gone}'],
+                         [f'{gone}::PlantGoneException(Exception) {{plant_name: str}}'],
+                         exceptions=[f'PlantGoneException  {SERVICE}  <= PlantUnreadable as  값 plant_name'])
+        run, report = self.cli(text)
+        self.assertNotIn('[#474]', report, run.stdout + run.stderr)
+        self.assertIn('번역 출처 칸 값 `plant_name` — published 예외 필드와 맞다', report)
+        # symbols 의 다른 타입 · 필드도 `__init__` 도 적지 않은 클래스 행은 받지 않는다.
+        for symbol in (f'{gone}::PlantGoneException(Exception) {{plant_name: int}}', f'{gone}::PlantGoneException(Exception)'):
+            with self.subTest(symbol=symbol):
+                run, report = self.cli(spec_text([f'update {SERVICE}', f'add {gone}'], [symbol],
+                                                 exceptions=[f'PlantGoneException  {SERVICE}  <= PlantUnreadable as  값 plant_name']))
+                self.assertIn('[#474]', pg._subsection(report, '선언 확정'), run.stdout + run.stderr)
+        for bad in (f'PlantGoneException  {SERVICE}  <= PlantUnreadable  값 plant_name',        # `as` 없는 값 칸
+                    f'PlantGoneException  {SERVICE}  <= PlantUnreadable as 값 plant_name',       # 칸 구분이 공백 하나
+                    f'PlantGoneException  {SERVICE}  <= PlantUnreadable as  값 plant.name'):     # 점 이름
+            with self.subTest(row=bad):
+                run, _ = self.cli(spec_text([f'update {SERVICE}'], exceptions=[bad]))
+                self.assertEqual(run.returncode, 3, run.stdout + run.stderr)
+                self.assertIn('exception-map 행 파싱 불가', run.stdout)
+
+    def lesson_project(self, name: str) -> Path:
+        project = self.root / name
+        for path, content in _LESSON_PROJECT.items():
+            self.write(project, path, content)
+        _git(project, 'init', '-q')
+        _git(project, 'add', '-A')
+        _git(project, 'commit', '-qm', 'lesson fixture')
+        return project
+
+    def error_centralization(self, project: Path, *extra: str, scripts: Path = SCRIPTS) -> "subprocess.CompletedProcess[str]":
+        return subprocess.run([sys.executable, '-B', str(scripts / 'check-error-centralization.py'), str(project), *_ERROR_ARGS, *extra],
+                              capture_output=True, text=True, env=self.env)
+
+    def test_f37_common_error_module_joins_the_inventory_by_itself(self):
+        project = self.lesson_project('f37')
+        only_bc = ('--project-code-error-module', _LESSON_ERROR)
+        old = self.error_centralization(project, *only_bc, scripts=self.scripts_at(_RELEASED_2330_COMMIT))
+        self.assertEqual(old.returncode, 1, old.stdout + old.stderr)
+        self.assertIn('canonical candidate가 project inventory union에 없음', old.stdout + old.stderr)
+        run = self.error_centralization(project, *only_bc)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        run = self.error_centralization(project, *only_bc, '--project-code-error-module', _COMMON_ERROR)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        preserved = self.error_centralization(project, *only_bc, '--project-preserve-error-module', _COMMON_ERROR)
+        self.assertEqual(preserved.returncode, 1, preserved.stdout + preserved.stderr)
+
+    def test_f44_unstaged_delete_is_not_production_source(self):
+        selectors = ('--project-code-error-module', _LESSON_ERROR, '--project-code-error-module', _COMMON_ERROR)
+        project = self.lesson_project('f44')
+        (project / _LESSON_OLD_MODULE).unlink()
+        old = self.error_centralization(project, *selectors, scripts=self.scripts_at(_RELEASED_2330_COMMIT))
+        self.assertEqual(old.returncode, 1, old.stdout + old.stderr)
+        self.assertIn('production source 없음', old.stdout + old.stderr)
+        run = self.error_centralization(project, *selectors)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        # 깨진 링크는 지운 것이 아니다 — 그대로 오류.
+        broken = self.lesson_project('f44-link')
+        (broken / _LESSON_OLD_MODULE).unlink()
+        (broken / _LESSON_OLD_MODULE).symlink_to('nowhere.py')
+        run = self.error_centralization(broken, *selectors)
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn(_LESSON_OLD_MODULE, run.stdout + run.stderr)
 
     def real_new_messages(self, path: str, checker: str, rule: str, after: str) -> "list[str]":
         """구현 뒤 실물 `after` 와 기준선에 실검사기를 돌려 G2 registry 차분과 같은 줄 키(`:N`)로 기준선에 없던 `rule` 줄의 판정문을 낸다."""

@@ -3405,9 +3405,9 @@ def _code_findings(
             findings.extend(extra_findings)
         except UsageError as exc:
             issue = str(exc)
-            if not issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "):
+            if not config.anchor_baseline and not issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "):
                 raise
-            analysis.append(issue)
+            analysis.append(issue)  # 기준선 재실행은 첫 못 읽음에서 끊지 않고 모은다(F4-59 ①)
     deduplicated = _deduplicate_findings(findings)
     return sorted(set(analysis)), deduplicated, overlap_keys | _module_overlap_keys(deduplicated)
 
@@ -3637,6 +3637,8 @@ def main(argv: list[str]) -> int:
                 if tree_findings:
                     _print_tree_findings(tree_findings)
                 raise
+            if config.anchor_baseline:
+                analysis = anchor_diff.settle_baseline_analysis(analysis)
             dynamic_proof_only = bool(analysis) and all(
                 issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED ")
                 for issue in analysis

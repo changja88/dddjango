@@ -176,3 +176,5 @@ djr:R-3718 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder>, <https:/
 
 djr:R-3719 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-3740 djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py>, <https://numchida.com/ns/djr#c/check-test-config.py> .

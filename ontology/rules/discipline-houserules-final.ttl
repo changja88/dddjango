@@ -780,6 +780,14 @@ djr:R-3719 a djr:Prohibition ;
     prov:specializationOf djr:R-3719 ;
     djr:revision 1 .
 
+djr:R-3740 a djr:Permission ;
+    skos:prefLabel "BC `test/` 직계 `conftest.py` 한 파일은 트리 행 없이 허용(#490 부칙 · integration · e2e 공용 고정물 자리) · `autouse=True` 고정물 금지(#383)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3740@2026-11-09> .
+
+<https://numchida.com/ns/djr#R-3740@2026-11-09> a djr:Expression ;
+    prov:specializationOf djr:R-3740 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/references/final.md> a djr:Document ;
     skos:prefLabel "discipline-houserules-final"@ko .
 
@@ -966,8 +974,8 @@ djr:R-3719 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s004-1> ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
-    djr:statesNorm djr:R-3192 ;
-    djr:text "- 기계 사본은 `scripts/standard_tree.py` — 검사기들이 import 하는 유일한 트리 데이터다.\n\n"@ko .
+    djr:statesNorm djr:R-3192, djr:R-3740 ;
+    djr:text "- 기계 사본은 `scripts/standard_tree.py` — 검사기들이 import 하는 유일한 트리 데이터다.\n- BC `test/` 바로 아래 `conftest.py` 한 파일은 트리 행 없이 둘 수 있다(골격 폐쇄 #490 의 부칙) — `integration/` · `e2e/` 가 함께 쓰는 고정물 자리다. 이 파일의 고정물은 `autouse=True` 로 두지 않는다(#383 — unit 까지 함께 켠다).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s006> a djr:Section ;
     djr:headingSnapshot "### BC 직계 — 일곱뿐"@ko ;

@@ -1543,7 +1543,7 @@ class CalculateDiscountService:
 **어댑터 배치 기준:**
 - Django view, Ninja router, DRF view/serializer, template view, form, management command, Celery task, message handler는 **인터페이스 어댑터**다.
 - ORM 리포지토리, 외부 SDK 클라이언트, 브로커 publisher, cache/filesystem 구현은 **인프라 어댑터**다.
-- 어댑터는 입력 검증, 인증 연결, DTO 변환, 유스케이스 호출, 응답 매핑을 담당할 수 있지만 핵심 정책을 소유하지 않는다.
+- 어댑터는 입력 Schema 선언, 인증 연결, DTO 변환, 유스케이스 호출, 응답 매핑을 담당할 수 있지만 핵심 정책을 소유하지 않는다.
 
 ### 5.4 CQRS (커맨드-쿼리 책임 분리)
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->

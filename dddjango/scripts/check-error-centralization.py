@@ -622,6 +622,8 @@ def _production_inventory(root: Path) -> CodeInventory:
             target_relative = git_relative.relative_to(target_prefix)
         except ValueError:
             continue
+        if not os.path.lexists(git_root / git_relative):
+            continue  # 스테이지하지 않은 삭제 — 작업 트리에 없다(깨진 링크는 lexists 가 참이라 뒤의 읽기에서 그대로 오류)
         if _is_production_path(target_relative):
             paths.append(target_relative)
     if len(paths) != len(set(paths)):
@@ -697,6 +699,8 @@ def _source_plan(
         return source_paths, code_paths, preserve_paths, analysis, blockers
 
     discovered = {path for path in inventory_paths if _is_schema_candidate(path)}
+    if COMMON_ERROR in inventory_paths and COMMON_ERROR not in preserve_paths:
+        code_paths.add(COMMON_ERROR)  # 고정 경로의 공용 모듈 — 렌더 inventory 에 적는 일을 호출자에게 맡기지 않는다
     union = code_paths | preserve_paths
     if COMMON_ERROR not in code_paths:
         analysis.append(
