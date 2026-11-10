@@ -1045,12 +1045,18 @@ djr:R-2597 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2598 a djr:Prohibition ;
-    skos:prefLabel "명세가 정한 기술 메커니즘(락 전략·동시성·격리 수준·저장 방식)의 자기 판단 대체 금지(출처-불문)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2598@2026-08-22> .
+    skos:prefLabel "명세가 정한 기술 메커니즘(락 전략·동시성·격리 수준·저장 방식)의 자기 판단 대체 금지(출처-불문) · 함께 커밋 주석은 승인 행이 있는 유스케이스에만 행 끝 칸 글 그대로(바깥 with 바로 위) · 승인 꼴(잠금 차례 · CAS raise · 삼킴 · 빠져나감 금지 · 다시 하는 고리는 with 바깥) · 행 없는 칸 고침 금지 · 행 없는 #546·#550 은 pending 반송(나눔 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2598@2026-11-10> .
 
 <https://numchida.com/ns/djr#R-2598@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2598 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2598@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-2598 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2598@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2599 a djr:Obligation ;
     skos:prefLabel "필요한 연결 튜닝의 stock OPTIONS 한정"@ko ;
@@ -1586,7 +1592,7 @@ djr:R-3733 a djr:Obligation ;
     djr:order 3 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s042-9.5/b11> ;
     djr:statesNorm djr:R-2598, djr:R-2599, djr:R-2600, djr:R-2601 ;
-    djr:text "- 명세가 정한 **기술 메커니즘**(락 전략·동시성·격리 수준·저장 방식)은 architect의 설계 결정이다 — 구현 중 자기 판단으로 다른 메커니즘으로 대체하지 않는다. 이 '대체'는 **출처-불문**이다 — 커스텀 `DatabaseWrapper` 백엔드뿐 아니라 런타임 몽키패치·`connection_created` 시그널·`OPTIONS.init_command`로 `BEGIN`/PRAGMA 주입·`isolation_level` 조작·DB 미들웨어·테스트 conftest 패치 등 *어떤 형태로든* 엔진/연결의 트랜잭션·락·격리 의미를 바꾸면 같은 위반이고, 필요한 연결 튜닝은 stock `OPTIONS`로만 한다(`implementation-django` §16.4·`architecture-db` §9.5). 환경상 부족해 보이면(예: 개발 sqlite의 락 한계) 우회책을 만들지 말고 멈춰 설계로 반송하고, 명세에 메커니즘 결정이 비어 있어도 — 구조 결정이 빠졌을 때와 똑같이 — 임의로 정하지 말고 보고한다. *왜* — 코더가 보는 건 한 슬라이스·한 환경뿐이고, 메커니즘 선택은 운영 DB·전체 일관성까지 본 설계 판단이라 국소 정보로 뒤집으면 명세와 어긋난다.\n"@ko .
+    djr:text "- 명세가 정한 **기술 메커니즘**(락 전략·동시성·격리 수준·저장 방식)은 architect의 설계 결정이다 — 구현 중 자기 판단으로 다른 메커니즘으로 대체하지 않는다. 이 '대체'는 **출처-불문**이다 — 커스텀 `DatabaseWrapper` 백엔드뿐 아니라 런타임 몽키패치·`connection_created` 시그널·`OPTIONS.init_command`로 `BEGIN`/PRAGMA 주입·`isolation_level` 조작·DB 미들웨어·테스트 conftest 패치 등 *어떤 형태로든* 엔진/연결의 트랜잭션·락·격리 의미를 바꾸면 같은 위반이고, 필요한 연결 튜닝은 stock `OPTIONS`로만 한다(`implementation-django` §16.4·`architecture-db` §9.5). 환경상 부족해 보이면(예: 개발 sqlite의 락 한계) 우회책을 만들지 말고 멈춰 설계로 반송하고, 명세에 메커니즘 결정이 비어 있어도 — 구조 결정이 빠졌을 때와 똑같이 — 임의로 정하지 말고 보고한다. *왜* — 코더가 보는 건 한 슬라이스·한 환경뿐이고, 메커니즘 선택은 운영 DB·전체 일관성까지 본 설계 판단이라 국소 정보로 뒤집으면 명세와 어긋난다.\n- **함께 커밋 주석**(2026-11-10): `# joint-commit: …` 주석은 이번 명세 `use-case-effects` 에 함께 커밋 칸(`함께 …  잠금 …  불변식 …`)이 있는 유스케이스에만, 그 트랜잭션을 여는 바깥 `with <uow>:` 바로 윗줄에 그 행 끝 칸 글 그대로 단다(글을 짓거나 줄이지 않는다 · 주석은 그 아래 `with` 하나만 덮는다). 구간은 승인 꼴로 짓는다 — 같은 타입 여럿은 `잠금` 키 차례(낙관 꼴 `for x in sorted((a, b), key=lambda item: item.<키>):` 안 `if not repo.save_with_version_guard(x): raise …` · 명세가 비관 꼴을 골랐으면 먼저 정렬한 키 차례로 `*_for_update`) · 다른 타입은 `잠금` 칸 차례 · CAS 결과는 `if not <쓰기>: raise …`(또는 결과를 이름에 담고 바로 다음 문장에서) · 구간 안에서 쓰기 실패를 `try` · `suppress` 로 받지 않고 받는 몸 · CAS 미스 몸에서 `continue` · `break` · `return` 으로 나가지 않는다 · 다시 하는 고리는 `with` 바깥(한 애그리거트의 재시도 꼴 — `with` 안에서 같은 키를 다시 읽는 고리 — 과 다르다). `×n` 은 이미 있는 것과 같은 구간에서 새로 만드는 것을 함께 센다. 이미 있는 주석의 칸은 이번 명세에 그 행이 없으면 고치지 않는다 — 다른 유스케이스 · area 로 옮기거나 베끼면 G2 대조가 붉히고, 같은 유스케이스 안에서 다른 구간으로 옮기는 것은 대조가 보지 않으니(G2 감수 몫) 칸 · 구간을 그대로 둔다. 승인 행이 없는 곳에 #546 · #550 이 서면 주석 · 명세로 풀지 않고(트랜잭션을 둘로 나누지도 않고) `pending` 으로 설계에 돌린다 — 명세를 고치지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s006/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s006> ;

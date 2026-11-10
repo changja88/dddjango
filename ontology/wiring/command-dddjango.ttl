@@ -1024,3 +1024,6 @@ djr:R-3725 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 djr:R-3726 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3727 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3747 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .

@@ -171,12 +171,18 @@ djr:R-3336 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3337 a djr:Obligation ;
-    skos:prefLabel "트랜잭션 경계·격리 수준·락의 정합성·동시성 적합성 점검"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3337@2026-08-22> .
+    skos:prefLabel "트랜잭션 경계·격리 수준·락의 정합성·동시성 적합성 점검 · 함께 커밋 승인 행이면 Risky Write 블록(Locking strategy = 잠금 칸)·같은 DB·같은 BC 다른 함께 커밋과 잠금 차례(--joint-list 재료 · 기계 확정 없음)·승인 밖 길·잠금 범위·뜨거운 행·Isolation/retry(다시 하는 고리는 with 바깥)·입장 후보(함께 되돌림 · 잠금 차례 · 실제 잠금)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3337@2026-11-10> .
 
 <https://numchida.com/ns/djr#R-3337@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3337 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3337@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-3337 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3337@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3338 a djr:Obligation ;
     skos:prefLabel "이 쓰기의 중복·race 치명성 의미 분류('Risky Write' 라벨·§9.6 인용 유무가 아닌 연산 성격 기준)"@ko ;
@@ -417,12 +423,18 @@ djr:R-3547 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3548 a djr:Obligation ;
-    skos:prefLabel "BC_AUDIT 점검 — 조각 파일 직접 열람·db 렌즈 점검 절 목록(플러그인 루트 경로)·대상 BC 기존 코드 전체에 표준 · 테스트 충분성 비항목 · 코드 무수정"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3548@2026-09-27> .
+    skos:prefLabel "BC_AUDIT 점검 — 조각 파일 직접 열람·db 렌즈 점검 절 목록(플러그인 루트 경로)·대상 BC 기존 코드 전체에 표준 · 테스트 충분성 비항목 · 코드 무수정 · #546·#550 ③ 항목 처방은 ddd 와 같음(같이 되돌릴 둘의 나눔 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3548@2026-11-10> .
 
 <https://numchida.com/ns/djr#R-3548@2026-09-27> a djr:Expression ;
     prov:specializationOf djr:R-3548 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3548@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-3548 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3548@2026-09-27> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3549 a djr:Obligation ;
     skos:prefLabel "BC_AUDIT 산출 = 정형 표만(규칙 인용 좌표·반대 방향·파일:행·바뀌는 것(닫힌 5 — 없음·내부 약속·밖 동작·DB 구조·다른 BC 파일 · + · 사유 한 구)·C 동일) — 규칙 없는 항목 불출(불편 근거 없음 행 예외)"@ko ;
@@ -613,7 +625,7 @@ djr:R-3604 a djr:Exception ;
     djr:order 4 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s043-9.6/b1> ;
     djr:statesNorm djr:R-3337, djr:R-3338, djr:R-3339, djr:R-3340, djr:R-3341, djr:R-3342, djr:R-3343, djr:R-3344, djr:R-3345, djr:R-3346 ;
-    djr:text "- 트랜잭션 경계·격리 수준·락이 정합성과 동시성에 맞는가 — **이 쓰기가 *중복·race가 치명적*인지를 의미로 분류한다('Risky Write' 라벨·§9.6 인용 유무가 아니라 연산 성격으로). 주문·결제·재고·예약·환불·권한·ledger 등은 *중복·race 치명성을 의심할 신호*이지 자동 판정이 아니다 — 신호가 있어도 그 쓰기에 실제 중복·이중적용·동시성 위험이 있을 때만 블록을 요구한다(race 없는 멱등 단일행 권한 설정은 명세 논증이 있으면 불요). 명세가 라벨·인용을 안 썼어도 연산이 돈·재고·권한·원장을 변경하면 리뷰어가 직접 Risky Write로 재분류한다. 치명적이면 `architecture-db` §9.6 Risky Write Consistency Block이 *명세에 8행으로 존재하고 각 행이 다뤄졌는지* 확인한다**(Transaction owner·Locking strategy·Rule ownership·Idempotency storage·API handoff·Side-effect timing·Isolation/retry·Test criteria). **각 행에 결정 내용 또는 근거 있는 '미적용'이 적혀 있으면 충족 — 빈칸·무언급만 미기재다. 블록 부재(§9.6을 번호로 인용만)·8행 누락·어느 행 미기재면 blocker.** 블록 *존재*는 리터럴 '§9.6' 문자열이 아니라 8행의 *의미적 충족*으로 판정한다(명세 자체 절번호 §3.3 등 다른 제목·표 아닌 행 나열이어도 충족). 쓰기가 중복·race에 치명적이지 않다고 명세가 논증하면 블록 불요 — 트집잡지 않는다. **여기서 보는 건 8행이 *채워졌는지*(구조 완전성)이지 그 Test criteria가 동시성을 *충분히* 덮는지(테스트 적정성)가 아니다** — 후자는 discipline-tdd·acceptance-tester 몫.\n"@ko .
+    djr:text "- 트랜잭션 경계·격리 수준·락이 정합성과 동시성에 맞는가 — **이 쓰기가 *중복·race가 치명적*인지를 의미로 분류한다('Risky Write' 라벨·§9.6 인용 유무가 아니라 연산 성격으로). 주문·결제·재고·예약·환불·권한·ledger 등은 *중복·race 치명성을 의심할 신호*이지 자동 판정이 아니다 — 신호가 있어도 그 쓰기에 실제 중복·이중적용·동시성 위험이 있을 때만 블록을 요구한다(race 없는 멱등 단일행 권한 설정은 명세 논증이 있으면 불요). 명세가 라벨·인용을 안 썼어도 연산이 돈·재고·권한·원장을 변경하면 리뷰어가 직접 Risky Write로 재분류한다. 치명적이면 `architecture-db` §9.6 Risky Write Consistency Block이 *명세에 8행으로 존재하고 각 행이 다뤄졌는지* 확인한다**(Transaction owner·Locking strategy·Rule ownership·Idempotency storage·API handoff·Side-effect timing·Isolation/retry·Test criteria). **각 행에 결정 내용 또는 근거 있는 '미적용'이 적혀 있으면 충족 — 빈칸·무언급만 미기재다. 블록 부재(§9.6을 번호로 인용만)·8행 누락·어느 행 미기재면 blocker.** 블록 *존재*는 리터럴 '§9.6' 문자열이 아니라 8행의 *의미적 충족*으로 판정한다(명세 자체 절번호 §3.3 등 다른 제목·표 아닌 행 나열이어도 충족). 쓰기가 중복·race에 치명적이지 않다고 명세가 논증하면 블록 불요 — 트집잡지 않는다. **여기서 보는 건 8행이 *채워졌는지*(구조 완전성)이지 그 Test criteria가 동시성을 *충분히* 덮는지(테스트 적정성)가 아니다** — 후자는 discipline-tdd·acceptance-tester 몫.\n- **함께 커밋 승인 행**(`use-case-effects` `write` 행 끝 `함께 …  잠금 …  불변식 …` 칸 — `architecture-ddd` §3.3 규칙 4 «실무 참고» 예외 ⑵ · 2026-11-10)이 있으면: Risky Write 블록이 채워졌고 `Locking strategy` 가 `잠금` 칸과 같은 말인가 · 같은 DB 인가(여러 `DATABASES` · 라우터면 한 `atomic` 이 둘을 덮지 못한다) · 같은 BC 의 다른 함께 커밋과 잠금 차례가 맞나(재료 = Coordinator 가 입력에 싣는 그 BC 의 `checker_target.py --joint-list` 출력 — 줄마다 `잠금` 칸 — 과 pre-gate 리포트의 «이번에 고치는 코드에 전부터 있던 함께 커밋» 절 · 기계 확정이 없어 이 리뷰가 유일한 자리다) · 승인 밖 길(도움 메서드 · 틀 부품 · 승인 없는 다른 유스케이스)이 같은 행을 다른 차례로 잠그지 않나 · 잠금 범위 안에 외부 호출 · 긴 일이 없나 · 뜨거운 행이면 비관 꼴(먼저 정렬한 키 차례로 `*_for_update`)을 골랐나 · `Isolation/retry` 가 교착 · CAS 미스를 다루고 다시 하는 고리가 `with` 바깥인가 · 입장 표 후보 «함께 되돌림» · «잠금 차례»(비관 꼴로 «잠금이 막아 준다»를 독자 실패로 주장하면 «실제 잠금»)가 decision 과 함께 있나. 빠졌거나 어긋나면 발견으로 올린다(`architecture-db` §9.5 · §9.6).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s004/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s004> ;
@@ -705,7 +717,7 @@ djr:R-3604 a djr:Exception ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
     djr:statesNorm djr:R-3548 ;
-    djr:text "**점검**: 조각 파일을 직접 읽고 모델·인덱스·제약·트랜잭션·마이그레이션 안전 관점으로, 표준을 대상 BC 의 기존 코드 전체에 적용해(적용 범위 규범) 위반을 찾는다. 점검 절: `agents/design-review-db.md` §점검 항목 (데이터 lens만) · `skills/architecture-db/references/final.md` §1 · §2 · §4 · §5 · §7 · §8 · §9 · §10 · §11 · §12 · §13 · `skills/implementation-django/references/final.md` §1 · §2 · §3 · §4 · §5 · §9 · §10 · §11 · §12 · §15 · §16 · §17 · §18. 렌즈가 `db+보안` 이면 `skills/implementation-django/references/final.md §13` 도 본다. 목록의 문서는 플러그인 설치 루트 기준 경로로 읽는다(이 에이전트에 로드되지 않은 스킬도 그 경로로 연다). Django ORM 기술 규칙은 이 렌즈가 판정한다. 도메인은 ddd, 계약은 api 렌즈의 몫이다. 테스트의 단언 강도·보호 범위·커버리지 부족은 항목이 아니다(기존 테스트가 안전망이다). 코드를 고치지 않는다.\n\n"@ko .
+    djr:text "**점검**: 조각 파일을 직접 읽고 모델·인덱스·제약·트랜잭션·마이그레이션 안전 관점으로, 표준을 대상 BC 의 기존 코드 전체에 적용해(적용 범위 규범) 위반을 찾는다. 점검 절: `agents/design-review-db.md` §점검 항목 (데이터 lens만) · `skills/architecture-db/references/final.md` §1 · §2 · §4 · §5 · §7 · §8 · §9 · §10 · §11 · §12 · §13 · `skills/implementation-django/references/final.md` §1 · §2 · §3 · §4 · §5 · §9 · §10 · §11 · §12 · §15 · §16 · §17 · §18. 렌즈가 `db+보안` 이면 `skills/implementation-django/references/final.md §13` 도 본다. 목록의 문서는 플러그인 설치 루트 기준 경로로 읽는다(이 에이전트에 로드되지 않은 스킬도 그 경로로 연다). Django ORM 기술 규칙은 이 렌즈가 판정한다. 도메인은 ddd, 계약은 api 렌즈의 몫이다. 테스트의 단언 강도·보호 범위·커버리지 부족은 항목이 아니다(기존 테스트가 안전망이다). 코드를 고치지 않는다. #546 · #550 ③(이미 있는 애그리거트 둘 이상을 한 트랜잭션에서 바꿈) 항목의 처방은 ddd 렌즈와 같다 — 같이 되돌려야 하는 둘을 «트랜잭션 둘로 나눔» 은 적지 않는다(승인 후보의 `바뀌는 것` 칸은 `없음 — 동작 불변 · 명세 행 + 주석`).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006> ;

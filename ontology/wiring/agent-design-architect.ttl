@@ -561,3 +561,6 @@ djr:R-3738 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect
 
 djr:R-3742 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .
+
+djr:R-3746 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .

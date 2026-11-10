@@ -7,7 +7,7 @@ FROZEN 이므로 실측은 이 fixture 결정 레인만 쓴다.
 
 케이스: skeleton 9 + 기존 15종×2 + API-error 3종×2(--error-profile auto)
        + 신설 8종×2 + checker_lint 2 + 호출 계약 27 + 수정 사이클 레인 3×2 + 음성 · 양성 단독 레인
-       = exit 대조 121 + 줄 대조 24(GROUP_CASES — 아래) = 145(실행 표 끝 «케이스» 줄이 실측이다).
+       = exit 대조 126 + 줄 대조 29(GROUP_CASES — 아래) = 155(실행 표 끝 «케이스» 줄이 실측이다).
 
 의미 묶음 줄 대조(2.28.0 · #654~#656 · 설계 7.4): exit 만 보는 레인은 ⓓ 후보 줄(exit 불산입)과
 줄 글자(#656 주어)를 못 본다 — 이 레인은 거름 규칙의 줄 전부를 글자 그대로 기대와 대조한다.
@@ -117,6 +117,10 @@ POSITIVE_LANES: "list[tuple[str, str, str]]" = [
     ("check-domain-model.py", "domain_model", "many_writes"),
     # F4-49 — #355 를 쓰기 메서드 반환에도(줄은 GROUP_CASES 가 고정).
     ("check-transaction-boundary.py", "transaction_boundary", "write_returns"),
+    # 2.36.0 함께 커밋 — 표지 칸 판정 · 표지가 서지 못한 #546 · #550 행 3(줄은 GROUP_CASES 가 고정).
+    ("check-domain-model.py", "domain_model", "joint_commit"),
+    # 2.36.0 — #195 글자 고리 넓힘(승인 꼴 S · 줄은 GROUP_CASES 가 고정).
+    ("check-transaction-boundary.py", "transaction_boundary", "literal_loop"),
     # F4-92 가드 — 위 한계의 경계: 같은 영역의 다른 업무 낱말(`booked` — 폴더 이름에는 없는 낱말)이 `event` 와 함께
     # 새면 그 낱말로 계속 잡는다.
     ("check-business-vocabulary.py", "business_vocabulary", "event_noun_leak_guard"),
@@ -176,6 +180,28 @@ _TB_VALUE: str = "값을 내는 주입 도구(시계 같은 것)는 작업 단�
 _MW: str = "[#550] application/orders/application_layer/order/{u}/{u}_use_case.py:{n}: "
 _M550: str = ("한 트랜잭션은 애그리거트 «하나»를 바꾼다: 같이 되돌려야 하면 한 애그리거트로 묶고, 아니면 건마다 트랜잭션을 연다"
               "(반복문 안에서 `with uow`) — 묶음은 새로 만들 때만")
+# 2.36.0 함께 커밋 — #550 행 3 · #546 확정의 꼬리(검사기 문면 그대로).
+_M_JOINT: str = ("한 트랜잭션은 애그리거트 «하나»를 바꾼다: 같이 되돌려야 하면 먼저 경계(한 애그리거트 · 이동 기록)를, 이미 있는 둘을 "
+                 "함께 바꿔야 하면 설계로 돌려 G1 승인(함께 커밋)을 받는다 — 코드에서 표지만 달지 않는다")
+_ROW3: str = "한 트랜잭션에서 따로 조회한 애그리거트 둘(`{a}` · `{b}`)을 차례로 쓴다 — " + _M_JOINT
+_TYPES2: str = "명시 transaction 구간에서 서로 다른 애그리거트 리포지토리 ['order', 'stock'] 에 쓰기 둘(현행 타입 계수) — " + _M_JOINT
+# domain_model/joint_commit — 표지 판정 문면 조각(설계 §3.5 · 사례마다 유스케이스 폴더 하나 · 불변식은 사례 글 그대로).
+_JC: str = "application/orders/application_layer/order/{u}/{u}_use_case.py:{n}: "
+_JC_INV: str = "옮긴 요청은 정확히 한 주문에만 있다"
+_JC_MARK: str = "함께 커밋 표지 «{i}» — "
+_JC_FORM: str = ("표지 꼴이 틀렸다 — `# joint-commit: 함께 <애그리거트>[×n], …  잠금 <애그리거트>(<키>)[ → …]  불변식 <이름>`"
+                 "(칸 사이 공백 둘 이상 · 명세 행 끝 칸 그대로) — 표지는 G1 승인 행이 있는 함께 커밋에만 단다"
+                 "(승인 행이 없으면 표지를 지우고 이 함께 쓰기를 설계로 돌린다 — pending)")
+_JC_CAS: str = ("CAS 쓰기 `save_with_version_guard` 의 결과를 `if not …: raise` 로 받지 않는다(미스 몸에서 `continue` · `break` · "
+                "`return` 으로 나가는 길도 없어야 한다) — 둘째가 미스면 예외로 통째 되돌려야 한다(하나라도 실패하면 둘 다 그대로)")
+_JC_SWALLOW: str = ("승인 구간 안에서 쓰기 실패를 받아 삼킨다(`try` 의 `except` 가 `raise` 로 끝나지 않거나 · `except` · `finally` 몸이 "
+                    "`continue` · `break` · `return` 으로 빠져나가거나 · `suppress`) — 하나라도 실패하면 둘 다 그대로여야 한다: 예외 받기 · "
+                    "다시 하기는 `with` 바깥에 둔다(시도마다 새 트랜잭션)")
+_JC_LOOP: str = ("승인 구간 안에서 쓰기를 감싼 고리는 잠금 정렬 고리(`for x in sorted((a, b), …)`) 하나뿐이다 — 조회한 여럿은 예외 밖이고, "
+                 "다시 하는 고리는 `with` 바깥에 둔다(시도마다 새 트랜잭션)")
+# transaction_boundary/literal_loop — #195 문면 조각(2.36.0 글자 고리 넓힘).
+_LL: str = ("[#195] application/orders/application_layer/order/{u}/{u}_use_case.py:{n}: save/remove 인자 `order` — 같은 함수 안에서 "
+            "루트 메서드 호출을 받은 적이 없다. 상태 변경은 애그리거트를 건너뛰지 않는다")
 # transaction_boundary/write_returns — #355 문면 조각(F4-49).
 _WR: str = "application/orders/domain_layer/order/order_repository.py"
 _M355: str = " — 리포지토리는 {애그리거트, Sequence[애그리거트], 값객체, bool·int·None} 만 돌려준다"
@@ -310,8 +336,7 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
         "[#257] application/orders/application_layer/order/checkout_order/checkout_order_use_case/card_payment.py:14: "
         "`order.lines.append(...)` — 애그리거트 상태 변경은 전부 «루트를 지나야» 한다(내부에 손을 넣지 않는다)",
         "[#546] application/orders/application_layer/order/checkout_order/checkout_order_use_case/checkout_order_frame.py:25: "
-        "명시 transaction 구간에서 서로 다른 애그리거트 리포지토리 ['order', 'stock'] 에 쓰기 둘 — "
-        "한 트랜잭션은 애그리거트 «하나»를 바꾼다(현행 타입 계수)",
+        + _TYPES2,
     )),
     # 11(#30 종류는 묶음 위 칸) · 12(#44 묶음 안 · 승격 본체 · 주어 실제 경로) · 13(C2 는 승격 면제 없음 — #41 · #481).
     ("naming/bad_rules", "check-naming.py", "naming/bad_rules", r"^\[#(30|41|44|481)\]", (
@@ -409,8 +434,15 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
      )),
     # F4-50 — #550 «한 트랜잭션 = 애그리거트 하나». 행 1(구간 무관 · 컬렉션 주석 이름 · tuple · 컴프리헨션) · 행 2(구간 안
     # for 몸 — 조회한 여럿의 원소 · 묶인 저장소의 조회 호출을 바로 돎 · 반복 변수로 조회 · 안쪽 고리만 나가는 break · 조건 안
-    # break · 나감 앞 continue · 나감 앞 다른 이름의 쓰기 · CAS 검사식의 참 갈래가 나가지 않음).
-    # 0 줄 대조군: 따로 조회한 같은 타입 둘(이체 꼴 — #550 판정 밖) · 한 건 쓰기(CAS `save_with_version_guard` ·
+    # break · 나감 앞 continue · 나감 앞 다른 이름의 쓰기 · CAS 검사식의 참 갈래가 나가지 않음). 2.36.0 행 3(같은 구간 · 같은
+    # 저장소 타입 · 따로 조회한 둘 · 표지 없음 — 차례로 저장(2.35.0 «판정 밖» 대조군이 뒤집힘) · 같은 갈래 안 · 키 정렬 · 집합 ·
+    # 컴프리헨션 글자 고리 · 인자 자리만 바뀐 맞팔 둘(위치 · 키워드 · CAS) · CAS 참 갈래 return 이 구간 안 고리 속(안쪽 `with` 안
+    # 포함) · finally 안 · CAS 아닌 쓰기(결과 이름 꼴 포함)) · 행 1 글자 묶음(`save_all([a, b])`). 2.36.0 0 줄: if/else · match · try/except 배타 갈래 · CAS 미스 몸
+    # (같은 키 · 다른 인자 · 키워드 — 구현 검토 1 f3 · f4 · 결과 이름 꼴) · return 으로 끝나는 갈래(f5) · CAS 결과 이름의 참 갈래가
+    # return(트랜잭션 바깥 다시 하기 고리로 감싸도) · 같은 조회 인자로 다시 읽음(위치 · 키워드 — 키워드는 저장소 선언의 매개변수
+    # 자리 · 섞어 · 키워드 차례만 바꿔) · 글자 고리
+    # 에서 하나만 쓰고 나감(CAS 참 갈래 · break · `next` 생성기) · 이름에 담은 묶음(받아들인 한계 — 리뷰어 몫).
+    # 0 줄 대조군: 한 건 쓰기(CAS `save_with_version_guard` ·
     # `save_label`) · 건마다 트랜잭션 · 새로 만든 것 여럿(조회값에서 만든 것 포함) · 같은 이름 두 번 · 여럿 읽고 하나 저장 ·
     # 같은 키 재시도 고리 · 첫 것을 잡고 break · return(바로 뒤 · 결과 대입 · 결과 값 · 기록 뒤 · 같은 애그리거트를 두 번 쓴
     # 뒤 · CAS 검사식의 참 갈래 · CAS 결과 이름의 `if saved:` · `if not saved: continue` 뒤) · 주석 단 조회 이름의 속성
@@ -434,8 +466,104 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
         _MW.format(u="cancel_each_by_id", n=25)
         + f"한 트랜잭션 안 반복문에서 반복 변수로 조회한 애그리거트(`order`)를 `remove` 로 쓴다 — {_M550}",
         "[#546] application/orders/application_layer/order/move_order_and_stock/move_order_and_stock_use_case.py:19: "
-        "명시 transaction 구간에서 서로 다른 애그리거트 리포지토리 ['order', 'stock'] 에 쓰기 둘 — "
-        "한 트랜잭션은 애그리거트 «하나»를 바꾼다(현행 타입 계수)",
+        + _TYPES2,
+        _MW.format(u="save_pair_literal", n=24)
+        + f"조회로 꺼낸 여럿(`source, target`)을 `save_all` 로 한꺼번에 쓴다(`save_all` 은 새로 만든 것만 받는다) — {_M550}",
+     ) + tuple(
+        _MW.format(u=u, n=n) + _ROW3.format(a="source", b="target")
+        for u, n in (("transfer_between_orders", 25), ("transfer_in_one_branch", 24), ("transfer_sorted_unmarked", 25),
+                     ("transfer_set_loop", 25), ("transfer_comprehension", 24))
+     ) + tuple(
+        _MW.format(u=u, n=n) + _ROW3.format(a=a, b=b)
+        for u, n, a, b in (("follow_back_by_keyword", 21, "request", "reverse"),
+                           ("follow_back_by_position", 21, "request", "reverse"),
+                           ("follow_back_guarded", 22, "request", "reverse"),
+                           ("claim_in_retry_loop", 27, "primary", "backup"), ("claim_then_finally", 28, "first", "second"),
+                           ("save_plain_then_return", 26, "first", "second"), ("save_plain_result_name", 26, "first", "second"),
+                           ("claim_in_retry_loop_inner_with", 30, "primary", "backup"))
+     )),
+    # 2.36.0 함께 커밋(설계 §3.5) — 표지 칸 = 승인. 0 줄: 승인 꼴 S(+ 새 재고) · P 넷(차례 잠금 · `with` 앞 정렬 · 다시 묶음 ·
+    # 잠근 이름만 도는 저장 고리) · 다른 타입 `잠금` 칸 차례 · 바깥 다시 하는 고리 · CAS 결과 이름 · 승격 폴더 틀 부품 · 뒤 `# noqa`
+    # · `order×3`(새 것까지) · 새 것만 ×2(하나씩 · `save_all((a, b))` · 새 것만 도는 글자 고리) · 다른 예외로 다시 올림 · 쓰기 밖
+    # try · 받는 몸 안 제 고리의 break · 새 주문 이름을 키 정렬 고리 변수로 다시 씀 · 키 정렬 고리 안 `order = order.renamed()`.
+    # 붉음에 새 것 ×2 를 `stock` 으로 줄여 적은 표지 · 글자 `-> "bool"` CAS 결과 버림 · 새 주문 이름을 고정 차례 고리 변수로 다시
+    # 씀(고리 앞 · 뒤 · 그냥 save · 다른 키) · 고정 차례 고리 안 재대입(반복 변수는 고리의 글자 원소로만 가린다). 표지가 서지 못하면
+    # 면제가 없어 #546 확정(다른 타입) · #550 행 3(같은 타입)이 함께 선다 · 표지 없는 부품 안 이체는 #550(파일 집합 = 본체 + 부품).
+    ("domain_model/joint_commit", "check-domain-model.py", "domain_model/joint_commit",
+     r"^\[(ⓓ)?#(257|546|550)\]", tuple(
+        f"[#550] {_JC.format(u=u, n=n)}" + _ROW3.format(a="source", b="target")
+        for u, n in (("cas_result_ignored", 32), ("e_marker_bare_invariant", 30), ("e_marker_field_order", 30),
+                     ("e_marker_in_string", 30), ("e_marker_single_space", 30), ("fixed_order_approved", 30),
+                     ("floating_marker", 31), ("found_loop_in_approved", 30), ("ib_suppress_swallow", 31),
+                     ("ibp_except_cond_continue", 31), ("ibp_finally_continue", 31), ("ibp_if_cas_cond_continue", 30),
+                     ("inner_with_marker", 36), ("new_order_beyond_count", 33), ("retry_inside_with", 32),
+                     ("retry_wraps_with", 33), ("try_swallow_around_loop", 33), ("type_mismatch", 32), ("wrong_key", 30),
+                     ("cas_result_ignored_text_bool", 32), ("new_entries_under_declared", 32))
+     ) + tuple(
+        f"[#550] {_JC.format(u=u, n=n)}" + _ROW3.format(a=a, b=b)
+        for u, n, a, b in (("merge_new_after_fixed_loop", 31, "second", "first"),
+                           ("merge_reused_name_fixed_order", 33, "first", "second"),
+                           ("merge_reused_name_plain_save", 33, "first", "second"),
+                           ("merge_reused_name_wrong_key", 33, "first", "second"), ("rebound_in_fixed_loop", 31, "b", "a"))
+     ) + tuple(
+        f"[#546] {_JC.format(u=u, n=n)}{_TYPES2}"
+        for u, n in (("diff_types_wrong_order", 24), ("inner_with_marker", 25), ("lock_lies_new_stock", 26),
+                     ("new_only_dash", 26), ("one_existing_plus_new", 26), ("type_mismatch", 24),
+                     ("new_entries_under_declared", 24))
+     ) + tuple(
+        f"[#546] {_JC.format(u=u, n=n)}{_JC_MARK.format(i=_JC_INV)}{m}"
+        for u, n, m in (
+            ("cas_result_ignored", 26, _JC_CAS), ("ibp_if_cas_cond_continue", 24, _JC_CAS), ("retry_wraps_with", 27, _JC_CAS),
+            ("cas_result_ignored_text_bool", 26, _JC_CAS.replace("`save_with_version_guard`", "`save_checked`")),
+            ("new_entries_under_declared", 24, "`stock` 바꾸는 것 2 개(이미 있는 것 0 · 새 것 2)가 표지 `stock×1` 와 다르다 — "
+                                               "`×n` 은 이미 있는 것과 새로 만드는 것을 함께 센다"),
+            ("ib_suppress_swallow", 24, _JC_SWALLOW), ("ibp_except_cond_continue", 24, _JC_SWALLOW),
+            ("ibp_finally_continue", 24, _JC_SWALLOW), ("try_swallow_around_loop", 26, _JC_SWALLOW),
+            ("found_loop_in_approved", 24, _JC_LOOP), ("retry_inside_with", 26, _JC_LOOP),
+            ("merge_new_after_fixed_loop", 26, _JC_LOOP), ("merge_reused_name_fixed_order", 26, _JC_LOOP),
+            ("merge_reused_name_plain_save", 26, _JC_LOOP), ("rebound_in_fixed_loop", 26, _JC_LOOP),
+            ("merge_reused_name_wrong_key", 26, "같은 타입 `order` 를 승인 잠금 키 `order_id` 와 다른 키로 정렬한다"),
+            ("e_marker_bare_invariant", 24, _JC_FORM),
+            ("diff_types_wrong_order", 24, "다른 타입을 승인 `잠금` 차례 order → stock 와 다르게 처음 잠근다"),
+            ("duplicate_marker", 33, "같은 불변식 표지가 이 유스케이스에 둘(먼저 application/orders/application_layer/order/"
+                                     "duplicate_marker/duplicate_marker_use_case.py:24) — 승인 하나는 구간 하나만 덮는다"),
+            ("fixed_order_approved", 24, "같은 타입 `order` 여럿을 고정 차례로 잠근다 — `sorted((a, b), key=…)` 고리 안에서 쓰거나 "
+                                         "`a, b = sorted(<키들>)` 차례로 `*_for_update` 조회한다(승인 잠금 `order(order_id)`)"),
+            ("inner_with_marker", 30, "표지는 트랜잭션을 여는 바깥 `with` 바로 위에 단다 — 이 `with` 는 바깥 트랜잭션(작업 단위 · atomic) "
+                                      "안에 있다"),
+            ("lock_lies_new_stock", 26, "이미 있는 애그리거트가 둘 이상이 아니다 — 예외 밖(새 기록은 그 하나가 품는다)"),
+            ("new_only_dash", 26, "표지 칸 꼴이 틀렸다 — `잠금 -` — 이미 있는 것을 잠그지 않는 묶음은 예외 밖(설계로 돌린다 — 표지만 고쳐 "
+                                  "풀지 않는다)"),
+            ("new_order_beyond_count", 26, "`order` 바꾸는 것 3 개(이미 있는 것 2 · 새 것 1)가 표지 `order×2` 와 다르다 — `×n` 은 이미 "
+                                           "있는 것과 새로 만드는 것을 함께 센다"),
+            ("one_existing_plus_new", 26, "표지 칸 꼴이 틀렸다 — `잠금`(이미 있는 것) 인스턴스가 둘 미만 — 예외 밖(새 기록은 그 하나가 "
+                                          "품는다)(설계로 돌린다 — 표지만 고쳐 풀지 않는다)"),
+            ("stale_marker", 24, "덮을 함께 쓰기를 찾지 못했다 — 함께 쓰기가 없으면 표지를 지우고, 있으면 승인 꼴(같은 타입은 정렬 고리 · "
+                                 "차례 조회 · 조회 이름 그대로)로 쓴다"),
+            ("type_mismatch", 24, "바꾸는 애그리거트 ['order', 'stock'] 가 승인 `함께` ['order'] 와 다르다"),
+            ("w_marker_on_lock_with", 24, "표지는 검사기가 트랜잭션으로 읽는 `with`(작업 단위 · `transaction.atomic`) 바로 위에만 단다 — "
+                                          "이 `with` 를 트랜잭션으로 읽지 못했다(승인 꼴로 쓴다)"),
+            ("wrong_key", 24, "같은 타입 `order` 를 승인 잠금 키 `order_id` 와 다른 키로 정렬한다"),
+        )
+     ) + (
+        f"[#546] {_JC.format(u='e_marker_field_order', n=24)}"
+        + _JC_MARK.format(i="잠금 order(order_id) 함께 order×2 불변식 " + _JC_INV) + _JC_FORM,
+        f"[#546] {_JC.format(u='e_marker_single_space', n=24)}"
+        + _JC_MARK.format(i="함께 order×2 잠금 order(order_id) 불변식 " + _JC_INV) + _JC_FORM,
+        f"[#546] {_JC.format(u='floating_marker', n=23)}함께 커밋 표지가 트랜잭션을 여는 `with` 바로 위에 있지 않다(떠 있는 표지)"
+        " — 표지는 그 아래 `with` 하나만 덮는다",
+        f"[#550] {_JC.format(u='duplicate_marker', n=39)}" + _ROW3.format(a="first", b="second"),
+        f"[#550] {_JC.format(u='found_loop_in_approved', n=35)}조회로 꺼낸 여럿(`found`)을 도는 반복문이 한 트랜잭션 안에서 "
+        f"`save` 로 쓴다 — {_M550}",
+        "[#550] application/orders/application_layer/order/frame_swap/frame_swap_use_case/frame_swap_frame.py:24: "
+        + _ROW3.format(a="source", b="target"),
+     )),
+    # 2.36.0 — #195 글자 고리 넓힘(함께 커밋 승인 꼴 S): 0 줄 = 키 정렬 글자 고리 · 싸지 않은 글자 튜플(원소가 모두 루트 메서드
+    # 호출을 받음). 그대로 #195 = 원소 하나가 받지 않음 · 반복 변수 이름을 다른 고리가 다시 묶음.
+    ("transaction_boundary/literal_loop", "check-transaction-boundary.py", "transaction_boundary/literal_loop",
+     r"^\[(ⓓ)?#195\]", (
+        _LL.format(u="move_pair_name_reused", n=22),
+        _LL.format(u="move_pair_one_untouched", n=21),
      )),
     # F4-49 — 쓰기 메서드(save · remove)의 반환도 #355 허용 목록(dict · str · QuerySet · 도메인 밖 타입 · 모델 이름).
     # 0 줄: None · 애그리거트 · 그 목록 · 값 객체 · 쓰기의 bool(CAS) · int(지운 개수 — 후보 물음도 없음). 조회 줄은 그대로.
@@ -610,8 +738,9 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
      'return init if init in inside else (inside[0] if inside else f"{parent}/{g}/")',
      'return next((q for q in inside if not q.endswith("/__init__.py")), f"{parent}/{g}/")', _DM),
     ("유스케이스 칸 승격 부품 넓힘 되돌림(본체만)", _DM,
-     'if not py.name.endswith("_use_case.py") and not _use_case_part_file(py):',
-     'if not py.name.endswith("_use_case.py"):', _DM),
+     "uc_key = checker_target.joint_use_case(py.relative_to(root).as_posix(), lambda r: (root / r).is_file())\n",
+     "uc_key = checker_target.joint_use_case(py.relative_to(root).as_posix(), lambda r: (root / r).is_file()) "
+     'if py.name.endswith("_use_case.py") else None\n', _DM),
     ("F4-50 행 1 «여럿» 주석 이름 걷음", _DM, "hit = _many_argument(n.args[0], many)", "hit = None", _DM),
     ("F4-50 행 2 조회한 여럿을 도는 고리 걷음", _DM, "if source is not None:", "if False:", _DM),
     ("F4-50 행 2 조회 호출을 바로 도는 고리 걷음", _DM,
@@ -639,6 +768,102 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
      "and isinstance(rest[0].test, ast.Name) and rest[0].test.id == result else None", "and False else None", _DM),
     ("F4-50 CAS 미스 continue 거름 걷음", _DM,
      "or (isinstance(x, ast.Continue) and id(x) not in missed)", "or isinstance(x, ast.Continue)", _DM),
+    # 2.36.0 — #550 행 3(되살림 · 오탐 고침 ⑴ ⑵ · 글자 고리 · 컴프리헨션) · 행 1 글자 묶음 · 함께 커밋 표지 판정(설계 §3.5) · #195 넓힘.
+    ("2.36.0 행 3 짝 걷음", _DM,
+     "        if pair is not None:\n            (first, _), (second, call) = pair",
+     "        if False:\n            (first, _), (second, call) = pair", _DM),
+    ("2.36.0 행 3 배타 갈래(if · match · try) 걷음", _DM,
+     "    if any(k in arms_b and arms_b[k] != v for k, v in arms_a.items()):\n        return True",
+     "    if False:\n        return True", _DM),
+    ("2.36.0 행 3 고침 ⑴ CAS 미스 몸 배타 걷음", _DM,
+     "_cas_miss_body(x, y, parents, cas, region) or _returns_before(x, y, parents)", "_returns_before(x, y, parents)", _DM),
+    ("2.36.0 행 3 고침 ⑵ return · raise 뒤 배타 걷음", _DM,
+     "_cas_miss_body(x, y, parents, cas, region) or _returns_before(x, y, parents)",
+     "_cas_miss_body(x, y, parents, cas, region)", _DM),
+    ("2.36.0 행 3 같은 조회 인자 빼기 걷음", _DM,
+     "and _read_key(reads[a[0]][0], params(reads[a[0]][0]))\n                     != _read_key(reads[b[0]][0], params(reads[b[0]][0]))",
+     "and True", _DM),
+    ("2.36.0 행 3 글자 고리 넓힘 걷음", _DM,
+     "elif literal_loop is not None and not _leaves_loop_after(call, literal_loop, parents, write_args):",
+     "elif False:", _DM),
+    ("2.36.0 행 3 글자 고리 한 건 나감 빼기 걷음", _DM,
+     "elif literal_loop is not None and not _leaves_loop_after(call, literal_loop, parents, write_args):",
+     "elif literal_loop is not None:", _DM),
+    ("2.36.0 행 3 컴프리헨션 글자 고리 걷음", _DM,
+     "elif (comp := _literal_comprehension(call, name, parents)) is not None:", "elif False:", _DM),
+    ("2.36.0 `any` · `next` 생성기 빼기 걷음(재확인 S-2)", _DM,
+     'and outer.func.id in ("any", "next") and outer.args and outer.args[0] is cur:', "and False:", _DM),
+    ("2.36.0 행 1 글자 묶음 걷음", _DM,
+     "pair = None if hit is not None else _literal_pair(n.args[0], reads, bindings)", "pair = None", _DM),
+    ("2.36.0 표지 구간 면제 걷음", _DM,
+     "excused |= {id(c) for c, *_ in writes if id(c) in inside}", "excused |= set()", _DM),
+    ("2.36.0 칸 사이 공백 둘 이상 걷음(공백 하나도 받음)", "checker_target.py",
+     'JOINT_SEP: str = r"(?:\\t+| {2,})"', 'JOINT_SEP: str = r"(?:\\t+| +)"', _DM),
+    ("2.36.0 떠 있는 표지 걷음", _DM, "for number in sorted(set(marks) - used_marks):", "for number in []:", _DM),
+    ("2.36.0 같은 불변식 표지 둘 걷음", _DM, "if problem is None and key in marked_keys:", "if False:", _DM),
+    ("2.36.0 트랜잭션으로 못 읽은 with 위 표지 받음(검토 걱정)", _DM,
+     "if any(region == -1 for _c, region, _l, _a in mine):", "if False:", _DM),
+    ("2.36.0 바깥 with 판정 걷음", _DM, "if any(region != w.lineno for _c, region, _l, _a in mine):", "if False:", _DM),
+    ("2.36.0 구간 안 except 가 raise 로 끝나지 않음 걷음(검토 I-B)", _DM,
+     "any(not h.body or not isinstance(h.body[-1], ast.Raise) or _escapes(h.body) for h in n.handlers)",
+     "any(_escapes(h.body) for h in n.handlers)", _DM),
+    ("2.36.0 suppress 삼킴 걷음(검토 I-B)", _DM, '== "suppress" for i in n.items):', '== "never" for i in n.items):', _DM),
+    ("2.36.0 빠져나갈 길 걷음(재확인 I-B′)", _DM, "    return any(walk(s, False) for s in stmts or [])", "    return False", _DM),
+    ("2.36.0 CAS 결과 받기 판정 걷음", _DM, "if call.func.attr in _bool_writes(root, bc, agg):", "if False:", _DM),
+    ("2.36.0 이미 있는 것 둘 미만 걷음", _DM, "if sum(existing.values()) < 2:", "if False:", _DM),
+    ("2.36.0 ×n 넘침 걷음(검토 S1)", _DM, "if (n >= 2) != (want >= 2) or n > want:", "if (n >= 2) != (want >= 2):", _DM),
+    ("2.36.0 같은 타입 고정 차례 받음", _DM, "if not all(loops_ok):", "if False:", _DM),
+    ("2.36.0 잠금 키 판정 걷음", _DM, "if not all(_key_mentions(sl, keys[t]) for sl in loops_ok):", "if False:", _DM),
+    ("2.36.0 다른 타입 잠금 차례 걷음", _DM,
+     "if [first[t] for t in order] != sorted(first[t] for t in order):", "if False:", _DM),
+    ("2.36.0 꼴 P 차례 잠금 받기 걷음", _DM,
+     "            continue  # 꼴 P — `a, b = sorted(키들)` 차례로 잠그는 조회", "            pass", _DM),
+    # 2.36.0 구현 검토 C — 행 3 결과 이름 꼴 · 참 갈래 return · 인자 값 열쇠 · 새 것 묶음 · 새 것만 도는 글자 고리 · 글자 `"bool"`.
+    ("2.36.0 행 3 CAS 결과 이름 `if not <이름>:` 배타 걷음(검토 C 중요 1)", _DM,
+     "        return nxt, True, True\n", "        return None\n", _DM),
+    ("2.36.0 행 3 CAS 참 갈래 return 뒤 배타 걷음(검토 C 중요 1)", _DM,
+     "return (isinstance(node.body[-1], (ast.Return, ast.Raise)) and not _escapes(node.body[:-1])",
+     "return (False and not _escapes(node.body[:-1])", _DM),
+    ("2.36.0 행 3 열쇠를 위치 · 키워드 따로(검토 C 중요 1 전)", _DM,
+     "return repr((sorted(slots.items()), sorted(rest)))",
+     "return repr([ast.dump(a) for a in call.args] + [ast.dump(k) for k in call.keywords])", _DM),
+    # 2.36.0 구현 재확인 — 열쇠 자리 차례 · 키워드를 선언 자리에 · 반복 변수는 고리 원소로 · CAS 참 갈래 · 결과 이름 꼴 좁힘.
+    ("2.36.0 행 3 열쇠 차례 무관(재확인 중요 1 전)", _DM,
+     "return repr((sorted(slots.items()), sorted(rest)))",
+     'return repr(sorted([*slots.values(), *(r.split("=", 1)[1] for r in rest)]))', _DM),
+    ("2.36.0 행 3 키워드를 선언 자리에 놓기 걷음(재확인 중요 1)", _DM,
+     "        if params and k.arg in params:\n            slots[params.index(k.arg)] = ast.dump(k.value)",
+     "        if False:\n            slots[params.index(k.arg)] = ast.dump(k.value)", _DM),
+    ("2.36.0 반복 변수를 이름의 다른 대입으로도 새 것으로 봄(재확인 중요 2 전)", _DM,
+     "            if loop is not None:\n                elements = _literal_names(loop.iter)",
+     "            if loop is not None and not new_name(expr.id, agg):\n                elements = _literal_names(loop.iter)", _DM),
+    ("2.36.0 결과 이름 꼴 · 참 갈래 배타를 CAS 아닌 쓰기에도(재확인 사소 3 전)", _DM,
+     "    if (named or not negated) and not cas(x):\n        return False", "    if False:\n        return False", _DM),
+    ("2.36.0 참 갈래 배타 고리 안 거름 걷음(재확인 사소 3)", _DM,
+     "        if isinstance(up, (ast.For, ast.AsyncFor, ast.While)):\n            return False",
+     "        if False:\n            return False", _DM),
+    ("2.36.0 참 갈래 배타 고리 거름을 쓰기 구간에서 멈추지 않음(셋째 확인 중요 1 전)", _DM,
+     "        if isinstance(up, (ast.With, ast.AsyncWith)) and up.lineno == region:\n            break",
+     "        if False:\n            break", _DM),
+    ("2.36.0 참 갈래 배타 finally 거름 걷음(재확인 사소 3)", _DM,
+     "        if isinstance(up, TRY_NODES) and not any(st is child for st in up.finalbody) \\",
+     "        if False and not any(st is child for st in up.finalbody) \\", _DM),
+    ("2.36.0 묶음 인자 안 새 것 셈 걷음(검토 C 중요 2)", _DM,
+     "        if isinstance(expr, (ast.Tuple, ast.List, ast.Set)) and expr.elts:\n            parts = [fresh_keys(e, agg) for e in expr.elts]",
+     "        if False:\n            parts = [fresh_keys(e, agg) for e in expr.elts]", _DM),
+    ("2.36.0 새 것만 도는 글자 고리 빼기 걷음(검토 C 중요 2)", _DM,
+     "            if literal and inner and all(is_fresh(c, a) for c, a in inner):", "            if False:", _DM),
+    ("2.36.0 글자 `-> \"bool\"` CAS 걷음(검토 C 사소 1)", _DM,
+     'or (isinstance(n.returns, ast.Constant) and n.returns.value == "bool"))}', "or False)}", _DM),
+    ("2.36.0 #195 글자 고리 넓힘 걷음", "check-transaction-boundary.py",
+     "                method_called.add(name)\n", "                pass\n", "check-transaction-boundary.py"),
+    ("2.36.0 #195 원소가 모두 받음 조건 걷음", "check-transaction-boundary.py",
+     "if (elements and all(e in method_called for e in elements) and loop_binds[name] == 1",
+     "if (elements and loop_binds[name] == 1", "check-transaction-boundary.py"),
+    ("2.36.0 #195 이 고리에서만 묶임 조건 걷음", "check-transaction-boundary.py",
+     "all(e in method_called for e in elements) and loop_binds[name] == 1\n"
+     "                    and name not in bound_other and name not in simple):",
+     "all(e in method_called for e in elements)):", "check-transaction-boundary.py"),
     ("10 이벤트 이름 검사를 */event/*.py 로", _EP,
      'for py in [e for d in sorted(domain.iterdir()) if d.is_dir()\n                   for e in folder_group.group_members(d / "event", "*.py", promotable=False)]:',
      'for py in sorted(domain.glob("*/event/*.py")):', _EP),

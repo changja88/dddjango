@@ -7,10 +7,13 @@ F4-48 · F4-155 — 저장소 쓰기 인자(#287) · `add_all`(#599) · update �
 구현 뒤 실검사기의 G2 줄 키 차분으로 고정한다.
 F4-137 · F4-105(pre-gate) · F4-37 · F4-44(`check-error-centralization.py` git inventory) — 2.33.0 배포판 대조로 고정한다.
 F4-52 — 프레임워크가 대신 부르는 메서드(#663)의 선언 예보 · 끝 칸 `대신부름` · `--check-report` 처분을 2.34.0 배포판 대조로 고정한다.
+2.36.0 함께 커밋 — use-case-effects 행 끝 칸(형식 · 같은 BC 애그리거트) · 리포트 지문 1행 · 두 소절 · `--joint-verify` 사용 꼴을
+2.35.0 배포판 대조로 고정한다(`JointCommitPregateTest` — G2 대조 장면은 pregate_fixture_run 묶음 joint).
 """
 from __future__ import annotations
 
 import ast
+import hashlib
 import os
 import json
 from unittest.mock import patch
@@ -1895,6 +1898,160 @@ class BookAdmin(TranslatableAdmin):
         run, report = self.cli(fixed)
         self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
         self.assertEqual(pg.check_report(fixed, report)[0], 0)
+
+
+# 함께 커밋(2.36.0) — use-case-effects 행 끝 칸 · 리포트 지문 1행 · 두 소절 · `--joint-verify` 를 2.35.0 배포판과 대조한다.
+# «옛 판» 은 2.35.0 배포 커밋 고정(HEAD 금지). G2 대조 장면(장난감 git 저장소)은 `pregate_fixture_run.py` 묶음 joint 가 진다.
+_RELEASED_2350_COMMIT = "ee77409d"
+_JOINT_INV = "옮긴 요청은 정확히 한 주문에만 있다"
+_JOINT_ORDER2 = f"함께 order×2  잠금 order(order_id)  불변식 {_JOINT_INV}"
+_JOINT_WIDE = f"함께 order×2, stock  잠금 order(order_id) → stock(sku)  불변식 {_JOINT_INV}"
+_JOINT_UC = "application/orders/application_layer/{area}/{uc}/{uc}_use_case.py"
+
+
+def _joint_class(uc: str) -> str:
+    return "".join(part.title() for part in uc.split("_")) + "UseCase"
+
+
+def _joint_source(uc: str, mark: "str | None") -> str:
+    """기준선 유스케이스 — `mark` 가 있으면 함께 쓰는 `with` 바로 위에 표지(줄 6)."""
+    head = f'"""기준선"""\n\n\nclass {_joint_class(uc)}:\n    def execute(self, first_id: str, second_id: str) -> None:\n'
+    if mark is None:
+        return head + "        with self._unit_of_work:\n            self._orders.save(self._orders.get(first_id))\n"
+    return head + (f"        # joint-commit: {mark}\n        with self._unit_of_work:\n"
+                   "            first = self._orders.get(first_id)\n            second = self._orders.get(second_id)\n"
+                   "            for order in sorted((first, second), key=lambda item: item.order_id):\n"
+                   "                if not self._orders.save_with_version_guard(order):\n"
+                   "                    raise RuntimeError(order.order_id)\n")
+
+
+class JointCommitPregateTest(unittest.TestCase):
+    """2.35.0 은 행 끝 칸이 붙은 행을 모두 «uow 타입식 파싱 불가» 형식 red 로 냈고 `--joint-verify` 가 없었다(2.36.0 설계 §9
+    «pre-gate 행 끝 칸») — 새 판은 칸을 떼어 읽고 형식 · 같은 BC 애그리거트를 보고 리포트에 지문 1행 · 두 소절을 싣는다."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="pregate-joint-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.source = self.root / "source"
+        files = {"application/orders/domain_layer/order/order_repository.py": "class OrderRepository:\n    pass\n"}
+        for uc, mark in (("same", _JOINT_ORDER2), ("kept", _JOINT_ORDER2), ("moved", _JOINT_ORDER2), ("promo", _JOINT_ORDER2),
+                         ("changed", _JOINT_ORDER2), ("untouched", _JOINT_ORDER2), ("fresh", None)):
+            files[_JOINT_UC.format(area="order", uc=uc)] = _joint_source(uc, mark)
+        for rel, text in files.items():
+            (self.source / rel).parent.mkdir(parents=True, exist_ok=True)
+            (self.source / rel).write_text(text, encoding="utf-8")
+        _git(self.source, "init", "-q")
+        _git(self.source, "add", "-A")
+        _git(self.source, "commit", "-qm", "joint fixture")
+        self.env = dict(os.environ, DJR_FINDINGS_JSON=str(self.root / "findings.jsonl"),
+                        DJR_VIOLATIONS_DIR=str(self.root / "violations"), PYTHONDONTWRITEBYTECODE="1")
+        self.old = FieldReportTest.scripts_at(self, _RELEASED_2350_COMMIT)
+
+    def cli(self, text: str, scripts: Path = SCRIPTS) -> "tuple[subprocess.CompletedProcess[str], str]":
+        return FieldReportTest.cli(self, text, scripts)
+
+    @staticmethod
+    def spec(updates: "list[str]", rows: "list[str]", extra_plan: "tuple[str, ...]" = ()) -> str:
+        """update 칸 · 그 클래스 symbols 행 · use-case-effects 행(유스케이스 이름 목록 → 경로)."""
+        paths = [_JOINT_UC.format(area="order", uc=uc) for uc in updates]
+        return ("<!-- machine: file-plan -->\n```paths\n" + "\n".join([f"update {p}" for p in paths] + list(extra_plan))
+                + "\n```\n<!-- machine: symbols -->\n```symbols\n"
+                + "\n".join(f"{p}::{_joint_class(uc)}" for p, uc in zip(paths, updates))
+                + "\n```\n<!-- machine: use-case-effects -->\n```effects\n" + "\n".join(rows) + "\n```\n")
+
+    @staticmethod
+    def row(uc: str, fields: str = "", effect: str = "write", uow: str = "OrdersUnitOfWork", sep: str = "  ") -> str:
+        return (f"{_JOINT_UC.format(area='order', uc=uc)}::{_joint_class(uc)}  {effect}  uow={uow}"
+                + (sep + fields.replace("  ", sep) if fields else ""))
+
+    def test_row_tail_was_form_red_in_2350_and_now_reads(self) -> None:
+        # 공백 둘 · 탭 칸 — 2.35.0 형식 red(uow 타입식에 칸이 먹힘) → 새 판 skip(update 만) · 지문 1행 = 실행기 셈 · `--check-report` 정합.
+        # 칸 없는 행은 두 판 같은 판정이고 새 판 지문은 빈 글의 해시다.
+        tailed = self.spec(["same", "fresh"], [self.row("same", _JOINT_ORDER2), self.row("fresh", _JOINT_ORDER2, sep="\t")])
+        plain = self.spec(["same", "fresh"], [self.row("same"), self.row("fresh")])
+        for label, text, old_code, rows in (("칸", tailed, 3, 2), ("칸 없음", plain, 4, 0)):
+            with self.subTest(form=label):
+                old, _ = self.cli(text, scripts=self.old)
+                self.assertEqual(old.returncode, old_code, old.stdout + old.stderr)
+                self.assertEqual("use-case-effects uow 타입식 파싱 불가" in old.stdout, bool(rows), old.stdout)
+                run, report = self.cli(text)
+                self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
+                n, fp = pg._joint_rows_fingerprint(text)
+                self.assertEqual((n, fp == hashlib.sha256(b"").hexdigest()[:12]), (rows, not rows))
+                self.assertIn(f"- 판정: skip\n- 함께 커밋 승인 행 {rows} · 지문 {fp}\n", report)
+                self.assertIn(f"### 함께 커밋 승인 행 ({rows}건)", report)
+                self.assertEqual(pg.check_report(text, report)[0], 0)
+        self.assertNotEqual(pg.block_hash(plain), pg.block_hash(tailed))
+
+    def test_row_tail_form_red_names_the_reason(self) -> None:
+        # 2.35.0 도 형식 red 지만 까닭이 «uow 타입식» 하나였다 — 새 판은 칸 까닭을 적는다. `함께` 애그리거트가 그 BC 에 없으면
+        # 기준선 대조 형식 red(2.35.0 은 칸을 못 읽어 이 까닭에 닿지 못했다).
+        for label, rows, fragment in (
+                ("read-only 행", [self.row("same", _JOINT_ORDER2, effect="read-only", uow="none")], "`write` · `uow=<타입>` 행에만"),
+                ("칸 꼴", [self.row("same", _JOINT_ORDER2.replace("잠금 order(order_id)", "잠금 -"))], "`잠금 -`"),
+                ("첫 칸 앞 공백 하나", [self.row("same", _JOINT_ORDER2, sep=" ")], "첫 칸 앞 구분"),
+                ("다른 BC 애그리거트", [self.row("same", _JOINT_WIDE)], "함께 커밋 애그리거트 부재: `stock`")):
+            with self.subTest(form=label):
+                text = self.spec(["same"], rows)
+                old, _ = self.cli(text, scripts=self.old)
+                self.assertEqual(old.returncode, 3, old.stdout + old.stderr)
+                self.assertNotIn(fragment, old.stdout)
+                run, report = self.cli(text)
+                self.assertEqual(run.returncode, 3, run.stdout + run.stderr)
+                self.assertIn(fragment, run.stdout)
+                self.assertIn("- 판정: 형식 red", report)
+                self.assertNotIn("### 함께 커밋 승인 행", report)
+
+    def test_report_sections_through_the_full_forecast(self) -> None:
+        # 실체화가 있는 명세(옮김 · 승격 — 게이트를 부른다)도 같은 두 소절을 싣는다: 새 · 기준선 주석과 같은 칸 · 바꿈 · 전부터 있던 ·
+        # 옮기거나 지우는(다른 area 로 옮김) · 승격(같은 열쇠의 폴더)은 남는 유스케이스. 이 명세가 고치지 않는 유스케이스는 싣지 않는다.
+        promo_folder = "application/orders/application_layer/order/promo_use_case"
+        text = self.spec(
+            ["same", "kept", "fresh", "changed"],
+            [self.row("same", _JOINT_ORDER2), self.row("kept"), self.row("fresh", _JOINT_ORDER2), self.row("changed", _JOINT_WIDE)],
+            extra_plan=(f"remove {_JOINT_UC.format(area='order', uc='moved')}", f"add {_JOINT_UC.format(area='stock', uc='moved')}",
+                        f"remove {_JOINT_UC.format(area='order', uc='promo')}", f"add {promo_folder}/promo_use_case.py",
+                        f"add {promo_folder}/promo_frame.py",
+                        "add application/orders/domain_layer/stock/stock_repository.py"))
+        old, _ = self.cli(text, scripts=self.old)
+        self.assertEqual(old.returncode, 3, old.stdout + old.stderr)
+        run, report = self.cli(text)
+        self.assertIn(run.returncode, (0, 2), run.stdout + run.stderr)
+        self.assertIn("원 registry 결과", run.stdout)  # 게이트까지 간 실행
+        rows = report.split("### 함께 커밋 승인 행 (3건)", 1)[1].split("\n### ", 1)[0]
+        same, kept, fresh, changed = (_JOINT_UC.format(area="order", uc=uc) for uc in ("same", "kept", "fresh", "changed"))
+        self.assertIn(f"- {same}::SameUseCase · 불변식 «{_JOINT_INV}» · 함께 order×2 · 잠금 order(order_id) — 기준선 주석과 같은 칸", rows)
+        self.assertIn(f"- {fresh}::FreshUseCase · 불변식 «{_JOINT_INV}» · 함께 order×2 · 잠금 order(order_id) — 새", rows)
+        self.assertIn(f"- {changed}::ChangedUseCase · 불변식 «{_JOINT_INV}» · 함께 order×2, stock · 잠금 order(order_id) → stock(sku) — "
+                      "바꿈: 옛 [함께 order×2 · 잠금 order(order_id)] → 새 [함께 order×2, stock · 잠금 order(order_id) → stock(sku)]", rows)
+        before = report.split("### 이번에 고치는 코드에 전부터 있던 함께 커밋 (2건 · 옮기거나 지우는 유스케이스 1건)", 1)[1].split("\n### ", 1)[0]
+        self.assertIn(f"- {kept}:6 «{_JOINT_INV}» · 함께 order×2 · 잠금 order(order_id) — 칸을 그대로 두면 다시 승인받지 않는다", before)
+        self.assertIn(f"- {_JOINT_UC.format(area='order', uc='promo')}:6 «{_JOINT_INV}»", before)
+        self.assertIn(f"- 옮기거나 지우는 유스케이스의 함께 커밋: {_JOINT_UC.format(area='order', uc='moved')}:6 «{_JOINT_INV}»", before)
+        self.assertEqual(before.count("\n- "), 3, before)
+        self.assertNotIn("untouched", rows + before)
+        self.assertIn(f"- 함께 커밋 승인 행 3 · 지문 {pg._joint_rows_fingerprint(text)[1]}\n", report)
+        for rel, mark in ((same, _JOINT_ORDER2), (kept, _JOINT_ORDER2)):
+            self.assertEqual((self.source / rel).read_text(encoding="utf-8"), _joint_source(rel.rsplit("/", 2)[1], mark))
+        self.assertFalse(Path(self.env["DJR_FINDINGS_JSON"]).exists())
+
+    def test_joint_verify_is_a_new_mode_exclusive_with_check_report(self) -> None:
+        # 2.35.0 은 `--joint-verify` 를 모른다(사용 오류). 새 판은 `--check-report` 와 함께 주면 사용 오류(한쪽이 말없이 빠지지 않게)
+        # · `--expect-base` 는 `--check-report` 전용이다. 장면 대조는 pregate_fixture_run 묶음 joint.
+        spec = self.root / "design.md"
+        spec.write_text(self.spec(["same"], [self.row("same")]), encoding="utf-8")
+        report = self.root / "report.md"
+        report.write_text("", encoding="utf-8")
+        for scripts, extra, fragment in (
+                (self.old, ["--joint-verify", str(self.root)], "unrecognized arguments: --joint-verify"),
+                (SCRIPTS, ["--joint-verify", str(self.root), "--check-report", str(report)], "not allowed with argument"),
+                (SCRIPTS, ["--joint-verify", str(self.root), "--expect-base", "abcdef1"], "--expect-base 는 --check-report 와 함께만")):
+            with self.subTest(scripts=str(scripts), extra=extra[2:]):
+                run = subprocess.run([sys.executable, "-B", str(scripts / "design_pregate.py"), str(spec), str(self.source), *extra],
+                                     capture_output=True, text=True, env=self.env)
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn(fragment, run.stderr)
 
 
 # 숨김 뺀 기준선 바로 앞 배포판(dddjango 2.24.2) — «지금 판과 같은 결과» 대조의 옛 판(HEAD 금지).

@@ -27,12 +27,18 @@ djr:R-0100 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0101 a djr:Obligation ;
-    skos:prefLabel "의사결정 4 — 복수 애그리거트 수정은 결과적 일관성"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0101@2026-08-19> .
+    skos:prefLabel "의사결정 4 — 복수 애그리거트 수정은 결과적 일관성(같은 BC · 같은 DB 의 함께 커밋 승인 예외 밖)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0101@2026-11-10> .
 
 <https://numchida.com/ns/djr#R-0101@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0101 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0101@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-0101 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0101@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0102 a djr:Obligation ;
     skos:prefLabel "의사결정 5 — 계층+DIP 기반 동기 흐름"@ko ;
@@ -529,12 +535,18 @@ djr:R-0497 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0498 a djr:Obligation ;
-    skos:prefLabel "한 트랜잭션 = 애그리거트 하나"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0498@2026-08-22> .
+    skos:prefLabel "한 트랜잭션 = 애그리거트 하나(만들기·고치기·지우기 모두 · 함께 바꾸고 싶으면 경계부터) — 원전도 경험칙 · 예외 둘(새로 여럿 만드는 save_all · 함께 커밋 승인 — 규칙 4 실무 참고)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0498@2026-11-10> .
 
 <https://numchida.com/ns/djr#R-0498@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0498 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0498@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-0498 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0498@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
 
 djr:R-0499 a djr:Obligation ;
     skos:prefLabel "애그리거트 경계 = 불변식 동시 보장 범위"@ko ;
@@ -601,28 +613,46 @@ djr:R-0506 a djr:Exception ;
     djr:revision 1 .
 
 djr:R-0507 a djr:Obligation ;
-    skos:prefLabel "규칙 4 — 일관성 경계 밖은 결과적 일관성"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0507@2026-08-22> .
+    skos:prefLabel "규칙 4 — 일관성 경계 밖은 결과적 일관성(같은 BC · 같은 DB 의 생성 묶음 · 함께 커밋 승인 예외 밖에서)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0507@2026-11-10> .
 
 <https://numchida.com/ns/djr#R-0507@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0507 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-0507@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-0507 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0507@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-0508 a djr:Permission ;
-    skos:prefLabel "동일 DB 단순 케이스의 복수 애그리거트 수정 용인(배경 이론)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0508@2026-08-22> .
+    skos:prefLabel "같은 BC · 같은 DB 에서 이미 있는 애그리거트 둘 이상을 한 트랜잭션에서 함께 바꾸는 이름 붙은 승인 예외(함께 커밋) — 조건 넷(설계 행 끝 칸 셋 · G1 승인 · 코드 주석 · 잠금 차례 · 통째 되돌림)을 지킨 구간만 · 조회한 여럿 · 이미 있는 것 하나뿐 · BC 넘음 · 남의 일은 예외 밖 · 나눈 두 트랜잭션은 답 아님"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0508@2026-11-10> .
 
 <https://numchida.com/ns/djr#R-0508@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0508 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-0508@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-0508 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0508@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
+
 djr:R-0509 a djr:Override ;
-    skos:prefLabel "dddjango 생성 코드의 정본은 「한 트랜잭션 = 애그리거트 하나」"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0509@2026-08-22> .
+    skos:prefLabel "dddjango 생성 코드의 정본은 «기본 애그리거트 하나 · 예외 둘(새로 여럿 만드는 save_all · 함께 커밋 승인)» — 그 밖 동일 DB 복수 애그리거트 수정 용인은 배경 이론"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0509@2026-11-10> .
 
 <https://numchida.com/ns/djr#R-0509@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0509 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0509@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-0509 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0509@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0510 a djr:Obligation ;
     skos:prefLabel "분산 시 즉시 결과적 일관성으로 전환"@ko ;
@@ -1784,6 +1814,22 @@ djr:R-3449 a djr:Obligation ;
     prov:specializationOf djr:R-3449 ;
     djr:revision 1 .
 
+djr:R-3744 a djr:Obligation ;
+    skos:prefLabel "함께 커밋 구간의 코드 — 바깥 `with <uow>:` 바로 위 주석(행 끝 칸 글 그대로 · 아래 with 하나만) · 같은 타입은 잠금 키 sorted · 다른 타입은 잠금 칸 차례 · CAS 는 if not …: raise · 구간 안 쓰기 실패 삼킴 · 빠져나감 금지 · 다시 하는 고리는 with 바깥 · 구간 안 한 애그리거트 재시도 꼴 금지(백스톱 #546 · #550 ③)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3744@2026-11-10> .
+
+<https://numchida.com/ns/djr#R-3744@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-3744 ;
+    djr:revision 1 .
+
+djr:R-3745 a djr:Obligation ;
+    skos:prefLabel "함께 커밋 승인의 자리 — 설계 명세 use-case-effects write 행 끝 칸 셋(함께 — 바꾸는 것 전부 · 잠금 — 이미 있는 것과 차례 · 불변식 — 업무 규칙 이름)과 G1 승인 · G2 에서 이번 실행에 새로 달거나 바꾼 주석은 이번 승인 행과 같은 칸(--joint-verify)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3745@2026-11-10> .
+
+<https://numchida.com/ns/djr#R-3745@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-3745 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/architecture-ddd/references/final.md> a djr:Document ;
     skos:prefLabel "architecture-ddd-final"@ko .
 
@@ -2357,8 +2403,8 @@ djr:R-3449 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s019> ;
     djr:kind djr:kind-norm ;
     djr:order 10 ;
-    djr:statesNorm djr:R-0508, djr:R-0509, djr:R-0510, djr:R-0511, djr:R-0512 ;
-    djr:text "> 실무 참고: 동일 데이터베이스 내 단순 케이스에서는 같은 트랜잭션에서 복수 애그리거트를 수정하는 것도 용인할 수 있다 — 단 dddjango 생성 코드에서는 「한 트랜잭션 = 애그리거트 하나」(D50·#546)가 정본이라 이 용인은 배경 이론이다. 단, 이는 원칙의 예외이며 시스템이 분산되면 즉시 결과적 일관성으로 전환해야 한다.\n>\n> ⚠ 이 '복수 애그리거트 수정 용인'은 **런타임 트랜잭션 원자성**에 관한 것이지 **영속성 FK 결합을 허가하지 않는다**(규칙3의 ORM 확장과 직교한다). FK 없이도 같은 atomic 트랜잭션이 성립한다 — 응용 서비스/ACL이 같은 connection에서 두 애그리거트를 원자적으로 쓰면 된다. \"한 트랜잭션에 묶인다\"를 BC 경계 ORM FK의 근거로 끌어쓰지 마라.\n\n"@ko .
+    djr:statesNorm djr:R-0508, djr:R-0509, djr:R-0510, djr:R-0511, djr:R-0512, djr:R-3744, djr:R-3745 ;
+    djr:text "> 실무 참고 — 규칙 1 의 예외 둘(dddjango 생성 코드의 정본은 «기본 애그리거트 하나 · 예외 둘»이다 — 그 밖의 «동일 데이터베이스 내 복수 애그리거트 수정 용인»은 배경 이론이다): ⑴ 같은 타입을 새로 여럿 만드는 묶음 — `save_all` 은 새로 만든 것만 받는다(#599). ⑵ **함께 커밋**(이름 붙은 승인 예외): 같은 BC · 같은 DB 안에서 «이미 있는» 애그리거트 둘 이상을 한 트랜잭션에서 함께 바꿔야 할 때만, 다음 넷을 모두 지킨 그 구간만 허용한다.\n>\n> 1. 설계 명세의 그 유스케이스 `use-case-effects` `write` 행 끝에 `함께`(그 구간이 바꾸는 애그리거트 전부 — 같은 구간에서 새로 만드는 것 포함) · `잠금`(그 가운데 이미 있는 것과 그 잠그는 차례) · `불변식`(함께 지켜야 하는 업무 규칙의 이름) 칸을 적고 G1 에서 승인받았다.\n> 2. 코드는 그 구간을 여는 바깥 `with <uow>:` 바로 위에 그 행 끝 칸 글 그대로 `# joint-commit: 함께 …  잠금 …  불변식 …` 주석 한 줄을 단다 — 주석은 그 아래 `with` 하나만 덮는다.\n> 3. 같은 타입 여럿은 `잠금` 키 차례(`sorted`)로, 다른 타입은 `잠금` 칸 차례로 잠근다.\n> 4. 하나라도 실패하면 둘 다 그대로다 — CAS 쓰기는 `if not <쓰기>: raise …`(또는 결과를 이름에 담고 바로 다음 문장에서 `if not <이름>: raise …`)로 받아 미스면 예외로 통째 되돌리고, 구간 안에서 쓰기 실패를 `try` · `suppress` 로 받아 삼키거나 받는 몸 · 미스 몸에서 `continue` · `break` · `return` 으로 빠져나가지 않으며, 다시 하는 고리는 `with` 바깥에 둔다(시도마다 새 트랜잭션). 한 애그리거트의 CAS 재시도 꼴(`with` 안에서 같은 키를 다시 읽는 고리 — §3.2)은 이 구간에서 쓰지 않는다 — 첫째가 이미 쓰인 트랜잭션에서 다시 하면 두 번 적용된다.\n>\n> 예(이체 — 새 이체 기록 하나와 이미 있는 계좌 둘): 명세 행 끝 `함께 account×2, transfer  잠금 account(id)  불변식 보낸 돈과 받은 돈이 같고 잔액은 0 밑으로 내려가지 않는다` → 코드는 그 글 그대로 단 `# joint-commit: …` 주석 아래 `with self._unit_of_work:` 안에서 `for account in sorted((source, target), key=lambda item: item.id):` 고리로 `if not self._account_repository.save_with_version_guard(account): raise …` 하고 이체 기록을 저장한다(CAS 의 UPDATE 도 커밋까지 행을 잠그므로 쓰기 차례가 곧 잠금 차례다 — `architecture-db` §9.5).\n>\n> 예외가 아닌 것: 조회한 여럿을 돌며 고치기 · 지우기와 조회 이름을 묶은 `save_all`(같이 되돌려야 하면 한 애그리거트로 묶고, 아니면 건마다 트랜잭션) · 이미 있는 것이 하나뿐인 묶음(새 기록은 그 하나가 품는다) · BC 를 넘는 묶음 · 다른 사람 · 시스템의 일(사실 공표 또는 직접 지시). 반드시 함께 바뀌어야 하는 둘을 트랜잭션 둘로 나누는 것은 답이 아니다 — 첫 커밋 뒤 죽으면 한쪽만 남고, 브로커가 전달을 보장하지 않아 되살릴 장치가 없다. Phase 2 백스톱이 주석 칸과 코드를 대조하고(#546 · #550 ③), G2 가 이번 실행에 새로 달거나 바꾼 주석과 이번 설계 승인 행을 대조한다(`design_pregate.py --joint-verify`). 단, 이는 원칙의 예외이며 시스템이 분산되면 즉시 결과적 일관성으로 전환해야 한다.\n>\n> ⚠ 이 '복수 애그리거트 수정 용인'은 **런타임 트랜잭션 원자성**에 관한 것이지 **영속성 FK 결합을 허가하지 않는다**(규칙3의 ORM 확장과 직교한다). FK 없이도 같은 atomic 트랜잭션이 성립한다 — 응용 서비스/ACL이 같은 connection에서 두 애그리거트를 원자적으로 쓰면 된다. \"한 트랜잭션에 묶인다\"를 BC 경계 ORM FK의 근거로 끌어쓰지 마라.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s019/b11> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s019> ;
@@ -2371,7 +2417,7 @@ djr:R-3449 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
     djr:statesNorm djr:R-0498, djr:R-0499 ;
-    djr:text "하나의 트랜잭션에서는 하나의 애그리거트만 수정한다. 애그리거트 경계는 비즈니스 불변식(invariant)이 반드시 함께 지켜져야 하는 범위와 일치해야 한다.\n\n"@ko .
+    djr:text "하나의 트랜잭션(한 `with <uow>:` 구간)에서는 하나의 애그리거트만 바꾼다 — 만들기 · 고치기 · 지우기 모두이고, 둘을 함께 바꾸고 싶어지면 먼저 경계를 다시 본다. 원전(Vernon)도 이 규칙을 경험칙(rule of thumb)이라 부르고 규칙을 깨는 까닭을 따로 둔다 — dddjango 생성 코드의 예외는 둘이다(아래 규칙 4 의 «실무 참고»). 애그리거트 경계는 비즈니스 불변식(invariant)이 반드시 함께 지켜져야 하는 범위와 일치해야 한다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s019/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s019> ;
@@ -2419,7 +2465,7 @@ djr:R-3449 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 9 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s051-8/b6> ;
-    djr:text "> **[의사결정 #4] External 채택**: 서로 다른 애그리거트 간의 일관성은 도메인 이벤트를 통한 결과적 일관성(eventual consistency)으로 달성한다.\n\n"@ko .
+    djr:text "> **[의사결정 #4] External 채택**: 서로 다른 애그리거트 간의 일관성은 도메인 이벤트를 통한 결과적 일관성(eventual consistency)으로 달성한다 — 같은 BC · 같은 DB 의 생성 묶음(예외 ⑴)과 이름 붙은 승인 예외(예외 ⑵ 함께 커밋 — 아래 «실무 참고») 밖에서.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s021-3.4> a djr:Section ;
     djr:headingSnapshot "### 3.4 리포지토리 (Repository)"@ko ;
@@ -3408,7 +3454,7 @@ djr:R-3449 a djr:Obligation ;
     djr:kind djr:kind-table-row ;
     djr:order 6 ;
     djr:statesNorm djr:R-0101 ;
-    djr:text "| 4 | 복수 애그리거트 수정 | External | 결과적 일관성 원칙 (Vernon 규칙 4) |\n" .
+    djr:text "| 4 | 복수 애그리거트 수정 | External | 결과적 일관성 원칙 (Vernon 규칙 4) — 같은 BC · 같은 DB 의 이름 붙은 승인 예외(함께 커밋) 밖 |\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s051-8/b7> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s051-8> ;

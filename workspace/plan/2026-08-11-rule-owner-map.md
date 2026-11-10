@@ -462,7 +462,7 @@
 | 542 | ast | scripts/check-domain-model.py (신설) | — | 신설 |  |
 | 543 | ast | scripts/check-domain-model.py (신설) | — | 신설 |  |
 | 545 | ast | scripts/check-port-adapter-pairing.py (신설) | — | 신설 |  |
-| 546 | ast+ | scripts/check-domain-model.py (신설) | agents/discipline-reviewer.md | 신설 | 확정은 해소된 동일 트랜잭션 영역에서 서로 다른 repository/aggregate 타입 쓰기다. 순차 독립 UoW는 분리하고 nested UoW·외부 Django atomic은 결합한다. 영역·출처 미해소는 후보이며 같은 트랜잭션인지 감수자가 확인한다. |
+| 546 | ast+ | scripts/check-domain-model.py (신설) | agents/discipline-reviewer.md | 신설 | 확정은 해소된 동일 트랜잭션 영역에서 서로 다른 repository/aggregate 타입 쓰기다. 순차 독립 UoW는 분리하고 nested UoW·외부 Django atomic은 결합한다. 영역·출처 미해소는 후보이며 같은 트랜잭션인지 감수자가 확인한다. 함께 커밋 표지 구간은 표지 칸과 코드를 대조해 지나면 셈에서 뺀다(표지 진단도 이 번호) · 표지 ↔ 이번 명세 승인 행은 G2 `design_pregate.py --joint-verify`(2.36.0). |
 | 547 | ast+ | scripts/check-domain-model.py (신설) | agents/discipline-reviewer.md | 신설 |  |
 | 548 | ast | scripts/check-domain-model.py (신설) | — | 신설 |  |
 | 549 | ast | scripts/check-domain-model.py (신설) | — | 신설 |  |

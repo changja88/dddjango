@@ -395,7 +395,7 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 |------|------------|------|
 | Unique constraint 기반 방어 | 중복 생성, 동일 key race, natural uniqueness | 충돌 시 예외/재시도/기존 결과 조회 정책 필요 |
 | Optimistic locking | 충돌이 드물고 retry가 허용됨 | version 컬럼 또는 compare-and-swap 조건 필요 |
-| Pessimistic row lock | 행 잠금 지원 엔진에서 경합이 잦은 핫 로우(동시 writer 다수) | SQLite no-op → 포터블/저경합은 위 Optimistic locking 우선; lock 순서·timeout·deadlock 대응 |
+| Pessimistic row lock | 행 잠금 지원 엔진에서 경합이 잦은 핫 로우(동시 writer 다수) | SQLite no-op → 포터블/저경합은 위 Optimistic locking 우선; lock 순서·timeout·deadlock 대응 — 한 트랜잭션에서 여러 행을 잠그면 차례를 하나로 정한다(같은 타입은 키 오름차순 · 다른 타입은 정한 차례 · Optimistic locking 의 CAS UPDATE 도 커밋까지 행을 잠그므로 쓰기 차례가 곧 잠금 차례다) · 행 잠금 엔진(PostgreSQL)에서 그래도 남은 교착(40P01)은 DB 가 트랜잭션을 통째 되돌리고 저장소가 실패 계약으로 번역해 올린다(SQLite 는 아래 «엔진 의존성» 그대로) |
 | Advisory lock | 여러 행이나 외부 key 단위로 임계 구역 필요 | lock key 설계와 해제 실패 대응 필요 |
 | Serializable + retry | 정확성이 최우선이고 predicate race를 막아야 함 | serialization failure retry가 필수 |
 

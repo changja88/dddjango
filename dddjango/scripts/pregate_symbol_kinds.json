@@ -10,7 +10,7 @@
     "check-composition-root.py": "653a328b389ab4bd",
     "check-context-isolation.py": "f22bddd101cfbc83",
     "check-db-table.py": "5e7ca1aa515e59bf",
-    "check-domain-model.py": "c9012221a515dcd8",
+    "check-domain-model.py": "274962ab0d4ab08a",
     "check-error-centralization.py": "81f5e2fab4057f00",
     "check-event-publish.py": "f1c54c0d552e6655",
     "check-idempotency-scope-creep.py": "8d41c3a32fa96c80",
@@ -25,10 +25,10 @@
     "check-response-schema-bypass.py": "0fd510470a0ac985",
     "check-synthetic-infra-exc.py": "f30d0f3e8320ee6b",
     "check-test-config.py": "2a2542d25fa6e430",
-    "check-transaction-boundary.py": "279b0818205b0e49",
+    "check-transaction-boundary.py": "d36d0a96cbeb4188",
     "check-transient-overmapping.py": "35ac532566baaf46",
     "check-usecase-dto-placement.py": "a815acb1f8c25da5",
-    "checker_target.py": "7bbad16681b15c27"
+    "checker_target.py": "be7a6f9f774c13ce"
   },
   "kinds": [
     {

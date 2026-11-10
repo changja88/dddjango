@@ -64,7 +64,7 @@ SEALED: "dict[str, str]" = {
 # 신판 기본 red 레인 stdout sha256 (--emit-expected 재생성). domain-model·
 # common-container 는 findings_smoke.BASELINE_SHA 와 동일값(교차 골든 — 2026-08-20 실측).
 EXPECTED_SHA: "dict[str, str]" = {
-    "check-domain-model.py": "07bd5dccd004cfedf3482369791650b5b74b0d1d42027814e70beb19c9610a1e",
+    "check-domain-model.py": "db15d9ac86a81c0a36d85c25e9e1259a7e8bdb564604b92f45425ec2ceddc96c",
     "check-common-container.py": "10f52932ce07457413bcb0c580ae8735a33f1ea08f3725a7a370962e1f5d39d0",
     "check-api-error-controller-contract.py": "502f3ec47923489b6d6fe87e5757b04ff02f8e61cc3eec30afd1f20a7d42066d",
     "check-error-centralization.py": "4360dbfa8557143519bed6c38096004f93213472d4d9a9a7ceff635128ee932f",

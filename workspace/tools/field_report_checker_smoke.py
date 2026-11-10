@@ -4983,5 +4983,68 @@ class ApplicationExceptionClassRegression(unittest.TestCase):
                 self.assertIs(dto._lawful_domain_exception_import(module, names, bc), want)
 
 
+class JointCommitListRegression(unittest.TestCase):
+    """2.36.0 — G0 배너 재료 `checker_target.py --joint-list`: BC 마다 함께 커밋 주석 1행(잠금 칸 · 꼴 틀림 · 0건도) · 사용 오류 exit 1."""
+
+    MEANING = ("애그리거트 여럿을 한 트랜잭션에서 바꾸도록 허용한 코드 자리(`# joint-commit:` 주석) — 플러그인 밖에서 단 것도 "
+               "여기 보인다 · 모르는 줄이면 알려 달라")
+    ORDER = "application/orders/application_layer/order"
+    MARK = "# joint-commit: 함께 order×2, stock  잠금 order(order_id) → stock(sku)  불변식 옮긴 요청은 정확히 한 주문에만 있다"
+
+    def setUp(self) -> None:
+        tmp = tempfile.TemporaryDirectory(prefix="field-joint-list-")
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        body = "class {c}:\n    def execute(self) -> None:\n        {m}\n        with self._unit_of_work:\n            pass\n"
+        self.write(f"{self.ORDER}/move_pair/move_pair_use_case.py", body.format(c="MovePairUseCase", m=self.MARK))
+        self.write(f"{self.ORDER}/swap_pair/swap_pair_use_case/swap_pair_use_case.py", "class SwapPairUseCase:\n    pass\n")
+        self.write(f"{self.ORDER}/swap_pair/swap_pair_use_case/swap_pair_frame.py",
+                   body.format(c="SwapPairFrame", m="# joint-commit: 함께 order×2  잠금 order(order_id)  불변식 두 주문의 묶음 번호는 같다"))
+        self.write(f"{self.ORDER}/broken_mark/broken_mark_use_case.py",
+                   body.format(c="BrokenMarkUseCase", m="# joint-commit: 옮긴 요청은 정확히 한 주문에만 있다"))
+        self.write(f"{self.ORDER}/note_pair/note_pair_use_case.py",
+                   'NOTE = "# joint-commit: 함께 order×2  잠금 order(order_id)  불변식 글자일 뿐"\n')
+        self.write("application/billing/application_layer/port/clock/clock_port.py", "class ClockPort:\n    pass\n")
+        self.write("application/__pycache__/gone.cpython-39.pyc", "")
+
+    def write(self, rel: str, source: str) -> None:
+        target = self.root / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(source, encoding="utf-8")
+
+    def run_list(self, target: Path, *bcs: str) -> "subprocess.CompletedProcess[str]":
+        argv = [sys.executable, "-I", "-B", str(SCRIPTS / "checker_target.py"), "--joint-list", str(target)]
+        if bcs:
+            argv += ["--bc", *bcs]
+        env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
+        return subprocess.run(argv, capture_output=True, text=True, env=env, cwd=str(self.root))
+
+    def test_list_lines_per_bc(self) -> None:
+        done = self.run_list(self.root)
+        self.assertEqual((done.returncode, done.stderr), (0, ""))
+        self.assertEqual(done.stdout.splitlines(), [
+            f"함께 커밋 주석 billing 0건 — {self.MEANING}",
+            f"함께 커밋 주석 orders 3건 — {self.MEANING}: "
+            f"{self.ORDER}/broken_mark/broken_mark_use_case.py:3 «꼴 틀림: 옮긴 요청은 정확히 한 주문에만 있다» · "
+            f"{self.ORDER}/move_pair/move_pair_use_case.py:3 «옮긴 요청은 정확히 한 주문에만 있다» · 잠금 order(order_id) → stock(sku) · "
+            f"{self.ORDER}/swap_pair/swap_pair_use_case/swap_pair_frame.py:3 «두 주문의 묶음 번호는 같다» · 잠금 order(order_id)",
+        ])
+        only = self.run_list(self.root, "billing")
+        self.assertEqual((only.returncode, only.stdout.splitlines()), (0, [f"함께 커밋 주석 billing 0건 — {self.MEANING}"]))
+
+    def test_usage_errors_exit_1(self) -> None:
+        cases = {
+            "BC 폴더 TARGET": (self.root / "application/orders", ()),
+            "application/ TARGET": (self.root / "application", ()),
+            "없는 --bc": (self.root, ("orders", "shipping")),
+        }
+        for label, (target, bcs) in cases.items():
+            with self.subTest(label=label):
+                done = self.run_list(target, *bcs)
+                self.assertEqual((done.returncode, done.stdout), (1, ""))
+                self.assertTrue(done.stderr.startswith("실행 불능(사용 오류): "), done.stderr)
+        self.assertIn("BC 없음 — shipping (application/ 아래: billing, orders)", self.run_list(self.root, "shipping").stderr)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

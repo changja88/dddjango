@@ -34,7 +34,7 @@
   imports-green-spec.md       — 실존 확인 `FrozenClock`·서브모듈 형·자기 add 해소·서드파티(update 소비자)·**update 대상 새 심볼
                                 `TickingClock`(자기 update 해소 S′)** → 결손 0 · exit 0.
   imports-red-spec.md         — ⑴ 모듈 부재·⑵ 0B 자리표시자·⑶ 심볼 미정의 각 1 · registry 귀속 0 → **exit 5**(권고·비차단).
-  imports-update-only-spec.md — file-plan `update` 뿐(실체화 0) + ⑵ 결손 1 → exit 5 + «실체화 0 · 실존 결손 1건»(kkebi S2 판형).
+  imports-update-only-spec.md — file-plan `update` 뿐(실체화 0) + ⑵ 결손 1 → exit 5 + «실체화 0 · 실존 결손 1건»(현장 S2 판형).
   묶음 enforce(차단 모드 승격 2026-09-03 — 별도 리포트 1 — 헤더 7):
   noblock-spec.md        — machine 마커 0(구형 명세 판형) → 형식 red(블록 부재) exit 3(관찰 모드의 exit 4 skip 폐지).
   empty-block-spec.md    — 마커 + 주석뿐인 펜스(file-plan 0행) → 형식 red(블록 공허) exit 3(빈 펜스 도피 봉쇄).
@@ -66,7 +66,14 @@
   `_domain_service_selected` 묶음 안 파일 · 묶음 안 승격 본체(18) · `_real_parts` 값 객체 C2 는 승격 본체로 잇지 않음(18′).
   group-dissolve: 명세가 `term_b` · `term_c` 를 지워 `term/` 이 한 파일로 풀림 → 사본이 `term_a` 를 부모로 · 빈 `term/__init__.py` 지움
   (`RunPlan.drops`) · exit 0 · 예보 0.
-  `--mutation-test`: «`apply_to_copy` 를 앵커 커밋 뒤로» 변이가 이 묶음을 붉게 하는지(계획 «단계 3 변이 회귀») · 이관 빚 · 빈 묶음 변이.
+  묶음 joint(2.36.0 함께 커밋 — 합성 git 저장소 · 리포트 각 1): 유닛 = use-case-effects 행 끝 칸 형식(통과 4 · red 15 · 유스케이스 칸
+  밖 행) · 블록 해시 · 지문(러너 독립 셈 `_joint_fp` · 행 · `함께` 차례 무관 · `잠금` 차례 · 행 0 = 빈 글) · `함께` 애그리거트 부재 ·
+  리포트 두 소절(새 · 기준선 주석과 같은 칸 · 바꿈 · 전부터 있던 · 옮기거나 지우는 · 승격은 남음). G2 대조 장면 21(설계 §11.1 g01 · g02 ·
+  g03 · g04 · g07 · g11 · g12 · g13 · g17 · g23 · g26 · g27 · g28 · g29 · g31 · g32 · g33 · g34 · 검토 r8 + 구현 때 더한 g35 꼴 틀린 앵커
+  표지 · g36 비 ASCII 경로)마다 `--joint-verify` exit 와 `요약:` 수 · 두 플래그 함께 = 사용 오류 exit 1 · update 만 하는 명세의
+  pre-gate 리포트(skip exit 4 · 지문 1행 = 독립 셈 · 두 소절 · `--check-report` 정합). `--only-joint` 는 이 묶음만(처음 붉은 데서 멈춤).
+  `--mutation-test`: «`apply_to_copy` 를 앵커 커밋 뒤로» 변이가 이 묶음을 붉게 하는지(계획 «단계 3 변이 회귀») · 이관 빚 · 빈 묶음 변이 ·
+  함께 커밋 변이 17(`--only-joint` — 행 끝 칸 떼기 · 형식 red 넷 · 지문 1행 · 리포트 둘 · 대조 아홉).
   실행기 exit 규약: 0 green · 2 귀속 red(결손 병기) · 3 형식 red(문법 · 블록 부재·공허 · add 충돌 · update/remove 대상 기준선 부재) ·
   4 skip(실체화 0·결손 0) · 5 결손 ≥1 ∧ (귀속 0 ∨ 실체화 0) · 1 실행 불능 · `--check-report`: 0 정합 · 3 불비 · 1 리포트/절 부재.
   (아래 재발화 판형의 케이스 이름 E1~E4 는 이 러너의 것 — 승격 계획서의 실행기 변경 항목 번호와 무관.)
@@ -84,7 +91,7 @@ import ⑵ 비적용·namespace-dir 이름 U·`import *` 재수출/`__getattr__`
 불일치면 exit 1(실행 출력 첨부). 검사기·트리 개정이 pre-gate 스텁 오탐을 새로 만들면
 green 이 깨져 여기서 드러난다(설계 §9-3 드리프트 하네스의 픽스처 축).
 
-사용: python3 workspace/tools/pregate_fixture_run.py [--keep]
+사용: python3 workspace/tools/pregate_fixture_run.py [--keep] [--only-group | --only-joint | --mutation-test] [--scripts <폴더>]
 """
 from __future__ import annotations
 
@@ -97,6 +104,7 @@ import subprocess
 import sys
 import tempfile
 import types
+from collections.abc import Iterator
 from pathlib import Path
 
 REPO_ROOT: Path = Path(__file__).resolve().parents[2]
@@ -748,7 +756,7 @@ def _run_imports_bundle(scratch: Path, failures: "list[str]") -> None:
         failures.append(f"imports-update-only-spec 기대 exit 5·⑵ 1·«실체화 0» ≠ 실측 exit {upd.returncode} · 단계 {stages_u}")
         _dump("imports-update-only", upd)
     else:
-        print("imports-update-only-spec: exit 5 · 실체화 0 · ⑵ 1 (kkebi S2 판형 — update 소비자 포함) — 기대 일치")
+        print("imports-update-only-spec: exit 5 · 실체화 0 · ⑵ 1 (현장 S2 판형 — update 소비자 포함) — 기대 일치")
     sec_u: str = section(report_u)
     if (_header_count(report_u) != 1 or len(_EXISTENCE_LINE_RE.findall(sec_u)) != 1
             or "- 판정: skip · 계약 실존 결손 1건(권고·비차단)" not in report_u.read_text(encoding="utf-8")):
@@ -2168,6 +2176,521 @@ def _sid(path: str) -> str:
     return hashlib.sha256(f"#541+{path}".encode("utf-8")).hexdigest()[:12]
 
 
+# ── 함께 커밋(2.36.0) — 행 끝 칸 형식 · 지문 · 리포트 두 소절 · G2 대조(`--joint-verify`) ──────────────────────────
+# 장난감 저장소는 합성 폴더에 짓는다(검사기를 돌리지 않는 대조라 유스케이스 파일 글만 있으면 된다). 지문은 러너가 독립으로 센다
+# (`_sid` 와 같은 뜻 — 실행기 셈이 바뀌면 조정자가 남긴 G1 배너 기록과 어긋나므로 고정한다).
+
+_JOINT_INV: str = "옮긴 요청은 정확히 한 주문에만 있다"
+_JOINT_ORDER2: str = f"함께 order×2  잠금 order(order_id)  불변식 {_JOINT_INV}"
+_JOINT_WIDE: str = f"함께 order×2, stock  잠금 order(order_id) → stock(sku)  불변식 {_JOINT_INV}"
+_JOINT_UC: str = "application/orders/application_layer/{area}/{uc}/{uc}_use_case.py"
+_JOINT_FOLDER: str = ".dddjango/20261110-1500-move"
+_JOINT_BOUNDARY: str = "- 실행 경계 — 20261110-1500 · 2026-11-10T06:00:00Z\n\n"
+_JOINT_FORECAST: str = "## pre-gate 예보 — 2026-11-10T06:10:00Z · design-spec.md\n\n- 판정: 예보 green\n\n"
+_JOINT_BANNER: str = "- G1 배너 — 함께 커밋 지문"
+_JOINT_EMPTY_FP: str = hashlib.sha256(b"").hexdigest()[:12]
+# 독립 지문 재료 — 칸 글 → (함께 (애그리거트, 수) 목록, 잠금 (타입, 키) 목록).
+_JOINT_PARTS: "dict[str, tuple[list[tuple[str, int]], list[tuple[str, str]]]]" = {
+    _JOINT_ORDER2: ([("order", 2)], [("order", "order_id")]),
+    _JOINT_WIDE: ([("order", 2), ("stock", 1)], [("order", "order_id"), ("stock", "sku")]),
+}
+
+
+def _joint_fp(rows: "list[tuple[tuple[str, str, str], str]]") -> str:
+    """함께 커밋 지문의 독립 셈 — 행마다 (bc|area|유스케이스|불변식|정렬한 함께|잠금 차례) 를 차례 맞춰 sha256[:12]."""
+    norm: "list[str]" = []
+    for head, fields in rows:
+        aggs, lock = _JOINT_PARTS[fields]
+        norm.append("|".join((*head, _JOINT_INV)) + "|" + repr(sorted(aggs)) + repr(lock))
+    return hashlib.sha256("\n".join(sorted(norm)).encode("utf-8")).hexdigest()[:12]
+
+
+_JOINT_EXECUTOR: "list[types.ModuleType]" = []
+
+
+def _joint_executor() -> "types.ModuleType":
+    """G1 배너 기록 재료 — 조정자가 예보 절 지문을 옮겨 적는 것과 같게 시험 대상 실행기의 셈을 한 번 싣는다."""
+    if not _JOINT_EXECUTOR:
+        _JOINT_EXECUTOR.append(_load_module(EXECUTOR, "_pregate_joint_fp"))
+    return _JOINT_EXECUTOR[0]
+
+
+def _joint_class(uc: str) -> str:
+    return "".join(part.title() for part in uc.split("_")) + "UseCase"
+
+
+def _joint_source(uc: str, fields: "str | None" = None, *, split: bool = False, mark: "str | None" = None) -> str:
+    """장난감 유스케이스 글 — `fields` 가 있으면 함께 쓰는 `with` 위에 표지(`mark` 가 있으면 그 글 그대로)를 단다 · split 이면
+    트랜잭션 둘로 나눈 꼴(표지 없음)."""
+    head: str = (f'"""장난감"""\n\n\nclass {_joint_class(uc)}:\n'
+                 "    def execute(self, first_id: str, second_id: str) -> None:\n")
+    if split:
+        return head + ("        with self._unit_of_work:\n            self._orders.save(self._orders.get(first_id))\n"
+                       "        with self._unit_of_work:\n            self._orders.save(self._orders.get(second_id))\n")
+    if fields is None and mark is None:
+        return head + "        with self._unit_of_work:\n            self._orders.save(self._orders.get(first_id))\n"
+    return head + (f"        # joint-commit: {mark if mark is not None else fields}\n"
+                   "        with self._unit_of_work:\n"
+                   "            first = self._orders.get(first_id)\n            second = self._orders.get(second_id)\n"
+                   "            for order in sorted((first, second), key=lambda item: item.order_id):\n"
+                   "                if not self._orders.save_with_version_guard(order):\n"
+                   "                    raise RuntimeError(order.order_id)\n")
+
+
+def _joint_row(uc: str, fields: "str | None" = None, *, area: str = "order", sep: str = "  ", path: "str | None" = None) -> str:
+    """명세 use-case-effects 행 — `fields` 가 있으면 행 끝 칸 셋(칸 사이 `sep`)."""
+    where: str = path or _JOINT_UC.format(area=area, uc=uc)
+    tail: str = (sep + fields.replace("  ", sep)) if fields else ""
+    return f"{where}::{_joint_class(uc)}  write  uow=OrdersUnitOfWork{tail}"
+
+
+class _JointScene:
+    """G2 대조 장면 하나 — 합성 폴더에 git 저장소를 짓고(뿌리 확인) 조정자 흐름대로 산출물 폴더(명세 · build_anchor · 리포트 · 배너
+    기록)를 두고 `design_pregate.py <폴더>/design-spec.md <저장소> --joint-verify <폴더>` 를 돌린다."""
+
+    def __init__(self, scratch: Path, name: str) -> None:
+        self.root: Path = scratch / "joint" / name
+        self.root.mkdir(parents=True)
+        _git(self.root, "init", "-q")
+        if Path(_git(self.root, "rev-parse", "--show-toplevel")).resolve() != self.root.resolve():
+            raise SystemExit(f"장난감 저장소 뿌리 불일치: {self.root}")
+        self.folder: Path = self.root / _JOINT_FOLDER
+
+    def write(self, rel: str, text: str) -> None:
+        (self.root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (self.root / rel).write_text(text, encoding="utf-8")
+
+    def uc(self, uc: str, fields: "str | None" = None, *, area: str = "order", split: bool = False,
+           mark: "str | None" = None) -> None:
+        self.write(_JOINT_UC.format(area=area, uc=uc), _joint_source(uc, fields, split=split, mark=mark))
+
+    def commit(self, message: str) -> str:
+        _git(self.root, "add", "-A")
+        _git(self.root, "commit", "-q", "--allow-empty", "-m", message)
+        return _git(self.root, "rev-parse", "HEAD")
+
+    def spec(self, anchor: str, rows: "list[str]", *, report: str = "this", banner: "str | bool" = True,
+             scope: "str | None" = None) -> None:
+        """report: this = 실행 경계 뒤 예보 절(이번 실행 명세) · prev = 예보 절 뒤 실행 경계(앞 실행 명세 — G1′ 생략) · none = 리포트
+        없음. banner: True = 이 명세 지문의 G1 배너 기록(독립 셈은 `_joint_fp` 로 따로 맞춘다) · 글 = 그 지문 · False = 기록 없음."""
+        self.folder.mkdir(parents=True, exist_ok=True)
+        text: str = "# 설계 명세\n\n<!-- machine: use-case-effects -->\n```effects\n" + "\n".join(rows) + "\n```\n"
+        (self.folder / "design-spec.md").write_text(text, encoding="utf-8")
+        (self.folder / "build_anchor").write_text(anchor + "\n", encoding="utf-8")
+        if scope is not None:
+            (self.folder / "refactor-scope.md").write_text(scope, encoding="utf-8")
+        report_path: Path = self.folder / "pregate-report.md"
+        if report == "none":
+            if report_path.exists():
+                report_path.unlink()
+            return
+        fp: str = banner if isinstance(banner, str) else _joint_executor()._joint_rows_fingerprint(text)[1]
+        line: str = f"{_JOINT_BANNER} {fp} · 2026-11-10T06:20:00Z\n" if banner is not False else ""
+        report_path.write_text(_JOINT_BOUNDARY + _JOINT_FORECAST + line if report == "this" else _JOINT_FORECAST + _JOINT_BOUNDARY,
+                               encoding="utf-8")
+
+    def verify(self, *extra: str) -> "subprocess.CompletedProcess[str]":
+        return subprocess.run([sys.executable, "-B", str(EXECUTOR), str(self.folder / "design-spec.md"), str(self.root),
+                               "--joint-verify", str(self.folder), *extra], capture_output=True, text=True)
+
+
+def _joint_merge_scene(sc: _JointScene, approved: bool) -> None:
+    """다른 레인(main)의 G2 승인분 표지가 머지로 들어온다 — 승인 머지 목록이 있으면 ^2 와 같은 칸이라 묻지 않는다."""
+    sc.uc("transfer", split=True)
+    sc.commit("공통")
+    trunk: str = _git(sc.root, "rev-parse", "--abbrev-ref", "HEAD")
+    _git(sc.root, "checkout", "-q", "-b", "lane")
+    sc.uc("lane_case", split=True)
+    anchor: str = sc.commit("레인 앵커")
+    _git(sc.root, "checkout", "-q", trunk)
+    sc.uc("swap", _JOINT_ORDER2)
+    sc.commit("다른 레인 G2 승인분")
+    _git(sc.root, "checkout", "-q", "lane")
+    _git(sc.root, "merge", "-q", "--no-ff", "-m", "main 머지", trunk)
+    merge: str = _git(sc.root, "rev-parse", "HEAD")
+    sc.spec(anchor, [_joint_row("lane_case")])
+    if approved:
+        (sc.folder / "approved-merges.txt").write_text(f"{merge} main 머지\n", encoding="utf-8")
+
+
+def _joint_scenes(scratch: Path) -> "Iterator[tuple[str, int, list[str], _JointScene]]":
+    """설계 §11.1 장면(g01 · g02 · g03 · g04 · g07 · g11 · g12 · g13 · g17 · g23 · g26 · g27 · g28 · g29 · g31 · g32 · g33 · g34 · 검토 r8)과
+    구현 때 더한 둘(g35 꼴 틀린 앵커 표지 · g36 비 ASCII 경로 — 시제품은 둘 다 «새 주석» 으로 붉혔다). (이름, 기대 exit, 출력에 있어야 할
+    조각, 장면) — 하나씩 지어 내준다(변이 실행은 처음 붉은 장면에서 멈춘다)."""
+    order_head: "tuple[str, str, str]" = ("orders", "order", "transfer")
+
+    def scene(name: str) -> _JointScene:
+        return _JointScene(scratch, name)
+
+    def summary(status: str, r: int, x: int, a: int, k: int, m: int) -> str:
+        return (f"요약: 함께 커밋(설계 승인 → 코드 주석 → G2 대조) {status} · 이번에 승인한 것 {r} · 이번에 새로 달거나 바꾼 주석 {x} · "
+                f"전부터 있던 주석 {a} · 이번에 걷은 주석 {k} · 머지로 들어온 다른 작업의 주석 {m}")
+
+    sc = scene("g01_new_with_row")
+    sc.uc("transfer", split=True)
+    a = sc.commit("앵커")
+    sc.uc("transfer", _JOINT_ORDER2)
+    sc.spec(a, [_joint_row("transfer", _JOINT_ORDER2)])
+    yield ("g01 새 표지 + 같은 칸 행", 0, [summary("맞음", 1, 1, 0, 0, 0)], sc)
+
+    sc = scene("g02_new_no_row")
+    sc.uc("transfer", split=True)
+    a = sc.commit("앵커")
+    sc.uc("transfer", _JOINT_ORDER2)
+    sc.spec(a, [_joint_row("transfer")])
+    yield ("g02 새 표지 · 행 없음", 2, [summary("어긋남 1건", 0, 1, 0, 0, 0), "이번 설계 승인에 같은 칸의 행이 없다"], sc)
+
+    sc = scene("g03_row_no_marker")
+    sc.uc("transfer")
+    a = sc.commit("앵커")
+    sc.uc("transfer", split=True)
+    sc.spec(a, [_joint_row("transfer", _JOINT_ORDER2)])
+    yield ("g03 행 · 코드는 둘로 나눔", 2, [summary("어긋남 1건", 1, 0, 0, 0, 0), "코드에 같은 칸의 함께 커밋 주석이 없다"], sc)
+
+    sc = scene("g04_widened_no_row")
+    sc.uc("transfer", _JOINT_ORDER2)
+    a = sc.commit("앵커")
+    sc.uc("transfer", _JOINT_WIDE)
+    sc.spec(a, [_joint_row("transfer")])
+    yield ("g04 앵커 표지 칸을 넓힘 · 행 없음", 2, [summary("어긋남 1건", 0, 1, 0, 0, 0)], sc)
+
+    sc = scene("g07_reuse_folder")
+    sc.uc("transfer", _JOINT_ORDER2)
+    sc.uc("other_case")
+    a = sc.commit("앞 실행 G2 승인분")
+    sc.uc("other_case", split=True)
+    sc.spec(a, [_joint_row("other_case")], scope=(f"# 스코프\n\n- 실행 · G0 승인 20261112-0900 · build_anchor {a[:12]}\n\n"
+                                                  "# 앞 실행\n\n- 실행 · G0 승인 20261101-1000 · build_anchor 0000000\n"))
+    yield ("g07 이어 쓴 폴더 · 앞 실행 표지는 앵커에", 0, [summary("맞음", 0, 0, 1, 0, 0)], sc)
+
+    sc = scene("g11_approved_merge")
+    _joint_merge_scene(sc, True)
+    yield ("g11 승인 머지 ^2 로 들어온 표지", 0, [summary("맞음", 0, 0, 0, 0, 1), "승인 머지 1"], sc)
+
+    sc = scene("g12_unapproved_merge")
+    _joint_merge_scene(sc, False)
+    yield ("g12 같은 머지 · 승인 목록 없음", 2, [summary("어긋남 1건", 0, 1, 0, 0, 0), "승인 머지 0"], sc)
+
+    sc = scene("g13_merge_resolution_changed")
+    sc.uc("transfer", _JOINT_ORDER2)
+    sc.commit("공통")
+    trunk = _git(sc.root, "rev-parse", "--abbrev-ref", "HEAD")
+    _git(sc.root, "checkout", "-q", "-b", "lane")
+    a = sc.commit("레인 앵커")
+    sc.uc("transfer", mark=_JOINT_ORDER2.replace(_JOINT_INV, "레인이 고친 불변식"))
+    sc.commit("레인 고침")
+    _git(sc.root, "checkout", "-q", trunk)
+    sc.uc("transfer", mark=_JOINT_ORDER2.replace(_JOINT_INV, "main 이 고친 불변식"))
+    sc.commit("main 고침")
+    _git(sc.root, "checkout", "-q", "lane")
+    subprocess.run(["git", "-C", str(sc.root), "-c", "core.hooksPath=", "-c", "commit.gpgsign=false", "-c", "user.email=fixture@local",
+                    "-c", "user.name=fixture", "merge", "-q", "--no-ff", "-m", "main 머지", trunk], capture_output=True, text=True)
+    sc.uc("transfer", mark=_JOINT_ORDER2.replace(_JOINT_INV, "둘 다 아닌 불변식"))
+    sc.commit("충돌 풂")
+    merge = _git(sc.root, "rev-parse", "HEAD")
+    sc.spec(a, [_joint_row("transfer", _JOINT_ORDER2.replace(_JOINT_INV, "레인이 고친 불변식"))])
+    (sc.folder / "approved-merges.txt").write_text(f"{merge}\n", encoding="utf-8")
+    yield ("g13 승인 머지 충돌을 다른 칸으로 풂", 2, [summary("어긋남 2건", 1, 1, 0, 1, 0)], sc)
+
+    sc = scene("g17_g1prime_no_launder")
+    sc.uc("transfer", split=True)
+    sc.uc("other_case")
+    a = sc.commit("앵커")
+    sc.uc("transfer", _JOINT_ORDER2)
+    sc.commit("코더 커밋(표지)")
+    sc.uc("other_case", split=True)
+    sc.spec(a, [_joint_row("transfer"), _joint_row("other_case")])
+    yield ("g17 표지 뒤 G1′(다른 행만) — 세탁 없음", 2, [summary("어긋남 1건", 0, 1, 0, 0, 0)], sc)
+
+    sc = scene("g23_row_marker_differ")
+    sc.uc("transfer", split=True)
+    a = sc.commit("앵커")
+    sc.uc("transfer", _JOINT_WIDE)
+    sc.spec(a, [_joint_row("transfer", _JOINT_ORDER2)])
+    yield ("g23 행(order×2) ≠ 표지(order×2, stock) — 양쪽 어긋남", 2, [summary("어긋남 2건", 1, 1, 0, 0, 0)], sc)
+
+    sc = scene("g26_stale_anchor_file")
+    sc.uc("transfer", _JOINT_ORDER2)
+    a = sc.commit("앞 실행")
+    sc.spec(a, [_joint_row("transfer")], scope="# 스코프\n\n- 실행 · G0 승인 20261112-0900\n\n# 앞 실행\n\n- 실행 · G0 승인 20261101-1000\n")
+    yield ("g26 이번 실행 줄에 앵커 없음 — 앞 실행 파일을 쓰지 않음", 1, ["이번 실행의 build_anchor 없음"], sc)
+
+    sc = scene("g27_stale_row_readd")
+    sc.uc("transfer", split=True)
+    a = sc.commit("다른 실행이 걷은 뒤")
+    sc.uc("transfer", _JOINT_ORDER2)
+    sc.spec(a, [_joint_row("transfer", _JOINT_ORDER2)], report="prev")
+    yield ("g27 G1′ 생략 명세의 행으로 주석을 다시 담", 2,
+                [summary("어긋남 1건", 0, 1, 0, 0, 0), "앞 실행 명세(이번 실행 예보 절 없음)라 이번 실행 승인으로 쓰지 않는다"], sc)
+
+    sc = scene("g28_rows_no_report")
+    sc.uc("transfer", split=True)
+    a = sc.commit("앵커")
+    sc.uc("transfer", _JOINT_ORDER2)
+    sc.spec(a, [_joint_row("transfer", _JOINT_ORDER2)], report="none")
+    yield ("g28 행이 있는데 pregate-report 없음", 1, ["pre-gate 를 돈 명세가 아니다"], sc)
+
+    sc = scene("g29_direct_uc_with_row")
+    direct: str = "application/orders/application_layer/transfer_use_case.py"
+    sc.write(direct, _joint_source("transfer", split=True))
+    a = sc.commit("앵커")
+    sc.write(direct, _joint_source("transfer", _JOINT_ORDER2))
+    sc.spec(a, [_joint_row("transfer", _JOINT_ORDER2, path=direct)])
+    yield ("g29 표준 밖 자리 유스케이스 · 행 · 주석 같음", 0, [summary("맞음", 1, 1, 0, 0, 0)], sc)
+
+    sc = scene("g31_banner_rows_after_g1")
+    sc.uc("transfer", split=True)
+    a = sc.commit("앵커")
+    sc.uc("transfer", _JOINT_ORDER2)
+    sc.spec(a, [_joint_row("transfer", _JOINT_ORDER2)], banner=_JOINT_EMPTY_FP)
+    fp31: str = _joint_fp([(order_head, _JOINT_ORDER2)])
+    yield ("g31 G1 배너 기록(행 0) 뒤 행이 생김", 2,
+                [summary("어긋남 1건", 1, 1, 0, 0, 0), f"(지문 {fp31} · 1건)이 이번 실행 마지막 G1 · G1′ 배너 기록 지문 {_JOINT_EMPTY_FP} 와 다르다"],
+                sc)
+
+    sc = scene("g32_banner_missing")
+    sc.uc("transfer", split=True)
+    a = sc.commit("앵커")
+    sc.uc("transfer", _JOINT_ORDER2)
+    sc.spec(a, [_joint_row("transfer", _JOINT_ORDER2)], banner=False)
+    yield ("g32 행이 있는데 G1 배너 기록 없음", 2, [summary("어긋남 1건", 1, 1, 0, 0, 0), "배너 기록이 없다"], sc)
+
+    sc = scene("g33_banner_rows_zero_no_record")
+    sc.uc("transfer")
+    a = sc.commit("앵커")
+    sc.uc("transfer", split=True)
+    sc.spec(a, [_joint_row("transfer")], banner=False)
+    yield ("g33 행 0 · 기록 없음 — 묻지 않음", 0, [summary("맞음", 0, 0, 0, 0, 0)], sc)
+
+    sc = scene("g34_split_this_run_removed")
+    sc.uc("transfer", _JOINT_ORDER2)
+    a = sc.commit("앵커")
+    sc.uc("transfer", split=True)
+    sc.spec(a, [_joint_row("transfer")])
+    yield ("g34 이번 실행이 앵커 주석을 걷고 나눔", 0, [summary("맞음", 0, 0, 0, 1, 0)], sc)
+
+    sc = scene("r8_stale_row")
+    sc.uc("transfer", _JOINT_ORDER2)
+    sc.uc("cancel")
+    sc.commit("앞 실행 — X 승인 · 표지")
+    sc.uc("transfer")
+    a = sc.commit("다른 폴더 실행 — X 표지 걷음")
+    sc.uc("cancel", split=True)
+    sc.spec(a, [_joint_row("transfer", _JOINT_ORDER2), _joint_row("cancel")], report="prev")
+    yield ("r8 G1′ 생략 · 앞 명세 X 행 · X 표지는 다른 실행이 걷음", 0,
+                [summary("맞음", 0, 0, 0, 0, 0), "알림: 명세 "], sc)
+
+    sc = scene("g35_malformed_mark_kept")
+    bad: str = _JOINT_ORDER2.replace("order×2  잠금", "order×2 잠금")
+    sc.uc("transfer", mark=bad)
+    sc.uc("other_case")
+    a = sc.commit("앵커 — 꼴 틀린 표지(실행 밖)")
+    sc.uc("other_case", split=True)
+    sc.spec(a, [_joint_row("other_case")])
+    yield ("g35 앵커에 있던 꼴 틀린 표지는 다시 묻지 않음(검사기 #546 몫)", 0, [summary("맞음", 0, 0, 1, 0, 0)], sc)
+
+    sc = scene("g36_non_ascii_path_kept")
+    sc.uc("transfer", _JOINT_ORDER2, area="주문")
+    sc.uc("other_case")
+    a = sc.commit("앵커 — 비 ASCII 폴더의 표지")
+    sc.uc("other_case", split=True)
+    sc.spec(a, [_joint_row("other_case")])
+    yield ("g36 비 ASCII 경로의 앵커 표지(git 경로 따옴표 꼴)", 0, [summary("맞음", 0, 0, 1, 0, 0)], sc)
+
+
+def _joint_unit_checks() -> "list[str]":
+    """함께 커밋(2.36.0) 유닛 — 행 끝 칸 형식 red(까닭 · 경로 표기) · 블록 해시 · 지문(독립 셈 · 차례) · `함께` 애그리거트 부재 ·
+    리포트 두 소절(새 · 같은 칸 · 바꿈 · 전부터 있던 · 옮기거나 지우는 · 승격은 남음)."""
+    fails: "list[str]" = []
+    pg: "types.ModuleType" = _load_module(EXECUTOR, "_pregate_joint_units")
+    uc: str = _JOINT_UC.format(area="order", uc="transfer")
+    part: str = "application/orders/application_layer/order/transfer_use_case/transfer_frame.py"
+
+    def spec(effects: "list[str]", plan: "list[str]", symbols: "list[str]") -> str:
+        return ("<!-- machine: file-plan -->\n```paths\n" + "\n".join(plan) + "\n```\n<!-- machine: symbols -->\n```symbols\n"
+                + "\n".join(symbols) + "\n```\n<!-- machine: use-case-effects -->\n```effects\n" + "\n".join(effects) + "\n```\n")
+
+    def one(path: str, row: str, cls: str = "TransferUseCase") -> "tuple[object, list[str]]":
+        return pg.parse_spec(spec([row], [f"update {path}"], [f"{path}::{cls}"]))
+
+    for label, path, row, cls in (
+            ("공백 둘", uc, _joint_row("transfer", _JOINT_ORDER2), "TransferUseCase"),
+            ("탭", uc, _joint_row("transfer", _JOINT_ORDER2, sep="\t"), "TransferUseCase"),
+            ("./ 경로", "./" + uc, _joint_row("transfer", _JOINT_ORDER2, path="./" + uc), "TransferUseCase"),
+            ("승격 부품", part, f"{part}::TransferFrame  write  uow=OrdersUnitOfWork  {_JOINT_ORDER2}", "TransferFrame")):
+        plan, errors = one(path, row, cls)
+        if errors or plan is None or [e.joint is not None for e in plan.effects] != [True]:
+            fails.append(f"[joint 형식] {label}: 통과해야 한다 — {errors}")
+    head: str = f"{uc}::TransferUseCase  write"
+    for label, row, fragment in (
+            ("read-only", f"{uc}::TransferUseCase  read-only  uow=none  {_JOINT_ORDER2}", "`write` · `uow=<타입>` 행에만"),
+            ("uow=none", f"{head}  uow=none  {_JOINT_ORDER2}", "`write` · `uow=<타입>` 행에만"),
+            ("uow='none'", f"{head}  uow='none'  {_JOINT_ORDER2}", "`write` · `uow=<타입>` 행에만"),
+            ("첫 칸 앞 공백 하나", f"{head}  uow=OrdersUnitOfWork {_JOINT_ORDER2}", "첫 칸 앞 구분은 탭 또는 공백 둘 이상"),
+            ("칸 차례", f"{head}  uow=OrdersUnitOfWork  잠금 order(order_id)  함께 order×2  불변식 {_JOINT_INV}", "`함께 … 잠금 … 불변식 …` 차례"),
+            ("칸 빠짐", f"{head}  uow=OrdersUnitOfWork  함께 order×2  불변식 {_JOINT_INV}", "칸 셋 꼴이 아니다"),
+            ("칸 사이 공백 하나", f"{head}  uow=OrdersUnitOfWork  함께 order×2 잠금 order(order_id)  불변식 {_JOINT_INV}", "칸 셋 꼴이 아니다"),
+            ("빈 불변식", f"{head}  uow=OrdersUnitOfWork  함께 order×2  잠금 order(order_id)  불변식 ", "칸 셋 꼴이 아니다"),
+            ("×1", f"{head}  uow=OrdersUnitOfWork  함께 order×1, stock  잠금 order(order_id)  불변식 {_JOINT_INV}", "`함께` 낱말 `order×1`"),
+            ("같은 낱말 둘", f"{head}  uow=OrdersUnitOfWork  함께 order, order  잠금 order(order_id)  불변식 {_JOINT_INV}", "가 둘"),
+            ("잠금 -", f"{head}  uow=OrdersUnitOfWork  함께 order×2  잠금 -  불변식 {_JOINT_INV}", "`잠금 -`"),
+            ("잠금 타입 밖", f"{head}  uow=OrdersUnitOfWork  함께 order×2  잠금 stock(sku)  불변식 {_JOINT_INV}", "`함께` 밖"),
+            ("이미 있는 것 하나", f"{head}  uow=OrdersUnitOfWork  함께 order, transfer  잠금 order(order_id)  불변식 {_JOINT_INV}",
+             "인스턴스가 둘 미만"),
+            ("불변식에 `#`(표지가 `#` 뒤를 지시어로 뗌 — 검토 C 사소 3)",
+             f"{head}  uow=OrdersUnitOfWork  함께 order×2  잠금 order(order_id)  불변식 주문 #1 과 주문 #2 의 합이 같다",
+             "불변식에 `#` 를 쓰지 않는다")):
+        plan, errors = one(uc, row)
+        if len(errors) != 1 or fragment not in errors[0] or not errors[0].startswith("use-case-effects 함께 커밋 칸"):
+            fails.append(f"[joint 형식] {label}: 형식 red «{fragment}» 1건이어야 한다 — {errors}")
+    outside: str = "application/orders/domain_layer/order/order_service.py"
+    plan, errors = one(outside, f"{outside}::TransferUseCase  write  uow=OrdersUnitOfWork  {_JOINT_ORDER2}")
+    if len(errors) != 1 or "유스케이스 칸 행에만" not in errors[0]:
+        fails.append(f"[joint 형식] 유스케이스 칸 밖 행: 형식 red 여야 한다 — {errors}")
+    plain: str = spec([_joint_row("transfer")], [f"update {uc}"], [f"{uc}::TransferUseCase"])
+    tailed: str = spec([_joint_row("transfer", _JOINT_ORDER2)], [f"update {uc}"], [f"{uc}::TransferUseCase"])
+    if pg.parse_spec(plain)[1] or pg.block_hash(plain) == pg.block_hash(tailed) \
+            or pg.block_hash(tailed) == pg.block_hash(tailed.replace("order×2", "order×3")):
+        fails.append("[joint 해시] 행 끝 칸은 블록 해시 안이어야 한다(승인 뒤 칸을 고치면 --check-report 가 stale 로 잡는다)")
+    # 지문 — 독립 셈과 같다 · 행 차례 · `함께` 차례는 무관 · `잠금` 차례 · 불변식은 바꾼다 · 행 0 = 빈 글의 해시.
+    two: str = spec([_joint_row("transfer", _JOINT_ORDER2), _joint_row("cancel", _JOINT_WIDE)], [], [])
+    swapped: str = spec([_joint_row("cancel", "함께 stock, order×2  잠금 order(order_id) → stock(sku)  불변식 " + _JOINT_INV),
+                         _joint_row("transfer", _JOINT_ORDER2)], [], [])
+    want: str = _joint_fp([(("orders", "order", "transfer"), _JOINT_ORDER2), (("orders", "order", "cancel"), _JOINT_WIDE)])
+    got: "list[tuple[int, str]]" = [pg._joint_rows_fingerprint(t) for t in (two, swapped)]
+    if got != [(2, want), (2, want)]:
+        fails.append(f"[joint 지문] 독립 셈 {want} · 행 · `함께` 차례 무관이어야 한다 — {got}")
+    relocked: str = two.replace("잠금 order(order_id) → stock(sku)", "잠금 stock(sku) → order(order_id)")
+    renamed: str = two.replace(_JOINT_INV, "다른 불변식", 1)
+    if want in (pg._joint_rows_fingerprint(relocked)[1], pg._joint_rows_fingerprint(renamed)[1]):
+        fails.append("[joint 지문] `잠금` 차례 · 불변식이 바뀌면 지문이 바뀌어야 한다")
+    if pg._joint_rows_fingerprint(plain) != (0, _JOINT_EMPTY_FP):
+        fails.append(f"[joint 지문] 행 0 = 빈 글의 해시 {_JOINT_EMPTY_FP} — {pg._joint_rows_fingerprint(plain)}")
+    with tempfile.TemporaryDirectory(prefix="pregate-joint-unit-") as tmp:
+        copy: Path = Path(tmp)
+        order_repository: str = "application/orders/domain_layer/order/order_repository.py"
+        stock_repository: str = "application/orders/domain_layer/stock/stock_repository.py"
+        (copy / order_repository).parent.mkdir(parents=True)
+        (copy / order_repository).write_text("class OrderRepository:\n    pass\n", encoding="utf-8")
+        for label, plan_rows, fields, count in (
+                ("다른 BC · 오타 애그리거트", [f"update {uc}"], _JOINT_WIDE, 1),
+                ("file-plan add 저장소", [f"update {uc}", f"add {stock_repository}"], _JOINT_WIDE, 0),
+                ("기준선 저장소", [f"update {uc}"], _JOINT_ORDER2, 0)):
+            plan, errors = pg.parse_spec(spec([_joint_row("transfer", fields)], plan_rows, [f"{uc}::TransferUseCase"]))
+            found: "list[str]" = pg.joint_form_errors(plan, copy) if plan is not None else ["(parse)"]
+            if errors or len(found) != count or (count and not found[0].startswith("함께 커밋 애그리거트 부재: `stock`")):
+                fails.append(f"[joint 애그리거트] {label}: 형식 red {count}건이어야 한다 — {errors or found}")
+        # 리포트 두 소절 — 기준선 사본 위 표지와 계획.
+        sources: "dict[str, str]" = {
+            _JOINT_UC.format(area="order", uc=name): _joint_source(name, _JOINT_ORDER2)
+            for name in ("same", "changed", "kept", "moved", "untouched", "promo")}
+        sources[_JOINT_UC.format(area="order", uc="fresh")] = _joint_source("fresh", split=True)
+        for rel, text in sources.items():
+            (copy / rel).parent.mkdir(parents=True, exist_ok=True)
+            (copy / rel).write_text(text, encoding="utf-8")
+        updated: "list[str]" = ["same", "changed", "kept", "fresh"]
+        promo_body: str = "application/orders/application_layer/order/promo_use_case/promo_use_case.py"
+        moved_to: str = _JOINT_UC.format(area="stock", uc="moved")
+        report_spec: str = spec(
+            [_joint_row("same", _JOINT_ORDER2), _joint_row("changed", _JOINT_WIDE), _joint_row("kept"),
+             _joint_row("fresh", _JOINT_ORDER2, sep="\t")],
+            [f"update {_JOINT_UC.format(area='order', uc=n)}" for n in updated]
+            + [f"remove {_JOINT_UC.format(area='order', uc='moved')}", f"add {moved_to}",
+               f"remove {_JOINT_UC.format(area='order', uc='promo')}", f"add {promo_body}",
+               "add application/orders/application_layer/order/promo_use_case/promo_frame.py"],
+            [f"{_JOINT_UC.format(area='order', uc=n)}::{_joint_class(n)}" for n in updated])
+        plan, errors = pg.parse_spec(report_spec)
+        if errors or plan is None:
+            fails.append(f"[joint 리포트] 명세 파싱 — {errors}")
+        else:
+            marks, gone = pg.joint_baseline(copy, plan)
+            text: str = "\n".join(pg.joint_report_lines(report_spec, marks, gone))
+            same_row: str = _JOINT_UC.format(area="order", uc="same")
+            for fragment in (
+                    "### 함께 커밋 승인 행 (3건)",
+                    f"- {same_row}::SameUseCase · 불변식 «{_JOINT_INV}» · 함께 order×2 · 잠금 order(order_id) — 기준선 주석과 같은 칸",
+                    "— 바꿈: 옛 [함께 order×2 · 잠금 order(order_id)] → 새 [함께 order×2, stock · 잠금 order(order_id) → stock(sku)]",
+                    "FreshUseCase · 불변식 «" + _JOINT_INV + "» · 함께 order×2 · 잠금 order(order_id) — 새",
+                    "### 이번에 고치는 코드에 전부터 있던 함께 커밋 (2건 · 옮기거나 지우는 유스케이스 1건)",
+                    f"- {_JOINT_UC.format(area='order', uc='kept')}:6 «{_JOINT_INV}» · 함께 order×2 · 잠금 order(order_id) — 칸을 그대로 두면",
+                    f"- {_JOINT_UC.format(area='order', uc='promo')}:6 «",
+                    f"- 옮기거나 지우는 유스케이스의 함께 커밋: {_JOINT_UC.format(area='order', uc='moved')}:6 «"):
+                if fragment not in text:
+                    fails.append(f"[joint 리포트] «{fragment[:80]}» 가 없다:\n{text}")
+            if "untouched" in text:
+                fails.append("[joint 리포트] 이 명세가 고치지 않는 유스케이스의 주석이 실렸다")
+    if not fails:
+        print("joint 유닛: 행 끝 칸 형식 통과 4 · red 15 · 블록 해시 · 지문(독립 셈 · 차례) · 애그리거트 부재 3 · 리포트 두 소절 — 기대 일치")
+    return fails
+
+
+def _run_joint_bundle(scratch: Path, failures: "list[str]", fail_fast: bool = False) -> None:
+    """G2 함께 커밋 대조 장면(장난감 git 저장소) · 두 플래그 사용 오류 · pre-gate 리포트(지문 1행 · 두 소절 · `--check-report` 정합).
+    `fail_fast` 면 처음 붉은 데서 멈춘다(변이 실행 — 하나만 붉으면 된다)."""
+    bad: int = 0
+    count: int = 0
+    first: "_JointScene | None" = None
+    for label, code, fragments, sc in _joint_scenes(scratch):
+        count += 1
+        first = first or sc
+        proc: "subprocess.CompletedProcess[str]" = sc.verify()
+        missing: "list[str]" = [f for f in fragments if f not in proc.stdout + proc.stderr]
+        if proc.returncode != code or missing:
+            bad += 1
+            failures.append(f"joint {label}: exit {proc.returncode}(기대 {code}) · 없는 조각 {missing}")
+            _dump(f"joint {label}", proc)
+            if fail_fast:
+                return
+    if first is None:
+        failures.append("joint: 장면이 없다")
+        return
+    both: "subprocess.CompletedProcess[str]" = first.verify("--check-report", str(first.folder / "pregate-report.md"))
+    if both.returncode != 1 or "not allowed with" not in both.stderr:
+        bad += 1
+        failures.append(f"joint `--joint-verify` · `--check-report` 함께: 사용 오류 exit 1 이어야 한다 — exit {both.returncode}")
+        _dump("joint 두 플래그", both)
+    # pre-gate 리포트 — update 만 하는 명세(실체화 0 · skip)라 게이트를 부르지 않는다.
+    sc = _JointScene(scratch, "report")
+    sc.write("application/orders/domain_layer/order/order_repository.py", "class OrderRepository:\n    pass\n")
+    sc.uc("same", _JOINT_ORDER2)
+    sc.uc("kept", _JOINT_ORDER2)
+    sc.uc("fresh", split=True)
+    sc.commit("기준선")
+    names: "list[str]" = ["same", "kept", "fresh"]
+    spec_text: str = ("<!-- machine: file-plan -->\n```paths\n"
+                      + "\n".join(f"update {_JOINT_UC.format(area='order', uc=n)}" for n in names)
+                      + "\n```\n<!-- machine: symbols -->\n```symbols\n"
+                      + "\n".join(f"{_JOINT_UC.format(area='order', uc=n)}::{_joint_class(n)}" for n in names)
+                      + "\n```\n<!-- machine: use-case-effects -->\n```effects\n"
+                      + "\n".join([_joint_row("same", _JOINT_ORDER2), _joint_row("kept"), _joint_row("fresh", _JOINT_ORDER2)])
+                      + "\n```\n")
+    spec_path: Path = scratch / "joint-report-spec.md"
+    spec_path.write_text(spec_text, encoding="utf-8")
+    report: Path = scratch / "joint-report.md"
+    proc = _run_pregate(spec_path, sc.root, report)
+    body: str = report.read_text(encoding="utf-8") if report.exists() else ""
+    fp: str = _joint_fp([(("orders", "order", "same"), _JOINT_ORDER2), (("orders", "order", "fresh"), _JOINT_ORDER2)])
+    want: "list[str]" = [f"- 판정: skip\n- 함께 커밋 승인 행 2 · 지문 {fp}\n", "### 함께 커밋 승인 행 (2건)", "— 기준선 주석과 같은 칸",
+                         "— 새", "### 이번에 고치는 코드에 전부터 있던 함께 커밋 (1건 · 옮기거나 지우는 유스케이스 0건)"]
+    missing = [w for w in want if w not in body]
+    check: "subprocess.CompletedProcess[str]" = _run_check(spec_path, report)
+    if proc.returncode != 4 or missing or check.returncode != 0:
+        bad += 1
+        failures.append(f"joint pre-gate 리포트: exit {proc.returncode}(기대 4) · 없는 조각 {missing} · check-report exit "
+                        f"{check.returncode}(기대 0)")
+        _dump("joint pre-gate 리포트", proc)
+    if not bad:
+        print(f"joint: G2 대조 장면 {count} · 두 플래그 사용 오류 · pre-gate 리포트(지문 1행 · 두 소절 · check-report 정합) — 기대 일치")
+
+
+def _only_joint(scratch: Path) -> "list[str]":
+    """`--only-joint`(변이 실행) — 유닛이 붉으면 장면을 짓지 않고, 장면은 처음 붉은 데서 멈춘다."""
+    failures: "list[str]" = _joint_unit_checks()
+    if not failures:
+        _run_joint_bundle(scratch, failures, fail_fast=True)
+    return failures
+
+
 # (이름, 옛 글, 새 글) — 옛 글은 design_pregate.py 에 정확히 한 번 있어야 한다(계획 «단계 3 변이 회귀» pre-gate).
 _MUTATIONS: "tuple[tuple[str, str, str], ...]" = (
     ("apply_to_copy 를 앵커 커밋 뒤로",
@@ -2184,6 +2707,31 @@ _MUTATIONS: "tuple[tuple[str, str, str], ...]" = (
     ("사본이 R 에서 빈 묶음 `__init__.py` 를 안 지움(합류)",
      "        if (copy / d).is_file():\n            (copy / d).unlink()\n", "        pass\n"),
 )
+# 함께 커밋(2.36.0) 변이 — `--only-joint`(유닛 · G2 대조 장면 · pre-gate 리포트)가 붉어야 한다.
+_JOINT_MUTATIONS: "tuple[tuple[str, str, str], ...]" = (
+    ("행 끝 칸을 떼지 않음(2.35.0 처럼 uow 타입식으로 읽음)",
+     "head, tail = ct.joint_row_tail(raw)  # 끝 칸", "head, tail = raw, None  # 끝 칸"),
+    ("read-only · uow=none 행의 칸을 받음", 'if effect != "write" or uow == "none":', "if False:"),
+    ("유스케이스 칸 밖 행의 칸을 받음", 'if ct.joint_use_case("/".join(_plan_parts(path)), None) is None:', "if False:"),
+    ("`함께` 애그리거트 부재를 안 봄", "if repository not in added and not (copy / repository).is_file():", "if False:"),
+    ("불변식의 `#` 을 받음(검토 C 사소 3)", 'if "#" in fields.inv:', "if False:"),
+    ("예보 절 지문 1행에 지문이 빠짐", 'return f"함께 커밋 승인 행 {n} · 지문 {fp}"', 'return f"함께 커밋 승인 행 {n}"'),
+    ("리포트가 칸이 바뀐 행을 «같은 칸» 으로", "elif fields is not None and any(f is not None and ct.joint_same(f, fields) for f in before):",
+     "elif before:"),
+    ("리포트가 옮기거나 지우는 유스케이스를 안 가름", "return _joint_dir_marks(copy, heads), heads - alive",
+     "return _joint_dir_marks(copy, heads), set()"),
+    ("대조가 앵커 표지를 안 읽음", "repo, anchor_sha)", "repo, anchor_sha) and {}"),
+    ("대조가 승인 머지 ^2 를 안 읽음", "for m in merges:", "for m in []:"),
+    ("앞 실행 명세 행을 이번 실행 승인으로 씀(검토 S3)", "if rows and not this_run:", "if False:"),
+    ("G1 배너 기록 대조를 안 함(재확인 걱정)", "if banner != fp:", "if False:"),
+    ("새 표지를 열쇠만으로 승인(칸 뜻을 안 봄)",
+     "return fields is not None and any(rk == key and rf is not None and ct.joint_same(rf, fields) for rk, _h, rf in rows)",
+     "return any(rk == key for rk, _h, rf in rows)"),
+    ("승인 행 → 코드 표지 대조를 안 함", "for key, head_text, fields in rows:", "for key, head_text, fields in []:"),
+    ("걷은 주석을 세지 않음", "removed: int = sum(len(items) for key, items in before.items() if key not in now)", "removed: int = 0"),
+    ("꼴 틀린 앵커 표지를 늘 새 것으로(시제품)", "return (a is None and b is None) or", "return False or"),
+    ("git 경로를 NUL 로 가르지 않음(시제품)", '"grep", "-I", "-l", "-z", "-e"', '"grep", "-I", "-l", "-e"'),
+)
 
 
 def _only_group(scratch: Path) -> "list[str]":
@@ -2197,7 +2745,9 @@ def _only_group(scratch: Path) -> "list[str]":
 def _mutation_test() -> int:
     survived: "list[str]" = []
     src: str = EXECUTOR.read_text(encoding="utf-8")
-    for name, old, new in _MUTATIONS:
+    runs: "list[tuple[str, str, str, str]]" = ([(n, o, w, "--only-group") for n, o, w in _MUTATIONS]
+                                               + [(n, o, w, "--only-joint") for n, o, w in _JOINT_MUTATIONS])
+    for name, old, new, only in runs:
         if src.count(old) != 1:
             survived.append(f"{name}: 변이 지점이 정확히 한 곳이 아니다({src.count(old)})")
             continue
@@ -2205,7 +2755,7 @@ def _mutation_test() -> int:
             copy: Path = Path(tmp) / "scripts"
             shutil.copytree(EXECUTOR.parent, copy, symlinks=False, ignore=shutil.ignore_patterns("__pycache__"))
             (copy / EXECUTOR.name).write_text(src.replace(old, new, 1), encoding="utf-8")
-            proc = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--scripts", str(copy), "--only-group"],
+            proc = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--scripts", str(copy), only],
                                   capture_output=True, text=True)
         if proc.returncode == 0:
             survived.append(f"{name}: 변이가 살아남음")
@@ -2218,7 +2768,7 @@ def _mutation_test() -> int:
         for line in survived:
             print(f"  {line}", file=sys.stderr)
         return 2
-    print(f"[mutation] pre-gate 변이 {len(_MUTATIONS)}종 모두 red")
+    print(f"[mutation] pre-gate 변이 {len(runs)}종 모두 red(묶음 {len(_MUTATIONS)} · 함께 커밋 {len(_JOINT_MUTATIONS)})")
     return 0
 
 
@@ -2228,6 +2778,7 @@ def main(argv: "list[str]") -> int:
     ap.add_argument("--keep", action="store_true", help="합성 저장소 보존(디버그)")
     ap.add_argument("--scripts", default=None, help="그 폴더의 design_pregate.py · registry_gate.py 로(변이 사본)")
     ap.add_argument("--only-group", action="store_true", help="묶음 이동(2.28.0) 유닛 · 묶음만")
+    ap.add_argument("--only-joint", action="store_true", help="함께 커밋(2.36.0) 유닛 · G2 대조 장면 · 리포트만")
     ap.add_argument("--mutation-test", action="store_true", help="계획 «단계 3 변이 회귀» pre-gate 변이 — 모두 red 여야 exit 0")
     ns: argparse.Namespace = ap.parse_args(argv)
     if ns.scripts is not None:
@@ -2248,6 +2799,19 @@ def main(argv: "list[str]") -> int:
             return 1
         print("\nPASS — pre-gate 묶음 이동")
         return 0
+    if ns.only_joint:
+        scratch_j: Path = Path(tempfile.mkdtemp(prefix="pregate-joint-"))
+        try:
+            joint_fails: "list[str]" = _only_joint(scratch_j)
+        finally:
+            shutil.rmtree(scratch_j, ignore_errors=True)
+        if joint_fails:
+            print("\nFAIL — pre-gate 픽스처 기대 불일치:")
+            for f in joint_fails:
+                print(f"  - {f}")
+            return 1
+        print("\nPASS — pre-gate 함께 커밋")
+        return 0
 
     scratch: Path = Path(tempfile.mkdtemp(prefix="pregate-fixture-"))
     failures: "list[str]" = []
@@ -2257,6 +2821,7 @@ def main(argv: "list[str]") -> int:
     failures.extend(_in_argument_unit_checks())
     failures.extend(_publish_path_unit_checks())       # F4-93 · #541 선언 예보
     failures.extend(_group_unit_checks())              # 2.28.0 의미 묶음 — 7.4 의 17 · 18 · 18′
+    failures.extend(_joint_unit_checks())              # 2.36.0 함께 커밋 — 행 끝 칸 · 지문 · 리포트 두 소절
     try:
         _run_execution_modes_bundle(scratch, failures)
         _run_base_bundle(scratch, failures)
@@ -2272,6 +2837,7 @@ def main(argv: "list[str]") -> int:
         _run_group_bundle(scratch, failures)              # 2.28.0 의미 묶음 — 사본 이동은 앵커 커밋 전(설계 9.3)
         _run_group_legacy_bundle(scratch, failures)       # 검토 B2 — 이관 빚이 붙든 묶음 자리(설계 5절 ⓪)
         _run_group_dissolve_bundle(scratch, failures)     # 합류 — 풀린 묶음의 빈 `__init__.py` 도 사본에서 지움
+        _run_joint_bundle(scratch, failures)              # 2.36.0 함께 커밋 — G2 대조 장면 · pre-gate 리포트
 
         if failures:
             print("\nFAIL — pre-gate 픽스처 기대 불일치:")
@@ -2283,7 +2849,8 @@ def main(argv: "list[str]") -> int:
               "계약 실존 imports 3종 exit 0/5/5 · 차단 모드 enforce 7(블록 부재·공허·update/remove 부재·승격 예외) · "
               "--check-report 14단계 + 유닛 매트릭스 · 스텁 정형 stub 10 + 재료 글 10(재수출 __init__ 0 · 진탐 #640 유지 · 재료 정형 본문) · "
               "stub-material 7(D17 #652 — 재료 0 · 반환 주석 진탐 1) · "
-              "publish 2(F4-93 #541 선언 확정 2·후보 2 / 0) + 유닛 매트릭스)")
+              "publish 2(F4-93 #541 선언 확정 2·후보 2 / 0) + 유닛 매트릭스 · "
+              "joint(2.36.0 함께 커밋 — 행 끝 칸 형식 · 지문 · 리포트 두 소절 · G2 대조 장면 21))")
         return 0
     finally:
         if ns.keep:

@@ -35,7 +35,7 @@
               `.dddjango/violations/` 오염 금지).
   5) 리포트 — `--report` 경로에 append(D4): 기준선 SHA·프로필·모드 헤더, 예보
               항목별 안정 ID(sha256(규칙#+경로)[:12]), 사각 목록 상시 병기,
-              already-built·미시뮬레이션 목록.
+              already-built·미시뮬레이션 목록, 함께 커밋 지문 1행 · 두 소절(아래 «함께 커밋 리포트»).
 
 기계 블록 정본 문법(§4 — 이 문법이 곧 규범이다):
   file-plan        `<!-- machine: file-plan -->` 직후 ```paths 펜스.
@@ -77,6 +77,14 @@
   use-case-effects 선택형 `<!-- machine: use-case-effects -->` + ```effects 펜스.
                    `<파일>::<클래스>  <read-only|write>  uow=<none|타입식>`.
                    add/update 클래스의 효과·DTO 선언은 소스 차분과 독립적으로 검증한다.
+                   선택 끝 칸 셋(함께 커밋 — 2.36.0) = `<칸 사이>함께 <애그리거트>[×n], …<칸 사이>잠금 <애그리거트>(<키>)[ →
+                   <애그리거트>(<키>) …]<칸 사이>불변식 <이름>`(칸 사이 = 탭 또는 공백 2+ · 셋을 이 차례로 함께 · 코드 표지
+                   `# joint-commit:` 뒤 글과 한 문법 — 읽기 · 꼴 틀림 까닭은 `checker_target` 한 출처). 형식 red: `read-only` ·
+                   `uow=none` 행 · 유스케이스 칸(`checker_target.joint_use_case` — 본체 `<x>_use_case.py` · 승격 폴더 부품) 밖 행 ·
+                   칸 셋 꼴 아님 · 칸 꼴 틀림(`×1` · 같은 낱말 둘 · `잠금 -` · `잠금` 타입이 `함께` 밖 · 잠금 인스턴스 둘 미만 · 빈
+                   불변식 등) · 불변식에 `#`(표지 주석이 그 뒤를 지시어로 떼어 같은 글을 달 수 없다) · `함께` 애그리거트가 그 BC 에 없음(기준선 ⊕ 승인 유입의 `domain_layer/<a>/<a>_repository.py` 도
+                   file-plan add 도 아님). 칸이 없는 행은 종전과 같다(블록 해시 무변). 끝 칸은 함께 쓰기 자체를 예보하지 않는다
+                   (본문 — G2 검사기 몫) — 리포트에 예보 절 지문 1행과 두 소절을 싣는다(아래 «함께 커밋 리포트»).
   physical-signals 영구 테스트 입장 표(6열 정본 header)의 owner/path 셀 첫 Python artifact에 정형
                    어노테이션 `[markers: a,b] [base: X] [client: yes]` — 무기재 = 부재.
                    add의 code span/bare token `.py::case`는 파일 부분만 결합한다.
@@ -93,12 +101,13 @@
 무엇이 아닌가: 예보는 Phase 2 step 6(G2 registry 게이트)의 실행·증거 요구를 어떤
 형태로도 대체·축약하지 않는다(D4 대체 금지). green 은 «설계 검증됨»이 아니라
 «P/S/I급 결정 계약 위반 예보 0»이다. 예보 기준선은 «스텁 제외 현재 상태»이며
-`build_anchor` 를 읽지도 쓰지도 않는다(앵커 의미론).
+`build_anchor` 를 읽지도 쓰지도 않는다(앵커 의미론 — 예보에 대한 말이다. 아래 `--joint-verify` 는 예보가 아니라 G2
+대조라서 이번 실행 앵커를 읽는다 · 쓰지 않는다).
 
 사용: design_pregate.py <design-spec.md> <저장소 루트> [--base <git ref, 기본 HEAD>]
                         [--report <경로>] [--approved-merge-file <approved-merges.txt>]
                         [--python <검사기 인터프리터>] [--keep] [--block-hash]
-                        [--check-report <pregate-report.md> [--expect-base <7~40 hex>]]
+                        [--check-report <pregate-report.md> [--expect-base <7~40 hex>] | --joint-verify <산출물 폴더>]
 exit 0 = 예보 green · 2 = 예보 red(계약 실존 결손은 병기) · 3 = 형식 red(파싱 오류 · machine 블록
 부재·공허 · add/empty 충돌 · update/remove 대상 기준선 부재 · 금지 경로 · 태그 이중 서술) · 4 = skip(실체화 0·
 결손 0 — 공허 차분 가드 · 사유 명시) · 5 = 계약 실존 결손 ≥1 ∧ (귀속 0 ∨ 실체화 0)(권고·비차단 —
@@ -119,6 +128,24 @@ architect 반송 의무)과 아래 `--check-report`(그 의무 이행의 결정�
 형식 red 미해소 · 처분 미기재(선언 확정 #574 의 filtered · #663 의 ignored · filtered 는 불인정) · 해시 토큰 없는 구판 헤더 · 툴체인 stale ·
 digest 토큰 없는 구판 헤더 · 기대 기준선과 다른 기준선(기준선 치환) · 기준선 대조 누락 · 기준선 행 중복) ·
 1 = 리포트 부재·절 부재·헤더 행 부재·digest 계산 실패.
+함께 커밋 리포트(2.36.0): 예보 절 머리 `- 판정:` 다음 1행 `- 함께 커밋 승인 행 <n> · 지문 <x>`(x = 행 끝 칸이 있는 행마다
+열쇠(bc · area · 유스케이스 · 불변식) · `함께`(차례 무관) · `잠금`(차례대로)을 정규화해 차례 맞춘 글의 sha256[:12] — 행 0 이면 빈
+글의 해시 · 셈은 `_joint_rows_fingerprint` 한 곳)과, 형식 red 아닌 절에 두 소절 — «함께 커밋 승인 행»(행마다 새 · 기준선
+주석과 같은 칸 · «바꿈: 옛 → 새») · «이번에 고치는 코드에 전부터 있던 함께 커밋»(file-plan 이 고치는 유스케이스의 기준선 주석 가운데
+이 명세가 다시 적지 않은 것 · 계획 뒤 그 유스케이스 파일이 하나도 남지 않으면(remove 로 옮기거나 지움 — 승격처럼 같은 열쇠로
+남으면 아니다) «옮기거나 지우는 유스케이스의 함께 커밋» 으로 따로).
+기준선 주석은 실체화 «전» 사본(스텁 제외 현재 상태)에서 주석 토큰으로 읽는다. Coordinator 는 G1 · G1′ 배너에 두 소절을
+옮기고, 배너를 낼 때 리포트 끝에 `- G1 배너 — 함께 커밋 지문 <x> · <UTC>` 1행을 덧붙인다(G2 대조의 재료).
+`--joint-verify <산출물 폴더>` 는 G2 함께 커밋 대조다(예보 아님 · 판정 무접촉 · 검사기를 돌리지 않는다 · git 은 읽기만 ·
+`--check-report` 와 상호 배타 — 함께 주면 사용 오류 exit 1). 이번 실행 앵커(`folder_group.run_anchor` — `folder_group.py
+verify --run` 과 같은 읽기)와 그 폴더 `approved-merges.txt` 의 참여 머지 `^2` 에 같은 열쇠 · 같은 뜻의 칸으로 없던 표지(유스케이스
+칸 파일의 `# joint-commit:` 주석 — 검사기와 같은 파일 · 같은 열쇠)는 이 명세에 같은 칸 행이 있어야 하고, 이 명세의 행은 코드에
+같은 칸 표지가 있어야 한다. 명세는 이번 실행 것만 승인으로 쓴다(그 폴더 `pregate-report.md` 의 마지막 예보 절이 마지막
+`- 실행 경계 —` 행 뒤 — 아니면 행을 알림으로만 찍는다 · 행이 있는데 리포트가 없으면 실행 불능). 이번 실행 명세에 행이 있으면
+그 지문이 이번 실행 마지막 `- G1 배너 — 함께 커밋 지문` 기록과 같아야 한다(다르거나 없으면 어긋남 — G1′ 배너로 보이고
+승인받는다). 출력: 머리 1행 · 알림 · 어긋남 줄 · `요약:` 1행(G2 배너 재료 — 맞음|어긋남 n건 · 이번에 승인한 것 · 새로 달거나
+바꾼 주석 · 전부터 있던 주석 · 이번에 걷은 주석 · 머지로 들어온 다른 작업의 주석). exit 0 맞음 · 2 어긋남 · 1 실행 불능(git 저장소
+아님 · 앵커 없음 · 앵커 불일치 · 풀 수 없음 · 승인 머지 목록 검증 실패 · 행이 있는데 리포트 없음 · git 읽기 실패).
 `--approved-merge-file <목록>`(발주자 소유 `approved-merges.txt` — registry_gate 와 같은 로더·검증): 기준선..HEAD
 first-parent 사슬의 참여 머지가 들여온 verbatim 변경(추가·수정·삭제 — 경로별 마지막 참여 머지 · 충돌 해소분 제외)을
 기준선 사본에 적용한다(헤더 «승인 유입» 행). 형식 검사의 실존은 «기준선 ⊕ 유입»이고, 유입 실존 경로의 add·empty 는
@@ -444,6 +471,7 @@ class UseCaseEffect:
     owner: str
     effect: str
     uow: str
+    joint: "ct.JointFields | None" = None  # 행 끝 함께 커밋 칸(2.36.0 — 없으면 None)
 
 
 @dataclass
@@ -957,7 +985,8 @@ def _parse_effects(rows: list[str] | None, plan: Plan, errors: list[str]) -> Non
     for raw in rows:
         if not raw.strip() or raw.lstrip().startswith("#"):
             continue
-        match = re.fullmatch(r"(\S+)::([A-Za-z_]\w*)\s+(read-only|write)\s+uow=(.+)", raw.strip())
+        head, tail = ct.joint_row_tail(raw)  # 끝 칸(함께 커밋)을 떼고 머리는 종전 문법으로 읽는다
+        match = re.fullmatch(r"(\S+)::([A-Za-z_]\w*)\s+(read-only|write)\s+uow=(.+)", head.strip())
         if not match:
             errors.append(f"use-case-effects 행 파싱 불가: {raw}")
             continue
@@ -982,9 +1011,41 @@ def _parse_effects(rows: list[str] | None, plan: Plan, errors: list[str]) -> Non
                 if any(isinstance(n, (ast.Call, ast.NamedExpr, ast.Lambda)) for n in ast.walk(annotation)):
                     raise ValueError("타입 표현식 밖")
         except (SyntaxError, ValueError):
-            errors.append(f"use-case-effects uow 타입식 파싱 불가: {raw}")
+            if re.search(r"\s(?:함께|잠금|불변식)\s", uow):  # 끝 칸을 떼지 못해 uow 타입식에 먹힌 꼴
+                errors.append(f"use-case-effects 함께 커밋 칸 — 칸 셋은 `함께 … 잠금 … 불변식 …` 차례이고 첫 칸 앞 구분은 탭 또는 "
+                              f"공백 둘 이상이다: {raw}")
+            else:
+                errors.append(f"use-case-effects uow 타입식 파싱 불가: {raw}")
             continue
-        plan.effects.append(UseCaseEffect(path, owner, effect, uow))
+        joint: "ct.JointFields | None" = None
+        if tail is not None:
+            joint = ct.joint_fields(tail)
+            why: "str | None" = _joint_row_reason(path, effect, uow, joint)
+            if why is not None:
+                errors.append(f"use-case-effects 함께 커밋 칸 — {why}: {raw}")
+                continue
+        plan.effects.append(UseCaseEffect(path, owner, effect, uow, joint))
+
+
+JOINT_ROW_FORM: str = ("`함께 <애그리거트>[×n], …<칸 사이>잠금 <애그리거트>(<키>)[ → <애그리거트>(<키>) …]<칸 사이>불변식 <이름>`"
+                       "(이 차례 · 칸 사이 = 탭 또는 공백 둘 이상 · 코드 표지 `# joint-commit:` 뒤 글과 같다)")
+
+
+def _joint_row_reason(path: str, effect: str, uow: str, fields: "ct.JointFields | None") -> "str | None":
+    """use-case-effects 행 끝 함께 커밋 칸의 형식 red 까닭(없으면 None) — 칸 읽기 · 꼴 틀림 까닭은 `checker_target` 한 출처."""
+    if effect != "write" or uow == "none":
+        return "칸은 `write` · `uow=<타입>` 행에만 적는다(읽기 행 · 저장 경계 없는 행은 함께 커밋할 트랜잭션이 없다)"
+    if fields is None:
+        return f"칸 셋 꼴이 아니다 — {JOINT_ROW_FORM}"
+    if fields.malformed:
+        return fields.malformed
+    if "#" in fields.inv:
+        return ("불변식에 `#` 를 쓰지 않는다 — 코드 표지 주석은 `#` 부터를 줄 끝 지시어(`# noqa` 등)로 보고 떼므로, 이 행과 같은 "
+                "글의 `# joint-commit:` 주석을 달 수 없다(G2 대조가 늘 어긋난다)")
+    if ct.joint_use_case("/".join(_plan_parts(path)), None) is None:
+        return ("칸은 유스케이스 칸 행에만 적는다(`application/<bc>/application_layer/` 아래 `<x>_use_case.py` 또는 승격 폴더 "
+                "`<x>_use_case/` 부품 — 검사기 · G2 대조가 표지를 읽는 파일)")
+    return None
 
 
 def block_hash(text: str) -> str:
@@ -5198,7 +5259,9 @@ def _own_interpreter_note(repo: Path) -> "str | None":
 
 BLIND_SPOTS: "tuple[str, ...]" = (
     "S1 C급(함수 본문·행위 규칙): 생성 본문은 미검증이다. 정확한 생성 위치/슬롯 결합의 #376/#645/#647만 별도 보고하며 실제 구현 검증을 대신하지 않는다. "
-    "재료 파일(`composition_root/wiring_material.py`) 함수 본문은 정형 `return settings.PREGATE_STUB` 로 실체화한다(생성식 · 읽는 설정 이름은 미검증).",
+    "재료 파일(`composition_root/wiring_material.py`) 함수 본문은 정형 `return settings.PREGATE_STUB` 로 실체화한다(생성식 · 읽는 설정 이름은 미검증). "
+    "use-case-effects 행 끝 함께 커밋 칸은 칸 꼴 · 같은 BC 애그리거트 · 기준선 주석만 본다 — 함께 쓰기 자체(#546 · #550 행 3)와 "
+    "표지 칸 = 코드는 본문이라 G2 검사기 몫이고, 표지 = 이번 승인 행은 G2 `--joint-verify` 몫이다.",
     "S2 ④형(명세 내부 의미 모순·규범 과잉결정): 명시 read-only/UoW와 출처 결합 DTO의 선언 확정/후보 밖은 미검증이다. "
     "포트·조회 계약 메서드 인자 `<data>_in` 의 #574 선언 확정은 이 사각이 아니다(S2 인용 filtered 불가 — 명세를 고친다).",
     "S3 BC 내부 계층 의존(#92/#93류): 유도 삽입은 규약 준수형이라 예보 불가 · 블록에 기재된 경계 import 는 스텁에 "
@@ -5293,8 +5356,8 @@ def write_report(report_path: Path, spec: Path, base_ref: str, base_sha: str, ve
                  notes: "list[str]", blk_hash: str, existence: ExistenceReport,
                  declarations: list[DeclarationFinding] | tuple[DeclarationFinding, ...] = (),
                  *, execution_mode: str = "", raw_summary: str = "", header_notes: "tuple[str, ...]" = (),
-                 deferred: list[str] | tuple[str, ...] = ()) -> None:
-    """예보 리포트 append(D4) — 헤더 상시 문구·안정 ID·계약 실존 절(상시)·사각 목록 병기."""
+                 deferred: list[str] | tuple[str, ...] = (), joint_lines: "list[str] | tuple[str, ...]" = ()) -> None:
+    """예보 리포트 append(D4) — 헤더 상시 문구·안정 ID·계약 실존 절(상시)·함께 커밋 두 소절·사각 목록 병기."""
     now: str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     lines: "list[str]" = [
         "",
@@ -5308,6 +5371,7 @@ def write_report(report_path: Path, spec: Path, base_ref: str, base_sha: str, ve
         *(f"- {note}" for note in header_notes),
         f"- {FILE_PLAN_NOTE}",
         f"- 판정: {verdict}",
+        f"- {_joint_rows_line(spec)}",
         "",
         f"### 예보 항목 ({len(attributed)}건 · 안정 ID = sha256(규칙#+경로)[:12])",
         "",
@@ -5322,6 +5386,7 @@ def write_report(report_path: Path, spec: Path, base_ref: str, base_sha: str, ve
         lines.append("- (없음)")
     lines.extend(_declaration_lines(declarations))
     lines.extend(_existence_lines(existence))
+    lines.extend(joint_lines)
     lines += ["", f"### already-built ({len(mat.get('already_built', []))}건) · "
                   f"미시뮬레이션 ({len(mat.get('unsimulated', []))}건)", ""]
     for item in mat.get("already_built", []):
@@ -5347,9 +5412,10 @@ def write_report_stub(report_path: "Path | None", spec: Path, base_ref: str, bas
                       verdict: str, detail: "list[str]", blk_hash: str,
                       existence: "ExistenceReport | None" = None,
                       declarations: list[DeclarationFinding] | tuple[DeclarationFinding, ...] = (),
-                      *, execution_mode: str = "", header_notes: "tuple[str, ...]" = ()) -> None:
-    """형식 red·skip 도 리포트에 사유를 남긴다(침묵 금지) — 예보 항목 없는 축약판. 실체화-0 skip 은 계약 실존 절을
-    싣는다(결손 ≥1 이면 exit 5 의 근거 — kkebi S2 판형: update 소비자만의 명세)."""
+                      *, execution_mode: str = "", header_notes: "tuple[str, ...]" = (),
+                      joint_lines: "list[str] | tuple[str, ...]" = ()) -> None:
+    """형식 red·skip 도 리포트에 사유를 남긴다(침묵 금지) — 예보 항목 없는 축약판. 실체화-0 skip 은 계약 실존 절과 함께 커밋
+    두 소절을 싣는다(결손 ≥1 이면 exit 5 의 근거 — 현장 S2 판형: update 소비자만의 명세 · skip 도 G1 배너 근거다)."""
     if report_path is None:
         return
     now: str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -5364,12 +5430,14 @@ def write_report_stub(report_path: "Path | None", spec: Path, base_ref: str, bas
         *(f"- {note}" for note in header_notes),
         f"- {FILE_PLAN_NOTE}",
         f"- 판정: {verdict}",
+        f"- {_joint_rows_line(spec)}",
         "",
     ]
     lines.extend(f"- {item}" for item in detail)
     lines.extend(_declaration_lines(declarations))
     if existence is not None:
         lines.extend(_existence_lines(existence))
+    lines.extend(joint_lines)
     lines.append("")
     report_path.parent.mkdir(parents=True, exist_ok=True)
     with report_path.open("a", encoding="utf-8") as fp:
@@ -5438,6 +5506,24 @@ def baseline_form_errors(plan: Plan, copy: Path, in_baseline: "frozenset[str]", 
             errors.append(f"empty 충돌(실존): {path} — 새 빈 파일 자리가 기준선 {base_short} 에 이미 있다: "
                           f"기실현이면 update 다(재라벨 도피 금지)")
     return errors, frozenset(promoted)
+
+
+def joint_form_errors(plan: Plan, copy: Path) -> "list[str]":
+    """함께 커밋 칸의 `함께` 애그리거트가 그 행의 BC 에 있는가 — 기준선 ⊕ 승인 유입 사본(오버레이 «전»)의
+    `application/<bc>/domain_layer/<a>/<a>_repository.py`(검사기가 애그리거트 저장소를 읽는 자리) 또는 file-plan add. 없으면 형식 red
+    (다른 BC 의 애그리거트 · 오타 — 예외는 같은 BC 안에서만이다)."""
+    added: "set[str]" = {"/".join(_plan_parts(p)) for p, e in plan.entries.items() if e.tag == "add"}
+    errors: "list[str]" = []
+    for eff in plan.effects:
+        if eff.joint is None:
+            continue
+        bc: str = _plan_parts(eff.path)[1]
+        for agg in eff.joint.aggs:
+            repository: str = f"application/{bc}/domain_layer/{agg}/{agg}_repository.py"
+            if repository not in added and not (copy / repository).is_file():
+                errors.append(f"함께 커밋 애그리거트 부재: `{agg}` — BC `{bc}` 의 기준선에 `{repository}` 가 없고 file-plan add 도 "
+                              f"아니다(`함께` 는 같은 BC 의 애그리거트 폴더 이름): {eff.path}::{eff.owner}")
+    return errors
 
 
 def _error_kinds(errors: "list[str]") -> str:
@@ -5645,6 +5731,286 @@ def run_check_report(spec_text: str, report_path: Path, blk_hash: str, expect_ba
     return code
 
 
+# ── 함께 커밋(2.36.0) — 예보 절 지문 · 리포트 두 소절 · G2 대조(`--joint-verify`) ─────────────────────────────
+# 표지 · 칸 읽기 · 열쇠 · 뜻 같음은 `checker_target` 한 출처(`joint_marks` · `joint_fields` · `joint_use_case` · `joint_same` ·
+# `joint_row_tail`)다 — 여기서는 그 결과를 열쇠(bc · area · 유스케이스 · 불변식)별로 모으고 견준다.
+
+JOINT_BANNER_PREFIX: str = "- G1 배너 — 함께 커밋 지문"
+_JOINT_TOKEN: str = "joint-commit:"
+
+
+def _joint_text_marks(rel: str, body: str, head: "tuple[str, str, str]",
+                      out: "dict[tuple[str, str, str, str], list[tuple[str, int, ct.JointFields | None]]]") -> None:
+    """한 파일 글의 표지(주석 토큰만)를 열쇠별로 담는다 — 칸 셋 꼴이 아닌 표지는 공백을 접은 본문 전체가 불변식 자리다."""
+    for line, mark in ct.joint_marks(body).items():
+        fields: "ct.JointFields | None" = ct.joint_fields(mark)
+        inv: str = fields.inv if fields is not None else " ".join(mark.split())
+        out.setdefault((*head, inv), []).append((rel, line, fields))
+
+
+def _joint_dir_marks(root: Path, heads: "set[tuple[str, str, str]] | None" = None
+                     ) -> "dict[tuple[str, str, str, str], list[tuple[str, int, ct.JointFields | None]]]":
+    """폴더(작업 트리 · 격리 사본)의 유스케이스 칸 파일(`checker_target.joint_use_case` — 검사기와 같은 파일 · 같은 열쇠)에서 읽은
+    표지. `heads` 를 주면 그 유스케이스만 본다."""
+    out: "dict[tuple[str, str, str, str], list[tuple[str, int, ct.JointFields | None]]]" = {}
+    app: Path = root / "application"
+    tops: "list[Path]" = ([app / bc / "application_layer" for bc in sorted({h[0] for h in heads})]
+                          if heads is not None else [app])
+    for top in tops:
+        for py in sorted(top.rglob("*.py")) if top.is_dir() else []:
+            rel: str = py.relative_to(root).as_posix()
+            head: "tuple[str, str, str] | None" = ct.joint_use_case(rel, lambda r: (root / r).is_file())
+            if head is None or (heads is not None and head not in heads):
+                continue
+            body: str = py.read_text(encoding="utf-8", errors="replace")
+            if _JOINT_TOKEN in body:
+                _joint_text_marks(rel, body, head, out)
+    return out
+
+
+def _joint_commit_marks(repo: Path, sha: str) -> "dict[tuple[str, str, str, str], list[tuple[str, int, ct.JointFields | None]]]":
+    """커밋 트리의 표지 — `git grep -l -z` 로 고른 유스케이스 칸 파일만 `git show` 로 읽는다. 부품 판독의 «파일이 있나» 는 그 커밋의
+    `ls-tree -r -z` 목록으로 본다(NUL 구분 — 비 ASCII 경로가 따옴표 꼴로 바뀌지 않는다). git 읽기 실패는 실행 불능(RunError)."""
+    listed: "subprocess.CompletedProcess[bytes]" = _git(repo, "ls-tree", "-r", "--name-only", "-z", sha, "--", "application")
+    names: "set[str]" = set(listed.stdout.decode("utf-8", "replace").split("\0")) - {""}
+    found: "subprocess.CompletedProcess[bytes]" = _git(repo, "grep", "-I", "-l", "-z", "-e", _JOINT_TOKEN, sha, "--",
+                                                       "application", check=False)
+    if found.returncode not in (0, 1):  # 1 = 맞는 줄 없음
+        raise RunError(f"git grep 실패({sha[:12]}) — {found.stderr.decode('utf-8', 'replace').strip()[:300]}")
+    out: "dict[tuple[str, str, str, str], list[tuple[str, int, ct.JointFields | None]]]" = {}
+    for item in found.stdout.decode("utf-8", "replace").split("\0"):
+        rel: str = item[len(sha) + 1:] if item.startswith(sha + ":") else item
+        head: "tuple[str, str, str] | None" = ct.joint_use_case(rel, names.__contains__) if rel else None
+        if head is not None:
+            _joint_text_marks(rel, _git(repo, "show", f"{sha}:{rel}").stdout.decode("utf-8", "replace"), head, out)
+    return out
+
+
+def _joint_spec_rows(text: str) -> "list[tuple[tuple[str, str, str, str], str, ct.JointFields | None]]":
+    """이 명세 use-case-effects 행 가운데 끝 칸이 있는 것 — (열쇠, 행 머리, 칸). 유스케이스 칸 밖 행은 pre-gate 형식 red 라
+    승인 명세에 남지 않는다(열쇠가 없어 뺀다)."""
+    out: "list[tuple[tuple[str, str, str, str], str, ct.JointFields | None]]" = []
+    for raw in _machine_blocks(text, []).get("use-case-effects", []):
+        if not raw.strip() or raw.lstrip().startswith("#"):
+            continue
+        head, tail = ct.joint_row_tail(raw)
+        if tail is None:
+            continue
+        uc: "tuple[str, str, str] | None" = ct.joint_use_case("/".join(_plan_parts(head.strip().split("::", 1)[0])), None)
+        if uc is None:
+            continue
+        fields: "ct.JointFields | None" = ct.joint_fields(tail)
+        out.append(((*uc, fields.inv if fields is not None else " ".join(tail.split())), head.strip(), fields))
+    return out
+
+
+def _joint_rows_fingerprint(text: str) -> "tuple[int, str]":
+    """이 명세 함께 커밋 행(행 끝 칸이 있는 use-case-effects 행)의 수와 지문 — 예보 절 · G1 배너 기록 · G2 대조가 같은 셈을 쓴다.
+    지문 = 행마다 (열쇠 · `함께`(차례 무관) · `잠금`(차례대로)) 를 정규화해 차례 맞춘 글의 sha256[:12] — 행 0 이면 빈 글의 해시."""
+    norm: "list[str]" = []
+    for key, _head, fields in _joint_spec_rows(text):
+        norm.append("|".join(key) + "|" + (repr(sorted(fields.aggs.items())) + repr(list(fields.lock)) if fields else "?"))
+    return len(norm), hashlib.sha256("\n".join(sorted(norm)).encode("utf-8")).hexdigest()[:12]
+
+
+def _joint_rows_line(spec: Path) -> str:
+    """예보 절 1행 — 조정자가 G1 · G1′ 배너 때 이 지문을 `- G1 배너 — 함께 커밋 지문 <x> · <UTC>` 로 리포트 끝에 덧붙인다."""
+    try:
+        n, fp = _joint_rows_fingerprint(spec.read_text(encoding="utf-8"))
+    except OSError:
+        return "함께 커밋 승인 행 ? · 지문 ?(명세를 읽지 못함)"
+    return f"함께 커밋 승인 행 {n} · 지문 {fp}"
+
+
+def _joint_fields_text(fields: "ct.JointFields | None") -> str:
+    """칸을 사람이 읽는 글로 — `함께 a×2, b · 잠금 a(id) → b(k)`(칸 셋 꼴이 아니거나 꼴이 틀리면 그렇게 적는다)."""
+    if fields is None:
+        return "칸 셋 꼴 아님"
+    aggs: str = ", ".join(f"{a}×{n}" if n > 1 else a for a, n in fields.aggs.items())
+    lock: str = " → ".join(f"{t}({k})" for t, k in fields.lock) or "-"
+    return f"함께 {aggs} · 잠금 {lock}" + (f"(꼴 틀림 — {fields.malformed})" if fields.malformed else "")
+
+
+def joint_baseline(copy: Path, plan: Plan
+                   ) -> "tuple[dict[tuple[str, str, str, str], list[tuple[str, int, ct.JointFields | None]]], set[tuple[str, str, str]]]":
+    """리포트 두 소절의 재료 — (이 명세가 file-plan 으로 고치는(add · update · empty · remove 칸이 든) 유스케이스의 기준선 표지,
+    그 가운데 계획 뒤 파일이 하나도 남지 않는 유스케이스(옮기거나 지움 — 같은 열쇠의 새 자리가 없다)). 기준선은 실체화 «전» 사본(스텁
+    제외 현재 상태)이고, 유스케이스 판독은 계획 뒤 모양(remove 는 없고 add · update · empty 는 있다)으로 한다 — 승격(같은 열쇠의 폴더로
+    옮김)은 남는 유스케이스다."""
+    planned: "dict[str, str]" = {"/".join(_plan_parts(p)): e.tag for p, e in plan.entries.items()}
+
+    def after(rel: str) -> bool:
+        tag: "str | None" = planned.get(rel)
+        return tag in ("add", "update", "empty") or (tag != "remove" and (copy / rel).is_file())
+
+    heads: "set[tuple[str, str, str]]" = {h for h in (ct.joint_use_case(p, after) for p in planned) if h is not None}
+    if not heads:
+        return {}, set()
+    alive: "set[tuple[str, str, str] | None]" = {ct.joint_use_case(p, after) for p, tag in planned.items()
+                                                 if tag in ("add", "update", "empty")}
+    for bc in sorted({h[0] for h in heads}):
+        layer: Path = copy / "application" / bc / "application_layer"
+        for py in layer.rglob("*.py") if layer.is_dir() else []:
+            rel: str = py.relative_to(copy).as_posix()
+            if planned.get(rel) != "remove":
+                alive.add(ct.joint_use_case(rel, after))
+    return _joint_dir_marks(copy, heads), heads - alive
+
+
+def joint_report_lines(text: str, baseline: "dict[tuple[str, str, str, str], list[tuple[str, int, ct.JointFields | None]]]",
+                       gone: "set[tuple[str, str, str]]") -> "list[str]":
+    """리포트 두 소절(G1 · G1′ 배너 재료) — «함께 커밋 승인 행»(행마다 새 · 기준선 주석과 같은 칸 · 바꿈: 옛 → 새) · «이번에 고치는 코드에
+    전부터 있던 함께 커밋»(이 명세가 다시 적지 않은 기준선 주석 — 옮기거나 지우는 유스케이스(`gone`)의 것은 따로: 새 자리는 열쇠가 달라
+    G2 대조가 그 자리 행을 찾는다)."""
+    rows: "list[tuple[tuple[str, str, str, str], str, ct.JointFields | None]]" = _joint_spec_rows(text)
+    lines: "list[str]" = ["", f"### 함께 커밋 승인 행 ({len(rows)}건)", ""]
+    for key, head, fields in rows:
+        before: "list[ct.JointFields | None]" = [f for _r, _l, f in baseline.get(key, [])]
+        if not before:
+            status: str = "새"
+        elif fields is not None and any(f is not None and ct.joint_same(f, fields) for f in before):
+            status = "기준선 주석과 같은 칸"
+        else:
+            status = f"바꿈: 옛 [{_joint_fields_text(before[0])}] → 새 [{_joint_fields_text(fields)}]"
+        lines.append(f"- {head.split()[0]} · 불변식 «{key[3]}» · {_joint_fields_text(fields)} — {status}")
+    if not rows:
+        lines.append("- (없음)")
+    row_keys: "set[tuple[str, str, str, str]]" = {key for key, _h, _f in rows}
+    kept: "list[str]" = []
+    moved: "list[str]" = []
+    for key, items in sorted(baseline.items()):
+        if key in row_keys:
+            continue
+        for rel, line, fields in items:
+            (moved if key[:3] in gone else kept).append(f"{rel}:{line} «{key[3]}» · {_joint_fields_text(fields)}")
+    lines += ["", f"### 이번에 고치는 코드에 전부터 있던 함께 커밋 ({len(kept)}건 · 옮기거나 지우는 유스케이스 {len(moved)}건)", ""]
+    lines += [f"- {item} — 칸을 그대로 두면 다시 승인받지 않는다 · 칸을 바꾸려면 행을 적는다" for item in kept]
+    lines += [f"- 옮기거나 지우는 유스케이스의 함께 커밋: {item} — 새 자리에 함께 커밋이 남으면 그 자리 행을 적는다(G2 대조는 "
+              "새 열쇠로 본다)" for item in moved]
+    if not kept and not moved:
+        lines.append("- (없음)")
+    return lines
+
+
+def _joint_g1_banner(report: Path) -> "str | None":
+    """이번 실행(마지막 실행 경계 행 뒤 · 경계가 없으면 전부)의 마지막 G1 · G1′ 배너 기록 지문 — 없으면 None."""
+    if not report.is_file():
+        return None
+    text: str = report.read_text(encoding="utf-8")
+    bounds: "list[int]" = [m.start() for m in re.finditer(r"(?m)^" + re.escape(RUN_BOUNDARY_PREFIX), text)]
+    found: "list[str]" = re.findall(r"(?m)^" + re.escape(JOINT_BANNER_PREFIX) + r" ([0-9a-f]{12})\b",
+                                    text[bounds[-1] if bounds else 0:])
+    return found[-1] if found else None
+
+
+def _joint_this_run_spec(report: Path) -> "bool | None":
+    """명세가 이번 실행 것인가 — pregate-report 의 마지막 예보 절이 마지막 실행 경계 행 뒤(경계가 없으면 예보 절이 하나라도)에
+    있으면 참(`check_report` 의 «앞 실행 예보(명세 불변)» 과 같은 경계). 리포트가 없으면 None."""
+    if not report.is_file():
+        return None
+    text: str = report.read_text(encoding="utf-8")
+    sections: "list[int]" = [m.start() for m in _REPORT_SECTION_RE.finditer(text)]
+    bounds: "list[int]" = [m.start() for m in re.finditer(r"(?m)^" + re.escape(RUN_BOUNDARY_PREFIX), text)]
+    return bool(sections) and (not bounds or sections[-1] > bounds[-1])
+
+
+def run_joint_verify(text: str, repo: Path, folder: Path, blk_hash: str) -> int:
+    """G2 함께 커밋 대조 — 실행 단위(이번 실행 앵커 · 그 폴더 승인 머지 · 이번 명세 · 이번 실행 G1 배너 기록). 앵커 · 승인 머지는
+    `folder_group.py verify --run` 과 같은 읽기(`run_anchor` · `approved-merges.txt` · `anchor_diff.load_approved_merges`)다."""
+    if not (repo / ".git").exists():
+        print(f"실행 불능: git 저장소가 아니다 — {repo}", file=sys.stderr)
+        return 1
+    try:
+        anchor: str = folder_group.run_anchor(folder)
+    except folder_group.FolderGroupError as exc:
+        print(f"실행 불능: {exc}", file=sys.stderr)
+        return 1
+    if not anchor:
+        print(f"실행 불능: {folder} — 이번 실행의 build_anchor 없음(대조는 Phase 2 첫 파견 직전 앵커 기록 뒤 G2 에서 돈다)",
+              file=sys.stderr)
+        return 1
+    rev: "subprocess.CompletedProcess[bytes]" = _git(repo, "rev-parse", "--verify", f"{anchor}^{{commit}}", check=False)
+    head: "subprocess.CompletedProcess[bytes]" = _git(repo, "rev-parse", "--verify", "HEAD^{commit}", check=False)
+    if rev.returncode != 0 or head.returncode != 0:
+        print(f"실행 불능: 앵커 {anchor!r} 또는 HEAD 를 풀 수 없다", file=sys.stderr)
+        return 1
+    anchor_sha: str = rev.stdout.decode("ascii").strip()
+    head_sha: str = head.stdout.decode("ascii").strip()
+    listed: Path = folder / "approved-merges.txt"
+    merges: "list[anchor_diff.ApprovedMerge]" = []
+    if listed.is_file():
+        try:
+            merges = [m for m in anchor_diff.load_approved_merges(listed.resolve(), repo, anchor_sha, head_sha)[0]
+                      if m.participates]
+        except (anchor_diff.AnchorDiffUsage, OSError) as exc:
+            print(f"실행 불능: 승인 머지 목록 — {exc}", file=sys.stderr)
+            return 1
+    rows: "list[tuple[tuple[str, str, str, str], str, ct.JointFields | None]]" = _joint_spec_rows(text)
+    this_run: "bool | None" = _joint_this_run_spec(folder / "pregate-report.md")
+    if rows and this_run is None:
+        print(f"실행 불능: 명세에 함께 커밋 행이 있는데 {folder}/pregate-report.md 가 없다 — pre-gate 를 돈 명세가 아니다",
+              file=sys.stderr)
+        return 1
+    now: "dict[tuple[str, str, str, str], list[tuple[str, int, ct.JointFields | None]]]" = _joint_dir_marks(repo)
+    before: "dict[tuple[str, str, str, str], list[tuple[str, int, ct.JointFields | None]]]" = _joint_commit_marks(
+        repo, anchor_sha)
+    inflow: "dict[tuple[str, str, str, str], list[tuple[str, int, ct.JointFields | None]]]" = {}
+    for m in merges:
+        for key, items in _joint_commit_marks(repo, m.parent2).items():
+            inflow.setdefault(key, []).extend(items)
+    print(f"# design_pregate --joint-verify · 앵커 {anchor_sha[:12]} · HEAD {head_sha[:12]} · 승인 머지 {len(merges)} · "
+          f"명세 블록 해시 {blk_hash}")
+    if rows and not this_run:
+        # G1′ 를 생략한 실행(이번 실행 예보 절 없음)의 명세 행은 앞 실행 승인이다 — 이번 실행의 새 주석을 승인하지도, 주석을 요구하지도 않는다.
+        for key, head_text, _f in rows:
+            print(f"  알림: 명세 {head_text.split()[0]}: 행 «{key[3]}» — 앞 실행 명세(이번 실행 예보 절 없음)라 이번 실행 승인으로 쓰지 않는다")
+        rows = []
+    problems: "list[str]" = []
+    if rows:
+        n_rows, fp = _joint_rows_fingerprint(text)
+        banner: "str | None" = _joint_g1_banner(folder / "pregate-report.md")
+        if banner != fp:
+            seen: str = "기록이 없다" if banner is None else f"기록 지문 {banner} 와 다르다"
+            problems.append(f"G1 배너 — 이번 명세의 함께 커밋 행(지문 {fp} · {n_rows}건)이 이번 실행 마지막 G1 · G1′ 배너 {seen} — "
+                            "사용자가 배너에서 보지 않은 행이다(G1 뒤 무배너 반영 · 반송으로 생기거나 바뀜): G1′ 배너로 보이고 승인받는다")
+
+    def same(a: "ct.JointFields | None", b: "ct.JointFields | None") -> bool:
+        """앵커 · 머지 ^2 와 같은 표지인가 — 칸 셋 꼴이 아닌 표지는 열쇠(접은 본문 글)가 같으면 같다."""
+        return (a is None and b is None) or (a is not None and b is not None and ct.joint_same(a, b))
+
+    def approved(key: "tuple[str, str, str, str]", fields: "ct.JointFields | None") -> bool:
+        """이번 명세에 같은 열쇠 · 같은 뜻의 칸 행이 있나(칸 셋 꼴이 아닌 쪽은 승인이 아니다)."""
+        return fields is not None and any(rk == key and rf is not None and ct.joint_same(rf, fields) for rk, _h, rf in rows)
+
+    fresh: int = 0
+    kept: int = 0
+    merged: int = 0
+    for key, items in sorted(now.items()):
+        for rel, line, fields in items:
+            if any(same(f, fields) for _r, _l, f in before.get(key, [])):
+                kept += 1
+            elif any(same(f, fields) for _r, _l, f in inflow.get(key, [])):
+                merged += 1
+            else:
+                fresh += 1
+                if not approved(key, fields):
+                    problems.append(f"{rel}:{line}: 주석 «{key[3]}» — 이번 실행에 새로 달거나 바꾼 함께 커밋 주석인데 이번 설계 승인에 "
+                                    "같은 칸의 행이 없다(G1 승인 밖 · 주석 · 명세로 풀지 않는다 — 이번 명세가 옮긴 유스케이스의 주석이면 "
+                                    "걷지 말고 G1′ 로 새 자리 행을 승인받고, 아니면 주석을 걷고 남은 함께 쓰기는 pending 으로 설계에 돌린다)")
+    for key, head_text, fields in rows:
+        if not (fields is not None and any(f is not None and ct.joint_same(f, fields) for _r, _l, f in now.get(key, []))):
+            problems.append(f"명세 {head_text.split()[0]}: 승인 행 «{key[3]}» — 코드에 같은 칸의 함께 커밋 주석이 없다(승인한 "
+                            "함께 커밋을 승인 꼴로 짓지 않았거나 둘로 나눴다 — coder 반송)")
+    removed: int = sum(len(items) for key, items in before.items() if key not in now)
+    for p in problems:
+        print(f"  어긋남: {p}")
+    status: str = "맞음" if not problems else f"어긋남 {len(problems)}건"
+    print(f"\n요약: 함께 커밋(설계 승인 → 코드 주석 → G2 대조) {status} · 이번에 승인한 것 {len(rows)} · "
+          f"이번에 새로 달거나 바꾼 주석 {fresh} · 전부터 있던 주석 {kept} · 이번에 걷은 주석 {removed} · "
+          f"머지로 들어온 다른 작업의 주석 {merged}")
+    return 0 if not problems else 2
+
+
 # ── main ────────────────────────────────────────────────────────────────────
 
 def main(argv: "list[str]") -> int:
@@ -5705,9 +6071,16 @@ def _main(argv: "list[str]") -> int:
     ap.add_argument("--block-hash", action="store_true",
                     help="기계가독 블록 해시와 실행 트리 digest 두 행만 출력하고 끝낸다(출력 전용·판정 무접촉 — "
                          "캐시 skip 대조용)")
-    ap.add_argument("--check-report", default=None,
+    only = ap.add_mutually_exclusive_group()  # S6 — `--check-report` · `--joint-verify` 를 함께 주면 사용 오류(exit 1)
+    only.add_argument("--check-report", default=None,
                     help="pregate-report.md 의 최신성·처분 완결만 대조하고 끝낸다(출력 전용·git 0회 — "
                          "배너·G2 근거 대조용: exit 0 정합 · 3 불비 · 1 리포트/절 부재)")
+    only.add_argument("--joint-verify", default=None, metavar="산출물 폴더",
+                    help="G2 함께 커밋 대조(예보 아님 · git 은 읽기만 · 판정 무접촉) — 이번 실행의 앵커(`folder_group.run_anchor`)와 "
+                         "그 폴더 `approved-merges.txt` 의 승인 머지 ^2 에 없던 표지는 이 명세의 같은 칸 승인 행이 있어야 하고, 이 "
+                         "명세의 승인 행은 코드에 같은 칸 표지가 있어야 한다 · 이번 실행 예보 절이 있는 명세만 승인으로 쓰고 그 행 "
+                         "지문은 이번 실행 마지막 `- G1 배너 — 함께 커밋 지문` 기록과 같아야 한다(exit 0 맞음 · 2 어긋남 · "
+                         "1 실행 불능)")
     ap.add_argument("--expect-base", default=None,
                     help="`--check-report` 전용(선택) — 마지막 예보 절 기준선이 이 SHA(7~40 hex)로 시작해야 정합 · "
                          "리포트의 `- pre-gate 기준선 —` 행과 함께 대조한다(기준선 치환 봉쇄)")
@@ -5739,6 +6112,8 @@ def _main(argv: "list[str]") -> int:
             return 1
     if ns.check_report is not None:
         return run_check_report(text, Path(ns.check_report).resolve(), blk_hash, expect_base=ns.expect_base)
+    if ns.joint_verify is not None:
+        return run_joint_verify(text, repo, Path(ns.joint_verify).resolve(), blk_hash)
     if not (repo / ".git").exists():
         print(f"실행 불능: git 저장소가 아니다 — {repo} (차분 예보는 git 앵커가 전제다)", file=sys.stderr)
         return 1
@@ -5877,7 +6252,7 @@ def _main(argv: "list[str]") -> int:
             plan, copy, in_baseline, base_sha[:12],
             (lambda p: _git(repo, "cat-file", "-e", f"{head_sha}:{p}", check=False).returncode == 0)
             if explicit_base else (lambda p: False), inflow=inflow)
-        form_errors: "list[str]" = form_result[0]
+        form_errors: "list[str]" = form_result[0] + joint_form_errors(plan, copy)
         promoted: "frozenset[str]" = form_result[1]
         if form_errors:
             print(f"형식 red — {len(form_errors)}건 (계획↔기준선 모순 · architect 반송 재료):")
@@ -5918,6 +6293,8 @@ def _main(argv: "list[str]") -> int:
         # 프레임워크가 대신 부르는 메서드(#663)의 비교 기준선도 전사 «전» 실물이다(F4-52).
         framework_findings: list[DeclarationFinding] = check_framework_called_forecast(
             plan, framework_called_baseline(copy, plan))
+        # 함께 커밋 두 소절(2.36.0)의 기준선 주석도 전사 «전» 실물에서 읽는다 — remove 가 지우고 add 스텁이 덮기 전.
+        joint_lines: "list[str]" = joint_report_lines(text, *joint_baseline(copy, plan))
 
         try:
             mat: MaterializationReport = materialize(copy, plan, realized=realized, base_short=base_sha[:12],
@@ -5939,7 +6316,7 @@ def _main(argv: "list[str]") -> int:
                         + catch_findings + framework_findings
                         + check_publish_path_forecast(plan, copy))
         declaration_count = len({(item.rule, item.path) for item in declarations if item.confirmed})
-        for line in _declaration_lines(declarations):
+        for line in _declaration_lines(declarations) + joint_lines:
             print(line)
         existence: ExistenceReport = check_import_existence(copy, plan)
         if skip_overlay:
@@ -5966,7 +6343,8 @@ def _main(argv: "list[str]") -> int:
             write_report_stub(report_path, spec_path, base_ref, base_sha, verdict_stub,
                               [reason] + [f"미시뮬레이션: {x}" for x in mat["unsimulated"]] + cleanup_notes
                               + [f"채널 메모: {n}" for n in plan.notes], blk_hash,
-                              existence=existence, declarations=declarations, execution_mode=execution_mode, header_notes=header_notes)
+                              existence=existence, declarations=declarations, execution_mode=execution_mode, header_notes=header_notes,
+                              joint_lines=joint_lines)
             return 2 if declaration_count else (5 if defects else 4)
 
         print(f"# design_pregate — 예보 실행 · 기준선 {base_sha[:12]} (--base {base_ref}) · "
@@ -6002,7 +6380,8 @@ def _main(argv: "list[str]") -> int:
         if report_path is not None:
             write_report(report_path, spec_path, base_ref, base_sha, verdict,
                          attributed, mat, plan.notes, blk_hash, existence, declarations,
-                         execution_mode=execution_mode, header_notes=header_notes, raw_summary=raw_summary, deferred=deferred)
+                         execution_mode=execution_mode, header_notes=header_notes, raw_summary=raw_summary, deferred=deferred,
+                         joint_lines=joint_lines)
         if attributed or declaration_count:
             return 2
         return 5 if defects else 0

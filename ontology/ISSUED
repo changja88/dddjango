@@ -3741,3 +3741,7 @@ R-3740	2026-11-09	rules/discipline-houserules-final.ttl
 R-3741	2026-11-10	rules/agent-design-review-ddd.ttl
 R-3742	2026-11-10	rules/agent-design-architect.ttl
 R-3743	2026-11-10	rules/agent-discipline-reviewer.ttl
+R-3744	2026-11-10	rules/architecture-ddd-final.ttl
+R-3745	2026-11-10	rules/architecture-ddd-final.ttl
+R-3746	2026-11-10	rules/agent-design-architect.ttl
+R-3747	2026-11-10	rules/command-dddjango.ttl

@@ -17,6 +17,14 @@ green 처리했다. 조용 통과 대신 소리내어 거절한다(#74 「조용
 
 이 모듈은 수기 소유다(standard_tree.py 는 tree_mirror_check --write 가 전체
 재생성하는 기계 사본이라 여기 두지 않는다).
+
+함께 커밋 칸(2.36.0)의 한 출처도 여기 산다 — 명세 use-case-effects `write` 행 끝 칸과 코드 표지
+`# joint-commit: 함께 …  잠금 …  불변식 …` 는 한 문법이고, 칸 읽기 · 꼴 틀림 까닭 · 표지 읽기(주석 토큰만) ·
+유스케이스 칸 파일과 열쇠(`joint_use_case` — 표준 밖 자리 · 승격 부품 포함) · 뜻 같음 · 행 끝 칸 떼기를
+check-domain-model(#546 표지 판정)과 design_pregate(형식 red · G2 `--joint-verify`)가 같이 쓴다.
+진입점 하나(G0 배너 재료 · 판정 없음): `python3 checker_target.py --joint-list <저장소 루트> [--bc <bc> …]` —
+BC 마다 `함께 커밋 주석 <bc> n건 — …: <파일:줄> «불변식» · 잠금 <…>` 1행. BC 폴더 · `application/` TARGET ·
+없는 `--bc` 는 사용 오류 exit 1(빈 목록을 0건으로 찍지 않는다). 제 폴더를 `sys.path` 앞에 두어 `-I` 로도 돈다.
 """
 from __future__ import annotations
 
@@ -27,7 +35,7 @@ import sys
 import fnmatch
 from pathlib import Path
 from types import MappingProxyType
-from typing import Iterator, Mapping, NamedTuple, Optional
+from typing import Callable, Iterator, Mapping, NamedTuple, Optional
 
 _BC_LAYER_DIRS: "tuple[str, ...]" = ("domain_layer", "application_layer", "driving_layer", "driven_layer")
 
@@ -573,3 +581,172 @@ def ohs_event_value_handler(handler: ast.ExceptHandler, mod: ast.Module, root: P
                         and value.value.id == handler.name and value.attr in caught_fields)):
             return False
     return True
+
+
+# ── 함께 커밋 칸(2.36.0) — 코드 표지 · 명세 use-case-effects 행 끝 칸의 한 문법 ─────────────────────────────
+# `함께 <애그리거트>[×n], …<칸 사이>잠금 <애그리거트>(<키>)[ → <애그리거트>(<키>) …]<칸 사이>불변식 <이름>`
+# 칸 사이 = 탭 또는 공백 둘 이상(명세의 다른 칸 · `대신부름` 과 같다). 표지 = 그 아래 `with` 바로 윗줄 주석
+# `# joint-commit: <칸 셋>` — 명세 행 끝 칸 글자를 그대로 옮긴다.
+JOINT_SEP: str = r"(?:\t+| {2,})"
+JOINT_FIELDS_RE: "re.Pattern[str]" = re.compile(
+    r"함께\s+(?P<agg>\S.*?)" + JOINT_SEP + r"잠금\s+(?P<lock>\S.*?)" + JOINT_SEP + r"불변식\s+(?P<inv>\S.*?)\s*")
+JOINT_TAIL_RE: "re.Pattern[str]" = re.compile(JOINT_SEP + r"(?=함께\s)")
+JOINT_MARK_RE: "re.Pattern[str]" = re.compile(r"#\s*joint-commit:\s*(?P<body>[^#]*?)(?:\s+#.*)?\s*$")  # 뒤 `# noqa…` 는 뺀다
+JOINT_MARK_FORM: str = ("`# joint-commit: 함께 <애그리거트>[×n], …  잠금 <애그리거트>(<키>)[ → …]  불변식 <이름>`"
+                        "(칸 사이 공백 둘 이상 · 명세 행 끝 칸 그대로)")
+class JointFields(NamedTuple):
+    """칸 셋을 읽은 것 — `malformed` 가 있으면 꼴이 틀렸다(그 까닭)."""
+    aggs: "Mapping[str, int]"
+    lock: "tuple[tuple[str, str], ...]"
+    inv: str
+    malformed: "str | None"
+
+
+def joint_fields(text: str) -> "JointFields | None":
+    """칸 셋 글(표지 본문 · 명세 행 끝 칸) → JointFields. 칸 셋 꼴이 아니면 None."""
+    m: "re.Match[str] | None" = JOINT_FIELDS_RE.fullmatch(text.strip())
+    if m is None:
+        return None
+    inv: str = " ".join(m["inv"].split())
+    aggs: "dict[str, int]" = {}
+    why: "str | None" = None
+    for item in m["agg"].split(","):
+        a = re.fullmatch(r"\s*([a-z_][a-z0-9_]*)(?:×(\d+))?\s*", item)
+        if a is None or (a.group(2) is not None and int(a.group(2)) < 2):
+            why = why or f"`함께` 낱말 `{item.strip()}`(snake 애그리거트 폴더 이름[×n] · n ≥ 2)"
+            continue
+        if a.group(1) in aggs:
+            why = why or f"`함께` 에 `{a.group(1)}` 가 둘 — 같은 타입 여럿은 `×n`"
+        aggs[a.group(1)] = int(a.group(2) or 1)
+    lock: "list[tuple[str, str]]" = []
+    if m["lock"].strip() == "-":
+        why = why or "`잠금 -` — 이미 있는 것을 잠그지 않는 묶음은 예외 밖"
+    else:
+        for item in m["lock"].split("→"):
+            k = re.fullmatch(r"\s*([a-z_][a-z0-9_]*)\((\w+)\)\s*", item)
+            if k is None:
+                why = why or f"`잠금` 낱말 `{item.strip()}`(`<애그리거트>(<키>)` 를 ` → ` 로 잇는다)"
+                continue
+            lock.append((k.group(1), k.group(2)))
+        types = [t for t, _ in lock]
+        if len(set(types)) != len(types):
+            why = why or "`잠금` 에 같은 타입이 둘"
+        elif any(t not in aggs for t in types):
+            why = why or "`잠금` 타입이 `함께` 밖"
+        elif sum(aggs.get(t, 0) for t in types) < 2:
+            why = why or "`잠금`(이미 있는 것) 인스턴스가 둘 미만 — 예외 밖(새 기록은 그 하나가 품는다)"
+    return JointFields(MappingProxyType(dict(aggs)), tuple(lock), inv, why)
+
+
+def joint_same(a: "JointFields", b: "JointFields") -> bool:
+    """뜻이 같은가 — `함께` 는 차례 무관 · `잠금` 은 차례 그대로 · 불변식은 공백을 접은 글자."""
+    return dict(a.aggs) == dict(b.aggs) and a.lock == b.lock and a.inv == b.inv
+
+
+def joint_row_tail(raw: str) -> "tuple[str, str | None]":
+    """명세 use-case-effects 행 → (행 머리, 끝 칸 셋 글 | None). 끝 칸은 `<칸 사이>함께 ` 에서 시작한다."""
+    m: "re.Match[str] | None" = JOINT_TAIL_RE.search(raw)
+    if m is None:
+        return raw, None
+    return raw[: m.start()], raw[m.end():].strip()
+
+
+def joint_marks(text: str) -> "dict[int, str]":
+    """홀로 선 주석 줄 가운데 표지 — 줄 번호 → 본문(문자열 · docstring 안 글은 아니다 · 토큰으로만 읽는다)."""
+    import io
+    import tokenize
+    out: "dict[int, str]" = {}
+    try:
+        for tok in tokenize.generate_tokens(io.StringIO(text).readline):
+            if tok.type == tokenize.COMMENT and tok.line.strip().startswith("#"):
+                m = JOINT_MARK_RE.match(tok.string)
+                if m:
+                    out[tok.start[0]] = m["body"]
+    except (tokenize.TokenError, SyntaxError, IndentationError):
+        pass
+    return out
+
+
+def joint_use_case(rel: str, is_file: "Callable[[str], bool] | None") -> "tuple[str, str, str] | None":
+    """유스케이스 칸 파일이면 열쇠 머리 (bc, area, 유스케이스) — 검사기(#546 · #550 이 보는 파일)와 G2 대조의 한 출처.
+
+    파일 = `application/<bc>/application_layer/` 아래(SKIP_DIRS 밖)의 ⑴ 본체 `<x>_use_case.py`(어디든) ⑵ 승격 폴더
+    `<x>_use_case/` 의 직계 부품 `.py`(`__init__` · 숨김 제외) — 폴더 안 본체 `<x>_use_case/<x>_use_case.py` 가 있고 형제 파일
+    `<x>_use_case.py` 가 없을 때(`use_case_parts` 와 같은 판독). area = application_layer 바로 아래 폴더(그것이 유스케이스
+    자신의 파일 · 승격 폴더면 빈 글 — 표준 밖 자리). is_file = 저장소 상대 경로가 파일인가(작업 트리 · 커밋 트리) ·
+    None 이면 명세 행 경로(아직 없는 파일) — 승격 폴더 모양이면 부품으로 본다."""
+    import business_vocab
+    parts: "list[str]" = rel.replace("\\", "/").split("/")
+    if (len(parts) < 4 or parts[0] != "application" or parts[2] != "application_layer" or not parts[-1].endswith(".py")
+            or set(parts) & business_vocab.SKIP_DIRS):
+        return None
+    name: str = parts[-1]
+    folder: str = parts[-2]
+    if name.endswith("_use_case.py"):
+        x: str = name[: -len("_use_case.py")]
+        own: int = len(parts) - 2 if folder == x + "_use_case" else len(parts) - 1
+    elif len(parts) >= 5 and folder.endswith("_use_case") and name != "__init__.py" and not name.startswith("."):
+        here: str = "/".join(parts[:-1])
+        if is_file is not None and (is_file(here + ".py") or not is_file(f"{here}/{folder}.py")):
+            return None
+        x, own = folder[: -len("_use_case")], len(parts) - 2
+    else:
+        return None
+    return parts[1], (parts[3] if own > 3 else ""), x
+
+
+def joint_bc_names(root: Path) -> "list[str]":
+    """G0 목록이 도는 BC 이름 — 검사기의 BC 열거(`server_bc_dirs`)에서 캐시 폴더를 뺀 것(F4-147)."""
+    import business_vocab
+    return [p.name for p in business_vocab.server_bc_dirs(root) if p.name not in business_vocab.SKIP_DIRS]
+
+
+def joint_commit_list(root: Path, bcs: "list[str] | None" = None) -> "dict[str, list[str]]":
+    """G0 배너 재료 — BC 마다 함께 커밋 주석 `<파일:줄> «불변식» · 잠금 <…>`(꼴이 틀린 주석은 본문 그대로). 검사기와 같은
+    파일 · 읽기."""
+    out: "dict[str, list[str]]" = {}
+    app_root: Path = root / "application"
+    for bc in joint_bc_names(root):
+        if bcs and bc not in bcs:
+            continue
+        items: "list[str]" = []
+        layer: Path = app_root / bc / "application_layer"
+        for py in sorted(layer.rglob("*.py")) if layer.is_dir() else []:
+            rel: str = py.relative_to(root).as_posix()
+            if joint_use_case(rel, lambda r: (root / r).is_file()) is None:
+                continue
+            for line, body in joint_marks(py.read_text(encoding="utf-8", errors="replace")).items():
+                fields = joint_fields(body)
+                if fields is None:
+                    items.append(f"{rel}:{line} «꼴 틀림: {' '.join(body.split())}»")
+                else:
+                    lock = " → ".join(f"{t}({k})" for t, k in fields.lock) or "-"
+                    items.append(f"{rel}:{line} «{fields.inv}» · 잠금 {lock}")
+        out[bc] = items
+    return out
+
+
+JOINT_LIST_MEANING: str = ("애그리거트 여럿을 한 트랜잭션에서 바꾸도록 허용한 코드 자리(`# joint-commit:` 주석) — 플러그인 밖에서 "
+                           "단 것도 여기 보인다 · 모르는 줄이면 알려 달라")
+
+if __name__ == "__main__":
+    # G0 배너 1행(늘): `python3 checker_target.py --joint-list <저장소 루트> [--bc <bc> …]` — 판정 없음 · 사용 오류 exit 1.
+    import argparse
+    sys.path.insert(0, str(Path(__file__).resolve().parent))  # -I 로 불려도 같은 폴더 모듈(business_vocab · findings)을 찾는다
+    ap = argparse.ArgumentParser(description="함께 커밋 주석 목록(G0 배너 재료 · 판정 없음)")
+    ap.add_argument("--joint-list", required=True, metavar="저장소 루트")
+    ap.add_argument("--bc", nargs="*", default=None)
+    ns = ap.parse_args()
+    target = Path(ns.joint_list).resolve()
+    why = bc_shaped_target_reason(target) if target.is_dir() else f"TARGET 이 폴더가 아니다 — {target}"
+    known = joint_bc_names(target)
+    missing = [b for b in (ns.bc or []) if b not in known]
+    if why or missing:
+        print(f"실행 불능(사용 오류): {why or 'BC 없음 — ' + ', '.join(missing) + ' (application/ 아래: ' + ', '.join(known) + ')'}",
+              file=sys.stderr)
+        sys.exit(1)
+    listed = joint_commit_list(target, ns.bc)
+    if not listed:
+        print(f"함께 커밋 주석 0건 — {JOINT_LIST_MEANING}(application/ 아래 BC 없음)")
+    for bc, items in listed.items():
+        print(f"함께 커밋 주석 {bc} {len(items)}건 — {JOINT_LIST_MEANING}" + (": " + " · ".join(items) if items else ""))

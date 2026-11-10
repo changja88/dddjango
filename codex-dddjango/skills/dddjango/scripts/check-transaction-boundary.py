@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""dddjango 트랜잭션 경계 검사기 — 「한 트랜잭션 = 애그리거트 하나」(D50) 축의 결정적 백스톱.
+"""dddjango 트랜잭션 경계 검사기 — 「한 트랜잭션 = 애그리거트 하나」(D50 · 예외 둘 — 새로 여럿 만드는 save_all · G1 승인
+함께 커밋) 축의 결정적 백스톱.
 
 리포지토리 «파일» 계약(트리 69행)과 유스케이스의 쓰기 규율을 강제한다.
 
@@ -8,7 +9,9 @@
               트랜잭션도 시각도 DB 예외도 포트를 거친다(D4+D31).
   #195 [ast]  상태를 바꾸는 유스케이스는 애그리거트를 건너뛰지 않는다 — save/remove
               인자는 «같은 함수 안에서 루트 메서드 호출을 받은» 객체여야 하고, UoW 를
-              받았는데 루트 메서드 호출이 0 이어도 위반.
+              받았는데 루트 메서드 호출이 0 이어도 위반. 글자 고리(함께 커밋 승인 꼴 S —
+              `for x in sorted((a, b), key=…)`)의 반복 변수는 원소 이름이 모두 루트 메서드 호출을 받았고
+              그 고리에서만 묶이면 받은 것으로 본다.
   #197 [ast]  읽기 전용 유스케이스는 UnitOfWork 를 받지 않는다 — `*UnitOfWork` 파라미터가
               있는데 본문에 `with uow:`·save·remove·after_commit 이 0 이면 위반. ②′ 승격 폴더는
               본체 + 틀(`<x>_frame.py`)을 한 단위로 본다 — 본체 도달 범위는 `self.<틀 속성>.<m>(…)`
@@ -88,7 +91,11 @@ reversed 인자(`tuple/list/set/frozenset/sorted` 의 유일 인자·반복 원�
 않으며, 스칼라 채널은 수리 전부터 같은 통로가 더 넓게 열려 있다). 그 밖의 «컬렉션을 돌려주는 호출» —
 본문 증명이 서지 않는 인자 받는 도메인 호출(받은 인스턴스를 고르는 선별 헬퍼 `C.m(xs)`·받은 컬렉션을 섞는
 누적·증명 안 된 헬퍼 위임·본문이 dict 값·map·`.copy()` 로 돌려주는 것)·리포지토리 조회·비도메인 호출 —
-과, 유스케이스 반복 원천의 튜플 언패킹·필터 체인·리터럴 목록·sorted/map/zip 은 전파하지 않는다. 상속한 메서드
+과, 유스케이스 반복 원천의 튜플 언패킹·필터 체인·리터럴 목록·sorted/map/zip 은 원소 출처(팩토리로 태어남)를
+전파하지 않는다. 다만 글자 고리(2.36.0 — 함께 커밋 승인 꼴 S): 반복 원천이 글자 그대로의 튜플·리스트·집합(이 함수에서
+가려지지 않은 sorted·list·tuple·reversed 로 싼 것 포함)이고 원소가 모두 이 함수에서 루트 메서드 호출을 받은 이름이며
+반복 변수가 단일 이름 target 으로 이 고리에서만 묶이면(다른 고리 · 대입 · 파라미터 결속 없음) 반복 변수도 루트 메서드
+호출을 받은 것으로 본다 — 원소 하나라도 받지 않았거나 이름이 아닌 원소가 있으면 그대로 위반이다. 상속한 메서드
 (`Sub.m()`)·async 메서드·`list[C] | None`·`Optional[...]` 선언, 상대 import·모듈 경유 호출
 (`mod.C.m()`)·최상위 밖(`if TYPE_CHECKING:`) import·`__init__` 재수출 경유 클래스, 모듈
 범위에서 다시 묶이거나(`try` 안 재 import 포함) `global` 로 선언되거나 그 함수에서 다시 묶인
@@ -166,6 +173,8 @@ PURE_COMPARE_OPS = (ast.Eq, ast.NotEq, ast.In, ast.NotIn, ast.Is, ast.IsNot)
 # #195 — 도메인 본문 증명(R8-I2): 누적 이름에 새 원소 하나를 들이는 메서드(원소 인자 위치)와 새 컬렉션을 들이는 메서드.
 BUILD_ELEMENT_ARG = {"append": 0, "add": 0, "insert": 1}
 BUILD_COLLECTION_METHODS = ("extend", "update")
+# #195 — 글자 고리(함께 커밋 승인 꼴 S · 2.36.0)의 반복 대상을 싸는 내장 — check-domain-model #550 행 3 글자 고리와 같은 목록.
+LITERAL_LOOP_WRAPPERS = ("sorted", "list", "tuple", "reversed")
 
 # #659 — 승격 부품의 쓰기 경계 자원(주석 이름 끝)과 문면 조각.
 WRITE_BOUNDARY_SUFFIXES = ("Repository", "UnitOfWork")
@@ -938,6 +947,17 @@ def _check_use_case_writes(root: Path, bc: Path, f: Findings) -> None:
                                     frames.get(cls.name))
 
 
+def _literal_loop_elements(it: ast.AST, shadowed: "set[str]") -> "list[str] | None":
+    """#195 글자 고리 — 반복 대상이 글자 그대로의 튜플 · 리스트 · 집합(이 함수에서 가려지지 않은 `sorted` · `list` · `tuple` ·
+    `reversed` 로 싼 것 포함)이고 원소가 모두 이름이면 그 이름들."""
+    while (isinstance(it, ast.Call) and isinstance(it.func, ast.Name) and it.func.id in LITERAL_LOOP_WRAPPERS
+           and it.func.id not in shadowed and it.args):
+        it = it.args[0]
+    if isinstance(it, (ast.Tuple, ast.List, ast.Set)) and it.elts and all(isinstance(e, ast.Name) for e in it.elts):
+        return [e.id for e in it.elts]
+    return None
+
+
 def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFunctionDef,
                         attr_repos: set[str], attr_uows: set[str],
                         helpers: "dict[str, ast.FunctionDef | ast.AsyncFunctionDef]",
@@ -1133,6 +1153,20 @@ def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFun
         f.add("#197", _rel(root, py, fn.lineno),
               f"`{fn.name}` 이 UnitOfWork 를 받는데 도달 범위에 save/remove/after_commit 이 없다"
               "(with 진입만으로는 쓰기가 아니다) — 읽기 전용 유스케이스는 UnitOfWork 를 받지 않는다")
+
+    # #195 — 글자 고리(함께 커밋 승인 꼴 S — `for x in sorted((a, b), key=…)`): 원소 이름이 모두 루트 메서드 호출을 받았고
+    # 반복 변수가 이 고리에서만 묶이면 반복 변수도 받은 것으로 본다(2.36.0 — 원소 하나라도 받지 않았으면 그대로 위반).
+    loop_binds: "dict[str, int]" = {}
+    for node in ast.walk(fn):
+        if isinstance(node, (ast.For, ast.AsyncFor, ast.comprehension)) and isinstance(node.target, ast.Name):
+            loop_binds[node.target.id] = loop_binds.get(node.target.id, 0) + 1
+    for node in ast.walk(fn):
+        if isinstance(node, (ast.For, ast.AsyncFor)) and isinstance(node.target, ast.Name):
+            elements = _literal_loop_elements(node.iter, local_names)
+            name = node.target.id
+            if (elements and all(e in method_called for e in elements) and loop_binds[name] == 1
+                    and name not in bound_other and name not in simple):
+                method_called.add(name)
 
     # #195 — save 인자가 루트 메서드 호출을 받은 객체인가.
     for arg_name, call in writes:
@@ -1404,7 +1438,7 @@ def main(argv: list[str]) -> int:
 
     emit_all(cand, printer=print, indent="")
     if findings:
-        print("blocker — 트랜잭션 경계 위반 (한 트랜잭션 = 애그리거트 하나 · D50)")
+        print("blocker — 트랜잭션 경계 위반 (한 트랜잭션 = 애그리거트 하나(예외: 새로 여럿 만들기 · G1 승인 함께 커밋) · D50)")
         emit_all(findings, printer=print, indent="  ")
         return 2
     return 0

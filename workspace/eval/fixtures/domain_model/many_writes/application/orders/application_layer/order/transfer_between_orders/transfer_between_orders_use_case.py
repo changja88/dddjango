@@ -1,4 +1,4 @@
-"""ok 판정 밖 — 따로 조회한 주문 둘을 한 트랜잭션에서 차례로 저장하는 꼴(이체)은 #550 이 보지 않는다."""
+"""bad 행 3 — 따로 조회한 주문 둘을 한 트랜잭션에서 차례로 저장한다(이체 꼴 · 함께 커밋 표지 없음)."""
 from __future__ import annotations
 
 from application.orders.application_layer.port.unit_of_work.orders_unit_of_work import OrdersUnitOfWork
