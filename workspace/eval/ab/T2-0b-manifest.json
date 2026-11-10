@@ -682,7 +682,7 @@
         "workspace/tools/query_golden_check.py": "522756a089322ad0dee7af78b741e2fc8dda26cc1b00300a37c5a82ed19c522e",
         "workspace/tools/regen_loop_prototype.py": "206d87a302058303fc68986275ea8624a27ea8fa0654fe2d4e94e71e33fc31f5",
         "workspace/tools/regen_loop_smoke.py": "d62f07563a1041da604bffdbf533006d35348e70be38ae752ee65ed85a9f6513",
-        "workspace/tools/rulepack_smoke.py": "d0cc69acd07db483a01a7c1e1b30359f4775e8c180b72080f33a2d8bff00a7c9",
+        "workspace/tools/rulepack_smoke.py": "5769be9362e5868d962209c314eef9221967fa87a8c5d300ffb195cf08fc12b6",
         "workspace/tools/session_bounce_counter.py": "82a52417417a80826bb89d0b0bc370ca8857c57805b7b32e1944c9b3d86aef73",
         "workspace/tools/violation_adapter.py": "00eaf196110b9697997c6e080c6ada3b48cf1898035ce56771435122da9e20a3"
       },
@@ -708,7 +708,7 @@
         "workspace/tools/probe-fixture-requirements.txt"
       ],
       "n_files": 36,
-      "tree_sha256": "8fa2e44768e5d1ac7ceb28b767652cfeada62cebaea306bc9096ce31cd678a39",
+      "tree_sha256": "a1a28ecda95a7fb010f21b4e0043650311a75bd44b45b1270d70bf31d32c9fa2",
       "why": "측정기. 실런 중 측정기가 바뀌면 앞뒤 런의 수치가 같은 자를 안 쓴 것이 된다(D11)."
     },
     "orders": {
@@ -1020,8 +1020,8 @@
     "source-claude": "93d8301308b8bc5b12a6f3f7558e652099749dbab48dbbc915e7583eb8be790b",
     "source-codex": "93d8301308b8bc5b12a6f3f7558e652099749dbab48dbbc915e7583eb8be790b"
   },
-  "sealed_commit": "4664a68258795a404e2255758bfd81fd61f77f20",
-  "self_sha256": "e7c099ec71a82ad66bc64ed03f9f7c181ac015a112e3d296f82ede26f09964ec",
+  "sealed_commit": "9247c9dbc076f855c4dc2c75390de70b5cde79b1",
+  "self_sha256": "17a86bae1f62144786d40db654896aaeb6a86b54973d3c65c309b567baca0f48",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [

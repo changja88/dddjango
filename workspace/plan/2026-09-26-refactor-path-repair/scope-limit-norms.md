@@ -538,6 +538,7 @@
 | R-3725 | Obligation | commands/dddjango ·s007 | 이름 nit 빠른 길(Phase 2) — 이번 실행 이름 · 시험 쪽 도움 이름만 · owner 치환 · 판정 1인 · 막히면 철회 | 절차 | 치환 절차(«diff» 적중 — 치환 diff · «이번 실행» 은 고칠 수 있는 이름을 좁히는 말이고 표준 적용을 한정하지 않는다) | nit 빠른 길 신설(G12 대조) |
 | R-3727 | Obligation | commands/dddjango ·s009 | 수정 모드 focused 감사 — test diff 가 이름 nit 빠른 길 치환뿐이면 판정 기록이 갈음 | 절차 | 감사 갈음(«diff» 적중 — test diff) | nit 빠른 길 신설(G12 대조) |
 | R-3729 | Obligation | agents/discipline-reviewer ·s002 | NIT_DIFF_CHECK 모드 — 낱말 · 이름 nit 반영의 독립 확인 | 절차 | 판정 입력(«diff» 적중 — 판정 입력 이름) | nit 빠른 길 신설(G12 대조) |
+| R-3746 | Obligation | agents/design-architect ·s005 | 함께 커밋 결정 나무 · use-case-effects write 행 끝 칸 셋 · Risky Write · 입장 후보 · 칸을 안 바꾸는 기존 주석은 행을 다시 적지 않음 | 절차 | 명세 적기 절차(«기존» 적중 — 이미 단 `# joint-commit:` 주석을 이번 명세에 다시 적지 않는다는 말 · 표준의 적용 범위를 줄이지 않는다) | 함께 커밋 신설(G12 대조 · 2.36.0) |
 
 - 묶음(N · 외부 계약·동작 · 보강 28건): `preserve-established` 오류 wire 의 slot 기록·보존·code-profile 비강제 규범 — R-0325 · R-1583 · R-1596 · R-1601 · R-1605 · R-1608 · R-1610 · R-1613 · R-1618 · R-1625 · R-1629 · R-1636 · R-2543 · R-2577 · R-2583 · R-2632 · R-2642 · R-2643 · R-2644 · R-2656 · R-2659 · R-2665 · R-2670 · R-2673 · R-2678 · R-2685 · R-2689 · R-3290. 사유: 보존 대상이 오류 wire 산출물이다(R-2552 · R-1655 — 트리·배선·import·테스트 규율은 profile 무관 표준이라 이미 리팩토링과 같은 방향이다).
 - grep 이 잡았으나 표에 올리지 않은 잡음군(전부 N·무관): pydantic `legacy Config` 표기 · 버전 태그 «리터럴 동결» · 타입 어노테이션·`Any` admin 슬롯 «면제» · 면제 조문 16종의 개별 번호 · pre-gate 기계 블록(R-3424~R-3436)의 «신규 함수»·«기존 본문» · «기존 safe 500 유지»(공개 오류 경계).
