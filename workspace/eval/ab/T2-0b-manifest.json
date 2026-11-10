@@ -375,6 +375,7 @@
     "codex": {
       "checked": 35,
       "mismatch": [
+        "codex-dddjango/.codex-plugin/plugin.json",
         "codex-dddjango/skills/dddjango-design-architect/SKILL.md",
         "codex-dddjango/skills/dddjango-design-review-api/SKILL.md",
         "codex-dddjango/skills/dddjango-design-review-ddd/SKILL.md",
@@ -779,7 +780,7 @@
       "files": {
         ".agents/plugins/marketplace.json": "bc134ae724e1e23019506c756bc3d2a0e6dfdc25f7dbaf55881e7edf173457f9",
         ".claude-plugin/marketplace.json": "2ab8baa47e88eb8fd0b51644b7e1e422c6e3f194520476db4ee1b1a8a693c4c4",
-        "codex-dddjango/.codex-plugin/plugin.json": "db09fb29253d42d61a4018bc989ab8188be786158f837067ba9e61650e0851d6",
+        "codex-dddjango/.codex-plugin/plugin.json": "9002f3fd2c3afb50297376d09328bdd838aba81b509d57ca449dd8a46e17d963",
         "codex-dddjango/skills/architecture-api/SKILL.md": "1f6c9659d8b9d230c2556c130c31d52031356c07eaafe00a10973ed7fcd8c5ab",
         "codex-dddjango/skills/architecture-api/references/final.md": "8fc5449177c790a02ffda7f5c036f0eab5d23a91e2b88517a37fb6bdc50d5e4c",
         "codex-dddjango/skills/architecture-db/SKILL.md": "b1560b89855acd55e0722ddd0ad7e808b4679adb899d1b75364bb4ffe8521e1d",
@@ -813,7 +814,7 @@
         "codex-dddjango/skills/implementation-django/references/final.md": "f44441feb4b1088713e141f8a3570eacf4f887e19a37ccc110aff953e9a4ddcb",
         "codex-dddjango/skills/implementation-python/SKILL.md": "0174757ef864c0072ea2dcce511ea15dc43525cd66466b656adfd4de9f0f159b",
         "codex-dddjango/skills/implementation-python/references/final.md": "1f4478a6524fee722042945a7954a997cbff78b31287cab9c098d5fe1385d004",
-        "dddjango/.claude-plugin/plugin.json": "dcd13f58891cc594d89277c0e4ee406bafcf9fd3c8b21026473cd6a89514af36",
+        "dddjango/.claude-plugin/plugin.json": "e12204ad614d1979e71224a92db0d280efd88bf64f537cd84e4338431446b42c",
         "dddjango/agents/acceptance-tester.md": "608115ff8bf3e02bc832dce7a30955323599b76bd629bcc40a3e9302332e8b34",
         "dddjango/agents/coder.md": "8fd1c72589715faf10e19a3df7fdf1b12b411e30d32647f4dfb7f21b61f48b1f",
         "dddjango/agents/design-architect.md": "c58f091bc9c72742821bbf92bca4902f9a78fab51c68d4061d9391889b96d997",
@@ -855,7 +856,7 @@
         ".agents/plugins/marketplace.json"
       ],
       "n_files": 66,
-      "tree_sha256": "9e92151a1e38cf3bb8f20a7cec21e1ad2eb60f2b6a57e008effd01c319e44b11",
+      "tree_sha256": "d50a6b80234f6cca39c16cc34788a2bccbde89d54b6371daffcb94d2362bba84",
       "why": "절차서가 **부르는 것들**. 서브에이전트 정의와 규범 산문(`references/final.md`)이 여기 있다 — 그중 ninja §6.1·§6.2 와 ddd §3.2 는 파일럿 이관 대상 클러스터 그 자체다. 절차서만 동결하고 이것들을 두면 봉투만 봉인하고 내용물을 열어 둔 것이다. 산문이 런 사이에 바뀌면 세 암이 같은 규범을 상대한 것이 아니게 되고, `coder.md` 한 줄이 바뀌면 처치와 무관하게 산출물이 달라진다."
     },
     "preregistration": {
@@ -872,7 +873,7 @@
     "protocol": {
       "files": {
         "Makefile": "d01e68bb51d40bcb93bd9b745e8da3d7a93ff7b05546dab678e070bc08fd949d",
-        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "17af3d3012ba80e84703bf6eb8a082edd720a014ef2eaeeca39ee2d4cd147014",
+        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "c464c52cd214d07b07c124d979041a0668b98f6229ded01ee5b908a6e6dde6f4",
         "workspace/plan/2026-08-12-bc-rebuild-protocol.md": "a39ba66e58cb8bde5ad8f84d630b6fd9b04300f7130d4bbc2d149751c2f6c492",
         "workspace/plan/templates/request-template.md": "531bb5c0e9b147d51665981bc3218aa027ddc4170101ea920ecc8a87f7018fe4",
         "workspace/tools/openapi_shape.py": "ea564e3b0ce0550352935b7a572f93dfae404f1a1d24f0fd9d4acf6dc4bc4932",
@@ -887,7 +888,7 @@
         "workspace/design/2026-08-20-ontology-t2-0b-design.md"
       ],
       "n_files": 6,
-      "tree_sha256": "5aa08e7847cce5ff694ddad7da0777f1daac6a6c1e4b8c2cc6038830f623e286",
+      "tree_sha256": "3fc7c25b6f66194e5e2e80912c588479b828dc00df3f806384dae371e8493186",
       "why": "**전이 의존** — 발주문이 «그대로 따르라»고 가리키는 판형과, 인수 판정이 부르는 도구와, 게이트를 배선하는 Makefile. 이 중 하나만 바뀌어도 모델이 받는 요청문·허용 범위·STOP 규약·shape 합격 여부·실런 진입 조건이 바뀐다. 그런데 대조는 글롭에 든 것만 재전개하므로, 봉인 밖이면 그 변경은 드리프트가 아니었다(레인 AU 발견 4)."
     },
     "queries": {
@@ -990,8 +991,8 @@
     "n_files": 46
   },
   "plugin_versions": {
-    "claude": "2.34.0",
-    "codex": "2.34.0"
+    "claude": "2.35.0",
+    "codex": "2.35.0"
   },
   "schema": "t2-0b-manifest/1",
   "schemas": {
@@ -1019,8 +1020,8 @@
     "source-claude": "dba1ffbb2634c5485900121fbae28f18d2a66c62fedd1a3f7d963c4933bca125",
     "source-codex": "dba1ffbb2634c5485900121fbae28f18d2a66c62fedd1a3f7d963c4933bca125"
   },
-  "sealed_commit": "f1c8a3161f43d44b6b755dca9d0e84498a967bff",
-  "self_sha256": "d7a9eb6dc2c841bd5e311872bf260f270078d856644642f315fa2f9e961708c5",
+  "sealed_commit": "ee77409db878f9423d8c3333edebf284a5798867",
+  "self_sha256": "278635cb357214fc8439ead08ce68f33a4744068973be3ee0742efc1c23fbdd9",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [
