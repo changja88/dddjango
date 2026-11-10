@@ -436,11 +436,17 @@ djr:R-0051 a djr:Prohibition ;
 
 djr:R-0052 a djr:Obligation ;
     skos:prefLabel "known failure의 식별자·status 선택은 BC controller 소유"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0052@2026-08-19> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-0052@2026-11-10> .
 
 <https://numchida.com/ns/djr#R-0052@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0052 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0052@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-0052 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0052@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0053 a djr:Permission ;
     skos:prefLabel "짧은 반복 mapping의 지역 중복 인정·10번 slot 승인 한 path"@ko ;
@@ -1198,7 +1204,7 @@ djr:R-0683 a djr:Prohibition ;
 
 djr:R-0684 a djr:Obligation ;
     skos:prefLabel "known exception의 구체 catch·준비된 concrete ErrorSchema(무인자 · 설명 칸 keyword 하나) Status 직접 반환"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0684@2026-10-11> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-0684@2026-11-10> .
 
 <https://numchida.com/ns/djr#R-0684@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0684 ;
@@ -1209,6 +1215,12 @@ djr:R-0684 a djr:Obligation ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-0684@2026-08-22> ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-0684@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-0684 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0684@2026-10-11> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0685 a djr:Prohibition ;
     skos:prefLabel "tuple·raw Response/dict·helper/factory/serializer/mapper·등록 handler 우회 금지"@ko ;
@@ -2552,7 +2564,7 @@ djr:R-3735 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s004-1.1> ;
     djr:kind djr:kind-prose ;
     djr:order 2 ;
-    djr:text "- Router 등록과 operation 선언\n- path/query/header/body 파라미터를 명시적 schema로 받기\n- authentication/authorization 연결\n- service/usecase 호출\n- domain/application error를 API error contract로 변환\n- response schema와 status code mapping\n- OpenAPI에 드러나는 계약 변화의 candidate·승인 뒤 검증 기준 제시\n- 실제 mount를 통과하는 Django client 기반 HTTP contract 검증 기준 제시\n\n"@ko .
+    djr:text "- Router 등록과 operation 선언\n- path/query/header/body 파라미터를 명시적 schema로 받기\n- authentication/authorization 연결\n- service/usecase 호출\n- 도메인 예외를 API error contract로 변환(응용 예외는 포트 예외(바깥 행위자의 죽음)뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다)\n- response schema와 status code mapping\n- OpenAPI에 드러나는 계약 변화의 candidate·승인 뒤 검증 기준 제시\n- 실제 mount를 통과하는 Django client 기반 HTTP contract 검증 기준 제시\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s005-1.2> a djr:Section ;
     djr:headingSnapshot "### 1.2 다른 source reference로 위임할 책임"@ko ;
@@ -2605,7 +2617,7 @@ djr:R-3735 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s006-1.3> ;
     djr:kind djr:kind-prose ;
     djr:order 2 ;
-    djr:text "- request schema validation과 parameter binding\n- auth/permission hook 연결\n- service/usecase 호출\n- API-facing DTO 또는 schema로 response mapping\n- known application/domain exception을 BC `ErrorSchema`로 변환\n\n"@ko .
+    djr:text "- request schema validation과 parameter binding\n- auth/permission hook 연결\n- service/usecase 호출\n- API-facing DTO 또는 schema로 response mapping\n- known 도메인 예외를 BC `ErrorSchema`로 변환(§2.2)\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s006-1.3/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s006-1.3> ;
@@ -2693,7 +2705,7 @@ djr:R-3735 a djr:Prohibition ;
     djr:order 11 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b29> ;
     djr:statesNorm djr:R-0684, djr:R-0685, djr:R-3735 ;
-    djr:text "- known domain/application exception은 컨트롤러가 구체적으로 catch하고, 준비된\n  concrete `ErrorSchema`(무인자 · 또는 설명 칸 keyword 하나 — §6.2 사건 값)를\n  `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 오류\n  `(status, schema)` tuple, raw `Response`/dict, 오류 helper/factory/serializer/mapper,\n  등록 handler/decorator로 우회하지 않는다(§6.2).\n- `dddjango-code-json` 표면에서 빈 값 · 범위 같은 입력 확인은 입력 Schema 선언(`Field` 제약 · `Query` · `Header` · `Path`)으로 둔다 — 응답은 framework 422 다. operation 본문에서 application call 앞의 분기로 오류를 반환하거나 raise 하지 않는다(§6.3 의 `raise HttpError(406)` · `raise HttpError(415)` 만 예외). 로그인과 권한은 framework 인증 틀(§4)이, 요청의 뜻 판정은 유스케이스가 맡는다(controller 는 그 뒤에 catch 한다). 승인된 `400` 을 바꾸는 일은 G1 에서 계약 변경(`400` → `422`) 또는 사용자 승인 빚 목록으로 간다.\n"@ko .
+    djr:text "- known 도메인 예외는 컨트롤러가 구체적으로 catch하고(응용 예외는 포트 예외(바깥 행위자의 죽음)뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다), 준비된\n  concrete `ErrorSchema`(무인자 · 또는 설명 칸 keyword 하나 — §6.2 사건 값)를\n  `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 오류\n  `(status, schema)` tuple, raw `Response`/dict, 오류 helper/factory/serializer/mapper,\n  등록 handler/decorator로 우회하지 않는다(§6.2).\n- `dddjango-code-json` 표면에서 빈 값 · 범위 같은 입력 확인은 입력 Schema 선언(`Field` 제약 · `Query` · `Header` · `Path`)으로 둔다 — 응답은 framework 422 다. operation 본문에서 application call 앞의 분기로 오류를 반환하거나 raise 하지 않는다(§6.3 의 `raise HttpError(406)` · `raise HttpError(415)` 만 예외). 로그인과 권한은 framework 인증 틀(§4)이, 요청의 뜻 판정은 유스케이스가 맡는다(controller 는 그 뒤에 catch 한다). 승인된 `400` 을 바꾸는 일은 G1 에서 계약 변경(`400` → `422`) 또는 사용자 승인 빚 목록으로 간다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b12> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
@@ -3539,7 +3551,7 @@ djr:R-3735 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 16 ;
     djr:statesNorm djr:R-0052, djr:R-0053 ;
-    djr:text "**컨트롤러가 변환을 소유한다.** known domain/application failure의 공개 식별자·status 선택은\n해당 BC controller가 한다. 짧은 반복 mapping은 의도적인 지역 중복이며, 다음 순서를\n10번 slot이 승인한 한 path로 보인다.\n\n"@ko .
+    djr:text "**컨트롤러가 변환을 소유한다.** known 도메인 실패(응용 예외는 포트 예외(바깥 행위자의 죽음)뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다)의 공개 식별자·status 선택은\n해당 BC controller가 한다. 짧은 반복 mapping은 의도적인 지역 중복이며, 다음 순서를\n10번 slot이 승인한 한 path로 보인다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b17> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;

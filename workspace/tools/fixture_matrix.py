@@ -113,6 +113,10 @@ POSITIVE_LANES: "list[tuple[str, str, str]]" = [
     ("check-domain-model.py", "domain_model", "part_flows"),
     # ②′ 역할 내 독립 흐름(10-29) — #659 쓰기 경계 · 틀 쪽 팔 · #197 본체 + 틀(줄은 GROUP_CASES 가 고정).
     ("check-transaction-boundary.py", "transaction_boundary", "part_flows"),
+    # F4-50 — #550 한 트랜잭션에서 조회한 애그리거트 여럿을 바꿈(행 1 · 2 와 대조군 · 줄은 GROUP_CASES 가 고정).
+    ("check-domain-model.py", "domain_model", "many_writes"),
+    # F4-49 — #355 를 쓰기 메서드 반환에도(줄은 GROUP_CASES 가 고정).
+    ("check-transaction-boundary.py", "transaction_boundary", "write_returns"),
     # F4-92 가드 — 위 한계의 경계: 같은 영역의 다른 업무 낱말(`booked` — 폴더 이름에는 없는 낱말)이 `event` 와 함께
     # 새면 그 낱말로 계속 잡는다.
     ("check-business-vocabulary.py", "business_vocabulary", "event_noun_leak_guard"),
@@ -121,6 +125,8 @@ POSITIVE_LANES: "list[tuple[str, str, str]]" = [
     ("check-business-vocabulary.py", "business_vocabulary", "entity_word_guard"),
     ("check-business-vocabulary.py", "business_vocabulary", "object_word_guard"),
     ("check-business-vocabulary.py", "business_vocabulary", "events_word_guard"),
+    # F4-103 — #292 를 클래스로도(application 층 모듈 맨 위 예외 클래스 · 줄은 GROUP_CASES 가 고정).
+    ("check-context-isolation.py", "context_isolation", "app_exception"),
 ]
 
 
@@ -166,6 +172,13 @@ _TB_HOLD: str = "부품이 쓰기 경계 자원을 쥔다 — {w} 의 주석이 
 _TB_FRAME: str = ("범용 트랜잭션 콜백이다(틀은 갈래를 모른다) — 구간을 본체에 두거나 갈래를 모르는 틀 쓰기 도구를 쓴다"
                   "(애그리거트를 받는 변경 함수는 된다)")
 _TB_VALUE: str = "값을 내는 주입 도구(시계 같은 것)는 작업 단위 밖에서 값을 구해 넘긴다"
+# domain_model/many_writes — #550 문면 조각(F4-50 · 검사기 문면 그대로 · 사례마다 유스케이스 폴더 하나).
+_MW: str = "[#550] application/orders/application_layer/order/{u}/{u}_use_case.py:{n}: "
+_M550: str = ("한 트랜잭션은 애그리거트 «하나»를 바꾼다: 같이 되돌려야 하면 한 애그리거트로 묶고, 아니면 건마다 트랜잭션을 연다"
+              "(반복문 안에서 `with uow`) — 묶음은 새로 만들 때만")
+# transaction_boundary/write_returns — #355 문면 조각(F4-49).
+_WR: str = "application/orders/domain_layer/order/order_repository.py"
+_M355: str = " — 리포지토리는 {애그리거트, Sequence[애그리거트], 값객체, bool·int·None} 만 돌려준다"
 # skeleton/bad_promoted_flows — #660 · #661 · #643(②′) 문면 조각(검사기 문면 그대로 · 사례마다 42행 승격 폴더 하나).
 _SF: str = "application/orders/application_layer/order/"
 _SF_TOOL: str = "본체 도구는 틀 부품의 공개 메서드로"
@@ -179,6 +192,14 @@ _SF_PUBLIC: str = "{s} 메서드 `{m}` 를 부른다 — {c} 계약은 공개 �
 _SF_PRIVATE: str = ("부품 클래스 `{c}` 가 `_` 로 시작한다 — 부품 클래스는 공개 이름이다(폴더 밖 비공개는 재수출하지 않음과"
                     " 바깥 import 금지가 지킨다) — 본체 `__init__` 이 만들어 `self` 에 두는 형제 클래스는 ②′ 부품이다"
                     "(② 로 두려면 `execute` 안에서 만든다)")
+# context_isolation/app_exception — #292 클래스 판정 문면 조각(F4-103 · 검사기 문면 그대로).
+_AE: str = "application/orders/application_layer/order/"
+_AE_FIX: str = ("예외의 자리는 넷(애그리거트 `exception/` · `shared_value_object/` · OHS `contract/exception/` · 바깥 행위자의 죽음은 "
+                "`port/<capability>/exception.py`)이다 — 한 유스케이스의 실패도 판정이면 도메인 예외로 두고, 그 값을 창구 · "
+                "컨트롤러가 보여야 하면 설계에서 승인한 사건 값 칸으로 옮긴다")
+_AE_PUBLIC: str = "[#292] " + _AE + "{f}: 예외 클래스 `{c}` 가 application 층 모듈에 있다. " + _AE_FIX
+_AE_PRIVATE: str = ("[#292] " + _AE + "{f}: 사설 예외 클래스 `{c}` 를 모듈 밖 제품 코드(`application/orders/{u}`)가 import 한다 — "
+                    "바깥이 잡으면 사설 이름이어도 예외 자리 규칙을 따른다. " + _AE_FIX)
 
 # (라벨, 검사기, fixture, 거름(줄에 search 하는 정규식 · 빈 글 = 모든 줄), 기대 줄) — 기대는 리터럴(고침 번호는 설계 7.4).
 _PURE562: str = " — 한 글자라도 나오면 위반(Shared Kernel 차단 기계)"
@@ -357,7 +378,8 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
      )),
     # ②′ 역할 내 독립 흐름(10-29) — #659 승격 부품의 쓰기 경계(ⓐ 쥠 · ⓑ 닿음 · ⓒ 발행) · 틀 쪽 팔(범용 트랜잭션
     # 콜백) · #197 본체 + 틀 한 단위(틀 클래스 단위 · (i) 꼴 도달 범위가 틀로 이어짐) · #195 는 틀로 넓히지 않음.
-    # 오탐 경계 0 줄: 바깥 port · 스트림 방출 · 변경 함수(주석 있음 · 없음) · 함께 저장 · 본체 구간 · 기존 ② 폴더.
+    # 오탐 경계 0 줄: 바깥 port · 스트림 방출 · 변경 함수(주석 있음 · 없음) · 틀 부품이 애그리거트 하나를 저장
+    # (archive_order — 2.35.0 F4-50 전에는 «함께 저장» merge_orders) · 본체 구간 · 기존 ② 폴더(실패 타입은 도메인 예외로 — F4-103).
     ("transaction_boundary/part_flows", "check-transaction-boundary.py", "transaction_boundary/part_flows",
      r"^\[#(659|197|195)\]", tuple(
         f"[#659] {_TB_P}{f}:{n}: " + _TB_HOLD.format(w=w, r=r)
@@ -385,11 +407,72 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
         "UnitOfWork 를 쥐는데 어느 메서드의 도달 범위에도 save/remove/after_commit 이 없다(with 진입만으로는 쓰기가 아니다)"
         " — 본체 + 틀은 한 유스케이스다: 읽기 전용이면 UnitOfWork 를 받지 않는다",
      )),
+    # F4-50 — #550 «한 트랜잭션 = 애그리거트 하나». 행 1(구간 무관 · 컬렉션 주석 이름 · tuple · 컴프리헨션) · 행 2(구간 안
+    # for 몸 — 조회한 여럿의 원소 · 묶인 저장소의 조회 호출을 바로 돎 · 반복 변수로 조회 · 안쪽 고리만 나가는 break · 조건 안
+    # break · 나감 앞 continue · 나감 앞 다른 이름의 쓰기 · CAS 검사식의 참 갈래가 나가지 않음).
+    # 0 줄 대조군: 따로 조회한 같은 타입 둘(이체 꼴 — #550 판정 밖) · 한 건 쓰기(CAS `save_with_version_guard` ·
+    # `save_label`) · 건마다 트랜잭션 · 새로 만든 것 여럿(조회값에서 만든 것 포함) · 같은 이름 두 번 · 여럿 읽고 하나 저장 ·
+    # 같은 키 재시도 고리 · 첫 것을 잡고 break · return(바로 뒤 · 결과 대입 · 결과 값 · 기록 뒤 · 같은 애그리거트를 두 번 쓴
+    # 뒤 · CAS 검사식의 참 갈래 · CAS 결과 이름의 `if saved:` · `if not saved: continue` 뒤) · 주석 단 조회 이름의 속성
+    # 읽기(#257 무변). 서로 다른 저장소 타입 둘은 #546 한 줄뿐(#550 은 다시 내지 않는다).
+    ("domain_model/many_writes", "check-domain-model.py", "domain_model/many_writes",
+     r"^\[(ⓓ)?#(257|546|550)\]", tuple(
+        _MW.format(u=u, n=n) + f"조회로 꺼낸 여럿(`found`)을 `{m}` 로 한꺼번에 쓴다 — {_M550}"
+        for u, n, m in (("remove_found_tuple", 23, "remove_many"), ("close_found_without_unit", 22, "save_all"),
+                        ("purge_found_typed_tuple", 20, "remove_many"), ("close_found_comprehension", 23, "save_all"))
+     ) + tuple(
+        _MW.format(u=u, n=n) + f"조회로 꺼낸 여럿(`found`)을 도는 반복문이 한 트랜잭션 안에서 `{m}` 로 쓴다 — {_M550}"
+        for u, n, m in (("cancel_each_found", 23, "remove"), ("cancel_each_found_copy", 23, "save"),
+                        ("number_found_orders", 23, "save"), ("cancel_each_found_inner_break", 24, "save"),
+                        ("cancel_found_until_done", 23, "save"), ("cancel_found_until_open", 23, "save"),
+                        ("cancel_first_and_rename_target", 24, "save"),
+                        ("cancel_found_guarded_no_exit", 23, "save_with_version_guard"))
+     ) + (
+        _MW.format(u="cancel_each_read_call", n=22)
+        + f"조회로 꺼낸 여럿(`find_by_customer(…)`)을 도는 반복문이 한 트랜잭션 안에서 `save` 로 쓴다 — {_M550}",
+     ) + (
+        _MW.format(u="cancel_each_by_id", n=25)
+        + f"한 트랜잭션 안 반복문에서 반복 변수로 조회한 애그리거트(`order`)를 `remove` 로 쓴다 — {_M550}",
+        "[#546] application/orders/application_layer/order/move_order_and_stock/move_order_and_stock_use_case.py:19: "
+        "명시 transaction 구간에서 서로 다른 애그리거트 리포지토리 ['order', 'stock'] 에 쓰기 둘 — "
+        "한 트랜잭션은 애그리거트 «하나»를 바꾼다(현행 타입 계수)",
+     )),
+    # F4-49 — 쓰기 메서드(save · remove)의 반환도 #355 허용 목록(dict · str · QuerySet · 도메인 밖 타입 · 모델 이름).
+    # 0 줄: None · 애그리거트 · 그 목록 · 값 객체 · 쓰기의 bool(CAS) · int(지운 개수 — 후보 물음도 없음). 조회 줄은 그대로.
+    ("transaction_boundary/write_returns", "check-transaction-boundary.py", "transaction_boundary/write_returns",
+     r"^\[(ⓓ)?#355\]", (
+        f"[ⓓ#355] {_WR}:21: `exists_open` 이 bool/int 를 돌려준다(요약값은 리포지토리에 남는 것이 맞다 — #285)"
+        " — 물음: 이 메서드의 주어가 애그리거트인가 화면인가",
+        f"[#355] {_WR}:18: `find_raw` 반환이 ['dict']{_M355}",
+        f"[#355] {_WR}:42: `save_raw` 반환이 ['dict']{_M355}",
+        f"[#355] {_WR}:45: `save_key` 반환이 ['str']{_M355}",
+        f"[#355] {_WR}:48: `remove_matching` 반환이 ['QuerySet']{_M355}",
+        f"[#355] {_WR}:51: `save_receipt` 반환 `SaveReceipt` 이 애그리거트도 값 객체도 아니다",
+        f"[#355] {_WR}:54: `save_rows` 반환이 ['OrderModel']{_M355}",
+     )),
     # 26 — #291 · #292 새 문면.
     ("context_isolation/bad_rules", "check-context-isolation.py", "context_isolation/bad_rules",
      r"^\[#29[12]\] application/[a-z_]+/domain_layer/", (
         f"[#291] {_D}exception.py: BC 바로 밑 `domain_layer/exception.py` 를 두지 않는다 — 도메인 예외의 자리는 애그리거트 밑 `exception/` 과 공유 개념의 `shared_value_object/` 둘이다(#657)",
         "[#292] application/billing/domain_layer/exception: 예외의 자리는 넷으로 갈린다 — 한 애그리거트 업무 규칙은 `domain_layer/<aggregate>/exception/` · 여러 애그리거트가 함께 쓰는 개념은 `shared_value_object/`(#657) · 남에게 공개하는 실패는 OHS `contract/exception/` · 바깥 행위자는 `port/<capability>/exception.py` 다",
+    )),
+    # F4-103 — #292 를 클래스로도: application 층 모듈 맨 위 예외 클래스(기존 ② 승격 폴더의 실패 타입 부품을 창구가 읽는
+    # 보고 꼴 · 같은 파일 기반 사슬 · 승격 안 한 본체) · 사설 `_X` 는 모듈 밖 제품 import 가 있을 때만(부품 경로 ·
+    # 승격 폴더 `__init__.py` 재수출 · 모듈 import 뒤 속성). 0 줄: 같은 승격 폴더 형제만 import(pack_order) · 시험만
+    # import(count_order) · 흐름 제어 사설(retry_order) · port 예외 · DTO · 결과 타입 · 같은 모듈 비예외 `…Error` 를
+    # 상속한 결과 타입(note_order) · 이름으로 걸린 자리 안 클래스(rate_order — 이름 줄 하나).
+    ("context_isolation/app_exception", "check-context-isolation.py", "context_isolation/app_exception",
+     r"^\[#292\]", (
+        "[#292] " + _AE + "rate_order/exception.py: application 쪽 예외 자리는 `port/<capability>/exception.py`(바깥 행위자의 죽음)뿐이다",
+        _AE_PUBLIC.format(f="place_order/place_order_use_case/place_order_failure.py:4", c="PlaceOrderFailure"),
+        _AE_PUBLIC.format(f="place_order/place_order_use_case/place_order_failure.py:10", c="PlaceOrderStockShort"),
+        _AE_PUBLIC.format(f="hold_order/hold_order_use_case.py:7", c="HoldOrderRejected"),
+        _AE_PRIVATE.format(f="cancel_order/cancel_order_use_case/cancel_order_failure.py:4", c="_CancelOrderFailure",
+                           u="driving_layer/open_host_service/order_desk/order_desk_service.py"),
+        _AE_PRIVATE.format(f="refund_order/refund_order_use_case/refund_order_failure.py:4", c="_RefundOrderFailure",
+                           u="application_layer/order/refund_order/refund_order_use_case/__init__.py"),
+        _AE_PRIVATE.format(f="ship_order/ship_order_use_case/ship_order_failure.py:4", c="_ShipOrderFailure",
+                           u="driving_layer/api/order/order_controller.py"),
     )),
     # F4-126 — 시험 본문은 #647 차단만(주석 없는 지역 변수 · 반환 타입 없는 시험 함수 · assert 는 줄 없음) · 모듈 수준 별칭은 펼쳐 같은 자리로.
     ("public_surface/bad_rules", "check-public-surface-annotation.py", "public_surface/bad_rules",
@@ -529,6 +612,33 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
     ("유스케이스 칸 승격 부품 넓힘 되돌림(본체만)", _DM,
      'if not py.name.endswith("_use_case.py") and not _use_case_part_file(py):',
      'if not py.name.endswith("_use_case.py"):', _DM),
+    ("F4-50 행 1 «여럿» 주석 이름 걷음", _DM, "hit = _many_argument(n.args[0], many)", "hit = None", _DM),
+    ("F4-50 행 2 조회한 여럿을 도는 고리 걷음", _DM, "if source is not None:", "if False:", _DM),
+    ("F4-50 행 2 조회 호출을 바로 도는 고리 걷음", _DM,
+     'return f"{it.func.attr}(…)" if key in repos else None', "return None", _DM),
+    ("F4-50 행 2 반복 변수로 조회한 이름 걷음", _DM,
+     "elif _read_by_loop(reads.get(name, []), loop, targets):", "elif False:", _DM),
+    ("F4-50 행 2 구간 밖 for 도 쌓음(건마다 트랜잭션을 막음)", _DM,
+     "loop_in_region = region != 0 and isinstance(st, (ast.For, ast.AsyncFor))",
+     "loop_in_region = isinstance(st, (ast.For, ast.AsyncFor))", _DM),
+    ("F4-50 첫 것을 잡고 나가는 고리 빼기 걷음", _DM,
+     "if not _leaves_loop_after(call, loop, parents, write_args):", "if True:", _DM),
+    ("F4-50 break 가 이 고리를 나가는지 안 봄", _DM, "return cur is loop", "return True", _DM),
+    ("F4-50 나감을 쓰기 바로 뒤로만(검토 1 전)", _DM,
+     "rest = seq[next(i for i, s in enumerate(seq) if s is stmt) + 1:]",
+     "rest = seq[next(i for i, s in enumerate(seq) if s is stmt) + 1:]\n    if len(rest) != 1:\n        return False", _DM),
+    ("F4-50 나감 앞 continue · 중첩 고리 · 다른 쓰기 거름 걷음", _DM,
+     "for st in rest for x in ast.walk(st)):", "for st in [] for x in ast.walk(st)):", _DM),
+    ("F4-50 나감 앞 다른 이름의 쓰기 거름 걷음", _DM,
+     "or (id(x) in write_args and write_args[id(x)] != name)", "or False", _DM),
+    ("F4-50 나감 앞 같은 이름 쓰기도 다른 쓰기로 셈(검토 1 고침 전)", _DM,
+     "or (id(x) in write_args and write_args[id(x)] != name)", "or (id(x) in write_args)", _DM),
+    ("F4-50 CAS 검사식 쓰기의 참 갈래 걷음(검토 2 고침 전)", _DM,
+     "if isinstance(stmt, ast.If) and stmt.test is call:", "if False:", _DM),
+    ("F4-50 CAS 결과 이름의 `if` 참 갈래 걷음", _DM,
+     "and isinstance(rest[0].test, ast.Name) and rest[0].test.id == result else None", "and False else None", _DM),
+    ("F4-50 CAS 미스 continue 거름 걷음", _DM,
+     "or (isinstance(x, ast.Continue) and id(x) not in missed)", "or isinstance(x, ast.Continue)", _DM),
     ("10 이벤트 이름 검사를 */event/*.py 로", _EP,
      'for py in [e for d in sorted(domain.iterdir()) if d.is_dir()\n                   for e in folder_group.group_members(d / "event", "*.py", promotable=False)]:',
      'for py in sorted(domain.glob("*/event/*.py")):', _EP),
@@ -583,6 +693,11 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
     ("#659 틀 팔 인자 없는 콜러블 판정 지움", "check-transaction-boundary.py",
      "if name in thunks or (name in untyped and not inner.args and not inner.keywords):", "if False:",
      "check-transaction-boundary.py"),
+    ("F4-49 쓰기 메서드 반환 #355 걷음", "check-transaction-boundary.py", "if m.returns is not None:",
+     'if m.returns is not None and first not in ("save", "remove"):', "check-transaction-boundary.py"),
+    ("F4-49 쓰기 bool·int 후보 물음 되살림", "check-transaction-boundary.py",
+     'elif not core and names & {"bool", "int"} and first not in ("save", "remove"):',
+     'elif not core and names & {"bool", "int"}:', "check-transaction-boundary.py"),
     ("F4-147 BC 열거에서 캐시 폴더 거름 걷음", _SK, " and p.name not in SKIP_DIRS)", ")", _SK),
     ("F4-152 파이썬이 정한 이름 빼기 걷음", "check-business-vocabulary.py",
      "        if id(node) in python_defined:\n            continue\n", "", "check-business-vocabulary.py"),
@@ -603,6 +718,28 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
      'port_stems = {p.stem for p in _py_files(fw)\n                      if p.stem.endswith("_port") and t not in p.parents}',
      'port_stems = {p.stem for cap in fw.iterdir() if cap.is_dir()\n                      for p in cap.glob("*_port.py")}',
      "check-business-vocabulary.py"),
+    ("F4-103 #292 클래스 판정 지움", _CI, "        _check_exception_classes(bc, bc_rel, app, out)\n", "", _CI),
+    ("F4-103 사설 예외도 공개처럼 셈", _CI, 'if not cls.name.startswith("_"):\n                out.add("#292"',
+     'if True:\n                out.add("#292"', _CI),
+    ("F4-103 같은 승격 폴더 형제 빼기 걷음", _CI, "own = set(folder_parts) if p in folder_parts else {p}", "own = {p}", _CI),
+    ("F4-103 승격 폴더 __init__ 재수출을 형제로", _CI, "own = set(folder_parts) if p in folder_parts else {p}",
+     'own = set(folder_parts) | {p.parent / "__init__.py"} if p in folder_parts else {p}', _CI),
+    ("F4-103 시험 import 도 셈", _CI,
+     "if set(rel.parts) & SKIP_DIRS or checker_target.is_test_path(bc_rel / rel):", "if set(rel.parts) & SKIP_DIRS:", _CI),
+    ("F4-103 모듈 import 뒤 속성 읽기 무시", _CI,
+     "return module_imported and any(isinstance(n, ast.Attribute) and n.attr == name for n in ast.walk(mod))",
+     "return False", _CI),
+    ("F4-103 이름으로 걸린 자리 안 클래스도 셈", _CI,
+     'or rp[0] == "port" or "exception" in rp[:-1] or p.name == "exception.py":', 'or rp[0] == "port":', _CI),
+    ("F4-103 같은 파일 기반 사슬 따라가기 지움", "checker_target.py",
+     "            if exception_based(declared[name], declared, depth + 1):\n                return True\n", "            pass\n", _CI),
+    ("F4-103 같은 모듈 베이스도 이름 끝을 사슬보다 먼저 믿음", "checker_target.py",
+     '        if name in declared:\n            if exception_based(declared[name], declared, depth + 1):\n'
+     '                return True\n        elif name == "Exception" or name.endswith(("Exception", "Error")):\n'
+     '            return True\n',
+     '        if name == "Exception" or name.endswith(("Exception", "Error")):\n            return True\n'
+     '        if name in declared and exception_based(declared[name], declared, depth + 1):\n'
+     '            return True\n', _CI),
 ]
 
 

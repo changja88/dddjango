@@ -1733,7 +1733,7 @@ EV_FWD_A = "caught application exception forwarding forbidden"
 EV_ARM = "managed catch must directly construct FrameworkErrorSchema and return Status"
 EV_OWN_C = "FrameworkErrorSchema construction is not owned by an approved catch/Result arm"
 EV_OWN_S = "error Status mapping is not owned by an approved catch/Result arm"
-EV_CATCH62 = "catch must be direct own-BC application/domain exception"
+EV_CATCH62 = "catch must be direct own-BC domain exception — 응용 예외는 포트 예외뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다"
 
 
 def ev_tree(name: str) -> str:
@@ -4852,6 +4852,135 @@ class AclConstructorPortRegression(unittest.TestCase):
                        clock_adapter="from application.conv.application_layer.port.clock.clock_port import ClockPort\n\n\n"
                                      "class PartnerClockAdapter(ClockPort):\n    pass\n"),
             {"ClockPort", "SummaryPort"})
+
+
+class ApplicationExceptionClassRegression(unittest.TestCase):
+    """F4-103 — #292 는 이름(`exception.py` · `exception/`)에 더해 application 층 모듈 맨 위 예외 클래스도 본다(현장 꼴을 일반 이름으로)."""
+
+    APP = "application/lesson/application_layer/grading/grade_answer"
+    PART = f"{APP}/grade_answer_use_case/grade_answer_failure.py"
+    PART_MODULE = "application.lesson.application_layer.grading.grade_answer.grade_answer_use_case.grade_answer_failure"
+    DOMAIN = "application/lesson/domain_layer/grade/exception/grade_rejected.py"
+    SERVICE = "application/lesson/driving_layer/open_host_service/grading/grading_service.py"
+    FAILURE = ("class {name}(Exception):\n    def __init__(self, category: str) -> None:\n"
+               "        super().__init__(category)\n        self.category: str = category\n")
+    HANDLERS = {
+        "value read": "    except {name} as failure:\n        if failure.category == \"empty\":\n"
+                      "            raise GradeUnavailable(category=\"empty\") from None\n"
+                      "        raise GradeUnavailable(category=failure.category) from None\n",
+        "str and from": "    except {name} as failure:\n        raise GradeUnavailable(category=str(failure)) from failure\n",
+        "one statement": "    except {name} as failure:\n        raise GradeUnavailable(category=failure.category) from None\n",
+        "type only": "    except {name}:\n        raise GradeUnavailable(category=\"unavailable\") from None\n",
+    }
+
+    def setUp(self) -> None:
+        tmp = tempfile.TemporaryDirectory(prefix="field-app-exception-")
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.write(f"{self.APP}/grade_answer_use_case/grade_answer_use_case.py",
+                   "from .grade_answer_failure import GradeAnswerFailure\n\n\n"
+                   "class GradeAnswerUseCase:\n    def execute(self, command):\n        raise GradeAnswerFailure(\"empty\")\n")
+        self.write(f"{self.APP}/grade_answer_use_case/__init__.py",
+                   "from .grade_answer_use_case import GradeAnswerUseCase as GradeAnswerUseCase\n")
+        self.write(self.DOMAIN, self.FAILURE.format(name="GradeRejected"))
+
+    def write(self, rel: str, source: str = "") -> Path:
+        target = self.root / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(source, encoding="utf-8")
+        return target
+
+    def lines(self) -> "list[str]":
+        found = isolation.Findings(defer=True)
+        isolation._check_exception_spots(self.root / "application/lesson", Path("application/lesson"), found)
+        return [f"{e.rule} {e.where}" for e in found.entries]
+
+    def service(self, module: str, name: str, handler: str) -> None:
+        self.write(self.SERVICE, f"from {module} import {name}\n\n\ndef grade_command(request):\n    try:\n"
+                                 f"        run(request)\n{handler.format(name=name)}    return None\n")
+
+    def test_part_failure_type_is_292_whatever_the_catch_reads(self) -> None:
+        self.write(self.PART, self.FAILURE.format(name="GradeAnswerFailure"))
+        for label, handler in self.HANDLERS.items():
+            with self.subTest(label=label):
+                self.service(self.PART_MODULE, "GradeAnswerFailure", handler)
+                self.assertEqual(self.lines(), [f"#292 {self.PART}:1"])
+
+    def test_domain_exception_controls_stay_clean(self) -> None:
+        self.write(self.PART, "def grade_reference(answer_id: str) -> str:\n    return answer_id\n")
+        for label, handler in self.HANDLERS.items():
+            with self.subTest(label=label):
+                self.service("application.lesson.domain_layer.grade.exception.grade_rejected", "GradeRejected", handler)
+                self.assertEqual(self.lines(), [])
+
+    def test_event_value_form_stays_domain_only(self) -> None:
+        self.write(self.PART, self.FAILURE.format(name="GradeAnswerFailure"))
+        published = "application/lesson/driving_layer/open_host_service/grading/contract/exception/grade_unavailable.py"
+        self.write(published, self.FAILURE.format(name="GradeUnavailable"))
+        header = ("from application.lesson.driving_layer.open_host_service.grading.contract.exception.grade_unavailable "
+                  "import GradeUnavailable\n")
+        for module, name, want in ((self.PART_MODULE, "GradeAnswerFailure", False),
+                                   ("application.lesson.domain_layer.grade.exception.grade_rejected", "GradeRejected", True)):
+            with self.subTest(name=name):
+                mod = ast.parse(f"from {module} import {name}\n{header}\n\ndef grade_command(request):\n    try:\n"
+                                f"        run(request)\n{self.HANDLERS['one statement'].format(name=name)}")
+                handler = next(n for n in ast.walk(mod) if isinstance(n, ast.ExceptHandler))
+                self.assertIs(isolation.checker_target.ohs_event_value_handler(handler, mod, self.root, "lesson"), want)
+
+    def test_private_failure_counts_only_with_an_outside_product_import(self) -> None:
+        private = self.FAILURE.format(name="_GradeAnswerFailure")
+        package = self.PART_MODULE.rpartition(".")[0]
+        reexport = f"{self.APP}/grade_answer_use_case/__init__.py"
+        cases = {
+            "service imports the part": ({self.SERVICE: f"from {self.PART_MODULE} import _GradeAnswerFailure\n"},
+                                         [f"#292 {self.PART}:1"]),
+            "package __init__ re-exports": ({reexport: "from .grade_answer_failure import _GradeAnswerFailure as _GradeAnswerFailure\n",
+                                             self.SERVICE: f"from {package} import _GradeAnswerFailure\n"},
+                                            [f"#292 {self.PART}:1"]),
+            "service reads the module attribute": (
+                {self.SERVICE: f"from {package} import grade_answer_failure\n\n\ndef f():\n"
+                               "    try:\n        run()\n    except grade_answer_failure._GradeAnswerFailure:\n        pass\n"},
+                [f"#292 {self.PART}:1"]),
+            "sibling only": ({f"{self.APP}/grade_answer_use_case/grade_memory.py":
+                              "from .grade_answer_failure import _GradeAnswerFailure\n"}, []),
+            "test only": ({"application/lesson/test/unit/test_grade_answer.py":
+                           f"from {self.PART_MODULE} import _GradeAnswerFailure\n"}, []),
+            "nobody outside": ({}, []),
+        }
+        for label, (files, want) in cases.items():
+            with self.subTest(label=label):
+                self.write(self.PART, private)
+                written = [self.write(rel, source) for rel, source in files.items()]
+                self.assertEqual(self.lines(), want)
+                for target in written:
+                    target.unlink()
+                self.write(reexport, "from .grade_answer_use_case import GradeAnswerUseCase as GradeAnswerUseCase\n")
+
+    def test_named_spot_port_and_data_classes_add_no_class_line(self) -> None:
+        self.write(f"{self.APP}/exception.py", self.FAILURE.format(name="GradeAnswerRejected"))
+        self.write("application/lesson/application_layer/port/grader/exception.py", self.FAILURE.format(name="GraderDown"))
+        self.write(f"{self.APP}/grade_answer_result.py",
+                   "from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass GradeAnswerResult:\n    error: str\n")
+        self.write(f"{self.APP}/grade_answer_use_case/grade_flow.py",
+                   "class _GradeRetry(RuntimeError):\n    pass\n\n\ndef grade_once():\n    raise _GradeRetry()\n")
+        self.assertEqual(self.lines(), [f"#292 {self.APP}/exception.py"])
+
+    def test_both_checkers_share_one_exception_judgment(self) -> None:
+        self.assertIs(dto.checker_target.exception_based, isolation.checker_target.exception_based)
+        self.assertFalse(hasattr(dto, "_exception_based"))
+
+    def test_same_module_error_named_data_base_is_not_an_exception(self) -> None:
+        data_errors = ("from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass GradeNoteError:\n    reason: str\n\n\n"
+                       "@dataclass(frozen=True)\nclass GradeNoteTooLongError(GradeNoteError):\n    limit: int\n")
+        self.write(f"{self.APP}/grade_answer_result.py", data_errors)
+        self.assertEqual(self.lines(), [])
+        self.write(self.DOMAIN, self.FAILURE.format(name="GradeRejected")
+                   + "\n\nclass GradeHeld(GradeRejected):\n    pass\n\n\n" + data_errors)
+        module = "application.lesson.domain_layer.grade.exception.grade_rejected"
+        bc = self.root / "application/lesson"
+        for names, want in ((["GradeRejected", "GradeHeld"], True), (["GradeNoteTooLongError"], False)):
+            with self.subTest(names=names):
+                self.assertIs(dto._lawful_domain_exception_import(module, names, bc), want)
 
 
 if __name__ == "__main__":

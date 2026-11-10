@@ -51,7 +51,7 @@ Django Ninja skill은 HTTP 요청과 응답을 Django application/service/usecas
 - path/query/header/body 파라미터를 명시적 schema로 받기
 - authentication/authorization 연결
 - service/usecase 호출
-- domain/application error를 API error contract로 변환
+- 도메인 예외를 API error contract로 변환(응용 예외는 포트 예외(바깥 행위자의 죽음)뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다)
 - response schema와 status code mapping
 - OpenAPI에 드러나는 계약 변화의 candidate·승인 뒤 검증 기준 제시
 - 실제 mount를 통과하는 Django client 기반 HTTP contract 검증 기준 제시
@@ -76,7 +76,7 @@ Router operation은 HTTP adapter다. 다음은 Router 안에 둘 수 있다.
 - auth/permission hook 연결
 - service/usecase 호출
 - API-facing DTO 또는 schema로 response mapping
-- known application/domain exception을 BC `ErrorSchema`로 변환
+- known 도메인 예외를 BC `ErrorSchema`로 변환(§2.2)
 
 다음은 Router, Schema, FilterSchema에 두지 않는다.
 
@@ -137,7 +137,7 @@ Operation 구현 기준:
   status(100–399)의 메타데이터 보충(header 문서화 등)은 허용한다: 보충 집합이 `response=`
   선언 집합의 부분집합이고 키 전부 리터럴일 때만이며, 오류 status 동거·변수/상수 키·
   `**` splat 은 위반이다(fail-closed — 2026-09-01).
-- known domain/application exception은 컨트롤러가 구체적으로 catch하고, 준비된
+- known 도메인 예외는 컨트롤러가 구체적으로 catch하고(응용 예외는 포트 예외(바깥 행위자의 죽음)뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다), 준비된
   concrete `ErrorSchema`(무인자 · 또는 설명 칸 keyword 하나 — §6.2 사건 값)를
   `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 오류
   `(status, schema)` tuple, raw `Response`/dict, 오류 helper/factory/serializer/mapper,
@@ -629,33 +629,38 @@ BC base의 식별자 field는 공통 annotation의 wrapper/nullability·required
 field는 공통의 default를 잃어 required여도 canon이다(식별자 field 한정·ErrorCode 좁힘 동반일
 때만 — 2026-08-15). 공통 default가
 문자열이면 같은 wire value의 Enum member로 표현한다. concrete 오류는 slot 6에서 해당
-concrete의 고정값으로 승인된 모든 required field에 default가 있어 인자 없이 생성한다.
+concrete의 고정값으로 승인된 모든 required field에 default가 있어 인자 없이 생성할 수 있어야
+하고, 생성 때 덮어쓸 수 있는 것은 공통 shape의 유일한 일반 `str` 설명 칸 하나뿐이다(문자 또는
+잡은 예외의 승인 필드 값 — 2026-10-11).
 새 필드·validator·child `model_config`나 annotation/Field metadata drift를 concrete subclass에
 추가하지 않고, 승인 alias 등이 있는 field를 재선언하면 같은 metadata를 반복한다. 단 공통
 annotation이 Field metadata 없는 벗겨진 스칼라 자리(식별자 field는 base가 좁힌 Enum 자리)인
 concrete field는 slot 6에서 승인된 그 concrete의 고정값 하나의 `Literal`로 자리를 더 좁히고
 같은 값을 default로 병기해도 canon이다(plain `=` 표기 한정·좁힘값=default 동일·
 wrapper/nullability 좁힘 불포함·무인자 생성 계약은 그대로 만족 — 식별자형은 §3.1 이벤트
-discriminator와 같은 표기·비식별자는 스칼라 상수로 확장 · 2026-08-24). URI·instance
+discriminator와 같은 표기·비식별자는 스칼라 상수로 확장 · 2026-08-24 · 설명 칸을 이렇게 좁힌
+concrete는 설명 keyword를 받지 않는다 — 덮어쓰려면 좁히지 않는다 · 2026-10-11). URI·instance
 같은 다른 profile 필드도 섞지 않는다. 오류마다 파일을 나누거나 validation 전용 두 번째 오류
 schema 파일을 만들지 않는다.
 
 한 operation에서만 의미가 생기는 사건이고 별도 concrete type이 필요하지 않다고 승인된
-경우에는 BC base를 직접 채울 수 있다. 이것은 concrete를 인자와 함께 생성하는 우회가 아니다.
+경우에는 BC base를 직접 채울 수 있다. 이것은 concrete에 설명 칸 밖 인자를 주는
+우회가 아니다 — concrete가 받는 인자는 설명 칸 keyword 하나뿐이다(2026-10-11).
 실제 controller의 `OrderErrorSchema(...)` 호출에 slot 6의 모든 field keyword와 승인된 값을 그
 자리에서 전부 명시하는 것이 아니라, 모든 required field와 그 사건에서 기본값을 덮어써야 하는
 승인 optional field만 keyword로 명시한다. 다음 문장에서
 `Status(status.HTTP_409_CONFLICT, error)`를 반환한다.
 dictionary unpacking, builder, factory, mapping table로 field 작성을 우회하지 않는다.
 
-**컨트롤러가 변환을 소유한다.** known domain/application failure의 공개 식별자·status 선택은
+**컨트롤러가 변환을 소유한다.** known 도메인 실패(응용 예외는 포트 예외(바깥 행위자의 죽음)뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다)의 공개 식별자·status 선택은
 해당 BC controller가 한다. 짧은 반복 mapping은 의도적인 지역 중복이며, 다음 순서를
 10번 slot이 승인한 한 path로 보인다.
 
 1. **exception path:** 입력 Schema를 준비하고 `try`에는 최외곽 application call 한 문장만
-   둔다. 구체 known exception 또는 구체 exception tuple만 catch해 no-arg concrete 또는
-   populated BC-base `ErrorSchema`, 필요하면 주입된 응답용 header를 만든 뒤 두 인자
-   `Status(<승인된 HTTP status 표현>, error)`를 직접 반환한다. status 표현은 literal/Ninja
+   둔다. 구체 known exception 또는 구체 exception tuple만 catch해 concrete(무인자 · 설명 칸
+   keyword 하나) 또는 populated BC-base `ErrorSchema`, 필요하면 주입된 응답용 header를 만든 뒤
+   두 인자 `Status(<승인된 HTTP status 표현>, error)`를 직접 반환한다 — 잡은 예외의 승인 필드
+   값(사건 값)은 설명 칸과 머리 값에만 싣고, 값 유무로 가를 때만 아래 사건 값 한 꼴 분기를 쓴다. status 표현은 literal/Ninja
    status 상수 또는 slot 6이 실제로 승인한 body field 접근일 수 있다. 성공 변환은 `try` 뒤에 둔다.
 2. **`None` path:** 조회 use case가 대상이 없어 `None`을 돌려주는 경우에만 쓴다. 입력 Schema를
    준비한 뒤 application call을 정확히 한 번 하고, `try` 없이 call 바로 다음 `if result is None:`
@@ -693,7 +698,9 @@ async def get_order(
 `try` 안에 준비·분기·로그·성공 변환을 넣지 않는다. `Exception`, framework exception,
 raw DB/SDK exception을 catch하지 않고, 컨트롤러가 방금 raise한 예외를 즉시 catch하지
 않는다. 서로 다른 공개 의미가 필요한 known exception은 별도 catch와 concrete로 나누고,
-같은 공개 의미로 수렴할 때만 tuple catch를 쓴다.
+같은 공개 의미로 수렴할 때만 tuple catch를 쓴다 — 단 잡은 예외의 승인 필드 값(사건 값)을 읽는
+catch는 구체 예외 하나만 잡아, 같은 공개 의미로 수렴해도 그 예외는 tuple에서 떼어 같은 concrete로
+따로 catch하고 tuple catch는 잡은 이름을 읽지 않는다(2026-10-11).
 
 다음은 10번 slot이 조회의 «없다»를 `None` path로 정한 경우의 controller-owned 직접 변환이다.
 application query/Result는 application layer DTO에서 import하고 use case는 BC `composition_root`에서
@@ -757,10 +764,23 @@ if result is None:
 return result
 ```
 
-승인된 BC 오류 헤더도 같은 controller가 소유하되 `Status` 생성자에 header를 넘기지 않는다.
-명세가 retryable BC 503과 `Retry-After`를 승인했다면 controller method가 주입된 응답용(temporal)
-Django `HttpResponse`를 받아 선택된 mapping branch에서 header를 설정한 뒤 두 인자 `Status`를
-반환한다. exception path의 구체 catch는 그 branch의 한 형태다.
+승인된 BC 오류 헤더도 같은 controller가 소유하되 `Status` 생성자에 header를 넘기지 않고, 머리
+이름은 고정 문자열이며 값은 정적 값 또는 승인 사건 값 꼴이다.
+명세가 BC 오류 머리(retryable 503의 `Retry-After` · 사건 값 머리)를 승인했다면 controller
+method가 주입된 응답용(temporal) Django `HttpResponse`를 받아 선택된 mapping branch에서 오류를 만든 다음 header를 설정하고 두 인자 `Status`를
+반환한다(차례는 오류 생성 → 머리 → 반환이다). exception path의 구체 catch는 그 branch의 한 형태다.
+managed catch가 `as`로 잡은 자기 BC 구체 예외 하나의 승인 필드 값(사건 값)은 slot 10이 승인한
+선언 필드(그 예외 클래스 본문의 `f: T` — `discipline-houserules` 의 타입 어노테이션 절이 정한 꼴 — 또는
+`__init__`의 `self.f: T = …` · 상속 필드 아님)만 읽어 공통 shape의 유일한 일반 `str` 설명 칸 keyword
+값과 승인 머리 값에만 싣고, 꼴은
+`str` 필드 `n.f` · `datetime` 필드 `n.f.astimezone(UTC).isoformat()` · `int` 필드 f-string `{n.f}`
+뿐이며, 식별자 · status · 그 밖의 칸 · 머리 이름 · helper에는 싣지 않는다.
+승인 필드가 `T | None`이면 값이 없다는 까닭만으로 예외를 나누지 않고 catch 본문을
+`if <n>.<f> is not None:`과 `else:` 한 문장으로 두며, 두 가지는 각각 같은 concrete · 같은 코드 ·
+같은 실제 status 값으로 오류 생성 → 머리 → 반환을 따르고, `T | None` 필드는 검사식이 본 그 필드만
+값 있는 가지에서만 읽는다(값이 늘 있는 다른 승인 필드는 어느 가지에서든 읽을 수 있다) — 이 분기는
+값을 보일지 생략할지 고르는 응답 구성이라 입구 로직이 아니며, 다른 조건 · 중첩 · `else` 없는 꼴 ·
+helper는 쓰지 않는다.
 
 ```python
 from django.http import HttpResponse
@@ -784,8 +804,8 @@ def retry_order(
     try:
         order = use_case.execute(command)
     except OrderContention:
-        response["Retry-After"] = "1"
         error = OrderTemporarilyUnavailableError()
+        response["Retry-After"] = "1"
         return Status(status.HTTP_503_SERVICE_UNAVAILABLE, error)
 
     return OrderOut.from_result(order)
@@ -828,9 +848,7 @@ class BearerAuth(HttpBearer):
 
 **인프라 오류 경계.** raw `OperationalError`, `IntegrityError`, SDK/network 오류를
 controller나 전역 recognizer가 문자열·SQLSTATE로 분류하지 않는다. 기본은 framework의
-미식별 500 경로다. 특정 실패가 안정된 공개 의미를 가진다고 G1에서 승인된 경우에만 infra/ACL이
-그 실패를 자기 BC의 구체 domain/application exception으로 정규화하고, controller가 그
-구체 exception을 위의 직접 흐름으로 처리한다. 인프라 예외를 합성하거나 다른 BC exception을
+미식별 500 경로다. 이미 잡은 IntegrityError의 승인된 알려진 제약 실패는 구체 계약 예외로, 나머지는 승인된 일반 저장소 실패 계약으로 번역한다. repository 실패 계약은 domain 소유, capability port 실패 계약은 해당 port 소유다. 이 내부 정규화는 공개 HTTP 오류 승인이 아니므로 일반 저장소 실패의 외부 응답은 기존 safe 500을 유지한다. 새 ErrorCode/ErrorSchema/4xx/503을 만들지 않는다. 잡지 않은 unknown 인프라 오류를 새로 catch-all하지 않는다. 안정된 public meaning이 별도로 승인된 경우에만 그 외부 계약에 맞는 controller mapping을 한다. 이미 선언된 계약 예외의 관찰 후 재던짐은 허용한다. 인프라 예외를 합성하거나 다른 BC exception을
 그대로 통과시키지 않는다.
 
 **응답 선언과 OpenAPI.** controller가 직접 반환할 수 있는 각 BC 오류 status는 operation의
@@ -856,7 +874,7 @@ framework-native carveout이다. 어느 carveout도 오류 helper나 raw 오류 
 소비자·테스트가 승인된 wire contract에 의존한다면 관찰한 status, body, header, media type을
 그대로 보존한다. 보존이 정당한 근거는 둘뿐이다 — ⑴ 밖이 의존한다(wire shape) ⑵ 되돌릴 수 없다.
 «먼저 작성돼 있음»(brownfield)은 근거가 아니며 코드의 «자리»는 둘 어디에도 안 걸린다(자리는
-백스톱 위반 = 리팩터링 대상). 이 짧은 carveout은 wire 계약을 지키기 위한 것이며, 새
+백스톱 위반 = 기능 요청의 리팩터링 대상 · 리팩토링 모드는 BC 의미 점검 항목도 대상). 이 짧은 carveout은 wire 계약을 지키기 위한 것이며, 새
 helper·handler 레시피나 code-profile과의 혼합을 제시하지 않는다.
 
 ### 6.3 콘텐츠 협상 실패 (406/415)

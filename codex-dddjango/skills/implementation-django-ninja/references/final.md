@@ -43,7 +43,7 @@ Django Ninja skill은 HTTP 요청과 응답을 Django application/service/usecas
 - path/query/header/body 파라미터를 명시적 schema로 받기
 - authentication/authorization 연결
 - service/usecase 호출
-- domain/application error를 API error contract로 변환
+- 도메인 예외를 API error contract로 변환(응용 예외는 포트 예외(바깥 행위자의 죽음)뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다)
 - response schema와 status code mapping
 - OpenAPI에 드러나는 계약 변화의 candidate·승인 뒤 검증 기준 제시
 - 실제 mount를 통과하는 Django client 기반 HTTP contract 검증 기준 제시
@@ -70,7 +70,7 @@ Router operation은 HTTP adapter다. 다음은 Router 안에 둘 수 있다.
 - auth/permission hook 연결
 - service/usecase 호출
 - API-facing DTO 또는 schema로 response mapping
-- known application/domain exception을 BC `ErrorSchema`로 변환
+- known 도메인 예외를 BC `ErrorSchema`로 변환(§2.2)
 
 다음은 Router, Schema, FilterSchema에 두지 않는다.
 
@@ -133,7 +133,7 @@ Operation 구현 기준:
   status(100–399)의 메타데이터 보충(header 문서화 등)은 허용한다: 보충 집합이 `response=`
   선언 집합의 부분집합이고 키 전부 리터럴일 때만이며, 오류 status 동거·변수/상수 키·
   `**` splat 은 위반이다(fail-closed — 2026-09-01).
-- known domain/application exception은 컨트롤러가 구체적으로 catch하고, 준비된
+- known 도메인 예외는 컨트롤러가 구체적으로 catch하고(응용 예외는 포트 예외(바깥 행위자의 죽음)뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다), 준비된
   concrete `ErrorSchema`(무인자 · 또는 설명 칸 keyword 하나 — §6.2 사건 값)를
   `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 오류
   `(status, schema)` tuple, raw `Response`/dict, 오류 helper/factory/serializer/mapper,
@@ -658,7 +658,7 @@ schema 파일을 만들지 않는다.
 `Status(status.HTTP_409_CONFLICT, error)`를 반환한다.
 dictionary unpacking, builder, factory, mapping table로 field 작성을 우회하지 않는다.
 
-**컨트롤러가 변환을 소유한다.** known domain/application failure의 공개 식별자·status 선택은
+**컨트롤러가 변환을 소유한다.** known 도메인 실패(응용 예외는 포트 예외(바깥 행위자의 죽음)뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다)의 공개 식별자·status 선택은
 해당 BC controller가 한다. 짧은 반복 mapping은 의도적인 지역 중복이며, 다음 순서를
 10번 slot이 승인한 한 path로 보인다.
 

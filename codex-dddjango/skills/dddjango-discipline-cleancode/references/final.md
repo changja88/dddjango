@@ -1667,7 +1667,7 @@ def delete_page_and_all_references(page):
 선택한 framework/profile이 adapter entrypoint에 예외→전송 응답 매핑의 소유권을
 명시적으로 부여한 경우에는, 그 entrypoint 안에 작은 구체 `catch`와 준비된 오류
 응답의 직접 반환을 유지할 수 있다. 예를 들어 Django Ninja controller operation이
-known application/domain exception을 잡아 준비된 concrete `ErrorSchema`를
+known 도메인 예외(응용 예외는 포트 예외(바깥 행위자의 죽음)뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다)를 잡아 준비된 concrete `ErrorSchema`를
 `Status(<승인된 HTTP status 표현>, error)`로 직접 반환하는 규율은
 `implementation-django-ninja` §6.2를 따른다. 이때 분리 원칙을 맞추기 위해서만
 mapping helper/factory/handler를 추출하지 않는다. 단, 이 자격은 광범위 catch를

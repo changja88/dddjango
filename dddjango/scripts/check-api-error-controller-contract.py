@@ -35,8 +35,8 @@ overlap 절 — #62·#474 는 handler 행, ⓓ#125 는 route 함수 def 행 좌�
   BC 소속 대조 생략)가 승인 목록이다.
   | 프로필 | 트리 #474(도메인 예외 읽기) | code lane |
   | auto | 꼴 맞는 읽기는 비켜 준다(승인 대조 없음) | 돌지 않는다 |
-  | dddjango-code-json | auto 와 같다 | C1 `caught exception field read not approved by slot 10`(도메인 #474 · 응용 계약) ·
-  |                    |                | C2 `caught exception read outside the approved event-value form`(응용 · 계약) |
+  | dddjango-code-json | auto 와 같다 | C1 `caught exception field read not approved by slot 10`(도메인 #474 · 응용(기존 빚) 계약) ·
+  |                    |                | C2 `caught exception read outside the approved event-value form`(응용(기존 빚) · 계약) |
   | preserve-established | 모든 읽기에 #474(그대로) · `--event-value` 는 사용 오류 | 판정 0(그대로) |
   비켜 주기는 api/<area>/<area>_controller.py 진입점(승격 본체 포함)의 managed catch(operation 본문의 `try` handler —
   code lane 이 보는 바로 그 handler)에만 — route 아닌 메서드 · 모듈 함수 · 중첩 함수의 catch 와 webhook 은 그대로다.
@@ -47,6 +47,10 @@ overlap 절 — #62·#474 는 handler 행, ⓓ#125 는 route 함수 def 행 좌�
   호출이 없어도 막는다(가지 문법 줄 + 응용 catch 는 C2 · 도메인 catch 는 트리 #474 — 구현 검토 보완).
   사건 값을 읽는 응용 catch 에서는 람다 본문처럼 평가되지 않는 자리의 통째 쓰기(`message=(lambda: str(n))()`)도 C2 다
   (도메인 catch 는 트리 #474 — 재검토 보완). 사건 값을 읽지 않는 응용 catch 의 같은 꼴은 그대로다(기계 밖 — 감수 몫).
+  컨트롤러가 잡는 것은 자기 BC 도메인 예외다 — 응용 예외는 포트 예외뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다
+  (2026-11-10 F4-103). #62 · C1 · C2 가 받는 범위는 그대로 자기 BC `domain_layer` · `application_layer` 예외다 — 응용 층
+  예외 catch 를 받는 것은 이미 있는 코드의 빚 때문이다(새 응용 예외 클래스는 context-isolation #292 가, 컨트롤러의
+  포트 예외 import 는 #93 이 막아 새로 생기지 않는다).
 
 호출 앞 입력 검사(2026-11-09 F4-130 · 사용자 결정 «나.» — code-json code lane):
   쓰임새 호출(뿌리 이름이 자기 BC `composition_root` · `application_layer` import 인 호출 · 응용 층 자료 생성 `*Command` · `*Query` ·
@@ -4306,13 +4310,14 @@ def _analyze_try(
                         "caught exception runtime provenance 분석 불능"
                     )
                 elif not validity:
-                    # 행5(#62) — 자기 BC 도메인·응용 예외 밖 catch = «한정» 위반.
+                    # 행5(#62) — 자기 BC 도메인 예외(응용 층 예외는 기존 빚으로 받음) 밖 catch = «한정» 위반.
                     _append_finding(
                         findings,
                         seen,
                         operation.parsed,
                         type_node,
-                        "catch must be direct own-BC application/domain exception",
+                        "catch must be direct own-BC domain exception — 응용 예외는 포트 예외뿐이고 "
+                        "유스케이스가 도메인 예외로 번역해 넘긴다",
                         rule="#62",
                         overlap_line=handler.lineno,
                     )
@@ -8622,7 +8627,9 @@ def _slice_check_controller_ast(
                 caught_names = [getattr(caught, "id", getattr(caught, "attr", ""))]
             if caught is None or set(caught_names) & _CATCH_ALL_NAMES:
                 where = f"{rel}:{node.lineno}"
-                msg = "`except Exception`/bare — 폴백은 도메인·응용 base 단위 catch 로 한정한다(base 는 상한이다 — code-json managed controller 는 concrete/구체 tuple 만 catch 한다: ninja §6.2)"
+                msg = ("`except Exception`/bare — 폴백은 자기 BC 도메인 예외 base 단위 catch 로 한정한다(응용 예외는 포트 예외뿐이고 "
+                       "유스케이스가 도메인 예외로 번역해 넘긴다 · base 는 상한이다 — code-json managed controller 는 concrete/구체 tuple 만 "
+                       "catch 한다: ninja §6.2)")
                 findings.add("#62", where, msg)
                 finding_keys.append(("#62", rel.as_posix(), node.lineno))
             if (

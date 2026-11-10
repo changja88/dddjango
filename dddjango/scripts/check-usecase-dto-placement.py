@@ -174,19 +174,6 @@ def _is_orm_import(mod_path: str) -> bool:
     return any(p.startswith("django_") for p in parts) or ("driven_layer" in parts and "models" in parts)
 
 
-def _exception_based(cls: "ast.ClassDef", declared: "dict[str, ast.ClassDef]", depth: int = 0) -> bool:
-    """기반 사슬에 Exception/Error 가 닿는가 — 비-예외 클래스 밀반입 차단(#210 면제 조건 ⑶)."""
-    if depth > 5:
-        return False
-    for base in cls.bases:
-        name = base.attr if isinstance(base, ast.Attribute) else getattr(base, "id", "")
-        if name == "Exception" or name.endswith(("Exception", "Error")):
-            return True
-        if name in declared and _exception_based(declared[name], declared, depth + 1):
-            return True
-    return False
-
-
 def _lawful_domain_exception_import(mod_path: str, names: "list[str]", bc: Path) -> bool:
     """같은 BC `domain_layer/<agg>/exception/<module>` 실선언 예외 클래스 import 인가.
 
@@ -194,7 +181,8 @@ def _lawful_domain_exception_import(mod_path: str, names: "list[str]", bc: Path)
     Goodhart 방어 셋(2026-08-14 적대 리뷰): ⑴ 경로 깊이 고정(`exception/` 직계 모듈, 또는 정확히 한
     칸 더 — 그 칸이 `<aggregate>/exception/` 아래 «실제 묶음»일 때만 · #654~#656)
     ⑵ 가져온 이름 전부가 그 모듈이 «직접 선언한» ClassDef(재수출·함수·상수 세탁 차단 —
-    별칭 import 는 이름 불일치로 자연 탈락) ⑶ 기반 사슬에 Exception/Error 토큰.
+    별칭 import 는 이름 불일치로 자연 탈락) ⑶ 기반 사슬에 Exception/Error 토큰(`checker_target.exception_based`
+    — 비-예외 클래스 밀반입 차단).
     타 BC 의 exception 은 면제 밖(#12 축과 별개로 여기서도 발화 유지)이다.
     """
     parts = mod_path.split(".")
@@ -220,7 +208,7 @@ def _lawful_domain_exception_import(mod_path: str, names: "list[str]", bc: Path)
     }
     if not names or any(n not in declared for n in names):
         return False
-    return all(_exception_based(declared[n], declared) for n in names)
+    return all(checker_target.exception_based(declared[n], declared) for n in names)
 
 
 # ── application_layer 구조 — #182 · #183 · #188 · #190 · #192 · #193 ────────

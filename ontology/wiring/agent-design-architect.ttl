@@ -558,3 +558,6 @@ djr:R-3736 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ap
 djr:R-3737 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api>, <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3738 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> .
+
+djr:R-3742 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .

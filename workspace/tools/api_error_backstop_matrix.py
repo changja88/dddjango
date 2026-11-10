@@ -7129,9 +7129,13 @@ class LessonController:
 
 # ── C-7(2.23.1 불변식): #15 출력은 새 두 꼴이 «호출의 결과 · 별칭 · 호출 대입 이름» 을 주어로 삼은 실행에서만 바뀐다 —
 # 2.23.0(배포 커밋 고정)과 같은 픽스처에서 나란히 돌려, 다른 실행은 옛 출력에 두 분석 불능 글 가운데 하나가 있어야 한다.
-# 예외는 차분 없는 code 프로필 선점 실행의 `안내:` 한 줄뿐이다.
+# 예외는 차분 없는 code 프로필 선점 실행의 `안내:` 한 줄과, #62 «한정» 문면을 «자기 BC 도메인 예외» 로 고친 것(F4-103 —
+# 판정 무변 · 옛 출력의 옛 문면을 새 문면으로 바꿔 대조한다)이다.
 RELEASED_2230_COMMIT: Final = "e1f6cb74"
 F496_PREEMPTION_NOTE: Final = "[check-api-error-controller-contract] 안내: 트리 진단이 먼저 서서"
+F4103_CATCH62_OLD: Final = "catch must be direct own-BC application/domain exception"
+F4103_CATCH62_NEW: Final = ("catch must be direct own-BC domain exception — 응용 예외는 포트 예외뿐이고 "
+                            "유스케이스가 도메인 예외로 번역해 넘긴다")
 
 
 def _released_checker_dir(scratch: Path) -> Path:
@@ -7164,7 +7168,8 @@ def controller_invariant_failures(cases: list[Case]) -> list[str]:
             if "auto" not in case.checker_args:
                 new_stdout = "".join(line for line in new.stdout.splitlines(keepends=True)
                                      if not line.startswith(F496_PREEMPTION_NOTE))
-            if (old.returncode, old.stdout, old.stderr) == (new.returncode, new_stdout, new.stderr):
+            old_stdout = old.stdout.replace(F4103_CATCH62_OLD, F4103_CATCH62_NEW)
+            if (old.returncode, old_stdout, old.stderr) == (new.returncode, new_stdout, new.stderr):
                 continue
             if F496_PREDICATE in old.stderr or F496_UNSUPPORTED in old.stderr:
                 continue

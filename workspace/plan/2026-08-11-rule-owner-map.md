@@ -573,3 +573,4 @@
 | 660 | ast | scripts/check-layer-skeleton.py | — | 신설 | 10-29 ②′ 의존 방향 — 폴더 안 import 그래프(부품 → 본체 · 부품끼리 순환 · ②′ 폴더 틀 · 잎 → 잎 아닌 형제) · 본체가 부품에 `self` · 본체 메서드 · `self` 잡는 lambda · 안쪽 함수 · `partial` 을 넘김 · 부품 인자 주석이 본체 클래스 |
 | 661 | ast | scripts/check-layer-skeleton.py | — | 신설 | 10-29 ②′ 이름 — ②′ 폴더만 · 부품 파일 이름 금지 낱말 · 틀 이름 `<유스케이스 이름>_frame.py` 하나 · 부품 클래스 `…UseCase` · 공개 이름(부품 클래스 · 받는 쪽 셋의 `_` 메서드) |
 | 662 | ast | scripts/check-usecase-dto-placement.py | — | 신설 | 10-29 ②′ 바깥 import — 같은 BC `application_layer/` 밖 시험 아닌 제품 코드가 ②′ 부품 모듈을 import(패키지 경로 통과 · 기존 ② 폴더 밖) |
+| 663 | ast | scripts/design_pregate.py | — | 신설 | 11-10 프레임워크가 대신 부르는 메서드(F4-52) — 예보기 자기 판정 · update 칸 직계 베이스가 사용자 매니저 · 인증 백엔드인 클래스가 직접 정의한 `create_superuser` · `get_by_natural_key` · `get_user` 의 symbols 행 무기재 · 서명 못 읽음 · 기본값 없는 인자 더함(행 끝 `대신부름` 칸으로 풀림 · 칸 파일은 file-plan 안) = 선언 확정 · 처분 `corrected` 만 |

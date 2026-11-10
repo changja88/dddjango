@@ -43,12 +43,8 @@ class Order:
     def settle(self) -> bool:
         return self._move("open", "settled")
 
-    def merge_into(self, other: Order) -> bool:
-        if not (self.is_open() and other.is_open()):
-            return False
-        other._paid += self._paid
-        self._paid = 0
-        return self._move("open", "merged")
+    def archive(self) -> bool:
+        return self._move("closed", "archived")
 
     def _move(self, before: str, after: str) -> bool:
         if self._state != before:

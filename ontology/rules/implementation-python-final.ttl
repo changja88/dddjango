@@ -399,12 +399,18 @@ djr:R-2757 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-2758 a djr:Obligation ;
-    skos:prefLabel "validation error 의 adapter·API·config 계층 변환"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2758@2026-08-22> .
+    skos:prefLabel "validation error 의 경계 소유 실패 변환(어댑터 = 그 포트의 예외 · API 입력 = 입력 Schema 선언 → framework 422)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2758@2026-11-10> .
 
 <https://numchida.com/ns/djr#R-2758@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2758 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2758@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-2758 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2758@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-2759 a djr:Prohibition ;
     skos:prefLabel "raw pydantic error shape 의 도메인 규칙 편입 금지"@ko ;
@@ -1272,7 +1278,7 @@ djr:R-3446 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
     djr:statesNorm djr:R-2758, djr:R-2759 ;
-    djr:text "- validation error는 adapter/API/config loading layer에서 domain/application error로 변환한다. raw pydantic error shape가 도메인 규칙의 일부가 되지 않게 한다.\n"@ko .
+    djr:text "- validation error는 adapter/API/config loading layer에서 그 경계가 소유한 실패로 변환한다 — 어댑터(바깥 응답 검증)는 그 포트의 예외로(응용 예외는 포트 예외(바깥 행위자의 죽음)뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다), API 입력은 입력 Schema 선언이 framework 422 로 낸다(`implementation-django-ninja` §2.2). raw pydantic error shape가 도메인 규칙의 일부가 되지 않게 한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s072-12.0/b6> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s072-12.0> ;

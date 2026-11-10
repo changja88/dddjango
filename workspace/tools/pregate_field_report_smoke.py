@@ -6,6 +6,7 @@ F4-115 — update 도메인 서비스 서명 · OHS 번역 출처 칸의 선언 
 F4-48 · F4-155 — 저장소 쓰기 인자(#287) · `add_all`(#599) · update 조립 파일 최상단 이름(#85)의 선언 예보를 2.32.0 배포판 대조와
 구현 뒤 실검사기의 G2 줄 키 차분으로 고정한다.
 F4-137 · F4-105(pre-gate) · F4-37 · F4-44(`check-error-centralization.py` git inventory) — 2.33.0 배포판 대조로 고정한다.
+F4-52 — 프레임워크가 대신 부르는 메서드(#663)의 선언 예보 · 끝 칸 `대신부름` · `--check-report` 처분을 2.34.0 배포판 대조로 고정한다.
 """
 from __future__ import annotations
 
@@ -119,6 +120,43 @@ WIRING_HEAD = 'from application.chat.application_layer.send.send_use_case import
 # 기준선 조립 파일 — 사설 함수 `_legacy_accounts` 는 이미 #85 를 내는 기존 빚이다.
 WIRING_ORIGINAL = (WIRING_HEAD + '\n\ndef _legacy_accounts() -> dict:\n    return {}\n\n\n'
                    'def build_send_use_case() -> SendUseCase:\n    return SendUseCase()\n')
+# F4-52 — 프레임워크가 대신 부르는 메서드(#663). «옛 판» 은 2.34.0 배포 커밋 고정(HEAD 금지).
+_RELEASED_2340_COMMIT = "98dac918"
+ACCOUNT_MODEL = "application/accounts/driven_layer/django_accounts/models/account_user_model.py"
+ACCOUNT_MODEL_ORIGINAL = ('from django.contrib.auth.models import AbstractUser, UserManager\nfrom django.db import models\n\n\n'
+                          'class AccountUserManager(UserManager["AccountUserModel"]):\n'
+                          '    def create_user(self, username: str, email: str | None = None, password: str | None = None,\n'
+                          '                    **extra: object) -> "AccountUserModel":\n'
+                          '        return super().create_user(username, email, password, **extra)\n\n'
+                          '    def create_superuser(self, username: str, email: str | None = None, password: str | None = None,\n'
+                          '                         **extra: object) -> "AccountUserModel":\n'
+                          '        return super().create_superuser(username, email, password, **extra)\n\n\n'
+                          'class AccountUserModel(AbstractUser):\n'
+                          '    gender: "models.CharField[str, str]" = models.CharField(max_length=1, default="")\n'
+                          '    objects: AccountUserManager = AccountUserManager()\n')
+ACCOUNT_BACKEND = "framework/authentication/account_backend_adapter.py"
+ACCOUNT_BACKEND_ORIGINAL = ('from django.contrib.auth.backends import ModelBackend\nfrom django.http import HttpRequest\n\n\n'
+                            'class AccountBackend(ModelBackend):\n'
+                            '    def authenticate(self, request: HttpRequest | None, username: str | None = None,\n'
+                            '                     password: str | None = None, **kwargs: object) -> object:\n'
+                            '        return super().authenticate(request, username=username, password=password, **kwargs)\n\n'
+                            '    def get_user(self, user_id: int) -> object:\n        return super().get_user(user_id)\n')
+ACCOUNT_FACTORY = "application/accounts/test/factories/account_factory.py"
+ACCOUNT_CALLER = "application/accounts/test/integration/test_literal_caller.py"
+# 옛 배치(표준 트리 이관 전) — 주석 없는 서명.
+MEMBER_LEGACY = "application/members/django_members/models.py"
+MEMBER_LEGACY_ORIGINAL = ('from django.contrib.auth.models import AbstractUser, UserManager\n\n\n'
+                          'class MemberManager(UserManager["Member"]):\n'
+                          '    def create_superuser(self, username, email=None, password=None, **extra):\n'
+                          '        return super().create_superuser(username, email, password, **extra)\n\n\n'
+                          'class Member(AbstractUser):\n    objects = MemberManager()\n')
+_MANAGER = f'{ACCOUNT_MODEL}::AccountUserManager(UserManager["AccountUserModel"])'
+_SUPERUSER = 'create_superuser(self, username: str, {}email: str | None = None, password: str | None = None, **extra: object) -> AccountUserModel'
+_SUPERUSER_ROW = f'{ACCOUNT_MODEL}::AccountUserManager.' + _SUPERUSER.format('')
+_BACKEND = f'{ACCOUNT_BACKEND}::AccountBackend(ModelBackend)'
+# 옛 판 `check_report` 를 따로 띄워 같은 리포트를 처분 판정만 본다(실행 트리 digest 는 리포트 헤더 값을 넘긴다).
+_OLD_CHECK_REPORT = ('import sys\nsys.path.insert(0, sys.argv[1])\nimport design_pregate as d\n'
+                     'print(d.check_report(sys.argv[2], sys.argv[3], current_digest=sys.argv[4])[0])\n')
 
 
 def questionnaire_source(methods=()) -> str:
@@ -1691,6 +1729,172 @@ class BookAdmin(TranslatableAdmin):
                     self.assertEqual((code, info['declarations']), (0, '1'), problems)
                 self.assertEqual((self.source / WIRING).read_text(), original)
         self.assertFalse(Path(self.env['DJR_FINDINGS_JSON']).exists())
+
+    def account_fixture(self) -> None:
+        self.write(self.source, ACCOUNT_MODEL, ACCOUNT_MODEL_ORIGINAL)
+        self.write(self.source, ACCOUNT_BACKEND, ACCOUNT_BACKEND_ORIGINAL)
+        self.write(self.source, ACCOUNT_FACTORY,
+                   'class AccountFactory:\n    def create_superuser(self, username: str) -> object:\n        raise NotImplementedError\n')
+        self.write(self.source, ACCOUNT_CALLER, 'def test_literal_caller() -> None:\n    assert True\n')
+        self.write(self.source, MEMBER_LEGACY, MEMBER_LEGACY_ORIGINAL)
+        self.write(self.source, 'conftest.py', 'import pytest\n')
+        _git(self.source, 'add', '-A')
+        _git(self.source, 'commit', '-qm', 'account fixture')
+
+    def test_f52_framework_called_rows_block_and_release(self):
+        # 현장 꼴(사용자 모델 update · symbols 없음 — 2.34.0 은 exit 4 인데 구현 뒤 `admin_client` 시험 · `manage.py createsuperuser` 가
+        # 깨진다) · 행 있음 · 기본값 · 풀어 줌 · 고칠 파일 계획 밖 · `-` · 목록 밖 · 물려받은 메서드 덮어씀 · 백엔드 `get_user` · 끝 칸 공백
+        # 하나 · 서명을 바꾸지 않는 정상 설계(행 없음 · 클래스 행만 = 멈춤 · 행 두 줄 = 통과). 옛 판은 모두 exit 4(놓침).
+        self.account_fixture()
+        old_scripts = self.scripts_at(_RELEASED_2340_COMMIT)
+        model = [f'update {ACCOUNT_MODEL}', f'update {ACCOUNT_CALLER}']
+        create_user = (f'{ACCOUNT_MODEL}::AccountUserManager.create_user(self, username: str, gender: str, '
+                       'email: str | None = None, password: str | None = None, **extra: object) -> AccountUserModel')
+        gendered = f'{ACCOUNT_MODEL}::AccountUserManager.' + _SUPERUSER.format('gender: str, ')
+        get_user = f'{ACCOUNT_BACKEND}::AccountBackend.get_user(self, user_id: int) -> object'
+        missing_superuser = 'AccountUserManager: `create_superuser` 는 프레임워크가 대신 부른다'
+        for label, paths, rows, code, confirmed_has, candidate_has in [
+            ('보고 꼴 행 없음', model, [], 2, [missing_superuser], []),
+            ('행 있음', model, [_MANAGER, create_user, gendered], 2,
+             ['AccountUserManager.create_superuser: 기본값 없는 인자 `gender`'], []),
+            ('기본값', model, [_MANAGER, _SUPERUSER_ROW.replace('**extra', 'gender: str = "", **extra')], 4, [], []),
+            ('풀어 줌', model + ['update conftest.py'],
+             [_MANAGER, create_user, f'{gendered}  대신부름 conftest.py {ACCOUNT_MODEL}'], 4, [], []),
+            ('고칠 파일 계획 밖', model, [_MANAGER, f'{gendered}  대신부름 conftest.py'], 2,
+             ['`대신부름` 의 `conftest.py` 가 file-plan add · update · empty 에 없다'], []),
+            ('고칠 파일 없음', model, [_MANAGER, f'{gendered}\t대신부름 -'], 4, [], []),
+            ('목록 밖', model + [f'update {ACCOUNT_BACKEND}', f'update {ACCOUNT_FACTORY}'],
+             [_MANAGER, create_user, _SUPERUSER_ROW, _BACKEND,
+              f'{ACCOUNT_BACKEND}::AccountBackend.authenticate(self, request: HttpRequest | None, otp: str, '
+              'username: str | None = None, password: str | None = None, **kwargs: object) -> object', get_user,
+              f'{ACCOUNT_FACTORY}::AccountFactory',
+              f'{ACCOUNT_FACTORY}::AccountFactory.create_superuser(self, username: str, gender: str) -> object'], 4, [], []),
+            ('물려받은 메서드 덮어씀', model,
+             [_MANAGER, _SUPERUSER_ROW,
+              f'{ACCOUNT_MODEL}::AccountUserManager.get_by_natural_key(self, username: str, tenant: str) -> AccountUserModel'], 4,
+             [], ['AccountUserManager.get_by_natural_key: 기본값 없는 인자 `tenant`', '예보 불확정: 기준선 클래스에 이 메서드 정의가 없다']),
+            ('백엔드 get_user', [f'update {ACCOUNT_BACKEND}'],
+             [_BACKEND, f'{ACCOUNT_BACKEND}::AccountBackend.get_user(self, user_id: int, tenant: str) -> object'], 2,
+             ['AccountBackend.get_user: 기본값 없는 인자 `tenant`'], []),
+            ('끝 칸 공백 하나', model, [_MANAGER, f'{gendered} 대신부름 -'], 2,
+             ['파이썬 서명으로 읽지 못했다(끝 칸 `대신부름` 앞은 탭 또는 공백 2+)'], []),
+            ('정상 설계 행 없음', [f'update {ACCOUNT_MODEL}'], [], 2, [missing_superuser], []),
+            ('정상 설계 클래스 행만', [f'update {ACCOUNT_MODEL}'], [_MANAGER], 2, [missing_superuser], []),
+            ('정상 설계 행 두 줄', [f'update {ACCOUNT_MODEL}'], [_MANAGER, _SUPERUSER_ROW], 4, [], []),
+            ('백엔드 정상 설계 행 없음', [f'update {ACCOUNT_BACKEND}'], [], 2, ['AccountBackend: `get_user` 는 프레임워크가 대신 부른다'], []),
+            ('백엔드 정상 설계 행 두 줄', [f'update {ACCOUNT_BACKEND}'], [_BACKEND, get_user], 4, [], []),
+        ]:
+            with self.subTest(form=label):
+                text = spec_text(paths, rows)
+                old, _ = self.cli(text, scripts=old_scripts)
+                self.assertEqual(old.returncode, 4, old.stdout + old.stderr)
+                run, report = self.cli(text)
+                self.assertEqual(run.returncode, code, run.stdout + run.stderr)
+                self.assertIn('실체화 0', run.stdout)
+                confirmed, candidate = pg._subsection(report, '선언 확정'), pg._subsection(report, '선언 후보')
+                for fragment in confirmed_has:
+                    self.assertIn(fragment, confirmed)
+                for fragment in candidate_has:
+                    self.assertIn(fragment, candidate)
+                self.assertEqual('[#663]' in confirmed, code == 2, confirmed)
+                self.assertEqual('[#663]' in candidate, bool(candidate_has), candidate)
+                self.assertEqual(pg.check_report(text, report)[0], 3 if code == 2 else 0)
+        for path, original in ((ACCOUNT_MODEL, ACCOUNT_MODEL_ORIGINAL), (ACCOUNT_BACKEND, ACCOUNT_BACKEND_ORIGINAL)):
+            self.assertEqual((self.source / path).read_text(), original)
+        self.assertFalse(Path(self.env['DJR_FINDINGS_JSON']).exists())
+
+    def test_f52_legacy_layout_and_release_cell_form(self):
+        # 옛 배치(주석 없는 서명 · 표준 트리 밖 경로)도 같은 판정 · 끝 칸 형식 위반은 형식 red(옛 판은 클래스 행만 형식 red).
+        self.account_fixture()
+        old_scripts = self.scripts_at(_RELEASED_2340_COMMIT)
+        legacy = spec_text([f'update {MEMBER_LEGACY}'], [
+            f'{MEMBER_LEGACY}::MemberManager(UserManager["Member"])',
+            f'{MEMBER_LEGACY}::MemberManager.create_superuser(self, username, gender, email=None, password=None, **extra)'])
+        old, _ = self.cli(legacy, scripts=old_scripts)
+        self.assertEqual(old.returncode, 4, old.stdout + old.stderr)
+        run, report = self.cli(legacy)
+        self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+        self.assertIn('MemberManager.create_superuser: 기본값 없는 인자 `gender`', pg._subsection(report, '선언 확정'))
+        gendered = f'{ACCOUNT_MODEL}::AccountUserManager.' + _SUPERUSER.format('gender: str, ')
+        for label, rows, old_code in [
+            ('경로 없음', [_MANAGER, f'{gendered}  대신부름'], 4),
+            ('`-` 와 경로 섞기', [_MANAGER, f'{gendered}  대신부름 - conftest.py'], 4),
+            ('클래스 행', [f'{_MANAGER}  대신부름 -', _SUPERUSER_ROW], 3),
+            ('함수 행', [_MANAGER, _SUPERUSER_ROW, f'{ACCOUNT_MODEL}::normalize_name(name: str) -> str  대신부름 -'], 4),
+        ]:
+            with self.subTest(form=label):
+                text = spec_text([f'update {ACCOUNT_MODEL}', 'update conftest.py'], rows)
+                old, _ = self.cli(text, scripts=old_scripts)
+                self.assertEqual(old.returncode, old_code, old.stdout + old.stderr)
+                run, _ = self.cli(text)
+                self.assertEqual(run.returncode, 3, run.stdout + run.stderr)
+                self.assertIn('symbols 대신부름 칸 형식 위반', run.stdout)
+
+    def test_f52_release_cell_paths_follow_the_file_plan(self):
+        # 끝 칸 경로는 file-plan add · update · empty 일 때만 푼다(정규화 마디로 견줌) — remove · 계획 밖은 그대로 확정.
+        gendered = f'{ACCOUNT_MODEL}::AccountUserManager.' + _SUPERUSER.format('gender: str, ')
+        baseline = {ACCOUNT_MODEL: ast.parse(ACCOUNT_MODEL_ORIGINAL)}
+        for tag, planned, cell, released in [
+            ('add', 'application/accounts/test/conftest.py', 'application/accounts/test/conftest.py', True),
+            ('empty', 'application/accounts/test/conftest.py', 'application/accounts/test/conftest.py', True),
+            ('update', 'conftest.py', './conftest.py', True),
+            ('remove', 'conftest.py', 'conftest.py', False),
+            ('update', 'conftest.py', 'conftest.py -', None),
+        ]:
+            with self.subTest(tag=tag, cell=cell):
+                plan, errors = pg.parse_spec(spec_text([f'update {ACCOUNT_MODEL}', f'{tag} {planned}'],
+                                                       [_MANAGER, f'{gendered}  대신부름 {cell}']))
+                if released is None:
+                    self.assertEqual(len(errors), 1, errors)
+                    self.assertTrue(errors[0].startswith('symbols 대신부름 칸 형식 위반'), errors)
+                    continue
+                self.assertEqual(errors, [])
+                found = pg.check_framework_called_forecast(plan, baseline)
+                self.assertEqual([(f.rule, f.confirmed) for f in found], [] if released else [('#663', True)])
+
+    def test_f52_unreadable_signature_points_at_the_cell_only_when_it_was_eaten(self):
+        # 검토 1 사소 7 — «서명 못 읽음» 확정의 구분 안내(끝 칸 앞 탭 · 공백 2+)는 끝 칸이 서명에 먹힌 꼴(공백 하나)에만 붙는다.
+        tail = '(끝 칸 `대신부름` 앞은 탭 또는 공백 2+)'
+        baseline = {ACCOUNT_MODEL: ast.parse(ACCOUNT_MODEL_ORIGINAL)}
+        broken = (f'{ACCOUNT_MODEL}::AccountUserManager.create_superuser(self, username: str, gender: str =, '
+                  'email: str | None = None) -> AccountUserModel')
+        for label, row, tailed in [
+            ('끝 칸이 공백 하나로 서명에 먹힘', f'{ACCOUNT_MODEL}::AccountUserManager.' + _SUPERUSER.format('gender: str, ') + ' 대신부름 -', True),
+            ('끝 칸 없이 서명이 깨짐', broken, False),
+            ('끝 칸은 바른 구분 · 서명이 깨짐', f'{broken}  대신부름 -', False),
+        ]:
+            with self.subTest(form=label):
+                plan, errors = pg.parse_spec(spec_text([f'update {ACCOUNT_MODEL}'], [_MANAGER, row]))
+                self.assertEqual(errors, [])
+                found = pg.check_framework_called_forecast(plan, baseline)
+                self.assertEqual([(f.rule, f.confirmed) for f in found], [('#663', True)])
+                self.assertTrue(found[0].detail.startswith('대신 부르는 메서드의 symbols 행을 파이썬 서명으로 읽지 못했다'), found[0].detail)
+                self.assertEqual(found[0].detail.endswith(tail), tailed, found[0].detail)
+
+    def test_f52_check_report_takes_only_corrected(self):
+        # #663 선언 확정은 ignored · filtered 처분으로 풀리지 않는다(2.34.0 `_disposed` 는 라벨 글자만 봐서 ignored 한 줄로 풀렸다) —
+        # 고쳐 다시 돌린 결과(corrected)만 닫는다.
+        self.account_fixture()
+        text = spec_text([f'update {ACCOUNT_MODEL}'], [])
+        run, report = self.cli(text)
+        self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+        stable = pg._stable_id(f'[#663] {ACCOUNT_MODEL}')
+        self.assertEqual(pg._REPORT_ID_RE.findall(pg._subsection(report, '선언 확정')), [stable])
+        digest = pg._REPORT_DIGEST_RE.search(report).group(1)
+        old_scripts = self.scripts_at(_RELEASED_2340_COMMIT)
+        for label in ('ignored', 'filtered'):
+            with self.subTest(label=label):
+                disposed = report + f'\n- `{stable}` [#663] {ACCOUNT_MODEL} → **{label}**(검토)\n'
+                code, problems, _ = pg.check_report(text, disposed)
+                self.assertEqual(code, 3, problems)
+                self.assertIn('#663 은 ignored · filtered 불인정', problems[0])
+                old = subprocess.run([sys.executable, '-I', '-B', '-c', _OLD_CHECK_REPORT, str(old_scripts), text, disposed, digest],
+                                     capture_output=True, text=True)
+                self.assertEqual(old.stdout.strip(), '0', old.stdout + old.stderr)
+        fixed = spec_text([f'update {ACCOUNT_MODEL}'], [_MANAGER, _SUPERUSER_ROW])
+        run, report = self.cli(fixed)
+        self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
+        self.assertEqual(pg.check_report(fixed, report)[0], 0)
 
 
 # 숨김 뺀 기준선 바로 앞 배포판(dddjango 2.24.2) — «지금 판과 같은 결과» 대조의 옛 판(HEAD 금지).

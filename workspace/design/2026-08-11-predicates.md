@@ -167,7 +167,7 @@ human 158  →  path 11 · ast 63 · ast+ 57 · human 27
 | 319 | ast | 4갈래를 import 로 계산해 폴더와 대조 — `ORM`(#462) → persistence · `CONTRACT` → acl · `SOCKET`(#367) → external_system · 나머지 → capability |
 | 343 | ast+ | 후보: `panel.py` 의 django 훅 본문에 `.objects`·`transaction`·루프·모델 필드 조건 / 물음: 「이 문장이 운영 «기능»인가 장고 «배선»인가」 |
 | 347 | ast+ | 후보: `admin/<entity>/feature/*.py` 중 애그리거트를 import 하고 리포지토리 쓰기를 부르는 것 / 물음: 「이 조작을 사용자 API 도 하나」 |
-| 355 | ast+ | 확정: `<A>_repository.py` 반환이 {A, Sequence[A], 값객체, bool·int·None} 밖 / 후보: bool·int 로 남은 것 / 물음: 「주어가 애그리거트인가 화면인가」 |
+| 355 | ast+ | 확정: `<A>_repository.py` 반환이 {A, Sequence[A], 값객체, bool·int·None} 밖(조회 · 쓰기 모두) / 후보: 조회가 bool·int 로 남은 것(쓰기의 bool·int 는 CAS 성공 · 지운 개수) / 물음: 「주어가 애그리거트인가 화면인가」 |
 | 365 | path | `anticorruption_layer/*/` 이름이 `application/*/` BC 폴더 이름 집합의 원소가 아니면 위반 |
 | 366 | ast | **#367 의 술어 그대로** — 「이 라이브러리가 소켓을 여나」 |
 | 368 | ast+ | 후보: `external_system/**` 의 `time.sleep`·재시도 루프·`tenacity`·`backoff`·`*Breaker`·`*Limiter` 정의 / 물음: 「이게 «기계»인가 «값»인가」 |

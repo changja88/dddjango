@@ -29,6 +29,8 @@ Kernel 없음)·#83(BC 삭제 내성)은 아래 각론 진단이 집행한다.
          `web/application/<단위>` 같은 다른 컨테이너의 폴더 이름은 세지 않는다)
   기타   #14 `with unit_of_work:` 안에서 크로스-BC 포트 호출 금지 · #110 auto_import=False
          #117 두 번째 ErrorCode 컨테이너 금지 · #291/#292 예외의 자리 넷 · #431 부작용 등록 금지
+         (#292 는 이름(`exception.py` · `exception/`)에 더해 application 층 모듈 맨 위 예외 클래스도 본다 —
+         사설 `_X` 는 BC 안 제품 모듈이 import 할 때만 · 같은 유스케이스 칸 승격 폴더 형제는 빼고 · 2026-11-10)
 
 ast+ 후보 채널 (㉰ — exit 불산입, 마무리는 discipline-reviewer):
   #151(창구 이름 — 기술·타 BC 토큰은 «확정» 위반) · #153(도메인 예외 속성 접근은 «확정» — 잡은 도메인 예외의 공개 필드를
@@ -1234,6 +1236,92 @@ def _check_exception_spots(bc: Path, bc_rel: Path, out: Findings) -> None:
             if (p.is_file() and p.name == "exception.py") or (p.is_dir() and p.name == "exception"):
                 # 승격 부품에도 적용 — 예외 자리는 규범 전역·2026-09-01
                 out.add("#292", bc_rel / p.relative_to(bc), "application 쪽 예외 자리는 `port/<capability>/exception.py`(바깥 행위자의 죽음)뿐이다")
+        _check_exception_classes(bc, bc_rel, app, out)
+
+
+_APP_EXCEPTION_CLASS_FIX: str = (
+    "예외의 자리는 넷(애그리거트 `exception/` · `shared_value_object/` · OHS `contract/exception/` · 바깥 행위자의 죽음은 "
+    "`port/<capability>/exception.py`)이다 — 한 유스케이스의 실패도 판정이면 도메인 예외로 두고, 그 값을 창구 · "
+    "컨트롤러가 보여야 하면 설계에서 승인한 사건 값 칸으로 옮긴다"
+)
+
+
+def _check_exception_classes(bc: Path, bc_rel: Path, app: Path, out: Findings) -> None:
+    """#292 를 클래스로도 본다 — `application_layer/` 모듈 맨 위 클래스 가운데 기반 사슬이 Exception · Error 에 닿는 것.
+
+    `port/` · 시험 · 이미 이름(`exception.py` · `exception/`)으로 걸린 자리 안은 보지 않는다. 앞 `_` 사설 클래스는
+    모듈 밖 제품 모듈이 import 할 때만 센다 — 같은 유스케이스 칸 승격 폴더의 형제 모듈은 빼고(그 폴더
+    `__init__.py` 의 재수출은 바깥 공개라 센다), 시험만 import 하면 세지 않는다. import 는 그 BC 안 모듈만 본다.
+    """
+    importers: "list[tuple[Path, ast.Module]] | None" = None
+    for p in sorted(app.rglob("*.py")):
+        rp = p.relative_to(app).parts
+        if set(rp) & SKIP_DIRS or rp[0] == "port" or "exception" in rp[:-1] or p.name == "exception.py":
+            continue
+        rel = bc_rel / p.relative_to(bc)
+        if checker_target.is_test_path(rel):
+            continue
+        mod = _parse(p)
+        if mod is None:
+            continue
+        classes = [n for n in mod.body if isinstance(n, ast.ClassDef)]
+        declared = {c.name: c for c in classes}
+        for cls in classes:
+            if not checker_target.exception_based(cls, declared):
+                continue
+            where = f"{rel.as_posix()}:{cls.lineno}"
+            if not cls.name.startswith("_"):
+                out.add("#292", where, f"예외 클래스 `{cls.name}` 가 application 층 모듈에 있다. {_APP_EXCEPTION_CLASS_FIX}")
+                continue
+            if importers is None:
+                importers = _product_modules(bc, bc_rel)
+            folder_parts = checker_target.use_case_parts(p.parent.parent / f"{p.parent.name}.py")
+            own = set(folder_parts) if p in folder_parts else {p}
+            users = [f for f, m in importers
+                     if f not in own and _imports_private_class(f, m, p, cls.name, bc.parent.parent)]
+            if users:
+                shown = " · ".join(f"`{(bc_rel / u.relative_to(bc)).as_posix()}`" for u in users)
+                out.add("#292", where, f"사설 예외 클래스 `{cls.name}` 를 모듈 밖 제품 코드({shown})가 import 한다 — "
+                                       f"바깥이 잡으면 사설 이름이어도 예외 자리 규칙을 따른다. {_APP_EXCEPTION_CLASS_FIX}")
+
+
+def _product_modules(bc: Path, bc_rel: Path) -> "list[tuple[Path, ast.Module]]":
+    """BC 안 시험 아닌 `.py` 와 그 구문 트리 — 파싱되지 않는 파일은 뺀다."""
+    out: "list[tuple[Path, ast.Module]]" = []
+    for f in sorted(bc.rglob("*.py")):
+        rel = f.relative_to(bc)
+        if set(rel.parts) & SKIP_DIRS or checker_target.is_test_path(bc_rel / rel):
+            continue
+        mod = _parse(f)
+        if mod is not None:
+            out.append((f, mod))
+    return out
+
+
+def _import_base(importer: Path, level: int, module: "str | None", root: Path) -> Path:
+    """`from <module> import …` 이 가리키는 경로(확장자 없음) — 절대 경로는 `root`(BC 컨테이너의 부모) 기준."""
+    base = root
+    if level > 0:
+        base = importer.parent
+        for _ in range(level - 1):
+            base = base.parent
+    return base.joinpath(*module.split(".")) if module else base
+
+
+def _imports_private_class(importer: Path, mod: ast.Module, owner: Path, name: str, root: Path) -> bool:
+    """`importer` 가 `owner` 모듈의 `name` 을 들이는가 — `from <owner> import name` 이거나, 모듈 `owner` 를 들여
+    `<모듈>.name` 으로 읽는다."""
+    stem = owner.parent if owner.name == "__init__.py" else owner.with_suffix("")
+    module_imported = False
+    for node in ast.walk(mod):
+        if isinstance(node, ast.ImportFrom):
+            base = _import_base(importer, node.level, node.module, root)
+            if base == stem and any(a.name == name for a in node.names):
+                return True
+            module_imported = module_imported or any(base / a.name == stem for a in node.names)
+        elif isinstance(node, ast.Import):
+            module_imported = module_imported or any(root.joinpath(*a.name.split(".")) == stem for a in node.names)
+    return module_imported and any(isinstance(n, ast.Attribute) and n.attr == name for n in ast.walk(mod))
 
 
 def _check_banned_entrance_name(bc: Path, bc_rel: Path, out: Findings) -> None:

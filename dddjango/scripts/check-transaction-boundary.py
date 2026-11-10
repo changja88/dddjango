@@ -22,13 +22,15 @@
               bool/int 반환 메서드는 ⓓ 후보(「이 수가 애그리거트 컬렉션을 센 것인가」).
   #287 [ast]  쓰기 인자는 «애그리거트»다 — `update_*` 필드 갱신 메서드·조건/필드 인자면 위반.
   #355 [ast+] 확정: 리포지토리 반환이 {애그리거트, Sequence[애그리거트], 값객체,
-              bool·int·None} 밖(QuerySet·Model·dict·str) / 후보: bool·int 로 남은 것
-              (「주어가 애그리거트인가 화면인가」).
+              bool·int·None} 밖(QuerySet·Model·dict·str) — 조회와 쓰기(save·remove) 모두 /
+              후보: 조회가 bool·int 로 남은 것(「주어가 애그리거트인가 화면인가」 — 쓰기의 bool·int 는
+              CAS 성공 · 지운 개수라 묻지 않는다).
   #597 [ast]  애그리거트 리포지토리의 쓰기 메서드 이름은 save·remove 로 시작한다 —
               add/store/persist/delete/insert 접두면 위반. 거꾸로(비리포지토리의 save)는
               안 문다 — 세는 대상은 «이름»이 아니라 «타입이 온 파일»(predicates ⓓ).
   #599 [ast]  `save_all()` 조건 셋 — ㉠구현이 트랜잭션을 열면 위반(atomic) ㉡맨
-              bulk_update(경합 가드 없음)면 위반 ㉢`add_all` 은 열지 않는다.
+              bulk_update 면 위반(잠금(select_for_update) 없는 bulk_update 는 WHERE 가 pk IN 뿐이라
+              경합 가드가 없다) ㉢`add_all` 은 열지 않는다.
   #659 [ast]  유스케이스 칸(트리 42행) 승격 폴더의 쓰기 경계 — 저장소 · UoW(팩토리 포함)는 본체와
               틀 부품만 받는다. 본체 · 틀 · `__init__.py` 밖 부품(갈래 · 단계 · 잎)이 ⓐ 매개변수 ·
               주석 대입의 주석으로 그것을 쥐거나(읽기만 해도) ⓑ 본체 · 틀이 그것으로 물린 속성
@@ -341,8 +343,8 @@ def _check_repository_contract(root: Path, repo_path: Path, agg_name: str,
                         _annotation_names(args[0].annotation) <= prim:
                     f.add("#287", _rel(root, repo_path, m.lineno),
                           f"`{m.name}` 인자 타입이 원시값이다 — 쓰기는 애그리거트를 받는다")
-            # #355 — 반환형.
-            if m.returns is not None and first not in ("save", "remove"):
+            # #355 — 반환형(조회 · 쓰기 같은 허용 목록 — 쓰기의 bool·int 는 CAS 성공 · 지운 개수라 묻지 않는다).
+            if m.returns is not None:
                 names = _annotation_names(m.returns)
                 core = names - RETURN_WRAPPERS - RETURN_PRIMITIVES
                 if names & RETURN_BAN or any(n.endswith("Model") for n in names):
@@ -352,7 +354,7 @@ def _check_repository_contract(root: Path, repo_path: Path, agg_name: str,
                 elif core and not (core & {agg_class} or core <= domain_syms):
                     f.add("#355", _rel(root, repo_path, m.lineno),
                           f"`{m.name}` 반환 `{'.'.join(sorted(core))}` 이 애그리거트도 값 객체도 아니다")
-                elif not core and names & {"bool", "int"}:
+                elif not core and names & {"bool", "int"} and first not in ("save", "remove"):
                     cand.add("#355", _rel(root, repo_path, m.lineno),
                              f"`{m.name}` 이 bool/int 를 돌려준다(요약값은 리포지토리에 남는 것이 맞다 — #285)",
                              "이 메서드의 주어가 애그리거트인가 화면인가")
@@ -1350,8 +1352,8 @@ def _check_save_all_impl(root: Path, bc: Path, f: Findings) -> None:
                           "save_all 이 트랜잭션을 연다(atomic) — ㉠ `with unit_of_work:` 안에서만 불린다")
                 if has_bulk and not has_lock:
                     f.add("#599", _rel(root, py, node.lineno),
-                          "save_all 이 맨 bulk_update 다 — ㉡ WHERE 가 pk IN 뿐이라 "
-                          "「내가 읽은 뒤 남이 바꿨다」를 못 잡는다(경합 가드 유지)")
+                          "save_all 이 맨 bulk_update 다 — ㉡ 잠금(select_for_update) 없는 bulk_update 는 "
+                          "WHERE 가 pk IN 뿐이라 경합 가드가 없다")
 
 
 # ── main ────────────────────────────────────────────────────────────────────

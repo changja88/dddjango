@@ -1491,7 +1491,7 @@ pydantic v2는 외부 입력과 런타임 검증 경계에서 사용한다. API 
 
 - `BaseModel`은 외부 DTO, config, 런타임 boundary 검증에 우선 사용한다.
 - 내부 domain object가 dataclass, 일반 class, Django model, aggregate로 이미 표현되어 있으면 pydantic 모델을 중복 domain model로 만들지 않는다.
-- validation error는 adapter/API/config loading layer에서 domain/application error로 변환한다. raw pydantic error shape가 도메인 규칙의 일부가 되지 않게 한다.
+- validation error는 adapter/API/config loading layer에서 그 경계가 소유한 실패로 변환한다 — 어댑터(바깥 응답 검증)는 그 포트의 예외로(응용 예외는 포트 예외(바깥 행위자의 죽음)뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다), API 입력은 입력 Schema 선언이 framework 422 로 낸다(`implementation-django-ninja` §2.2). raw pydantic error shape가 도메인 규칙의 일부가 되지 않게 한다.
 - coercion이 잘못된 입력을 숨기면 strict mode를 켠다. 단, 외부 계약상 문자열 숫자처럼 의도한 coercion을 받는 필드는 field-level로 허용한다.
 - Django Ninja Schema가 API serialization boundary를 이미 소유하면 별도 pydantic DTO를 추가하기 전에 `implementation-django-ninja` 기준과 충돌하지 않는지 확인한다.
 

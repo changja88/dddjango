@@ -478,7 +478,7 @@ class BcSelectorPartitionRegression(unittest.TestCase):
         _write(repo, "application/report/driving_layer/controller.py", "def report(request): return {}\n")
         existing = {
             "[#62] application/lesson/driving_layer/controller.py:N: bare catch forbidden: except:",
-            "[#62] application/lesson/driving_layer/controller.py:N: catch must be direct own-BC application/domain exception: except Exception:",
+            "[#62] application/lesson/driving_layer/controller.py:N: catch must be direct own-BC domain exception — 응용 예외는 포트 예외뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다: except Exception:",
             "[#59] application/lesson/driving_layer/controller.py:N: custom Ninja exception_handler forbidden: @router.exception_handler(LessonMissing)",
         }
         for selectors in (["--scope-bc", "report", "--error-bc", "report"],
@@ -1201,7 +1201,7 @@ class NewScopeApiModuleRegression(unittest.TestCase):
     c404: str = BaselineSliceRegression.c404
     old15: set[str] = {
         "[#62] " + ctrl + ":N: bare catch forbidden: except:",
-        "[#62] " + ctrl + ":N: catch must be direct own-BC application/domain exception: except Exception:",
+        "[#62] " + ctrl + ":N: catch must be direct own-BC domain exception — 응용 예외는 포트 예외뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다: except Exception:",
         "[#59] " + ctrl + ":N: custom Ninja exception_handler forbidden: @router.exception_handler(LessonMissing)",
     }
     old16: str = "[#107] " + registrar + ":N: additional public registrar function — def lesson_helper(api):"

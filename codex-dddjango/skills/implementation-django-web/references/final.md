@@ -309,7 +309,7 @@ Web 구현을 마칠 때는 실행한 검증만 보고한다. render/browser/col
 ## 11. 서버렌더 에러 처리
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
-Service/usecase가 던진 예외는 **출처로 분류**해 처리 자리를 가른다 — service가 raise한 도메인/애플리케이션 예외는 view가 잡아 사용자 언어로 변환하고(view-local), 인프라·프레임워크·미식별 예외(`OperationalError`·`IntegrityError`·미식별 `Exception`)는 view가 잡지 않고 전파해 중앙이 처리한다. "사용자가 행동을 바꿔 풀 수 있나"는 1차 분류 기준이 아니라(결제 거절·권한·동시성 충돌에서 흔들린다) 도메인 예외를 잡은 *뒤* 폼 재렌더냐 거부 안내냐를 정하는 2차 신호다. 이 절은 서버렌더 HTML 경로만 소유하며, JSON API 오류 표현과 섞지 않는다. **[DDoc] [dddjango-django]**
+Service/usecase가 던진 예외는 **출처로 분류**해 처리 자리를 가른다 — service가 raise한 도메인 예외(응용 예외는 포트 예외(바깥 행위자의 죽음)뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다)는 view가 잡아 사용자 언어로 변환하고(view-local), 인프라·프레임워크·미식별 예외(`OperationalError`·`IntegrityError`·미식별 `Exception`)는 view가 잡지 않고 전파해 중앙이 처리한다. "사용자가 행동을 바꿔 풀 수 있나"는 1차 분류 기준이 아니라(결제 거절·권한·동시성 충돌에서 흔들린다) 도메인 예외를 잡은 *뒤* 폼 재렌더냐 거부 안내냐를 정하는 2차 신호다. 이 절은 서버렌더 HTML 경로만 소유하며, JSON API 오류 표현과 섞지 않는다. **[DDoc] [dddjango-django]**
 
 기준:
 

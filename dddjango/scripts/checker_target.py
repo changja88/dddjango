@@ -211,6 +211,27 @@ def is_test_path(path: Path) -> bool:
     return bool(set(parts) & TEST_DIR_NAMES) or path.name.startswith("test_") or path.name == "conftest.py"
 
 
+# ── 예외 클래스 판별 — check-usecase-dto-placement 에서 올림(2026-11-10 · #210 면제 · #292 클래스) ──────
+
+def exception_based(cls: "ast.ClassDef", declared: "Mapping[str, ast.ClassDef]", depth: int = 0) -> bool:
+    """기반 사슬에 Exception/Error 가 닿는가 — 베이스가 `declared`(같은 모듈 맨 위 클래스)에 있으면 그 사슬을 따라가고
+    (이름 끝은 보지 않는다 — `…Error` 이름의 같은 모듈 비예외 클래스를 상속한 것은 예외가 아니다), 없으면 베이스 이름이
+    `Exception` 이거나 `Exception` · `Error` 로 끝날 때 참(다섯 단 넘으면 거짓).
+
+    다른 모듈의 사용자 기반 클래스만 상속하고 그 이름이 `Exception` · `Error` 로 끝나지 않으면 놓친다.
+    """
+    if depth > 5:
+        return False
+    for base in cls.bases:
+        name = base.attr if isinstance(base, ast.Attribute) else getattr(base, "id", "")
+        if name in declared:
+            if exception_based(declared[name], declared, depth + 1):
+                return True
+        elif name == "Exception" or name.endswith(("Exception", "Error")):
+            return True
+    return False
+
+
 # ── 유스케이스 칸(트리 42행) 승격의 부품 — 역할 내 독립 흐름(②′) · 2026-10-29 ──────────
 #
 # 부품 종류는 선언 없이 가른다(houserules final §0 «②′ 승격의 부품»):

@@ -555,12 +555,18 @@ djr:R-0893 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0894 a djr:Obligation ;
-    skos:prefLabel "remove/weaken의 3요소 요구(계약 종료 근거·exact target·남는 현행 보호 위치)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0894@2026-08-22> .
+    skos:prefLabel "remove/weaken의 3요소 요구(계약 종료 근거·exact target·남는 현행 보호 위치) · 시험 파일 통째 remove 는 케이스마다 종료 근거 — 남는 보호가 이 요청이 다시 쓰는 코드의 다른 높이 시험 하나뿐이면 important"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0894@2026-11-10> .
 
 <https://numchida.com/ns/djr#R-0894@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0894 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0894@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-0894 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0894@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0895 a djr:Prohibition ;
     skos:prefLabel "명세 침묵·구현 불일치·중복 추정만의 삭제 금지"@ko ;
@@ -1811,12 +1817,18 @@ djr:R-1044 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-1045 a djr:Obligation ;
-    skos:prefLabel "복구 가능한 도메인·애플리케이션 오류의 view-local 재렌더·messages.error 보존"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1045@2026-08-22> .
+    skos:prefLabel "복구 가능한 도메인 예외의 view-local 재렌더·messages.error 보존"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1045@2026-11-10> .
 
 <https://numchida.com/ns/djr#R-1045@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1045 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1045@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-1045 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1045@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-1046 a djr:Obligation ;
     skos:prefLabel "인프라·미식별 시스템 오류의 중앙 handler500/500.html 경로"@ko ;
@@ -2912,6 +2924,14 @@ djr:R-3732 a djr:Obligation ;
     prov:specializationOf djr:R-3732 ;
     djr:revision 1 .
 
+djr:R-3743 a djr:Obligation ;
+    skos:prefLabel "Phase 1 대신 부르는 길 점검 — 서명(필수 인자 · 이름)을 바꾸는 명세가 프레임워크 · 플러그인 · fixture 가 대신 부르는 길을 찾았는가 · 그 시험은 슬라이스 완료 조건의 소비자 경로 · 깨지는 길의 고칠 자리는 file-plan · 고칠 자리 없음 = blocker"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3743@2026-11-10> .
+
+<https://numchida.com/ns/djr#R-3743@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-3743 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/discipline-reviewer.md> a djr:Document ;
     skos:prefLabel "agent-discipline-reviewer"@ko .
 
@@ -3112,8 +3132,8 @@ djr:R-3732 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
-    djr:statesNorm djr:R-0894, djr:R-0895, djr:R-0896, djr:R-3685 ;
-    djr:text "- **삭제·약화·재조직**: `remove/weaken`은 명시적 계약 종료 근거와 exact target, 변경 뒤 남는 현행 보호 위치를 요구한다. 명세의 침묵·현재 구현과의 불일치·중복 추정만으로 삭제하지 않는다. 기존 migration 전용 테스트는 절대 규칙으로 제거 대상이다 — `remove` 근거 없이도 삭제를 요구한다(`migrations/`는 생성물·`check-test-config` #637). 리팩토링 모드의 케이스 · id · 칸 개명(`retain` «개명» · «칸 개명» 행)은 삭제 · 약화가 아니다 — 아래 개명 키(칸 개명은 `개명 칸 <클래스>.<옛> → <새>`)로 감사한다.\n"@ko .
+    djr:statesNorm djr:R-0894, djr:R-0895, djr:R-0896, djr:R-3685, djr:R-3743 ;
+    djr:text "- **삭제·약화·재조직**: `remove/weaken`은 명시적 계약 종료 근거와 exact target, 변경 뒤 남는 현행 보호 위치를 요구한다. 시험 파일 통째의 `remove`는 케이스마다 종료 근거를 본다 — 어느 케이스의 남는 보호가 이 요청이 다시 쓰는 코드의 다른 높이 시험 하나뿐이면 important 다. 명세의 침묵·현재 구현과의 불일치·중복 추정만으로 삭제하지 않는다. 기존 migration 전용 테스트는 절대 규칙으로 제거 대상이다 — `remove` 근거 없이도 삭제를 요구한다(`migrations/`는 생성물·`check-test-config` #637). 리팩토링 모드의 케이스 · id · 칸 개명(`retain` «개명» · «칸 개명» 행)은 삭제 · 약화가 아니다 — 아래 개명 키(칸 개명은 `개명 칸 <클래스>.<옛> → <새>`)로 감사한다.\n- **대신 부르는 길**(Phase 1): 명세가 공개 메서드 · 함수의 서명(필수 인자 · 이름)을 바꾸면, 프레임워크 · 플러그인 · fixture 가 그것을 대신 부르는 길(예: Django `manage.py createsuperuser` 와 pytest-django `admin_user`(`admin_client`)가 사용자 매니저의 `create_superuser` 를 부른다 — 코드 글자로 보이지 않는다)을 명세가 찾았는지 본다. 그 길의 시험은 슬라이스 완료 조건의 소비자 경로에, 깨지는 길의 고칠 자리는 file-plan 에 있어야 한다 — 깨지는 길의 고칠 자리가 명세에 없으면 blocker 다(pre-gate #663 은 사용자 매니저 · 인증 백엔드의 목록 메서드 셋만 본다).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s005/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s005> ;
@@ -3299,7 +3319,7 @@ djr:R-3732 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 26 ;
     djr:statesNorm djr:R-1045, djr:R-1046, djr:R-1047, djr:R-1048, djr:R-1049 ;
-    djr:text "- **서버렌더 오류 분류 규율(plain Django view·CBV — API 규칙과 독립)**: 사용자에게 복구 가능한 도메인·애플리케이션 오류는 view-local 폼 재렌더와 `messages.error`로 입력·의미를 보존하고, 인프라·미식별 시스템 오류는 중앙 `handler500`/`500.html`로 보낸다(`implementation-django-web` §11). 레드 플래그(**important**): (a) view가 시스템 오류를 잡아 자체 에러 페이지나 200으로 삼킴, (b) 사용자 오류를 `handler500`으로 보내 메시지·입력을 잃음, (c) HTML용 local `process_exception`/middleware가 `OperationalError`의 permanent/retryable 의미를 구별하지 않고 통째 503/5xx로 올림, (d) view의 broad `except Exception`이 인프라 오류를 사용자 메시지로 둔갑시킴. invalid POST 폼 재렌더·승인된 transient를 local middleware가 503으로 분류함·HTMX error fragment(200/422)는 정상이다. 이 규율은 API error profile·handler 유무와 무관한 독립 server-rendered 의미 판정이며 reviewer가 직접 본다.\n"@ko .
+    djr:text "- **서버렌더 오류 분류 규율(plain Django view·CBV — API 규칙과 독립)**: 사용자에게 복구 가능한 도메인 예외(응용 예외는 포트 예외 — 바깥 행위자의 죽음 — 뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다)는 view-local 폼 재렌더와 `messages.error`로 입력·의미를 보존하고, 인프라·미식별 시스템 오류는 중앙 `handler500`/`500.html`로 보낸다(`implementation-django-web` §11). 레드 플래그(**important**): (a) view가 시스템 오류를 잡아 자체 에러 페이지나 200으로 삼킴, (b) 사용자 오류를 `handler500`으로 보내 메시지·입력을 잃음, (c) HTML용 local `process_exception`/middleware가 `OperationalError`의 permanent/retryable 의미를 구별하지 않고 통째 503/5xx로 올림, (d) view의 broad `except Exception`이 인프라 오류를 사용자 메시지로 둔갑시킴. invalid POST 폼 재렌더·승인된 transient를 local middleware가 503으로 분류함·HTMX error fragment(200/422)는 정상이다. 이 규율은 API error profile·handler 유무와 무관한 독립 server-rendered 의미 판정이며 reviewer가 직접 본다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b27> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;

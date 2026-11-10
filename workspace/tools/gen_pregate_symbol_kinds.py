@@ -118,6 +118,7 @@ class Material:
     expect: tuple[str, ...] = ()  # 집합 앵커의 최소 부분집합 센티널 / f-string 꼬리
     emit: Emit | None = None
     note: str = ""  # 검증 전용 소재의 채널 귀속 근거
+    source: str = ""  # 리터럴이 사는 파일(비면 checker 자신) — 검사기들이 함께 쓰는 판정을 `checker_target.py` 로 올린 경우
 
 
 # ── 명시 로스터 — 검사기 소스의 «클래스 베이스 판정 재료» 전수(2026-09-01 스캔) ──
@@ -219,13 +220,19 @@ ROSTER: tuple[Material, ...] = (
              expect=("Exception",), emit=Emit("exact", ("#294",))),
     Material("check-business-vocabulary.py", "endswith_literal", "_port.py",
              note="framework 4단 판정(#396)은 «파일명» 채널 — Base 종류 아님(방출 제외)"),
-    # 컨트롤러 결과 소비 — 예외 기반 사슬 면제(#210)의 Exception/*Exception/*Error.
+    # 예외 기반 사슬(`checker_target.exception_based`) — 컨트롤러 결과 소비 면제(#210) · 응용 층 예외 클래스 자리(#292).
     Material("check-usecase-dto-placement.py", "compare_literal", "Exception",
-             emit=Emit("exact", ("#210",), bases=("Exception",))),
+             emit=Emit("exact", ("#210",), bases=("Exception",)), source="checker_target.py"),
     Material("check-usecase-dto-placement.py", "endswith_literal", "Exception",
-             emit=Emit("suffix", ("#210",), bases=("Exception",))),
+             emit=Emit("suffix", ("#210",), bases=("Exception",)), source="checker_target.py"),
     Material("check-usecase-dto-placement.py", "endswith_literal", "Error",
-             emit=Emit("suffix", ("#210",), bases=("Error",))),
+             emit=Emit("suffix", ("#210",), bases=("Error",)), source="checker_target.py"),
+    Material("check-context-isolation.py", "compare_literal", "Exception",
+             emit=Emit("exact", ("#292",), bases=("Exception",)), source="checker_target.py"),
+    Material("check-context-isolation.py", "endswith_literal", "Exception",
+             emit=Emit("suffix", ("#292",), bases=("Exception",)), source="checker_target.py"),
+    Material("check-context-isolation.py", "endswith_literal", "Error",
+             emit=Emit("suffix", ("#292",), bases=("Error",)), source="checker_target.py"),
     # 이벤트 발행 — 도메인 Enum 값↔유스케이스 이름 겹침(#564 후보).
     Material("check-event-publish.py", "set_literal", "event-enum-bases",
              expect=("Enum", "StrEnum", "TextChoices", "IntChoices", "Choices"),
@@ -405,7 +412,7 @@ def _find_compare_literal(tree: ast.Module, lit: str) -> bool:
 
 def _extract_material(tree: ast.Module, m: Material) -> tuple[frozenset[str] | None, str | None]:
     """소재 1건 추출 — (방출 이름 집합 | 검증전용 None, 오류 문면 | None)."""
-    where: str = f"{m.checker} · {m.anchor}({m.key})"
+    where: str = f"{m.checker} · {m.anchor}({m.key})" + (f" · 소재 {m.source}" if m.source else "")
     if m.anchor == "assign_set":
         values: frozenset[str] | None = _find_assign_set(tree, m.key)
         if values is None or not values:
@@ -468,7 +475,8 @@ def build_payload(root: Path) -> dict[str, object]:
 
     trees: dict[str, ast.Module] = {}
     source_sha: dict[str, str] = {}
-    for name in KNOWN_CHECKERS:
+    shared: tuple[str, ...] = tuple(sorted({m.source for m in ROSTER if m.source}))
+    for name in KNOWN_CHECKERS + shared:
         path: Path = scripts_dir / name
         if not path.is_file():
             continue  # 부재는 닫힌 세계 검사에서 이미 red
@@ -481,7 +489,7 @@ def build_payload(root: Path) -> dict[str, object]:
 
     kinds_map: dict[str, dict[str, set[str]]] = {}
     for m in ROSTER:
-        tree: ast.Module | None = trees.get(m.checker)
+        tree: ast.Module | None = trees.get(m.source or m.checker)
         if tree is None:
             continue  # 파일 부재/파싱 실패는 위에서 red
         names, error = _extract_material(tree, m)

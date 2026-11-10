@@ -510,7 +510,7 @@ class RepositoryForecastTest(unittest.TestCase):
               "pairs(account_id: int) -> tuple[FortuneRecord, UUID]", "unique(account_id: int) -> frozenset[FortuneRecord]",
               "page(account_id: int) -> Page[FortuneRecord]", "untyped(account_id: int)"], []),
             (["save_many(records: list[FortuneRecord]) -> int", "remove_by_ids(ids: frozenset[UUID]) -> frozenset[UUID]",
-              "save(record: FortuneRecord) -> dict[str, int]"], []),
+              "save(record: FortuneRecord) -> dict[str, int]"], [("#355", True), ("#355", True)]),
             (["exists_for(account_id: int) -> bool"], [("#355", False)]),
             (["count_records(account_id: int) -> int"], [("#355", False)]),
             (["record_numbers(account_id: int) -> list[int]"], [("#355", False)]),

@@ -1034,11 +1034,17 @@ djr:R-1495 a djr:Permission ;
 
 djr:R-1496 a djr:Obligation ;
     skos:prefLabel "Ninja controller 오류 반환 규율의 implementation-django-ninja §6.2 준수"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1496@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-1496@2026-11-10> .
 
 <https://numchida.com/ns/djr#R-1496@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1496 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1496@2026-11-10> a djr:Expression ;
+    prov:specializationOf djr:R-1496 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1496@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-1497 a djr:Prohibition ;
     skos:prefLabel "분리 원칙만을 위한 mapping helper·factory 추출 금지"@ko ;
@@ -3049,7 +3055,7 @@ djr:R-1555 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
     djr:statesNorm djr:R-1495, djr:R-1496, djr:R-1497, djr:R-1498, djr:R-1499 ;
-    djr:text "\n선택한 framework/profile이 adapter entrypoint에 예외→전송 응답 매핑의 소유권을\n명시적으로 부여한 경우에는, 그 entrypoint 안에 작은 구체 `catch`와 준비된 오류\n응답의 직접 반환을 유지할 수 있다. 예를 들어 Django Ninja controller operation이\nknown application/domain exception을 잡아 준비된 concrete `ErrorSchema`를\n`Status(<승인된 HTTP status 표현>, error)`로 직접 반환하는 규율은\n`implementation-django-ninja` §6.2를 따른다. 이때 분리 원칙을 맞추기 위해서만\nmapping helper/factory/handler를 추출하지 않는다. 단, 이 자격은 광범위 catch를\n허용하지 않으며, `try` 범위를 넓히거나 정상/오류 흐름을 뒤섞는 근거가 되지 않는다.\nresource cleanup, transaction, retry, 예외 추상화의 소유와 규율도 각각 그대로 따른다.\n\n"@ko .
+    djr:text "\n선택한 framework/profile이 adapter entrypoint에 예외→전송 응답 매핑의 소유권을\n명시적으로 부여한 경우에는, 그 entrypoint 안에 작은 구체 `catch`와 준비된 오류\n응답의 직접 반환을 유지할 수 있다. 예를 들어 Django Ninja controller operation이\nknown 도메인 예외(응용 예외는 포트 예외(바깥 행위자의 죽음)뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다)를 잡아 준비된 concrete `ErrorSchema`를\n`Status(<승인된 HTTP status 표현>, error)`로 직접 반환하는 규율은\n`implementation-django-ninja` §6.2를 따른다. 이때 분리 원칙을 맞추기 위해서만\nmapping helper/factory/handler를 추출하지 않는다. 단, 이 자격은 광범위 catch를\n허용하지 않으며, `try` 범위를 넓히거나 정상/오류 흐름을 뒤섞는 근거가 되지 않는다.\nresource cleanup, transaction, retry, 예외 추상화의 소유와 규율도 각각 그대로 따른다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s094-12.4> a djr:Section ;
     djr:headingSnapshot "### 12.4 올바른 추상화 수준에서 예외를 처리하라 [PC]"@ko ;

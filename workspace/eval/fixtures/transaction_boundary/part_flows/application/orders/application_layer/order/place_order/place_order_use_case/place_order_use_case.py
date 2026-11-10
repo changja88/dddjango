@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from application.orders.application_layer.port.unit_of_work.orders_unit_of_work import OrdersUnitOfWork
+from application.orders.domain_layer.order.exception.order_payment_failure import OrderPaymentFailure
 from application.orders.domain_layer.order.order import Order
 from application.orders.domain_layer.order.order_repository import OrderRepository
 
-from .order_payment_failure import OrderPaymentFailure
 from .payment_channel import _PaymentChannel
 
 

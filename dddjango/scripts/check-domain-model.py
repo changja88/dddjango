@@ -59,7 +59,14 @@
               필드)한 것 — 「이 둘이 동시에 일어나면 업무가 정말 막아야 하나」(경계를 쪼갠다).
   #548 [ast]  다른 애그리거트는 «식별자 값 객체»로만 — 타입 힌트의 남의 루트 클래스 위반.
   #549 [ast]  수정 조회는 캐시 우회 — select_for_update 와 캐시가 한 함수에 있으면 위반.
-  #550 [ast]  배치 면제는 «생성»에만 — 조회로 꺼낸 것들의 save_all 이면 위반.
+  #550 [ast]  배치 면제는 «생성»에만 — 조회한 여럿을 한 트랜잭션에서 고치거나 지우면 위반.
+              ① 조회로 꺼낸 «여럿»을 save_*·remove_* 하나에 넘김(구간 무관) — «여럿» = 첫 주석이
+              컬렉션인 조회 이름 · 그 tuple(..)·list(..) · 원소식이 반복 변수 그 자체인 컴프리헨션
+              (주석 없는 대입은 save_all 만). ② 명시 구간 안 for 몸이 조회한 여럿(조회 이름 · 묶인 저장소의
+              조회 호출)의 원소나 반복 변수로 조회한 이름을 씀(쓰기가 든 문장 목록이 다른 이름의 쓰기·
+              continue·중첩 고리 없이 이 고리를 나가는 break·return·raise 로 끝나면 한 건이라 뺌 · 쓰기나
+              그 결과 이름이 검사식인 마지막 if 는 참 갈래를 본다 — CAS). 따로 조회한 같은 타입 이름 둘을
+              쓰는 꼴(이체)은 보지 않는다 · 다른 타입은 #546 몫.
   #565 [ast+] 후보: 도메인 Enum 값이 유스케이스·서비스 이름과 겹침 — 「업무가 이 단계
               이름을 입으로 부르나」(워크플로 위장 신호).
   #656 [ast]  묶음 자리 = `folder_group.place(지금 트리)` — 만들 묶음(부모 `__init__.py`) ·
@@ -72,7 +79,8 @@ domain_service)의 파일은 `folder_group.group_members` 로 읽는다 — 묶�
 단순화(정직 기록): #269/#270 의 «읽힘»은 BC 파일 텍스트의 이름 등장으로 잰다. #546 의
 타입 해소는 파라미터·__init__ 애너테이션의 `*Repository` 이름과 import 경로 대조다.
 트랜잭션 영역은 표준 UoW 주입·factory·별칭과 Django atomic의 AST 범위로 한정한다.
-같은 repository 타입의 여러 인스턴스는 구별하지 않으며 미해소 영역은 통과 증명이 아니다.
+같은 repository 타입의 여러 인스턴스는 #546 이 아니라 #550 ①② 가 조회 이름과 반복문으로 가른다 —
+도움 메서드·다른 함수를 거친 쓰기와 속성에 담은 조회값은 보지 않는다. 미해소 영역은 통과 증명이 아니다.
 
 이관 계약(명세 조각 ⓐ): 채택 신호 2원(#78) · 대상 0건 가드(#74) · ImportError
 fail-closed · ⓓ 후보 exit 불산입.
@@ -847,7 +855,10 @@ def _function_nodes(node: ast.AST):
 
 def _transaction_write_regions(root: Path, py: Path, mod: ast.Module, fn: ast.AST,
                                cls: ast.ClassDef | None, repos: dict[str, str]):
-    """lexical region만 관찰한다. 호출자/ATOMIC_REQUESTS/간접 helper의 commit 증명은 하지 않는다."""
+    """lexical region만 관찰한다. 호출자/ATOMIC_REQUESTS/간접 helper의 commit 증명은 하지 않는다.
+
+    반환: (구간 → 쓴 애그리거트 집합, 경계 불명 여부, 쓰기 호출 목록). 쓰기 호출 하나 =
+    (호출, 구간, 그 호출을 감싼 구간 안 `for` 문들(바깥 → 안)) — #550 이 쓴다."""
     def key(expr):
         return ast.unparse(expr) if isinstance(expr, (ast.Name, ast.Attribute)) else ""
 
@@ -929,6 +940,8 @@ def _transaction_write_regions(root: Path, py: Path, mod: ast.Module, fn: ast.AS
     params(fn, env)
     regions = {0: set()}
     unknown = False
+    writes = []
+    loops = []
 
     def atomic(expr, local):
         target = expr.func if isinstance(expr, ast.Call) else expr
@@ -943,6 +956,7 @@ def _transaction_write_regions(root: Path, py: Path, mod: ast.Module, fn: ast.AS
             agg = repos.get(repo_key)
             if agg and node.func.attr.split("_", 1)[0] in {"save", "remove"}:
                 regions.setdefault(region, set()).add(agg)
+                writes.append((node, region, tuple(loops)))
             name = address(node.func, local)
             if name.startswith("django.db.transaction.") and name != "django.db.transaction.atomic": unknown = True
 
@@ -975,10 +989,13 @@ def _transaction_write_regions(root: Path, py: Path, mod: ast.Module, fn: ast.AS
                     value = getattr(st, field, None)
                     if value: scan(value, local, region)
                 branches = []
+                loop_in_region = region != 0 and isinstance(st, (ast.For, ast.AsyncFor))
                 for branch_body in (st.body, st.orelse):
                     branch = dict(local)
                     if isinstance(st, (ast.For, ast.AsyncFor)): branch[key(st.target)] = ""
+                    if loop_in_region and branch_body is st.body: loops.append(st)
                     block(branch_body, branch, region)
+                    if loop_in_region and branch_body is st.body: loops.pop()
                     branches.append(branch)
                 if isinstance(st, ast.Try):
                     for handler in st.handlers:
@@ -1001,7 +1018,167 @@ def _transaction_write_regions(root: Path, py: Path, mod: ast.Module, fn: ast.AS
     region = fn.lineno if any(atomic(d, env) for d in decorators) else 0
     if any(not atomic(d, env) for d in decorators): unknown = True
     block(fn.body, env, region)
-    return regions, unknown
+    return regions, unknown, writes
+
+
+# #550 — 조회 머리 · «여럿» 주석의 바깥 이름 · 반복 대상 포장 · 교정 문면.
+READ_HEADS = ("get", "find", "list", "search")
+MANY_ANNOTATIONS = {"list", "List", "tuple", "Tuple", "Sequence", "MutableSequence", "Iterable", "Iterator",
+                    "Collection", "set", "Set", "frozenset", "FrozenSet", "AbstractSet"}
+LOOP_WRAPPERS = ("list", "tuple", "sorted", "reversed", "enumerate")
+M550 = ("한 트랜잭션은 애그리거트 «하나»를 바꾼다: 같이 되돌려야 하면 한 애그리거트로 묶고, 아니면 건마다 트랜잭션을 연다"
+        "(반복문 안에서 `with uow`) — 묶음은 새로 만들 때만")
+
+
+def _read_assignments(fn: ast.AST) -> dict[str, list[ast.Call]]:
+    """이름 → 그 이름에 담은 조회 호출(get·find·list·search 머리 메서드)들 — 주석 유무와 무관하게 차례대로."""
+    out: dict[str, list[ast.Call]] = {}
+    for n in _function_nodes(fn):
+        if isinstance(n, ast.Assign) and len(n.targets) == 1:
+            target = n.targets[0]
+        elif isinstance(n, ast.AnnAssign):
+            target = n.target
+        else:
+            continue
+        value = n.value
+        if isinstance(target, ast.Name) and isinstance(value, ast.Call) and isinstance(value.func, ast.Attribute) \
+                and value.func.attr.split("_", 1)[0] in READ_HEADS:
+            out.setdefault(target.id, []).append(value)
+    return out
+
+
+def _many_read_names(fn: ast.AST, reads: dict[str, list[ast.Call]]) -> set[str]:
+    """조회로 꺼낸 «여럿» — 첫 주석 대입(#493 이 강제하는 주석)의 바깥 이름이 컬렉션인 조회 이름."""
+    first: dict[str, ast.expr] = {}
+    for n in _function_nodes(fn):
+        if isinstance(n, ast.AnnAssign) and isinstance(n.target, ast.Name):
+            first.setdefault(n.target.id, n.annotation)
+    out: set[str] = set()
+    for name in reads:
+        ann = first.get(name)
+        outer = ann.value if isinstance(ann, ast.Subscript) else ann
+        word = outer.id if isinstance(outer, ast.Name) else outer.attr if isinstance(outer, ast.Attribute) else ""
+        if word in MANY_ANNOTATIONS:
+            out.add(name)
+    return out
+
+
+def _many_argument(arg: ast.expr, many: set[str]) -> str | None:
+    """#550 행 1 인자 꼴 — «여럿» 이름 · 그 `tuple(..)` · `list(..)` · 원소식이 반복 변수 그 자체인 컴프리헨션."""
+    if isinstance(arg, ast.Name):
+        return arg.id if arg.id in many else None
+    if isinstance(arg, ast.Call) and isinstance(arg.func, ast.Name) and arg.func.id in ("tuple", "list") \
+            and len(arg.args) == 1 and not arg.keywords:
+        return _many_argument(arg.args[0], many)
+    if isinstance(arg, (ast.ListComp, ast.SetComp, ast.GeneratorExp)) and len(arg.generators) == 1:
+        gen = arg.generators[0]
+        if isinstance(gen.iter, ast.Name) and gen.iter.id in many and isinstance(gen.target, ast.Name) \
+                and isinstance(arg.elt, ast.Name) and arg.elt.id == gen.target.id:
+            return gen.iter.id
+    return None
+
+
+def _loop_source(it: ast.expr, reads: dict[str, list[ast.Call]], repos: dict[str, str]) -> str | None:
+    """반복 대상이 조회한 여럿인가 — 조회 이름이나 묶인 저장소의 조회 호출(그대로이거나 `list` · `tuple` · `sorted` ·
+    `reversed` · `enumerate` 로 싼 것). 반환: 문면에 보일 출처."""
+    while isinstance(it, ast.Call) and isinstance(it.func, ast.Name) and it.func.id in LOOP_WRAPPERS and it.args:
+        it = it.args[0]
+    if isinstance(it, ast.Name):
+        return it.id if it.id in reads else None
+    if isinstance(it, ast.Call) and isinstance(it.func, ast.Attribute) \
+            and it.func.attr.split("_", 1)[0] in READ_HEADS:
+        recv = it.func.value
+        key = recv.id if isinstance(recv, ast.Name) else recv.attr if isinstance(recv, ast.Attribute) \
+            and isinstance(recv.value, ast.Name) and recv.value.id == "self" else ""
+        return f"{it.func.attr}(…)" if key in repos else None
+    return None
+
+
+def _read_by_loop(calls: list[ast.Call], loop: ast.AST, targets: set[str]) -> bool:
+    """이 반복문 몸 안의 조회 호출이 반복 변수에 기댄 인자로 불렸는가(같은 키를 다시 읽는 재시도 고리는 아니다)."""
+    inside = {id(x) for st in loop.body for x in ast.walk(st)}
+    return any(id(c) in inside and any(isinstance(x, ast.Name) and x.id in targets
+                                       for a in (*c.args, *(k.value for k in c.keywords)) for x in ast.walk(a))
+               for c in calls)
+
+
+def _leaves_loop_after(call: ast.Call, loop: ast.AST, parents: dict, write_args: dict[int, str]) -> bool:
+    """쓴 뒤 길이 다른 이름의 쓰기 · `continue` · 중첩 고리 없이 `return` · `raise` 나 이 반복문을 나가는 `break` 로
+    끝나는가 — 한 실행에 하나만 바꾼다(같은 이름을 다시 쓰는 것은 같은 애그리거트라 센다 밖). 쓴 뒤 길 = 쓰기가 든
+    문장 목록의 나머지, 또는 쓰기(나 그 결과를 담은 이름)가 검사식인 마지막 `if` 의 참 갈래(CAS — 거짓 갈래는 쓰지 않은
+    길이라 쓰기만 없으면 된다). 결과 이름의 `if not <이름>:` 몸에 바로 든 `continue` 도 쓰지 않은 길이다."""
+    name = call.args[0].id
+    stmt = call
+    while not isinstance(stmt, ast.stmt):
+        stmt = parents[stmt]
+    if isinstance(stmt, ast.Return):
+        return True
+    result = None
+    if isinstance(stmt, ast.If) and stmt.test is call:
+        gate = stmt
+    else:
+        owner = parents.get(stmt)
+        seq = next((s for s in (getattr(owner, f, None) for f in ("body", "orelse", "finalbody"))
+                    if isinstance(s, list) and any(x is stmt for x in s)), None)
+        if seq is None:
+            return False
+        rest = seq[next(i for i, s in enumerate(seq) if s is stmt) + 1:]
+        if isinstance(stmt, (ast.Assign, ast.AnnAssign)) and stmt.value is call:
+            target = stmt.target if isinstance(stmt, ast.AnnAssign) else stmt.targets[0] if len(stmt.targets) == 1 else None
+            result = target.id if isinstance(target, ast.Name) else None
+        gate = rest[0] if result and len(rest) == 1 and isinstance(rest[0], ast.If) \
+            and isinstance(rest[0].test, ast.Name) and rest[0].test.id == result else None
+    if gate is not None:
+        if any(id(x) in write_args for st in gate.orelse for x in ast.walk(st)):
+            return False
+        owner, seq, rest = gate, gate.body, gate.body
+    if not seq or seq[-1] is stmt or not isinstance(seq[-1], (ast.Return, ast.Raise, ast.Break)):
+        return False
+    missed = {id(c) for st in rest if isinstance(st, ast.If) and isinstance(st.test, ast.UnaryOp)
+              and isinstance(st.test.op, ast.Not) and isinstance(st.test.operand, ast.Name)
+              and st.test.operand.id == result for c in st.body if isinstance(c, ast.Continue)}
+    if any(isinstance(x, (ast.For, ast.AsyncFor, ast.While))
+           or (isinstance(x, ast.Continue) and id(x) not in missed)
+           or (id(x) in write_args and write_args[id(x)] != name)
+           for st in rest for x in ast.walk(st)):
+        return False
+    if isinstance(seq[-1], ast.Break):
+        cur = owner
+        while cur is not None and not isinstance(cur, (ast.For, ast.AsyncFor, ast.While)):
+            cur = parents.get(cur)
+        return cur is loop
+    return True
+
+
+def _region_writes_550(fn: ast.AST, writes: list, reads: dict[str, list[ast.Call]],
+                       flagged: set[int], repos: dict[str, str]) -> list[tuple[int, str]]:
+    """#550 행 2 — 같은 transaction 구간의 반복문이 조회한 애그리거트 여럿을 쓴다. 반환: (줄, 문면)."""
+    if not any(region > 0 for _, region, _ in writes):
+        return []
+    parents = {child: parent for parent in _function_nodes(fn) for child in ast.iter_child_nodes(parent)}
+    write_args = {id(w[0]): (w[0].args[0].id if w[0].args and isinstance(w[0].args[0], ast.Name) else "")
+                  for w in writes}
+    out: list[tuple[int, str]] = []
+    for call, region, loops in writes:
+        if region <= 0 or id(call) in flagged or not call.args or not isinstance(call.args[0], ast.Name):
+            continue
+        name, meth = call.args[0].id, call.func.attr
+        message = None
+        for loop in loops:
+            targets = {x.id for x in ast.walk(loop.target) if isinstance(x, ast.Name)}
+            source = _loop_source(loop.iter, reads, repos) if name in targets else None
+            if source is not None:
+                found = f"조회로 꺼낸 여럿(`{source}`)을 도는 반복문이 한 트랜잭션 안에서 `{meth}` 로 쓴다"
+            elif _read_by_loop(reads.get(name, []), loop, targets):
+                found = f"한 트랜잭션 안 반복문에서 반복 변수로 조회한 애그리거트(`{name}`)를 `{meth}` 로 쓴다"
+            else:
+                continue
+            if not _leaves_loop_after(call, loop, parents, write_args):
+                message = found
+                break
+        if message is not None:
+            out.append((call.lineno, f"{message} — {M550}"))
+    return out
 
 
 def _use_case_part_file(py: Path) -> bool:
@@ -1069,11 +1246,14 @@ def _check_application_side(root: Path, bc: Path, f: Findings, cand: Candidates)
                                 and value.id in param_map:
                             bindings[target.attr] = param_map[value.id]
             loaded_from_read: set[str] = set()
+            reads = _read_assignments(fn)
+            many = _many_read_names(fn, reads)
+            flagged_550: set[int] = set()
             for n in _function_nodes(fn):
                 if isinstance(n, ast.Assign) and isinstance(n.value, ast.Call) \
                         and isinstance(n.value.func, ast.Attribute):
                     head = n.value.func.attr.split("_", 1)[0]
-                    if head in ("get", "find", "list", "search") and len(n.targets) == 1 \
+                    if head in READ_HEADS and len(n.targets) == 1 \
                             and isinstance(n.targets[0], ast.Name):
                         loaded_from_read.add(n.targets[0].id)
                 if not isinstance(n, ast.Call) or not isinstance(n.func, ast.Attribute):
@@ -1087,19 +1267,25 @@ def _check_application_side(root: Path, bc: Path, f: Findings, cand: Candidates)
                     names.add(recv.attr)
                 agg = next((bindings[x] for x in names if x in bindings), None)
                 head = meth.split("_", 1)[0]
-                if agg and head in ("save", "remove"):
-                    if meth == "save_all" and n.args and isinstance(n.args[0], ast.Name) \
+                if agg and head in ("save", "remove") and n.args:
+                    # #550 행 1(구간과 무관) — 조회로 꺼낸 «여럿»을 한 번의 쓰기에 넘긴다. 주석 없는 대입(옛 꼴)은 save_all 만.
+                    hit = _many_argument(n.args[0], many)
+                    if hit is None and meth == "save_all" and isinstance(n.args[0], ast.Name) \
                             and n.args[0].id in loaded_from_read:
+                        hit = n.args[0].id
+                    if hit is not None:
+                        flagged_550.add(id(n))
                         f.add("#550", _rel(root, py, n.lineno),
-                              "조회로 꺼낸 것들을 save_all — 배치 면제는 «생성»에만 걸린다"
-                              "(이미 있는 것 여럿 고치기는 면제가 아니다)")
+                              f"조회로 꺼낸 여럿(`{hit}`)을 `{meth}` 로 한꺼번에 쓴다 — {M550}")
                 # #257 확정 — 리포지토리에서 나온 객체의 «속성 접근 후 메서드 호출».
                 if isinstance(recv, ast.Attribute) and isinstance(recv.value, ast.Name) \
                         and recv.value.id in loaded_from_read:
                     f.add("#257", _rel(root, py, n.lineno),
                           f"`{recv.value.id}.{recv.attr}.{meth}(...)` — 애그리거트 상태 변경은 "
                           "전부 «루트를 지나야» 한다(내부에 손을 넣지 않는다)")
-            regions, unknown_boundary = _transaction_write_regions(root, py, mod, fn, cls_parent, bindings)
+            regions, unknown_boundary, writes = _transaction_write_regions(root, py, mod, fn, cls_parent, bindings)
+            for line, message in _region_writes_550(fn, writes, reads, flagged_550, bindings):
+                f.add("#550", _rel(root, py, line), message)
             for region, written in regions.items():
                 if region > 0 and len(written) >= 2:
                     f.add("#546", _rel(root, py, region),

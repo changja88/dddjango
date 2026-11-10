@@ -47,6 +47,9 @@
                    1행 = `경로::Symbol[(Base)][ {필드, …}]`     (Symbol = 대문자 또는 `_`+대문자
                                                               선두 — 사설 보조 타입 `_Symbol` 도 클래스)
                        | `경로::Symbol.method(파라미터)[ -> 반환]`   (선행 클래스 행 필수)
+                         메서드 행 끝 선택 칸(#663) = `<탭|2+공백>대신부름 <고칠 파일 경로…>` | `<탭|2+공백>대신부름 -` —
+                         프레임워크가 대신 부르는 길을 확인했다는 증언(경로 없음 · `-` 와 경로 섞기 · 클래스 · 함수 행에
+                         붙이기 = 형식 red · 경로가 모두 file-plan add/update/empty 일 때만 풀린다 · `-` = 고칠 파일 없음)
                        | `경로::snake_함수[(파라미터)][ -> 반환]`   (소문자 선두 — `_helper` 포함)
                        | `경로::Symbol @decorator[(인자)]`       (선행 클래스 필수 · 복수 행 순서 보존)
                        | `경로::alias 이름[: 타입] = 별칭식`      (클래스/함수보다 먼저)
@@ -113,7 +116,7 @@ architect 반송 의무)과 아래 `--check-report`(그 의무 이행의 결정�
 ∧ 그 판정이 형식 red 가 아님 ∧ 예보 red 면
 `### 예보 항목` 의 안정 ID 전건에 그 절 이후 `` `<ID>` `` + `**ignored**`|`**filtered**` 처분 행이 있음
 (`corrected` 는 불인정 — 재실행 결과가 곧 최종본). exit 0 = 정합(배너·G2 근거 가능) · 3 = 불비(stale ·
-형식 red 미해소 · 처분 미기재(선언 확정 #574 의 filtered 는 불인정) · 해시 토큰 없는 구판 헤더 · 툴체인 stale ·
+형식 red 미해소 · 처분 미기재(선언 확정 #574 의 filtered · #663 의 ignored · filtered 는 불인정) · 해시 토큰 없는 구판 헤더 · 툴체인 stale ·
 digest 토큰 없는 구판 헤더 · 기대 기준선과 다른 기준선(기준선 치환) · 기준선 대조 누락 · 기준선 행 중복) ·
 1 = 리포트 부재·절 부재·헤더 행 부재·digest 계산 실패.
 `--approved-merge-file <목록>`(발주자 소유 `approved-merges.txt` — registry_gate 와 같은 로더·검증): 기준선..HEAD
@@ -163,6 +166,15 @@ file-plan update 칸에서 symbols 의 공개 메서드 · 모듈 함수 가운�
 판정문» — 함수 줄은 경로에 줄 번호가 없고 대입 · 문 줄은 줄 번호만 다르다)가 기준선에 없는 것만 선언 확정이다(기준선에 이미 최상단
 대입 · 문이 있는 파일에 더한 대입은 G2 처럼 기존 줄). 기준선 읽기 · 파싱 불능은 후보 · 클래스 행 · 본문 · #86 · 그 밖 조립 · 등록
 파일(event_wiring · wiring_material · api_router · urls · api)의 update 는 S5 다.
+프레임워크가 대신 부르는 메서드(F4-52 · #663 — 예보기 자기 판정 · 번들 검사기 없음): 닫힌 목록 셋 — 직계 베이스(끝 이름)가
+`UserManager` · `BaseUserManager` 인 클래스의 `create_superuser`(`manage.py createsuperuser` · pytest-django `admin_user`) ·
+`get_by_natural_key`(로그인 백엔드 · `createsuperuser` · `admin_user` · 자연 키 `loaddata`), `BaseBackend` · `ModelBackend` 류의
+`get_user`(요청마다 `request.user`). file-plan update `.py` 칸의 전사 전 기준선 실물에서 목록 클래스가 직접 정의한 목록 메서드는
+symbols 에 그 메서드 행을 적는다 — 적지 않으면 선언 확정이다(다른 update 채널의 «적지 않은 서명 바꿈은 예보 밖» 과 다르다). 적은
+행이 기준선 정의보다 기본값 없는 인자(수신자 · `*args` · `**kwargs` 뺌)를 더하거나 행을 서명으로 읽지 못하면 선언 확정 · 기준선
+클래스에 그 정의가 없거나(물려받음 · 새 클래스 — 첫 인자 뒤를 셈) 둘 이상이면 후보다. 행 끝 `대신부름` 칸이 인자 판정을 푼다(위
+문법). 이 규칙의 선언 확정은 `--check-report` 가 ignored · filtered 처분으로 받지 않는다(corrected 뿐). 직계 베이스 밖 · 메서드
+본문(`REQUIRED_FIELDS` 포함) · add 칸 · 목록 밖 길은 보지 않는다(설계 글의 몫).
 번역 출처 칸(F4-115 · #474 · #62): 창구가 검사기 OHS 선택(`…/application/<bc>/driving_layer/open_host_service/**/*_service.py` —
 `_tree_bcs2` 의 BC 고르기를 계획 경로로 바로 맞춤)과 같은 행만 판정한다. `Exception` · `BaseException` 출처는 `as` 와 무관하게 최소 catch 투영을 검사기 트리 슬라이스(`_slice_check_controller_ast`)
 에 돌려 #62 선언 확정이다. 그 밖 출처는 검사기 조건 그대로(절대 ImportFrom · 모듈 마디 `domain_layer` · 전 깊이 · 지역 이름 =
@@ -302,6 +314,8 @@ _FIELD_RE: "re.Pattern[str]" = re.compile(r"^[A-Za-z_]\w*\s*[:=]\s*\S.*$")
 _DECORATOR_RE: "re.Pattern[str]" = re.compile(r"^([A-Za-z_]\w*)\s+@(.+)$")
 _ALIAS_RE: "re.Pattern[str]" = re.compile(
     r"^alias(?:\[(TYPE_CHECKING|else)\]\s+|\s+(?=[A-Za-z_]\w*\s*[:=]))(.+)$")
+# 메서드 행 끝 칸(선택 · #663 · F4-52) = 탭 또는 공백 2+ `대신부름 <고칠 파일 경로…>` | `대신부름 -`.
+_CALLED_BY_FRAMEWORK_RE: "re.Pattern[str]" = re.compile(r"(?:\t+| {2,})대신부름(?:[ \t]+(\S.*?))?\s*$")
 _IMPORT_ROW_RE: "re.Pattern[str]" = re.compile(
     r"^(\S+)(?:\t+| {2,})((?:from\s+\S+\s+import\s+.+|import\s+\S.*))$")
 # 셋째 칸(선택 · F4-115) = 번역 출처 `<= <잡는 예외 맨 이름>[ as]` — 점 이름 · `as <이름>` · `AS` · `<-` 는 형식 red.
@@ -355,6 +369,7 @@ class Method:
     name: str
     params: str
     ret: str
+    called_by_framework: "list[str] | None" = None  # 끝 칸 `대신부름 <경로…>` · `대신부름 -`(#663) — 없으면 None
 
 
 @dataclass
@@ -762,8 +777,15 @@ def _parse_symbols(rows: "list[str]", plan: Plan, errors: "list[str]") -> None:
                 continue
             owner.decorators.append(expression)
         else:
-            parsed: "Symbol | Method | None" = _parse_symbol_rest(rest, errors, path)
+            called: "re.Match[str] | None" = _CALLED_BY_FRAMEWORK_RE.search(rest)
+            parsed: "Symbol | Method | None" = _parse_symbol_rest(rest[:called.start()] if called else rest, errors, path)
             if parsed is None:
+                continue
+            cell: "list[str] | None" = called.group(1).split() if called and called.group(1) else None
+            if called is not None and (not isinstance(parsed, Method) or cell is None
+                                       or ("-" in cell and cell != ["-"])):
+                errors.append(f"symbols 대신부름 칸 형식 위반(메서드 행 끝에 `대신부름 <고칠 파일…>` 또는 `대신부름 -` 만 — "
+                              f"경로 없음 · `-` 와 경로 섞기 · 클래스 · 함수 행은 안 된다): {path}::{rest}")
                 continue
             declared_name: str = parsed.name.split(".", 1)[0]
             if declared_name in alias_names.get(path, set()):
@@ -780,7 +802,7 @@ def _parse_symbols(rows: "list[str]", plan: Plan, errors: "list[str]") -> None:
                     errors.append(f"symbols 메서드 행의 선행 클래스 부재: {path}::{parsed.name}")
                     continue
                 owner.methods.append(Method(name=parsed.name.split(".", 1)[1],
-                                            params=parsed.params, ret=parsed.ret))
+                                            params=parsed.params, ret=parsed.ret, called_by_framework=cell))
             elif entry is not None and entry.tag in ("add", "update"):
                 entry.declarations.append(parsed)
                 if entry.tag == "add" or parsed.kind == "function":
@@ -3484,6 +3506,130 @@ def check_domain_service_forecast(plan: Plan, copy: Path, scratch: Path,
     return out
 
 
+# ── #663 예보(F4-52) — 프레임워크가 대신 부르는 메서드 ─────────────────────────────────────────────────────────────────────
+# 예보기 자기 판정이다(이 판정을 맡는 번들 검사기 규칙이 없다). 닫힌 목록: 메서드 이름 → (그 메서드를 프레임워크가 부르는 클래스의
+# 직계 베이스 끝 이름, 대신 부르는 길). 직계 베이스만 본다(프로젝트 중간 매니저 · 믹스인을 거치면 조용) — 목록 밖(`create_user` ·
+# `authenticate` · `save` · 신호 등)과 메서드 본문(`REQUIRED_FIELDS` 포함)은 설계 글이 맡는다.
+FRAMEWORK_CALLED_RULE: str = "#663"
+_FRAMEWORK_CALLED: "dict[str, tuple[frozenset[str], str]]" = {
+    "create_superuser": (frozenset({"UserManager", "BaseUserManager"}),
+                         "manage.py createsuperuser · pytest-django admin_user/admin_client"),
+    "get_by_natural_key": (frozenset({"UserManager", "BaseUserManager"}),
+                           "로그인 백엔드 · manage.py createsuperuser · pytest-django admin_user · 자연 키 loaddata"),
+    "get_user": (frozenset({"BaseBackend", "ModelBackend", "AllowAllUsersModelBackend", "RemoteUserBackend",
+                            "AllowAllUsersRemoteUserBackend"}), "요청마다 django.contrib.auth.get_user · request.user"),
+}
+
+
+def _base_names(bases: "list[ast.expr]") -> "set[str]":
+    """직계 베이스의 끝 이름 — `UserManager["M"]` · `auth_models.UserManager` → `UserManager`."""
+    names: "set[str]" = set()
+    for node in bases:
+        node = node.value if isinstance(node, ast.Subscript) else node
+        if isinstance(node, ast.Name):
+            names.add(node.id)
+        elif isinstance(node, ast.Attribute):
+            names.add(node.attr)
+    return names
+
+
+def _stated_bases(base: str) -> "list[ast.expr]":
+    """symbols 클래스 행의 `(Base)` 칸 — 읽지 못하면 없음."""
+    if not base:
+        return []
+    try:
+        node: ast.stmt = ast.parse(f"class _Stated({base}): ...").body[0]
+    except (SyntaxError, ValueError, RecursionError):
+        return []
+    return node.bases if isinstance(node, ast.ClassDef) else []
+
+
+def _required_params(fn: "ast.FunctionDef | ast.AsyncFunctionDef") -> "list[str]":
+    """기본값 없는 위치 · 키워드 인자 이름(수신자 `self` · `cls` 와 `*args` · `**kwargs` 뺌) — `_argument_key` 는 기본값을 보지
+    않아 필수 · 선택을 가르지 못한다."""
+    positional: "list[ast.arg]" = [*fn.args.posonlyargs, *fn.args.args]
+    required: "list[ast.arg]" = positional[:len(positional) - len(fn.args.defaults)]
+    required += [arg for arg, default in zip(fn.args.kwonlyargs, fn.args.kw_defaults) if default is None]
+    return [arg.arg for arg in required if arg.arg not in ("self", "cls")]
+
+
+def framework_called_baseline(copy: Path, plan: Plan) -> "dict[str, ast.Module | None]":
+    """#663 예보의 비교 기준선 — 명세 전사(`materialize`) «전» 사본에서 update `.py` 칸 실물을 파싱해 잡는다(`forecast_baseline` 과
+    같은 자리 · 칸 거름이 달라 따로 잡는다). 읽기 · 파싱 불능 · 부재 · 링크는 None 이다. 키 = 계획 원문 경로."""
+    baseline: "dict[str, ast.Module | None]" = {}
+    for entry in plan.entries.values():
+        if entry.tag != "update" or not entry.path.endswith(".py"):
+            continue
+        real: Path = copy.joinpath(*_plan_parts(entry.path))
+        try:
+            baseline[entry.path] = (ast.parse(real.read_text(encoding="utf-8"))
+                                    if real.is_file() and not real.is_symlink() else None)
+        except (OSError, UnicodeError, SyntaxError, ValueError, RecursionError):
+            baseline[entry.path] = None
+    return baseline
+
+
+def check_framework_called_forecast(plan: Plan, baseline: "dict[str, ast.Module | None]") -> list[DeclarationFinding]:
+    """#663 — file-plan update `.py` 칸에서 직계 베이스가 목록 클래스인 기준선 클래스가 직접 정의한 목록 메서드는 symbols 에 그 메서드
+    행을 적어야 한다(적지 않으면 선언 확정 — 행 없이는 기본값 없는 인자를 더하는지 가를 수 없다). 적은 행이 기준선 정의보다 기본값
+    없는 인자를 더하거나 행을 파이썬 서명으로 읽지 못하면 선언 확정이고, 기준선 클래스에 그 정의가 없거나(물려받음 · 새 클래스 — 첫
+    인자 뒤를 셈) 둘 이상이면 후보다. 행 끝 `대신부름` 칸의 경로가 모두 file-plan add · update · empty 면(`-` = 고칠 파일 없음) 그 행의
+    인자 판정은 풀린다."""
+    out: list[DeclarationFinding] = []
+    fixable: "set[tuple[str, ...]]" = {_plan_parts(p) for p, e in plan.entries.items() if e.tag in ("add", "update", "empty")}
+    for path, module in baseline.items():
+        entry: PlanEntry = plan.entries[path]
+        classes: "dict[str, ast.ClassDef]" = {n.name: n for n in (module.body if module else []) if isinstance(n, ast.ClassDef)}
+        stated: "dict[str, Symbol]" = {s.name: s for s in entry.declarations if s.kind == "class"}
+        for name, cls in classes.items():
+            defined: "set[str]" = {n.name for n in cls.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+            written: "set[str]" = {m.name for m in stated[name].methods} if name in stated else set()
+            missing: "list[str]" = [m for m, (owners, _) in _FRAMEWORK_CALLED.items()
+                                    if _base_names(cls.bases) & owners and m in defined and m not in written]
+            if missing:
+                out.append(DeclarationFinding(
+                    FRAMEWORK_CALLED_RULE, path, name,
+                    f"{' · '.join(f'`{m}`' for m in missing)} 는 프레임워크가 대신 부른다"
+                    f"({' / '.join(_FRAMEWORK_CALLED[m][1] for m in missing)}) — 이 파일을 update 하면 서명을 그대로 두어도 "
+                    "symbols 에 그 메서드 행을 적는다(행이 없으면 기본값 없는 인자를 더하는지 가를 수 없다)", True))
+        for symbol in stated.values():
+            old: "ast.ClassDef | None" = classes.get(symbol.name)
+            bases: "set[str]" = _base_names(old.bases if old else []) | _base_names(_stated_bases(symbol.base))
+            for method in symbol.methods:
+                listed: "tuple[frozenset[str], str] | None" = _FRAMEWORK_CALLED.get(method.name)
+                if listed is None or not bases & listed[0]:
+                    continue
+                owner: str = f"{symbol.name}.{method.name}"
+                fn: "ast.FunctionDef | None" = _method_def(method.name, method.params, method.ret)
+                if fn is None:
+                    # 끝 칸이 서명에 먹힌 꼴(구분이 공백 하나)일 때만 구분을 가리킨다 — 그 밖의 까닭에는 붙이지 않는다.
+                    eaten: bool = "대신부름" in method.params or "대신부름" in method.ret
+                    out.append(DeclarationFinding(
+                        FRAMEWORK_CALLED_RULE, path, owner,
+                        "대신 부르는 메서드의 symbols 행을 파이썬 서명으로 읽지 못했다"
+                        + ("(끝 칸 `대신부름` 앞은 탭 또는 공백 2+)" if eaten else ""), True))
+                    continue
+                olds: "list[ast.FunctionDef | ast.AsyncFunctionDef]" = [
+                    n for n in (old.body if old else []) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    and n.name == method.name]
+                new: "list[str]" = ([r for r in _required_params(fn) if r not in _required_params(olds[-1])] if olds
+                                    else _required_params(fn)[1:])
+                cell: "list[str] | None" = method.called_by_framework
+                outside: "list[str]" = [p for p in (cell or []) if p != "-" and _plan_parts(p) not in fixable]
+                if not new or (cell is not None and not outside):
+                    continue
+                detail: str = (f"기본값 없는 인자 {', '.join(f'`{r}`' for r in new)} 를 더한다 — 대신 부르는 길({listed[1]})을 "
+                               "확인했으면 이 symbols 행 끝에 `  대신부름 <고칠 파일…>`(file-plan add · update · empty) 또는 "
+                               "`  대신부름 -`(고칠 파일 없음) 를 적는다")
+                if outside:
+                    detail += f" — `대신부름` 의 {', '.join(f'`{p}`' for p in outside)} 가 file-plan add · update · empty 에 없다"
+                if len(olds) != 1:
+                    detail += (" — 예보 불확정: 기준선 클래스에 이 메서드 정의가 "
+                               + ("없다(물려받음 · 새 클래스 — 첫 인자 뒤를 셈)" if not olds else "둘 이상이다"))
+                out.append(DeclarationFinding(FRAMEWORK_CALLED_RULE, path, owner, detail, len(olds) == 1))
+    return out
+
+
 # ── #85 예보(F4-155) — update 조립 파일(`composition_root/dependency_wiring.py`) 최상단 이름 ─────────────────────────────────
 # 대상 선택(`_find_bc_dirs` → `_has_any_layer` → `composition_root/` 폴더 → `dependency_wiring.py` 파일 — BC 고르기는 계획 경로로
 # 바로 맞춘다) · 판정(`_check_dependency_wiring`) · 진단문은 번들 검사기를 그대로 부른다(검사기 무변 · 사본 실물 무접촉). 기존 빚
@@ -5068,7 +5214,8 @@ BLIND_SPOTS: "tuple[str, ...]" = (
     "#597·#599 는 새 이름만) · 도메인 서비스 공개 메서드·함수 서명의 #304·#305·#307·#308(update "
     "는 기준선 대비 새·서명 변경만 · 기존 빚 열쇠 = 파일·규칙·판정문) · 조립 파일(`composition_root/dependency_wiring.py`) update 칸 symbols "
     "함수·alias 행의 #85(기준선에 없던 줄만 — 줄 키는 G2 와 같다: 기준선에 최상단 대입·문이 이미 있으면 새 대입도 기존 줄) · OHS 창구 번역 출처 "
-    "칸의 #474(`as`)·#62(`Exception`) — 은 S5 가 아니다. "
+    "칸의 #474(`as`)·#62(`Exception`) · update 칸 목록 클래스(사용자 매니저 · 인증 백엔드 — 직계 베이스)가 직접 정의한 대신 부르는 "
+    "메서드의 #663(행 무기재 · 기본값 없는 인자 추가) — 은 S5 가 아니다. "
     "두 채널(pre-gate 선언 예보 · G2 registry)의 기존 빚 기준이 다르다: G2 는 줄 번호만 지운 «파일·규칙·판정문» 집합 차분이고, 선언 예보는 그보다 "
     "엄격한 구석이 있다(저장소는 다른 클래스의 같은 판정문도 새 위반 · 도메인 서비스는 기존 줄의 소유자를 이 명세가 고쳐 그 줄이 사라지거나 함수 "
     "이름이 다르면 대개 새 위반 — #304·#305 기존 빚 메서드의 개명은 G2 0 인 거짓 확정이 될 수 있다 · 같은 함수 이름이 다른 자리에 있으면 후보 · "
@@ -5328,13 +5475,14 @@ def _subsection(section: str, header: str) -> str:
     return rest if nxt < 0 else rest[:nxt]
 
 
-def _disposed(section: str, stable_id: str, allow_filtered: bool = True) -> bool:
+def _disposed(section: str, stable_id: str, allow_filtered: bool = True, allow_ignored: bool = True) -> bool:
     """처분 행(R-3438 정형 — `` - `<ID>` … → **<라벨>**(<증거>) ``)이 이 절 이후에 있는가 — 라벨은 ignored|filtered 만
     (corrected 는 재실행이 곧 최종본 · 증거 토큰은 사람 감사용이라 읽지 않는다). 선언 확정 #574 는 filtered 불인정
-    (`allow_filtered=False` — 사각 인용·재수출 대조가 성립하지 않는다: corrected 또는 ignored(빚 매칭)뿐)."""
+    (`allow_filtered=False` — 사각 인용·재수출 대조가 성립하지 않는다: corrected 또는 ignored(빚 매칭)뿐). 선언 확정 #663 은
+    ignored · filtered 둘 다 불인정(`allow_ignored=False` 도 — 검사기가 없어 ⓑ 가 서지 않고 빚 매칭도 해당이 없다: corrected 뿐)."""
     token: str = f"`{stable_id}`"
     for line in section.split("\n"):
-        if token in line and ("**ignored**" in line or (allow_filtered and "**filtered**" in line)):
+        if token in line and ((allow_ignored and "**ignored**" in line) or (allow_filtered and "**filtered**" in line)):
             return True
     return False
 
@@ -5433,10 +5581,14 @@ def check_report(spec_text: str, report_text: str, current_digest: "str | None" 
                     + _REPORT_ID_RE.findall(_subsection(section, "선언 확정"))))
         in574: "set[str]" = {m.group(1) for m in re.finditer(r"^- `([0-9a-f]{12})` \[#574\] ",
                                                             _subsection(section, "선언 확정"), re.M)}
-        missing: "list[str]" = [i for i in ids if not _disposed(section, i, allow_filtered=i not in in574)]
+        in663: "set[str]" = {m.group(1) for m in re.finditer(rf"^- `([0-9a-f]{{12}})` \[{FRAMEWORK_CALLED_RULE}\] ",
+                                                            _subsection(section, "선언 확정"), re.M)}
+        missing: "list[str]" = [i for i in ids if not _disposed(section, i, allow_filtered=i not in (in574 | in663),
+                                                                allow_ignored=i not in in663)]
         if missing:
             problems.append(f"처분 미기재 {len(missing)}건(ignored|filtered 행 없음 — corrected 는 재실행이 최종본 · "
-                            "선언 확정 #574 는 filtered 불인정): " + " ".join(f"`{i}`" for i in missing))
+                            "선언 확정 #574 는 filtered 불인정 · #663 은 ignored · filtered 불인정): "
+                            + " ".join(f"`{i}`" for i in missing))
         short = f"red {attributed}({'처분 전건' if not missing else f'미기재 {len(missing)}'}) · 실존 결손 {defects}"
     elif verdict.startswith("예보 green"):
         short = "green" + (f" · 실존 결손 {defects}" if defects else "")
@@ -5763,6 +5915,9 @@ def _main(argv: "list[str]") -> int:
         # 같은 자리(F4-115 · F4-155).
         forecast_material: "dict[str, bytes | None]" = forecast_baseline(copy, plan)
         declared_scope: "dict[str, str]" = forecast_scope(plan, copy)
+        # 프레임워크가 대신 부르는 메서드(#663)의 비교 기준선도 전사 «전» 실물이다(F4-52).
+        framework_findings: list[DeclarationFinding] = check_framework_called_forecast(
+            plan, framework_called_baseline(copy, plan))
 
         try:
             mat: MaterializationReport = materialize(copy, plan, realized=realized, base_short=base_sha[:12],
@@ -5781,7 +5936,7 @@ def _main(argv: "list[str]") -> int:
                         + check_repository_forecast(plan, copy, scratch, repository_material)
                         + check_domain_service_forecast(plan, copy, scratch, forecast_material)
                         + check_wiring_forecast(plan, copy, scratch, forecast_material)
-                        + catch_findings
+                        + catch_findings + framework_findings
                         + check_publish_path_forecast(plan, copy))
         declaration_count = len({(item.rule, item.path) for item in declarations if item.confirmed})
         for line in _declaration_lines(declarations):
