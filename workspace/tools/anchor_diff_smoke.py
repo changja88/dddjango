@@ -65,6 +65,23 @@ _RELEASED_2212_COMMIT: str = "c4e40615"
 _RELEASED_2221_COMMIT: str = "62a5e5db"
 # F4-89 남은 몫(BC 이름 바꾸기 대응) · 앵커 사본 심링크 고침 바로 앞 배포판(dddjango 2.22.2) — «짝이 서지 않으면 옛 판과 글자 같음» 대조의 옛 판(HEAD 금지).
 _RELEASED_2222_COMMIT: str = "2e86346f"
+# 옛 배포판 뒤 판정은 그대로 두고 글자만 바꾼 문면(옛 → 새) — 옛 판 출력과 글자 대조하기 전에 옛 출력에 옮긴다.
+# 2.35.0 F4-103: #62 · 폴백 문면이 «자기 BC 도메인 예외 — 응용 예외는 포트 예외뿐» 으로.
+_REWORDED_SINCE_RELEASE: "tuple[tuple[str, str], ...]" = (
+    ("catch must be direct own-BC application/domain exception",
+     "catch must be direct own-BC domain exception — 응용 예외는 포트 예외뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다"),
+    ("폴백은 도메인·응용 base 단위 catch 로 한정한다(base 는 상한이다",
+     "폴백은 자기 BC 도메인 예외 base 단위 catch 로 한정한다(응용 예외는 포트 예외뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다 · "
+     "base 는 상한이다"),
+)
+
+
+def _reworded(result: "tuple[int, str]") -> "tuple[int, str]":
+    """옛 배포판 출력에 그 뒤 글자만 바뀐 문면을 옮긴다(종료 코드 · 나머지 글자는 그대로)."""
+    code, out = result
+    for old, new in _REWORDED_SINCE_RELEASE:
+        out = out.replace(old, new)
+    return code, out
 
 _GIT_ID: "list[str]" = ["-c", "user.email=smoke@dddjango", "-c", "user.name=smoke"]
 
@@ -2445,7 +2462,7 @@ class RenamedBcBaselineRegression(unittest.TestCase):
     def run_both(self, r: ApprovedInflowRepo, anchor: str, merges: tuple[str, ...], argv: list[str],
                  script: Path = CENT) -> tuple[tuple[int, str], tuple[int, str]]:
         extra: list[str] = ["--anchor", anchor] + (["--approved-merge-file", str(r.approved(*merges))] if merges else [])
-        return _run(script, r.root, argv + extra), _run(self.released() / script.name, r.root, argv + extra)
+        return _run(script, r.root, argv + extra), _reworded(_run(self.released() / script.name, r.root, argv + extra))
 
     def assert_existing(self, new: tuple[int, str], lines: set[str], *, inflow: int, pairs: str) -> str:
         code: int
