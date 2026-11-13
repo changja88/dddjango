@@ -2929,7 +2929,7 @@ class ApprovedMergeFlagRegression(unittest.TestCase):
     """설계 v3 §7-3와 Q42: 발견 0에서도 재료 오류를 먼저 거절한다."""
 
     def test_all_five_usage_errors_equal_form_and_ap_contract(self) -> None:
-        from anchor_diff_smoke import ApprovedInflowRepo
+        from anchor_diff_smoke import ApprovedInflowRepo, _install_pre_route
         with tempfile.TemporaryDirectory(prefix="approved-flags-") as td_s:
             td: Path = Path(td_s)
             r: ApprovedInflowRepo = ApprovedInflowRepo(td, "repo")
@@ -2949,8 +2949,17 @@ class ApprovedMergeFlagRegression(unittest.TestCase):
             offchain: str = r.merge("main")
             r.checkout("lane")
             outside.write_text(offchain + "\n", encoding="utf-8")
+            plain_api: str = (r.root / "config/api.py").read_text(encoding="utf-8")
             for name in ("check-error-centralization.py", "check-openapi-error-declaration.py",
                          "check-context-isolation.py", "check-api-error-controller-contract.py", "check-composition-root.py"):
+                # F4-173 — 경로 앞 응답 꼴이 없으면 #5 는 operation 마다 c 줄을 낸다(발견 0 전제가 깨진다) · 그 검사기 동안만 꼴을 둔다.
+                if name == "check-openapi-error-declaration.py":
+                    _install_pre_route(r.write)
+                else:
+                    r.write("config/api.py", plain_api)
+                    for rel in ("framework/ninja/pre_route_responses.py", "framework/ninja/pre_route_response_table.py"):
+                        if (r.root / rel).exists():
+                            r.rm(rel)
                 with self.subTest(checker=name):
                     base: list[str] = ["--error-profile", "auto"]
                     cases: list[tuple[list[str], str]] = [
@@ -3723,8 +3732,19 @@ class RootBcSelectionRegression(unittest.TestCase):
                     shutil.copytree(bc, self.root / "src/application" / f"{fixture}_{bc.name}")
         wiring: str = ("`wiring_material` 낱말은 그 파일 자신과 같은 BC dependency_wiring.py 의 모듈째 import 한 줄 · "
                        "`wiring_material.<재료>()` 호출에만 나온다")
-        extra: str = ("`openapi_extra` 의 responses 보충 — 오류 응답은 `response=` 에 그 status 의 실제 오류 타입 그대로 직접 선언한다"
-                      "(허용은 `response=` 에 선언된 성공 status 의 리터럴 메타데이터 보충뿐)")
+        tail: str = (" (보충은 `response=` 에 선언된 status 의 정수 키뿐 — 오류 status 는 `headers` 만 · 오류 응답 몸통은 "
+                     "`response=` 에 그 status 의 실제 오류 타입 그대로 · implementation-django-ninja §6.2 «머리 보충»)")
+
+        def extra(problem: str) -> str:
+            return "`openapi_extra` 의 responses 보충 — " + problem + tail
+
+        def c63(where: str, name: str) -> str:
+            # F4-173 c — 경로 앞 응답 꼴(루트 API 클래스 · framework/ninja/ 정본 · 표)이 없으면 operation 마다 선다
+            # (모듈 함수 operation 의 식별 글은 `<Router 이름>.<함수>`).
+            return (f"[#63] {where}: operation `router.{name}` 의 경로 앞 오류(인증 · CSRF · 권한 · throttle · 입력 · 미들웨어 · 앞단 답)가 "
+                    "생성 문서에 없다 — 루트 API 를 정해진 클래스로 짓고 framework/ninja/ 에 정본 · 표 파일을 둔다"
+                    "(implementation-django-ninja §6.2 «경로 앞 응답»)")
+
         order: str = "src/application/openapi_error_declaration_orders/driving_layer/api/order/order_controller.py"
         promo: str = "src/application/openapi_error_declaration_orders/driving_layer/api/promo/promo_controller.py"
         expected: "dict[str, tuple[int, list[str]]]" = {
@@ -3738,12 +3758,21 @@ class RootBcSelectionRegression(unittest.TestCase):
             "check-error-centralization.py": (0, []),
             "check-openapi-error-declaration.py": (2, [
                 "[check-openapi-error-declaration] BLOCKER — OpenAPI 오류 선언 규율 위반 (#63 · D27):",
-                f"[#63] {order}:15: {extra}",
-                f"[#63] {order}:19: `get_openapi_schema` override — 오류 응답은 operation 의 `response=` 직접 선언으로만 문서화한다",
+                f"[#63] {order}:15: " + extra('숫자 문자열 키 "404" — 정수 키 404 로 쓴다'),
+                f"[#63] {order}:19: `get_openapi_schema` override — 문서 재정의는 루트 API 모듈의 정해진 클래스 하나뿐이다"
+                "(경로 앞 오류는 그 클래스가 붙인다 · implementation-django-ninja §6.2 «경로 앞 응답»)",
                 f"[#63] {order}:23: `openapi_schema` monkeypatch — OpenAPI 를 사후 변형하지 않는다",
-                f"[#63] {promo}:18: {extra}",
-                f"[#63] {promo}:27: {extra}",
-                f"[#63] {promo}:36: {extra}",
+                f"[#63] {promo}:18: " + extra("변수 · 표현식 키 — 정수 글자로 쓴다"),
+                f"[#63] {promo}:27: " + extra("`**` 펼침"),
+                f"[#63] {promo}:36: " + extra("status 201 — `response=` 에 선언되지 않았다"),
+                "[check-openapi-error-declaration] BLOCKER — 경로 앞 응답 · 머리 보충 위반 (#63 · implementation-django-ninja §6.2 «경로 앞 응답»):",
+                "경로 앞 응답이 서지 않은 까닭: `framework/ninja/pre_route_responses.py` 없음 · `framework/ninja/pre_route_response_table.py` 없음 · "
+                "루트 API(`NinjaAPI` · `NinjaExtraAPI` 또는 그 정해진 클래스로 짓는 모듈 이름)를 찾지 못했다",
+                c63("src/application/api_error_controller_orders/driving_layer/api/order/routes.py:6", "list_orders"),
+                c63(f"{order}:10", "get_order"),
+                c63(f"{promo}:13", "get_promo"),
+                c63(f"{promo}:22", "list_promos"),
+                c63(f"{promo}:31", "featured_promo"),
             ]),
             "check-business-vocabulary.py": (0, []),
             "check-naming.py": (0, []),

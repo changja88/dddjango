@@ -24,7 +24,7 @@ REST API 계약(리소스 설계, HTTP 메서드 의미론, 상태 코드, 요�
 - 페이지네이션은 데이터 특성(정렬 안정성, 실시간성, 딥 페이지 여부)에 따라 오프셋·커서·페이지 방식 중 선택하고 선택 기준을 명시한다 (§9)
 - 버전 전략(URL·헤더·쿼리파라미터)과 하위 호환성·Deprecation 프로세스를 API 변경 전에 결정한다 (§10, §11)
 - duplicate-sensitive 요청(결제·생성)에는 `Idempotency-Key` 정책(scope·replay·conflict 계약)을 함께 정한다 (§13)
-- 모든 계약 결정은 OpenAPI에 반영한다 — path·method·schema·response·security·header를 빠짐없이 기술한다 (§14)
+- 모든 계약 결정은 OpenAPI에 반영한다 — path·method·schema·response·security·header를 빠짐없이 기술하고, 그 경로에서 날 수 있는 의도된 오류는 누가 보내든(경로 코드 · framework · 미들웨어 · 앞단) 모두 적는다 (§5.2·§14)
 
 ## 상세 레퍼런스
 

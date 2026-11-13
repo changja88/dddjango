@@ -7,6 +7,12 @@ BC 오류와 그 status 에서 실제 반환하는 오류 타입 그대로(concr
 base 뭉뚱그림 금지 · 2026-08-25)의 ``response=`` 선언의 일치를 검증하고, 선택 API
 module의 수동 OpenAPI 후처리를 차단한다.
 
+경로 앞 응답(F4-173 · 2026-11-13 — 모든 프로필): API 문서는 그 경로에서 날 수 있는 의도된
+오류를 누가 보내든 모두 적는다. 루트 API 모듈의 정해진 클래스 하나(a) · 플러그인 정본과 프로젝트
+표(b) · 그 꼴이 없을 때 operation 마다 «경로 앞 오류가 문서에 없다»(c) · 프로젝트 미들웨어 답 ↔
+표(d) · `openapi_extra` 머리 보충(e) · 주입 응답 머리 ↔ 머리 보충(f) · 직접 반환하지 않는 4xx·5xx
+광고(g, code 레인)를 본다.
+
 종료코드: 0=clean, 1=사용/분석 오류, 2=blocker.
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
 추가 방출한다. 위반 라인과 레코드는 공용 포매터(출력 계약 v2 — ordered emitter)가
@@ -30,7 +36,7 @@ import subprocess
 import sys
 
 import checker_target
-from findings import Findings, emit_all, lines, zero_target_guard
+from findings import Candidates, Findings, emit_all, lines, zero_target_guard
 from dataclasses import dataclass, field
 from http import HTTPStatus
 from pathlib import Path
@@ -53,6 +59,8 @@ ROOT_API_CONSTRUCTORS = {"ninja.NinjaAPI", "ninja_extra.NinjaExtraAPI"}
 COMMON_ERROR_MODULE = "framework.ninja.framework_error_schema"
 COMMON_ERROR_OUT = f"{COMMON_ERROR_MODULE}.FrameworkErrorSchema"
 COMMON_ERROR_PATH = Path("framework/ninja/framework_error_schema.py")
+PRE_ROUTE_SECTION = "implementation-django-ninja §6.2 «경로 앞 응답»"
+SUPPLEMENT_SECTION = "implementation-django-ninja §6.2 «머리 보충»"
 
 SKIP_DIRS = {
     ".venv",
@@ -662,55 +670,7 @@ def _literal_status(node: ast.AST) -> int | None:
     return None
 
 
-def _scan_response_statuses(
-    function: ast.FunctionDef | ast.AsyncFunctionDef,
-) -> set[int]:
-    for decorator in function.decorator_list:
-        if not isinstance(decorator, ast.Call):
-            continue
-        for keyword in decorator.keywords:
-            if keyword.arg != "response":
-                continue
-            if not isinstance(keyword.value, ast.Dict):
-                return set()
-            return {
-                status
-                for key in keyword.value.keys
-                if key is not None
-                for status in [_literal_status(key)]
-                if status is not None
-            }
-    return set()
-
-
-def _scan_openapi_extra_statuses(
-    function: ast.FunctionDef | ast.AsyncFunctionDef,
-) -> set[int]:
-    statuses: set[int] = set()
-    for decorator in function.decorator_list:
-        if not isinstance(decorator, ast.Call):
-            continue
-        for keyword in decorator.keywords:
-            if keyword.arg != "openapi_extra" or not isinstance(keyword.value, ast.Dict):
-                continue
-            for key, value in zip(keyword.value.keys, keyword.value.values):
-                if (
-                    isinstance(key, ast.Constant)
-                    and key.value == "responses"
-                    and isinstance(value, ast.Dict)
-                ):
-                    for status_key in value.keys:
-                        status = (
-                            _literal_status(status_key)
-                            if status_key is not None
-                            else None
-                        )
-                        if status is not None and 400 <= status <= 599:
-                            statuses.add(status)
-    return statuses
-
-
-def _scan_operations(source: str) -> list[str]:
+def _scan_operations(source: str, relative_path: Path) -> list[str]:
     if not NINJA_IMPORT_RE.search(source):
         return []
     try:
@@ -718,17 +678,21 @@ def _scan_operations(source: str) -> list[str]:
     except SyntaxError:
         return []
     findings: list[str] = []
+    bindings = _final_module_symbol_bindings(ParsedSource(relative_path, source, tree))
     for node in ast.walk(tree):
         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             continue
-        missing = sorted(
-            _scan_openapi_extra_statuses(node) - _scan_response_statuses(node)
-        )
-        if missing:
-            findings.append(
-                f"operation '{node.name}' "
-                f"(오류 {missing} 가 openapi_extra 에만·response= 누락)"
-            )
+        for decorator in node.decorator_list:
+            if not isinstance(decorator, ast.Call):
+                continue
+            for keyword in decorator.keywords:
+                if keyword.arg != "openapi_extra":
+                    continue
+                problems = _extra_problems(keyword.value, tree, _declared_response_statuses(node, bindings))
+                if problems:
+                    findings.append(
+                        f"operation '{node.name}' (openapi_extra responses 보충 — {' · '.join(problems)})"
+                    )
     return findings
 
 
@@ -770,7 +734,7 @@ def _repo_scan_findings(root: Path) -> Findings:
             source = path.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
-        hits = _scan_operations(source)
+        hits = _scan_operations(source, path.relative_to(root))
         if hits and _scan_is_new_or_modified(root, path):
             findings.add("#63", where=path.relative_to(root), msg="; ".join(hits))
     return findings
@@ -2774,13 +2738,11 @@ def _response_findings(
             )
 
     for status, value in sorted(final_values.items()):
-        if status in uncertain or not 400 <= status <= 599:
+        if status in uncertain or not 400 <= status <= 599 or requirements.get(status):
             continue
         declared = _declared_schema_symbols(value, operation.bindings, catalog, operation) or []
-        if not any(isinstance(schema, ErrorSymbol) for schema in declared):
-            continue
-        schema = next(schema for schema in declared if isinstance(schema, ErrorSymbol))
-        if not requirements.get(status):
+        schema = next((schema for schema in declared if isinstance(schema, ErrorSymbol)), None)
+        if schema is not None:
             findings.append(
                 Finding(
                     operation.relative_path,
@@ -2791,45 +2753,43 @@ def _response_findings(
                     symbol=operation.function.name,
                 )
             )
+            continue
+        # g — 직접 반환하지 않는 4xx · 5xx 는 Schema 가 무엇이든(`dict` · framework 예외 · 모르는 타입) 광고하지 않는다.
+        shown = ast.unparse(value) if hasattr(ast, "unparse") else "Schema"
+        findings.append(
+            Finding(
+                operation.relative_path,
+                operation.decorator.lineno,
+                "extra-error-advertisement",
+                f"{operation.identity} status {status}의 `{shown}` 선언에 직접 BC 오류 반환 없음 — "
+                f"경로 앞에서 나는 오류는 `response=` 가 아니라 경로 앞 응답으로 문서에 붙는다({PRE_ROUTE_SECTION})",
+                symbol=operation.function.name,
+            )
+        )
     return findings
 
 
-def _openapi_extra_findings(operation: Operation) -> list[Finding]:
-    extra = _keyword(operation.decorator, "openapi_extra")
-    if not isinstance(extra, ast.Dict):
+def _openapi_extra_findings(operation: Operation, tree: ast.Module | None = None) -> list[Finding]:
+    """e — `openapi_extra` 의 responses 보충은 3.4 머리 보충(정수 키 · 오류 status 는 `headers` 만)만 받는다."""
+    raw = _keyword(operation.decorator, "openapi_extra")
+    extra = _resolved_extra(raw, tree) if raw is not None else None
+    if extra is None or not isinstance(_top_level_responses(extra), ast.Dict):
+        return []  # 글자 Dict 가 아닌 responses · 중첩 responses 는 tree 레인 몫(사건 하나 — 대표 줄은 tree)
+    problems = _supplement_problems(
+        extra, _declared_response_statuses(operation.function, operation.bindings)
+    )
+    if not problems:
         return []
-    for key, value in zip(extra.keys, extra.values):
-        if not (
-            isinstance(key, ast.Constant)
-            and key.value == "responses"
-            and isinstance(value, ast.Dict)
-        ):
-            continue
-        statuses: list[int] = []
-        for status_key in value.keys:
-            if status_key is None:
-                continue
-            text = _static_string(status_key, operation.bindings)
-            status = (
-                int(text)
-                if text is not None and text.isdigit()
-                else _status_from_expression(status_key, operation.bindings)
-            )
-            if status is not None and 400 <= status <= 599:
-                statuses.append(status)
-        statuses.sort()
-        if statuses:
-            return [
-                Finding(
-                    operation.relative_path,
-                    operation.decorator.lineno,
-                    "openapi-extra",
-                    f"{operation.identity} 오류 responses {statuses}를 "
-                    "openapi_extra로 수동 선언",
-                    symbol=operation.function.name,
-                )
-            ]
-    return []
+    return [
+        Finding(
+            operation.relative_path,
+            operation.decorator.lineno,
+            "openapi-extra",
+            f"{operation.identity} openapi_extra responses 보충 — {' · '.join(problems)}"
+            f"({SUPPLEMENT_SECTION})",
+            symbol=operation.function.name,
+        )
+    ]
 
 
 def _api_schema_call_state(
@@ -3022,11 +2982,15 @@ def _api_module_findings(
     findings: list[Finding] = []
     receiver_events = 0
     annotations_evaluated = _annotations_are_evaluated(parsed.tree)
+    final_module_bindings = _final_module_symbol_bindings(parsed)
+    documented_nodes: set[int] = set()  # 3.2 꼴 클래스 안 — 그 몸통의 `super().get_openapi_schema(...)` 는 후처리가 아니다
     deferred_functions: list[
         tuple[ast.FunctionDef | ast.AsyncFunctionDef, dict[str, str]]
     ] = []
 
     def scan_expression(expression: ast.AST, bindings: dict[str, str]) -> None:
+        if id(expression) in documented_nodes:
+            return
         selected_line, ambiguous_line = _api_schema_call_state(expression, bindings)
         if ambiguous_line is not None:
             raise UsageError(
@@ -3168,7 +3132,14 @@ def _api_module_findings(
                 or (base is not None and base.startswith(API_TYPE_PREFIX))
                 for base in bases
             )
-            if api_subclass:
+            documented_class = (
+                api_subclass
+                and scope_kind == "module"
+                and _is_documented_api_class(statement, state.bindings, final_module_bindings)
+            )
+            if documented_class:
+                documented_nodes.update(id(node) for node in ast.walk(statement))
+            if api_subclass and not documented_class:
                 for member in statement.body:
                     if (
                         isinstance(member, (ast.FunctionDef, ast.AsyncFunctionDef))
@@ -3357,12 +3328,46 @@ def _module_overlap_keys(findings: list[Finding]) -> set[tuple[str, str, int]]:
             keys.add(("override", finding.relative_path.as_posix(), finding.lineno))
         elif finding.category == "openapi-monkeypatch":
             keys.add(("monkeypatch", finding.relative_path.as_posix(), finding.lineno))
+        elif finding.category == "openapi-postprocess":
+            keys.add(("postprocess", finding.relative_path.as_posix(), finding.lineno))
     return keys
+
+
+def _catalog_status_resolver(catalog: dict[str, ErrorSymbol]) -> "StatusResolver":
+    """code 레인 f — branch 마지막 `Status` 의 status 를 오류 카탈로그로 푼다(`Status(error.status, error)` 포함)."""
+
+    def resolve(call: ast.Call, block: list[ast.stmt], operation: Operation) -> int | None:
+        status = _plain_status(call, block, operation)
+        if status is not None:
+            return status
+        bindings = dict(operation.body_bindings)
+        instances: dict[str, ErrorInstance | str] = {}
+        for statement in block[:-1]:
+            targets, value = _assigned_value(statement)
+            names = {name for target in targets for name in _target_names(target)}
+            if value is None or len(names) != 1:
+                continue
+            try:
+                instance = _constructed_error(value, bindings, catalog, operation.relative_path)
+            except UsageError:
+                instance = None
+            if instance is not None:
+                instances[next(iter(names))] = instance
+        last = block[-1]
+        if not isinstance(last, ast.Return):
+            return None
+        try:
+            found = _status_return_instance(last, bindings, instances)
+        except UsageError:
+            return None
+        return found.direct_status if found is not None else None
+
+    return resolve
 
 
 def _code_findings(
     config: Config,
-) -> tuple[list[str], list[Finding], set[tuple[str, str, int]]]:
+) -> tuple[list[str], list[Finding], set[tuple[str, str, int]], "dict[Path, StatusResolver]"]:
     parsed_by_path = _parse_code_sources(config)
     findings: list[Finding] = []
     selected_imports: frozenset[str] = frozenset()
@@ -3387,13 +3392,16 @@ def _code_findings(
         if issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "):
             analysis.append(issue)
             deduplicated = _deduplicate_findings(findings)
-            return analysis, deduplicated, _module_overlap_keys(deduplicated)
+            return analysis, deduplicated, _module_overlap_keys(deduplicated), {}
         raise
+    resolver = _catalog_status_resolver(catalog)
+    resolvers: dict[Path, StatusResolver] = {Path(raw): resolver for raw in config.controller_modules}
     for operation in controller_operations:
         try:
             requirements = _operation_requirements(operation, catalog)
             findings.extend(_response_findings(operation, requirements, catalog))
-            extra_findings = _openapi_extra_findings(operation)
+            parsed_source = parsed_by_path.get(operation.relative_path)
+            extra_findings = _openapi_extra_findings(operation, parsed_source.tree if parsed_source is not None else None)
             if extra_findings:
                 overlap_keys.add(
                     (
@@ -3409,22 +3417,20 @@ def _code_findings(
                 raise
             analysis.append(issue)  # 기준선 재실행은 첫 못 읽음에서 끊지 않고 모은다(F4-59 ①)
     deduplicated = _deduplicate_findings(findings)
-    return sorted(set(analysis)), deduplicated, overlap_keys | _module_overlap_keys(deduplicated)
+    return sorted(set(analysis)), deduplicated, overlap_keys | _module_overlap_keys(deduplicated), resolvers
 
 
 def _print_repo_scan_findings(findings: Findings) -> None:
     print(
-        "[check-openapi-error-declaration] BLOCKER — 오류 status 를 openapi_extra 로만 "
-        "선언하고 "
-        "response={...} 엔 누락함(ninja 가 타입으로 미인지 = 선언 계약 밖):"
+        "[check-openapi-error-declaration] BLOCKER — openapi_extra 의 responses 보충이 "
+        "머리 보충 꼴이 아니다(정수 키 · response= 에 선언된 status · 오류 status 는 headers 만):"
     )
     emit_all(findings, printer=print)
     print(
-        "  근거: implementation-django-ninja §2.2 line111. 가능한 모든 status"
-        "(404·409·422 등)를 response={...} 에 선언한다 — "
-        "openapi_extra/get_openapi_schema 수동 선언은 Swagger 가시성만 달성하고 "
-        "ninja 응답 타입엔 안 들어간다. 오류 schema 를 response= 로 옮겨라. "
-        "설계로 반송하라."
+        f"  근거: {SUPPLEMENT_SECTION}. 경로 코드가 직접 반환하는 오류는 "
+        "response={...} 에 그 status 의 실제 오류 타입 그대로 선언하고, 그 오류의 머리만 "
+        "openapi_extra 의 정수 키 headers 로 보충한다 — 경로 앞에서 나는 오류는 "
+        f"경로 앞 응답이 붙인다({PRE_ROUTE_SECTION}). 설계로 반송하라."
     )
 
 
@@ -3450,17 +3456,19 @@ def _print_code_findings(records: Findings) -> None:
     emit_all(records, printer=print)
     print(
         "  조치: 각 직접 반환 status를 그 status에서 실제 반환하는 오류 타입 그대로(concrete·Union·명시값 base — base 뭉뚱그림 금지) 선언하고, "
-        "직접 반환하지 않는 BC 오류 광고와 "
-        "openapi_extra/get_openapi_schema 후처리를 "
-        "제거한다."
+        "직접 반환하지 않는 4xx·5xx 광고(Schema 무관)와 "
+        "정해진 꼴 밖의 openapi_extra/get_openapi_schema 후처리를 "
+        "제거한다 — 경로 앞 오류는 경로 앞 응답이, 오류의 머리는 정수 키 머리 보충이 문서에 싣는다"
+        f"({PRE_ROUTE_SECTION} · {SUPPLEMENT_SECTION})."
     )
 
 
 # ── 표준 트리 슬라이스 — #63 (D27 «OpenAPI 도 같다») ────────────────────────
 #
 # 오류 응답은 operation 이 `response={status: 그 status 의 실제 오류 타입}` 로 «직접 선언»한다 —
-# openapi_extra 의 responses 보충 · `get_openapi_schema` override · `openapi_schema`
-# monkeypatch/postprocessor 는 사후 변형이라 위반이다. 모든 프로필에서 돈다.
+# driving 층의 `get_openapi_schema` override · `openapi_schema` monkeypatch 는 사후 변형이라 위반이고,
+# openapi_extra 의 responses 보충은 3.4 머리 보충(정수 키 · `response=` 에 선언된 status · 오류
+# status 는 `headers` 만)만 받는다. 모든 프로필에서 돈다.
 
 _TREE_DRIVING_SET = frozenset({"driving_layer"})
 _TREE_LAYERS63 = {"driving_layer", "application_layer", "domain_layer", "driven_layer"}
@@ -3496,38 +3504,159 @@ def _dict_has_key(node: ast.AST, key: str) -> bool:
     return False
 
 
-def _success_only_supplement(
-    extra: ast.AST,
-    function: ast.FunctionDef | ast.AsyncFunctionDef,
-) -> bool:
-    """`openapi_extra` 가 «성공 메타데이터 보충»이면 True — #63 tree 레인 허용면.
+def _resolved_extra(node: ast.AST, tree: ast.Module | None) -> ast.Dict | None:
+    """`openapi_extra=` 값 — 글자 Dict 그대로, 같은 모듈 맨 위에서 한 번만 묶인 이름이면 그 글자 Dict(못 풀면 None)."""
+    if isinstance(node, ast.Dict):
+        return node
+    if not isinstance(node, ast.Name) or tree is None:
+        return None
+    stores = [n for n in ast.walk(tree) if isinstance(n, ast.Name) and n.id == node.id and isinstance(n.ctx, ast.Store)]
+    values = [
+        value
+        for statement in tree.body
+        for targets, value in [_assigned_value(statement)]
+        if value is not None and any(isinstance(target, ast.Name) and target.id == node.id for target in targets)
+    ]
+    other_bindings = any(
+        (isinstance(n, (ast.Import, ast.ImportFrom)) and any((a.asname or a.name.split(".")[0]) == node.id for a in n.names))
+        or (isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and n.name == node.id)
+        or (isinstance(n, (ast.Global, ast.Nonlocal)) and node.id in n.names)
+        for n in ast.walk(tree)
+    )
+    if len(stores) == 1 and len(values) == 1 and not other_bindings and isinstance(values[0], ast.Dict):
+        return values[0]
+    return None
 
-    허용은 정확히 이 꼴뿐(리비전 10호 — houserules 아닌 ninja §2.2·§6.2 개정 성문):
-    top-level Dict 의 "responses" 값이 Dict 이고, 그 키 전부가 **리터럴**(정수·숫자
-    문자열)로 읽히며, 전부 100–399 화이트리스트 안이고, 그 status 집합이 operation
-    `response=` 선언 집합의 **부분집합**일 때. 그 밖 — 오류 status·범위 밖(0·600+)·
-    변수/상수 표현식 키·splat(`**` — 키 None)·중첩 responses·비-Dict — 은 전부
-    fail-closed 로 현행 방출을 유지한다."""
+
+EXTRA_NOT_LITERAL: str = "`openapi_extra` 가 글자 Dict 가 아니다(같은 모듈에서 한 번 묶인 글자 Dict 이름도 아니다)"
+
+
+def _extra_problems(node: ast.AST, tree: ast.Module | None, declared: set[int]) -> list[str]:
+    """e 의 판정 입구 — 글자 Dict 로 풀리면 responses 보충 판정, 못 풀면 막는다(보충을 가릴 수 없다)."""
+    extra = _resolved_extra(node, tree)
+    if extra is None:
+        return [EXTRA_NOT_LITERAL]
+    if not _dict_has_key(extra, "responses"):
+        return []
+    return _supplement_problems(extra, declared)
+
+
+def _top_level_responses(extra: ast.AST) -> ast.AST | None:
     if not isinstance(extra, ast.Dict):
-        return False
-    responses: ast.AST | None = None
+        return None
     for key, value in zip(extra.keys, extra.values):
         if isinstance(key, ast.Constant) and key.value == "responses":
-            responses = value
-            break
-    if responses is None or not isinstance(responses, ast.Dict):
-        return False
-    statuses: set[int] = set()
-    for status_key in responses.keys:
+            return value
+    return None
+
+
+def _int_status_key(node: ast.AST | None) -> int | None:
+    if (
+        isinstance(node, ast.Constant)
+        and isinstance(node.value, int)
+        and not isinstance(node.value, bool)
+    ):
+        return node.value
+    return None
+
+
+def _supplement_problems(extra: ast.AST, declared: set[int]) -> list[str]:
+    """`openapi_extra` 의 responses 보충 판정(e) — 빈 목록이면 받는 꼴.
+
+    받는 꼴은 정확히 이것뿐이다: top-level Dict 의 "responses" 값이 Dict 이고, 키 전부가
+    **정수 글자**이며 그 status 가 operation `response=` 에 선언돼 있고, 오류 status(400–599)의
+    값은 `headers` 칸 하나만 가진 Dict 일 때(성공 status 는 메타데이터 보충). 숫자 문자열 키는
+    Ninja 가 정수 키 항목과 따로 남겨 문서에서 몸통 · `description` 이 사라지므로 성공 · 오류
+    모두 위반이고, 변수 · 상수 표현식 키 · `**` · 중첩 responses · 비-Dict 도 위반이다."""
+    responses = _top_level_responses(extra)
+    if responses is None:
+        return ["responses 가 top-level 칸이 아니다"]
+    if not isinstance(responses, ast.Dict):
+        return ["responses 값이 글자 Dict 가 아니다"]
+    problems: list[str] = []
+    if not responses.keys:
+        problems.append("빈 responses")
+    for status_key, value in zip(responses.keys, responses.values):
         if status_key is None:
-            return False  # ** splat — 정적 해석 불가
-        status = _literal_status(status_key)
-        if status is None or not 100 <= status <= 399:
-            return False
-        statuses.add(status)
-    if not statuses:
-        return False
-    return statuses <= _scan_response_statuses(function)
+            problems.append("`**` 펼침")
+            continue
+        status = _int_status_key(status_key)
+        if status is None:
+            if (
+                isinstance(status_key, ast.Constant)
+                and isinstance(status_key.value, str)
+                and status_key.value.isdigit()
+            ):
+                problems.append(f'숫자 문자열 키 "{status_key.value}" — 정수 키 {status_key.value} 로 쓴다')
+            else:
+                problems.append("변수 · 표현식 키 — 정수 글자로 쓴다")
+            continue
+        if not 100 <= status <= 599:
+            problems.append(f"status {status} — 100–599 밖")
+            continue
+        if status not in declared:
+            problems.append(f"status {status} — `response=` 에 선언되지 않았다")
+            continue
+        if 400 <= status <= 599 and not (
+            isinstance(value, ast.Dict)
+            and len(value.keys) == 1
+            and isinstance(value.keys[0], ast.Constant)
+            and value.keys[0].value == "headers"
+        ):
+            problems.append(f"오류 status {status} 에는 `headers` 칸 하나만 보충한다")
+    return problems
+
+
+def _declared_response_statuses(
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+    bindings: dict[str, str],
+) -> set[int]:
+    statuses: set[int] = set()
+    for decorator in function.decorator_list:
+        if not isinstance(decorator, ast.Call):
+            continue
+        for keyword in decorator.keywords:
+            if keyword.arg != "response" or not isinstance(keyword.value, ast.Dict):
+                continue
+            for key in keyword.value.keys:
+                if key is None:
+                    continue
+                status = _status_from_expression(key, bindings)
+                if status is not None:
+                    statuses.add(status)
+    return statuses
+
+
+def _header_supplement(extra: ast.AST | None, tree: ast.Module | None = None) -> dict[int, set[str]] | None:
+    """머리 보충 — status → 머리 이름(소문자). `headers` 값이 같은 모듈 맨 위에서 한 번 묶인 글자 Dict 이름이면 푼다.
+    글자로 읽지 못하면 None."""
+    if extra is None:
+        return {}
+    if not isinstance(extra, ast.Dict):
+        return None
+    if not _dict_has_key(extra, "responses"):
+        return {}
+    responses = _top_level_responses(extra)
+    if not isinstance(responses, ast.Dict):
+        return None
+    supplement: dict[int, set[str]] = {}
+    for status_key, value in zip(responses.keys, responses.values):
+        status = _int_status_key(status_key)
+        if status is None or not isinstance(value, ast.Dict):
+            return None
+        names: set[str] = set()
+        for key, item in zip(value.keys, value.values):
+            if not (isinstance(key, ast.Constant) and key.value == "headers"):
+                continue
+            item = _resolved_extra(item, tree)
+            if item is None:
+                return None
+            for header in item.keys:
+                if not (isinstance(header, ast.Constant) and isinstance(header.value, str)):
+                    return None
+                names.add(header.value.lower())
+        supplement[status] = names
+    return supplement
 
 
 def _tree_slice63(root: Path) -> tuple[Findings, list[tuple[str, str, int]]]:
@@ -3538,33 +3667,28 @@ def _tree_slice63(root: Path) -> tuple[Findings, list[tuple[str, str, int]]]:
     같은 function def 행에서 code 레인과 만난다)."""
     findings = Findings(defer=True)
     keys: list[tuple[str, str, int]] = []
-    files: list[Path] = []
-    for p in sorted(root.rglob("*.py")):
-        rel = p.relative_to(root)
-        if _scan_is_production_path(rel):
-            files.append(p)
-    for f in files:
-        rel = f.relative_to(root)
-        try:
-            mod = ast.parse(f.read_text(encoding="utf-8", errors="replace"))
-        except (SyntaxError, OSError):
-            continue
+    for rel, mod in sorted(_parsed_driving_modules(root).items(), key=lambda item: item[0].as_posix()):
+        bindings = _final_module_symbol_bindings(ParsedSource(rel, "", mod))
         for node in ast.walk(mod):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 if node.name == "get_openapi_schema":
                     where = f"{rel}:{node.lineno}"
-                    msg = "`get_openapi_schema` override — 오류 응답은 operation 의 `response=` 직접 선언으로만 문서화한다"
+                    msg = ("`get_openapi_schema` override — 문서 재정의는 루트 API 모듈의 정해진 클래스 하나뿐이다"
+                           f"(경로 앞 오류는 그 클래스가 붙인다 · {PRE_ROUTE_SECTION})")
                     findings.add("#63", where=where, msg=msg)
                     keys.append(("override", rel.as_posix(), node.lineno))
                 for deco in node.decorator_list:
                     if not isinstance(deco, ast.Call):
                         continue
                     for kw in deco.keywords:
-                        if kw.arg == "openapi_extra" and _dict_has_key(kw.value, "responses"):
-                            if _success_only_supplement(kw.value, node):
-                                continue  # 성공 메타데이터 보충 — 허용(방출·overlap key 함께 생략)
+                        if kw.arg == "openapi_extra":
+                            problems = _extra_problems(kw.value, mod, _declared_response_statuses(node, bindings))
+                            if not problems:
+                                continue  # 머리 보충 · 성공 메타데이터 보충 — 받는 꼴(방출·overlap key 함께 생략)
                             where = f"{rel}:{node.lineno}"
-                            msg = "`openapi_extra` 의 responses 보충 — 오류 응답은 `response=` 에 그 status 의 실제 오류 타입 그대로 직접 선언한다(허용은 `response=` 에 선언된 성공 status 의 리터럴 메타데이터 보충뿐)"
+                            msg = (f"`openapi_extra` 의 responses 보충 — {' · '.join(problems)} "
+                                   "(보충은 `response=` 에 선언된 status 의 정수 키뿐 — 오류 status 는 `headers` 만 · "
+                                   f"오류 응답 몸통은 `response=` 에 그 status 의 실제 오류 타입 그대로 · {SUPPLEMENT_SECTION})")
                             findings.add("#63", where=where, msg=msg)
                             keys.append(("openapi-extra", rel.as_posix(), node.lineno))
             elif isinstance(node, ast.Assign):
@@ -3575,6 +3699,2190 @@ def _tree_slice63(root: Path) -> tuple[Findings, list[tuple[str, str, int]]]:
                         findings.add("#63", where=where, msg=msg)
                         keys.append(("monkeypatch", rel.as_posix(), node.lineno))
     return findings, keys
+
+
+# ── 경로 앞 응답 — #63 (F4-173 · 2026-11-13) ─────────────────────────────────
+#
+# API 문서는 그 경로에서 날 수 있는 의도된 오류를 누가 보내든 모두 적는다. 경로 앞(Ninja 인증 ·
+# CSRF · 권한 · throttle · 입력 해석 · Django 상한 · 미들웨어(서드파티 포함) · 앞단)에서 나는 답은 루트 API
+# 모듈의 정해진 클래스 하나(a)가 플러그인 정본 `framework/ninja/pre_route_responses.py`(b — 이 검사기
+# 옆 자산과 AST 대조)와 프로젝트 표 `framework/ninja/pre_route_response_table.py`(b 정적 검증 ·
+# d 미들웨어 답 대조 — d 가 기계로 대조하는 것은 프로젝트 안 미들웨어뿐이고 서드파티 답은 리뷰어 몫)로 붙인다. 그 꼴이 서지 않으면 operation 마다 c 줄이 서고, 주입 응답에 싣는
+# 머리는 그 뒤 반환하는 status 의 머리 보충에 있어야 한다(f). 모든 프로필에서 돈다.
+
+PRE_ROUTE_PATH: Path = Path("framework/ninja/pre_route_responses.py")
+PRE_ROUTE_TABLE_PATH: Path = Path("framework/ninja/pre_route_response_table.py")
+PRE_ROUTE_FUNCTION: str = "framework.ninja.pre_route_responses.add_pre_route_responses"
+OPENAPI_SCHEMA_TYPE: str = "ninja.openapi.schema.OpenAPISchema"
+# 받는 정본 — 이 검사기와 같은 폴더의 자산 파일. 정본 판이 바뀌어 옛 판도 받을 때는 그 판 자산을
+# 파일로 더하고 여기 이름을 잇는다(지문 = 그 자산의 AST 대조 꼴 — 실행 Python 이 같은 꼴로 읽는다).
+PRE_ROUTE_CANONICAL_ASSETS: tuple[str, ...] = ("pre_route_responses_canonical.py",)
+DOCUMENTED_API_METHOD: str = (
+    "def get_openapi_schema(\n"
+    "    self, *, path_prefix: str | None = None, path_params: dict[str, object] | None = None\n"
+    ") -> OpenAPISchema:\n"
+    "    return add_pre_route_responses(self, super().get_openapi_schema(path_prefix=path_prefix, path_params=path_params))\n"
+)
+PRE_ROUTE_TABLE_NAMES: tuple[str, ...] = ("PRE_ROUTE_RESPONSES", "BAD_REQUEST_RESPONSE", "NOT_API_MIDDLEWARE")
+PROJECT_ROW_WHEN: frozenset[str] = frozenset({"all", "auth", "body", "input"})
+DEFAULT_BAD_REQUEST: dict[str, str] = {"media_type": "text/html"}
+DOTTED_PATH_RE: re.Pattern[str] = re.compile(r"[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+")
+HTTP_RESPONSE_TYPES: frozenset[str] = frozenset({"django.http.HttpResponse", "django.http.response.HttpResponse"})
+MIDDLEWARE_HOOKS: frozenset[str] = frozenset(
+    {
+        "__call__",
+        "__acall__",
+        "process_request",
+        "process_view",
+        "process_exception",
+        "process_response",
+        "process_template_response",
+    }
+)
+# 응답 생성자 → `status` 위치 인자 자리(없으면 키워드만).
+MIDDLEWARE_RESPONSE_CALLS: dict[str, int | None] = {
+    "django.http.HttpResponse": 2,
+    "django.http.response.HttpResponse": 2,
+    "django.http.JsonResponse": None,
+    "django.http.response.JsonResponse": None,
+    "django.shortcuts.render": 4,
+    "django.template.response.TemplateResponse": 4,
+}
+MIDDLEWARE_FIXED_STATUS: dict[str, int] = {
+    f"{module}.{name}": status
+    for module in ("django.http", "django.http.response")
+    for name, status in (
+        ("HttpResponseBadRequest", 400),
+        ("HttpResponseForbidden", 403),
+        ("HttpResponseNotFound", 404),
+        ("HttpResponseNotAllowed", 405),
+        ("HttpResponseGone", 410),
+        ("HttpResponseServerError", 500),
+    )
+}
+MIDDLEWARE_RAISED_STATUS: dict[str, int] = {
+    "django.core.exceptions.PermissionDenied": 403,
+    "django.core.exceptions.BadRequest": 400,
+    "django.core.exceptions.SuspiciousOperation": 400,
+    "django.core.exceptions.DisallowedHost": 400,
+    "django.core.exceptions.DisallowedRedirect": 400,
+    "django.core.exceptions.SuspiciousFileOperation": 400,
+    "django.core.exceptions.SuspiciousMultipartForm": 400,
+    "django.core.exceptions.RequestDataTooBig": 400,
+    "django.core.exceptions.TooManyFieldsSent": 400,
+    "django.core.exceptions.TooManyFilesSent": 400,
+    "django.contrib.sessions.exceptions.SuspiciousSession": 400,
+    "django.http.Http404": 404,
+    "django.http.response.Http404": 404,
+}
+
+_SOURCES: "dict[tuple[Path, Path], str | None]" = {}
+_PARSED: "dict[tuple[Path, Path], ast.Module | None]" = {}
+_DRIVING: "dict[Path, dict[Path, ast.Module]]" = {}
+
+
+def _project_source(root: Path, relative_path: Path) -> str | None:
+    key = (root, relative_path)
+    if key not in _SOURCES:
+        try:
+            _SOURCES[key] = (root / relative_path).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            _SOURCES[key] = None
+    return _SOURCES[key]
+
+
+def _parse_project_file(root: Path, relative_path: Path) -> ast.Module | None:
+    key = (root, relative_path)
+    if key not in _PARSED:
+        source = _project_source(root, relative_path)
+        try:
+            _PARSED[key] = ast.parse(source, filename=relative_path.as_posix()) if source is not None else None
+        except (SyntaxError, ValueError):
+            _PARSED[key] = None
+    return _PARSED[key]
+
+
+def _parsed_driving_modules(root: Path) -> dict[Path, ast.Module]:
+    """tree 레인 대상(경로에 `driving_layer` 가 든 운영 파일) — 한 실행에 한 번 읽는다."""
+    if root not in _DRIVING:
+        modules: dict[Path, ast.Module] = {}
+        for path in sorted(root.rglob("*.py")):
+            relative = path.relative_to(root)
+            if not _scan_is_production_path(relative):
+                continue
+            tree = _parse_project_file(root, relative)
+            if tree is not None:
+                modules[relative] = tree
+        _DRIVING[root] = modules
+    return _DRIVING[root]
+
+
+def _project_python_files(root: Path) -> list[Path]:
+    """루트 API · settings · URLconf · registrar · 미들웨어를 찾는 운영 파일(숨김 폴더 = 도구 영역은 뺀다)."""
+    found: list[Path] = []
+    for directory, names, filenames in os.walk(root):
+        relative_directory = Path(directory).relative_to(root)
+        names[:] = sorted(
+            name
+            for name in names
+            if name not in CODE_SKIP_DIRS and name not in TEST_DIR_NAMES and not name.startswith(".")
+        )
+        for filename in sorted(filenames):
+            relative = relative_directory / filename
+            if _is_code_production_path(relative):
+                found.append(relative)
+    return found
+
+
+def _module_path(root: Path, module: str) -> Path | None:
+    base = Path(*module.split("."))
+    for candidate in (base.with_suffix(".py"), base / "__init__.py"):
+        if (root / candidate).is_file():
+            return candidate
+    return None
+
+
+def _module_statements(statements: list[ast.stmt]) -> "list[ast.stmt]":
+    """모듈 실행 문장 — 함수 · 클래스 몸통 밖(조건 · try · with · 반복 안 포함)."""
+    out: list[ast.stmt] = []
+    for statement in statements:
+        out.append(statement)
+        if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            continue
+        for name in ("body", "orelse", "finalbody"):
+            block = getattr(statement, name, None)
+            if isinstance(block, list) and block and isinstance(block[0], ast.stmt):
+                out.extend(_module_statements(block))
+        for handler in getattr(statement, "handlers", ()):
+            out.extend(_module_statements(handler.body))
+    return out
+
+
+def _documented_method_dump() -> str:
+    return ast.dump(ast.parse(DOCUMENTED_API_METHOD).body[0], include_attributes=False)
+
+
+def _is_documented_api_class(
+    node: ast.ClassDef,
+    bindings: dict[str, str],
+    final: dict[str, str],
+) -> bool:
+    """3.2 꼴 — 루트 API 기저 하나의 하위 클래스 · 메서드 `get_openapi_schema` 하나(서명 · 몸통 글자 그대로)."""
+    if node.decorator_list or node.keywords or len(node.bases) != 1 or getattr(node, "type_params", None):
+        return False
+    if _resolve_expression(node.bases[0], bindings) not in ROOT_API_CONSTRUCTORS:
+        return False
+    body = list(node.body)
+    if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) and isinstance(body[0].value.value, str):
+        body = body[1:]
+    if len(body) != 1 or not isinstance(body[0], ast.FunctionDef):
+        return False
+    if ast.dump(body[0], include_attributes=False) != _documented_method_dump():
+        return False
+    schema_name = ast.Name(id="OpenAPISchema", ctx=ast.Load())
+    function_name = ast.Name(id="add_pre_route_responses", ctx=ast.Load())
+    return (
+        _resolve_expression(schema_name, bindings) == OPENAPI_SCHEMA_TYPE
+        and _resolve_expression(schema_name, final) == OPENAPI_SCHEMA_TYPE
+        and _resolve_expression(function_name, final) == PRE_ROUTE_FUNCTION
+    )
+
+
+@dataclass(frozen=True)
+class _RootApi:
+    relative_path: Path
+    receivers: tuple[str, ...]  # 모듈.이름
+    namespaces: tuple[str | None, ...]
+    documented: bool
+
+
+@dataclass(frozen=True)
+class _PreRouteSite:
+    kind: str  # 겹침 키 종류(override · monkeypatch · postprocess · f) — 그 밖은 ""
+    relative_path: Path
+    lineno: int
+    msg: str
+    symbol: str | None = None
+
+
+def _api_namespace(call: ast.Call) -> str | None:
+    """루트 API 의 URL 이름공간 — `urls_namespace=` 글자, 없으면 Ninja 기본 `api-<version>`(못 읽으면 None)."""
+    keywords = {keyword.arg: keyword.value for keyword in call.keywords}
+    if None in keywords:
+        return None
+    for name, default in (("urls_namespace", None), ("version", "1.0.0")):
+        node = keywords.get(name)
+        if node is None:
+            if default is None:
+                continue
+            return f"api-{default}"
+        if not (isinstance(node, ast.Constant) and isinstance(node.value, str)):
+            return None
+        if node.value:
+            return node.value if name == "urls_namespace" else f"api-{node.value}"
+    return None
+
+
+def _api_class_names(root: Path, files: list[Path]) -> dict[str, tuple[Path, ast.ClassDef]]:
+    """프로젝트 안 루트 API 하위 클래스(모듈.이름 → 자리) — 다른 모듈의 하위 클래스까지 고정점으로 모은다."""
+    classes: dict[str, tuple[Path, ast.ClassDef]] = {}
+    while True:
+        markers = {"NinjaAPI", "NinjaExtraAPI"} | {name.rsplit(".", 1)[-1] for name in classes}
+        before_count = len(classes)
+        for relative in files:
+            source = _project_source(root, relative)
+            if source is None or not any(marker in source for marker in markers):
+                continue
+            tree = _parse_project_file(root, relative)
+            if tree is None or not any(isinstance(node, ast.ClassDef) and node.bases for node in tree.body):
+                continue
+            module = _module_name(relative)
+            before = _module_symbol_bindings_before(ParsedSource(relative, "", tree))
+            for statement in tree.body:
+                if not isinstance(statement, ast.ClassDef):
+                    continue
+                bindings = before.get(id(statement), {})
+                for base in statement.bases:
+                    resolved = _resolve_expression(base, bindings)
+                    if resolved in ROOT_API_CONSTRUCTORS or resolved in classes:
+                        classes[f"{module}.{statement.name}"] = (relative, statement)
+                        break
+        if len(classes) == before_count:
+            return classes
+
+
+def _passthrough_subclass(node: ast.ClassDef) -> bool:
+    """몸통이 `pass` · docstring · `...` 뿐인 하위 클래스(기저 하나 · 데코레이터 · 키워드 없음) — 문서는 상속으로 정해진다."""
+    if node.decorator_list or node.keywords or len(node.bases) != 1 or getattr(node, "type_params", None):
+        return False
+    return all(
+        isinstance(member, ast.Pass)
+        or (isinstance(member, ast.Expr) and isinstance(member.value, ast.Constant)
+            and (isinstance(member.value.value, str) or member.value.value is Ellipsis))
+        for member in node.body
+    )
+
+
+def _root_api_site(kind: str, relative: Path, lineno: int, attribute: str = "get_openapi_schema") -> _PreRouteSite:
+    if kind == "monkeypatch":
+        message = (f"루트 API 의 `{attribute}` monkeypatch — OpenAPI 를 사후 변형하지 않는다"
+                   f"(경로 앞 오류는 정해진 클래스가 붙인다 · {PRE_ROUTE_SECTION})")
+    else:
+        message = ("루트 API 의 `get_openapi_schema` 직접 호출 · 후처리 — 생성 문서를 사후 변형하지 않는다"
+                   f"({PRE_ROUTE_SECTION})")
+    return _PreRouteSite(kind, relative, lineno, message)
+
+
+def _syntactic_root_sites(
+    relative: Path,
+    tree: ast.Module,
+    local_receivers: set[str],
+    final: dict[str, str],
+    documented_nodes: set[int],
+) -> list[_PreRouteSite]:
+    """루트 API 이름(그 모듈이 지은 이름)에 대한 monkeypatch · setattr · 후처리 — 출처 판독이 흔들릴 때의 글자 꼴."""
+    sites: list[_PreRouteSite] = []
+    assigned_attributes: set[int] = set()
+    for node in ast.walk(tree):
+        for target in _attribute_assignment_targets(node) if isinstance(node, ast.stmt) else ():
+            assigned_attributes.add(id(target))
+            if (
+                target.attr in {"get_openapi_schema", "openapi_schema"}
+                and isinstance(target.value, ast.Name)
+                and target.value.id in local_receivers
+            ):
+                sites.append(_root_api_site("monkeypatch", relative, target.lineno, target.attr))
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "setattr"
+            and "setattr" not in final
+            and len(node.args) >= 2
+            and isinstance(node.args[0], ast.Name)
+            and node.args[0].id in local_receivers
+            and isinstance(node.args[1], ast.Constant)
+            and node.args[1].value in {"get_openapi_schema", "openapi_schema"}
+        ):
+            sites.append(_root_api_site("monkeypatch", relative, node.lineno, str(node.args[1].value)))
+        elif (
+            isinstance(node, ast.Attribute)
+            and node.attr == "get_openapi_schema"
+            and id(node) not in assigned_attributes
+            and isinstance(node.value, ast.Name)
+            and node.value.id in local_receivers
+            and id(node) not in documented_nodes
+        ):
+            sites.append(_root_api_site("postprocess", relative, node.lineno))
+    return sites
+
+
+def _class_patch_sites(
+    root: Path,
+    files: list[Path],
+    classes: dict[str, tuple[Path, ast.ClassDef]],
+) -> list[_PreRouteSite]:
+    """루트 API 클래스 · 기저(`NinjaAPI` · `NinjaExtraAPI`) 수준의 `get_openapi_schema` monkeypatch — 대입 · `setattr`."""
+    patched_names = {"get_openapi_schema", "openapi_schema"}
+    targets_of_interest = ROOT_API_CONSTRUCTORS | set(classes)
+    sites: list[_PreRouteSite] = []
+    for relative in files:
+        source = _project_source(root, relative)
+        if source is None or not any(name in source for name in patched_names):
+            continue
+        tree = _parse_project_file(root, relative)
+        if tree is None:
+            continue
+        final = _final_module_symbol_bindings(ParsedSource(relative, "", tree))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.stmt):
+                for target in _attribute_assignment_targets(node):
+                    if target.attr in patched_names and _resolve_expression(target.value, final) in targets_of_interest:
+                        sites.append(_root_api_site("monkeypatch", relative, target.lineno, target.attr))
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == "setattr"
+                and "setattr" not in final
+                and len(node.args) >= 2
+                and isinstance(node.args[1], ast.Constant)
+                and node.args[1].value in patched_names
+                and _resolve_expression(node.args[0], final) in targets_of_interest
+            ):
+                sites.append(_root_api_site("monkeypatch", relative, node.lineno, str(node.args[1].value)))
+    return sites
+
+
+def _root_api_lane(
+    root: Path,
+    files: list[Path],
+) -> tuple[list[_RootApi], list[_PreRouteSite]]:
+    """루트 API 레인(a) — 루트 API 를 짓는 모듈과 문서 재정의 · monkeypatch · 후처리.
+
+    정해진 클래스인지는 그 클래스를 정의한 모듈에서 판정하고(다른 프로젝트 모듈에서 import 해 지어도 같다), 같은 모듈의
+    생성은 그 문장 앞에 묶인 정의로 판정한다."""
+    classes = _api_class_names(root, files)
+    class_tails = {name.rsplit(".", 1)[-1] for name in classes}
+    roots: list[_RootApi] = []
+    sites: list[_PreRouteSite] = []
+    markers = {"NinjaAPI", "NinjaExtraAPI"} | class_tails
+    node_documented: dict[int, bool] = {}
+    entries: list[tuple[Path, ast.ClassDef, dict[str, str]]] = []
+    module_root_classes: dict[Path, list[ast.ClassDef]] = {}
+    contexts: dict[Path, tuple[str, ast.Module]] = {}
+    for relative in files:
+        source = _project_source(root, relative)
+        if source is None or not any(marker in source for marker in markers):
+            continue
+        tree = _parse_project_file(root, relative)
+        if tree is None:
+            continue
+        contexts[relative] = (source, tree)
+        before = _module_symbol_bindings_before(ParsedSource(relative, "", tree))
+        final = _final_module_symbol_bindings(ParsedSource(relative, "", tree))
+        for node in tree.body:
+            if not isinstance(node, ast.ClassDef):
+                continue
+            bindings = before.get(id(node), {})
+            if not any(
+                _resolve_expression(base, bindings) in ROOT_API_CONSTRUCTORS or _resolve_expression(base, bindings) in classes
+                for base in node.bases
+            ):
+                continue
+            module_root_classes.setdefault(relative, []).append(node)
+            entries.append((relative, node, bindings))
+            node_documented[id(node)] = _is_documented_api_class(node, bindings, final)
+    # 정해진 클래스의 하위 클래스가 몸통 없이(pass · docstring) 물려받으면 문서는 상속으로 맞다 — 고정점까지.
+    changed = True
+    while changed:
+        changed = False
+        documented_names = {name for name, (_, node) in classes.items() if node_documented.get(id(node))}
+        for relative, node, bindings in entries:
+            if (
+                not node_documented[id(node)]
+                and _passthrough_subclass(node)
+                and _resolve_expression(node.bases[0], bindings) in documented_names
+            ):
+                node_documented[id(node)] = changed = True
+    for relative, node, bindings in entries:
+        if node_documented[id(node)]:
+            continue
+        for member in node.body:
+            if isinstance(member, (ast.FunctionDef, ast.AsyncFunctionDef)) and member.name == "get_openapi_schema":
+                sites.append(
+                    _PreRouteSite(
+                        "override",
+                        relative,
+                        member.lineno,
+                        f"루트 API 클래스 `{node.name}` 의 `get_openapi_schema` 재정의가 정해진 꼴이 아니다 — "
+                        "문서 재정의는 서명 · 몸통 글자 그대로의 그 클래스 하나뿐이다"
+                        f"({PRE_ROUTE_SECTION})",
+                        member.name,
+                    )
+                )
+    class_documented: dict[str, bool] = {name: node_documented.get(id(node), False) for name, (_, node) in classes.items()}
+    class_sites = _class_patch_sites(root, files, classes)
+    sites.extend(class_sites)
+    for relative, (source, tree) in contexts.items():
+        parsed = ParsedSource(relative, "", tree)
+        module = _module_name(relative)
+        before = _module_symbol_bindings_before(parsed)
+        final = _final_module_symbol_bindings(parsed)
+        documented_nodes: set[int] = set()
+        for node in module_root_classes.get(relative, []):
+            if node_documented.get(id(node)):
+                documented_nodes.update(id(child) for child in ast.walk(node.body[-1]))
+        receivers: list[str] = []
+        namespaces: list[str | None] = []
+        bound_documented: list[bool] = []
+        for statement in _module_statements(tree.body):
+            targets, value = _assigned_value(statement)
+            if not isinstance(value, ast.Call):
+                continue
+            constructor = _resolve_expression(value.func, before.get(id(statement), final))
+            if constructor not in ROOT_API_CONSTRUCTORS and constructor not in classes:
+                continue
+            constructor_module, _, constructor_name = (constructor or "").rpartition(".")
+            if constructor in ROOT_API_CONSTRUCTORS:
+                bound_documented.append(False)
+            elif constructor_module == module:
+                bound = [
+                    node
+                    for node in module_root_classes.get(relative, [])
+                    if node.name == constructor_name and node.lineno < statement.lineno
+                ]
+                bound_documented.append(bool(bound) and node_documented.get(id(bound[-1]), False))
+            else:
+                bound_documented.append(class_documented.get(constructor or "", False))
+            for target in targets:
+                for name in sorted(_target_names(target)):
+                    receivers.append(f"{module}.{name}")
+            namespaces.append(_api_namespace(value))
+        if not bound_documented:
+            continue
+        try:
+            # 고른 API 모듈과 같은 출처 판독(재대입 · 닿지 않는 갈래 · 가린 setattr) — 판독이 흔들리면 글자 꼴로 본다.
+            module_findings, _ = _api_module_findings(ParsedSource(relative, source, tree))
+            local_sites = [
+                _root_api_site(
+                    "monkeypatch" if finding.category == "openapi-monkeypatch" else "postprocess", relative, finding.lineno
+                )
+                for finding in module_findings
+                if finding.category in {"openapi-monkeypatch", "openapi-postprocess"}
+            ]
+        except UsageError:
+            local_sites = _syntactic_root_sites(
+                relative, tree, {receiver.rsplit(".", 1)[-1] for receiver in receivers}, final, documented_nodes
+            )
+        known = {(site.kind, site.relative_path, site.lineno) for site in sites}
+        sites.extend(site for site in local_sites if (site.kind, site.relative_path, site.lineno) not in known)
+        own = module_root_classes.get(relative, [])
+        documented = (
+            all(bound_documented)
+            and len(own) <= 1
+            and all(node_documented.get(id(node), False) for node in own)
+            and not any(site.relative_path == relative for site in sites)
+        )
+        roots.append(_RootApi(relative, tuple(receivers), tuple(namespaces), documented))
+    sites.sort(key=lambda site: (site.relative_path.as_posix(), site.lineno, site.msg))
+    return roots, sites
+
+
+@dataclass(frozen=True)
+class _CanonicalSpec:
+    forms: tuple[tuple[frozenset[str], tuple[str, ...]], ...]
+    names: tuple[tuple[str, ...], ...]
+    row_required: frozenset[str]
+    row_optional: frozenset[str]
+    bad_request_required: frozenset[str]
+    bad_request_optional: frozenset[str]
+    http_methods: frozenset[str]
+    operation_key: re.Pattern[str]
+
+
+_SPEC: "list[_CanonicalSpec]" = []
+
+
+def _statement_name(statement: ast.stmt) -> str:
+    if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        return statement.name
+    type_alias = getattr(ast, "TypeAlias", None)
+    if type_alias is not None and isinstance(statement, type_alias):
+        return statement.name.id
+    targets, _ = _assigned_value(statement)
+    names = sorted(name for target in targets for name in _target_names(target))
+    return names[0] if names else type(statement).__name__
+
+
+def _canonical_form(tree: ast.Module) -> tuple[frozenset[str], tuple[str, ...], tuple[str, ...]]:
+    """AST 대조 꼴 — import 는 집합(`__future__` 뺌) · 그 밖 문장은 차례대로(모듈 docstring 뺌)."""
+    imports: set[str] = set()
+    definitions: list[str] = []
+    names: list[str] = []
+    for index, statement in enumerate(tree.body):
+        if (
+            index == 0
+            and isinstance(statement, ast.Expr)
+            and isinstance(statement.value, ast.Constant)
+            and isinstance(statement.value.value, str)
+        ):
+            continue
+        if isinstance(statement, ast.Import):
+            imports.update(f"import {alias.name} as {alias.asname}" for alias in statement.names)
+        elif isinstance(statement, ast.ImportFrom):
+            if statement.level == 0 and statement.module == "__future__":
+                continue
+            module = "." * statement.level + (statement.module or "")
+            imports.update(f"from {module} import {alias.name} as {alias.asname}" for alias in statement.names)
+        else:
+            definitions.append(ast.dump(statement, include_attributes=False))
+            names.append(_statement_name(statement))
+    return frozenset(imports), tuple(definitions), tuple(names)
+
+
+def _asset_constant(tree: ast.Module, name: str) -> ast.expr | None:
+    for statement in tree.body:
+        targets, value = _assigned_value(statement)
+        if any(isinstance(target, ast.Name) and target.id == name for target in targets):
+            return value
+    return None
+
+
+def _typed_dict_keys(tree: ast.Module, name: str) -> tuple[frozenset[str], frozenset[str]]:
+    for statement in tree.body:
+        if isinstance(statement, ast.ClassDef) and statement.name == name:
+            required: set[str] = set()
+            optional: set[str] = set()
+            for member in statement.body:
+                if isinstance(member, ast.AnnAssign) and isinstance(member.target, ast.Name):
+                    annotation = member.annotation
+                    is_optional = (
+                        isinstance(annotation, ast.Subscript)
+                        and isinstance(annotation.value, ast.Name)
+                        and annotation.value.id == "NotRequired"
+                    )
+                    (optional if is_optional else required).add(member.target.id)
+            return frozenset(required), frozenset(optional)
+    raise UsageError(f"정본 자산 분석 불능: `{name}` TypedDict 를 찾지 못했다")
+
+
+def _canonical_spec() -> _CanonicalSpec:
+    """이 검사기 옆 정본 자산 — 받는 꼴 · 표 칸 이름 · 메서드 낱말 · operation 꼴의 단일 출처."""
+    if _SPEC:
+        return _SPEC[0]
+    forms: list[tuple[frozenset[str], tuple[str, ...]]] = []
+    names: list[tuple[str, ...]] = []
+    current: ast.Module | None = None
+    for asset in PRE_ROUTE_CANONICAL_ASSETS:
+        path = Path(__file__).resolve().with_name(asset)
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=asset)
+        except (OSError, UnicodeError, SyntaxError) as exc:
+            raise UsageError(f"정본 자산 분석 불능: {asset} ({exc}) — 검사기와 같은 폴더에 있어야 한다") from exc
+        imports, definitions, definition_names = _canonical_form(tree)
+        forms.append((imports, definitions))
+        names.append(definition_names)
+        if current is None:
+            current = tree
+    assert current is not None
+    row_required, row_optional = _typed_dict_keys(current, "PreRouteResponse")
+    bad_required, bad_optional = _typed_dict_keys(current, "BadRequestResponse")
+    methods_node = _asset_constant(current, "HTTP_METHODS")
+    methods = frozenset(
+        node.value
+        for node in (ast.walk(methods_node) if methods_node is not None else ())
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
+    )
+    key_node = _asset_constant(current, "OPERATION_KEY")
+    pattern: str | None = None
+    if isinstance(key_node, ast.Call) and key_node.args and isinstance(key_node.args[0], ast.Constant):
+        pattern = key_node.args[0].value if isinstance(key_node.args[0].value, str) else None
+    if not methods or pattern is None:
+        raise UsageError("정본 자산 분석 불능: HTTP_METHODS · OPERATION_KEY 를 읽지 못했다")
+    spec = _CanonicalSpec(
+        tuple(forms),
+        tuple(names),
+        row_required,
+        row_optional,
+        bad_required,
+        bad_optional,
+        methods,
+        re.compile(pattern),
+    )
+    _SPEC.append(spec)
+    return spec
+
+
+def _canonical_findings(relative: Path, tree: ast.Module) -> list[_PreRouteSite]:
+    """b — 프로젝트 정본 파일 ↔ 받는 정본(자산)의 AST 대조."""
+    spec = _canonical_spec()
+    imports, definitions, names = _canonical_form(tree)
+    if (imports, definitions) in spec.forms:
+        return []
+    want_imports, want_definitions = spec.forms[0]
+    want_names = spec.names[0]
+    detail: list[str] = []
+    if imports != want_imports:
+        missing = sorted(want_imports - imports)
+        extra = sorted(imports - want_imports)
+        if missing:
+            detail.append(f"빠진 import {len(missing)}")
+        if extra:
+            detail.append(f"더한 import {len(extra)}")
+    if definitions != want_definitions:
+        differing = next(
+            (
+                index
+                for index in range(max(len(definitions), len(want_definitions)))
+                if index >= len(definitions)
+                or index >= len(want_definitions)
+                or definitions[index] != want_definitions[index]
+            ),
+            None,
+        )
+        if differing is not None:
+            shown = names[differing] if differing < len(names) else want_names[differing]
+            detail.append(f"{differing + 1}번째 정의(`{shown}`)부터 다름")
+    lineno = 1
+    return [
+        _PreRouteSite(
+            "",
+            relative,
+            lineno,
+            f"경로 앞 응답 정본이 플러그인 정본과 글자 그대로가 아니다({' · '.join(detail) or '꼴 다름'}) — "
+            f"정본은 고치지 않는다 · 참조 글의 정본 코드를 글자 그대로 둔다({PRE_ROUTE_SECTION})",
+        )
+    ]
+
+
+@dataclass(frozen=True)
+class _TableRow:
+    lineno: int
+    status: int | None
+    headers: frozenset[str]  # 소문자
+    narrowing: frozenset[str] = frozenset()  # 단 좁힘 칸(operations · methods · namespaces · exempt · `all` 밖 when)
+    namespaces: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class _ProjectSettings:
+    middleware: tuple[tuple[str, Path, int], ...]  # (점 경로, settings 파일, 행)
+    names: frozenset[str]  # 모든 settings 진입 모듈의 `*` import 닫힘에 있는 이름(exempt 대조)
+    root_urlconfs: frozenset[str]
+    found: bool
+    unread: tuple[tuple[Path, int], ...] = ()  # `MIDDLEWARE` 값에서 글자로 풀지 못한 조각의 자리
+    urlconf_unread: bool = False  # `ROOT_URLCONF` 를 글자 아닌 값으로 대입했다
+
+
+def _string_constants(
+    node: ast.AST,
+    constants: "dict[str, list[ast.expr]] | None" = None,
+    unread: "list[ast.AST] | None" = None,
+    _seen: "frozenset[str]" = frozenset(),
+) -> list[str]:
+    """글자 · 목록 · `+` · 별표 펼침 · settings 목록 상수 이름(`constants`)을 글자로 푼다 — 못 푼 조각은 `unread` 에."""
+    out: list[str] = []
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        out.append(node.value)
+    elif isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+        for element in node.elts:
+            out.extend(_string_constants(element, constants, unread, _seen))
+    elif isinstance(node, ast.Starred):
+        out.extend(_string_constants(node.value, constants, unread, _seen))
+    elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+        out.extend(_string_constants(node.left, constants, unread, _seen))
+        out.extend(_string_constants(node.right, constants, unread, _seen))
+    elif isinstance(node, ast.Name) and constants is not None and node.id in constants and node.id not in _seen:
+        for value in constants[node.id]:
+            out.extend(_string_constants(value, constants, unread, _seen | {node.id}))
+    elif unread is not None:
+        unread.append(node)
+    return out
+
+
+def _star_import_targets(relative: Path, tree: ast.Module) -> set[str]:
+    """그 모듈이 `from X import *` 하는 모듈 이름(상대 import 는 그 파일 패키지 기준)."""
+    package = _module_name(relative).split(".")
+    if relative.name != "__init__.py":
+        package = package[:-1]
+    targets: set[str] = set()
+    for statement in _module_statements(tree.body):
+        if not (isinstance(statement, ast.ImportFrom) and any(alias.name == "*" for alias in statement.names)):
+            continue
+        if statement.level:
+            anchor = package[: len(package) - (statement.level - 1)] if statement.level > 1 else package
+            targets.add(".".join([*anchor, *([statement.module] if statement.module else [])]))
+        elif statement.module:
+            targets.add(statement.module)
+    return targets
+
+
+def _project_settings(root: Path, files: list[Path]) -> _ProjectSettings:
+    """settings 모든 모듈의 합 — `MIDDLEWARE`(대입 · `+=` · `append` · `insert` · `extend` · 목록 상수 이름 · 별표 펼침) ·
+    이름(뿌리 settings 의 것 — exempt 대조) · ROOT_URLCONF."""
+    middleware: list[tuple[str, Path, int]] = []
+    module_names: dict[str, set[str]] = {}
+    star_of: dict[str, set[str]] = {}
+    star_targets: set[str] = set()
+    urlconf_unread = False
+    urlconfs: set[str] = set()
+    constants: dict[str, list[ast.expr]] = {}
+    trees: list[tuple[Path, ast.Module]] = []
+    unread: list[tuple[Path, int]] = []
+    for relative in files:
+        if relative.parts[:1] == ("application",) or not (
+            relative.name == "settings.py" or relative.parent.name == "settings"
+        ):
+            continue
+        tree = _parse_project_file(root, relative)
+        if tree is None:
+            continue
+        trees.append((relative, tree))
+        names = module_names.setdefault(_module_name(relative), set())
+        stars = _star_import_targets(relative, tree)
+        star_of[_module_name(relative)] = stars
+        star_targets.update(stars)
+        for statement in _module_statements(tree.body):
+            targets, value = _assigned_value(statement)
+            for target in targets:
+                names.update(_target_names(target))
+            if isinstance(statement, ast.AugAssign):
+                names.update(_target_names(statement.target))
+            target_names = {name for target in targets for name in _target_names(target)}
+            if "ROOT_URLCONF" in target_names:
+                if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                    urlconfs.add(value.value)
+                else:
+                    urlconf_unread = True
+            if (
+                value is not None
+                and len(targets) == 1
+                and isinstance(targets[0], ast.Name)
+                and targets[0].id != "MIDDLEWARE"
+                and isinstance(value, (ast.List, ast.Tuple, ast.BinOp, ast.Name))
+            ):
+                constants.setdefault(targets[0].id, []).append(value)
+    for relative, tree in trees:
+        for node in ast.walk(tree):
+            values: list[ast.AST] = []
+            if isinstance(node, (ast.Assign, ast.AnnAssign)):
+                targets, value = _assigned_value(node)
+                if value is not None and any(isinstance(t, ast.Name) and t.id == "MIDDLEWARE" for t in targets):
+                    values.append(value)
+            elif isinstance(node, ast.AugAssign):
+                if isinstance(node.target, ast.Name) and node.target.id == "MIDDLEWARE":
+                    values.append(node.value)
+            elif isinstance(node, ast.Call):
+                func = node.func
+                if (
+                    isinstance(func, ast.Attribute)
+                    and func.attr in {"append", "insert", "extend"}
+                    and isinstance(func.value, ast.Name)
+                    and func.value.id == "MIDDLEWARE"
+                ):
+                    values.extend(node.args[1:] if func.attr == "insert" else node.args)
+            for value in values:
+                missed: list[ast.AST] = []
+                for entry in _string_constants(value, constants, missed):
+                    middleware.append((entry, relative, getattr(node, "lineno", 1)))
+                unread.extend((relative, getattr(piece, "lineno", getattr(node, "lineno", 1))) for piece in missed)
+    # exempt 대조 이름 = settings 진입 모듈(다른 settings 가 `*` import 하지 않는 모듈 — 이름도 `*` import 도 없는 빈 모듈은
+    # 뺀다)마다 그 `*` import 닫힘 안의 이름 — 모든 진입에 있는 이름만(진입이 하나면 그 모듈 닫힘).
+    def closure(module: str) -> set[str]:
+        seen: set[str] = set()
+        stack = [module]
+        while stack:
+            current = stack.pop()
+            if current in seen or current not in module_names:
+                continue
+            seen.add(current)
+            stack.extend(star_of.get(current, set()))
+        return seen
+
+    entries = [
+        module
+        for module in module_names
+        if module not in star_targets and (module_names[module] or star_of.get(module))
+    ]
+    entry_names = [set().union(*(module_names[member] for member in closure(module))) for module in entries]
+    root_names = set.intersection(*entry_names) if entry_names else set().union(*module_names.values()) if module_names else set()
+    return _ProjectSettings(
+        tuple(middleware),
+        frozenset(root_names),
+        frozenset(urlconfs),
+        bool(trees),
+        tuple(dict.fromkeys(unread)),
+        urlconf_unread,
+    )
+
+
+HANDLER400_HTML_CALLS: frozenset[str] = frozenset(
+    {
+        "django.shortcuts.render",
+        "django.template.response.TemplateResponse",
+        "django.views.defaults.bad_request",
+        "django.http.HttpResponseBadRequest",
+        "django.http.response.HttpResponseBadRequest",
+    }
+)
+
+
+def _handler400_kind(root: Path, dotted: str | None) -> str | None:
+    """처리기 점 경로 → "json" · "html" · "other" · 못 읽으면 None."""
+    if dotted == "django.views.defaults.bad_request":
+        return "html"
+    module, _, name = (dotted or "").rpartition(".")
+    view_relative = _module_path(root, module) if module else None
+    view_tree = _parse_project_file(root, view_relative) if view_relative is not None else None
+    function = next(
+        (
+            node
+            for node in (view_tree.body if view_tree is not None else [])
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name
+        ),
+        None,
+    )
+    if function is None or view_relative is None or view_tree is None:
+        return None
+    view_bindings = _final_module_symbol_bindings(ParsedSource(view_relative, "", view_tree))
+    kinds: set[str] = set()
+    for node in ast.walk(function):
+        if not isinstance(node, ast.Call):
+            continue
+        resolved = _resolve_expression(node.func, view_bindings)
+        if resolved in {"django.http.JsonResponse", "django.http.response.JsonResponse"}:
+            kinds.add("json")
+        elif resolved in HANDLER400_HTML_CALLS:
+            content_type = next((k.value for k in node.keywords if k.arg == "content_type"), None)
+            if content_type is None:
+                kinds.add("html")
+            elif isinstance(content_type, ast.Constant) and isinstance(content_type.value, str):
+                kinds.add("json" if "json" in content_type.value.lower() else "html")
+            else:
+                kinds.add("other")
+    if "json" in kinds:
+        return "json"
+    return "html" if kinds == {"html"} else "other"
+
+
+def _handler400_view(root: Path, settings: _ProjectSettings) -> tuple[bool | None, str | None]:
+    """루트 URLconf 의 `handler400` → (있음 — 루트 URLconf 를 못 읽으면 None, 그 처리기가 만드는 꼴 — "json"(JsonResponse 를
+    만든다 · `content_type=` 이 JSON) · "html"(HTML 만 그린다 · Django 기본 처리기) · "other"(읽었지만 가르지 못함) · 못 읽으면
+    None). `from … import … as handler400` 도 읽는다."""
+    if not settings.root_urlconfs or settings.urlconf_unread:
+        return None, None
+    for urlconf in sorted(settings.root_urlconfs):
+        relative = _module_path(root, urlconf)
+        tree = _parse_project_file(root, relative) if relative is not None else None
+        if tree is None or relative is None:
+            return None, None
+        bindings = _final_module_symbol_bindings(ParsedSource(relative, "", tree))
+        for statement in _module_statements(tree.body):
+            if isinstance(statement, ast.ImportFrom):
+                for alias in statement.names:
+                    if (alias.asname or alias.name) == "handler400" and statement.module and not statement.level:
+                        return True, _handler400_kind(root, f"{statement.module}.{alias.name}")
+                continue
+            targets, value = _assigned_value(statement)
+            if not any("handler400" in _target_names(target) for target in targets):
+                continue
+            dotted: str | None = None
+            if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                dotted = value.value
+            elif value is not None:
+                dotted = _resolve_expression(value, bindings)
+            return True, _handler400_kind(root, dotted)
+    return False, None
+
+
+def _literal_value(node: ast.AST) -> object:
+    try:
+        return ast.literal_eval(node)
+    except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+        return _NO_STATIC_VALUE
+
+
+def _string_tuple(node: ast.AST) -> tuple[str, ...] | None:
+    if not isinstance(node, ast.Tuple):
+        return None
+    values: list[str] = []
+    for element in node.elts:
+        if not (isinstance(element, ast.Constant) and isinstance(element.value, str)):
+            return None
+        values.append(element.value)
+    return tuple(values)
+
+
+def _table_row_problems(
+    row: ast.Dict,
+    spec: _CanonicalSpec,
+    schemas: set[str],
+    namespaces: set[str],
+    settings: _ProjectSettings,
+) -> tuple[list[str], _TableRow]:
+    problems: list[str] = []
+    values: dict[str, ast.AST] = {}
+    for key, value in zip(row.keys, row.values):
+        if key is None:
+            problems.append("`**` 펼침")
+            continue
+        if not (isinstance(key, ast.Constant) and isinstance(key.value, str)):
+            problems.append("칸 이름이 글자가 아니다")
+            continue
+        if key.value in values:
+            problems.append(f"칸 `{key.value}` 가 두 번")
+        values[key.value] = value
+    allowed = spec.row_required | spec.row_optional
+    for name in sorted(set(values) - allowed):
+        problems.append(f"모르는 칸 `{name}`")
+    for name in sorted(spec.row_required - set(values)):
+        problems.append(f"필수 칸 `{name}` 없음")
+    status: int | None = None
+    if "status" in values:
+        status = _int_status_key(values["status"])
+        if status is None:
+            problems.append("`status` 가 정수 글자가 아니다")
+        elif not 400 <= status <= 599:
+            problems.append(f"`status` {status} — 400–599 밖")
+    if "when" in values:
+        when = values["when"]
+        if not (isinstance(when, ast.Constant) and isinstance(when.value, str) and when.value in PROJECT_ROW_WHEN):
+            problems.append(f"`when` 은 {' · '.join(sorted(PROJECT_ROW_WHEN))} 가운데 하나")
+    for name in ("description", "media_type"):
+        if name in values and not (
+            isinstance(values[name], ast.Constant) and isinstance(values[name].value, str)
+        ):
+            problems.append(f"`{name}` 가 글자가 아니다")
+    if "body" in values:
+        body = values["body"]
+        if not (isinstance(body, ast.Name) and body.id in schemas):
+            problems.append("`body` 는 같은 파일 Schema 이름")
+    narrowing: dict[str, tuple[str, ...]] = {}
+    for name in ("methods", "namespaces", "operations"):
+        if name not in values:
+            continue
+        items = _string_tuple(values[name])
+        if items is None:
+            problems.append(f"`{name}` 가 글자 튜플이 아니다")
+            continue
+        if not items:
+            problems.append(f"`{name}` 빈 튜플")
+        narrowing[name] = items
+    for method in narrowing.get("methods", ()):
+        if method not in spec.http_methods:
+            problems.append(f"`methods` 의 `{method}` — 대문자 HTTP 메서드만")
+    for namespace in narrowing.get("namespaces", ()):
+        if namespace not in namespaces:
+            shown = " · ".join(sorted(namespaces)) or "없음"
+            problems.append(f"`namespaces` 의 `{namespace}` 가 루트 API `urls_namespace=` 글자 안이 아니다(있는 것: {shown})")
+    if "operations" in values:
+        for target in narrowing.get("operations", ()):
+            if spec.operation_key.fullmatch(target) is None:
+                problems.append(f"`operations` 의 `{target}` — `METHOD /경로` 꼴")
+        if len(narrowing.get("namespaces", ())) != 1:
+            problems.append("`operations` 행은 `namespaces` 하나가 필수")
+    if "exempt" in values:
+        exempt = values["exempt"]
+        shape = (
+            isinstance(exempt, ast.Tuple)
+            and len(exempt.elts) == 2
+            and isinstance(exempt.elts[0], ast.Constant)
+            and (exempt.elts[0].value is None or exempt.elts[0].value in spec.http_methods)
+            and isinstance(exempt.elts[1], ast.Constant)
+            and isinstance(exempt.elts[1].value, str)
+        )
+        if not shape:
+            problems.append("`exempt` 는 `(메서드 | None, \"<settings 이름>\")` 글자 튜플")
+        elif settings.found and exempt.elts[1].value not in settings.names:
+            problems.append(
+                f"`exempt` 의 settings 이름 `{exempt.elts[1].value}` 가 settings 에 없다"
+                "(목록은 모든 settings 진입 모듈이 `*` import 로 받는 base settings 에 둔다)"
+            )
+    headers: set[str] = set()
+    if "headers" in values:
+        header_node = values["headers"]
+        if not isinstance(header_node, ast.Dict) or _literal_value(header_node) is _NO_STATIC_VALUE:
+            problems.append("`headers` 가 글자 Dict 가 아니다")
+        else:
+            for key in header_node.keys:
+                if isinstance(key, ast.Constant) and isinstance(key.value, str):
+                    headers.add(key.value.lower())
+                else:
+                    problems.append("`headers` 의 머리 이름이 글자가 아니다")
+    for name, value in values.items():
+        if name in {"body", "headers"} or name not in allowed:
+            continue
+        if _literal_value(value) is _NO_STATIC_VALUE:
+            problems.append(f"`{name}` 가 글자 값이 아니다")
+    present = frozenset(name for name in ("operations", "methods", "namespaces", "exempt") if name in values) | (
+        frozenset({"when"})
+        if "when" in values and not (isinstance(values["when"], ast.Constant) and values["when"].value == "all")
+        else frozenset()
+    )
+    return problems, _TableRow(row.lineno, status, frozenset(headers), present, narrowing.get("namespaces", ()))
+
+
+def _table_findings(
+    relative: Path,
+    tree: ast.Module,
+    namespaces: set[str],
+    settings: _ProjectSettings,
+    handler400: tuple[bool | None, str | None],
+) -> tuple[list[_PreRouteSite], list[_TableRow], frozenset[str], list[tuple[_PreRouteSite, str]]]:
+    """b — 표 파일 정적 검증(글자 값 · 닫힌 칸 · 값) → (위반, 행, `NOT_API_MIDDLEWARE`, ⓓ 후보)."""
+    spec = _canonical_spec()
+    sites: list[_PreRouteSite] = []
+    candidates: list[tuple[_PreRouteSite, str]] = []
+    schemas: set[str] = {statement.name for statement in tree.body if isinstance(statement, ast.ClassDef)}
+    assigned: dict[str, tuple[ast.stmt, ast.expr]] = {}
+
+    def add(lineno: int, message: str) -> None:
+        sites.append(_PreRouteSite("", relative, lineno, f"경로 앞 응답 표 — {message}({PRE_ROUTE_SECTION})"))
+
+    for index, statement in enumerate(tree.body):
+        if isinstance(statement, (ast.Import, ast.ImportFrom, ast.ClassDef)):
+            continue
+        if (
+            index == 0
+            and isinstance(statement, ast.Expr)
+            and isinstance(statement.value, ast.Constant)
+            and isinstance(statement.value.value, str)
+        ):
+            continue
+        targets, value = _assigned_value(statement)
+        names = {name for target in targets for name in _target_names(target)}
+        if (
+            value is not None
+            and len(targets) == 1
+            and isinstance(targets[0], ast.Name)
+            and targets[0].id in PRE_ROUTE_TABLE_NAMES
+        ):
+            if targets[0].id in assigned:
+                add(statement.lineno, f"`{targets[0].id}` 를 두 번 대입했다 — 한 번 글자 값으로 둔다")
+            assigned[targets[0].id] = (statement, value)
+            continue
+        shown = ", ".join(f"`{name}`" for name in sorted(names)) or f"`{type(statement).__name__}` 문장"
+        add(
+            statement.lineno,
+            f"{shown} — 표 파일에는 몸통 Schema 와 `PRE_ROUTE_RESPONSES` · `BAD_REQUEST_RESPONSE` · "
+            "`NOT_API_MIDDLEWARE` 글자 값만 둔다",
+        )
+    for name in PRE_ROUTE_TABLE_NAMES:
+        if name not in assigned:
+            add(1, f"`{name}` 이 없다")
+    rows: list[_TableRow] = []
+    if "PRE_ROUTE_RESPONSES" in assigned:
+        statement, value = assigned["PRE_ROUTE_RESPONSES"]
+        if not isinstance(value, ast.Tuple):
+            add(statement.lineno, "`PRE_ROUTE_RESPONSES` 는 행 Dict 의 글자 튜플")
+        else:
+            for element in value.elts:
+                if not isinstance(element, ast.Dict):
+                    add(getattr(element, "lineno", statement.lineno), "행이 글자 Dict 가 아니다")
+                    continue
+                problems, row = _table_row_problems(element, spec, schemas, namespaces, settings)
+                rows.append(row)
+                if problems:
+                    add(element.lineno, "행: " + " · ".join(problems))
+    if "BAD_REQUEST_RESPONSE" in assigned:
+        statement, value = assigned["BAD_REQUEST_RESPONSE"]
+        problems: list[str] = []
+        keys: dict[str, ast.AST] = {}
+        if not isinstance(value, ast.Dict):
+            problems.append("글자 Dict 가 아니다")
+        else:
+            for key, item in zip(value.keys, value.values):
+                if not (isinstance(key, ast.Constant) and isinstance(key.value, str)):
+                    problems.append("칸 이름이 글자가 아니다")
+                    continue
+                keys[key.value] = item
+            allowed = spec.bad_request_required | spec.bad_request_optional
+            problems.extend(f"모르는 칸 `{name}`" for name in sorted(set(keys) - allowed))
+            problems.extend(f"필수 칸 `{name}` 없음" for name in sorted(spec.bad_request_required - set(keys)))
+            if "media_type" in keys and not (
+                isinstance(keys["media_type"], ast.Constant) and isinstance(keys["media_type"].value, str)
+            ):
+                problems.append("`media_type` 이 글자가 아니다")
+            if "body" in keys and not (isinstance(keys["body"], ast.Name) and keys["body"].id in schemas):
+                problems.append("`body` 는 같은 파일 Schema 이름")
+            default = _literal_value(value) == DEFAULT_BAD_REQUEST
+            if not default and handler400[0] is False:
+                problems.append(
+                    "기본값(`text/html`)이 아닌데 루트 URLconf 에 `handler400` 이 없다 — Django 기본 처리기는 상한 400 을 "
+                    "HTML 로 그리므로 기본값으로 적거나 그 꼴로 그리는 `handler400` 을 둔다"
+                )
+            elif not default and handler400[1] == "html":
+                problems.append("기본값(`text/html`)이 아닌데 루트 URLconf 의 `handler400` 이 HTML 로 그린다 — 기본값으로 적는다")
+            elif not default and handler400[1] != "json":
+                candidates.append(
+                    (
+                        _PreRouteSite(
+                            "",
+                            relative,
+                            statement.lineno,
+                            "`BAD_REQUEST_RESPONSE` 이 기본값이 아닌데 루트 URLconf 의 `handler400` 이 그리는 꼴을 가르지 못했다",
+                        ),
+                        "그 처리기가 그리는 Django 상한 400 의 꼴이 표에 적은 꼴인가",
+                    )
+                )
+            if handler400[0] is True and default:
+                if handler400[1] == "json":
+                    problems.append(
+                        "루트 URLconf 의 `handler400` 이 JSON 으로 답한다 — Django 상한 400 을 그 처리기가 그리므로 "
+                        "기본값(`text/html`)이 아니라 그 꼴로 적는다"
+                    )
+                else:
+                    candidates.append(
+                        (
+                            _PreRouteSite(
+                                "",
+                                relative,
+                                statement.lineno,
+                                "`BAD_REQUEST_RESPONSE` 이 기본값(`text/html`)인데 루트 URLconf 에 `handler400` 이 있다",
+                            ),
+                            "그 처리기가 그리는 Django 상한 400 의 꼴이 `text/html` 인가(JSON 이면 그 꼴로 적는다)",
+                        )
+                    )
+        if problems:
+            add(statement.lineno, "`BAD_REQUEST_RESPONSE`: " + " · ".join(problems))
+    not_api: frozenset[str] = frozenset()
+    if "NOT_API_MIDDLEWARE" in assigned:
+        statement, value = assigned["NOT_API_MIDDLEWARE"]
+        items = _string_tuple(value)
+        if items is None or any(DOTTED_PATH_RE.fullmatch(item) is None for item in items):
+            add(statement.lineno, "`NOT_API_MIDDLEWARE` 는 미들웨어 점 경로 글자 튜플")
+        else:
+            not_api = frozenset(items)
+    return sites, rows, not_api, candidates
+
+
+@dataclass
+class _MiddlewareAnswer:
+    lineno: int
+    status: int
+    headers: set[str]
+
+
+def _middleware_status(node: ast.AST | None, bindings: dict[str, str]) -> int | None:
+    if node is None:
+        return None
+    if isinstance(node, ast.Attribute) and node.attr == "value":
+        node = node.value
+    return _status_from_expression(node, bindings)
+
+
+def _response_call_status(call: ast.Call, resolved: str, bindings: dict[str, str]) -> tuple[bool, int | None]:
+    """응답 생성 호출의 status → (읽음, 값). `status` 가 없으면 200."""
+    if resolved in MIDDLEWARE_FIXED_STATUS:
+        return True, MIDDLEWARE_FIXED_STATUS[resolved]
+    status_node: ast.AST | None = next((k.value for k in call.keywords if k.arg == "status"), None)
+    position = MIDDLEWARE_RESPONSE_CALLS[resolved]
+    if status_node is None and position is not None and len(call.args) > position:
+        status_node = call.args[position]
+    if status_node is None:
+        if any(k.arg is None for k in call.keywords) or any(isinstance(a, ast.Starred) for a in call.args):
+            return False, None
+        return True, 200
+    status = _middleware_status(status_node, bindings)
+    return status is not None, status
+
+
+def _middleware_answers(
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+    bindings: dict[str, str],
+) -> tuple[list[_MiddlewareAnswer], list[tuple[int, str]]]:
+    """미들웨어 자리 한 곳이 직접 내는 답 · 싣는 글자 머리 — 읽지 못한 꼴은 (행, 까닭)."""
+    answers: list[_MiddlewareAnswer] = []
+    unread: list[tuple[int, str]] = []
+    tracked: dict[str, _MiddlewareAnswer] = {}
+    assigned_to: dict[int, str] = {}
+    for node in ast.walk(function):
+        if isinstance(node, (ast.Assign, ast.AnnAssign)):
+            targets, value = _assigned_value(node)
+            if isinstance(value, ast.Call) and len(targets) == 1 and isinstance(targets[0], ast.Name):
+                assigned_to[id(value)] = targets[0].id
+    nodes = sorted(
+        (node for node in ast.walk(function) if hasattr(node, "lineno") and node is not function),
+        key=lambda node: (node.lineno, node.col_offset),
+    )
+    for node in nodes:
+        if isinstance(node, ast.Call):
+            resolved = _resolve_expression(node.func, bindings)
+            if resolved not in MIDDLEWARE_RESPONSE_CALLS and resolved not in MIDDLEWARE_FIXED_STATUS:
+                continue
+            readable, status = _response_call_status(node, resolved, bindings)
+            if not readable or status is None:
+                unread.append((node.lineno, f"`{resolved.rsplit('.', 1)[-1]}` 의 status 를 글자로 읽지 못했다"))
+                continue
+            answer = _MiddlewareAnswer(node.lineno, status, set())
+            header_node = next((k.value for k in node.keywords if k.arg == "headers"), None)
+            if header_node is not None:
+                if isinstance(header_node, ast.Dict) and all(
+                    isinstance(key, ast.Constant) and isinstance(key.value, str) for key in header_node.keys
+                ):
+                    answer.headers.update(key.value.lower() for key in header_node.keys)
+                else:
+                    unread.append((node.lineno, "응답 `headers=` 머리 이름을 글자로 읽지 못했다"))
+            answers.append(answer)
+            if id(node) in assigned_to:
+                tracked[assigned_to[id(node)]] = answer
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            targets, value = _assigned_value(node)
+            for target in targets:
+                if isinstance(target, ast.Name):
+                    tracked.pop(target.id, None)  # 다시 묶임 — 응답 생성이면 그 호출이 곧 다시 잇는다
+                elif isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name):
+                    owner = tracked.get(target.value.id)
+                    if owner is None:
+                        continue  # 지나가는 응답(get_response 결과 등)에 붙인 머리 — 이 미들웨어의 답이 아니다
+                    name = _static_string(target.slice, bindings)
+                    if name is None:
+                        unread.append((node.lineno, "답에 싣는 머리 이름을 글자로 읽지 못했다"))
+                    else:
+                        owner.headers.add(name.lower())
+                elif isinstance(target, ast.Attribute) and target.attr == "status_code":
+                    status = _middleware_status(value, bindings)
+                    if status is None:
+                        unread.append((node.lineno, "`status_code` 값을 글자로 읽지 못했다"))
+                        continue
+                    owner = tracked.get(target.value.id) if isinstance(target.value, ast.Name) else None
+                    if owner is not None:
+                        owner.status = status
+                        owner.lineno = node.lineno
+                    else:
+                        answers.append(_MiddlewareAnswer(node.lineno, status, set()))
+        elif isinstance(node, ast.Raise) and node.exc is not None:
+            raised = node.exc.func if isinstance(node.exc, ast.Call) else node.exc
+            status = MIDDLEWARE_RAISED_STATUS.get(_resolve_expression(raised, bindings) or "")
+            if status is not None:
+                answers.append(_MiddlewareAnswer(node.lineno, status, set()))
+    return answers, unread
+
+
+MIDDLEWARE_PASSING_CALLS: frozenset[str] = frozenset(
+    f"{module}.{name}"
+    for module, names in (
+        ("django.shortcuts", ("redirect",)),
+        ("django.http", ("HttpResponseRedirect", "HttpResponsePermanentRedirect", "HttpResponseNotModified")),
+        ("django.http.response", ("HttpResponseRedirect", "HttpResponsePermanentRedirect", "HttpResponseNotModified")),
+    )
+    for name in names
+)  # 오류 답이 아닌 응답 생성(3xx) — hook 이 돌려줘도 d 몫이 아니다
+
+
+@dataclass(frozen=True)
+class _MiddlewareCode:
+    relative: Path
+    tree: ast.Module
+    bindings: dict[str, str]
+
+
+def _top_level_definition(tree: ast.Module | None, name: str) -> ast.stmt | None:
+    return next(
+        (
+            statement
+            for statement in (tree.body if tree is not None else [])
+            if isinstance(statement, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and statement.name == name
+        ),
+        None,
+    )
+
+
+def _middleware_code(root: Path, relative: Path, tree: ast.Module) -> _MiddlewareCode:
+    return _MiddlewareCode(relative, tree, _final_module_symbol_bindings(ParsedSource(relative, "", tree)))
+
+
+def _project_base_classes(
+    root: Path, code: _MiddlewareCode, cls: ast.ClassDef
+) -> list[tuple[_MiddlewareCode, ast.ClassDef]]:
+    """프로젝트 안 기저 클래스(MRO 한 단계 — 같은 모듈 · 프로젝트 모듈)."""
+    out: list[tuple[_MiddlewareCode, ast.ClassDef]] = []
+    for base in cls.bases:
+        resolved = _resolve_expression(base, code.bindings)
+        module, _, name = (resolved or "").rpartition(".")
+        if not module:
+            continue
+        if module == _module_name(code.relative):
+            base_code: _MiddlewareCode | None = code
+        else:
+            base_relative = _module_path(root, module)
+            base_tree = _parse_project_file(root, base_relative) if base_relative is not None else None
+            base_code = _middleware_code(root, base_relative, base_tree) if base_relative and base_tree else None
+        node = _top_level_definition(base_code.tree, name) if base_code is not None else None
+        if base_code is not None and isinstance(node, ast.ClassDef) and node is not cls:
+            out.append((base_code, node))
+    return out
+
+
+def _function_parameters(function: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
+    arguments = function.args
+    names = {a.arg for a in (*arguments.posonlyargs, *arguments.args, *arguments.kwonlyargs)}
+    names.update(a.arg for a in (arguments.vararg, arguments.kwarg) if a is not None)
+    return names
+
+
+def _returned_calls(function: ast.FunctionDef | ast.AsyncFunctionDef) -> list[ast.Call]:
+    """그 함수 몸통(안쪽 함수 · 클래스 밖)의 `return <호출>` · `return await <호출>`."""
+    calls: list[ast.Call] = []
+    stack: list[ast.AST] = list(function.body)
+    while stack:
+        node = stack.pop()
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+            continue
+        if isinstance(node, ast.Return) and node.value is not None:
+            value = node.value.value if isinstance(node.value, ast.Await) else node.value
+            if isinstance(value, ast.Call):
+                calls.append(value)
+        stack.extend(ast.iter_child_nodes(node))
+    return sorted(calls, key=lambda call: (call.lineno, call.col_offset))
+
+
+def _body_calls(function: ast.FunctionDef | ast.AsyncFunctionDef) -> list[ast.Call]:
+    """그 함수 몸통(안쪽 함수 · 클래스 · lambda 밖)의 모든 호출 — 대입 값 · 문장 호출 · 조건식 · 불 연산 갈래 포함."""
+    calls: list[ast.Call] = []
+    stack: list[ast.AST] = list(function.body)
+    while stack:
+        node = stack.pop()
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+            continue
+        if isinstance(node, ast.Call):
+            calls.append(node)
+        stack.extend(ast.iter_child_nodes(node))
+    return sorted(calls, key=lambda call: (call.lineno, call.col_offset))
+
+
+def _body_statements(function: ast.FunctionDef | ast.AsyncFunctionDef) -> list[ast.stmt]:
+    """그 함수 몸통(안쪽 함수 · 클래스 밖)의 모든 문장."""
+    out: list[ast.stmt] = []
+    stack: list[ast.AST] = list(function.body)
+    while stack:
+        node = stack.pop()
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+            continue
+        if isinstance(node, ast.stmt):
+            out.append(node)
+        stack.extend(ast.iter_child_nodes(node))
+    return sorted(out, key=lambda statement: (statement.lineno, statement.col_offset))
+
+
+def _call_bound_names(function: ast.FunctionDef | ast.AsyncFunctionDef, call: ast.Call) -> set[str]:
+    """`<이름> = <그 호출>` · `<이름> = await <그 호출>` 의 이름."""
+    names: set[str] = set()
+    for statement in _body_statements(function):
+        targets, value = _assigned_value(statement)
+        value = value.value if isinstance(value, ast.Await) else value
+        if value is call and len(targets) == 1 and isinstance(targets[0], ast.Name):
+            names.add(targets[0].id)
+    return names
+
+
+def _returned_call_ids(function: ast.FunctionDef | ast.AsyncFunctionDef) -> set[int]:
+    """돌려주는 호출 — `return <호출>` · `return await <호출>` 과, `return <이름>` 의 이름에 묶인 호출(`<이름> = <호출>`)."""
+    ids = {id(call) for call in _returned_calls(function)}
+    returned_names = {
+        statement.value.id
+        for statement in _body_statements(function)
+        if isinstance(statement, ast.Return) and isinstance(statement.value, ast.Name)
+    }
+    for statement in _body_statements(function):
+        targets, value = _assigned_value(statement)
+        value = value.value if isinstance(value, ast.Await) else value
+        if (
+            isinstance(value, ast.Call)
+            and len(targets) == 1
+            and isinstance(targets[0], ast.Name)
+            and targets[0].id in returned_names
+        ):
+            ids.add(id(value))
+    return ids
+
+
+def _middleware_findings(
+    root: Path,
+    settings: _ProjectSettings,
+    rows: list[_TableRow],
+    not_api: frozenset[str],
+    api_namespaces: "set[str] | frozenset[str] | None" = frozenset(),
+) -> tuple[list[_PreRouteSite], list[tuple[_PreRouteSite, str]]]:
+    """d — 프로젝트 미들웨어가 내는 오류 답 ↔ 표 행. hook(같은 클래스 · 프로젝트 기저 클래스 한 단계)과 그 hook 이 돌려주는
+    도움 메서드 · 같은 모듈 함수 한 단계까지 읽는다. 같은 status 행이 좁힌 행(`operations` · `methods` · `exempt` · `all` 밖
+    `when` · 모든 루트 API 이름공간을 덮지 않는 `namespaces` — 이름공간을 글자로 못 읽은 루트가 있으면(`api_namespaces` 가
+    None) `namespaces` 는 늘 좁힘)뿐이면 그 행이 이 미들웨어의 행인지 기계가 가를 수 없으므로 ⓓ 후보로 둔다."""
+    sites: list[_PreRouteSite] = []
+    candidates: list[tuple[_PreRouteSite, str]] = []
+    counted = [row for row in rows if row.status is not None]
+
+    def narrowed(row: _TableRow) -> bool:
+        if row.narrowing & {"operations", "methods", "exempt", "when"}:
+            return True
+        return "namespaces" in row.narrowing and (
+            api_namespaces is None or not set(api_namespaces) <= set(row.namespaces)
+        )
+
+    for path, lineno in settings.unread:
+        candidates.append(
+            (
+                _PreRouteSite("", path, lineno, "settings `MIDDLEWARE` 의 조각을 글자 · 목록 상수로 풀지 못했다"),
+                "그 조각의 프로젝트 미들웨어가 API 경로에 내는 오류 답이 경로 앞 응답 표에 있는가",
+            )
+        )
+    seen: set[str] = set()
+    for dotted, settings_path, settings_line in settings.middleware:
+        if dotted in seen or dotted in not_api:
+            continue
+        seen.add(dotted)
+        module, _, attribute = dotted.rpartition(".")
+        relative = _module_path(root, module) if module else None
+        if relative is None:
+            continue  # 프로젝트 밖(서드파티 · Django) — 리뷰어 몫
+        tree = _parse_project_file(root, relative)
+        target = _top_level_definition(tree, attribute)
+        if tree is None or target is None:
+            candidates.append(
+                (
+                    _PreRouteSite("", settings_path, settings_line, f"미들웨어 `{dotted}` 의 정의를 읽지 못했다"),
+                    "이 미들웨어가 API 경로에 내는 오류 답이 경로 앞 응답 표에 있는가",
+                )
+            )
+            continue
+        code = _middleware_code(root, relative, tree)
+        hooks: list[tuple[_MiddlewareCode, ast.FunctionDef | ast.AsyncFunctionDef]] = []
+        classes: list[tuple[_MiddlewareCode, ast.ClassDef]] = []
+        outer: set[str] = set()
+        if isinstance(target, ast.ClassDef):
+            classes = [(code, target), *_project_base_classes(root, code, target)]
+            taken: set[str] = set()
+            for owner_code, owner in classes:
+                for member in owner.body:
+                    if (
+                        isinstance(member, (ast.FunctionDef, ast.AsyncFunctionDef))
+                        and member.name in MIDDLEWARE_HOOKS
+                        and member.name not in taken
+                    ):
+                        taken.add(member.name)
+                        hooks.append((owner_code, member))
+        elif isinstance(target, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            outer = _function_parameters(target)
+            hooks = [
+                (code, node)
+                for node in ast.walk(target)
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node is not target
+            ]
+        answers: list[tuple[Path, _MiddlewareAnswer]] = []
+        answers_of: dict[int, list[_MiddlewareAnswer]] = {}
+        unread_reported: set[int] = set()
+
+        def unread_candidate(path: Path, lineno: int, reason: str) -> None:
+            candidates.append(
+                (
+                    _PreRouteSite("", path, lineno, f"미들웨어 `{dotted}` — {reason}"),
+                    "이 답이 API 경로에 나는가 · 나면 그 status · 머리가 경로 앞 응답 표에 있는가",
+                )
+            )
+
+        def passing_call(call: ast.Call, function_code: _MiddlewareCode, passing: set[str]) -> bool:
+            resolved = _resolve_expression(call.func, function_code.bindings)
+            func = call.func
+            return (
+                resolved in MIDDLEWARE_RESPONSE_CALLS
+                or resolved in MIDDLEWARE_FIXED_STATUS
+                or resolved in MIDDLEWARE_PASSING_CALLS
+                or (isinstance(func, ast.Attribute) and func.attr.endswith("get_response"))
+                or (isinstance(func, ast.Name) and func.id in passing)
+                or (
+                    isinstance(func, ast.Attribute)
+                    and isinstance(func.value, ast.Call)
+                    and isinstance(func.value.func, ast.Name)
+                    and func.value.func.id == "super"
+                )
+            )  # 읽은 응답 생성 · 지나가는 응답(get_response · 받은 view) · 기저 hook(위에서 따로 읽음)
+
+        def helper_of(
+            call: ast.Call, function_code: _MiddlewareCode
+        ) -> tuple[_MiddlewareCode, ast.FunctionDef | ast.AsyncFunctionDef] | None:
+            func = call.func
+            if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name) and func.value.id in {"self", "cls"}:
+                for owner_code, owner in classes:
+                    member = next(
+                        (
+                            m
+                            for m in owner.body
+                            if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef)) and m.name == func.attr
+                        ),
+                        None,
+                    )
+                    if member is not None:
+                        return owner_code, member
+                return None
+            if isinstance(func, ast.Name):
+                definition = _top_level_definition(function_code.tree, func.id)
+                module_name = _module_name(function_code.relative)
+                if (
+                    isinstance(definition, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    and function_code.bindings.get(func.id) == f"{module_name}.{func.id}"
+                ):
+                    return function_code, definition
+            return None
+
+        def read_function(
+            function_code: _MiddlewareCode,
+            function: ast.FunctionDef | ast.AsyncFunctionDef,
+            *,
+            follow: bool,
+            returned_by_caller: bool,
+        ) -> list[_MiddlewareAnswer]:
+            """그 함수가 내는 답을 읽는다(한 번). `follow` 면 몸통 어디서든 부른 도움 함수 · 메서드를 한 단계 따른다.
+            돌려주는 호출(`return <호출>` · `<이름> = <호출>` 뒤 `return <이름>`)을 따르지 못하면 — 그 함수 결과가 미들웨어 답으로
+            돌아갈 때만(`returned_by_caller`) — ⓓ 다."""
+            passing = _function_parameters(function) | outer
+            returned = _returned_call_ids(function)
+            if id(function) not in answers_of:
+                found, unread = _middleware_answers(function, function_code.bindings)
+                answers_of[id(function)] = list(found)
+                answers.extend((function_code.relative, answer) for answer in found)
+                for lineno, reason in unread:
+                    unread_candidate(function_code.relative, lineno, reason)
+                if follow:
+                    bound: dict[str, list[_MiddlewareAnswer]] = {}
+                    for call in _body_calls(function):
+                        if passing_call(call, function_code, passing):
+                            continue
+                        helper = helper_of(call, function_code)
+                        if helper is None:
+                            continue
+                        helper_answers = read_function(
+                            helper[0], helper[1], follow=False, returned_by_caller=id(call) in returned
+                        )
+                        for name in _call_bound_names(function, call):
+                            bound.setdefault(name, []).extend(helper_answers)
+                    # 따른 호출에서 받은 이름에 이 함수가 더 싣는 머리 — 그 답의 머리다.
+                    for node in _body_statements(function):
+                        if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+                            continue
+                        target = node.targets[0]
+                        if not (isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name)):
+                            continue
+                        owners = bound.get(target.value.id)
+                        if not owners:
+                            continue
+                        header_name = _static_string(target.slice, function_code.bindings)
+                        if header_name is None:
+                            unread_candidate(function_code.relative, node.lineno, "답에 싣는 머리 이름을 글자로 읽지 못했다")
+                            continue
+                        for owner in owners:
+                            owner.headers.add(header_name.lower())
+            if returned_by_caller and id(function) not in unread_reported:
+                unread_reported.add(id(function))
+                for call in _body_calls(function):
+                    if id(call) not in returned or passing_call(call, function_code, passing):
+                        continue
+                    if follow and helper_of(call, function_code) is not None:
+                        continue
+                    unread_candidate(function_code.relative, call.lineno, "이 hook 이 돌려주는 응답의 status 를 읽지 못했다")
+            return answers_of[id(function)]
+
+        for hook_code, hook in hooks:
+            read_function(hook_code, hook, follow=True, returned_by_caller=True)
+        for answer_path, answer in answers:
+            if not 400 <= answer.status <= 599:
+                continue
+            matching = [row for row in counted if row.status == answer.status]
+            if not matching:
+                sites.append(
+                    _PreRouteSite(
+                        "",
+                        answer_path,
+                        answer.lineno,
+                        f"미들웨어 `{dotted}` 가 내는 {answer.status} 응답이 경로 앞 응답 표에 없다 — 표에 그 status "
+                        "행을 근거(이 줄)와 함께 더하거나, API 경로를 빼는 미들웨어면 그 빼는 줄을 근거로 "
+                        f"`NOT_API_MIDDLEWARE` 에 적는다({PRE_ROUTE_SECTION})",
+                    )
+                )
+                continue
+            documented = set().union(*(row.headers for row in matching))  # 좁힌 행 포함 — 어느 행에도 없으면 어느 경로 문서에도 없다
+            for header in sorted(answer.headers - documented):
+                sites.append(
+                    _PreRouteSite(
+                        "",
+                        answer_path,
+                        answer.lineno,
+                        f"미들웨어 `{dotted}` 가 {answer.status} 에 싣는 머리 `{header}` 가 그 표 행 `headers` 에 없다"
+                        f"({PRE_ROUTE_SECTION})",
+                    )
+                )
+            if all(narrowed(row) for row in matching):
+                candidates.append(
+                    (
+                        _PreRouteSite(
+                            "",
+                            answer_path,
+                            answer.lineno,
+                            f"미들웨어 `{dotted}` 가 내는 {answer.status} 응답 — 표의 같은 status 행이 좁힌 행"
+                            f"(표 {' · '.join(str(row.lineno) for row in matching)}행)뿐이다",
+                        ),
+                        "이 미들웨어 답이 그 행이 좁힌 경로 · 메서드에만 나는가 — 그 행의 G1 근거가 이 미들웨어 줄인가",
+                    )
+                )
+    return sites, candidates
+
+
+@dataclass(frozen=True)
+class _RouteIndex:
+    mounts: dict[str, str | None]  # 루트 API(모듈.이름) → URLconf 마운트 글자(여럿 · 못 읽음 = None)
+    routers: dict[str, tuple[str, str] | None]  # Router(모듈.이름) → (루트 API, add_router 앞머리)
+    controllers: dict[str, str | None]  # ninja_extra 컨트롤러(모듈.클래스) → 루트 API
+
+
+def _route_index(root: Path, files: list[Path], roots: list[_RootApi]) -> _RouteIndex:
+    """operation 식별 글의 `METHOD 경로` 재료 — URLconf 마운트 · registrar 등록(읽히는 꼴만)."""
+    receivers: set[str] = {receiver for api in roots for receiver in api.receivers}
+    local_receivers: dict[Path, dict[str, str]] = {
+        api.relative_path: {receiver.rsplit(".", 1)[-1]: receiver for receiver in api.receivers} for api in roots
+    }
+    mounts: dict[str, list[str]] = {}
+    registrar_calls: dict[str, list[str]] = {}
+    direct: list[tuple[str, str, ast.Call, dict[str, str], Path]] = []  # (루트 API, 메서드, 호출, 바인딩, 파일)
+
+    def resolve(node: ast.AST, bindings: dict[str, str], relative: Path) -> str | None:
+        if isinstance(node, ast.Name) and node.id in local_receivers.get(relative, {}):
+            return local_receivers[relative][node.id]
+        return _resolve_expression(node, bindings)
+
+    scanned = {relative for relative in files if relative.name == "urls.py"} | set(local_receivers)
+    for relative in sorted(scanned, key=Path.as_posix):
+        tree = _parse_project_file(root, relative)
+        if tree is None:
+            continue
+        bindings = _final_module_symbol_bindings(ParsedSource(relative, "", tree))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            func = resolve(node.func, bindings, relative)
+            if (
+                func == "django.urls.path"
+                and len(node.args) >= 2
+                and isinstance(node.args[0], ast.Constant)
+                and isinstance(node.args[0].value, str)
+                and isinstance(node.args[1], ast.Attribute)
+                and node.args[1].attr == "urls"
+            ):
+                api = resolve(node.args[1].value, bindings, relative)
+                if api in receivers:
+                    mounts.setdefault(api, []).append(node.args[0].value)
+                continue
+            if isinstance(node.func, ast.Attribute) and node.func.attr in {"add_router", "register_controllers"}:
+                api = resolve(node.func.value, bindings, relative)
+                if api in receivers:
+                    direct.append((api, node.func.attr, node, bindings, relative))
+                continue
+            if func and func.rsplit(".", 1)[-1].startswith("register_") and len(node.args) == 1 and not node.keywords:
+                api = resolve(node.args[0], bindings, relative)
+                if api in receivers:
+                    registrar_calls.setdefault(func, []).append(api)
+    for registrar, apis in sorted(registrar_calls.items()):
+        if len(set(apis)) != 1:
+            continue
+        module, _, function_name = registrar.rpartition(".")
+        relative = _module_path(root, module)
+        tree = _parse_project_file(root, relative) if relative is not None else None
+        function = next(
+            (
+                statement
+                for statement in (tree.body if tree is not None else [])
+                if isinstance(statement, ast.FunctionDef) and statement.name == function_name
+            ),
+            None,
+        )
+        if function is None or not function.args.args or relative is None or tree is None:
+            continue
+        parameter = function.args.args[0].arg
+        bindings = _final_module_symbol_bindings(ParsedSource(relative, "", tree))
+        for node in ast.walk(function):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr in {"add_router", "register_controllers"}
+                and isinstance(node.func.value, ast.Name)
+                and node.func.value.id == parameter
+            ):
+                direct.append((apis[0], node.func.attr, node, bindings, relative))
+    routers: dict[str, list[tuple[str, str]]] = {}
+    controllers: dict[str, list[str]] = {}
+    for api, method, call, bindings, relative in direct:
+        if method == "add_router":
+            prefix_node = call.args[0] if call.args else next((k.value for k in call.keywords if k.arg == "prefix"), None)
+            router_node = call.args[1] if len(call.args) > 1 else next((k.value for k in call.keywords if k.arg == "router"), None)
+            if not (isinstance(prefix_node, ast.Constant) and isinstance(prefix_node.value, str)) or router_node is None:
+                continue
+            router = resolve(router_node, bindings, relative)
+            if router is not None:
+                routers.setdefault(router, []).append((api, prefix_node.value))
+        else:
+            for argument in call.args:
+                controller = resolve(argument, bindings, relative)
+                if controller is not None:
+                    controllers.setdefault(controller, []).append(api)
+    return _RouteIndex(
+        {api: values[0] if len(values) == 1 else None for api, values in mounts.items()},
+        {router: values[0] if len(values) == 1 else None for router, values in routers.items()},
+        {controller: values[0] if len(values) == 1 else None for controller, values in controllers.items()},
+    )
+
+
+def _literal_path_argument(call: ast.Call, *, default: str | None) -> str | None:
+    node: ast.AST | None = call.args[0] if call.args else next((k.value for k in call.keywords if k.arg == "path"), None)
+    if node is None:
+        return default
+    return node.value if isinstance(node, ast.Constant) and isinstance(node.value, str) else None
+
+
+def _operation_route(
+    operation: Operation,
+    tree: ast.Module,
+    index: _RouteIndex,
+) -> str | None:
+    """operation 의 `METHOD 생성 문서 경로` — Ninja `get_paths` 와 같은 식으로 읽히는 꼴만(아니면 None)."""
+    decorator = operation.decorator
+    if not isinstance(decorator.func, ast.Attribute):
+        return None
+    method = decorator.func.attr.upper()
+    module = _module_name(operation.relative_path)
+    if operation.owners:
+        if len(operation.owners) != 1:
+            return None
+        cls = next(
+            (s for s in tree.body if isinstance(s, ast.ClassDef) and s.name == operation.owners[0]),
+            None,
+        )
+        if cls is None:
+            return None
+        before = _module_symbol_bindings_before(ParsedSource(operation.relative_path, "", tree)).get(id(cls), {})
+        prefix: str | None = None
+        for item in cls.decorator_list:
+            call = item if isinstance(item, ast.Call) else None
+            resolved = _resolve_expression(call.func if call is not None else item, before)
+            if resolved not in {"ninja_extra.api_controller", "ninja_extra.controllers.api_controller"}:
+                continue
+            if call is None or not (call.args or any(k.arg == "prefix_or_class" for k in call.keywords)):
+                prefix = ""
+            else:
+                node = call.args[0] if call.args else next(k.value for k in call.keywords if k.arg == "prefix_or_class")
+                prefix = node.value if isinstance(node, ast.Constant) and isinstance(node.value, str) else None
+        api = index.controllers.get(f"{module}.{cls.name}")
+        route_path = _literal_path_argument(decorator, default="")
+    else:
+        receiver = decorator.func.value
+        if not isinstance(receiver, ast.Name):
+            return None
+        bound = index.routers.get(f"{module}.{receiver.id}")
+        api, prefix = bound if bound is not None else (None, None)
+        route_path = _literal_path_argument(decorator, default=None)
+    mount = index.mounts.get(api) if api is not None else None
+    if prefix is None or route_path is None or mount is None:
+        return None
+    path = "/" + mount + "/" + "/".join(part for part in (prefix, route_path) if part)
+    while "//" in path:
+        path = path.replace("//", "/")
+    return f"{method} {re.sub(r'{[^}:]+:', '{', path)}"
+
+
+def _operations_in(relative: Path, tree: ast.Module) -> list[Operation] | None:
+    try:
+        return _collect_operations(ParsedSource(relative, "", tree))
+    except UsageError:
+        return None
+
+
+def _operation_name(operation: Operation) -> str:
+    return ".".join((*operation.owners, operation.function.name))
+
+
+def _operation_identity(operation: Operation) -> str:
+    """c 식별 글 — `<클래스>.<메서드>` · 모듈 함수 operation 은 `<Router 이름>.<함수>`(같은 파일에서 유일하게)."""
+    receiver = operation.decorator.func.value if isinstance(operation.decorator.func, ast.Attribute) else None
+    if not operation.owners and isinstance(receiver, ast.Name):
+        return f"{receiver.id}.{operation.function.name}"
+    return _operation_name(operation)
+
+
+def _in_schema(operation: Operation) -> bool:
+    flag = next((k.value for k in operation.decorator.keywords if k.arg == "include_in_schema"), None)
+    return not (isinstance(flag, ast.Constant) and flag.value is False)
+
+
+def _response_parameter_names(operation: Operation) -> set[str]:
+    """주입 응답 매개변수 — 주석이 `django.http.HttpResponse` 로 풀리는 것(이름 무관 · Ninja 와 같은 기준)."""
+    bindings = operation.bindings if operation.annotations_evaluated else operation.body_bindings
+    names: set[str] = set()
+    arguments = operation.function.args
+    for argument in (*arguments.posonlyargs, *arguments.args, *arguments.kwonlyargs):
+        annotation = argument.annotation
+        if annotation is None:
+            continue
+        if isinstance(annotation, ast.Constant) and isinstance(annotation.value, str):
+            try:
+                annotation = ast.parse(annotation.value, mode="eval").body
+            except SyntaxError:
+                continue
+        if _resolve_expression(annotation, bindings) in HTTP_RESPONSE_TYPES:
+            names.add(argument.arg)
+    return names
+
+
+def _statement_blocks(statements: list[ast.stmt]) -> "list[list[ast.stmt]]":
+    blocks: list[list[ast.stmt]] = [statements]
+    for statement in statements:
+        if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            continue
+        for name in ("body", "orelse", "finalbody"):
+            block = getattr(statement, name, None)
+            if isinstance(block, list) and block and isinstance(block[0], ast.stmt):
+                blocks.extend(_statement_blocks(block))
+        for handler in getattr(statement, "handlers", ()):
+            blocks.extend(_statement_blocks(handler.body))
+        for case in getattr(statement, "cases", ()):
+            blocks.extend(_statement_blocks(case.body))
+    return blocks
+
+
+StatusResolver = Callable[[ast.Call, "list[ast.stmt]", Operation], "int | None"]
+
+
+def _plain_status(call: ast.Call, block: "list[ast.stmt]", operation: Operation) -> int | None:
+    return _status_from_expression(call.args[0], operation.body_bindings) if call.args else None
+
+
+def _header_findings(
+    operation: Operation,
+    resolve_status: StatusResolver,
+    tree: ast.Module | None = None,
+) -> tuple[list[_PreRouteSite], list[tuple[_PreRouteSite, str]]]:
+    """f — 오류 branch(마지막 문장이 `return Status(<4xx · 5xx>, …)`)에서 주입 응답에 싣는 글자 머리 ↔ 그 status 의 머리 보충."""
+    parameters = _response_parameter_names(operation)
+    if not parameters:
+        return [], []
+    name = _operation_name(operation)
+    relative = operation.relative_path
+    raw_extra = _keyword(operation.decorator, "openapi_extra")
+    supplement = _header_supplement(_resolved_extra(raw_extra, tree) if raw_extra is not None else None, tree)
+    if raw_extra is not None and _resolved_extra(raw_extra, tree) is None:
+        supplement = None
+    sites: list[_PreRouteSite] = []
+    candidates: list[tuple[_PreRouteSite, str]] = []
+    question = "그 머리가 실리는 응답 status 의 머리 보충(`openapi_extra` responses `headers`)에 적혔는가"
+
+    def candidate(lineno: int, message: str) -> None:
+        candidates.append(
+            (_PreRouteSite("f", relative, lineno, f"`{name}` — {message}", operation.function.name), question)
+        )
+
+    def header_of(statement: ast.stmt) -> tuple[ast.Assign, str | None] | None:
+        if not (isinstance(statement, ast.Assign) and len(statement.targets) == 1):
+            return None
+        target = statement.targets[0]
+        if not isinstance(target, ast.Subscript):
+            return None
+        if isinstance(target.value, ast.Name) and target.value.id in parameters:
+            return statement, _static_string(target.slice, operation.body_bindings)
+        return None
+
+    reported: set[tuple[int, str]] = set()
+    Header = tuple[ast.Assign, "str | None", bool]  # (대입, 머리 이름, 그 return 에 늘 실림)
+
+    def check(last: ast.Return, block: "list[ast.stmt]", headers: "list[Header]") -> None:
+        status = resolve_status(last.value, block, operation)  # type: ignore[arg-type]
+        if status is not None and not 400 <= status <= 599:
+            return  # 성공 쪽 머리는 f 밖
+        for statement, header, definite in headers:
+            if header is None:
+                message = "주입 응답에 싣는 머리 이름을 글자로 읽지 못했다"
+            elif status is None:
+                message = f"머리 `{header}` — 그 branch 마지막 `Status` 의 status 를 글자로 읽지 못했다"
+            elif supplement is None:
+                message = f"머리 `{header}` — `openapi_extra` 머리 보충을 글자로 읽지 못했다"
+            elif header.lower() in supplement.get(status, set()):
+                continue
+            elif not definite:
+                message = (
+                    f"머리 `{header}` — 앞 블록에서 실릴 수 있는 머리가 그 뒤 반환하는 {status} 에 실리는지 "
+                    "기계가 가르지 못했다(흐름에 따라 다르다)"
+                )
+            else:
+                key = (statement.lineno, f"{header.lower()}:{status}")
+                if key in reported:
+                    continue
+                reported.add(key)
+                sites.append(
+                    _PreRouteSite(
+                        "f",
+                        relative,
+                        statement.lineno,
+                        f"`{name}` 가 주입 응답에 싣는 머리 `{header}` 가 그 뒤 반환하는 {status} 의 머리 보충에 없다 — "
+                        f"`openapi_extra` 의 responses 에 정수 키 {status} 의 `headers` 로 적는다({SUPPLEMENT_SECTION})",
+                        operation.function.name,
+                    )
+                )
+                continue
+            if (statement.lineno, message) not in reported:
+                reported.add((statement.lineno, message))
+                candidate(statement.lineno, message)
+
+    def nested_blocks(statement: ast.stmt) -> "list[list[ast.stmt]]":
+        blocks: list[list[ast.stmt]] = []
+        for field_name in ("body", "orelse", "finalbody"):
+            block = getattr(statement, field_name, None)
+            if isinstance(block, list) and block and isinstance(block[0], ast.stmt):
+                blocks.append(block)
+        blocks.extend(handler.body for handler in getattr(statement, "handlers", ()))
+        blocks.extend(case.body for case in getattr(statement, "cases", ()))
+        return blocks
+
+    def always_ends(block: "list[ast.stmt]") -> bool:
+        """그 블록이 늘 `return` · `raise` 로 끝나는가 — 분명히 가를 수 있는 꼴만(반복 · `while True` 는 지나감으로 둔다)."""
+        if not block:
+            return False
+        last = block[-1]
+        if isinstance(last, (ast.Return, ast.Raise)):
+            return True
+        if isinstance(last, ast.If):
+            return bool(last.orelse) and always_ends(last.body) and always_ends(last.orelse)
+        if isinstance(last, ast.Try):
+            if last.finalbody and always_ends(last.finalbody):
+                return True
+            body_ends = always_ends(last.body) or (bool(last.orelse) and always_ends(last.orelse))
+            return body_ends and all(always_ends(handler.body) for handler in last.handlers)
+        if isinstance(last, (ast.With, ast.AsyncWith)):
+            return always_ends(last.body)
+        if isinstance(last, ast.Match):
+            wildcard = any(
+                isinstance(case.pattern, ast.MatchAs) and case.pattern.pattern is None and case.guard is None
+                for case in last.cases
+            )
+            return wildcard and all(always_ends(case.body) for case in last.cases)
+        return False
+
+    def runs_code(expression: ast.AST) -> bool:
+        """`return` 값 식 안에 `Status(…)` · 클래스(Schema) 생성 밖의 호출 · `await` 이 있는가 — 머리 뒤 실행이 터질 수 있다."""
+        for node in ast.walk(expression):
+            if isinstance(node, ast.Await):
+                return True
+            if not isinstance(node, ast.Call):
+                continue
+            if _resolve_expression(node.func, operation.body_bindings) == "ninja.Status":
+                continue
+            callee = node.func.attr if isinstance(node.func, ast.Attribute) else node.func.id if isinstance(node.func, ast.Name) else ""
+            if callee[:1].isupper():
+                continue
+            return True
+        return False
+
+    def runs_after(later: "list[ast.stmt]") -> bool:
+        for statement in later:
+            if isinstance(statement, ast.Return):
+                return statement.value is not None and runs_code(statement.value)
+            return True
+        return False
+
+    def try_carried(statements: "list[ast.stmt]", tail: bool, loop: bool) -> "list[Header]":
+        """try 몸통 머리 가운데 그 뒤에 실행이 있는 것 — 뒤 문장(`return` 이면 그 값 식 안 호출) · 바깥 꼬리 · 반복의 다음 차례.
+        except · finally 로 물린다."""
+        carried: list[Header] = []
+        for index, statement in enumerate(statements):
+            more = loop or runs_after(statements[index + 1:]) or (not always_ends(statements) and tail)
+            header = header_of(statement)
+            if header is not None:
+                if more:
+                    carried.append((header[0], header[1], True))
+                continue
+            if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                continue
+            in_loop = loop or isinstance(statement, (ast.For, ast.AsyncFor, ast.While))
+            for block in nested_blocks(statement):
+                carried.extend(try_carried(block, more, in_loop))
+        return carried
+
+    def possible(headers: "list[Header]") -> "list[Header]":
+        return [(statement, header, False) for statement, header, _ in headers]
+
+    def visit(block: "list[ast.stmt]", inherited: "list[Header]") -> "list[Header]":
+        """블록을 내려가며 앞선 바깥 블록의 머리(그 문장보다 앞 줄)를 «늘 실림» 으로 물려준다. 늘 끝나지 않는 안쪽 블록의
+        머리는 뒤 형제 문장에 «실릴 수 있음»(ⓓ)으로 간다. `try` 몸통의 머리는 `else` 에, `except` · `finally` 에는 그 머리 뒤에
+        실행이 있을 때만 «늘 실림» 으로 간다. 돌려주는 값 = 이 블록을 나가며 실려 있을 수 있는 머리."""
+        local: list[Header] = []
+
+        def merge(escaped: "list[Header]") -> None:
+            for statement, header, _ in escaped:
+                if all(statement is not known for known, _, _ in local):
+                    local.append((statement, header, False))
+
+        for statement in block:
+            header = header_of(statement)
+            if header is not None:
+                local.append((header[0], header[1], True))
+                continue
+            if isinstance(statement, ast.Assign) and len(statement.targets) == 1:
+                target = statement.targets[0]
+                if (
+                    isinstance(target, ast.Subscript)
+                    and isinstance(target.value, ast.Attribute)
+                    and target.value.attr == "headers"
+                    and isinstance(target.value.value, ast.Name)
+                    and target.value.value.id in parameters
+                ):
+                    candidate(statement.lineno, "주입 응답 `.headers[...]` 머리 — 이 꼴은 기계가 머리 보충과 잇지 않는다")
+            if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                continue
+            prefix = inherited + local
+            escaped: list[Header] = []
+            if isinstance(statement, ast.Try):
+                body_left = visit(statement.body, prefix)
+                escaped.extend(body_left)
+                carried = try_carried(statement.body, False, False)
+                to_handlers = prefix + carried
+                for handler in statement.handlers:
+                    escaped.extend(visit(handler.body, to_handlers))
+                    if not always_ends(handler.body):
+                        escaped.extend(carried)  # 지나가는 except — 몸통 머리가 try 뒤로 간다
+                if statement.orelse:
+                    escaped.extend(visit(statement.orelse, prefix + body_left))
+                if statement.finalbody:
+                    escaped.extend(visit(statement.finalbody, to_handlers))
+            else:
+                for nested in nested_blocks(statement):
+                    escaped.extend(visit(nested, prefix))
+            merge(escaped)
+        last = block[-1] if block else None
+        applicable = inherited + local
+        if (
+            applicable
+            and isinstance(last, ast.Return)
+            and isinstance(last.value, ast.Call)
+            and _resolve_expression(last.value.func, operation.body_bindings) == "ninja.Status"
+        ):
+            check(last, block, applicable)
+        return [] if always_ends(block) else local
+
+    visit(operation.function.body, [])
+    for node in ast.walk(operation.function):
+        if not isinstance(node, ast.Call):
+            continue
+        func = node.func
+        if (
+            isinstance(func, ast.Attribute)
+            and (
+                (isinstance(func.value, ast.Name) and func.value.id in parameters and func.attr in {"setdefault", "__setitem__"})
+                or (
+                    isinstance(func.value, ast.Attribute)
+                    and func.value.attr == "headers"
+                    and isinstance(func.value.value, ast.Name)
+                    and func.value.value.id in parameters
+                )
+            )
+        ):
+            candidate(node.lineno, f"주입 응답 머리를 `{func.attr}` 로 싣는다 — 이 꼴은 기계가 머리 보충과 잇지 않는다")
+        elif any(keyword.arg == "headers" for keyword in node.keywords) and (
+            _resolve_expression(func, operation.body_bindings) in MIDDLEWARE_RESPONSE_CALLS
+        ):
+            candidate(node.lineno, "raw 응답 `headers=` 머리 — 이 꼴은 기계가 머리 보충과 잇지 않는다")
+    return sites, candidates
+
+
+@dataclass
+class _PreRouteResult:
+    findings: Findings
+    candidates: Candidates
+    reasons: list[str]
+
+
+def _pre_route_slice(
+    root: Path,
+    covered: "set[tuple[str, str, int]] | frozenset[tuple[str, str, int]]" = frozenset(),
+    resolvers: "dict[Path, StatusResolver] | None" = None,
+) -> _PreRouteResult:
+    """a · b · c · d · f — 공용 포매터 violation · candidate 문법으로 모은다.
+
+    `covered` 는 tree · code 레인이 이미 낸 같은 사건(override · monkeypatch · postprocess 행)의
+    좌표다 — 루트 API 레인은 그 자리를 다시 내지 않는다. `resolvers` 는 code 레인이 고른
+    controller 의 branch status 해석(오류 카탈로그)이다 — 없으면 글자 · 상수만 읽는다."""
+    files = _project_python_files(root)
+    roots, root_sites = _root_api_lane(root, files)
+    sites: list[_PreRouteSite] = [
+        site for site in root_sites if (site.kind, site.relative_path.as_posix(), site.lineno) not in covered
+    ]
+    candidate_sites: list[tuple[_PreRouteSite, str]] = []
+    canonical_tree = _parse_project_file(root, PRE_ROUTE_PATH) if (root / PRE_ROUTE_PATH).is_file() else None
+    table_tree = _parse_project_file(root, PRE_ROUTE_TABLE_PATH) if (root / PRE_ROUTE_TABLE_PATH).is_file() else None
+    reasons: list[str] = []
+    if not (root / PRE_ROUTE_PATH).is_file():
+        reasons.append(f"`{PRE_ROUTE_PATH.as_posix()}` 없음")
+    elif canonical_tree is None:
+        sites.append(_PreRouteSite("", PRE_ROUTE_PATH, 1, f"경로 앞 응답 정본을 읽지 못했다(문법 오류)({PRE_ROUTE_SECTION})"))
+    else:
+        sites.extend(_canonical_findings(PRE_ROUTE_PATH, canonical_tree))
+    if not (root / PRE_ROUTE_TABLE_PATH).is_file():
+        reasons.append(f"`{PRE_ROUTE_TABLE_PATH.as_posix()}` 없음")
+    elif table_tree is None:
+        sites.append(_PreRouteSite("", PRE_ROUTE_TABLE_PATH, 1, f"경로 앞 응답 표를 읽지 못했다(문법 오류)({PRE_ROUTE_SECTION})"))
+    else:
+        settings = _project_settings(root, files)
+        namespaces = {namespace for api in roots for namespace in api.namespaces if namespace is not None}
+        table_sites, rows, not_api, table_candidates = _table_findings(
+            PRE_ROUTE_TABLE_PATH, table_tree, namespaces, settings, _handler400_view(root, settings)
+        )
+        sites.extend(table_sites)
+        candidate_sites.extend(table_candidates)
+        readable = all(namespace is not None for api in roots for namespace in api.namespaces)
+        middleware_sites, middleware_candidates = _middleware_findings(
+            root, settings, rows, not_api, namespaces if readable else None
+        )
+        sites.extend(middleware_sites)
+        candidate_sites.extend(middleware_candidates)
+    reasons.extend(
+        f"`{api.relative_path.as_posix()}` 의 루트 API 가 정해진 클래스로 지어지지 않았다" for api in roots if not api.documented
+    )
+    modules: list[tuple[Path, ast.Module, list[Operation]]] = []
+    for relative, tree in sorted(_parsed_driving_modules(root).items(), key=lambda item: item[0].as_posix()):
+        operations = _operations_in(relative, tree)
+        if operations is None:
+            candidate_sites.append(
+                (
+                    _PreRouteSite("", relative, 1, "operation 을 읽지 못했다(데코레이터 receiver 출처가 흔들린다)"),
+                    "이 파일의 operation 이 경로 앞 오류 · 주입 응답 머리 규칙을 지키는가",
+                )
+            )
+            continue
+        modules.append((relative, tree, [operation for operation in operations if _in_schema(operation)]))
+    if not roots and any(operations for _, _, operations in modules):
+        reasons.append("루트 API(`NinjaAPI` · `NinjaExtraAPI` 또는 그 정해진 클래스로 짓는 모듈 이름)를 찾지 못했다")
+    index = _route_index(root, files, roots) if reasons else None
+    for relative, tree, operations in modules:
+        for operation in operations:
+            if index is not None:
+                route = _operation_route(operation, tree, index)
+                shown = f"`{_operation_identity(operation)}`" + (f"(`{route}`)" if route else "")
+                sites.append(
+                    _PreRouteSite(
+                        "",
+                        relative,
+                        operation.decorator.lineno,
+                        f"operation {shown} 의 경로 앞 오류(인증 · CSRF · 권한 · throttle · 입력 · 미들웨어 · 앞단 답)가 "
+                        "생성 문서에 없다 — 루트 API 를 정해진 클래스로 짓고 framework/ninja/ 에 정본 · 표 파일을 둔다"
+                        f"({PRE_ROUTE_SECTION})",
+                        operation.function.name,
+                    )
+                )
+            header_sites, header_candidates = _header_findings(
+                operation, (resolvers or {}).get(relative, _plain_status), tree
+            )
+            sites.extend(header_sites)
+            candidate_sites.extend(header_candidates)
+    findings = Findings(defer=True)
+    for site in sites:
+        findings.add("#63", where=f"{site.relative_path}:{site.lineno}", msg=site.msg, symbol=site.symbol)
+    candidates = Candidates(defer=True)
+    for site, question in candidate_sites:
+        candidates.add("#63", where=f"{site.relative_path}:{site.lineno}", msg=site.msg, question=question, symbol=site.symbol)
+    return _PreRouteResult(findings, candidates, reasons)
 
 
 def _suppress_overlapped_tree(
@@ -3600,6 +5908,23 @@ def _print_tree_findings(findings: Findings) -> None:
     emit_all(findings, printer=print)
 
 
+def _print_pre_route(result: _PreRouteResult) -> None:
+    if result.findings:
+        print(
+            "[check-openapi-error-declaration] BLOCKER — 경로 앞 응답 · 머리 보충 위반 "
+            f"(#63 · {PRE_ROUTE_SECTION}):"
+        )
+        if result.reasons:
+            print(f"  경로 앞 응답이 서지 않은 까닭: {' · '.join(result.reasons)}")
+        emit_all(result.findings, printer=print)
+    if result.candidates:
+        print(
+            "[check-openapi-error-declaration] ⓓ 후보 — 기계가 후보를 좁혔다 · 마무리 물음은 "
+            "리뷰어 몫(exit 불산입):"
+        )
+        emit_all(result.candidates, printer=print)
+
+
 def main(argv: list[str]) -> int:
     try:
         config = _parse_config(argv[1:])
@@ -3621,18 +5946,21 @@ def main(argv: list[str]) -> int:
             return 2
         # 일반 실행은 슬라이스 선점 계약을 유지한다. 앵커 및 그 기준선 재실행은
         # 같은 전 슬라이스 진단을 수집해야 기존 code 진단이 신규로 오분류되지 않는다.
+        # 경로 앞 응답 레인(a · b · c · d · f)은 모든 프로필에서 돌고 다른 레인을 선점하지 않는다.
         collected: list[str] = []
         pending_analysis: list[str] = []
         tree_findings, tree_keys = _tree_slice63(config.root)
+        covered: set[tuple[str, str, int]] = set(tree_keys)
         if tree_findings and config.anchor is None and not config.anchor_baseline:
             _print_tree_findings(tree_findings)
+            _print_pre_route(_pre_route_slice(config.root, covered))
             return 2
         if config.profile == "dddjango-code-json":
             # 앵커 레인의 tree↔code 동일 사건 선점 억제를 위해 code 레인을 먼저
             # 계산한다 — 분석 불능(UsageError)이어도 확정 tree 진단은 exit 1 전에
             # 그대로 인쇄한다(현행 stdout 순서 보존 · 억제는 code 실발화 시에만).
             try:
-                analysis, findings, code_keys = _code_findings(config)
+                analysis, findings, code_keys, resolvers = _code_findings(config)
             except UsageError:
                 if tree_findings:
                     _print_tree_findings(tree_findings)
@@ -3646,24 +5974,32 @@ def main(argv: list[str]) -> int:
             emit_code = bool(findings) and (not analysis or dynamic_proof_only)
             if emit_code and tree_findings:
                 tree_findings = _suppress_overlapped_tree(tree_findings, tree_keys, code_keys)
+            pre_route = _pre_route_slice(
+                config.root, covered | (code_keys if emit_code else set()), resolvers
+            )
             if tree_findings:
                 _print_tree_findings(tree_findings)
                 collected.extend(lines(tree_findings))
             if emit_code:
                 records = _code_findings_records(findings)
                 _print_code_findings(records)
-                if config.anchor is None:
-                    return 2
                 collected.extend(lines(records))
                 # 토큰-only analysis 는 차분 강등으로 소거되지 않는다 — findings 가
                 # 전건 앵커 기존분이어도 proof 경로(exit 1)로 남긴다(fail-open 차단).
                 pending_analysis = analysis
-            elif analysis:
+            _print_pre_route(pre_route)
+            collected.extend(lines(pre_route.findings))
+            if emit_code and config.anchor is None:
+                return 2
+            if not emit_code and analysis:
                 raise UsageError("; ".join(analysis))
         else:
             if tree_findings:
                 _print_tree_findings(tree_findings)
                 collected.extend(lines(tree_findings))
+            pre_route = _pre_route_slice(config.root, covered)
+            _print_pre_route(pre_route)
+            collected.extend(lines(pre_route.findings))
             repo_scan = _repo_scan_findings(config.root)
             if repo_scan:
                 _print_repo_scan_findings(repo_scan)
@@ -3673,6 +6009,8 @@ def main(argv: list[str]) -> int:
         if config.anchor_baseline:
             # 기준선 재실행은 차분 재귀 없이 모은 결과로 끝낸다(registry #15 와 같은 끝).
             return 2 if collected else 0
+        if collected and config.anchor is None:
+            return 2
         if collected:
             verdict = anchor_diff.partition_exit(
                 script=Path(__file__).resolve(),
@@ -3683,7 +6021,9 @@ def main(argv: list[str]) -> int:
                 findings=collected,
                 path_flags=frozenset({"--api-module", "--controller-module"}),
                 debt_file=config.anchor_debt_file,
-                **({"approved_merge_file": config.anchor_approved_merge_file}
+                # 기준선 재실행(--anchor-baseline)은 tree · code · 경로 앞 응답 레인을 끝까지 모은 뒤에만 exit 2 로 끝난다 —
+                # 승인 머지 ^1 렌더의 c 줄(operation 마다)이 «완결 안 됨» 으로 읽혀 상호작용 유입 증명을 깨지 않게 한다(registry 의 context-isolation · composition-root · api-error-controller-contract 와 같은 꼴).
+                **({"approved_merge_file": config.anchor_approved_merge_file, "baseline_collects_all": True}
                    if config.anchor_approved_merge_file is not None else {}),
                 analysis_pending=bool(pending_analysis),
             )

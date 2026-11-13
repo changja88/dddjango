@@ -204,6 +204,7 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 - `202 Accepted`는 작업 접수 응답과 결과 확인 방법을 함께 제공한다
 - `204 No Content`는 응답 본문이 없다는 점을 계약으로 둔다
 - 오류 응답은 선택한 에러 프로필의 media type·필드·상태 코드별 schema를 문서화한다
+- **API 문서는 그 경로에서 날 수 있는 의도된 오류를 누가 보내든 모두 적는다** — 경로 코드가 보내는 BC 오류는 operation 응답 선언(`response=`)으로, 경로 앞에서 framework(인증 · CSRF · 권한 · throttle · 몸통 · 입력 검증) · 미들웨어 · 앞단이 보내는 답은 경로 앞 응답으로, 오류의 머리는 머리 보충으로 적는다(구현 꼴은 `implementation-django-ninja` §6.2). 적는 것은 코드 · 설정 · 앞단 설정에 그 status 가 적힌 의도된 답이다 — 미식별 500 · 앞단 502/504 는 결함이라 약속이 아니고, 없는 경로 404 · 다른 메서드 405 는 그 operation 의 답이 아니라 적지 않는다
 - 캐시, rate limit, retry, deprecation, idempotency replay처럼 클라이언트 동작을 바꾸는 헤더는 응답 계약에 포함한다
 - 한 상태 코드의 성공 본문이 둘 이상의 모양이면 판별 필드(discriminator)를 가진 **이름 붙은 schema 하나**(`oneOf` + `discriminator`)로 계약한다 — 익명 `anyOf` 는 클라이언트가 분기할 이름과 판별 키를 잃는다. 오류 본문의 union 은 각 오류 schema 가 고정 공개 식별자(code 프로필의 `<Bc>ErrorCode` 값 · RFC 9457 의 `type`)로 자기 판별되므로 이 요구의 대상이 아니다(§5.4 에러 프로필)
 
@@ -249,12 +250,12 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 - 승인 shape의 한 공통 필드를 BC `ErrorCode(StrEnum)`으로 좁혀 안정적인 공개 식별자를 제공한다. 그 필드명은 고정하지 않는다. 소비자가 다르게 행동해야 하는 실패에만 새 값을 부여하고(행동이 같으면 같은 값에 설명만 달리 쓴다), 여러 내부 예외는 하나의 public 식별자로 합쳐질 수 있다.
 - HTTP status 계약은 body property의 존재를 요구하거나 가정하지 않는다. 승인 shape에 status field가 있으면 실제 HTTP status와 일치시켜야 하지만, 그런 field가 없으면 controller의 literal/status 상수가 계약을 소유한다. 공개 문자열은 `str(exc)`를 자동 사용하거나 민감한 내부 정보를 누설하지 않으며, 동적으로 넣는 값은 설계(slot 10)가 승인한 예외 필드 값뿐이다. 소비자가 계산하거나 따로 보일 값은 설명 문장에만 두지 않고 승인된 응답 머리에도 싣고, 머리 이름 · 값 꼴 · 값 없음의 뜻을 승인 계약에 적는다 — 설명은 사람이 읽는 글이라 소비자가 뜯어 읽는 자리가 아니다.
 - 배포된 public 식별자의 변경은 breaking change다. 한 클라이언트 Enum은 하나의 계약을 소비한다. 실제 클라이언트 migration은 별도 작업이지만, 12-slot rollout에는 동시 전환인지 version split인지 기록한다.
-- framework-owned 401/403, route 404, 422, 429, `HttpError`, 500의 기본 응답은 이 code 계약의 body가 아니며, 그 본문이 정확하고 안정적인 공개 계약이라고 주장하지 않는다.
+- framework-owned 401/403, route 404, 422, 429, `HttpError`, 500의 기본 응답은 이 code 계약의 body가 아니며, 그 본문이 정확하고 안정적인 공개 계약이라고 주장하지 않는다. 그 가운데 경로 앞에서 나는 의도된 답만 API 문서에 관찰된 꼴 그대로 경로 앞 응답으로 적고(§5.2), 그 꼴은 행마다 둔 시험이 지킨다.
 
 #### framework 기본 응답과 공개 헤더의 경계
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
-프레임워크 기본 401/403/route 404/422/429/`HttpError`/500을 전역 handler나 helper로 BC body로 바꾸어 헤더를 합성하지 않는다. 확립된 계약이 401의 `WWW-Authenticate` 또는 429의 `Retry-After`를 요구하면 그 헤더는 보존하고 별도 설계한다. presentation controller가 직접 공개하는 BC 오류의 승인된 헤더(retryable 오류의 `Retry-After` · 사건 값 헤더)는 그 controller가 소유한다.
+프레임워크 기본 401/403/route 404/422/429/`HttpError`/500을 전역 handler나 helper로 BC body로 바꾸어 헤더를 합성하지 않는다. 확립된 계약이 401의 `WWW-Authenticate` 또는 429의 `Retry-After`를 요구하면 그 헤더는 보존하고 별도 설계한다. presentation controller가 직접 공개하는 BC 오류의 승인된 헤더(retryable 오류의 `Retry-After` · 사건 값 헤더)는 그 controller가 소유한다. API 문서에 이 답과 그 헤더를 경로 앞 응답으로 적는 것은 합성이 아니다 — 적었다고 실제 응답에 헤더 · status 합성이 허용되는 것도 아니다(§5.2).
 
 ## 6. RFC 9457 에러 응답 형식
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
@@ -343,7 +344,7 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 
 406은 **응답** 표현을 협상하지 못한 경우, 415는 **요청** 페이로드 형식을 받아들이지 못한 경우다. 둘을 혼동하지 않는다. (RFC 9110 §15.5.7, §15.5.16)
 
-> `406`/`415` 계약이 별도 승인된 범위에서만 `implementation-django-ninja` §6.3을 따른다. 사용 중인 Django Ninja 버전과 presentation 스타일에 맞는, 검증된 Ninja-owned pre-body 경계에서 framework `HttpError` 흐름을 사용한다. 특히 parser 예외는 버전에 따라 다른 status로 정규화될 수 있으므로 실제 응답이 415인지 확인한다. 전역 middleware/helper/handler로 status나 body를 합성하지 않는다.
+> `406`/`415` 계약이 별도 승인된 범위에서만 `implementation-django-ninja` §6.3을 따른다. 사용 중인 Django Ninja 버전과 presentation 스타일에 맞는, 검증된 Ninja-owned pre-body 경계에서 framework `HttpError` 흐름을 사용한다. 특히 parser 예외는 버전에 따라 다른 status로 정규화될 수 있으므로 실제 응답이 415인지 확인한다. 전역 middleware/helper/handler로 status나 body를 합성하지 않는다. 문서에 406 · 415 를 경로 앞 응답으로 적는 것(`implementation-django-ninja` §6.2 «경로 앞 응답» 의 `operations` 행)은 합성이 아니고, 적었다고 합성이 허용되는 것도 아니다.
 
 ### 7.3 캐시 관련 헤더
 
@@ -404,7 +405,7 @@ Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 �
 | 토큰 만료·폐기·변조 (`invalid_token`) | `401 Unauthorized` | `Bearer error="invalid_token"` | 재인증하거나 refresh로 새 토큰을 발급받는다 |
 | 토큰은 유효하나 권한 범위 부족 (`insufficient_scope`) | `403 Forbidden` | `Bearer error="insufficient_scope", scope="..."` | 필요한 scope를 응답에 안내할 수 있다 |
 
-- 토큰 만료는 401이며 인증(§8.1) 실패다. 서버가 이 401을 생성하면 `WWW-Authenticate` challenge로 인증 방법과 오류 원인을 안내한다. 이미 배포되었거나 공개적으로 요구된 Bearer 계약의 challenge는 보존하고, 테스트한 Django Ninja 기본 401이 제공하지 못하는 차이는 G1에서 별도 설계한다. 프레임워크 기본 401에 전역 handler나 helper로 이 헤더를 합성하여 code-profile body를 강제하지 않는다.
+- 토큰 만료는 401이며 인증(§8.1) 실패다. 서버가 이 401을 생성하면 `WWW-Authenticate` challenge로 인증 방법과 오류 원인을 안내한다. 이미 배포되었거나 공개적으로 요구된 Bearer 계약의 challenge는 보존하고, 테스트한 Django Ninja 기본 401이 제공하지 못하는 차이는 G1에서 별도 설계한다. 프레임워크 기본 401에 전역 handler나 helper로 이 헤더를 합성하여 code-profile body를 강제하지 않는다. 문서에 이 401 과 challenge 헤더를 경로 앞 응답으로 적는 것은 합성이 아니고, 적었다고 합성이 허용되는 것도 아니다(§5.2).
 - scope는 토큰이 허용하는 작업 범위다. 엔드포인트가 요구하는 scope와 토큰의 scope를 비교해 부족하면 403 + `insufficient_scope`로 응답하고, 확립된 Bearer 계약이 정하면 필요한 scope를 헤더로 알린다.
 - 토큰 수명, refresh 흐름, scope 집합은 API 계약으로 고정한다. 토큰 검증·발급의 구체 구현은 인증 라이브러리/프레임워크가 담당한다.
 
@@ -547,7 +548,7 @@ X-RateLimit-Remaining: 0
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 비용 큰 작업(인증, DB) **전에** rate limit 검사
-- 확립된 429 계약의 `Retry-After` 헤더는 보존한다. 프레임워크 기본 429에 전역적으로 헤더를 합성하지 않으며, presentation controller가 직접 공개하는 retryable BC 오류만 승인된 `Retry-After` 헤더를 그 controller가 소유한다.
+- 확립된 429 계약의 `Retry-After` 헤더는 보존한다. 프레임워크 기본 429에 전역적으로 헤더를 합성하지 않으며, presentation controller가 직접 공개하는 retryable BC 오류만 승인된 `Retry-After` 헤더를 그 controller가 소유한다. 문서에 429 와 `Retry-After` 를 경로 앞 응답으로 적는 것은 합성이 아니고, 적었다고 합성이 허용되는 것도 아니다(§5.2).
 - Rate limit 정책을 API 문서에 명확히 기재
 
 > 출처: GitHub Docs - Rate Limits, IETF Draft - RateLimit Headers
@@ -631,7 +632,7 @@ API 계약이 바뀌면 OpenAPI에 다음 표면을 함께 반영한다.
 
 - path, HTTP method, operationId, tag
 - path/query/header parameter와 request body schema
-- 상태 코드별 response body schema와 header
+- 상태 코드별 response body schema와 header — 경로 앞에서 framework · 미들웨어 · 앞단이 보내는 오류 응답과 그 머리까지(§5.2)
 - 선택한 에러 프로필의 error response (RFC 9457을 선택한 경우 Problem Details)
 - authentication/authorization security requirement
 - pagination parameter와 response metadata

@@ -211,12 +211,18 @@ djr:R-2865 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2866 a djr:Obligation ;
-    skos:prefLabel "모든 계약 결정의 OpenAPI 반영 — path·method·schema·response·security·header 전수 기술"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2866@2026-08-22> .
+    skos:prefLabel "모든 계약 결정의 OpenAPI 반영 — path·method·schema·response·security·header 전수 기술 · 그 경로의 의도된 오류는 누가 보내든 모두"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2866@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-2866@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2866 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2866@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-2866 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2866@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-2867 a djr:Obligation ;
     skos:prefLabel "주제별 라우팅 준거 — references/final.md 해당 절 준수"@ko ;
@@ -381,7 +387,7 @@ djr:R-2868 a djr:Exception ;
     djr:order 8 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3/b1> ;
     djr:statesNorm djr:R-2866 ;
-    djr:text "- 모든 계약 결정은 OpenAPI에 반영한다 — path·method·schema·response·security·header를 빠짐없이 기술한다 (§14)\n\n"@ko .
+    djr:text "- 모든 계약 결정은 OpenAPI에 반영한다 — path·method·schema·response·security·header를 빠짐없이 기술하고, 그 경로에서 날 수 있는 의도된 오류는 누가 보내든(경로 코드 · framework · 미들웨어 · 앞단) 모두 적는다 (§5.2·§14)\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/SKILL.md/s005> a djr:Section ;
     djr:headingSnapshot "## 상세 레퍼런스"@ko ;

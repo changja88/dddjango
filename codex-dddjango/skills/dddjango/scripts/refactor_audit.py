@@ -1611,6 +1611,17 @@ def _scope(folder: Path) -> "tuple[str, set[str], set[str], dict[str, Reduction]
     return m.group(1), adopted - merged, removed, reductions, lines
 
 
+def _adopted_c(lines: "list[DecisionLine]") -> "set[str]":
+    """이번 실행 G0 ⓐ 검사기 빚 `C<n>` — 재상정 절 밖 `… · 결정 = ⓐ` 줄의 키(괄호 안 · ⓐ′ 는 빼고)."""
+    return {k for d in lines if d.decision and not d.reconsider and d.token.startswith("ⓐ") and not d.token.startswith("ⓐ′")
+            for k in d.ckeys}
+
+
+def _reconsidered_c(lines: "list[DecisionLine]") -> "set[str]":
+    """재상정 절이 뺀 검사기 빚 `C<n>` — 재상정 절 결정 줄 가운데 요지 축소가 아닌 줄의 키(C 에는 요지가 없다)."""
+    return {k for d in lines if d.decision and d.reconsider and not d.token.startswith(REDUCE_TOKEN) for k in d.ckeys}
+
+
 # ── resolution(명세 «슬라이스 0 해소 판정» 표) ──────────────────────────────
 
 class ResolutionRow:
@@ -1628,8 +1639,9 @@ class ResolutionRow:
         self.why: str = cells[7]
 
 
-def _resolution_table(spec: Path) -> "tuple[list[ResolutionRow], str, list[str]]":
-    """(판정 표 행, 표 밖 명세 본문(정규화), 형식 red) — `슬라이스 0 해소 판정` 제목 아래 표."""
+def _resolution_table(spec: Path, need_rows: bool = True) -> "tuple[list[ResolutionRow], str, list[str]]":
+    """(판정 표 행, 표 밖 명세 본문(정규화), 형식 red) — `슬라이스 0 해소 판정` 제목 아래 표. `need_rows` 가 거짓(이번 실행 ⓐ
+    `M<n>` 이 없다 — 검사기 빚만의 실행)이면 제목 없음 · 행 없음은 red 가 아니다(제목이 둘이면 그대로 red)."""
     lines: "list[str]" = _read(spec).split("\n")
     heads: "list[tuple[int, int]]" = []
     all_heads: "list[tuple[int, int]]" = []
@@ -1649,8 +1661,9 @@ def _resolution_table(spec: Path) -> "tuple[list[ResolutionRow], str, list[str]]
                 heads.append((i, len(rm.group(1))))
     reds: "list[str]" = []
     if len(heads) != 1:
-        reds.append("명세에 `슬라이스 0 해소 판정` 제목이 없다(기대 형태 `## [번호] 슬라이스 0 해소 판정`)" if not heads
-                    else f"`슬라이스 0 해소 판정` 제목이 {len(heads)}개다(하나여야 한다)")
+        if heads or need_rows:
+            reds.append("명세에 `슬라이스 0 해소 판정` 제목이 없다(기대 형태 `## [번호] 슬라이스 0 해소 판정`)" if not heads
+                        else f"`슬라이스 0 해소 판정` 제목이 {len(heads)}개다(하나여야 한다)")
         return [], normalize("\n".join(lines)), reds
     start, level = heads[0]
     end: int = next((i for i, lv in all_heads if i > start and lv <= level), len(lines))
@@ -1671,7 +1684,7 @@ def _resolution_table(spec: Path) -> "tuple[list[ResolutionRow], str, list[str]]
             reds.append(f"판정 표 행 칸 부족({len(cells)} < {RESOLUTION_COLUMNS}): {s[:80]}")
             continue
         rows.append(ResolutionRow(mm.group(1), cells))
-    if not rows and not reds:
+    if not rows and not reds and need_rows:
         reds.append("`슬라이스 0 해소 판정` 표에 행이 없다")
     body: str = normalize("\n".join(ln for i, ln in enumerate(lines) if i not in table_lines))
     return rows, body, reds
@@ -1876,7 +1889,7 @@ def cmd_resolution(project: Path, folder: Path, gate: bool, corpus_fn: "Callable
     verdicts: "dict[str, Verdict]" = _final_verdicts(audit)
     rows: "dict[str, Row]" = {r.rid: r for r in _load_rows(audit, Plan(audit))}
     spec: Path = folder / "design-spec.md"
-    table, body, reds = _resolution_table(spec)
+    table, body, reds = _resolution_table(spec, need_rows=bool(adopted))
     vids: "set[str]" = {v.vid for v in _v_section(_read(spec))[0]}
     by_m: "dict[str, list[ResolutionRow]]" = {}
     for r in table:
@@ -2030,10 +2043,7 @@ def _moved_c(folder: Path, lines: "list[DecisionLine]", pairs: "dict[str, str]",
     «이동 따라 옮긴 legacy» 줄을 위반 칸 통째로 품으면 잔존이다(줄 번호는 게이트처럼 `:N` · 줄 뒤가 칸 끝 — 표 행은 `|`, 목록 행은
     ` · ` 나 줄 끝 — 이어야 한다: 그 줄이 다른 위반 글의 앞부분일 뿐이면 맞지 않는다 · 검토 SB2)."""
     fg = _folder_group_module()
-    live: "set[str]" = ({k for d in lines if d.decision and not d.reconsider and d.token.startswith("ⓐ")
-                         and not d.token.startswith("ⓐ′") for k in d.ckeys}
-                        - {k for d in lines if d.decision and d.reconsider and not d.token.startswith(REDUCE_TOKEN)
-                           for k in d.ckeys})
+    live: "set[str]" = _adopted_c(lines) - _reconsidered_c(lines)
     sub = fg.string_substituter(sorted(pairs.items())) if pairs else None
     out: "set[str]" = set()
     for raw in _current_scope(folder)[1]:
@@ -2292,7 +2302,11 @@ SUPPORT_STAMP: "re.Pattern[str]" = re.compile(r"^\d{8}T\d{6}Z$")
 # G1 기록의 `<시각>` — ` · ` 앞까지(저장소 기록 관례는 공백 든 꼴 `2026-09-27 10:00` 도 쓴다) · 빈 시각은 못 읽는다.
 _G1_TIME: str = r"[^\s·][^·\n]*?"
 _HEAD_V: "re.Pattern[str]" = re.compile(
-    r"^[-*]\s+V(\d+)\s*·\s*(.+?)\s*·\s*근거\s+(M\d+)\s*#\s*(\d+)\s*·\s*슬라이스\s+(S\d+)\s*$")
+    r"^[-*]\s+V(\d+)\s*·\s*(.+?)\s*·\s*근거\s+([^·]+?)\s*·\s*슬라이스\s+(S\d+)\s*$")
+# V 머리 근거 칸 — 의미 항목 요지 `M<k> #<j>` 또는 검사기 빚 `C<a>[~C<b>][, C<c>[~C<d>]…]`(범위 · 쉼표 목록 · 한 종류만).
+_BASIS_M: "re.Pattern[str]" = re.compile(r"(M\d+)\s*#\s*(\d+)")
+_BASIS_C: "re.Pattern[str]" = re.compile(r"C([1-9]\d*)(?:\s*~\s*C([1-9]\d*))?")
+BASIS_FORMS: str = "`M<k> #<j>` 또는 `C<a>[~C<b>][, C<c>[~C<d>]…]`"
 _SUB_V: "re.Pattern[str]" = re.compile(r"^[-*]\s+[*`]*(전\s*(?:→|->)\s*후|시험|바뀌는 기대|연산|데이터|영향)[*`]*\s*:\s*(.*)$")
 _TEST_LINE: "re.Pattern[str]" = re.compile(
     r"^(?P<row>.+?)\s+(?P<verb>[a-z]+)\((?P<owner>[a-z-]+)\)\s+`?(?P<case>[^\s`]+)`?\s*$")
@@ -2380,7 +2394,7 @@ class VTest:
 
 
 class VEntry:
-    """`바뀌는 것 목록` 의 V 하나(머리 줄 + 하위 줄)."""
+    """`바뀌는 것 목록` 의 V 하나(머리 줄 + 하위 줄) — 근거 `basis` 는 `M<k> #<j>` 또는 검사기 빚 `C<a>~C<b>, C<c>` 판형 글."""
 
     def __init__(self, no: int, vid: str, kinds: "list[str]", basis: str, slice_: str) -> None:
         self.no: int = no
@@ -2425,6 +2439,43 @@ def _op_entry(raw: str) -> "tuple[dict | None, str]":
     return {"app": app, "call": call, "op": name, "key": key}, ""
 
 
+def _basis(raw: str) -> "tuple[str, str]":
+    """V 머리 근거 칸 → (판형 글, red 사유) — `M<k> #<j>` 는 `M<k> #<j>` 로, C 목록은 `C<a>~C<b>, C<c>` 꼴로 공백만 고른다."""
+    text: str = raw.strip()
+    m = _BASIS_M.fullmatch(text)
+    if m:
+        return f"{m.group(1)} #{m.group(2)}", ""
+    canon: "list[str]" = []
+    seen: "list[int]" = []
+    for part in text.split(","):
+        cm = _BASIS_C.fullmatch(part.strip())
+        if cm is None:
+            return text, f"근거 `{text}` 가 {BASIS_FORMS} 가 아니다"
+        a: int = int(cm.group(1))
+        b: int = int(cm.group(2) or a)
+        if cm.group(2) and b <= a:
+            return text, f"근거 `{text}` 의 범위 `C{a}~C{b}` 는 앞 번호가 뒤 번호보다 작아야 한다"
+        seen += range(a, b + 1)
+        canon.append(f"C{a}~C{b}" if b != a else f"C{a}")
+    if len(set(seen)) != len(seen):
+        return text, f"근거 `{text}` 의 검사기 빚 번호가 겹친다"
+    return ", ".join(canon), ""
+
+
+def _c_refs(basis: str) -> "list[str] | None":
+    """판형 근거 글의 검사기 빚 `C<n>` 목록(범위를 편다) — 의미 항목 근거(`M<k> #<j>`)이거나 판형 밖이면 None."""
+    if _BASIS_M.fullmatch(basis.strip()):
+        return None
+    out: "list[str]" = []
+    for part in basis.split(","):
+        cm = _BASIS_C.fullmatch(part.strip())
+        if cm is None:
+            return None
+        a: int = int(cm.group(1))
+        out += [f"C{n}" for n in range(a, int(cm.group(2) or a) + 1)]
+    return out
+
+
 def _expectations(text: str) -> "tuple[list[str], int, str]":
     """`바뀌는 기대:` 칸 → (옛 원소 원문 목록, 기대 추가 수, 사유)."""
     olds: "list[str]" = re.findall(r"«(.*?)»", text)
@@ -2467,7 +2518,10 @@ def _v_section(text: str) -> "tuple[list[VEntry], list[str]]":
             if vid in seen:
                 reds.append(f"{vid}({no}행) V 번호 중복")
             seen.add(vid)
-            cur, test = VEntry(no, vid, kinds, f"{hm.group(3)} #{hm.group(4)}", hm.group(5)), None
+            basis, why = _basis(hm.group(3))
+            if why:
+                reds.append(f"{vid}({no}행) {why}")
+            cur, test = VEntry(no, vid, kinds, basis, hm.group(4)), None
             out.append(cur)
             continue
         sm = _SUB_V.match(s)
@@ -3646,10 +3700,41 @@ def _applied_reds(folder: Path, cand_path: Path, cand: dict, cand_digest: str, n
     return reds + table_reds, partial
 
 
+def _c_basis_reds(vid: str, cs: "list[str]", decision: str, lines: "list[DecisionLine]") -> "list[str]":
+    """근거가 검사기 빚(`C<n>` 여럿)인 V 의 G1 정합 — `바꾼다`(또는 지금 목록에 있는 V)면 C 마다 이번 실행 ⓐ 이고 재상정으로 빼지
+    않았어야 한다 · `안 바꾼다` 면 C 마다 이번 실행 ⓐ 이고 `ⓐ 재상정` 절에 그 C 를 뺀 결정 줄(닫힌 어휘 · 요지 축소 밖)이 있어야 한다."""
+    adopted: "set[str]" = _adopted_c(lines)
+    outside: "list[str]" = [c for c in cs if c not in adopted]
+    reds: "list[str]" = []
+    if outside:
+        reds.append(f"{vid} 근거 {', '.join(outside)} 가 이번 실행 G0 ⓐ 검사기 빚(`C<n> · 결정 = ⓐ` 줄)이 아니다")
+    if decision != "안 바꾼다":
+        gone: "list[str]" = [c for c in cs if c in adopted and c in _reconsidered_c(lines)]
+        if gone:
+            reds.append(f"{vid} 근거 {', '.join(gone)} 는 `ⓐ 재상정` 줄이 뺀 검사기 빚이다(바뀌는 것 목록의 근거가 될 수 없다)")
+        return reds
+    closed: "set[str]" = {k for d in lines if d.decision and d.reconsider and d.token.startswith(RECONSIDER_TOKENS)
+                          and not d.token.startswith(REDUCE_TOKEN) for k in d.ckeys}
+    left: "list[str]" = [c for c in cs if c in adopted and c not in closed]
+    if left:
+        reds.append(f"{vid} 는 G1 결정 `안 바꾼다` 인데 근거 검사기 빚 {', '.join(left)} 의 `ⓐ 재상정` 결정 줄(`C<n> · 결정 = "
+                    f"<{' · '.join(RECONSIDER_TOKENS[:-1])}> …` — C 에는 요지 축소가 없다)이 없다")
+    return reds
+
+
 def _gate_changes_reds(folder: Path, spec: SpecChanges) -> "list[str]":
     """`changes --gate` — G1 결정 줄과 후보 · V 표 · 해소 표 양방향 정합: 후보의 밖 동작 V 집합 = 결정 줄 집합 · `바꾼다` V 는
-    지금 목록에 있다 · `안 바꾼다` V 는 없고 그 요지가 `불가 · 변경 미승인` · 지금 밖 동작 V 마다 `바꾼다` · V 근거 = `변경` 행."""
+    지금 목록에 있다 · `안 바꾼다` V 는 없고 그 요지가 `불가 · 변경 미승인`(근거가 검사기 빚이면 그 C 마다 `ⓐ 재상정` 결정 줄) ·
+    지금 밖 동작 V 마다 `바꾼다` · V 근거 = `변경` 행(근거가 검사기 빚이면 이번 실행 ⓐ `C<n>`)."""
     reds: "list[str]" = []
+    scope_lines: "list[DecisionLine] | None" = None
+
+    def decision_lines() -> "list[DecisionLine]":
+        """`refactor-scope.md` 결정 줄 — 근거가 검사기 빚인 V 가 있을 때만 읽는다."""
+        nonlocal scope_lines
+        if scope_lines is None:
+            scope_lines = _scope(folder)[4]
+        return scope_lines
     cand_digest, decisions, dreds = _g1_decisions(folder)
     reds += dreds
     cand: "dict | None" = None
@@ -3670,6 +3755,10 @@ def _gate_changes_reds(folder: Path, spec: SpecChanges) -> "list[str]":
         dec = decisions.get(v.vid)
         if "밖 동작" in v.kinds and (dec is None or dec[0] != "바꾼다"):
             reds.append(f"{v.vid} 밖 동작 V 에 G1 결정 `바꾼다` 줄이 없다")
+        cs: "list[str] | None" = _c_refs(v.basis)
+        if cs is not None:
+            reds += _c_basis_reds(v.vid, cs, "바꾼다", decision_lines())
+            continue
         m = re.fullmatch(r"(M\d+) #(\d+)", v.basis)
         r = rows.get((m.group(1), int(m.group(2)))) if m else None
         if r is None or r.verdict != CHANGE_VERDICT or v.vid not in (_v_refs(r.blocker) or []):
@@ -3682,6 +3771,10 @@ def _gate_changes_reds(folder: Path, spec: SpecChanges) -> "list[str]":
         if vid in spec.vids:
             reds.append(f"{vid} 는 G1 결정 `안 바꾼다` 인데 바뀌는 것 목록에 남아 있다(architect 반영)")
         basis: "str | None" = next((x["basis"] for x in (cand or {}).get("V", []) if x["id"] == vid), None)
+        cand_cs: "list[str] | None" = _c_refs(basis) if basis else None
+        if cand_cs is not None:
+            reds += _c_basis_reds(vid, cand_cs, dec, decision_lines())
+            continue
         m = re.fullmatch(r"(M\d+) #(\d+)", basis or "")
         r = rows.get((m.group(1), int(m.group(2)))) if m else None
         if r is None or r.verdict != "불가" or r.category != UNAPPROVED_CATEGORY:

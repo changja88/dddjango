@@ -561,20 +561,32 @@ djr:R-1998 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-1999 a djr:Prohibition ;
-    skos:prefLabel "framework 기본 응답의 code 계약 body 배제·공개 계약 주장 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1999@2026-08-22> .
+    skos:prefLabel "framework 기본 응답의 code 계약 body 배제·공개 계약 주장 금지 · 그 가운데 경로 앞 의도된 답만 문서에 관찰된 꼴로 경로 앞 응답(행 시험이 지킴)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1999@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-1999@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1999 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-1999@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-1999 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1999@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
+
 djr:R-2000 a djr:Prohibition ;
-    skos:prefLabel "framework 기본 응답의 전역 handler·helper 변환과 헤더 합성 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2000@2026-08-22> .
+    skos:prefLabel "framework 기본 응답의 전역 handler·helper 변환과 헤더 합성 금지 · 문서에 경로 앞 응답으로 적는 것은 합성 아님(적었다고 합성 허용 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2000@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-2000@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2000 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2000@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-2000 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2000@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-2001 a djr:Obligation ;
     skos:prefLabel "확립 계약의 WWW-Authenticate·Retry-After 헤더 보존과 별도 설계"@ko ;
@@ -703,12 +715,18 @@ djr:R-2015 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2016 a djr:Prohibition ;
-    skos:prefLabel "전역 middleware·helper·handler의 status·body 합성 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2016@2026-08-22> .
+    skos:prefLabel "전역 middleware·helper·handler의 status·body 합성 금지 · 문서에 경로 앞 응답(operations 행)으로 적는 것은 합성 아님(적었다고 합성 허용 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2016@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-2016@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2016 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2016@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-2016 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2016@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-2017 a djr:Obligation ;
     skos:prefLabel "401 생성 시 적용 가능한 WWW-Authenticate challenge 필수(RFC 9110)"@ko ;
@@ -839,12 +857,18 @@ djr:R-2032 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2033 a djr:Prohibition ;
-    skos:prefLabel "프레임워크 기본 401의 전역 handler·helper 헤더 합성 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2033@2026-08-22> .
+    skos:prefLabel "프레임워크 기본 401의 전역 handler·helper 헤더 합성 금지 · 문서에 경로 앞 응답으로 적는 것은 합성 아님(적었다고 합성 허용 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2033@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-2033@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2033 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2033@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-2033 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2033@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-2034 a djr:Obligation ;
     skos:prefLabel "scope의 허용 작업 범위 정의"@ko ;
@@ -1135,12 +1159,18 @@ djr:R-2069 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2070 a djr:Prohibition ;
-    skos:prefLabel "기본 429의 전역 헤더 합성 금지와 controller 직접 공개 오류 한정 소유"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2070@2026-08-22> .
+    skos:prefLabel "기본 429의 전역 헤더 합성 금지와 controller 직접 공개 오류 한정 소유 · 문서에 경로 앞 응답으로 적는 것은 합성 아님(적었다고 합성 허용 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2070@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-2070@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2070 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2070@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-2070 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2070@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-2071 a djr:Obligation ;
     skos:prefLabel "rate limit 정책의 API 문서 기재"@ko ;
@@ -1388,6 +1418,14 @@ djr:R-3656 a djr:Obligation ;
 
 <https://numchida.com/ns/djr#R-3656@2026-10-11> a djr:Expression ;
     prov:specializationOf djr:R-3656 ;
+    djr:revision 1 .
+
+djr:R-3748 a djr:Obligation ;
+    skos:prefLabel "API 문서는 그 경로의 의도된 오류를 누가 보내든 모두 적음 — BC 오류는 response= · 경로 앞(framework · 미들웨어 · 앞단) 답은 경로 앞 응답 · 오류 머리는 머리 보충 · 의도된 답의 경계(미식별 500 · 앞단 502/504 · 없는 경로 404 · 다른 메서드 405 는 적지 않음)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3748@2026-11-13> .
+
+<https://numchida.com/ns/djr#R-3748@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-3748 ;
     djr:revision 1 .
 
 <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> a djr:Document ;
@@ -1738,16 +1776,23 @@ djr:R-3656 a djr:Obligation ;
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2/b6> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2> ;
     djr:kind djr:kind-norm ;
-    djr:order 6 ;
+    djr:order 7 ;
     djr:statesNorm djr:R-1972 ;
     djr:text "- 캐시, rate limit, retry, deprecation, idempotency replay처럼 클라이언트 동작을 바꾸는 헤더는 응답 계약에 포함한다\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2/b7> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2> ;
     djr:kind djr:kind-norm ;
-    djr:order 7 ;
+    djr:order 8 ;
     djr:statesNorm djr:R-3467 ;
     djr:text "- 한 상태 코드의 성공 본문이 둘 이상의 모양이면 판별 필드(discriminator)를 가진 **이름 붙은 schema 하나**(`oneOf` + `discriminator`)로 계약한다 — 익명 `anyOf` 는 클라이언트가 분기할 이름과 판별 키를 잃는다. 오류 본문의 union 은 각 오류 schema 가 고정 공개 식별자(code 프로필의 `<Bc>ErrorCode` 값 · RFC 9457 의 `type`)로 자기 판별되므로 이 요구의 대상이 아니다(§5.4 에러 프로필)\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-3748 ;
+    djr:text "- **API 문서는 그 경로에서 날 수 있는 의도된 오류를 누가 보내든 모두 적는다** — 경로 코드가 보내는 BC 오류는 operation 응답 선언(`response=`)으로, 경로 앞에서 framework(인증 · CSRF · 권한 · throttle · 몸통 · 입력 검증) · 미들웨어 · 앞단이 보내는 답은 경로 앞 응답으로, 오류의 머리는 머리 보충으로 적는다(구현 꼴은 `implementation-django-ninja` §6.2). 적는 것은 코드 · 설정 · 앞단 설정에 그 status 가 적힌 의도된 답이다 — 미식별 500 · 앞단 502/504 는 결함이라 약속이 아니고, 없는 경로 404 · 다른 메서드 405 는 그 operation 의 답이 아니라 적지 않는다\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3> a djr:Section ;
     djr:headingSnapshot "### 5.3 계약 체크리스트"@ko ;
@@ -1922,7 +1967,7 @@ djr:R-3656 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
     djr:statesNorm djr:R-1999 ;
-    djr:text "- framework-owned 401/403, route 404, 422, 429, `HttpError`, 500의 기본 응답은 이 code 계약의 body가 아니며, 그 본문이 정확하고 안정적인 공개 계약이라고 주장하지 않는다.\n\n"@ko .
+    djr:text "- framework-owned 401/403, route 404, 422, 429, `HttpError`, 500의 기본 응답은 이 code 계약의 body가 아니며, 그 본문이 정확하고 안정적인 공개 계약이라고 주장하지 않는다. 그 가운데 경로 앞에서 나는 의도된 답만 API 문서에 관찰된 꼴 그대로 경로 앞 응답으로 적고(§5.2), 그 꼴은 행마다 둔 시험이 지킨다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s026> a djr:Section ;
     djr:headingSnapshot "#### framework 기본 응답과 공개 헤더의 경계"@ko ;
@@ -1934,7 +1979,7 @@ djr:R-3656 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:statesNorm djr:R-2000, djr:R-2001, djr:R-2002 ;
-    djr:text "\n프레임워크 기본 401/403/route 404/422/429/`HttpError`/500을 전역 handler나 helper로 BC body로 바꾸어 헤더를 합성하지 않는다. 확립된 계약이 401의 `WWW-Authenticate` 또는 429의 `Retry-After`를 요구하면 그 헤더는 보존하고 별도 설계한다. presentation controller가 직접 공개하는 BC 오류의 승인된 헤더(retryable 오류의 `Retry-After` · 사건 값 헤더)는 그 controller가 소유한다.\n\n"@ko .
+    djr:text "\n프레임워크 기본 401/403/route 404/422/429/`HttpError`/500을 전역 handler나 helper로 BC body로 바꾸어 헤더를 합성하지 않는다. 확립된 계약이 401의 `WWW-Authenticate` 또는 429의 `Retry-After`를 요구하면 그 헤더는 보존하고 별도 설계한다. presentation controller가 직접 공개하는 BC 오류의 승인된 헤더(retryable 오류의 `Retry-After` · 사건 값 헤더)는 그 controller가 소유한다. API 문서에 이 답과 그 헤더를 경로 앞 응답으로 적는 것은 합성이 아니다 — 적었다고 실제 응답에 헤더 · status 합성이 허용되는 것도 아니다(§5.2).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s027-6> a djr:Section ;
     djr:headingSnapshot "## 6. RFC 9457 에러 응답 형식"@ko ;
@@ -2046,7 +2091,7 @@ djr:R-3656 a djr:Obligation ;
     djr:order 14 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s026/b1> ;
     djr:statesNorm djr:R-2013, djr:R-2014, djr:R-2015, djr:R-2016 ;
-    djr:text "> `406`/`415` 계약이 별도 승인된 범위에서만 `implementation-django-ninja` §6.3을 따른다. 사용 중인 Django Ninja 버전과 presentation 스타일에 맞는, 검증된 Ninja-owned pre-body 경계에서 framework `HttpError` 흐름을 사용한다. 특히 parser 예외는 버전에 따라 다른 status로 정규화될 수 있으므로 실제 응답이 415인지 확인한다. 전역 middleware/helper/handler로 status나 body를 합성하지 않는다.\n\n"@ko .
+    djr:text "> `406`/`415` 계약이 별도 승인된 범위에서만 `implementation-django-ninja` §6.3을 따른다. 사용 중인 Django Ninja 버전과 presentation 스타일에 맞는, 검증된 Ninja-owned pre-body 경계에서 framework `HttpError` 흐름을 사용한다. 특히 parser 예외는 버전에 따라 다른 status로 정규화될 수 있으므로 실제 응답이 415인지 확인한다. 전역 middleware/helper/handler로 status나 body를 합성하지 않는다. 문서에 406 · 415 를 경로 앞 응답으로 적는 것(`implementation-django-ninja` §6.2 «경로 앞 응답» 의 `operations` 행)은 합성이 아니고, 적었다고 합성이 허용되는 것도 아니다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2> ;
@@ -2266,7 +2311,7 @@ djr:R-3656 a djr:Obligation ;
     djr:order 5 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b8>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b9> ;
     djr:statesNorm djr:R-2030, djr:R-2031, djr:R-2032, djr:R-2033 ;
-    djr:text "- 토큰 만료는 401이며 인증(§8.1) 실패다. 서버가 이 401을 생성하면 `WWW-Authenticate` challenge로 인증 방법과 오류 원인을 안내한다. 이미 배포되었거나 공개적으로 요구된 Bearer 계약의 challenge는 보존하고, 테스트한 Django Ninja 기본 401이 제공하지 못하는 차이는 G1에서 별도 설계한다. 프레임워크 기본 401에 전역 handler나 helper로 이 헤더를 합성하여 code-profile body를 강제하지 않는다.\n"@ko .
+    djr:text "- 토큰 만료는 401이며 인증(§8.1) 실패다. 서버가 이 401을 생성하면 `WWW-Authenticate` challenge로 인증 방법과 오류 원인을 안내한다. 이미 배포되었거나 공개적으로 요구된 Bearer 계약의 challenge는 보존하고, 테스트한 Django Ninja 기본 401이 제공하지 못하는 차이는 G1에서 별도 설계한다. 프레임워크 기본 401에 전역 handler나 helper로 이 헤더를 합성하여 code-profile body를 강제하지 않는다. 문서에 이 401 과 challenge 헤더를 경로 앞 응답으로 적는 것은 합성이 아니고, 적었다고 합성이 허용되는 것도 아니다(§5.2).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4/b6> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4> ;
@@ -2607,7 +2652,7 @@ djr:R-3656 a djr:Obligation ;
     djr:order 2 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s026/b1> ;
     djr:statesNorm djr:R-2069, djr:R-2070 ;
-    djr:text "- 확립된 429 계약의 `Retry-After` 헤더는 보존한다. 프레임워크 기본 429에 전역적으로 헤더를 합성하지 않으며, presentation controller가 직접 공개하는 retryable BC 오류만 승인된 `Retry-After` 헤더를 그 controller가 소유한다.\n"@ko .
+    djr:text "- 확립된 429 계약의 `Retry-After` 헤더는 보존한다. 프레임워크 기본 429에 전역적으로 헤더를 합성하지 않으며, presentation controller가 직접 공개하는 retryable BC 오류만 승인된 `Retry-After` 헤더를 그 controller가 소유한다. 문서에 429 와 `Retry-After` 를 경로 앞 응답으로 적는 것은 합성이 아니고, 적었다고 합성이 허용되는 것도 아니다(§5.2).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s056-12.4/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s056-12.4> ;
@@ -2837,7 +2882,7 @@ djr:R-3656 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3> ;
     djr:kind djr:kind-prose ;
     djr:order 4 ;
-    djr:text "- 상태 코드별 response body schema와 header\n"@ko .
+    djr:text "- 상태 코드별 response body schema와 header — 경로 앞에서 framework · 미들웨어 · 앞단이 보내는 오류 응답과 그 머리까지(§5.2)\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3> ;

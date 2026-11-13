@@ -8,6 +8,7 @@ it must not import Django or Ninja itself.
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -5343,12 +5344,62 @@ def get_lesson(request, lesson_id: int):
     return {"id": lesson_id}
 """
 
-OPENAPI_FILES: Final = {
-    **BASE_FILES,
-    "config/api.py": """from ninja_extra import NinjaExtraAPI
+# 경로 앞 응답 꼴(F4-173 · #63 a · b · c) — 루트 API 의 정해진 클래스 하나 + framework/ninja/ 정본 · 표.
+# 정본 글은 검사기 옆 자산에서 읽는다(이 행렬은 글과 하위 프로세스만 쓴다 — Django · Ninja 를 import 하지 않는다).
+PRE_ROUTE_CANONICAL: Final = (CHECKER_DIR / "pre_route_responses_canonical.py").read_text(encoding="utf-8")
+DOCUMENTED_API: Final = """from ninja.openapi.schema import OpenAPISchema
+from ninja_extra import NinjaExtraAPI
+
+from framework.ninja.pre_route_responses import add_pre_route_responses
+
+
+class DocumentedAPI(NinjaExtraAPI):
+    def get_openapi_schema(
+        self, *, path_prefix: str | None = None, path_params: dict[str, object] | None = None
+    ) -> OpenAPISchema:
+        return add_pre_route_responses(self, super().get_openapi_schema(path_prefix=path_prefix, path_params=path_params))
+
+
+api: DocumentedAPI = DocumentedAPI(urls_namespace="api")
+"""
+PRE_ROUTE_TABLE: Final = '''"""경로 앞 응답 표 — 프로젝트 미들웨어 · 앞단이 보내는 답(설계 G1 승인)."""
+from ninja import Schema
+
+
+class ServiceMaintenanceOut(Schema):
+    error: str
+    message: str
+
+
+PRE_ROUTE_RESPONSES: tuple[dict[str, object], ...] = (
+    {
+        "status": 503,
+        "when": "all",
+        "namespaces": ("api",),
+        "description": "점검 중",
+        "body": ServiceMaintenanceOut,
+        "headers": {"Service-Maintenance-Ends-At": {"schema": {"type": "string", "format": "date-time"}}},
+    },
+    {"status": 413, "when": "body", "description": "앞단이 받는 크기를 넘음", "media_type": "text/html"},
+)
+
+NOT_API_MIDDLEWARE: tuple[str, ...] = ()
+
+BAD_REQUEST_RESPONSE: dict[str, object] = {"media_type": "text/html"}
+'''
+PRE_ROUTE_PIECES: Final = {
+    "config/api.py": DOCUMENTED_API,
+    "framework/ninja/pre_route_responses.py": PRE_ROUTE_CANONICAL,
+    "framework/ninja/pre_route_response_table.py": PRE_ROUTE_TABLE,
+}
+PLAIN_API: Final = """from ninja_extra import NinjaExtraAPI
 
 api = NinjaExtraAPI()
-""",
+"""
+
+OPENAPI_FILES: Final = {
+    **BASE_FILES,
+    **PRE_ROUTE_PIECES,
     "application/lesson/driving_layer/controller.py": OPENAPI_CONTROLLER,
 }
 
@@ -6320,32 +6371,33 @@ def get_lesson(request, lesson_id: int):
         Case("openapi-framework-common-error-advertised-empty-error-bc", with_files(("application/lesson/driving_layer/controller.py", no_direct_common), ("application/lesson/driving_layer/api/bc_error_schema.py", "<REMOVE>"), base=OPENAPI_FILES), "check-openapi-error-declaration.py", empty_error_bc_args, 2, "BLOCKER"),
         Case("openapi-framework-bc-base-error-advertised", with_files(("application/lesson/driving_layer/controller.py", no_direct_base), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-framework-concrete-error-advertised", with_files(("application/lesson/driving_layer/controller.py", no_direct_concrete), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
-        Case("openapi-clean-framework-dict-error-status", with_files(("application/lesson/driving_layer/controller.py", no_direct_dict), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
-        Case("openapi-clean-framework-owned-error-schema", with_files(("application/lesson/driving_layer/controller.py", no_direct_framework_schema), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        # F4-173 g — 직접 반환하지 않는 4xx · 5xx 는 Schema 가 무엇이든 광고하지 않는다(2.36.0 까지 통과 · 경로 앞 오류는 경로 앞 응답이 붙인다).
+        Case("openapi-g-framework-dict-error-status-advertised", with_files(("application/lesson/driving_layer/controller.py", no_direct_dict), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "extra-error-advertisement"),
+        Case("openapi-g-framework-owned-error-schema-advertised", with_files(("application/lesson/driving_layer/controller.py", no_direct_framework_schema), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "extra-error-advertisement"),
         Case("openapi-code-selected-bound-method-call", with_files(("config/api.py", selected_method_alias), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-code-selected-literal-setattr", with_files(("config/api.py", selected_setattr), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-code-selected-controller-import-call", with_files(("application/lesson/driving_layer/controller.py", selected_controller_call), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
-        Case("openapi-clean-arbitrary-schema-receiver", with_files(("config/api.py", arbitrary_receiver), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
-        Case("openapi-clean-arbitrary-schema-setattr", with_files(("config/api.py", arbitrary_setattr), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
-        Case("openapi-clean-arbitrary-schema-class", with_files(("config/api.py", arbitrary_class), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-clean-arbitrary-schema-receiver", with_files(("config/api.py", documented(arbitrary_receiver)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-clean-arbitrary-schema-setattr", with_files(("config/api.py", documented(arbitrary_setattr)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-clean-arbitrary-schema-class", with_files(("config/api.py", documented(arbitrary_class)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-clean-arbitrary-controller-receiver", with_files(("application/lesson/driving_layer/controller.py", arbitrary_controller_call), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-analysis-conditionally-rebound-selected-receiver", with_files(("config/api.py", ambiguous_selected_alias), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 1, "사용 오류"),
-        Case("openapi-clean-match-rebound-selected-receiver", with_files(("config/api.py", match_rebound_alias), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 10) else 1, "" if sys.version_info >= (3, 10) else "사용 오류"),
-        Case("openapi-clean-trystar-rebound-selected-receiver", with_files(("config/api.py", trystar_rebound_alias), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 11) else 1, "" if sys.version_info >= (3, 11) else "사용 오류"),
+        Case("openapi-clean-match-rebound-selected-receiver", with_files(("config/api.py", documented(match_rebound_alias)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 10) else 1, "" if sys.version_info >= (3, 10) else "사용 오류"),
+        Case("openapi-clean-trystar-rebound-selected-receiver", with_files(("config/api.py", documented(trystar_rebound_alias)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 11) else 1, "" if sys.version_info >= (3, 11) else "사용 오류"),
         Case("openapi-extra-ninja-status-constant", with_files(("application/lesson/driving_layer/controller.py", ninja_status_extra), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-extra-httpstatus-constant", with_files(("application/lesson/driving_layer/controller.py", http_status_extra), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-extra-success-status-blocked", with_files(("application/lesson/driving_layer/controller.py", success_status_extra), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "#63"),
         Case("openapi-round3-clean-early-return-error-instance", with_files(("application/lesson/driving_layer/controller.py", early_return_instance), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-round3-selected-api-after-early-return", with_files(("config/api.py", early_return_selected_api), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-round3-clean-unreachable-match-error-return", with_files(("application/lesson/driving_layer/controller.py", unreachable_match_error), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 10) else 1, "" if sys.version_info >= (3, 10) else "사용 오류"),
-        Case("openapi-round3-clean-unreachable-match-selected-api", with_files(("config/api.py", unreachable_match_selected_api), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 10) else 1, "" if sys.version_info >= (3, 10) else "사용 오류"),
-        Case("openapi-round3-clean-shadowed-setattr", with_files(("config/api.py", shadowed_setattr), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-round3-clean-unreachable-match-selected-api", with_files(("config/api.py", documented(unreachable_match_selected_api)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 10) else 1, "" if sys.version_info >= (3, 10) else "사용 오류"),
+        Case("openapi-round3-clean-shadowed-setattr", with_files(("config/api.py", documented(shadowed_setattr)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-round3-clean-two-step-error-instance-alias", with_files(("application/lesson/driving_layer/controller.py", two_step_instance_alias), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-round3-one-step-standard-status-alias", with_files(("application/lesson/driving_layer/controller.py", one_step_standard_status_alias), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-round3-clean-unselected-controller-api-call", with_files(("application/catalog/driving_layer/controller.py", unselected_controller_call), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-round4-mandatory-finally-error-return", with_files(("application/lesson/driving_layer/controller.py", mandatory_finally_error), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-round4-mandatory-finally-selected-api", with_files(("config/api.py", mandatory_finally_selected_api), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
-        Case("openapi-round4-clean-terminal-try-benign-finally", with_files(("config/api.py", terminal_try_benign_finally), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-round4-clean-terminal-try-benign-finally", with_files(("config/api.py", documented(terminal_try_benign_finally)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         # Reviewer-only: dynamic response mappings and status-specific code
         # subset precision for a shared BC base schema.
     ]
@@ -6624,6 +6676,533 @@ def import_endpoint(request):
         Case("success-fp-unignored-generated-path", {**success_files(schema_object), ".gitignore": "application/lesson/driving_layer/ignored_bypass.py\n", "application/lesson/driving_layer/generated/bypass.py": raw_200_decoy}, "check-response-schema-bypass.py", (TARGET_DIR,), 0, "", baseline_files={**success_files(schema_object), ".gitignore": "application/lesson/driving_layer/ignored_bypass.py\n"}),
         Case("success-fp-git-ignored-selected-path", {**success_files(schema_object), ".gitignore": "application/lesson/driving_layer/ignored_bypass.py\n", "application/lesson/driving_layer/ignored_bypass.py": raw_200_decoy}, "check-response-schema-bypass.py", (TARGET_DIR,), 0, "", baseline_files={**success_files(schema_object), ".gitignore": "application/lesson/driving_layer/ignored_bypass.py\n"}),
         # Reviewer-only: helper/re-export/subclass-mediated success bypasses.
+    ]
+
+
+PRE_ROUTE_SETTINGS: Final = """MIDDLEWARE: list[str] = [
+    "django.middleware.common.CommonMiddleware",
+    "framework.django.maintenance_middleware.MaintenanceMiddleware",
+]
+ROOT_URLCONF: str = "config.urls"
+"""
+PRE_ROUTE_MIDDLEWARE: Final = """from django.http import JsonResponse
+
+
+class MaintenanceMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.path.startswith("/api/"):
+            response = JsonResponse({"error": "service_maintenance", "message": "m"}, status=503)
+            response["Service-Maintenance-Ends-At"] = "2026-11-13T03:00:00Z"
+            return response
+        return self.get_response(request)
+"""
+PRE_ROUTE_URLS: Final = """from django.urls import path
+
+from application.lesson.driving_layer.api.api_router import register_lesson_api
+from config.api import api
+
+register_lesson_api(api)
+
+urlpatterns = [path("api/", api.urls)]
+"""
+PRE_ROUTE_REGISTRAR: Final = """from ninja_extra import NinjaExtraAPI
+
+from application.lesson.driving_layer.controller import router
+
+
+def register_lesson_api(api: NinjaExtraAPI) -> None:
+    api.add_router("/lessons", router)
+"""
+HEADER_CONTROLLER: Final = """from django.http import HttpResponse
+from ninja import Router, Status
+from application.lesson.driving_layer.api.bc_error_schema import LessonConflictError, LessonErrorSchema, LessonNotFoundError
+
+router = Router()
+
+
+@router.post("/{lesson_id}/retry", response={200: dict, 409: LessonConflictError}, openapi_extra=EXTRA)
+def retry_lesson(request, response: HttpResponse, lesson_id: int):
+    if lesson_id < 0:
+        error = LessonConflictError()
+        response["Retry-After"] = "1"
+        return Status(STATUS, error)
+    return {"id": lesson_id}
+"""
+
+
+PRE_ROUTE_TWO_OPERATIONS: Final = OPENAPI_CONTROLLER + """
+
+@router.get("/", response={200: dict})
+def list_lessons(request):
+    return {"items": []}
+
+
+@router.get("/hidden", response={200: dict}, include_in_schema=False)
+def hidden(request):
+    return {}
+"""
+
+
+def header_controller(extra: str, status: str = "409") -> str:
+    source = HEADER_CONTROLLER.replace("STATUS", status)
+    if extra:
+        return source.replace("EXTRA", extra)
+    return source.replace(", openapi_extra=EXTRA", "")
+
+
+def documented(source: str) -> str:
+    """`api = NinjaExtraAPI()` 를 쓰는 api.py 글을 경로 앞 응답 꼴(정해진 클래스) 루트 API 로 바꾼다."""
+    head, marker, tail = source.partition("api = NinjaExtraAPI()\n")
+    if not marker:
+        raise ValueError("documented(): `api = NinjaExtraAPI()` 줄이 없다")
+    imports = "from ninja.openapi.schema import OpenAPISchema\nfrom framework.ninja.pre_route_responses import add_pre_route_responses\n"
+    klass = DOCUMENTED_API.split("\n\n\n", 1)[1].rsplit("\n\n\n", 1)[0]
+    return imports + head + klass + "\n\n\n" + 'api: DocumentedAPI = DocumentedAPI(urls_namespace="api")\n' + tail
+
+
+def pre_route_cases() -> list[Case]:
+    """F4-173 — 경로 앞 응답(#63 a · b · c · d · e · f · g). 옛 판(2.36.0) 결과는 각 사례의 note 에 적는다."""
+    openapi = "check-openapi-error-declaration.py"
+    auto = AUTO_PROFILE_ARGS
+    base = OPENAPI_FILES
+    table = PRE_ROUTE_TABLE
+    routed = {**base, "config/urls.py": PRE_ROUTE_URLS, "application/lesson/driving_layer/api/api_router.py": PRE_ROUTE_REGISTRAR}
+    mw = {**base, "config/settings.py": PRE_ROUTE_SETTINGS, "framework/django/maintenance_middleware.py": PRE_ROUTE_MIDDLEWARE}
+
+    def row(text: str) -> str:
+        return table.replace("PRE_ROUTE_RESPONSES: tuple[dict[str, object], ...] = (\n", "PRE_ROUTE_RESPONSES: tuple[dict[str, object], ...] = (\n" + text, 1)
+
+    def table_with(old: str, new: str) -> str:
+        if old not in table:
+            raise ValueError(f"table_with(): {old!r} 없음")
+        return table.replace(old, new, 1)
+
+    other_override = DOCUMENTED_API.replace(
+        "return add_pre_route_responses(self, super().get_openapi_schema(path_prefix=path_prefix, path_params=path_params))",
+        "schema = super().get_openapi_schema(path_prefix=path_prefix, path_params=path_params)\n        schema[\"x-errors\"] = True\n        return schema",
+    )
+    signature_differs = DOCUMENTED_API.replace(", path_params: dict[str, object] | None = None", "").replace(", path_params=path_params", "")
+    monkeypatched = DOCUMENTED_API + "\n\ndef patched(*args, **kwargs):\n    return {}\n\n\napi.get_openapi_schema = patched\n"
+    postprocessed = DOCUMENTED_API + "\n\ndef build_schema():\n    return api.get_openapi_schema()\n"
+    second_class = DOCUMENTED_API.replace("class DocumentedAPI(", "class OtherAPI(NinjaExtraAPI):\n    pass\n\n\nclass DocumentedAPI(")
+    second_api = DOCUMENTED_API + '\ninternal: NinjaExtraAPI = NinjaExtraAPI(urls_namespace="internal")\n'
+    docstring_class = DOCUMENTED_API.replace("class DocumentedAPI(NinjaExtraAPI):\n", 'class DocumentedAPI(NinjaExtraAPI):\n    """경로 앞 응답을 붙이는 루트 API."""\n\n')
+    two_ops = PRE_ROUTE_TWO_OPERATIONS
+    canonical_edit = PRE_ROUTE_CANONICAL.replace('"description": "인증 실패"', '"description": "인증 실패함"', 1)
+    canonical_import_order = PRE_ROUTE_CANONICAL.replace("import copy\nimport re\n", "import re\nimport copy\n", 1)
+    canonical_future = PRE_ROUTE_CANONICAL.replace('"""\nimport copy', '"""\nfrom __future__ import annotations\n\nimport copy', 1)
+    canonical_docstring = PRE_ROUTE_CANONICAL.replace("dddjango 플러그인 정본(고치지 않는다)", "프로젝트가 옮긴 정본", 1)
+    canonical_extra = PRE_ROUTE_CANONICAL + "\n\nLOCAL_FLAG: bool = True\n"
+    mw_status_var = PRE_ROUTE_MIDDLEWARE.replace("status=503)", "status=MAINTENANCE_STATUS)").replace(
+        "from django.http import JsonResponse\n", "from django.http import JsonResponse\n\nfrom framework.django.codes import MAINTENANCE_STATUS\n"
+    )
+    mw_raise = """from django.core.exceptions import PermissionDenied
+
+
+class MaintenanceMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.path.startswith("/api/") and request.method == "TRACE":
+            raise PermissionDenied
+        return self.get_response(request)
+"""
+    mw_factory = """def MaintenanceMiddleware(get_response):
+    def middleware(request):
+        response = get_response(request)
+        if request.path.startswith("/api/") and getattr(request, "closed", False):
+            response.status_code = 503
+        return response
+
+    return middleware
+"""
+    mw_render = """from django.shortcuts import render
+
+
+class MaintenanceMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def process_exception(self, request, exception):
+        response = render(request, "503.html", status=503)
+        response["Retry-After"] = "5"
+        return response
+"""
+    settings_split = {
+        "config/settings/__init__.py": "",
+        "config/settings/base.py": 'MIDDLEWARE: list[str] = ["django.middleware.common.CommonMiddleware"]\nROOT_URLCONF: str = "config.urls"\n',
+        "config/settings/production.py": 'from config.settings.base import *  # noqa: F403\n\nMIDDLEWARE += ["framework.django.maintenance_middleware.MaintenanceMiddleware"]  # noqa: F405\n',
+    }
+    mw_split = {key: value for key, value in mw.items() if key != "config/settings.py"} | settings_split
+    no_503 = table.replace(table[table.index("    {\n        \"status\": 503"):table.index("    {\"status\": 413")], "")
+    ops_503 = no_503.replace(
+        '    {"status": 413',
+        '    {"status": 503, "when": "all", "namespaces": ("api",), "operations": ("GET /api/lessons/{lesson_id}",), "description": "점검", "media_type": "text/html", "headers": {"Service-Maintenance-Ends-At": {"schema": {"type": "string", "format": "date-time"}}}},\n    {"status": 413',
+    )
+    no_header = table.replace(
+        ',\n        "headers": {"Service-Maintenance-Ends-At": {"schema": {"type": "string", "format": "date-time"}}},', ","
+    )
+    urls_handler = PRE_ROUTE_URLS + '\nhandler400 = "config.errors.bad_request"\n'
+    json_bad_request = table.replace(
+        'BAD_REQUEST_RESPONSE: dict[str, object] = {"media_type": "text/html"}',
+        'BAD_REQUEST_RESPONSE: dict[str, object] = {"media_type": "application/json", "body": ServiceMaintenanceOut}',
+    )
+    error_extra = '{"responses": {409: {"headers": {"Retry-After": {"schema": {"type": "integer"}}}}}}'
+    # 3차(코드 검토 I1 ~ I5 · S1 ~ S9) 재료
+    json_handler = "from django.http import HttpRequest, JsonResponse\n\n\ndef bad_request(request: HttpRequest, exception: Exception) -> JsonResponse:\n    return JsonResponse({\"error\": \"bad_request\"}, status=400)\n"
+    html_handler = "from django.http import HttpRequest, HttpResponse\nfrom django.shortcuts import render\n\n\ndef bad_request(request: HttpRequest, exception: Exception) -> HttpResponse:\n    return render(request, \"400.html\", status=400)\n"
+    mw_helper = """from django.http import JsonResponse
+
+
+class MaintenanceMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.path.startswith("/api/"):
+            return self._closed()
+        return self.get_response(request)
+
+    def _closed(self):
+        return JsonResponse({"error": "service_maintenance", "message": "m"}, status=503)
+"""
+    mw_module_function = """from django.http import JsonResponse
+
+
+def closed_response():
+    return JsonResponse({"error": "service_maintenance", "message": "m"}, status=503)
+
+
+class MaintenanceMiddleware:
+    def __init__(self, get_response):
+        self._get_response = get_response
+
+    def __call__(self, request):
+        if request.path.startswith("/api/"):
+            return closed_response()
+        return self._get_response(request)
+"""
+    mw_inherited = """from django.http import JsonResponse
+
+
+class GateMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return JsonResponse({"error": "service_maintenance", "message": "m"}, status=503)
+
+
+class MaintenanceMiddleware(GateMiddleware):
+    pass
+"""
+    mw_unread_return = """from framework.django.responses import build_closed_response
+
+
+class MaintenanceMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.path.startswith("/api/"):
+            return build_closed_response(request)
+        return self.get_response(request)
+"""
+    methods_503 = no_503.replace(
+        '    {"status": 413',
+        '    {"status": 503, "when": "all", "methods": ("DELETE",), "description": "다른 까닭", "media_type": "text/html", "headers": {"Service-Maintenance-Ends-At": {"schema": {"type": "string"}}}},\n    {"status": 413',
+    )
+    two_roots = DOCUMENTED_API + 'internal: DocumentedAPI = DocumentedAPI(urls_namespace="internal")\n'
+    settings_star = 'BASE_MIDDLEWARE: list[str] = ["framework.django.maintenance_middleware.MaintenanceMiddleware"]\nMIDDLEWARE: list[str] = [*BASE_MIDDLEWARE, "django.middleware.common.CommonMiddleware"]\nROOT_URLCONF: str = "config.urls"\n'
+    settings_plus = 'BASE_MIDDLEWARE: list[str] = ["framework.django.maintenance_middleware.MaintenanceMiddleware"]\nMIDDLEWARE: list[str] = BASE_MIDDLEWARE + ["django.middleware.common.CommonMiddleware"]\nROOT_URLCONF: str = "config.urls"\n'
+    settings_unread = 'MIDDLEWARE: list[str] = ["framework.django.maintenance_middleware.MaintenanceMiddleware", *extra_middleware()]\nROOT_URLCONF: str = "config.urls"\n'
+    exempt_table = table_with('"namespaces": ("api",),', '"namespaces": ("api",),\n        "exempt": (None, "MAINTENANCE_MODE_EXEMPT_PATHS"),')
+    exempt_base = {
+        "config/settings/__init__.py": "",
+        "config/settings/base.py": 'MIDDLEWARE: list[str] = ["django.middleware.common.CommonMiddleware"]\nROOT_URLCONF: str = "config.urls"\n',
+        "config/settings/production.py": 'from config.settings.base import *  # noqa: F403\n\nMAINTENANCE_MODE_EXEMPT_PATHS: tuple[str, ...] = ("/api/health",)\n',
+    }
+    exempt_in_base = exempt_base | {
+        "config/settings/base.py": exempt_base["config/settings/base.py"] + 'MAINTENANCE_MODE_EXEMPT_PATHS: tuple[str, ...] = ("/api/health",)\n',
+        "config/settings/production.py": "from config.settings.base import *  # noqa: F403\n",
+    }
+    internal_imports = 'from config.api import DocumentedAPI\n\ninternal_api: DocumentedAPI = DocumentedAPI(urls_namespace="internal")\n'
+    internal_plain = 'from ninja_extra import NinjaExtraAPI\n\ninternal_api: NinjaExtraAPI = NinjaExtraAPI(urls_namespace="internal")\n'
+    ctor = 'api: DocumentedAPI = DocumentedAPI(urls_namespace="api")\n'
+    bad_class = DOCUMENTED_API.replace(ctor, "").replace(
+        "return add_pre_route_responses(self, super().get_openapi_schema(path_prefix=path_prefix, path_params=path_params))",
+        "return super().get_openapi_schema(path_prefix=path_prefix, path_params=path_params)",
+    )
+    redefined_after = bad_class + ctor + "\n\nclass " + DOCUMENTED_API.replace(ctor, "").split("\n\n\nclass ", 1)[1]
+    class_patch = DOCUMENTED_API + "\n\nDocumentedAPI.get_openapi_schema = lambda self, **kw: {}\n"
+    base_patch = DOCUMENTED_API + "\n\nNinjaExtraAPI.get_openapi_schema = lambda self, **kw: {}\n"
+    factory_api = 'from ninja_extra import NinjaExtraAPI\n\n\ndef build_api() -> NinjaExtraAPI:\n    return NinjaExtraAPI(urls_namespace="api")\n\n\napi: NinjaExtraAPI = build_api()\n'
+    header_409 = '{"headers": {"Retry-After": {"schema": {"type": "integer"}}}}'
+
+    def extra_const(extra_value: str) -> str:
+        return header_controller("EXTRA").replace("router = Router()\n", "router = Router()\nEXTRA = " + extra_value + "\n")
+
+    try_header = header_controller(error_extra).replace(
+        '    if lesson_id < 0:\n        error = LessonConflictError()\n        response["Retry-After"] = "1"\n        return Status(409, error)\n',
+        '    try:\n        response["Cache-Control"] = "no-store"\n        if lesson_id < 0:\n            raise ValueError\n    except ValueError:\n        error = LessonConflictError()\n        return Status(409, error)\n',
+    )
+    # 4차(구현 둘째 확인 N1 ~ N3 · M1 ~ M6) 재료
+    run_head = header_controller(error_extra).split("@router.post", 1)[0].replace(
+        "router = Router()\n", "router = Router()\n\n\ndef run_use_case(lesson_id: int) -> int:\n    if lesson_id < 0:\n        raise ValueError\n    return lesson_id\n"
+    )
+    try_success_header = run_head + '\n\n@router.post("/{lesson_id}/retry", response={201: dict, 409: LessonConflictError})\ndef retry_lesson(request, response: HttpResponse, lesson_id: int):\n    try:\n        value = run_use_case(lesson_id)\n        response["Location"] = f"/api/lessons/{value}"\n        return Status(201, {"id": value})\n    except ValueError:\n        error = LessonConflictError()\n        return Status(409, error)\n'
+    try_last_header = run_head + '\n\n@router.post("/{lesson_id}/retry", response={200: dict, 409: LessonConflictError})\ndef retry_lesson(request, response: HttpResponse, lesson_id: int):\n    try:\n        value = run_use_case(lesson_id)\n        response["ETag"] = str(value)\n    except ValueError:\n        error = LessonConflictError()\n        return Status(409, error)\n    return {"id": value}\n'
+    inner_then_outer = run_head + '\n\n@router.post("/{lesson_id}/retry", response={200: dict, 409: LessonConflictError})\ndef retry_lesson(request, response: HttpResponse, lesson_id: int):\n    if lesson_id < 0:\n        response["Retry-After"] = "1"\n    if lesson_id < 10:\n        error = LessonConflictError()\n        return Status(409, error)\n    return {"id": lesson_id}\n'
+    inner_returns_then_outer = inner_then_outer.replace('        response["Retry-After"] = "1"\n', '        response["Retry-After"] = "1"\n        return {"id": lesson_id}\n')
+    headers_const = header_controller('{"responses": {409: {"headers": HEADERS}}}').replace(
+        "router = Router()\n", 'router = Router()\nHEADERS = {"Retry-After": {"schema": {"type": "integer"}}}\n'
+    )
+    headers_const_missing = headers_const.replace('HEADERS = {"Retry-After"', 'HEADERS = {"ETag"')
+    mw_helper_assigned = mw_helper.replace(
+        "            return self._closed()\n", "            response = self._closed()\n            return response\n"
+    )
+    mw_helper_raises = """from django.core.exceptions import PermissionDenied
+
+
+class MaintenanceMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        self._guard(request)
+        return self.get_response(request)
+
+    def _guard(self, request):
+        if request.path.startswith("/api/") and request.method == "DELETE":
+            raise PermissionDenied
+"""
+    mw_helper_ifexp = mw_helper.replace(
+        '        if request.path.startswith("/api/"):\n            return self._closed()\n        return self.get_response(request)\n',
+        '        return self._closed() if request.path.startswith("/api/") else self.get_response(request)\n',
+    )
+    mw_function_header = mw_module_function.replace(
+        "            return closed_response()\n",
+        '            response = closed_response()\n            response["Retry-After"] = "60"\n            return response\n',
+    )
+
+    def when_503(when: str) -> str:
+        return no_503.replace(
+            '    {"status": 413',
+            '    {"status": 503, "when": "' + when + '", "description": "다른 까닭", "media_type": "text/html", "headers": {"Service-Maintenance-Ends-At": {"schema": {"type": "string"}}}},\n    {"status": 413',
+        )
+
+    internal_constant_ns = 'from config.api import DocumentedAPI\n\nINTERNAL_NAMESPACE: str = "internal"\ninternal_api: DocumentedAPI = DocumentedAPI(urls_namespace=INTERNAL_NAMESPACE)\n'
+    internal_subclass = 'from config.api import DocumentedAPI\n\n\nclass InternalAPI(DocumentedAPI):\n    pass\n\n\ninternal_api: InternalAPI = InternalAPI(urls_namespace="internal")\n'
+    internal_subclass_override = internal_subclass.replace(
+        "    pass\n", "    def get_openapi_schema(self, *, path_prefix=None, path_params=None):\n        return {}\n"
+    )
+    documented_module = DOCUMENTED_API.split('\napi: DocumentedAPI = DocumentedAPI(urls_namespace="api")')[0]
+    api_subclass_only = 'from framework.ninja.documented_api import DocumentedAPI\n\n\nclass ProjectAPI(DocumentedAPI):\n    pass\n\n\napi: ProjectAPI = ProjectAPI(urls_namespace="api")\n'
+    json_bad_request_table = json_bad_request
+    exempt_chain = {
+        "config/settings/__init__.py": "",
+        "config/settings/base.py": 'MIDDLEWARE: list[str] = ["django.middleware.common.CommonMiddleware"]\nROOT_URLCONF: str = "config.urls"\n',
+        "config/settings/dev.py": 'from config.settings.base import *  # noqa: F403\n\nMAINTENANCE_MODE_EXEMPT_PATHS: tuple[str, ...] = ("/api/health",)\n',
+        "config/settings/local.py": "from config.settings.dev import *  # noqa: F403\n",
+        "config/settings/production.py": "from config.settings.base import *  # noqa: F403\n",
+    }
+    # 5차(셋째 확인 R1 ~ R4 · S1 ~ S5) 재료
+    def r5_f(body: str, response: str = "{200: dict, 201: dict, 404: LessonNotFoundError, 409: LessonConflictError}") -> str:
+        return run_head + "\n\n@router.post(\"/{lesson_id}/retry\", response=" + response + ")\ndef retry_lesson(request, response: HttpResponse, lesson_id: int):\n" + body
+
+    r5_return_call = r5_f('    try:\n        response["Cache-Control"] = "no-store"\n        return Status(200, {"id": run_use_case(lesson_id)})\n    except ValueError:\n        return Status(409, LessonConflictError())\n')
+    r5_loop = r5_f('    try:\n        for item in (1, lesson_id):\n            run_use_case(item)\n            response["X-Last-Item"] = str(item)\n        return Status(200, {"id": lesson_id})\n    except ValueError:\n        return Status(409, LessonConflictError())\n')
+    r5_ifelse = r5_f('    if lesson_id > 0:\n        response["ETag"] = str(lesson_id)\n        if lesson_id > 10:\n            return Status(200, {"id": lesson_id})\n        else:\n            return Status(201, {"id": lesson_id})\n    return Status(404, LessonNotFoundError())\n')
+    r5_with = r5_f('    if lesson_id > 0:\n        response["ETag"] = str(lesson_id)\n        with open("/dev/null"):\n            return Status(200, {"id": lesson_id})\n    return Status(404, LessonNotFoundError())\n')
+    r5_try_ends = r5_f('    if lesson_id > 0:\n        response["ETag"] = str(lesson_id)\n        try:\n            return Status(200, {"id": run_use_case(lesson_id)})\n        except ValueError:\n            return Status(409, LessonConflictError())\n    return Status(404, LessonNotFoundError())\n')
+    r5_match = r5_f('    if lesson_id > 0:\n        response["ETag"] = str(lesson_id)\n        match lesson_id:\n            case 1:\n                return Status(200, {"id": lesson_id})\n            case _:\n                return Status(201, {"id": lesson_id})\n    return Status(404, LessonNotFoundError())\n')
+    r5_exclusive = r5_f('    if lesson_id > 0:\n        response["ETag"] = str(lesson_id)\n    if lesson_id <= 0:\n        return Status(404, LessonNotFoundError())\n    return Status(200, {"id": lesson_id})\n')
+    r5_except_falls = r5_f('    try:\n        response["Retry-After"] = "1"\n        value = run_use_case(lesson_id)\n        return Status(200, {"id": value})\n    except ValueError:\n        pass\n    return Status(409, LessonConflictError())\n')
+    r5_shared = "from django.http import JsonResponse\n\n\ndef closed_response():\n    return JsonResponse({\"error\": \"service_maintenance\", \"message\": \"m\"}, status=503)\n"
+    r5_imported_assigned = "from framework.http.error_responses import closed_response\n\n\nclass MaintenanceMiddleware:\n    def __init__(self, get_response):\n        self.get_response = get_response\n\n    def __call__(self, request):\n        if request.path.startswith(\"/api/\"):\n            response = closed_response()\n            return response\n        return self.get_response(request)\n"
+    r5_two_level = "from django.http import JsonResponse\n\n\nclass MaintenanceMiddleware:\n    def __init__(self, get_response):\n        self.get_response = get_response\n\n    def __call__(self, request):\n        if request.path.startswith(\"/api/\"):\n            return self._a()\n        return self.get_response(request)\n\n    def _a(self):\n        response = self._b()\n        return response\n\n    def _b(self):\n        return JsonResponse({\"error\": \"service_maintenance\", \"message\": \"m\"}, status=503)\n"
+    r5_predicate = PRE_ROUTE_MIDDLEWARE.replace('        if request.path.startswith("/api/"):\n', '        if self._is_api(request):\n') + '\n    def _is_api(self, request):\n        return request.path.startswith("/api/")\n'
+    r5_hook_header = mw_module_function.replace(
+        "            return closed_response()\n",
+        '            response = closed_response()\n            response["Retry-After"] = "60"\n            return response\n',
+    )
+    r5_auth_mw = PRE_ROUTE_MIDDLEWARE.replace(
+        '            response["Service-Maintenance-Ends-At"] = "2026-11-13T03:00:00Z"\n',
+        '            response["Service-Maintenance-Ends-At"] = "2026-11-13T03:00:00Z"\n            response["Retry-After"] = "60"\n',
+    )
+    r5_urls_alias = 'from django.urls import path\n\nfrom config.api import api\nfrom config.errors import bad_request as handler400  # noqa: F401\n\nurlpatterns = [path("api/", api.urls)]\n'
+    r5_content_type = 'import json\n\nfrom django.http import HttpResponseBadRequest\n\n\ndef bad_request(request, exception):\n    return HttpResponseBadRequest(json.dumps({"error": "bad"}), content_type="application/json")\n'
+    r5_settings_env = PRE_ROUTE_SETTINGS.replace('ROOT_URLCONF: str = "config.urls"', 'import os\n\nROOT_URLCONF: str = os.environ.get("ROOT_URLCONF", "config.urls")')
+    r5_component = {
+        "config/settings/__init__.py": "",
+        "config/settings/middleware.py": 'MIDDLEWARE: list[str] = ["django.middleware.common.CommonMiddleware"]\nROOT_URLCONF: str = "config.urls"\n',
+        "config/settings/base.py": 'from config.settings.middleware import *  # noqa: F403\n\nMAINTENANCE_MODE_EXEMPT_PATHS: tuple[str, ...] = ("/api/health",)\n',
+        "config/settings/production.py": "from config.settings.base import *  # noqa: F403\n",
+        "config/settings/local.py": "from config.settings.base import *  # noqa: F403\n",
+    }
+    r5_tail_override = {
+        "config/settings/__init__.py": "",
+        "config/settings/base.py": 'MIDDLEWARE: list[str] = ["django.middleware.common.CommonMiddleware"]\nROOT_URLCONF: str = "config.urls"\nMAINTENANCE_MODE_EXEMPT_PATHS: tuple[str, ...] = ("/api/health",)\n\ntry:\n    from config.settings.local_override import *  # noqa: F403\nexcept ImportError:\n    pass\n',
+        "config/settings/local_override.py": "DEBUG: bool = True\n",
+        "config/settings/production.py": "from config.settings.base import *  # noqa: F403\n",
+    }
+    two_routers = 'from ninja import Router\n\npublic = Router()\nprivate = Router()\n\n\n@public.get("/item", response={200: dict})\ndef item(request):\n    return {}\n\n\n@private.get("/item", response={200: dict})\ndef item(request):  # noqa: F811\n    return {}\n'
+    success_extra = '{"responses": {200: {"headers": {"Retry-After": {"schema": {"type": "integer"}}}}}}'
+    return [
+        # c — 경로 앞 응답 꼴이 서지 않으면 operation 마다(모든 프로필). 2.36.0: auto exit 0(놓침).
+        Case("pre-route-c-plain-api-auto", with_files(("config/api.py", PLAIN_API), base=base), openapi, auto, 2, "operation `router.get_lesson` 의 경로 앞 오류", note="2.36.0 exit 0"),
+        Case("pre-route-c-no-canonical-auto", with_files(("framework/ninja/pre_route_responses.py", "<REMOVE>"), base=base), openapi, auto, 2, "`framework/ninja/pre_route_responses.py` 없음", note="2.36.0 exit 0"),
+        Case("pre-route-c-no-table-auto", with_files(("framework/ninja/pre_route_response_table.py", "<REMOVE>"), base=base), openapi, auto, 2, "`framework/ninja/pre_route_response_table.py` 없음", note="2.36.0 exit 0"),
+        Case("pre-route-c-plain-api-code", with_files(("config/api.py", PLAIN_API), base=base), openapi, openapi_args(), 2, "경로 앞 오류(인증", note="2.36.0 exit 0"),
+        Case("pre-route-c-route-text", with_files(("config/api.py", PLAIN_API), base=routed), openapi, auto, 2, "`router.get_lesson`(`GET /api/lessons/{lesson_id}`)", note="2.36.0 exit 0"),
+        Case("pre-route-c-each-operation", with_files(("config/api.py", PLAIN_API), ("application/lesson/driving_layer/controller.py", two_ops), base=base), openapi, auto, 2, "operation `router.list_lessons` 의 경로 앞 오류", note="2.36.0 exit 0"),
+        Case("pre-route-c-second-root-api-not-documented", with_files(("config/api.py", second_api), base=base), openapi, auto, 2, "`config/api.py` 의 루트 API 가 정해진 클래스로 지어지지 않았다", note="2.36.0 exit 0"),
+        Case("pre-route-clean-documented-auto", base, openapi, auto, 0, "", note="2.36.0 exit 0 — 대조군"),
+        Case("pre-route-clean-documented-routed-auto", routed, openapi, auto, 0, "", note="2.36.0 exit 0 — 대조군"),
+        # a — 루트 API 레인(모든 프로필). 정해진 꼴은 받고 그 밖 재정의 · monkeypatch · 후처리는 위반.
+        Case("pre-route-a-documented-class-code-clean", base, openapi, openapi_args(), 0, "", note="2.36.0 exit 2 openapi-override(붉음) → 녹색"),
+        Case("pre-route-a-documented-class-docstring-clean", with_files(("config/api.py", docstring_class), base=base), openapi, auto, 0, ""),
+        Case("pre-route-a-other-override-auto", with_files(("config/api.py", other_override), base=base), openapi, auto, 2, "재정의가 정해진 꼴이 아니다", note="2.36.0 auto exit 0(놓침)"),
+        Case("pre-route-a-other-override-code", with_files(("config/api.py", other_override), base=base), openapi, openapi_args(), 2, "get_openapi_schema override", note="2.36.0 exit 2"),
+        Case("pre-route-a-signature-differs-auto", with_files(("config/api.py", signature_differs), base=base), openapi, auto, 2, "재정의가 정해진 꼴이 아니다", note="2.36.0 auto exit 0"),
+        Case("pre-route-a-monkeypatch-auto", with_files(("config/api.py", monkeypatched), base=base), openapi, auto, 2, "monkeypatch", note="2.36.0 auto exit 0"),
+        Case("pre-route-a-postprocess-auto", with_files(("config/api.py", postprocessed), base=base), openapi, auto, 2, "직접 호출 · 후처리", note="2.36.0 auto exit 0"),
+        Case("pre-route-a-postprocess-code", with_files(("config/api.py", postprocessed), base=base), openapi, openapi_args(), 2, "openapi-postprocess", note="2.36.0 exit 2"),
+        Case("pre-route-a-second-class-not-documented", with_files(("config/api.py", second_class), base=base), openapi, auto, 2, "정해진 클래스로 지어지지 않았다"),
+        # b — 정본 파일 AST 대조(import 집합 · `__future__` 뺌 · 모듈 docstring 뺌 · 정의 차례) · 표 정적 검증.
+        Case("pre-route-b-canonical-edited", with_files(("framework/ninja/pre_route_responses.py", canonical_edit), base=base), openapi, auto, 2, "플러그인 정본과 글자 그대로가 아니다", note="2.36.0 exit 0"),
+        Case("pre-route-b-canonical-extra-definition", with_files(("framework/ninja/pre_route_responses.py", canonical_extra), base=base), openapi, auto, 2, "`LOCAL_FLAG`"),
+        Case("pre-route-b-canonical-import-order-clean", with_files(("framework/ninja/pre_route_responses.py", canonical_import_order), base=base), openapi, auto, 0, ""),
+        Case("pre-route-b-canonical-future-import-clean", with_files(("framework/ninja/pre_route_responses.py", canonical_future), base=base), openapi, auto, 0, ""),
+        Case("pre-route-b-canonical-docstring-clean", with_files(("framework/ninja/pre_route_responses.py", canonical_docstring), base=base), openapi, auto, 0, ""),
+        Case("pre-route-b-table-unknown-key", with_files(("framework/ninja/pre_route_response_table.py", table_with('"when": "all",\n        "namespaces"', '"when": "all",\n        "namespace": ("api",),\n        "namespaces"')), base=base), openapi, auto, 2, "모르는 칸 `namespace`", note="2.36.0 exit 0"),
+        Case("pre-route-b-table-status-range", with_files(("framework/ninja/pre_route_response_table.py", table_with('"status": 503', '"status": 200')), base=base), openapi, auto, 2, "`status` 200 — 400–599 밖"),
+        Case("pre-route-b-table-when", with_files(("framework/ninja/pre_route_response_table.py", table_with('"when": "all"', '"when": "always"')), base=base), openapi, auto, 2, "`when` 은"),
+        Case("pre-route-b-table-method-case", with_files(("framework/ninja/pre_route_response_table.py", row('    {"status": 403, "when": "all", "methods": ("post",), "description": "x", "media_type": "text/html"},\n')), base=base), openapi, auto, 2, "대문자 HTTP 메서드만"),
+        Case("pre-route-b-table-empty-tuple", with_files(("framework/ninja/pre_route_response_table.py", row('    {"status": 403, "when": "all", "methods": (), "description": "x", "media_type": "text/html"},\n')), base=base), openapi, auto, 2, "`methods` 빈 튜플"),
+        Case("pre-route-b-table-namespace-typo", with_files(("framework/ninja/pre_route_response_table.py", table_with('"namespaces": ("api",)', '"namespaces": ("apii",)')), base=base), openapi, auto, 2, "`namespaces` 의 `apii` 가 루트 API `urls_namespace=` 글자 안이 아니다"),
+        Case("pre-route-b-table-operation-shape", with_files(("framework/ninja/pre_route_response_table.py", row('    {"status": 406, "when": "all", "namespaces": ("api",), "operations": ("get /api/lessons",), "description": "x", "media_type": "text/html"},\n')), base=base), openapi, auto, 2, "`METHOD /경로` 꼴"),
+        Case("pre-route-b-table-operation-needs-namespace", with_files(("framework/ninja/pre_route_response_table.py", row('    {"status": 406, "when": "all", "operations": ("GET /api/lessons/{lesson_id}",), "description": "x", "media_type": "text/html"},\n')), base=base), openapi, auto, 2, "`operations` 행은 `namespaces` 하나가 필수"),
+        Case("pre-route-b-table-operation-clean", with_files(("framework/ninja/pre_route_response_table.py", row('    {"status": 406, "when": "all", "namespaces": ("api",), "operations": ("GET /api/lessons/{lesson_id}",), "description": "x", "media_type": "text/html"},\n')), base=base), openapi, auto, 0, ""),
+        Case("pre-route-b-table-body-not-schema", with_files(("framework/ninja/pre_route_response_table.py", table_with('"body": ServiceMaintenanceOut', '"body": dict')), base=base), openapi, auto, 2, "`body` 는 같은 파일 Schema 이름"),
+        Case("pre-route-b-table-not-literal", with_files(("framework/ninja/pre_route_response_table.py", table_with('"description": "점검 중"', '"description": DESCRIPTION').replace("PRE_ROUTE_RESPONSES:", 'DESCRIPTION: str = "점검 중"\n\nPRE_ROUTE_RESPONSES:', 1)), base=base), openapi, auto, 2, "`DESCRIPTION`"),
+        Case("pre-route-b-table-missing-name", with_files(("framework/ninja/pre_route_response_table.py", table.replace("NOT_API_MIDDLEWARE: tuple[str, ...] = ()\n", "")), base=base), openapi, auto, 2, "`NOT_API_MIDDLEWARE` 이 없다"),
+        Case("pre-route-b-table-not-api-dotted", with_files(("framework/ninja/pre_route_response_table.py", table.replace("NOT_API_MIDDLEWARE: tuple[str, ...] = ()", 'NOT_API_MIDDLEWARE: tuple[str, ...] = ("transient",)')), base=base), openapi, auto, 2, "점 경로 글자 튜플"),
+        Case("pre-route-b-table-exempt-setting-missing", with_files(("framework/ninja/pre_route_response_table.py", table_with('"namespaces": ("api",),', '"namespaces": ("api",),\n        "exempt": (None, "MAINTENANCE_MODE_EXEMPT_PATHS"),')), base=mw), openapi, auto, 2, "`MAINTENANCE_MODE_EXEMPT_PATHS` 가 settings 에 없다"),
+        Case("pre-route-b-table-handler400-json-default", with_files(("config/urls.py", urls_handler), ("config/settings.py", PRE_ROUTE_SETTINGS), ("config/errors.py", json_handler), base=routed), openapi, auto, 2, "`handler400` 이 JSON 으로 답한다", note="3차 I3 — JSON 처리기일 때만 위반"),
+        Case("pre-route-b-table-handler400-html-candidate", with_files(("config/urls.py", urls_handler), ("config/settings.py", PRE_ROUTE_SETTINGS), ("config/errors.py", html_handler), base=routed), openapi, auto, 0, "[ⓓ#63] framework/ninja/pre_route_response_table.py:24: `BAD_REQUEST_RESPONSE` 이 기본값(`text/html`)인데 루트 URLconf 에 `handler400` 이 있다", note="3차 I3 — 1차 판 exit 2(참인 값을 막음)"),
+        Case("pre-route-b-table-handler400-unread-candidate", with_files(("config/urls.py", urls_handler), ("config/settings.py", PRE_ROUTE_SETTINGS), base=routed), openapi, auto, 0, "그 처리기가 그리는 Django 상한 400 의 꼴이 `text/html` 인가", note="3차 I3 — 처리기를 못 읽으면 후보"),
+        Case("pre-route-b-table-handler400-json-clean", with_files(("config/urls.py", urls_handler), ("config/settings.py", PRE_ROUTE_SETTINGS), ("framework/ninja/pre_route_response_table.py", json_bad_request), base=routed), openapi, auto, 0, ""),
+        # d — settings MIDDLEWARE(모든 모듈의 합)의 프로젝트 미들웨어 답 ↔ 표 행(표가 있을 때만).
+        Case("pre-route-d-clean-row-and-header", mw, openapi, auto, 0, "", note="대조군"),
+        Case("pre-route-d-status-missing", with_files(("framework/ninja/pre_route_response_table.py", no_503), base=mw), openapi, auto, 2, "`framework.django.maintenance_middleware.MaintenanceMiddleware` 가 내는 503 응답이 경로 앞 응답 표에 없다", note="2.36.0 exit 0"),
+        Case("pre-route-d-operations-row-candidate", with_files(("framework/ninja/pre_route_response_table.py", ops_503), base=mw), openapi, auto, 0, "가 내는 503 응답 — 표의 같은 status 행이 좁힌 행(표 11행)뿐이다", note="3차 I5 — 좁힌 행뿐이면 exit 불산입 후보(1차 판 exit 0 · 후보 없음)"),
+        Case("pre-route-d-header-missing", with_files(("framework/ninja/pre_route_response_table.py", no_header), base=mw), openapi, auto, 2, "머리 `service-maintenance-ends-at` 가 그 표 행 `headers` 에 없다"),
+        Case("pre-route-d-not-api-middleware-clean", with_files(("framework/ninja/pre_route_response_table.py", no_503.replace("NOT_API_MIDDLEWARE: tuple[str, ...] = ()", 'NOT_API_MIDDLEWARE: tuple[str, ...] = ("framework.django.maintenance_middleware.MaintenanceMiddleware",)')), base=mw), openapi, auto, 0, ""),
+        Case("pre-route-d-raise-permission-denied", with_files(("framework/django/maintenance_middleware.py", mw_raise), base=mw), openapi, auto, 2, "가 내는 403 응답이 경로 앞 응답 표에 없다"),
+        Case("pre-route-d-factory-status-code", with_files(("framework/django/maintenance_middleware.py", mw_factory), ("framework/ninja/pre_route_response_table.py", no_503), base=mw), openapi, auto, 2, "가 내는 503 응답이 경로 앞 응답 표에 없다"),
+        Case("pre-route-d-render-header-missing", with_files(("framework/django/maintenance_middleware.py", mw_render), base=mw), openapi, auto, 2, "머리 `retry-after` 가 그 표 행 `headers` 에 없다"),
+        Case("pre-route-d-settings-split-append", with_files(("framework/ninja/pre_route_response_table.py", no_503), base=mw_split), openapi, auto, 2, "가 내는 503 응답이 경로 앞 응답 표에 없다"),
+        Case("pre-route-d-unread-status-candidate", with_files(("framework/django/maintenance_middleware.py", mw_status_var), ("framework/django/codes.py", "MAINTENANCE_STATUS: int = 503\n"), base=mw), openapi, auto, 0, "[ⓓ#63] framework/django/maintenance_middleware.py"),
+        Case("pre-route-d-no-table-skipped", with_files(("framework/ninja/pre_route_response_table.py", "<REMOVE>"), base=mw), openapi, auto, 2, "`framework/ninja/pre_route_response_table.py` 없음"),
+        # e — `openapi_extra` 머리 보충(code · tree · repo scan): 정수 키 · 선언된 status · 오류 status 는 headers 만.
+        Case("pre-route-e-error-header-supplement-code-clean", with_files(("application/lesson/driving_layer/controller.py", header_controller(error_extra)), base=base), openapi, openapi_args(), 0, "", note="2.36.0 exit 2 openapi_extra(붉음) → 녹색"),
+        Case("pre-route-e-error-header-supplement-auto-clean", with_files(("application/lesson/driving_layer/controller.py", header_controller(error_extra)), base=base), openapi, auto, 0, "", note="2.36.0 exit 2 → 녹색"),
+        Case("pre-route-e-digit-string-success-key", with_files(("application/lesson/driving_layer/controller.py", header_controller('{"responses": {"200": {"description": "ok"}}}')), base=base), openapi, auto, 2, '숫자 문자열 키 "200"', note="2.36.0 exit 0(놓침) → 붉음"),
+        Case("pre-route-e-digit-string-success-key-code", with_files(("application/lesson/driving_layer/controller.py", header_controller('{"responses": {"200": {"description": "ok"}}}')), base=base), openapi, openapi_args(), 2, "숫자 문자열 키", note="2.36.0 exit 0"),
+        Case("pre-route-e-digit-string-error-key", with_files(("application/lesson/driving_layer/controller.py", header_controller('{"responses": {"409": {"headers": {"Retry-After": {}}}}}')), base=base), openapi, auto, 2, '숫자 문자열 키 "409"'),
+        Case("pre-route-e-variable-key", with_files(("application/lesson/driving_layer/controller.py", header_controller('{"responses": {CONFLICT: {"headers": {"Retry-After": {}}}}}').replace("router = Router()", "CONFLICT: int = 409\nrouter = Router()")), base=base), openapi, auto, 2, "변수 · 표현식 키"),
+        Case("pre-route-e-splat", with_files(("application/lesson/driving_layer/controller.py", header_controller('{"responses": {**EXTRA_RESPONSES}}').replace("router = Router()", "EXTRA_RESPONSES: dict = {}\nrouter = Router()")), base=base), openapi, auto, 2, "`**` 펼침"),
+        Case("pre-route-e-error-status-description", with_files(("application/lesson/driving_layer/controller.py", header_controller('{"responses": {409: {"description": "again", "headers": {}}}}')), base=base), openapi, openapi_args(), 2, "오류 status 409 에는 `headers` 칸 하나만"),
+        Case("pre-route-e-undeclared-status", with_files(("application/lesson/driving_layer/controller.py", header_controller('{"responses": {401: {"headers": {"WWW-Authenticate": {}}}}}')), base=base), openapi, auto, 2, "status 401 — `response=` 에 선언되지 않았다"),
+        # f — 주입 응답 머리 ↔ 그 branch 마지막 Status 의 머리 보충.
+        Case("pre-route-f-header-missing-auto", with_files(("application/lesson/driving_layer/controller.py", header_controller("")), base=base), openapi, auto, 2, "머리 `Retry-After` 가 그 뒤 반환하는 409 의 머리 보충에 없다", note="2.36.0 exit 0(놓침)"),
+        Case("pre-route-f-header-missing-code", with_files(("application/lesson/driving_layer/controller.py", header_controller("")), base=base), openapi, openapi_args(), 2, "머리 `Retry-After`", note="2.36.0 exit 0"),
+        Case("pre-route-f-header-wrong-status", with_files(("application/lesson/driving_layer/controller.py", header_controller(success_extra)), base=base), openapi, auto, 2, "그 뒤 반환하는 409 의 머리 보충에 없다"),
+        Case("pre-route-f-error-status-attribute-code-resolved", with_files(("application/lesson/driving_layer/controller.py", header_controller("", "error.status")), base=base), openapi, openapi_args(), 2, "그 뒤 반환하는 409 의 머리 보충에 없다"),
+        Case("pre-route-f-error-status-attribute-code-clean", with_files(("application/lesson/driving_layer/controller.py", header_controller(error_extra, "error.status")), base=base), openapi, openapi_args(), 0, ""),
+        Case("pre-route-f-error-status-attribute-auto-candidate", with_files(("application/lesson/driving_layer/controller.py", header_controller(error_extra, "error.status")), base=base), openapi, auto, 0, "[ⓓ#63] application/lesson/driving_layer/controller.py"),
+        Case("pre-route-f-outer-header-reaches-error", with_files(("application/lesson/driving_layer/controller.py", header_controller(error_extra).replace("    if lesson_id < 0:", '    response["Cache-Control"] = "no-store"\n    if lesson_id < 0:').replace('    return {"id": lesson_id}', '    return Status(200, {"id": lesson_id})')), base=base), openapi, auto, 2, "머리 `Cache-Control` 가 그 뒤 반환하는 409 의 머리 보충에 없다", note="3차 I4 — 1차 판 exit 0(놓침)"),
+        Case("pre-route-f-header-after-error-branch-clean", with_files(("application/lesson/driving_layer/controller.py", header_controller(error_extra).replace('    return {"id": lesson_id}', '    response["Cache-Control"] = "no-store"\n    return Status(200, {"id": lesson_id})')), base=base), openapi, auto, 0, "", note="대조군 — 오류 branch 뒤에 실은 성공 쪽 머리는 f 밖"),
+        Case("pre-route-f-headers-attribute-candidate", with_files(("application/lesson/driving_layer/controller.py", header_controller(error_extra).replace('response["Retry-After"]', 'response.headers["Retry-After"]')), base=base), openapi, auto, 0, "`.headers[...]`"),
+        # g — code 레인: response= 의 4xx · 5xx 에 직접 반환하지 않는 Schema 는 무엇이든 위반.
+        Case("pre-route-g-dict-401-advertised", with_files(("application/lesson/driving_layer/controller.py", OPENAPI_CONTROLLER.replace("409: LessonConflictError}", "409: LessonConflictError, 401: dict}")), base=base), openapi, openapi_args(), 2, "extra-error-advertisement", note="2.36.0 exit 0(놓침)"),
+        Case("pre-route-g-framework-error-401-advertised", with_files(("application/lesson/driving_layer/controller.py", OPENAPI_CONTROLLER.replace("409: LessonConflictError}", "409: LessonConflictError, 401: AuthenticationError}").replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom ninja.errors import AuthenticationError")), base=base), openapi, openapi_args(), 2, "status 401의 `AuthenticationError`", note="2.36.0 exit 0"),
+        # 3차 — 코드 검토(I1 ~ I5 · S1 ~ S9). note 의 «1차 판» = 3차 고침 전 작업 트리 판.
+        Case("pre-route-d-helper-method", with_files(("framework/django/maintenance_middleware.py", mw_helper), ("framework/ninja/pre_route_response_table.py", no_503), base=mw), openapi, auto, 2, "framework/django/maintenance_middleware.py:14: 미들웨어 `framework.django.maintenance_middleware.MaintenanceMiddleware` 가 내는 503 응답이 경로 앞 응답 표에 없다", note="3차 I1 — 1차 판 exit 0(놓침)"),
+        Case("pre-route-d-module-function", with_files(("framework/django/maintenance_middleware.py", mw_module_function), ("framework/ninja/pre_route_response_table.py", no_503), base=mw), openapi, auto, 2, "maintenance_middleware.py:5: 미들웨어 `framework.django.maintenance_middleware.MaintenanceMiddleware` 가 내는 503", note="3차 I1 — 1차 판 exit 0"),
+        Case("pre-route-d-inherited-hook", with_files(("framework/django/maintenance_middleware.py", mw_inherited), ("framework/ninja/pre_route_response_table.py", no_503), base=mw), openapi, auto, 2, "maintenance_middleware.py:9: 미들웨어 `framework.django.maintenance_middleware.MaintenanceMiddleware` 가 내는 503", note="3차 I1 — 1차 판 exit 0"),
+        Case("pre-route-d-helper-method-clean", with_files(("framework/django/maintenance_middleware.py", mw_helper), base=mw), openapi, auto, 0, "", note="대조군 — 503 행이 있다"),
+        Case("pre-route-d-unread-hook-return-candidate", with_files(("framework/django/maintenance_middleware.py", mw_unread_return), ("framework/django/responses.py", "def build_closed_response(request):\n    raise NotImplementedError\n"), base=mw), openapi, auto, 0, "이 hook 이 돌려주는 응답의 status 를 읽지 못했다", note="3차 I1 — 못 따라가면 후보"),
+        Case("pre-route-d-methods-row-candidate", with_files(("framework/ninja/pre_route_response_table.py", methods_503), base=mw), openapi, auto, 0, "가 내는 503 응답 — 표의 같은 status 행이 좁힌 행(표 11행)뿐이다", note="3차 I5 — 1차 판 exit 0 · 후보 없음"),
+        Case("pre-route-d-namespace-row-not-all-roots-candidate", with_files(("config/api.py", two_roots), base=mw), openapi, auto, 0, "가 내는 503 응답 — 표의 같은 status 행이 좁힌 행", note="3차 I5 — 루트 API 이름공간 둘 가운데 하나만 덮는 행"),
+        Case("pre-route-d-settings-star", with_files(("config/settings.py", settings_star), ("framework/ninja/pre_route_response_table.py", no_503), base=mw), openapi, auto, 2, "가 내는 503 응답이 경로 앞 응답 표에 없다", note="3차 S8 — 1차 판 exit 0"),
+        Case("pre-route-d-settings-name-plus", with_files(("config/settings.py", settings_plus), ("framework/ninja/pre_route_response_table.py", no_503), base=mw), openapi, auto, 2, "가 내는 503 응답이 경로 앞 응답 표에 없다", note="3차 S8 — 1차 판 exit 0"),
+        Case("pre-route-d-settings-unread-candidate", with_files(("config/settings.py", settings_unread), base=mw), openapi, auto, 0, "[ⓓ#63] config/settings.py:1: settings `MIDDLEWARE` 의 조각을 글자 · 목록 상수로 풀지 못했다", note="3차 S8"),
+        Case("pre-route-b-exempt-setting-only-in-one-entry", with_files(("config/settings.py", "<REMOVE>"), *exempt_base.items(), ("config/settings/local.py", "from config.settings.base import *  # noqa: F403\n"), ("framework/ninja/pre_route_response_table.py", exempt_table), base=mw), openapi, auto, 2, "`MAINTENANCE_MODE_EXEMPT_PATHS` 가 settings 에 없다(목록은 모든 settings 진입", note="3차 S9 · 5차 S5 — 진입 둘(production · local) 가운데 하나에만 · 1차 판 exit 0"),
+        Case("pre-route-b-exempt-setting-single-entry-clean", with_files(("config/settings.py", "<REMOVE>"), *exempt_base.items(), ("framework/ninja/pre_route_response_table.py", exempt_table), base=mw), openapi, auto, 0, "", note="5차 S5 대조군 — 진입이 production 하나면 그 닫힘(4차 판 exit 2)"),
+        Case("pre-route-b-exempt-setting-in-base-clean", with_files(("config/settings.py", "<REMOVE>"), *exempt_in_base.items(), ("framework/ninja/pre_route_response_table.py", exempt_table), base=mw), openapi, auto, 0, "", note="대조군"),
+        Case("pre-route-c-second-module-imports-documented-clean", with_files(("config/internal_api.py", internal_imports), base=base), openapi, auto, 0, "", note="3차 I2 — 1차 판 exit 2(c 가 operation 마다)"),
+        Case("pre-route-c-second-module-plain-api", with_files(("config/internal_api.py", internal_plain), base=base), openapi, auto, 2, "`config/internal_api.py` 의 루트 API 가 정해진 클래스로 지어지지 않았다", note="대조군"),
+        Case("pre-route-a-redefined-after-construct", with_files(("config/api.py", redefined_after), base=base), openapi, auto, 2, "`config/api.py` 의 루트 API 가 정해진 클래스로 지어지지 않았다", note="3차 S3 — 1차 판 exit 0"),
+        Case("pre-route-a-class-level-patch", with_files(("config/api.py", class_patch), base=base), openapi, auto, 2, "루트 API 의 `get_openapi_schema` monkeypatch", note="3차 S2 — 1차 판 exit 0"),
+        Case("pre-route-a-base-level-patch-code", with_files(("config/api.py", base_patch), base=base), openapi, openapi_args(), 2, "루트 API 의 `get_openapi_schema` monkeypatch", note="3차 S2 — 1차 판 · 2.36.0 exit 0"),
+        Case("pre-route-c-root-api-not-found", with_files(("config/api.py", factory_api), base=base), openapi, auto, 2, "루트 API(`NinjaAPI` · `NinjaExtraAPI` 또는 그 정해진 클래스로 짓는 모듈 이름)를 찾지 못했다", note="3차 S1 — 1차 판 exit 0"),
+        Case("pre-route-c-same-name-functions-distinct", with_files(("config/api.py", PLAIN_API), ("application/lesson/driving_layer/controller.py", two_routers), base=base), openapi, auto, 2, "operation `private.item` 의 경로 앞 오류", note="3차 S7 — 1차 판 두 줄이 `:N` 정규화 뒤 같은 글"),
+        Case("pre-route-e-module-constant-string-key", with_files(("application/lesson/driving_layer/controller.py", extra_const('{"responses": {"409": ' + header_409 + '}}')), base=base), openapi, auto, 2, '숫자 문자열 키 "409"', note="3차 S4 — 1차 판 · 2.36.0 exit 0"),
+        Case("pre-route-e-module-constant-string-key-code", with_files(("application/lesson/driving_layer/controller.py", extra_const('{"responses": {"409": ' + header_409 + '}}')), base=base), openapi, openapi_args(), 2, '숫자 문자열 키 "409"', note="3차 S4 — 1차 판 · 2.36.0 exit 0"),
+        Case("pre-route-e-module-constant-clean", with_files(("application/lesson/driving_layer/controller.py", extra_const('{"responses": {409: ' + header_409 + '}}')), base=base), openapi, auto, 0, "", note="대조군 — 같은 모듈 글자 Dict 상수는 풀어 같은 판정"),
+        Case("pre-route-e-not-literal", with_files(("application/lesson/driving_layer/controller.py", header_controller("build_extra()").replace("router = Router()\n", "router = Router()\n\n\ndef build_extra():\n    return {}\n")), base=base), openapi, auto, 2, "`openapi_extra` 가 글자 Dict 가 아니다", note="3차 S4"),
+        Case("pre-route-f-try-body-header-reaches-except", with_files(("application/lesson/driving_layer/controller.py", try_header), base=base), openapi, auto, 2, "머리 `Cache-Control` 가 그 뒤 반환하는 409 의 머리 보충에 없다", note="3차 I4 — 1차 판 exit 0"),
+        # 4차 — 구현 둘째 확인(N1 ~ N3 · M1 ~ M6). note 의 «3차 판» = 4차 고침 전 판.
+        Case("pre-route-f-try-success-header-not-to-except", with_files(("application/lesson/driving_layer/controller.py", try_success_header), base=base), openapi, auto, 0, "", note="4차 N1 — 3차 판 exit 2(실리지 않는 Location 을 409 에 물림)"),
+        Case("pre-route-f-try-last-header-not-to-except", with_files(("application/lesson/driving_layer/controller.py", try_last_header), base=base), openapi, auto, 0, "", note="4차 N1 — 3차 판 exit 2"),
+        Case("pre-route-f-inner-header-escapes-to-outer-error", with_files(("application/lesson/driving_layer/controller.py", inner_then_outer), base=base), openapi, auto, 0, "머리 `Retry-After` — 앞 블록에서 실릴 수 있는 머리가 그 뒤 반환하는 409 에 실리는지 기계가 가르지 못했다", note="4차 M3 · 5차 원칙 — 흐름에 따라 실리는 머리는 ⓓ(3차 판 놓침 · 4차 판 위반)"),
+        Case("pre-route-f-inner-returning-header-stays", with_files(("application/lesson/driving_layer/controller.py", inner_returns_then_outer), base=base), openapi, auto, 0, "", note="대조군 — return 으로 끝나는 안쪽 블록의 머리는 뒤로 새지 않는다"),
+        Case("pre-route-f-headers-module-constant-missing", with_files(("application/lesson/driving_layer/controller.py", headers_const_missing), base=base), openapi, auto, 2, "머리 `Retry-After` 가 그 뒤 반환하는 409 의 머리 보충에 없다", note="4차 M4 ② — 3차 판 exit 0(ⓓ 뿐)"),
+        Case("pre-route-f-headers-module-constant-clean", with_files(("application/lesson/driving_layer/controller.py", headers_const), base=base), openapi, auto, 0, "", note="대조군"),
+        Case("pre-route-d-helper-assigned-then-returned", with_files(("framework/django/maintenance_middleware.py", mw_helper_assigned), ("framework/ninja/pre_route_response_table.py", no_503), base=mw), openapi, auto, 2, "maintenance_middleware.py:15: 미들웨어 `framework.django.maintenance_middleware.MaintenanceMiddleware` 가 내는 503", note="4차 N2 — 3차 판 exit 0"),
+        Case("pre-route-d-helper-raises", with_files(("framework/django/maintenance_middleware.py", mw_helper_raises), base=mw), openapi, auto, 2, "가 내는 403 응답이 경로 앞 응답 표에 없다", note="4차 N2 — 3차 판 exit 0"),
+        Case("pre-route-d-helper-in-conditional-return", with_files(("framework/django/maintenance_middleware.py", mw_helper_ifexp), ("framework/ninja/pre_route_response_table.py", no_503), base=mw), openapi, auto, 2, "가 내는 503 응답이 경로 앞 응답 표에 없다", note="4차 N2 — 3차 판 exit 0"),
+        Case("pre-route-d-function-assigned-header", with_files(("framework/django/maintenance_middleware.py", mw_function_header), ("framework/ninja/pre_route_response_table.py", no_503), base=mw), openapi, auto, 2, "maintenance_middleware.py:5: 미들웨어 `framework.django.maintenance_middleware.MaintenanceMiddleware` 가 내는 503", note="4차 N2 — 3차 판 exit 0"),
+        Case("pre-route-d-when-auth-row-candidate", with_files(("framework/ninja/pre_route_response_table.py", when_503("auth")), base=mw), openapi, auto, 0, "가 내는 503 응답 — 표의 같은 status 행이 좁힌 행(표 11행)뿐이다", note="4차 N3 — 3차 판 후보 없음"),
+        Case("pre-route-d-when-body-row-candidate", with_files(("framework/ninja/pre_route_response_table.py", when_503("body")), base=mw), openapi, auto, 0, "가 내는 503 응답 — 표의 같은 status 행이 좁힌 행(표 11행)뿐이다", note="4차 N3"),
+        Case("pre-route-d-when-input-row-candidate", with_files(("framework/ninja/pre_route_response_table.py", when_503("input")), base=mw), openapi, auto, 0, "가 내는 503 응답 — 표의 같은 status 행이 좁힌 행(표 11행)뿐이다", note="4차 N3"),
+        Case("pre-route-d-unreadable-root-namespace-candidate", with_files(("config/internal_api.py", internal_constant_ns), base=mw), openapi, auto, 0, "가 내는 503 응답 — 표의 같은 status 행이 좁힌 행", note="4차 M1 — 3차 판 후보 없음"),
+        Case("pre-route-c-xmodule-passthrough-subclass-clean", with_files(("config/internal_api.py", internal_subclass), base=base), openapi, auto, 0, "", note="4차 M2 — 정해진 클래스를 몸통 없이 물려받은 루트는 정해진 꼴"),
+        Case("pre-route-a-xmodule-subclass-instance-patch", with_files(("config/internal_api.py", internal_subclass + "internal_api.get_openapi_schema = lambda **kwargs: {}\n"), base=base), openapi, auto, 2, "루트 API 의 `get_openapi_schema` monkeypatch", note="4차 M2 — 3차 판 exit 0"),
+        Case("pre-route-a-xmodule-subclass-class-patch", with_files(("config/internal_api.py", internal_subclass + "InternalAPI.get_openapi_schema = lambda self, **kwargs: {}\n"), base=base), openapi, auto, 2, "루트 API 의 `get_openapi_schema` monkeypatch", note="4차 M2 — 3차 판 exit 0"),
+        Case("pre-route-a-xmodule-subclass-override", with_files(("config/internal_api.py", internal_subclass_override), base=base), openapi, auto, 2, "루트 API 클래스 `InternalAPI` 의 `get_openapi_schema` 재정의가 정해진 꼴이 아니다", note="대조군 — 재정의하는 하위 클래스는 꼴 밖"),
+        Case("pre-route-b-xmodule-subclass-namespace-row", with_files(("config/internal_api.py", internal_subclass), ("framework/ninja/pre_route_response_table.py", table_with('"namespaces": ("api",)', '"namespaces": ("api", "internal")')), base=base), openapi, auto, 0, "", note="4차 M2 — 3차 판 exit 2(«글자 안이 아니다»)"),
+        Case("pre-route-c-only-root-xmodule-subclass", with_files(("framework/ninja/documented_api.py", documented_module), ("config/api.py", api_subclass_only), base=base), openapi, auto, 0, "", note="4차 M2 — 3차 판 exit 2(«루트 API 를 찾지 못했다»)"),
+        Case("pre-route-b-bad-request-json-no-handler", with_files(("config/settings.py", PRE_ROUTE_SETTINGS), ("framework/ninja/pre_route_response_table.py", json_bad_request_table), base=routed), openapi, auto, 2, "기본값(`text/html`)이 아닌데 루트 URLconf 에 `handler400` 이 없다", note="4차 M5 — 3차 판 exit 0"),
+        Case("pre-route-b-bad-request-json-no-urlconf-candidate", with_files(("config/settings.py", PRE_ROUTE_SETTINGS), ("framework/ninja/pre_route_response_table.py", json_bad_request_table), base=base), openapi, auto, 0, "`BAD_REQUEST_RESPONSE` 이 기본값이 아닌데 루트 URLconf 의 `handler400` 이 그리는 꼴을 가르지 못했다", note="5차 S4 — URLconf 모듈 없음 = 못 읽음(4차 판 exit 2)"),
+        Case("pre-route-b-bad-request-json-html-handler", with_files(("config/urls.py", urls_handler), ("config/settings.py", PRE_ROUTE_SETTINGS), ("config/errors.py", html_handler), ("framework/ninja/pre_route_response_table.py", json_bad_request_table), base=routed), openapi, auto, 2, "`handler400` 이 HTML 로 그린다", note="4차 M5 — 3차 판 exit 0"),
+        Case("pre-route-b-bad-request-json-unread-handler-candidate", with_files(("config/urls.py", urls_handler), ("config/settings.py", PRE_ROUTE_SETTINGS), ("framework/ninja/pre_route_response_table.py", json_bad_request_table), base=routed), openapi, auto, 0, "그 처리기가 그리는 Django 상한 400 의 꼴이 표에 적은 꼴인가", note="4차 M5"),
+        Case("pre-route-b-exempt-setting-only-in-chain-middle", with_files(("config/settings.py", "<REMOVE>"), *exempt_chain.items(), ("framework/ninja/pre_route_response_table.py", exempt_table), base=mw), openapi, auto, 2, "`MAINTENANCE_MODE_EXEMPT_PATHS` 가 settings 에 없다", note="4차 M6 — 3차 판 exit 0"),
+        # 5차 — 셋째 확인(R1 ~ R4 · S1 ~ S5). note 의 «4차 판» = 5차 고침 전 판.
+        Case("pre-route-f-try-header-then-return-call", with_files(("application/lesson/driving_layer/controller.py", r5_return_call), base=base), openapi, auto, 2, "머리 `Cache-Control` 가 그 뒤 반환하는 409 의 머리 보충에 없다", note="5차 R1 — 4차 판 exit 0"),
+        Case("pre-route-f-try-loop-header", with_files(("application/lesson/driving_layer/controller.py", r5_loop), base=base), openapi, auto, 2, "머리 `X-Last-Item` 가 그 뒤 반환하는 409 의 머리 보충에 없다", note="5차 R1 — 4차 판 exit 0"),
+        Case("pre-route-f-block-ends-in-if-else", with_files(("application/lesson/driving_layer/controller.py", r5_ifelse), base=base), openapi, auto, 0, "", note="5차 R2 — 4차 판 exit 2(오탐)"),
+        Case("pre-route-f-block-ends-in-with", with_files(("application/lesson/driving_layer/controller.py", r5_with), base=base), openapi, auto, 0, "", note="5차 R2 — 4차 판 exit 2"),
+        Case("pre-route-f-block-ends-in-match", with_files(("application/lesson/driving_layer/controller.py", r5_match), base=base), openapi, auto, 0, "", note="5차 R2 — 4차 판 exit 2"),
+        Case("pre-route-f-block-ends-in-try-inner-409", with_files(("application/lesson/driving_layer/controller.py", r5_try_ends), base=base), openapi, auto, 2, "머리 `ETag` 가 그 뒤 반환하는 409 의 머리 보충에 없다", note="5차 R2 — 안쪽 409 는 참 · 뒤 404 줄은 없다"),
+        Case("pre-route-f-exclusive-conditions-candidate", with_files(("application/lesson/driving_layer/controller.py", r5_exclusive), base=base), openapi, auto, 0, "머리 `ETag` — 앞 블록에서 실릴 수 있는 머리가 그 뒤 반환하는 404 에 실리는지 기계가 가르지 못했다", note="5차 원칙 — 4차 판 exit 2"),
+        Case("pre-route-f-except-falls-candidate", with_files(("application/lesson/driving_layer/controller.py", r5_except_falls), base=base), openapi, auto, 0, "머리 `Retry-After` — 앞 블록에서 실릴 수 있는 머리가 그 뒤 반환하는 409 에", note="5차 S3 — 4차 판 놓침(후보 없음)"),
+        Case("pre-route-d-imported-helper-assigned-candidate", with_files(("framework/django/maintenance_middleware.py", r5_imported_assigned), ("framework/http/error_responses.py", r5_shared), ("framework/ninja/pre_route_response_table.py", no_503), base=mw), openapi, auto, 0, "이 hook 이 돌려주는 응답의 status 를 읽지 못했다", note="5차 R4 — 4차 판 후보 없음"),
+        Case("pre-route-d-two-level-assigned-candidate", with_files(("framework/django/maintenance_middleware.py", r5_two_level), ("framework/ninja/pre_route_response_table.py", no_503), base=mw), openapi, auto, 0, "maintenance_middleware.py:14: 미들웨어 `framework.django.maintenance_middleware.MaintenanceMiddleware` — 이 hook 이 돌려주는", note="5차 R4 — 4차 판 후보 없음"),
+        Case("pre-route-d-predicate-helper-clean", with_files(("framework/django/maintenance_middleware.py", r5_predicate), base=mw), openapi, auto, 0, "", note="5차 S1 대조군 — 응답 아닌 값의 도움(4차 판 ⓓ 소음)"),
+        Case("pre-route-d-hook-header-on-helper-answer", with_files(("framework/django/maintenance_middleware.py", r5_hook_header), base=mw), openapi, auto, 2, "가 503 에 싣는 머리 `retry-after` 가 그 표 행 `headers` 에 없다", note="5차 S2 — 4차 판 exit 0"),
+        Case("pre-route-d-narrowed-row-header-missing", with_files(("framework/django/maintenance_middleware.py", r5_auth_mw), ("framework/ninja/pre_route_response_table.py", when_503("auth")), base=mw), openapi, auto, 2, "가 503 에 싣는 머리 `retry-after` 가 그 표 행 `headers` 에 없다", note="5차 R3 — 4차 판 exit 0(ⓓ 뿐)"),
+        Case("pre-route-b-handler400-import-alias-json-clean", with_files(("config/urls.py", r5_urls_alias), ("config/settings.py", PRE_ROUTE_SETTINGS), ("config/errors.py", json_handler), ("framework/ninja/pre_route_response_table.py", json_bad_request_table), base=routed), openapi, auto, 0, "", note="5차 S4 — 4차 판 exit 2(«없다»)"),
+        Case("pre-route-b-handler400-content-type-json-clean", with_files(("config/urls.py", urls_handler), ("config/settings.py", PRE_ROUTE_SETTINGS), ("config/errors.py", r5_content_type), ("framework/ninja/pre_route_response_table.py", json_bad_request_table), base=routed), openapi, auto, 0, "", note="5차 S4 — 4차 판 exit 2(«HTML»)"),
+        Case("pre-route-b-root-urlconf-not-literal-candidate", with_files(("config/urls.py", urls_handler), ("config/settings.py", r5_settings_env), ("config/errors.py", json_handler), ("framework/ninja/pre_route_response_table.py", json_bad_request_table), base=routed), openapi, auto, 0, "그 처리기가 그리는 Django 상한 400 의 꼴이 표에 적은 꼴인가", note="5차 S4 — 4차 판 exit 2"),
+        Case("pre-route-b-exempt-base-star-imports-component", with_files(("config/settings.py", "<REMOVE>"), *r5_component.items(), ("framework/ninja/pre_route_response_table.py", exempt_table), base=mw), openapi, auto, 0, "", note="5차 S5 — 4차 판 exit 2"),
+        Case("pre-route-b-exempt-base-tail-override", with_files(("config/settings.py", "<REMOVE>"), *r5_tail_override.items(), ("framework/ninja/pre_route_response_table.py", exempt_table), base=mw), openapi, auto, 0, "", note="5차 S5 — 4차 판 exit 2"),
     ]
 
 
@@ -7073,7 +7652,7 @@ return result""", 1, F496_PREDICATE, "guard · 호출 뒤 다른 이름")
 
     def c5(name: str, module: str, code: int, fragment: str, note: str) -> None:
         source = F496_OPENAPI_HEAD + module
-        cases.append(Case(name, _f496_files(source), openapi, controller_args(), code, fragment, note=note))
+        cases.append(Case(name, {**_f496_files(source), **PRE_ROUTE_PIECES}, openapi, controller_args(), code, fragment, note=note))
 
     op = F496_OPENAPI_OP
     c5("f496-d1-pep695-alias", "type _E = LessonNotFoundError\n" + op, 0, "", "red-first · `type` 별칭")
@@ -7180,6 +7759,70 @@ def controller_invariant_failures(cases: list[Case]) -> list[str]:
     return failures
 
 
+PRE_ROUTE_TOY_FILES: Final = {
+    **OPENAPI_FILES,
+    "config/settings.py": 'SECRET_KEY: str = "x"\nROOT_URLCONF: str = "config.urls"\nMIDDLEWARE: list[str] = []\n',
+    "config/urls.py": PRE_ROUTE_URLS,
+    "application/lesson/driving_layer/api/api_router.py": PRE_ROUTE_REGISTRAR,
+}
+PRE_ROUTE_OWN_FILES: Final = tuple(PRE_ROUTE_PIECES)
+VIOLATION_LINE: Final = re.compile(r"^\s*\[#(\d+)\] ([^\s:]+)")
+
+
+def pre_route_toy_failures() -> list[str]:
+    """B1(F4-173) — 정본 둘 + 루트 API 클래스 장난감이 27종 positional(auto)에서 #63 · #437 0 이고, 이웃
+    검사기(#415 · #493 · #645 · #647 등)가 그 세 파일에 위반 줄을 내지 않는다(ⓓ 후보는 exit 불산입이라 세지 않는다)."""
+    sys.path.insert(0, str(CHECKER_DIR))
+    from checker_registry import REGISTRY  # noqa: PLC0415 — 검사기 폴더의 로스터 단일 출처
+
+    failures: list[str] = []
+    env = dict(os.environ)
+    env.pop("DJR_FINDINGS_JSON", None)
+    with tempfile.TemporaryDirectory(prefix="dddjango-pre-route-toy-") as directory:
+        root = Path(directory)
+        initialize_git_fixture(root, PRE_ROUTE_TOY_FILES)
+        for name, auto in REGISTRY:
+            command = [sys.executable, str(CHECKER_DIR / name), str(root), *(("--error-profile", "auto") if auto else ())]
+            completed = subprocess.run(command, capture_output=True, text=True, check=False, env=env)
+            if completed.returncode not in {0, 2}:
+                failures.append(f"[pre-route-toy {name}] exit {completed.returncode}\n{completed.stdout}{completed.stderr}")
+                continue
+            for line in completed.stdout.splitlines():
+                match = VIOLATION_LINE.match(line)
+                if match is None:
+                    continue
+                rule, where = match.groups()
+                if rule in {"63", "437"} or where in PRE_ROUTE_OWN_FILES:
+                    failures.append(f"[pre-route-toy {name}] {line.strip()}")
+    return failures
+
+
+def pre_route_identity_failures() -> list[str]:
+    """c 줄은 operation 마다 하나이고 앵커 · registry_gate 의 `:N` 정규화 뒤에도 서로 다르다(설계 4.1 c ·
+    검토 I3) — 문서 밖 operation(`include_in_schema=False`)에는 서지 않는다."""
+    files = with_files(
+        ("config/api.py", PLAIN_API),
+        ("application/lesson/driving_layer/controller.py", PRE_ROUTE_TWO_OPERATIONS),
+        base=OPENAPI_FILES,
+    )
+    env = dict(os.environ)
+    env.pop("DJR_FINDINGS_JSON", None)
+    with tempfile.TemporaryDirectory(prefix="dddjango-pre-route-c-") as directory:
+        root = Path(directory)
+        write_fixture(root, files)
+        completed = subprocess.run(
+            [sys.executable, str(CHECKER_DIR / "check-openapi-error-declaration.py"), str(root), "--error-profile", "auto"],
+            capture_output=True, text=True, check=False, env=env,
+        )
+    lines = [line.strip() for line in completed.stdout.splitlines() if "의 경로 앞 오류(" in line]
+    normalized = {re.sub(r":\d+", ":N", line) for line in lines}
+    names = sorted(re.findall(r"operation `([^`]+)`", "\n".join(lines)))
+    if completed.returncode != 2 or names != ["router.get_lesson", "router.list_lessons"] or len(normalized) != len(lines):
+        return [f"[pre-route-c-identity] operation 마다 다른 c 줄 둘(router.get_lesson · router.list_lessons)이어야 한다 — "
+                f"exit {completed.returncode} · {lines}"]
+    return []
+
+
 def run_case(case: Case) -> tuple[bool, str, int]:
     validate_checker_args(case)
     checker = CHECKER_DIR / case.checker
@@ -7218,6 +7861,7 @@ def main() -> int:
         *openapi_cases(),
         *success_cases(),
         *f496_cases(),
+        *pre_route_cases(),
     ]
     passed = 0
     checker_mismatches = 0
@@ -7236,7 +7880,7 @@ def main() -> int:
         else:
             checker_mismatches += 1
             print(detail)
-    invariant = controller_invariant_failures(cases)
+    invariant = controller_invariant_failures(cases) + pre_route_toy_failures() + pre_route_identity_failures()
     for detail in invariant:
         print(detail)
     print(

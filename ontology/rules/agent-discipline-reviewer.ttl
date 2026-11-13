@@ -1527,16 +1527,22 @@ djr:R-1010 a djr:Obligation ;
     djr:revisionKind djr:revision-redefinition .
 
 djr:R-1011 a djr:Obligation ;
-    skos:prefLabel "mapping tuple·runtime 반환·generated OpenAPI 3자의 완전·동일"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1011@2026-08-22> .
+    skos:prefLabel "mapping tuple·runtime 반환·generated OpenAPI 3자의 완전·동일 · 경로 앞 응답은 정본 글자 그대로·루트 API 클래스 꼴·표 = 승인 행 · 붙는 행마다 행 시험 · G2 의 #63 ⓓ 후보 전부(예: 좁힌 행·못 읽은 미들웨어 답·handler400·주입 응답 머리·머리 보충·흐름 못 가른 머리)는 감수자가 닫음(없으면 important)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1011@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-1011@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1011 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-1011@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-1011 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1011@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-1012 a djr:Prohibition ;
-    skos:prefLabel "framework-owned status(401·403·route 404·422·429·HttpError·500)의 BC 오류 직접 반환·BC 오류 광고 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1012@2026-08-25> .
+    skos:prefLabel "framework-owned status(401·403·route 404·422·429·HttpError·500)의 BC 오류 직접 반환·response= 광고 금지 · 그 가운데 경로 앞 의도된 답만 문서에 경로 앞 응답으로"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1012@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-1012@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1012 ;
@@ -1546,6 +1552,12 @@ djr:R-1012 a djr:Prohibition ;
     prov:specializationOf djr:R-1012 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-1012@2026-08-22> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
+
+<https://numchida.com/ns/djr#R-1012@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-1012 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1012@2026-08-25> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-clarification .
 
 djr:R-1013 a djr:Obligation ;
@@ -1627,8 +1639,8 @@ djr:R-1021 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-1022 a djr:Obligation ;
-    skos:prefLabel "checker 사각 8종(a~h)의 직독 의무"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1022@2026-10-11> .
+    skos:prefLabel "checker 사각 8종(a~h)의 직독 의무 · (h) 오류 머리 계약은 머리 보충에서"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1022@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-1022@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1022 ;
@@ -1640,13 +1652,25 @@ djr:R-1022 a djr:Obligation ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-amendment .
 
+<https://numchida.com/ns/djr#R-1022@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-1022 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1022@2026-10-11> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-clarification .
+
 djr:R-1023 a djr:Obligation ;
-    skos:prefLabel "contract scope마다 project api.py의 API instance 단독 소유"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1023@2026-08-22> .
+    skos:prefLabel "contract scope마다 project api.py의 API instance 단독 소유 · 루트 API 는 경로 앞 응답의 정해진 클래스로"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1023@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-1023@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1023 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1023@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-1023 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1023@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-1024 a djr:Obligation ;
     skos:prefLabel "BC api_router의 side-effect-free 자기 controller 한정 등록"@ko ;
@@ -1815,12 +1839,18 @@ djr:R-1043 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-1044 a djr:Prohibition ;
-    skos:prefLabel "framework-owned body의 code/profile 형식 고정·exact-format 테스트 요구 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1044@2026-08-22> .
+    skos:prefLabel "framework-owned body의 code/profile 형식 고정·exact-format 테스트 요구 금지 · 경로 앞 응답 표 행은 예외(행 시험 요구)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1044@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-1044@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1044 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1044@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-1044 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1044@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-1045 a djr:Obligation ;
     skos:prefLabel "복구 가능한 도메인 예외의 view-local 재렌더·messages.error 보존"@ko ;
@@ -3281,7 +3311,7 @@ djr:R-3743 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 19 ;
     djr:statesNorm djr:R-1010, djr:R-1011, djr:R-1012, djr:R-1013, djr:R-1014, djr:R-1015, djr:R-1016 ;
-    djr:text "- **API 오류 규율 5 — returned status·OpenAPI·framework default(blocker)**: active `dddjango-code-json` scope에서 operation이 실제 직접 반환하는 모든 BC 오류 status는 `response={...}`에서 실제 반환하는 오류 타입 그대로(concrete·`Union`·명시값 base — base 뭉뚱그림 금지) 선언되어야 하고, 승인된 endpoint→status→schema mapping tuple·runtime 반환·generated OpenAPI의 status/schema 출현은 완전하며 서로 같아야 한다. framework-owned 401/403/route 404/422/429/general `HttpError`/unknown 500은 BC 오류로 직접 반환하거나 BC 오류로 광고하지 않는다. auth backend는 성공 시 identity/principal, 실패 시 `None` 또는 framework `AuthenticationError`만 반환·raise하며 truthy `FrameworkErrorSchema`/Schema를 `request.auth`에 넣지 않는다. framework-established header dependency를 숨기거나 명세에 없는 header를 꾸며내지 않는다. status→schema 선언만으로 허용 식별자 subset이 증명되지 않으므로 실제 runtime mapping case 검증을 생략하지 않는다.\n"@ko .
+    djr:text "- **API 오류 규율 5 — returned status·OpenAPI·framework default(blocker)**: active `dddjango-code-json` scope에서 operation이 실제 직접 반환하는 모든 BC 오류 status는 `response={...}`에서 실제 반환하는 오류 타입 그대로(concrete·`Union`·명시값 base — base 뭉뚱그림 금지) 선언되어야 하고, 승인된 endpoint→status→schema mapping tuple·runtime 반환·generated OpenAPI의 status/schema 출현은 완전하며 서로 같아야 한다. framework-owned 401/403/route 404/422/429/general `HttpError`/unknown 500은 BC 오류로 직접 반환하거나 `response=`에 광고하지 않는다 — 그 가운데 경로 앞에서 나는 의도된 답만 문서에 경로 앞 응답으로 적는다(`implementation-django-ninja` §6.2). auth backend는 성공 시 identity/principal, 실패 시 `None` 또는 framework `AuthenticationError`만 반환·raise하며 truthy `FrameworkErrorSchema`/Schema를 `request.auth`에 넣지 않는다. framework-established header dependency를 숨기거나 명세에 없는 header를 꾸며내지 않는다. status→schema 선언만으로 허용 식별자 subset이 증명되지 않으므로 실제 runtime mapping case 검증을 생략하지 않는다. 경로 앞 응답은 `framework/ninja/pre_route_responses.py` 가 그 절 정본 코드 블록 글자 그대로이고(검사기는 정의를 정본과 맞출 뿐이다 — 손으로 바꾼 꼴이 기계 대조를 피하는지 본다) 루트 API 가 그 절의 클래스 꼴이며 표가 slot 12 의 승인 행 그대로인지, 표를 만들거나 행을 바꾼 실행이면 붙는 행마다 행 시험(본문 꼴 엄격 검증 · 붙는 쪽 단언 · 좁힘 반대쪽 · 시험 자리 없는 행은 G2 배너 — `implementation-test` §19.2.1)이 있는지 본다. G2 감사 입력에 동봉된 `check-openapi-error-declaration`(#63)의 ⓓ 후보 줄은 전부(예: 좁힌 행 · 못 읽은 미들웨어 답 · `handler400` · 주입 응답 머리를 글자로 못 읽음 · 머리 보충을 글자로 못 읽음 · 흐름을 못 가른 머리) 네가 닫는다 — 좁힌 행뿐인 미들웨어 답은 그 답이 그 행이 좁힌 경로 · 메서드에만 나는지(그 행의 G1 근거가 그 미들웨어 줄인지), 그 밖의 줄은 그 답의 status · 꼴 · 머리가 경로 앞 응답 표 · 머리 보충에 있는지 코드로 보고, 없으면 important 다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;
@@ -3302,14 +3332,14 @@ djr:R-3743 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 21 ;
     djr:statesNorm djr:R-1021, djr:R-1022 ;
-    djr:text "- **API 오류 checker/reviewer 사각(명시 검토)**: 관련 checker가 exit 0이어도 semantic compliance의 증거가 아니다. 반드시 (a) 직접 import한 1-hop class method mutation·2-hop helper·선택 source 밖 helper·renamed converter, (b) dynamic import/registration·required symbol 재수출, (c) 문법상 concrete 이름이나 의미상 broad base인 exception, (d) Ninja/`FrameworkErrorSchema` import 없이 inner layer를 흐르는 HTTP status/code DTO, (e) project-wide inventory 완전성·mixed-profile shared module·scope 안의 API instance 복수, (f) root-local catalog/mapping·registrar/composition lookalike, (g) auth backend의 truthy `FrameworkErrorSchema`/Schema와 숨은 framework-header dependency, (h) 잡은 예외의 승인 필드 값(사건 값) — 예외 생성부가 승인 필드에 넣는 값의 출처(`str(다른 예외)` · 내부 id 금지), 메시지와 머리의 대응(slot 10 이 정한 머리 누락 · 메시지와 머리의 날짜 불일치 · slot 10 이 정하지 않은 머리), 승인 `datetime` 필드에 넣는 값이 시간대를 갖는 aware datetime 인지(예외 생성부와 던지는 자리에서 대조), 구현된 operation `description` 에 slot 10 · 12 의 머리 계약(이름 · 값 꼴 · 생략의 뜻 · 소비법)이 있는지, 렌더된 `--event-value` 와 slot 10 의 대조를 직접 읽는다.\n"@ko .
+    djr:text "- **API 오류 checker/reviewer 사각(명시 검토)**: 관련 checker가 exit 0이어도 semantic compliance의 증거가 아니다. 반드시 (a) 직접 import한 1-hop class method mutation·2-hop helper·선택 source 밖 helper·renamed converter, (b) dynamic import/registration·required symbol 재수출, (c) 문법상 concrete 이름이나 의미상 broad base인 exception, (d) Ninja/`FrameworkErrorSchema` import 없이 inner layer를 흐르는 HTTP status/code DTO, (e) project-wide inventory 완전성·mixed-profile shared module·scope 안의 API instance 복수, (f) root-local catalog/mapping·registrar/composition lookalike, (g) auth backend의 truthy `FrameworkErrorSchema`/Schema와 숨은 framework-header dependency, (h) 잡은 예외의 승인 필드 값(사건 값) — 예외 생성부가 승인 필드에 넣는 값의 출처(`str(다른 예외)` · 내부 id 금지), 메시지와 머리의 대응(slot 10 이 정한 머리 누락 · 메시지와 머리의 날짜 불일치 · slot 10 이 정하지 않은 머리), 승인 `datetime` 필드에 넣는 값이 시간대를 갖는 aware datetime 인지(예외 생성부와 던지는 자리에서 대조), 구현된 operation 의 머리 보충(그 status 정수 키의 `headers` · 머리 `description`)에 slot 10 · 12 의 머리 계약(이름 · 값 꼴 · 생략의 뜻 · 소비법)이 있는지(구현된 operation `description` 에만 적은 것은 선언이 아니다), 렌더된 `--event-value` 와 slot 10 의 대조를 직접 읽는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b22> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 22 ;
     djr:statesNorm djr:R-1023, djr:R-1024, djr:R-1025, djr:R-1026, djr:R-1027, djr:R-1028, djr:R-1029, djr:R-1030, djr:R-1031, djr:R-1032, djr:R-1033, djr:R-1034 ;
-    djr:text "- **API instance·registrar·composition 규율**: active `dddjango-code-json` contract scope마다 project `<project>/api.py`가 API instance 하나를 소유한다. 각 BC의 side-effect-free api_router(`driving_layer/api/api_router.py`의 `register_<bc>_api` — final.md §1 10행)는 전달받은 API에 자기 controller만 등록하고, project `urls.py`가 각 registrar를 명시적으로 한 번 호출한 뒤 API를 mount한다. controller는 `auto_import=False`여야 하며 project API import·module-top-level 등록·dynamic registrar·import-time side effect·scope 안의 API 복수는 blocker다. HTTP registrar와 DI-only `composition_root/`(트리 2~4행)를 섞지 않고, root-local catalog/mapping 또는 registrar/composition lookalike도 직접 확인한다. controller 형태는 승인된 presentation 계약을 보존한다. 오류 대응, 특히 406/415를 이유로 승인된 class controller를 함수형 `Router`로 바꾸거나 별도 API instance로 격리하지 않는다. `preserve-established` scope 에서도 **registration/composition 은 이 표준으로 대조한다** — preserve 가 보존하는 것은 오류 wire 산출물이지 배선이 아니다(구 «native registration/API-instance layout 보존» 문구는 라운드 1′ 배선 답습의 통로로 실증되어 걷었다 — 2026-08-12). 배선 표준화가 오류 profile 이주를 뜻하지도 않는다 — 오류 산출물은 slot 승인대로 유지한다. Phase 1의 project-wide inventory와 mixed-profile sharing 점검은 profile에 관계없이 유지한다.\n"@ko .
+    djr:text "- **API instance·registrar·composition 규율**: active `dddjango-code-json` contract scope마다 project `<project>/api.py`가 API instance 하나를 소유한다(루트 API 는 경로 앞 응답의 정해진 클래스로 짓는다 — `implementation-django-ninja` §6.2). 각 BC의 side-effect-free api_router(`driving_layer/api/api_router.py`의 `register_<bc>_api` — final.md §1 10행)는 전달받은 API에 자기 controller만 등록하고, project `urls.py`가 각 registrar를 명시적으로 한 번 호출한 뒤 API를 mount한다. controller는 `auto_import=False`여야 하며 project API import·module-top-level 등록·dynamic registrar·import-time side effect·scope 안의 API 복수는 blocker다. HTTP registrar와 DI-only `composition_root/`(트리 2~4행)를 섞지 않고, root-local catalog/mapping 또는 registrar/composition lookalike도 직접 확인한다. controller 형태는 승인된 presentation 계약을 보존한다. 오류 대응, 특히 406/415를 이유로 승인된 class controller를 함수형 `Router`로 바꾸거나 별도 API instance로 격리하지 않는다. `preserve-established` scope 에서도 **registration/composition 은 이 표준으로 대조한다** — preserve 가 보존하는 것은 오류 wire 산출물이지 배선이 아니다(구 «native registration/API-instance layout 보존» 문구는 라운드 1′ 배선 답습의 통로로 실증되어 걷었다 — 2026-08-12). 배선 표준화가 오류 profile 이주를 뜻하지도 않는다 — 오류 산출물은 slot 승인대로 유지한다. Phase 1의 project-wide inventory와 mixed-profile sharing 점검은 profile에 관계없이 유지한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b23> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;
@@ -3330,7 +3360,7 @@ djr:R-3743 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 25 ;
     djr:statesNorm djr:R-1042, djr:R-1043, djr:R-1044 ;
-    djr:text "- **framework-default 운영 보안**: unknown failure는 framework 500 경로를 유지한다. 배포 설정에서 `DEBUG=False`, traceback·sensitive data 비노출, BC `FrameworkErrorSchema` 변환 부재를 확인한다. framework-owned 401/403/route 404/422/429/general `HttpError` body는 정확한 code/profile 형식으로 고정하거나 exact-format 테스트를 요구하지 않는다.\n"@ko .
+    djr:text "- **framework-default 운영 보안**: unknown failure는 framework 500 경로를 유지한다. 배포 설정에서 `DEBUG=False`, traceback·sensitive data 비노출, BC `FrameworkErrorSchema` 변환 부재를 확인한다. framework-owned 401/403/route 404/422/429/general `HttpError` body는 정확한 code/profile 형식으로 고정하거나 exact-format 테스트를 요구하지 않는다 — 경로 앞 응답 표의 행은 예외다(행마다 표의 Schema 로 본문 꼴을 엄격 검증하는 행 시험을 요구한다 — `implementation-test` §19.2.1).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b26> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;

@@ -525,8 +525,8 @@ djr:R-2541 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2542 a djr:Obligation ;
-    skos:prefLabel "dddjango-code-json 시 slot 5·6·7~9·1·11·12 산출물의 검색·보고"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2542@2026-08-26> .
+    skos:prefLabel "dddjango-code-json 시 slot 5·6·7~9·1·11·12 산출물의 검색·보고 · 경로 앞 응답 파일 둘·루트 API 클래스 포함"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2542@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-2542@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2542 ;
@@ -536,6 +536,12 @@ djr:R-2542 a djr:Obligation ;
     prov:specializationOf djr:R-2542 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-2542@2026-08-22> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
+
+<https://numchida.com/ns/djr#R-2542@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-2542 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2542@2026-08-26> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-clarification .
 
 djr:R-2543 a djr:Obligation ;
@@ -591,12 +597,18 @@ djr:R-2547 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2548 a djr:Obligation ;
-    skos:prefLabel "dddjango-code-json 구현 순서 준수(common reuse/create → BC error module → 승인 add/update Red → controller direct mapping → side-effect-free registrar/root URL composition → 입장 mounted OpenAPI Green)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2548@2026-08-22> .
+    skos:prefLabel "dddjango-code-json 구현 순서 준수(common reuse/create → BC error module → 승인 add/update Red → controller direct mapping → side-effect-free registrar/root URL composition(경로 앞 응답 파일 · 루트 API 클래스 포함) → 입장 mounted OpenAPI Green) · 두 profile 경로 앞 응답 정본은 글자 그대로·루트 API 클래스 꼴·표는 승인 행 그대로"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2548@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-2548@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2548 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2548@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-2548 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2548@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2549 a djr:Obligation ;
     skos:prefLabel "12-slot 과 별도 shape 승인의 보존"@ko ;
@@ -1394,7 +1406,7 @@ djr:R-3733 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 14 ;
     djr:statesNorm djr:R-2541, djr:R-2542, djr:R-2543 ;
-    djr:text "- **Error response contract 12-slot preflight**: 구현 전에 승인된 `dddjango-code-json | preserve-established` profile과 1~12번 slot inventory의 **모든 project-relative 승인 경로**를 현재 tree에 대조한다. `dddjango-code-json`이면 5·6번의 common response directory와 canonical `ErrorSchema`; 7~9번의 모든 BC error module, `<Bc>ErrorCode` literal value, BC base, 모든 concrete의 무인자 생성; 1·11번의 선택 API/controller/URLconf/registrar module, root API import/mount, controller의 single application call 뒤 `try`·concrete `catch`·direct `Status` mapping 또는 조회 `None` path의 `is None` branch; error helper/handler/factory/serializer/mapping lookalike; 12번의 response declaration, mounted generated OpenAPI와 관련 contract test를 검색해 보고한다. `preserve-established`이면 slot에 승인된 native canonical/schema/controller/handler/helper/composition/runtime/OpenAPI/test artifact와 behavior를 그 경로에서 검색해 보고한다.\n"@ko .
+    djr:text "- **Error response contract 12-slot preflight**: 구현 전에 승인된 `dddjango-code-json | preserve-established` profile과 1~12번 slot inventory의 **모든 project-relative 승인 경로**를 현재 tree에 대조한다. `dddjango-code-json`이면 5·6번의 common response directory와 canonical `ErrorSchema`; 7~9번의 모든 BC error module, `<Bc>ErrorCode` literal value, BC base, 모든 concrete의 무인자 생성; 1·11번의 선택 API/controller/URLconf/registrar module, root API import/mount, 경로 앞 응답 파일 둘과 루트 API 클래스(slot 1 의 action), controller의 single application call 뒤 `try`·concrete `catch`·direct `Status` mapping 또는 조회 `None` path의 `is None` branch; error helper/handler/factory/serializer/mapping lookalike; 12번의 response declaration, mounted generated OpenAPI와 관련 contract test를 검색해 보고한다. `preserve-established`이면 slot에 승인된 native canonical/schema/controller/handler/helper/composition/runtime/OpenAPI/test artifact와 behavior를 그 경로에서 검색해 보고한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b15> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
@@ -1409,7 +1421,7 @@ djr:R-3733 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 16 ;
     djr:statesNorm djr:R-2548, djr:R-2549, djr:R-2550 ;
-    djr:text "- `dddjango-code-json` 구현 순서는 **common reuse/create(또는 승인된 change) → BC error module → 승인된 `add/update` test 행의 Red(있을 때만) → controller direct mapping → side-effect-free registrar/root URL composition → 입장된 mounted OpenAPI Green(있을 때만)**으로 둔다. 12-slot과 별도 shape 승인은 보존하되 inventory나 private Pydantic mechanics 자체를 영구 테스트로 만들지 않는다.\n"@ko .
+    djr:text "- `dddjango-code-json` 구현 순서는 **common reuse/create(또는 승인된 change) → BC error module → 승인된 `add/update` test 행의 Red(있을 때만) → controller direct mapping → side-effect-free registrar/root URL composition(경로 앞 응답 파일 · 루트 API 클래스 포함) → 입장된 mounted OpenAPI Green(있을 때만)**으로 둔다. 두 profile 모두 경로 앞 응답 파일을 만들면 `framework/ninja/pre_route_responses.py` 는 `implementation-django-ninja` §6.2 의 정본 코드 블록을 글자 그대로 옮기고(이름 · 주석 · 차례를 바꾸지 않는다), 루트 API 는 그 절의 클래스 꼴(`get_openapi_schema` 서명 · 몸통 글자 그대로)로 짓고, 표는 slot 12 의 승인 행 그대로 적는다(행을 더하거나 빼지 않는다). 12-slot과 별도 shape 승인은 보존하되 inventory나 private Pydantic mechanics 자체를 영구 테스트로 만들지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b17> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;

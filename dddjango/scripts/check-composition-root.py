@@ -2884,10 +2884,61 @@ def _find_project_dirs(root: Path) -> list[Path]:
     return out
 
 
+# 경로 앞 응답의 루트 API 클래스(#437 닫힌 목록 · F4-173) — 루트 API 기저 하나의 하위 클래스이고 메서드는
+# `get_openapi_schema` 하나(서명 · 몸통 글자 그대로 · #63 check-openapi-error-declaration 과 같은 글자)다.
+_DOCUMENTED_API_METHOD: str = (
+    "def get_openapi_schema(\n"
+    "    self, *, path_prefix: str | None = None, path_params: dict[str, object] | None = None\n"
+    ") -> OpenAPISchema:\n"
+    "    return add_pre_route_responses(self, super().get_openapi_schema(path_prefix=path_prefix, path_params=path_params))\n"
+)
+_DOCUMENTED_API_NAMES: dict[str, str] = {
+    "OpenAPISchema": "ninja.openapi.schema.OpenAPISchema",
+    "add_pre_route_responses": "framework.ninja.pre_route_responses.add_pre_route_responses",
+}
+
+
+def _module_import_names(mod: ast.Module) -> dict[str, str]:
+    names: dict[str, str] = {}
+    for node in mod.body:
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                names[alias.asname or alias.name.split(".", 1)[0]] = alias.name if alias.asname else alias.name.split(".", 1)[0]
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            for alias in node.names:
+                names[alias.asname or alias.name] = f"{node.module}.{alias.name}"
+    return names
+
+
+def _dotted_import(node: ast.AST, names: dict[str, str]) -> str | None:
+    if isinstance(node, ast.Name):
+        return names.get(node.id)
+    if isinstance(node, ast.Attribute):
+        owner = _dotted_import(node.value, names)
+        return f"{owner}.{node.attr}" if owner is not None else None
+    return None
+
+
+def _documented_api_class(node: ast.ClassDef, names: dict[str, str]) -> bool:
+    if node.decorator_list or node.keywords or len(node.bases) != 1 or getattr(node, "type_params", None):
+        return False
+    if _dotted_import(node.bases[0], names) not in ROOT_API_CONSTRUCTORS:
+        return False
+    body = list(node.body)
+    if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) and isinstance(body[0].value.value, str):
+        body = body[1:]
+    expected = ast.dump(ast.parse(_DOCUMENTED_API_METHOD).body[0], include_attributes=False)
+    if len(body) != 1 or ast.dump(body[0], include_attributes=False) != expected:
+        return False
+    return all(names.get(name) == origin for name, origin in _DOCUMENTED_API_NAMES.items())
+
+
 def _check_project_api(f: Path, rel: Path, findings: Findings) -> None:
     mod = _slice_parse(f)
     if mod is None:
         return
+    import_names: dict[str, str] = _module_import_names(mod)
+    documented_seen: bool = False
     for lineno, path_str in _slice_imports(mod):
         if path_str.split(".")[0] == "application":
             findings.add(
@@ -2897,6 +2948,9 @@ def _check_project_api(f: Path, rel: Path, findings: Findings) -> None:
             )
     for node in mod.body:
         if isinstance(node, ast.ClassDef):
+            if not documented_seen and _documented_api_class(node, import_names):
+                documented_seen = True  # 닫힌 목록의 클래스 하나 — 경로 앞 응답을 붙이는 루트 API 클래스
+                continue
             findings.add(
                 "#437",
                 f"{rel}:{node.lineno}",

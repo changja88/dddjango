@@ -2464,7 +2464,20 @@ framework-owned 401/403/route 404/422/429/`HttpError`/500은 별도 입장 행�
 검증한다. 별도 승인 또는 실제 deployed consumer evidence가 없는 Django Ninja/Pydantic 기본 body,
 직렬화, coercion은 제품 계약처럼 exact snapshot하지 않고 status와 민감 정보 비노출만 smoke한다.
 반대로 기존 지원 계약이나 consumer가 의존하는 public wire field가 입장됐다면 그 관련 field만
-리터럴로 검증한다. 전체 framework body snapshot이나 private metadata까지 넓히지 않는다.
+리터럴로 검증한다. 전체 framework body snapshot이나 private metadata까지 넓히지 않는다. 경로 앞 응답 표의 행은 이 문단의
+예외다(아래).
+
+**경로 앞 응답 표의 행**(`implementation-django-ninja` §6.2)은 표를 만들거나 행을 바꾸는 실행에서 그 프로젝트에
+붙는 행마다(Ninja 기본 행 포함) 별도 입장 행을 둔다. 그 답을 실제로 일으켜 표의 Schema 로 본문 꼴을 엄격 검증하고
+(`<Schema>.model_validate_json(response.content, strict=True)` — 값을 고정하지 않는다 · 몸통 Schema 가 없는 행은
+status · media type 만), 붙는 쪽을 단언한다 — 그 operation 의 mounted 생성 문서에 그 status(· 머리)가 있다. `methods` ·
+`namespaces` · `exempt` · `operations` · `all` 이 아닌 `when` 으로 좁힌 프로젝트 행마다 빠진 쪽 operation 하나에서 그
+미들웨어 조건을 일으켜 답하지 않음을, `NOT_API_MIDDLEWARE` 줄마다 API 경로에서 그 조건을 일으켜 답하지 않음을
+시험한다. 시험은 대상 BC
+시험 폴더에 두고 그 BC 경로로 답을 일으킨다 — 대상 BC 경로로 일으킬 수 없는 행(다른 이름공간 · 그 BC 에 몸통
+경로가 없음)은 그 실행 시험에서 빼고 G2 배너에 «시험 자리 없음» 으로 적는다. 예외로 일어나는 미들웨어(서버렌더
+transient 등)는 `RequestFactory` 로 미들웨어를 직접 불러 시험한다. Ninja 판 올림으로 기본 몸통이 바뀌면 이 시험이
+붉다.
 
 #### 19.2.2 공개 Python Schema 계약
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
@@ -2490,8 +2503,9 @@ client로 요청하고, 관련 operation·status·media type·schema만 검증�
 component를 snapshot하지 않는다.
 
 `api.get_openapi_schema()`, schema helper, postprocessor 같은 내부 직접 호출은 실제 mounted generated
-document를 대신하지 않는다. OpenAPI가 공개 계약으로 승인되지 않았거나 기존 권위 테스트가 같은
-operation/status/schema drift를 보호하면 새 테스트를 만들지 않는다.
+document를 대신하지 않는다(경로 앞 응답을 붙이는 루트 API 클래스의 `get_openapi_schema` 직접 호출도 같다). OpenAPI가 공개 계약으로 승인되지 않았거나 기존 권위 테스트가 같은
+operation/status/schema drift를 보호하면 새 테스트를 만들지 않는다 — 경로 앞 응답 표 행의 붙는 쪽 단언(§19.2.1)은
+예외다.
 
 
 ### 19.3 인증, 페이지네이션, 필터링

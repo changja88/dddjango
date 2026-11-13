@@ -435,12 +435,18 @@ djr:R-3282 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-3283 a djr:Exception ;
-    skos:prefLabel "framework-owned 401/403/route 404/422/429/general HttpError/unknown 500 의 별도 승인 행 한정 status·민감정보 비노출 smoke"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3283@2026-08-22> .
+    skos:prefLabel "framework-owned 401/403/route 404/422/429/general HttpError/unknown 500 의 별도 승인 행 한정 status·민감정보 비노출 smoke · 경로 앞 응답 표 행은 예외(본문 꼴 엄격 검증 · 붙는 쪽 단언 · 좁힘 반대쪽)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3283@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-3283@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3283 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3283@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-3283 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3283@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3284 a djr:Permission ;
     skos:prefLabel "별도 승인·실제 consumer evidence 있는 public wire field 의 해당 field 한정 exact 단언(전체 body snapshot·private/framework mechanics 확대 금지)"@ko ;
@@ -951,7 +957,7 @@ djr:R-3734 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 16 ;
     djr:statesNorm djr:R-3283, djr:R-3284, djr:R-3285 ;
-    djr:text "- framework-owned 401/403/route 404/422/429/general `HttpError`/unknown 500은 별도 승인 행이 있을 때만 status·민감정보 비노출을 smoke한다. 별도 승인 또는 실제 consumer evidence가 있는 public wire field는 해당 field만 exact 단언할 수 있지만 전체 body snapshot·private/framework mechanics로 확대하지 않는다. 명세에 없는 endpoint/backend/header를 발명하지 않는다.\n"@ko .
+    djr:text "- framework-owned 401/403/route 404/422/429/general `HttpError`/unknown 500은 별도 승인 행이 있을 때만 status·민감정보 비노출을 smoke한다 — 경로 앞 응답 표의 행(`implementation-django-ninja` §6.2)은 예외다: 입장 표의 그 행마다 답을 실제로 일으켜 표의 Schema 로 본문 꼴을 엄격 검증하고(값 고정 아님) 붙는 operation 의 mounted 생성 문서에 그 status · 머리가 있음을 단언하며, 좁힌 행 · `NOT_API_MIDDLEWARE` 줄은 반대쪽(답하지 않음)을 시험한다(`implementation-test` §19.2.1 — 시험은 대상 BC 시험 폴더 · 예외로 일어나는 미들웨어는 `RequestFactory`). 별도 승인 또는 실제 consumer evidence가 있는 public wire field는 해당 field만 exact 단언할 수 있지만 전체 body snapshot·private/framework mechanics로 확대하지 않는다. 명세에 없는 endpoint/backend/header를 발명하지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004/b17> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004> ;

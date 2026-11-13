@@ -1007,20 +1007,32 @@ djr:R-1884 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-1885 a djr:Exception ;
-    skos:prefLabel "framework-owned 상태코드는 별도 입장 승인 시에만 검증"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1885@2026-08-22> .
+    skos:prefLabel "framework-owned 상태코드는 별도 입장 승인 시에만 검증 · 경로 앞 응답 표 행은 예외(행마다 입장)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1885@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-1885@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1885 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-1885@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-1885 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1885@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
+
 djr:R-1886 a djr:Prohibition ;
-    skos:prefLabel "미승인 framework 기본 body 의 exact snapshot 금지 — status·민감정보 비노출 smoke"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1886@2026-08-22> .
+    skos:prefLabel "미승인 framework 기본 body 의 exact snapshot 금지 — status·민감정보 비노출 smoke · 경로 앞 응답 표 행은 예외(본문 꼴 엄격 검증)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1886@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-1886@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1886 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1886@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-1886 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1886@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-1887 a djr:Obligation ;
     skos:prefLabel "입장된 public wire field 는 관련 field 만 리터럴 검증"@ko ;
@@ -1103,20 +1115,32 @@ djr:R-1896 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-1897 a djr:Prohibition ;
-    skos:prefLabel "내부 직접 호출의 mounted 문서 대체 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1897@2026-08-22> .
+    skos:prefLabel "내부 직접 호출의 mounted 문서 대체 금지 · 경로 앞 응답 루트 API 클래스의 get_openapi_schema 직접 호출도"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1897@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-1897@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1897 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-1897@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-1897 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1897@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
+
 djr:R-1898 a djr:Prohibition ;
-    skos:prefLabel "미승인·기존 보호 중복 시 새 OpenAPI 테스트 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1898@2026-08-22> .
+    skos:prefLabel "미승인·기존 보호 중복 시 새 OpenAPI 테스트 금지 · 경로 앞 응답 표 행의 붙는 쪽 단언은 예외"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1898@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-1898@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1898 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1898@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-1898 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1898@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-1899 a djr:Obligation ;
     skos:prefLabel "인증 우회·user fixture·header 이름은 프로젝트 auth contract 준거"@ko ;
@@ -1388,6 +1412,14 @@ djr:R-1932 a djr:Obligation ;
 
 <https://numchida.com/ns/djr#R-1932@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1932 ;
+    djr:revision 1 .
+
+djr:R-3752 a djr:Obligation ;
+    skos:prefLabel "경로 앞 응답 표 행 시험 — 붙는 행마다(기본 행 포함) 별도 입장 행 · 답을 일으켜 표 Schema 로 본문 꼴 엄격 검증 · 붙는 쪽 단언(mounted 생성 문서) · 좁힘 반대쪽 · NOT_API_MIDDLEWARE 줄 · 대상 BC 시험 폴더(자리 없으면 G2 배너) · 예외로 일어나는 미들웨어는 RequestFactory"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3752@2026-11-13> .
+
+<https://numchida.com/ns/djr#R-3752@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-3752 ;
     djr:revision 1 .
 
 <https://numchida.com/ns/djr#d/dddjango/skills/implementation-test/references/final.md> a djr:Document ;
@@ -2628,7 +2660,14 @@ djr:R-1932 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
     djr:statesNorm djr:R-1885, djr:R-1886, djr:R-1887, djr:R-1888 ;
-    djr:text "framework-owned 401/403/route 404/422/429/`HttpError`/500은 별도 입장 행에서 승인된 경우에만\n검증한다. 별도 승인 또는 실제 deployed consumer evidence가 없는 Django Ninja/Pydantic 기본 body,\n직렬화, coercion은 제품 계약처럼 exact snapshot하지 않고 status와 민감 정보 비노출만 smoke한다.\n반대로 기존 지원 계약이나 consumer가 의존하는 public wire field가 입장됐다면 그 관련 field만\n리터럴로 검증한다. 전체 framework body snapshot이나 private metadata까지 넓히지 않는다.\n\n"@ko .
+    djr:text "framework-owned 401/403/route 404/422/429/`HttpError`/500은 별도 입장 행에서 승인된 경우에만\n검증한다. 별도 승인 또는 실제 deployed consumer evidence가 없는 Django Ninja/Pydantic 기본 body,\n직렬화, coercion은 제품 계약처럼 exact snapshot하지 않고 status와 민감 정보 비노출만 smoke한다.\n반대로 기존 지원 계약이나 consumer가 의존하는 public wire field가 입장됐다면 그 관련 field만\n리터럴로 검증한다. 전체 framework body snapshot이나 private metadata까지 넓히지 않는다. 경로 앞 응답 표의 행은 이 문단의\n예외다(아래).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/references/final.md/s095-19.2.1/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/references/final.md/s095-19.2.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-3752 ;
+    djr:text "**경로 앞 응답 표의 행**(`implementation-django-ninja` §6.2)은 표를 만들거나 행을 바꾸는 실행에서 그 프로젝트에\n붙는 행마다(Ninja 기본 행 포함) 별도 입장 행을 둔다. 그 답을 실제로 일으켜 표의 Schema 로 본문 꼴을 엄격 검증하고\n(`<Schema>.model_validate_json(response.content, strict=True)` — 값을 고정하지 않는다 · 몸통 Schema 가 없는 행은\nstatus · media type 만), 붙는 쪽을 단언한다 — 그 operation 의 mounted 생성 문서에 그 status(· 머리)가 있다. `methods` ·\n`namespaces` · `exempt` · `operations` · `all` 이 아닌 `when` 으로 좁힌 프로젝트 행마다 빠진 쪽 operation 하나에서 그\n미들웨어 조건을 일으켜 답하지 않음을, `NOT_API_MIDDLEWARE` 줄마다 API 경로에서 그 조건을 일으켜 답하지 않음을\n시험한다. 시험은 대상 BC\n시험 폴더에 두고 그 BC 경로로 답을 일으킨다 — 대상 BC 경로로 일으킬 수 없는 행(다른 이름공간 · 그 BC 에 몸통\n경로가 없음)은 그 실행 시험에서 빼고 G2 배너에 «시험 자리 없음» 으로 적는다. 예외로 일어나는 미들웨어(서버렌더\ntransient 등)는 `RequestFactory` 로 미들웨어를 직접 불러 시험한다. Ninja 판 올림으로 기본 몸통이 바뀌면 이 시험이\n붉다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/references/final.md/s096-19.2.2> a djr:Section ;
     djr:headingSnapshot "#### 19.2.2 공개 Python Schema 계약"@ko ;
@@ -2698,7 +2737,7 @@ djr:R-1932 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
     djr:statesNorm djr:R-1897, djr:R-1898 ;
-    djr:text "`api.get_openapi_schema()`, schema helper, postprocessor 같은 내부 직접 호출은 실제 mounted generated\ndocument를 대신하지 않는다. OpenAPI가 공개 계약으로 승인되지 않았거나 기존 권위 테스트가 같은\noperation/status/schema drift를 보호하면 새 테스트를 만들지 않는다.\n\n\n"@ko .
+    djr:text "`api.get_openapi_schema()`, schema helper, postprocessor 같은 내부 직접 호출은 실제 mounted generated\ndocument를 대신하지 않는다(경로 앞 응답을 붙이는 루트 API 클래스의 `get_openapi_schema` 직접 호출도 같다). OpenAPI가 공개 계약으로 승인되지 않았거나 기존 권위 테스트가 같은\noperation/status/schema drift를 보호하면 새 테스트를 만들지 않는다 — 경로 앞 응답 표 행의 붙는 쪽 단언(§19.2.1)은\n예외다.\n\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/references/final.md/s098-19.3> a djr:Section ;
     djr:headingSnapshot "### 19.3 인증, 페이지네이션, 필터링"@ko ;

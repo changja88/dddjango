@@ -458,7 +458,7 @@ ROWS = [
  row("fixed", ["sp","l"], "unit/", "고유", "<code>framework</code> <b>자신의</b> 테스트 — 뼈대와 섞지 않는다", "확정", "fix", pin(24)),
 
  row("own", [], "&lt;project&gt;/", "고유", 'BC 밖의 프로젝트 조립 자리. BC 내부 타입은 모르고 공개 API registrar 로 등록한다. <code>health.py</code>·<code>home.py</code>·<code>asgi.py</code>·<code>wsgi.py</code> 는 표준 트리의 관할 밖이다(#436).', "신설", "fix", pin(25), bold=True),
- row("fixed", ["t"], "api.py", "고유", "<b>전역 API 객체 하나와 전역 예외 핸들러</b> — 프레임워크가 하나를 요구해서 여기다. <em>도메인 예외 목록은 여기 없다</em>", "확정", "fix", pin(25)),
+ row("fixed", ["t"], "api.py", "고유", "<b>전역 API 객체 하나와 전역 예외 핸들러</b> — 프레임워크가 하나를 요구해서 여기다. <em>도메인 예외 목록은 여기 없다</em> · <b>루트 API 객체는 경로 앞 응답을 문서에 붙이는 정해진 클래스 하나로 짓는다</b> <em>클래스 이름 · 기저는 프로젝트가 고르고 <code>get_openapi_schema</code> 의 서명 · 몸통은 글자 그대로다 — 그 몸통이 <code>framework/ninja/pre_route_responses.py</code> 를 부른다(<code>implementation-django-ninja</code> §6.2)</em> <span class='dim'>11-13 · F4-173 — API 문서는 그 경로에서 날 수 있는 오류를 누가 보내든 모두 적는다(사용자 결정).</span>", "확정", "fix", pin(25)),
  row("fixed", ["t"], "urls.py", "고유", '<code>api.py</code> 의 전역 API 객체에 각 BC 의 공개 <code>register_&lt;bc&gt;_api(api)</code> 를 명시적으로 한 번 등록한다. registrar import 는 허용된 조립이고 BC 내부 업무 타입 import 는 하지 않는다.', "확정", "fix", pin(25)),
  row("fixed", ["t"], "celery.py", "고유", "<code>Celery</code> 인스턴스와 <code>autodiscover_tasks(packages=…, related_name=None)</code> — <b>조립</b>. <em>경로 문자열만 쓰고 타입을 모른다</em> · <b>기본값으로는 못 닿는다</b> — <em>Django 가 넘기는 package 는 <code>AppConfig.name</code>(=<code>…driven_layer/django_&lt;bc&gt;</code>) 이라 위로 못 올라간다. <code>packages</code> 를 «콜러블»로 주되 <b>목록이 아니라 규칙</b>으로 짓는다 — <code>label</code> 로 도는 한 줄(08-07 · R10)</em>", "신설", "fix", pin(26)+pin(25)),
  row("fixed", ["l"], "settings/", "고유", "<b>Django 가 정한 자리</b> — <em>여기서 갈리는 건 환경뿐이다</em>", "확정", "fix", pin(25)),
@@ -1539,7 +1539,7 @@ BC 하나짜리 저장소에서도 <b>처음부터</b> 여기 만든다.
 <br><em>안에 오는 모듈은 <b>«하는 일» 또는 «무엇인가»</b>로 이름 붙는다 — <code>authentication</code> · <code>retryable_database_error</code>. <b>기술 이름은 안 붙인다</b> — 폴더가 이미 말했다. <span class='dim'>08-09 · T54 — 옛 문장은 「«무엇을 하나»로」였는데 <b>여기 사는 넷 중 하나만 그렇다</b>(나머지 셋은 자료·타입이다).</span></em>""",
 
 
-158: '<p>라이브러리 타입이 있어야 성립하는 공용 기술 코드다. 예를 들면 Ninja 인증, <code>FrameworkErrorSchema</code> 와 framework 오류 응답 처리, Django 기술 오류 판별이 온다. 어느 BC 의 업무도 알지 않는다.</p><p><code>dddjango-code-json</code> 에서는 승인된 공통 오류 봉투를 <code>framework/ninja/framework_error_schema.py</code> 에 둔다. BC base 가 이를 상속하며 framework failure 의 표현은 공통 경로가 소유한다. controller 에서 framework 오류를 직접 만들거나 BC 오류로 다시 매핑하지 않는다.</p>',
+158: '<p>라이브러리 타입이 있어야 성립하는 공용 기술 코드다. 예를 들면 Ninja 인증, <code>FrameworkErrorSchema</code> 와 framework 오류 응답 처리, Django 기술 오류 판별이 온다. 어느 BC 의 업무도 알지 않는다.</p><p><code>dddjango-code-json</code> 에서는 승인된 공통 오류 봉투를 <code>framework/ninja/framework_error_schema.py</code> 에 둔다. BC base 가 이를 상속하며 framework failure 의 표현은 공통 경로가 소유한다. controller 에서 framework 오류를 직접 만들거나 BC 오류로 다시 매핑하지 않는다.</p><p><b>경로 앞 응답</b>도 여기 둘이 산다 — <code>framework/ninja/pre_route_responses.py</code> 는 <b>플러그인 정본</b>(글자 그대로 · 프로젝트가 고치지 않는다 — 경로의 인증 · CSRF · 권한 · throttle · 입력을 읽어 Ninja 의 답을 그 경로 문서에 붙인다)이고, <code>framework/ninja/pre_route_response_table.py</code> 는 <b>프로젝트 표</b>(응답을 직접 만드는 미들웨어 · 앞단의 답 — 설계 G1 에서 근거와 함께 승인)다. <code>&lt;project&gt;/api.py</code> 의 정해진 클래스가 이 둘을 부른다. <span class="dim">11-13 · F4-173 — 08-09 T41 은 «접힌 규칙 클래스는 쓰이려면 문서 재정의가 필요한데 그것이 금지» 라 <code>openapi_rule.py</code> 를 뺐다. 이번 판은 그 재정의를 정해진 꼴 하나로 열었다 — 꼴 밖 재정의 · 후처리는 그대로 금지다.</span></p>',
 
 
 159: """<b>«그냥 계산»인 것.</b> 금액 반올림 · 슬러그화 · 문자열 정규화 같은 것이 온다.
@@ -1772,7 +1772,7 @@ NAMES = {
 153: "<b>고정 이름 파일.</b> 형제 <code>application_layer/port/&lt;capability&gt;/exception.py</code> 와 같은 이름을 쓴다 — <b>같은 물건이면 같은 이름</b>이라야 사람이 두 번 배우지 않는다. 클래스는 <b>「무엇이 안 됐는가」의 서술문</b>(<code>ClockUnavailable</code>) — <span class='no'>ClockError</span> ✗ 는 무엇이 안 됐는지를 말하지 않는다.",
 156: "<b>기술 + <code>_adapter</code></b>(<code>clock/django_adapter.py</code>) — 능력은 폴더가 이미 말했다. 클래스는 <code>&lt;기술&gt;&lt;Capability&gt;Adapter</code> — 여기서는 <b>능력을 폴더 이름에서 가져온다</b>(<code>DjangoClockAdapter</code>).",
 157: '고정 갈래 <code>broker/</code>·<code>test/</code>·<code>pure/</code> 를 먼저 가른다. 나머지에서 <code>*_port.py</code> 가 있으면 능력, 없고 라이브러리 타입 없이는 성립하지 않으면 기술 갈래다. 나머지는 <code>pure/</code> 다.',
-158: '<code>authentication.py</code>·<code>framework_error_schema.py</code> 처럼 하는 일이나 타입의 역할로 짓는다. 기술 이름은 부모 폴더가 말한다. 공통 오류 모듈의 실제 경로·shape 는 승인된 profile 계약을 따른다.',
+158: '<code>authentication.py</code>·<code>framework_error_schema.py</code> 처럼 하는 일이나 타입의 역할로 짓는다. 기술 이름은 부모 폴더가 말한다. 공통 오류 모듈의 실제 경로·shape 는 승인된 profile 계약을 따른다. 경로 앞 응답의 두 파일 이름(<code>pre_route_responses.py</code> · <code>pre_route_response_table.py</code>)은 플러그인이 정한 고정 이름이다.',
 # ── <project> ───────────────────────────────────────────────────────
 159: "<b>고정 이름 폴더.</b> <b>이름이 곧 판정 물음이다</b> — 「이 파일이 순수한가?」. <span class='no'>util/</span> · <span class='no'>support/</span> · <span class='no'>shared/</span> ✗ — <b>「공통이냐」는 정도로 재는 말이라 아무도 «아니오»라고 답할 수 없다</b>(113행과 같은 자).",
 160: "<b>갈래로 짓는다</b> — <code>money.py</code> · <code>text.py</code>. <b>접미사를 달지 않는다</b>(계약도 구현도 아니라 가를 것이 없다). <span class='no'>helpers.py</span> · <span class='no'>misc.py</span> ✗ — 서랍 이름이다.",

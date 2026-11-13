@@ -241,12 +241,18 @@ djr:R-1584 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-1585 a djr:Obligation ;
-    skos:prefLabel "slot 1 — contract scope inventory 열거"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1585@2026-08-22> .
+    skos:prefLabel "slot 1 — contract scope inventory 열거 · 경로 앞 응답 파일 둘·루트 API 클래스의 경로와 action(reuse | create | change)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1585@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-1585@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1585 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1585@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-1585 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1585@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-1586 a djr:Obligation ;
     skos:prefLabel "slot 1 — repository·greenfield artifact 경로 표기와 부재 항목 명시"@ko ;
@@ -611,8 +617,8 @@ djr:R-1625 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-1626 a djr:Obligation ;
-    skos:prefLabel "slot 12 — code-json 의 status/body/header mapping·OpenAPI 후보 기록과 입장 표 행 참조 · 사건 값 머리 계약의 operation description 병기"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1626@2026-10-11> .
+    skos:prefLabel "slot 12 — code-json 의 status/body/header mapping·OpenAPI 후보 기록과 입장 표 행 참조 · 사건 값 머리 계약 · 오류 status 머리는 머리 보충으로 선언(operation description 만은 선언 아님) · 두 profile 경로 앞 응답 행·행 시험 입장 행·프로젝트 행 근거(미들웨어 코드 줄·설정·앞단 · NOT_API_MIDDLEWARE = API 경로를 빼는 코드 줄) · operations 행"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1626@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-1626@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1626 ;
@@ -622,6 +628,12 @@ djr:R-1626 a djr:Obligation ;
     prov:specializationOf djr:R-1626 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-1626@2026-08-22> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-1626@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-1626 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1626@2026-10-11> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-1627 a djr:Prohibition ;
@@ -665,12 +677,18 @@ djr:R-1631 a djr:Exception ;
     djr:revision 1 .
 
 djr:R-1632 a djr:Prohibition ;
-    skos:prefLabel "framework-owned 오류의 BC ErrorSchema 변환·response 광고 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1632@2026-08-22> .
+    skos:prefLabel "framework-owned 오류의 BC ErrorSchema 변환·response 광고 금지 · 그 가운데 경로 앞 의도된 답만 문서에 경로 앞 응답으로"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1632@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-1632@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1632 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1632@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-1632 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1632@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-1633 a djr:Obligation ;
     skos:prefLabel "인증 실패의 None 반환 또는 framework AuthenticationError raise"@ko ;
@@ -2083,8 +2101,8 @@ djr:R-3572 a djr:Exception ;
     djr:revision 1 .
 
 djr:R-3573 a djr:Obligation ;
-    skos:prefLabel "판정 범주 6(채택·병합·제외·오탐·사용자 판단·다른 BC 몫)과 범주별 근거 형식 — 두 Override(적용 범위·운영 전 예외)와 그 대상 규범은 제외 근거 불가 · 다른 BC 몫 = 리뷰어 칸 다른 BC 파일 ∧ application/<다른 bc>/ 실재 근거 ∧ 다른 BC 편집 갈래 밖"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3573@2026-10-27> .
+    skos:prefLabel "판정 범주 6(채택·병합·제외·오탐·사용자 판단·다른 BC 몫)과 범주별 근거 형식 — 두 Override(적용 범위·운영 전 예외)와 그 대상 규범은 제외 근거 불가 · 다른 BC 몫 = 리뷰어 칸 다른 BC 파일 ∧ application/<다른 bc>/ 실재 근거 ∧ 다른 BC 편집 갈래 밖 · 프로젝트 합성 = urls.py · api.py · 경로 앞 응답 파일 둘(새 패키지면 __init__.py 도)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3573@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-3573@2026-09-27> a djr:Expression ;
     prov:specializationOf djr:R-3573 ;
@@ -2101,6 +2119,12 @@ djr:R-3573 a djr:Obligation ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-3573@2026-10-04> ;
     djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-3573@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-3573 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3573@2026-10-27> ;
+    djr:revision 4 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3574 a djr:Prohibition ;
     skos:prefLabel "비용·일정·규모를 빼는 사유로 쓰기 금지 · 판정 모드에서 코드·명세 무수정·처분 질문 생성 금지"@ko ;
@@ -2175,20 +2199,32 @@ djr:R-3611 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3644 a djr:Obligation ;
-    skos:prefLabel "리팩토링 명세 바뀌는 것 목록 — V 판형(들여 쓴 - 하위 줄 · 입장 행 = candidate 칸 원문 · 동사 update|add|remove = decision)·다른 BC 편집 목록·슬라이스 계획(0T·0C·0F·S…) · 종류 = 시험 owner · 낮춤 금지 · 기대 의미 그대로 편집은 0F retain 재조직(candidate 칸 재조직 — <무엇을 어디로> · V 금지) · 0T 기대 고침 = V 밖 update 행 + ⓐ 항목(M·C) · 증명 절 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3644@2026-10-04> .
+    skos:prefLabel "리팩토링 명세 바뀌는 것 목록 — V 판형(들여 쓴 - 하위 줄 · 입장 행 = candidate 칸 원문 · 동사 update|add|remove = decision)·다른 BC 편집 목록·슬라이스 계획(0T·0C·0F·S…) · 종류 = 시험 owner · 낮춤 금지 · 기대 의미 그대로 편집은 0F retain 재조직(candidate 칸 재조직 — <무엇을 어디로> · V 금지) · 0T 기대 고침 = V 밖 update 행 + ⓐ 항목(M·C) · 증명 절 금지 · ⓐ C 의 처방이 동작·계약을 바꾸면 0C 아닌 변경 슬라이스 V(밖 동작 · 근거 C 여럿 · 해소 판정 표 행 없음 · 검사기 빚뿐이면 표 없음 · 범위는 머리 근거에서만)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3644@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-3644@2026-10-04> a djr:Expression ;
     prov:specializationOf djr:R-3644 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3644@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-3644 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3644@2026-10-04> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3645 a djr:Obligation ;
-    skos:prefLabel "G1 반영 입력 — 고르지 않은 V·그 V 에만 딸린 입장 행·다른 BC 편집 줄·슬라이스 삭제 · 요지 = 불가 · 변경 미승인 · 그 밖 무변(changes --applied 대조)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3645@2026-10-04> .
+    skos:prefLabel "G1 반영 입력 — 고르지 않은 V·그 V 에만 딸린 입장 행·다른 BC 편집 줄·슬라이스 삭제 · 요지 = 불가 · 변경 미승인(근거 C 인 V 는 표 행 없음) · 그 밖 무변(changes --applied 대조)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3645@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-3645@2026-10-04> a djr:Expression ;
     prov:specializationOf djr:R-3645 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3645@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-3645 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3645@2026-10-04> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3653 a djr:Obligation ;
     skos:prefLabel "도메인 저장소 add/update 메서드 서명의 선언 #287·#355·#597·#599 예보 · update 조립 파일 최상단 이름의 선언 #85 예보 — 검사기 판정 그대로 · 저장소 update 는 기준선 대비 새 메서드와 반환(#355) · 인자(#287)가 바뀐 메서드만(#597·#599 는 새 이름만) · 조립 파일은 기준선 실물 최상단 정의 ∪ symbols 함수·alias 행 · 기준선에 없던 줄만 · bool/int·출처 미해소·기준선 비교 불능은 후보"@ko ;
@@ -2413,7 +2449,7 @@ djr:R-3746 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
     djr:statesNorm djr:R-1564, djr:R-3568, djr:R-3569, djr:R-3585, djr:R-3586, djr:R-3644, djr:R-3645, djr:R-3683, djr:R-3728 ;
-    djr:text "- (있으면) **G1 override 입력**: 사용자가 G1에서 기본(미적용)을 뒤집어 채택했거나 미해결 옵션을 정한 결정. 형식 = `[항목] 기본=미적용 → 채택` 또는 `[항목] 옵션A → 옵션B`. 이 입력이 있으면 너는 그 결정만 반영하는 **좁은 재호출**이다 — **해당 절만 제자리 갱신하고 타 절은 불변**으로 둔다(전체 재작성 금지).\n- (있으면) **빠른 길 입력**(2026-11-07): Coordinator 가 `빠른 길` 과 항목 목록을 주면 그 항목만 제자리에서 고치는 좁은 재호출이다 — 줄을 더하거나 지우지 않고, 숫자 · decision · owner 값과 표의 칸 구성을 바꾸지 않고, 새 문장이나 근거를 더하지 않고, 밖으로 보이는 이름을 바꾸지 않는다(고치는 이름은 명세의 모든 자리를 같이 고친다). 이 제약으로 끝낼 수 없는 항목은 반영하지 말고 응답에 `보고: <항목> — <까닭 한 구>` 로 적는다. 처분 기록은 받은 경로에 지금 판형대로 쓴다.\n- (리팩토링 모드면) `모드 리팩토링` · `M<n>` ⓐ 목록(규칙 인용 포함) · 적용 범위 규범 원문 · «운영 전 예외» 블록 원문 · Coordinator 의 «해소 판정» · «바뀌는 것 목록» 문단 원문 — 리팩토링 명세(슬라이스 0 · 변경 슬라이스)를 쓴다. 파견 입력에 적용 범위 규범·«운영 전 예외» 블록이 실려 있으면 그 규범이 정한 몫과 때를 따른다. 바뀌는 것 목록의 V 항목에는 «운영 전 예외» 의 대상 규범을 적용하지 않고 조건부 대상은 조건이 설 때만 적용하지 않는다(유지 규범 · V 밖 코드는 그대로).\n  - **해소 판정**(2026-09-29 · 2026-10-04): 파견 입력의 «해소 판정» 문단대로 명세에 판정 표(제목 `슬라이스 0 해소 판정`)를 쓴다 — 범위 안 ⓐ `M<n>` 전부를 요지로 나누고, 원 규칙의 처방으로 요지를 없앨 수 있으면 해소(그 처방을 명세에 넣는다), 그 처방이 동작·계약·DB 구조를 바꾸면 `변경`(처방 앵커 · 6번 칸 `V<n>` — 그 변화를 바뀌는 것 목록에 적는다), 둘 다 아니면 불가(닫힌 범주 여섯과 막는 `파일:행` — 인용 밖 `반대 방향 규칙` 이면 증거 칸)다. 원 규칙의 처방이 아닌 대체 형태를 명세에 넣지 않고, ⓐ 요지의 미해소를 Z·알려진 한계·잔존 빚에 적지 않는다 — 표의 불가로만 적는다(Z 는 스스로 가르지 못한 트레이드오프뿐이다). 판정 표 행에 대한 리뷰어 이의는 기록·반박으로 닫지 않고 행을 이의대로 고친다 — 해소 행 이의면 원 규칙 처방 형태로 고치거나 불가로, 불가·부분 행 이의(과대 제외 · 요지를 좁게 적음)면 해소 처방을 넣는다. `ⓐ 재상정` 의 요지 축소 결정이 오면 표의 요지 번호를 그 결정과 맞춘다 — Phase 2 STOP 이 요지 일부를 빼면 요지를 나누어 뺀 요지를 불가(범주)로 적는다. 전체 제외 결정(요지 축소가 아닌 처분 줄)이 오면 그 항목의 행을 모두 불가로 적는다 — 해소이던 요지는 범주 `재상정 제외` 이고 막는 것은 그 결정 줄(`refactor-scope.md:<행>`)이다.\n  - **바뀌는 것 목록**(2026-10-04): 파견 입력의 «바뀌는 것 목록» 문단대로 명세에 `## 바뀌는 것 목록`(V — 종류 · 근거 · 슬라이스 · 전 → 후 · 시험 · 바뀌는 기대 · 연산 · 데이터 · 영향 — 하위 줄은 그 문단 판형대로 들여 쓴 `- ` 목록 줄이다) · `## 다른 BC 편집 목록` · 슬라이스 계획(`0T` · `0C` · `0F` · `S1…`)을 쓴다. 시험 줄의 `<입장 행>` 은 영구 테스트 입장 표 그 행의 candidate 칸 원문 그대로 옮기고, 동사는 그 행의 decision(`update` · `add` · `remove` — 케이스 삭제는 `remove`)이다. V 의 종류는 시험 줄 owner 로 가르고(밖 = acceptance-tester · 안 = coder) 낮춰 적지 않는다. 기대 의미가 그대로인 시험 편집은 V 로 올리지 않고 0F 의 `retain` 재조직 행(파일 · 케이스 · «기대 의미 그대로» 까닭)으로 적는다 — 그 행의 candidate 칸은 `재조직 — <무엇을 어디로>` 꼴로 쓴다(낱말 `재조직` 표지가 없는 `retain` 행의 파일은 0F 허용 파일이 아니다). 시험 케이스 이름 · parametrize 원소 id 개명은 파견 입력 «바뀌는 것 목록» 문단의 `retain` «개명» 행(`재조직 — 개명 <경로>::[<클래스>::]<옛> → <새>` · `재조직 — 개명 <경로>::<케이스>[<옛 id>] → [<새 id>]` · 한 행에 하나 · 수집 케이스만)으로 적고, 입장 표 `update` · `remove` 행은 옛(G1 트리) 이름으로 적는다(2026-10-24). 시험이 쓰는 운영 클래스 칸(필드) 개명은 그 칸을 쓰는 시험 파일마다 `retain` «칸 개명» 행(`재조직 — 칸 개명 <운영 경로>::<클래스>.<옛> → <새>`)으로 적어 0F 슬라이스에 둔다 — 변경 슬라이스의 칸 개명은 red 다. ninja `Schema` · pydantic 모델 · Django `Model` 과, 기반이 같은 파일 클래스 · `object` · `NamedTuple` · `Generic` · `ABC` · 내장 예외로 풀리지 않는 클래스(다른 파일 기반 · Enum · TypedDict · metaclass)의 칸에는 칸 개명 행을 쓰지 않는다 — 그 칸 개명이 밖 계약 · DB 구조를 바꾸면 V 로 적고, 아니면 그 요지를 해소 판정 표에 `불가` · 범주 `지원 안 함`(막는 것 = 그 클래스 정의 `파일:행` — 칸 개명 행이 받지 않는 클래스)으로 적는다(2026-10-28). 0T 에서 기대를 고치는 ⓐ 시험 항목은 입장 표 `update` 행(V 에 딸리지 않은 행)으로 적고 그 행에 ⓐ 항목(`M<n>` · `C<n>`)을 적는다. «동작 불변 판정 경계»·«배포 DB 점검 조회» 같은 증명 절은 쓰지 않는다 — 바뀌면 V 다. G1 반영 입력(고르지 않은 V)이 오면 그 V · 그 V 에만 딸린 입장 행 · 다른 BC 편집 줄 · 슬라이스를 지우고 그 요지를 `불가 · 변경 미승인` 으로 적는다 — 그 밖은 한 글자도 바꾸지 않는다(Coordinator 가 `changes --applied` 로 대조한다).\n\n"@ko .
+    djr:text "- (있으면) **G1 override 입력**: 사용자가 G1에서 기본(미적용)을 뒤집어 채택했거나 미해결 옵션을 정한 결정. 형식 = `[항목] 기본=미적용 → 채택` 또는 `[항목] 옵션A → 옵션B`. 이 입력이 있으면 너는 그 결정만 반영하는 **좁은 재호출**이다 — **해당 절만 제자리 갱신하고 타 절은 불변**으로 둔다(전체 재작성 금지).\n- (있으면) **빠른 길 입력**(2026-11-07): Coordinator 가 `빠른 길` 과 항목 목록을 주면 그 항목만 제자리에서 고치는 좁은 재호출이다 — 줄을 더하거나 지우지 않고, 숫자 · decision · owner 값과 표의 칸 구성을 바꾸지 않고, 새 문장이나 근거를 더하지 않고, 밖으로 보이는 이름을 바꾸지 않는다(고치는 이름은 명세의 모든 자리를 같이 고친다). 이 제약으로 끝낼 수 없는 항목은 반영하지 말고 응답에 `보고: <항목> — <까닭 한 구>` 로 적는다. 처분 기록은 받은 경로에 지금 판형대로 쓴다.\n- (리팩토링 모드면) `모드 리팩토링` · `M<n>` ⓐ 목록(규칙 인용 포함) · 적용 범위 규범 원문 · «운영 전 예외» 블록 원문 · Coordinator 의 «해소 판정» · «바뀌는 것 목록» 문단 원문 — 리팩토링 명세(슬라이스 0 · 변경 슬라이스)를 쓴다. 파견 입력에 적용 범위 규범·«운영 전 예외» 블록이 실려 있으면 그 규범이 정한 몫과 때를 따른다. 바뀌는 것 목록의 V 항목에는 «운영 전 예외» 의 대상 규범을 적용하지 않고 조건부 대상은 조건이 설 때만 적용하지 않는다(유지 규범 · V 밖 코드는 그대로).\n  - **해소 판정**(2026-09-29 · 2026-10-04): 파견 입력의 «해소 판정» 문단대로 명세에 판정 표(제목 `슬라이스 0 해소 판정`)를 쓴다 — 범위 안 ⓐ `M<n>` 전부를 요지로 나누고, 원 규칙의 처방으로 요지를 없앨 수 있으면 해소(그 처방을 명세에 넣는다), 그 처방이 동작·계약·DB 구조를 바꾸면 `변경`(처방 앵커 · 6번 칸 `V<n>` — 그 변화를 바뀌는 것 목록에 적는다), 둘 다 아니면 불가(닫힌 범주 여섯과 막는 `파일:행` — 인용 밖 `반대 방향 규칙` 이면 증거 칸)다. 원 규칙의 처방이 아닌 대체 형태를 명세에 넣지 않고, ⓐ 요지의 미해소를 Z·알려진 한계·잔존 빚에 적지 않는다 — 표의 불가로만 적는다(Z 는 스스로 가르지 못한 트레이드오프뿐이다). 판정 표 행에 대한 리뷰어 이의는 기록·반박으로 닫지 않고 행을 이의대로 고친다 — 해소 행 이의면 원 규칙 처방 형태로 고치거나 불가로, 불가·부분 행 이의(과대 제외 · 요지를 좁게 적음)면 해소 처방을 넣는다. `ⓐ 재상정` 의 요지 축소 결정이 오면 표의 요지 번호를 그 결정과 맞춘다 — Phase 2 STOP 이 요지 일부를 빼면 요지를 나누어 뺀 요지를 불가(범주)로 적는다. 전체 제외 결정(요지 축소가 아닌 처분 줄)이 오면 그 항목의 행을 모두 불가로 적는다 — 해소이던 요지는 범주 `재상정 제외` 이고 막는 것은 그 결정 줄(`refactor-scope.md:<행>`)이다.\n  - **바뀌는 것 목록**(2026-10-04): 파견 입력의 «바뀌는 것 목록» 문단대로 명세에 `## 바뀌는 것 목록`(V — 종류 · 근거 · 슬라이스 · 전 → 후 · 시험 · 바뀌는 기대 · 연산 · 데이터 · 영향 — 하위 줄은 그 문단 판형대로 들여 쓴 `- ` 목록 줄이다) · `## 다른 BC 편집 목록` · 슬라이스 계획(`0T` · `0C` · `0F` · `S1…`)을 쓴다. 시험 줄의 `<입장 행>` 은 영구 테스트 입장 표 그 행의 candidate 칸 원문 그대로 옮기고, 동사는 그 행의 decision(`update` · `add` · `remove` — 케이스 삭제는 `remove`)이다. V 의 종류는 시험 줄 owner 로 가르고(밖 = acceptance-tester · 안 = coder) 낮춰 적지 않는다. 기대 의미가 그대로인 시험 편집은 V 로 올리지 않고 0F 의 `retain` 재조직 행(파일 · 케이스 · «기대 의미 그대로» 까닭)으로 적는다 — 그 행의 candidate 칸은 `재조직 — <무엇을 어디로>` 꼴로 쓴다(낱말 `재조직` 표지가 없는 `retain` 행의 파일은 0F 허용 파일이 아니다). 시험 케이스 이름 · parametrize 원소 id 개명은 파견 입력 «바뀌는 것 목록» 문단의 `retain` «개명» 행(`재조직 — 개명 <경로>::[<클래스>::]<옛> → <새>` · `재조직 — 개명 <경로>::<케이스>[<옛 id>] → [<새 id>]` · 한 행에 하나 · 수집 케이스만)으로 적고, 입장 표 `update` · `remove` 행은 옛(G1 트리) 이름으로 적는다(2026-10-24). 시험이 쓰는 운영 클래스 칸(필드) 개명은 그 칸을 쓰는 시험 파일마다 `retain` «칸 개명» 행(`재조직 — 칸 개명 <운영 경로>::<클래스>.<옛> → <새>`)으로 적어 0F 슬라이스에 둔다 — 변경 슬라이스의 칸 개명은 red 다. ninja `Schema` · pydantic 모델 · Django `Model` 과, 기반이 같은 파일 클래스 · `object` · `NamedTuple` · `Generic` · `ABC` · 내장 예외로 풀리지 않는 클래스(다른 파일 기반 · Enum · TypedDict · metaclass)의 칸에는 칸 개명 행을 쓰지 않는다 — 그 칸 개명이 밖 계약 · DB 구조를 바꾸면 V 로 적고, 아니면 그 요지를 해소 판정 표에 `불가` · 범주 `지원 안 함`(막는 것 = 그 클래스 정의 `파일:행` — 칸 개명 행이 받지 않는 클래스)으로 적는다(2026-10-28). ⓐ `C<n>`(검사기 빚)의 처방이 동작 · 계약을 바꾸면(경로 앞 응답을 두어 생성 문서가 바뀌는 #63 같은 것) 0C 로 보내지 않고 변경 슬라이스의 V(종류 `밖 동작` · 근거 `C<a>[~C<b>][, C<c>…]` — 같은 처방 하나로 함께 사라지는 C 를 모두)로 적는다 — 해소 판정 표에는 행을 쓰지 않고(ⓐ 가 검사기 빚뿐인 실행은 표를 두지 않는다), 범위 `~` 는 V 머리 근거에서만 쓴다(G0 ⓐ · `ⓐ 재상정` 결정 줄의 C 는 번호 하나씩). 0T 에서 기대를 고치는 ⓐ 시험 항목은 입장 표 `update` 행(V 에 딸리지 않은 행)으로 적고 그 행에 ⓐ 항목(`M<n>` · `C<n>`)을 적는다. «동작 불변 판정 경계»·«배포 DB 점검 조회» 같은 증명 절은 쓰지 않는다 — 바뀌면 V 다. G1 반영 입력(고르지 않은 V)이 오면 그 V · 그 V 에만 딸린 입장 행 · 다른 BC 편집 줄 · 슬라이스를 지우고 그 요지를 `불가 · 변경 미승인` 으로 적는다(근거가 `C<n>` 인 V 는 표 행이 없다 — V 와 딸린 줄만 지운다) — 그 밖은 한 글자도 바꾸지 않는다(Coordinator 가 `changes --applied` 로 대조한다).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s002/b7> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s002> ;
@@ -2492,14 +2528,14 @@ djr:R-3746 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 13 ;
     djr:statesNorm djr:R-1626, djr:R-1627, djr:R-1628, djr:R-1629, djr:R-1630, djr:R-1631 ;
-    djr:text "12. **`response/OpenAPI/tests`**: `dddjango-code-json`이면 승인된 runtime HTTP status/body/header mapping(사건 값 머리는 머리 이름 · 값 꼴 · 값 없음(생략)의 뜻 · 화면이 읽는 법까지 적고, 오류 status의 머리는 생성 OpenAPI에 선언되지 않으므로 같은 머리 계약을 operation `description`에도 적는다), framework-owned status non-advertising, mounted client와 공개 generated OpenAPI의 관련 operation/status/schema 후보·기존 evidence를 기록하고 아래 영구 테스트 입장 표의 행을 참조한다. slot 6의 shape 및 별도 변경 승인은 보존하지만 Pydantic private metadata·validator 위치·framework 기본 직렬화를 자동 영구 테스트로 만들지 않는다. 별도 공개 Python consumer 계약은 HTTP와 다른 행으로 심사한다. `preserve-established`이면 관찰된 profile-native media type/fields/status-specific schema·handler와 test/OpenAPI evidence 또는 `none | not applicable`을 기록한다. framework-owned 오류 smoke와 auth/header 검증도 승인 계약·독자 failure가 있는 후보만 입장시키며 exact framework body snapshot을 요구하지 않는다. native download/stream/redirect와 schema-less 204는 선언 Schema 규칙의 carveout이다.\n\n"@ko .
+    djr:text "12. **`response/OpenAPI/tests`**: `dddjango-code-json`이면 승인된 runtime HTTP status/body/header mapping(사건 값 머리는 머리 이름 · 값 꼴 · 값 없음(생략)의 뜻 · 화면이 읽는 법까지 적고, 오류 status의 머리는 그 경로의 머리 보충(`openapi_extra` 정수 status 키의 `headers` — 머리 `description` 에 같은 머리 계약)으로 생성 OpenAPI에 선언한다 — operation `description`에만 적는 것은 선언이 아니다), framework-owned status non-advertising(`response=` 에 적지 않는다), mounted client와 공개 generated OpenAPI의 관련 operation/status/schema 후보·기존 evidence를 기록하고 아래 영구 테스트 입장 표의 행을 참조한다. slot 6의 shape 및 별도 변경 승인은 보존하지만 Pydantic private metadata·validator 위치·framework 기본 직렬화를 자동 영구 테스트로 만들지 않는다. 별도 공개 Python consumer 계약은 HTTP와 다른 행으로 심사한다. `preserve-established`이면 관찰된 profile-native media type/fields/status-specific schema·handler와 test/OpenAPI evidence 또는 `none | not applicable`을 기록한다. framework-owned 오류 smoke와 auth/header 검증도 승인 계약·독자 failure가 있는 후보만 입장시키며 exact framework body snapshot을 요구하지 않는다. 두 profile 모두 이 scope 경로에 붙는 경로 앞 응답 행(Ninja 기본 행 · 프로젝트 행 — `implementation-django-ninja` §6.2)과 그 행 시험 입장 행(`implementation-test` §19.2.1 — 표를 만들거나 행을 바꾸는 실행은 붙는 행마다 · 대상 BC 경로로 일으킬 수 없는 행은 «시험 자리 없음»)을 기록하고, 프로젝트 행마다 근거를 단다 — 그 답을 내는 미들웨어 코드 줄 · 설정 · 앞단 설정이고, `NOT_API_MIDDLEWARE` 줄은 그 미들웨어가 API 경로를 빼는 코드 줄이다(서버렌더 transient 미들웨어처럼 빼는 줄이 없는 미들웨어는 API 경로에도 답하므로 행으로 적는다). 승인 endpoint 의 406 · 415 · 인증 안 `HttpError` 처럼 경로 객체로 못 가르는 답은 `operations` 행으로 적는다. native download/stream/redirect와 schema-less 204는 선언 Schema 규칙의 carveout이다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b14> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 14 ;
     djr:statesNorm djr:R-1632, djr:R-1633, djr:R-1634, djr:R-1635, djr:R-1636 ;
-    djr:text "`dddjango-code-json`의 framework-owned 오류는 401/403/route 404/422/429/general `HttpError`/unknown 500이며 BC `ErrorSchema`으로 변환하거나 `response`에 광고하지 않는다. 모든 Ninja profile의 인증 실패에서는 `None`을 return하거나 framework `AuthenticationError`를 raise한다. `AuthenticationError` object나 `ErrorSchema`을 return하지 않고 어느 것도 `request.auth`에 저장하지 않는다. 406과 415는 각각 별도 사용자 승인을 받은 경우에만 tested version-compatible Ninja-owned pre-body/framework `HttpError` 경로로 구현하며 함수형 `Router`나 전역 handler를 강제하지 않는다. `preserve-established`는 관찰된 framework error body/협상 behavior를 그대로 기록하고 code-profile artifact를 도입하지 않는다.\n\n"@ko .
+    djr:text "`dddjango-code-json`의 framework-owned 오류는 401/403/route 404/422/429/general `HttpError`/unknown 500이며 BC `ErrorSchema`으로 변환하거나 `response`에 광고하지 않는다 — 그 가운데 경로 앞에서 나는 의도된 답만 문서에 경로 앞 응답으로 적는다(slot 12). 모든 Ninja profile의 인증 실패에서는 `None`을 return하거나 framework `AuthenticationError`를 raise한다. `AuthenticationError` object나 `ErrorSchema`을 return하지 않고 어느 것도 `request.auth`에 저장하지 않는다. 406과 415는 각각 별도 사용자 승인을 받은 경우에만 tested version-compatible Ninja-owned pre-body/framework `HttpError` 경로로 구현하며 함수형 `Router`나 전역 handler를 강제하지 않는다. `preserve-established`는 관찰된 framework error body/협상 behavior를 그대로 기록하고 code-profile artifact를 도입하지 않는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b15> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
@@ -2541,7 +2577,7 @@ djr:R-3746 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
     djr:statesNorm djr:R-1585, djr:R-1586, djr:R-1587 ;
-    djr:text "1. **`contract scope`**: 프로젝트의 모든 API surface별 profile, API instance/namespace/version/public·internal 구분, scope 전체 BC와 그중 public BC error가 있는 error-BC subset, API/controller/URLconf/registrar/error/common module의 project-relative 경로, consumer·OpenAPI evidence, module sharing을 열거한다. repository artifact에는 project-relative 경로가 필수이고, greenfield artifact에는 명시적인 planned project-relative 경로를 쓰며, 없거나 적용되지 않는 항목은 그렇게 명시한다. planned 경로는 **이번 delivery가 승인 스코프 안에서 새로 만드는** artifact 전용이다 — 기존 artifact는 관찰된 실제 경로(legacy 위치 포함)로 적고, 타 BC의 표준 경로를 planned로 적지 않는다(2026-08-13).\n"@ko .
+    djr:text "1. **`contract scope`**: 프로젝트의 모든 API surface별 profile, API instance/namespace/version/public·internal 구분, scope 전체 BC와 그중 public BC error가 있는 error-BC subset, API/controller/URLconf/registrar/error/common module의 project-relative 경로, 경로 앞 응답 파일 둘(`framework/ninja/pre_route_responses.py` · `framework/ninja/pre_route_response_table.py`)과 루트 API 클래스(`<project>/api.py` — `implementation-django-ninja` §6.2)의 경로와 action(`reuse | create | change`), consumer·OpenAPI evidence, module sharing을 열거한다. repository artifact에는 project-relative 경로가 필수이고, greenfield artifact에는 명시적인 planned project-relative 경로를 쓰며, 없거나 적용되지 않는 항목은 그렇게 명시한다. planned 경로는 **이번 delivery가 승인 스코프 안에서 새로 만드는** artifact 전용이다 — 기존 artifact는 관찰된 실제 경로(legacy 위치 포함)로 적고, 타 BC의 표준 경로를 planned로 적지 않는다(2026-08-13).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b20> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
@@ -2843,7 +2879,7 @@ djr:R-3746 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
     djr:statesNorm djr:R-3573 ;
-    djr:text "**판정 범주와 근거**(증명 책임은 빼는 쪽이다 — `check-verdict` 가 근거를 기계로 대조한다):\n- **채택**.\n- **병합** → `M<k>`(채택 항목만) 또는 `C<n>`(리뷰어가 그 행에 «`C<n>` 과 같음»을 적었을 때만).\n- **제외** — 근거 `R-ID «인용»`: 인용이 든 블록의 허용·예외 규범이거나, 리뷰어가 «반대 방향 규칙» 열에 적은 규칙이다. 적용 범위 규범·«운영 전 예외» 규범과 그 대상 목록(조건부 대상 포함)의 규범은 근거가 될 수 없고, 적용 한정 어구가 든 문장을 인용하지 않는다. 의무·금지와 허용·예외가 한 블록에 섞였으면 위반 행이 인용한 구간과 겹치지 않는 구간을 인용한다.\n- **오탐**(요건 불충족 포함) — 근거는 위반으로 인용된 바로 그 블록의 요건 문구 인용이다(같은 절의 다른 문장은 안 된다).\n- **사용자 판단** — 두 규칙이 반대 방향이고 문면으로 가를 수 없을 때다(반대 방향 규칙이 적용 범위 규범·«운영 전 예외»의 대상이면 이미 갈린 충돌이라 여기 들지 않는다).\n- **다른 BC 몫** — 리뷰어가 «바뀌는 것» 칸에 `다른 BC 파일` 을 적은 행만이다. 근거는 타 BC 하나다 — 편집할 파일 `application/<다른 bc>/…:행` 이 실재하고, 그 자리가 이 레인이 고칠 수 있는 다른 BC 편집 갈래(받는 쪽 어댑터 · 받는 쪽 시험 · 직접 import 자리 · HTTP 소비자 · 공유 표면 · 프로젝트 합성 · 묶음 import 치환 — `urls.py`·api 등록 같은 프로젝트 합성 파일은 BC 범위다) 밖이어야 한다(아니면 `check-verdict` 가 채택으로 재분류한다). 동작·계약·DB 구조가 바뀐다는 것은 빼는 사유가 아니다(바뀌는 것도 정리다 — G1 목록으로 승인).\n\n"@ko .
+    djr:text "**판정 범주와 근거**(증명 책임은 빼는 쪽이다 — `check-verdict` 가 근거를 기계로 대조한다):\n- **채택**.\n- **병합** → `M<k>`(채택 항목만) 또는 `C<n>`(리뷰어가 그 행에 «`C<n>` 과 같음»을 적었을 때만).\n- **제외** — 근거 `R-ID «인용»`: 인용이 든 블록의 허용·예외 규범이거나, 리뷰어가 «반대 방향 규칙» 열에 적은 규칙이다. 적용 범위 규범·«운영 전 예외» 규범과 그 대상 목록(조건부 대상 포함)의 규범은 근거가 될 수 없고, 적용 한정 어구가 든 문장을 인용하지 않는다. 의무·금지와 허용·예외가 한 블록에 섞였으면 위반 행이 인용한 구간과 겹치지 않는 구간을 인용한다.\n- **오탐**(요건 불충족 포함) — 근거는 위반으로 인용된 바로 그 블록의 요건 문구 인용이다(같은 절의 다른 문장은 안 된다).\n- **사용자 판단** — 두 규칙이 반대 방향이고 문면으로 가를 수 없을 때다(반대 방향 규칙이 적용 범위 규범·«운영 전 예외»의 대상이면 이미 갈린 충돌이라 여기 들지 않는다).\n- **다른 BC 몫** — 리뷰어가 «바뀌는 것» 칸에 `다른 BC 파일` 을 적은 행만이다. 근거는 타 BC 하나다 — 편집할 파일 `application/<다른 bc>/…:행` 이 실재하고, 그 자리가 이 레인이 고칠 수 있는 다른 BC 편집 갈래(받는 쪽 어댑터 · 받는 쪽 시험 · 직접 import 자리 · HTTP 소비자 · 공유 표면 · 프로젝트 합성 · 묶음 import 치환 — `urls.py`·api 등록 · `<project>/api.py` · 경로 앞 응답 파일 둘(`framework/ninja/pre_route_responses.py` · `framework/ninja/pre_route_response_table.py` — 새 패키지면 `framework/__init__.py` · `framework/ninja/__init__.py` 도) 같은 프로젝트 합성 파일은 BC 범위다) 밖이어야 한다(아니면 `check-verdict` 가 채택으로 재분류한다). 동작·계약·DB 구조가 바뀐다는 것은 빼는 사유가 아니다(바뀌는 것도 정리다 — G1 목록으로 승인).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s008/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s008> ;

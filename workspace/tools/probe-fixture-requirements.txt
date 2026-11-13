@@ -1,6 +1,7 @@
-# 픽스처 가상환경(.venv-probe) 고정 판 — workspace/tools/behavior_probe_fixture_run.py(B0) 전용.
+# 픽스처 가상환경(.venv-probe) 고정 판 — workspace/tools/behavior_probe_fixture_run.py(B0) · pre_route_behavior_smoke.py(F4-173) 전용.
 # 플러그인 배포물에 들어가지 않는다(설치본 도구는 표준 라이브러리만 — 블루프린트 E7).
 # 판은 설계 원형 측정 환경(scratch pyvenv · greenlet_site)의 dist-info 그대로다(Python 3.14).
+# `--no-deps` 로 깐다 — 의존도 빠짐없이 적는다(`uv pip check` 로 확인).
 pytest==8.4.2
 pluggy==1.6.0
 iniconfig==2.3.0
@@ -13,3 +14,22 @@ asgiref==3.12.1
 sqlparse==0.6.0
 pytest-django==4.14.0
 greenlet==3.5.5
+# 경로 앞 응답 정본 동작 시험(F4-173 · 설계 §4.3) — 시제품 측정 환경(Django 6.1 · Ninja 1.6.3 · ninja_extra 0.31.7)과 같은 판.
+django-ninja==1.6.3
+django-ninja-extra==0.31.7
+pydantic==2.14.3
+pydantic-core==2.50.4
+annotated-types==0.8.0
+typing-extensions==4.16.0
+typing-inspection==0.4.5
+injector==0.24.0
+contextlib2==21.6.0
+# 정본 · 표 · 3.2 api.py 의 mypy strict 0(정본 파일은 프로젝트가 고칠 수 없다 — 셋째 확인 N4) — django 형은 django-stubs.
+mypy==2.4.1
+mypy-extensions==1.2.0
+pathspec==1.1.1
+librt==0.16.0
+ast-serialize==0.13.1
+django-stubs==6.1.2
+django-stubs-ext==6.1.2
+types-pyyaml==6.0.12.20261111

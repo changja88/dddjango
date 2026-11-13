@@ -347,3 +347,5 @@ djr:R-1930 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-db
 djr:R-1931 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 
 djr:R-1932 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-3752 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .

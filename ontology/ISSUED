@@ -3745,3 +3745,8 @@ R-3744	2026-11-10	rules/architecture-ddd-final.ttl
 R-3745	2026-11-10	rules/architecture-ddd-final.ttl
 R-3746	2026-11-10	rules/agent-design-architect.ttl
 R-3747	2026-11-10	rules/command-dddjango.ttl
+R-3748	2026-11-13	rules/architecture-api-final.ttl
+R-3749	2026-11-13	rules/implementation-django-ninja-final.ttl
+R-3750	2026-11-13	rules/implementation-django-ninja-final.ttl
+R-3751	2026-11-13	rules/implementation-django-ninja-final.ttl
+R-3752	2026-11-13	rules/implementation-test-final.ttl

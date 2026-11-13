@@ -11,6 +11,7 @@
       · scripts/standard_tree.py     — 트리 171행 단일 출처(전 검사기 import)
       · scripts/business_vocab.py    — #628 실체(업무 어휘 재료)
       · scripts/checker_target.py    — 호출 계약 공용 모듈(전 검사기 import · 라운드 1 P2)
+      · scripts/pre_route_responses_canonical.py — 경로 앞 응답 정본 자산(#63 b 가 읽는 자료)
       · skills/discipline-houserules — ⓐ 정본(final.md)·ⓑ SKILL(값 0)
       · 나머지 skills 10             — 책 코퍼스(corpus_mirror 11 · 치환 부류)
       · agents/*.md                  — 매핑표 ⓓ 소유 규칙(0이면 파이프라인 절차)
@@ -177,6 +178,11 @@ def main() -> int:
             elif key == "scripts/watch_probe/test_watch_probe.py":
                 why = ("멈춘 시험 깨우기 탐침(2026-11-04 — 판정 없는 기록기) — test_watch.py 가 `PYTEST_PLUGINS` 로 싣고 "
                        "시험마다 시작 · 끝 한 줄만 적는다(스레드 없음 · 자기 디렉터리만 PYTHONPATH 에) · test_watch_fixture_run 이 행동 고정")
+            elif rel.name == "pre_route_responses_canonical.py":
+                why = ("경로 앞 응답 정본 자산(F4-173 · 2.37.0 — #63 b) — check-openapi-error-declaration 이 프로젝트 "
+                       "`framework/ninja/pre_route_responses.py` 를 이 글과 AST 로 대조하고 표 칸 · 메서드 낱말 · operation 꼴을 "
+                       "여기서 읽는다(검사기가 import 하지 않는 자료 · 실행 파일 아님) · pre_route_canonical_check 가 "
+                       "참조 글 정본 코드 블록 = 이 자산을 고정")
             elif rel.name == "anchor_diff.py":
                 why = "scope-render 직접 계열 판정 차분 공용 모듈(2026-08-15 r2″ — registry 2·5·6·15·16번 --anchor 소비·registry_gate 동형 N∖L·빚 채널) — anchor_diff_smoke 가 행동 고정"
             else:

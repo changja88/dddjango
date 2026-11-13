@@ -344,3 +344,6 @@ djr:R-2099 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ap
 djr:R-3467 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
 
 djr:R-3656 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-3748 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-openapi-error-declaration.py> .

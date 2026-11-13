@@ -243,7 +243,7 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     "check-error-centralization.py": (2, 5, 5, 1, False),
     "check-response-schema-bypass.py": (2, 0, 0, 3, True),
     "check-layer-skeleton.py": (2, 10, 10, 1, False),
-    "check-openapi-error-declaration.py": (2, 6, 4, 1, False),
+    "check-openapi-error-declaration.py": (2, 10, 10, 3, False),
     "check-context-isolation.py": (2, 61, 60, 6, False),
     "check-app-container.py": (2, 0, 0, 4, True),
     "check-ninja-boundary-middleware.py": (2, 0, 0, 4, True),

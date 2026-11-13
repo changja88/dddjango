@@ -15,6 +15,7 @@ import hashlib
 import importlib.util
 import itertools
 import json
+import os
 import random
 import re
 import shutil
@@ -376,11 +377,12 @@ def verdict_cases(fails: "list[str]", aud: Audit, nov: "tuple[str, str, str]") -
 
 
 def _res_folder(repo: Path, rows: "list[str]", verdicts: "list[str]",
-                disc: "list[str] | None" = None, confirm: bool = True) -> "tuple[Path, str]":
+                disc: "list[str] | None" = None, confirm: bool = True, name: str = "refactor-demo") -> "tuple[Path, str]":
     """리팩토링 실행 산출물 폴더(G0 ⓐ 뒤 · 앵커 기록) — (폴더, 앵커). `disc` = discipline 렌즈 표 행.
-    `confirm` = check-verdict exit 0 으로 확정 표(verdict-final.md)까지 만든다(아니면 호출자가 확정한다)."""
+    `confirm` = check-verdict exit 0 으로 확정 표(verdict-final.md)까지 만든다(아니면 호출자가 확정한다).
+    `name` = 폴더 이름(behavior_guard 창을 실제로 여는 사례는 `-refactor-` 표지가 든 이름)."""
     anchor: str = _git(repo, "rev-parse", "HEAD").strip()
-    folder: Path = repo / ".dddjango" / "refactor-demo"
+    folder: Path = repo / ".dddjango" / name
     audit: Path = folder / "audit" / "20260927-0250"
     code, out = run(repo, "plan", "demo", "--out", str(audit), "--stage", STAGE)          # 설계 §6-2 · §7 plan --stage
     if code != 0:
@@ -3159,6 +3161,266 @@ def resolution_change_cases(fails: "list[str]", td: Path) -> None:
         expect(fails, label, rs(), code, needle)
 
 
+# ── F4-173 — V 머리 근거 검사기 빚 `C<k>`(여럿 · 범위 · 쉼표 목록) · `changes --gate` 의 C 연결 · «안 바꾼다» 의 C 처분 ──
+# 검사기 빚만의 실행(ⓐ M 없음)이 `resolution` 을 지나고, 다른 BC 편집 «프로젝트 합성» 세 파일이 변경 창을 지난다.
+CB_ROW: str = ("| 경로 앞 응답 문서 | OpenAPI 문서 계약 | 문서 빠짐 | 없음 | add | acceptance-tester "
+               "`application/demo/test/test_thing_api.py::test_pre_route_documented` |\n")
+CB_ADM: str = "".join(ln for ln in V_SPEC_ROWS.splitlines(keepends=True) if "컨트롤러 404 응답" not in ln) + CB_ROW
+CB_ADM_ONLY: str = "".join(V_SPEC_ROWS.splitlines(keepends=True)[:2]) + CB_ROW
+CB_TABLE: str = "| ID | 위반 | 백스톱 | 미룰 수 있나 |\n|---|---|---|---|\n"
+CB_C: str = "".join(f"| C{i} | [#63] {C_LOC}: ThingController.{op} {verb} /thing/ — 경로 앞 오류가 문서에 없다 | "
+                    f"check-openapi-error-declaration | 예 |\n"
+                    for i, (op, verb) in enumerate((("get", "GET"), ("list", "GET"), ("post", "POST")), 1))
+CB_COMPOSE: "tuple[str, ...]" = ("config/api.py", "framework/ninja/pre_route_responses.py",
+                                 "framework/ninja/pre_route_response_table.py")
+CB_M2_SOLVED: str = "| M2 | 1 | 예외 매핑 흩어짐 | 해소 | — | — | M2 — 컨트롤러 예외 매핑 정리 | — |\n"
+CB_TEST: str = "application/demo/test/test_thing_api.py"
+CB_DOC_API: str = ("from ninja.openapi.schema import OpenAPISchema\nfrom ninja_extra import NinjaExtraAPI\n\n"
+                   "from framework.ninja.pre_route_responses import add_pre_route_responses\n\n\n"
+                   "class DocumentedAPI(NinjaExtraAPI):\n    def get_openapi_schema(\n"
+                   "        self, *, path_prefix: str | None = None, path_params: dict[str, object] | None = None\n"
+                   "    ) -> OpenAPISchema:\n        return add_pre_route_responses(self, super().get_openapi_schema("
+                   "path_prefix=path_prefix, path_params=path_params))\n\n\napi: DocumentedAPI = DocumentedAPI()\n")
+
+
+def _cb_v(basis: str, vid: str = "V2", slice_: str = "S2") -> str:
+    """밖 동작 V — 근거 `basis`(검사기 빚) · 시험 add 하나(경로 앞 응답이 문서에 섰다) · 영향."""
+    return (f"- {vid} · 밖 동작 · 근거 {basis} · 슬라이스 {slice_}\n"
+            "  - 전 → 후: 문서에 경로 앞 오류 없음 → 경로마다 401 · 422 · 미들웨어 답이 붙음\n"
+            f"  - 시험: 경로 앞 응답 문서 add(acceptance-tester) {CB_TEST}::test_pre_route_documented\n"
+            "    - 바뀌는 기대: 기대 추가 1\n"
+            "  - 영향: HTTP 소비 0 · 저장소 밖 소비자 관찰 못 함\n")
+
+
+def _cb_edits(vid: str = "V2", paths: "tuple[str, ...]" = CB_COMPOSE) -> str:
+    return "".join(f"- {p} · 프로젝트 합성 · {vid}\n" for p in paths)
+
+
+def _cb_lane(td: Path, name: str) -> ChangesLane:
+    """ChangesLane + G0 ⓐ C1 · C2 · C3(#63 c 줄 — operation 마다 하나) · V1(M1 #1) · V2(근거 C1~C2, C3)."""
+    lane = ChangesLane(td, name)
+    lane.scope_base = lane.scope_base.replace("- M1, M2 · 결정", CB_TABLE + CB_C + "\n- C1, C2, C3, M1, M2 · 결정")
+    (lane.folder / "refactor-scope.md").write_text(lane.scope_base, encoding="utf-8")
+    lane.spec(V1_TEXT + _cb_v("C1~C2, C3"), _cb_edits(), CH_ROW_M1 + CB_M2_SOLVED, adm=CB_ADM)
+    return lane
+
+
+def c_basis_cases(fails: "list[str]", td: Path) -> None:
+    """F4-173(설계 §6 · 셋째 확인 N3) — V 머리 근거 `C<a>[~C<b>][, C<c>[~C<d>]…]` 판형 · 옛 `M<k> #<j>` 그대로 · `--gate` 의 C 연결
+    (이번 실행 ⓐ C · 재상정으로 뺀 C) · «안 바꾼다» 의 C 처분(`ⓐ 재상정` 결정 줄 — 닫힌 어휘 · 요지 축소 밖)."""
+    lane = _cb_lane(td, "cb")
+    f = lane.folder
+
+    def basis_of(vid: str) -> str:
+        try:
+            return next(v["basis"] for v in ra.changes_snapshot(f, lane.repo)["V"] if v["id"] == vid)
+        except RuntimeError as exc:                      # 형식 red 명세 — 스냅숏 불능(옛 판은 C 근거 머리를 판형 밖 줄로 읽는다)
+            return f"(스냅숏 불능: {str(exc)[:160]})"
+    lane.support()
+    for label, basis, canon in (("RD-CB1 범위 + 쉼표 목록", "C1~C2, C3", "C1~C2, C3"), ("RD-CB2 범위", "C1~C3", "C1~C3"),
+                                ("RD-CB3 쉼표 목록(공백 흔들림)", "C1 ,C2,  C3", "C1, C2, C3"), ("RD-CB4 C 하나", "C2", "C2"),
+                                ("RD-CB5 범위 안 공백", "C1 ~ C3", "C1~C3")):
+        lane.spec(V1_TEXT + _cb_v(basis), _cb_edits(), CH_ROW_M1 + CB_M2_SOLVED, adm=CB_ADM)
+        got = lane.ch()
+        expect(fails, f"{label} `근거 {basis}` → changes green · 스냅숏 근거 판형 `{canon}`",
+               (got[0] if basis_of("V2") == canon else 9, got[1] + f" · 근거 {basis_of('V2')!r}"), 0, "V 2(내부 약속 1 · 밖 동작 1 · DB 구조 0)",
+               "다른 BC 편집 3", "red 0")
+    for label, basis, needle in (
+            ("RD-CB6 C 에 `#<j>`", "C1 #1", "근거 `C1 #1` 가 `M<k> #<j>` 또는 `C<a>[~C<b>][, C<c>[~C<d>]…]` 가 아니다"),
+            ("RD-CB7 범위 거꾸로", "C3~C1", "범위 `C3~C1` 는 앞 번호가 뒤 번호보다 작아야 한다"),
+            ("RD-CB8 범위 한 점", "C2~C2", "범위 `C2~C2` 는 앞 번호가"),
+            ("RD-CB9 번호 겹침", "C1~C3, C2", "검사기 빚 번호가 겹친다"),
+            ("RD-CB10 M 과 C 섞음", "M2 #1, C1", "근거 `M2 #1, C1` 가 `M<k> #<j>` 또는"),
+            ("RD-CB11 범위 표지 `-`", "C1-C3", "근거 `C1-C3` 가"),
+            ("RD-CB12 범위 끝에 C 없음", "C1~3", "근거 `C1~3` 가"),
+            ("RD-CB13 C0", "C0", "근거 `C0` 가")):
+        lane.spec(V1_TEXT + _cb_v(basis), _cb_edits(), CH_ROW_M1 + CB_M2_SOLVED, adm=CB_ADM)
+        expect(fails, f"{label} `근거 {basis}` → changes red(판형)", lane.ch(), 2, f"V2(", needle)
+    lane.spec(V1_TEXT.replace("근거 M1 #1", "근거 M1 # 1") + _cb_v("C1~C2, C3"), _cb_edits(), CH_ROW_M1 + CB_M2_SOLVED, adm=CB_ADM)
+    v1: str = basis_of("V1")
+    expect(fails, "RD-CB14 옛 `근거 M1 # 1` 꼴 → 판형 `M1 #1` 그대로(스냅숏 · digest 무변)", (0 if v1 == "M1 #1" else 9, v1), 0)
+    # --gate — G1 결정(V2 바꾼다) · C 연결
+    lane.spec(V1_TEXT + _cb_v("C1~C2, C3"), _cb_edits(), CH_ROW_M1 + CB_M2_SOLVED, adm=CB_ADM)
+    made = lane.ch("--candidate")
+    cands: "list[Path]" = sorted((f / "g1").glob("*-candidate.json"))
+    if not cands:
+        fails.append(f"RD-CB15 ~ RD-CB24 후보 스냅숏을 만들지 못했다 — {made[1][-300:]}")
+        return
+    cand: Path = cands[-1]
+    cd: str = ra.snapshot_digest(json.loads(cand.read_text(encoding="utf-8")))
+    head: str = f"\n## G1 변경 결정 2026-11-13 10:00 · 후보 digest {cd}\n\n"
+    scope: Path = f / "refactor-scope.md"
+    scope.write_text(lane.scope_base + head + "- V2 · 결정 = 바꾼다 · 출처 = 본인 직접(1000)\n", encoding="utf-8")
+    expect(fails, "RD-CB15 --applied V2 바꾼다 · 승인판 무변 → green", lane.ch("--applied", str(cand)), 0, "red 0 · applied")
+    expect(fails, "RD-CB16 --gate 근거 C1~C2, C3 = 이번 실행 ⓐ C → green(옛 판: `근거 … 가 이 V 를 가리키는 해소 판정 표 변경 행이 아니다`)",
+           lane.ch("--gate"), 0, "red 0 · gate")
+    scope.write_text(lane.scope_base.replace("- C1, C2, C3, M1, M2 · 결정 = ⓐ", "- C1, C3, M1, M2 · 결정 = ⓐ")
+                     + "- C2 · 결정 = ⓑ · 사유 = 픽스처 · 출처 = 본인 직접(1900)\n" + head
+                     + "- V2 · 결정 = 바꾼다 · 출처 = 본인 직접(1000)\n", encoding="utf-8")
+    expect(fails, "RD-CB17 --gate 근거의 C2 가 G0 ⓐ 가 아님(ⓑ) → red", lane.ch("--gate"), 2,
+           "V2 근거 C2 가 이번 실행 G0 ⓐ 검사기 빚(`C<n> · 결정 = ⓐ` 줄)이 아니다")
+    recon: str = "\n## ⓐ 재상정 2026-11-13 10:10 — 픽스처\n\n"
+    scope.write_text(lane.scope_base + head + "- V2 · 결정 = 바꾼다 · 출처 = 본인 직접(1000)\n" + recon
+                     + "- C3 · 결정 = 별도 요청 · 사유 = 픽스처 · 출처 = 본인 직접(1010)\n", encoding="utf-8")
+    expect(fails, "RD-CB18 --gate 바꾼다 V2 근거의 C3 를 재상정이 뺐다 → red", lane.ch("--gate"), 2,
+           "V2 근거 C3 는 `ⓐ 재상정` 줄이 뺀 검사기 빚이다")
+    # «안 바꾼다» — architect 반영(V2 · 그 V 에만 딸린 입장 행 · 다른 BC 편집 줄을 지운다) + C 처분(`ⓐ 재상정` 결정 줄)
+    keep: str = lane.scope_base + head + "- V2 · 결정 = 안 바꾼다 · 출처 = 본인 직접(1000)\n"
+    lane.spec(V1_TEXT, "없음\n", CH_ROW_M1 + CB_M2_SOLVED, adm=CB_ADM.replace(CB_ROW, ""))
+    scope.write_text(keep, encoding="utf-8")
+    expect(fails, "RD-CB19 --applied 안 바꾼 V2(근거 C) 를 지운 승인판 → green(해소 판정 표 무변)", lane.ch("--applied", str(cand)), 0,
+           "red 0 · applied")
+    # 근거가 C 인 V 는 해소 판정 표 행이 없다 — 반영은 그 V 와 딸린 줄(그 V 에만 딸린 입장 행 · 다른 BC 편집 줄)만 지운다
+    unapproved_m2: str = (f"| M2 | 1 | 예외 매핑 흩어짐 | 불가 | 변경 미승인 | refactor-scope.md:{len(keep.split(chr(10))) - 1} — "
+                          "G1 결정 안 바꾼다 | — | — |\n")
+    for label, vs, edits, rows, adm, needle in (
+            ("RD-CB19a 다른 BC 편집 줄(프로젝트 합성 · V2)을 남김", V1_TEXT, _cb_edits(), CH_ROW_M1 + CB_M2_SOLVED,
+             CB_ADM.replace(CB_ROW, ""), "다른 BC 편집 연결 `V2` 가 0C · 0F · 목록의 V 가 아니다"),
+            ("RD-CB19b V1 문면도 바뀜", V1_TEXT.replace("rule_0 이 x → x + 1", "rule_0 이 x → x + 2"), "없음\n",
+             CH_ROW_M1 + CB_M2_SOLVED, CB_ADM.replace(CB_ROW, ""), "반영 대조 다름 — `V`"),
+            ("RD-CB19c 해소 판정 표에 `불가 · 변경 미승인` 행을 적음(M 의 버릇 — C 근거 V 에는 표 행이 없다)", V1_TEXT, "없음\n",
+             CH_ROW_M1 + unapproved_m2, CB_ADM.replace(CB_ROW, ""), "M2 #1 가 후보 뒤 바뀌었다")):
+        lane.spec(vs, edits, rows, adm=adm)
+        expect(fails, f"{label} → --applied red", lane.ch("--applied", str(cand)), 2, needle)
+    lane.spec(V1_TEXT, "없음\n", CH_ROW_M1 + CB_M2_SOLVED, adm=CB_ADM.replace(CB_ROW, ""))
+    expect(fails, "RD-CB20 --gate 안 바꾼 V2 근거 C1 · C2 · C3 에 `ⓐ 재상정` 결정 줄이 없다 → red", lane.ch("--gate"), 2,
+           "V2 는 G1 결정 `안 바꾼다` 인데 근거 검사기 빚 C1, C2, C3 의 `ⓐ 재상정` 결정 줄")
+    for label, lines, code, needle in (
+            ("RD-CB21 C 마다 재상정 결정 줄(쉼표 목록 · 닫힌 어휘 `별도`) → green",
+             "- C1, C2, C3 · 결정 = 별도 요청 · 사유 = G1 V2 안 바꾼다 · 출처 = 본인 직접(1010)\n", 0, "red 0 · gate"),
+            ("RD-CB22 C3 의 재상정 줄 빠짐 → red(C3)",
+             "- C1, C2 · 결정 = ⓑ · 사유 = G1 V2 안 바꾼다 · 출처 = 본인 직접(1010)\n", 2, "근거 검사기 빚 C3 의 `ⓐ 재상정`"),
+            ("RD-CB23 C 의 요지 축소 줄 → red(C 에는 요지가 없다)",
+             "- C1, C2, C3 · 결정 = 요지 축소 · 사유 = x · 출처 = 본인 직접(1010)\n", 2, "C 에는 요지 축소가 없다"),
+            ("RD-CB24 재상정 결정 칸 첫 낱말이 닫힌 어휘 밖 → red",
+             "- C1, C2, C3 · 결정 = 미룸 · 사유 = x · 출처 = 본인 직접(1010)\n", 2, "근거 검사기 빚 C1, C2, C3 의 `ⓐ 재상정`")):
+        scope.write_text(keep + recon + lines, encoding="utf-8")
+        expect(fails, label, lane.ch("--gate"), code, needle)
+
+
+def _cb_guard(repo: Path, *args: str) -> "tuple[int, str]":
+    """설치본 behavior_guard(이 러너가 대는 scripts 폴더) — 대상 프로젝트 루트에서."""
+    proc = subprocess.run([sys.executable, "-B", str(TOOL.parent / "behavior_guard.py"), *args], cwd=repo, capture_output=True,
+                          text=True, env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
+    return proc.returncode, proc.stdout + proc.stderr
+
+
+def c_basis_flow_cases(fails: "list[str]", td: Path) -> None:
+    """F4-173 흐름 — #63 c 빚(operation 마다 C) → V `밖 동작`(근거 C1~C3) → 다른 BC 편집 «프로젝트 합성» 세 파일 → `resolution` ·
+    `changes`(--candidate · --applied · --gate) → `G1 변경판 확정` → 변경 창(behavior_guard open · close). 검사기 빚만의 실행(ⓐ M
+    없음 · 해소 판정 표 없음)이다. 대조군: 목록 밖 대상 BC 밖 파일은 변경 창 close 가 red."""
+    base: "dict[str, str]" = {**DEPS_FILES, "framework/__init__.py": "", "framework/ninja/__init__.py": ""}
+    repo: Path = _project(td / "cbf", base)
+    folder, anchor = _res_folder(repo, [row(1, V_B9, where=C_LOC)], ["M1 | ddd-01#1 | 채택 | | "],
+                                 name="20261113-1000-refactor-demo")
+    scope: Path = folder / "refactor-scope.md"
+    scope_base: str = (f"실행 · G0 승인 20261113-1000 · 모드 리팩토링 · audit 20260927-0250 · build_anchor {anchor}\n\n"
+                       + CB_TABLE + CB_C + "\n- C1, C2, C3 · 결정 = ⓐ · 사유 = 픽스처 · 출처 = 본인 직접(1000)\n"
+                       "- M1 · 결정 = ⓑ · 사유 = 픽스처 · 출처 = 본인 직접(1000)\n")
+    scope.write_text(scope_base, encoding="utf-8")
+    spec_text: str = ("# 설계 명세 — demo\n\n## 1. 처방\n\n프로젝트에 경로 앞 응답 꼴을 둔다.\n\n## 6. 영구 테스트 입장 표\n\n"
+                      + CB_ADM_ONLY + "\n## 7. 바뀌는 것 목록\n\n" + _cb_v("C1~C3", vid="V1", slice_="S1")
+                      + "\n## 8. 다른 BC 편집 목록\n\n" + _cb_edits("V1") + "\n## 9. 끝\n")
+    (folder / "design-spec.md").write_text(spec_text, encoding="utf-8")
+    sup: Path = folder / "behavior" / "support" / "20261113T010000Z"
+    sup.mkdir(parents=True)
+    (sup / "run-definition.json").write_text(json.dumps({"version": 1, "argvs": [["pytest"]], "env": {"PYTEST_ADDOPTS": None},
+                                                         "sources": ["Makefile:1"], "frozen_at": "20261113T010000Z"}),
+                                             encoding="utf-8")
+    (sup / "g0-collect.json").write_text(json.dumps({"version": 1, "verdict": "지원"}), encoding="utf-8")
+    rs = lambda *extra: run(repo, "resolution", str(folder), *extra)  # noqa: E731
+    ch = lambda *extra: run(repo, "changes", str(folder), *extra)  # noqa: E731
+    expect(fails, "RD-CF1 resolution — 검사기 빚만의 실행(ⓐ M 없음 · 해소 판정 표 없음) → green(옛 판: 제목이 없다 red)", rs(), 0,
+           "항목 0", "red 0")
+    expect(fails, "RD-CF2 changes — V1 근거 C1~C3 · 프로젝트 합성 세 파일(config/api.py · framework/ninja 둘) → green", ch(), 0,
+           "V 1(내부 약속 0 · 밖 동작 1 · DB 구조 0)", "다른 BC 편집 3", "red 0")
+    got = ch("--candidate")
+    cands: "list[Path]" = sorted((folder / "g1").glob("*-candidate.json"))
+    cd: str = ra.snapshot_digest(json.loads(cands[-1].read_text(encoding="utf-8"))) if cands else ""
+    expect(fails, "RD-CF3 changes --candidate → 후보 digest", (got[0] if cd else 9, got[1]), 0, "red 0 · candidate")
+    head: str = f"\n## G1 변경 결정 2026-11-13 10:30 · 후보 digest {cd}\n\n- V1 · 결정 = 바꾼다 · 출처 = 본인 직접(1030)\n"
+    scope.write_text(scope_base + head, encoding="utf-8")
+    expect(fails, "RD-CF4 changes --applied → green", ch("--applied", str(cands[-1])) if cands else (9, "후보 없음"), 0, "red 0 · applied")
+    expect(fails, "RD-CF5 resolution --gate → green", rs("--gate"), 0, "red 0 · gate")
+    got = ch("--gate")
+    final: str = got[1].split("최종 digest ", 1)[1].split()[0] if "최종 digest " in got[1] else ""
+    expect(fails, "RD-CF6 changes --gate → green + 최종 digest", (got[0] if final else 9, got[1]), 0, "red 0 · gate")
+    scope.write_text(scope_base + head + f"- G1 변경판 확정 2026-11-13 10:40 · digest {final} · 후보 {cd}\n", encoding="utf-8")
+    try:
+        snap: dict = ra.changes_snapshot(folder, repo)
+    except RuntimeError as exc:
+        snap = {"other_bc_edits": [], "error": str(exc)[:200]}
+    edits: "list[str]" = sorted(e["path"] for e in snap["other_bc_edits"])
+    expect(fails, "RD-CF7 확정 스냅숏의 다른 BC 편집 = 프로젝트 합성 세 파일(갈래 · 연결 V1)",
+           (0 if edits == sorted(CB_COMPOSE) and {(e["kind"], e["ref"]) for e in snap["other_bc_edits"]} == {("프로젝트 합성", "V1")}
+            else 9, json.dumps(snap["other_bc_edits"], ensure_ascii=False)), 0)
+    opened = _cb_guard(repo, "open", str(folder), "--kind", "change", "--mode", "refactor")
+    expect(fails, "RD-CF8 변경 창 open(G1 변경판 확정 digest 결속)", opened, 0, "종류 변경", f"G1 digest {final}")
+    for rel, body in {"config/api.py": CB_DOC_API,
+                      "framework/ninja/pre_route_responses.py": "\"\"\"경로 앞 응답(정본 자리 — 사례 대역).\"\"\"\n",
+                      "framework/ninja/pre_route_response_table.py": "PRE_ROUTE_RESPONSES: tuple[dict[str, object], ...] = ()\n",
+                      CB_TEST: "def test_pre_route_documented() -> None:\n    assert 401 in (401, 422)\n"}.items():
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / rel).write_text(body, encoding="utf-8")
+    _git(repo, "add", "-A", "config", "framework", "application")
+    _git(repo, "commit", "-qm", "S1 경로 앞 응답")
+    closed = _cb_guard(repo, "close", str(folder))
+    expect(fails, "RD-CF9 변경 창 close — 프로젝트 합성 세 파일은 다른 BC 편집 목록 안(대상 BC 밖 red 없음) · 승인 add 케이스",
+           (closed[0] if "다른 BC 편집 목록 밖" not in closed[1] else 9, closed[1]), 0)
+    opened = _cb_guard(repo, "open", str(folder), "--kind", "change", "--mode", "refactor")
+    (repo / "framework/ninja/extra_hook.py").write_text("HOOK: int = 1\n", encoding="utf-8")
+    _git(repo, "add", "-A", "framework")
+    _git(repo, "commit", "-qm", "목록 밖")
+    expect(fails, "RD-CF10 대조군 — 목록 밖 대상 BC 밖 파일(framework/ninja/extra_hook.py) → 변경 창 close red",
+           _cb_guard(repo, "close", str(folder)) if opened[0] == 0 else opened, 2,
+           "framework/ninja/extra_hook.py — 대상 BC(`application/demo/`) 밖 경로가 다른 BC 편집 목록 밖")
+
+
+def c_basis_reject_cases(fails: "list[str]", td: Path) -> None:
+    """F4-173 — 검사기 빚만의 실행(ⓐ M 없음 · 해소 판정 표 없음)에서 G1 이 근거 C 인 V 를 `안 바꾼다` — 반영은 V 와 그 V 에만 딸린 줄만
+    지운다(표 행이 없다) · `--applied` · `resolution --gate` 초록 · `--gate` 는 C 마다 `ⓐ 재상정` 결정 줄."""
+    base: "dict[str, str]" = {**DEPS_FILES, "framework/__init__.py": "", "framework/ninja/__init__.py": ""}
+    repo: Path = _project(td / "cbr", base)
+    folder, anchor = _res_folder(repo, [row(1, V_B9, where=C_LOC)], ["M1 | ddd-01#1 | 채택 | | "],
+                                 name="20261113-1100-refactor-demo")
+    scope: Path = folder / "refactor-scope.md"
+    scope_base: str = (f"실행 · G0 승인 20261113-1100 · 모드 리팩토링 · audit 20260927-0250 · build_anchor {anchor}\n\n"
+                       + CB_TABLE + CB_C + "\n- C1, C2, C3 · 결정 = ⓐ · 사유 = 픽스처 · 출처 = 본인 직접(1100)\n"
+                       "- M1 · 결정 = ⓑ · 사유 = 픽스처 · 출처 = 본인 직접(1100)\n")
+    scope.write_text(scope_base, encoding="utf-8")
+
+    def spec(vs: str, edits: str, adm: str) -> None:
+        (folder / "design-spec.md").write_text(
+            "# 설계 명세 — demo\n\n## 1. 처방\n\n프로젝트에 경로 앞 응답 꼴을 둔다.\n\n## 6. 영구 테스트 입장 표\n\n" + adm
+            + "\n## 7. 바뀌는 것 목록\n\n" + vs + "\n## 8. 다른 BC 편집 목록\n\n" + edits + "\n## 9. 끝\n", encoding="utf-8")
+    spec(_cb_v("C1~C3", vid="V1", slice_="S1"), _cb_edits("V1"), CB_ADM_ONLY)
+    sup: Path = folder / "behavior" / "support" / "20261113T020000Z"
+    sup.mkdir(parents=True)
+    (sup / "run-definition.json").write_text(json.dumps({"version": 1, "argvs": [["pytest"]], "env": {"PYTEST_ADDOPTS": None},
+                                                         "sources": ["Makefile:1"], "frozen_at": "20261113T020000Z"}),
+                                             encoding="utf-8")
+    (sup / "g0-collect.json").write_text(json.dumps({"version": 1, "verdict": "지원"}), encoding="utf-8")
+    ch = lambda *extra: run(repo, "changes", str(folder), *extra)  # noqa: E731
+    made = ch("--candidate")
+    cands: "list[Path]" = sorted((folder / "g1").glob("*-candidate.json"))
+    if not cands:
+        fails.append(f"RD-CR 후보 스냅숏을 만들지 못했다 — {made[1][-300:]}")
+        return
+    cd: str = ra.snapshot_digest(json.loads(cands[-1].read_text(encoding="utf-8")))
+    keep: str = scope_base + f"\n## G1 변경 결정 2026-11-13 11:30 · 후보 digest {cd}\n\n- V1 · 결정 = 안 바꾼다 · 출처 = 본인 직접(1130)\n"
+    scope.write_text(keep, encoding="utf-8")
+    spec("없음\n", "없음\n", "".join(CB_ADM_ONLY.splitlines(keepends=True)[:2]))
+    expect(fails, "RD-CR1 --applied 안 바꾼 V1(근거 C1~C3) · 딸린 입장 행 · 다른 BC 편집 줄만 지움(해소 판정 표 없음) → green",
+           ch("--applied", str(cands[-1])), 0, "red 0 · applied")
+    expect(fails, "RD-CR2 resolution --gate 검사기 빚만의 실행 → green", run(repo, "resolution", str(folder), "--gate"), 0, "red 0 · gate")
+    expect(fails, "RD-CR3 changes --gate 재상정 줄 없음 → red(C1, C2, C3)", ch("--gate"), 2, "근거 검사기 빚 C1, C2, C3 의 `ⓐ 재상정`")
+    scope.write_text(keep + "\n## ⓐ 재상정 2026-11-13 11:40 — G1 안 바꾼 V\n\n"
+                     "- C1, C2, C3 · 결정 = 별도 요청 · 사유 = G1 V1 안 바꾼다 · 출처 = 본인 직접(1140)\n", encoding="utf-8")
+    expect(fails, "RD-CR4 changes --gate C 마다 재상정 결정 줄 → green", ch("--gate"), 0, "red 0 · gate")
+    spec("없음\n", "없음\n", CB_ADM_ONLY)
+    expect(fails, "RD-CR5 안 바꾼 V1 에만 딸린 add 입장 행을 남긴 반영 → --applied red", ch("--applied", str(cands[-1])), 2,
+           "반영 대조 다름 — 입장 표(후보 − 안 바꾼 V 에만 딸린 행 1): 남거나 바뀐 행 경로 앞 응답 문서")
+
 def deps_cases(fails: "list[str]", td: Path) -> None:
     """설계 §5 새 `deps` — SCC · 받는 쪽 · HTTP 간선 · 공유 표면 · 공급자 정리 상태 · 경로 단위 겹침 · 보류 · 다른 작업 트리."""
     repo: Path = _project(td / "dep", DEPS_FILES)
@@ -5616,6 +5878,9 @@ def main() -> int:
         g1_partial_cases(fails, td)
         closed_window_cases(fails, td)
         resolution_change_cases(fails, td)
+        c_basis_cases(fails, td)
+        c_basis_flow_cases(fails, td)
+        c_basis_reject_cases(fails, td)
         deps_cases(fails, td)
         deps_tree_cases(fails, td)
         deps_stage_cases(fails, td)

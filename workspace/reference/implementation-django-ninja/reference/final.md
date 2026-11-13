@@ -130,13 +130,15 @@ Operation 구현 기준:
   오류 타입 그대로 선언한다 — concrete 하나면 그 concrete, 둘 이상이면 `Union[...]`(`A | B`),
   명시값으로 채운 base 인스턴스면 base. 상위 base로 뭉뚱그리거나 반환하지 않는 타입을 적지
   않는다(OpenAPI가 endpoint별 code를 정확히 드러낸다 — 2026-08-25). framework가 소유하는 401/403/route 404/422/429/일반 `HttpError`/미식별
-  500은 BC 오류로 직접 반환하지도, BC `ErrorSchema`로 광고하지도 않는다.
+  500은 BC 오류로 직접 반환하지도, BC `ErrorSchema`로 광고하지도 않는다 — 그 가운데 경로 앞에서 나는
+  의도된 답만 문서에 경로 앞 응답으로 적는다(§6.2).
 - `openapi_extra`나 `get_openapi_schema` override·monkeypatch·postprocessor로 오류
-  응답을 수동 선언하거나 사후 변형하지 않는다. operation의 `response=`가 runtime과
-  OpenAPI가 함께 아는 계약이다. 예외는 하나 — `response=`로 직접 선언된 성공·리다이렉트
-  status(100–399)의 메타데이터 보충(header 문서화 등)은 허용한다: 보충 집합이 `response=`
-  선언 집합의 부분집합이고 키 전부 리터럴일 때만이며, 오류 status 동거·변수/상수 키·
-  `**` splat 은 위반이다(fail-closed — 2026-09-01).
+  응답을 수동 선언하거나 사후 변형하지 않는다 — 받는 것은 경로 앞 응답을 붙이는 정해진 꼴
+  하나(§6.2 «경로 앞 응답»)다. operation의 `response=`가 runtime과 OpenAPI가 함께 아는 경로
+  코드의 계약이다. `openapi_extra` 의 응답 보충은 그 경로 `response=`에 선언된 status 의 정수
+  리터럴 키만 받는다 — 성공·리다이렉트 status(100–399)는 메타데이터 보충(header 문서화 등),
+  오류 status 는 `headers` 만(머리 보충 — 설명 · 몸통을 바꾸지 않는다)이다. 숫자 문자열 키 ·
+  변수/상수 키 · `**` splat 은 성공 · 오류 모두 위반이다(fail-closed — 2026-11-13).
 - known 도메인 예외는 컨트롤러가 구체적으로 catch하고(응용 예외는 포트 예외(바깥 행위자의 죽음)뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다), 준비된
   concrete `ErrorSchema`(무인자 · 또는 설명 칸 keyword 하나 — §6.2 사건 값)를
   `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 오류
@@ -246,7 +248,8 @@ operation 함수가 `self` 첫 인자를 받는 메서드로 올라간다.
   자동 주입한다(명시 상속은 중복이다).
 
 **등록 — 프로젝트 소유 API, BC 소유 registrar, URLconf 소유 합성.** contract scope 안에서
-프로젝트 `api.py`가 `NinjaExtraAPI` 인스턴스 하나를 소유한다. 각 BC는 project API를 import하지
+프로젝트 `api.py`가 `NinjaExtraAPI` 인스턴스 하나를 소유한다(루트 API 는 경로 앞 응답을 문서에 붙이는
+정해진 클래스로 짓는다 — §6.2 «경로 앞 응답»). 각 BC는 project API를 import하지
 않는 side-effect-free `register_<bc>_api(api)`만 노출한다. 프로젝트 `urls.py`가 API와 registrar를
 import하고, 각 registrar를 명시적으로 한 번 호출한 뒤 API를 mount한다. BC 모듈 import만으로
 registration이 일어나면 안 된다.
@@ -257,10 +260,21 @@ side effect를 만들지 않고, 등록 집합과 시점은 `register_<bc>_api(a
 `urls.py` 호출만으로 결정된다.
 
 ```python
-# config/api.py — 프로젝트가 contract scope의 API 인스턴스 하나를 소유한다.
+# config/api.py — 프로젝트가 contract scope의 API 인스턴스 하나를 소유한다(경로 앞 응답 꼴 — §6.2).
+from ninja.openapi.schema import OpenAPISchema
 from ninja_extra import NinjaExtraAPI
 
-api = NinjaExtraAPI()
+from framework.ninja.pre_route_responses import add_pre_route_responses
+
+
+class DocumentedAPI(NinjaExtraAPI):
+    def get_openapi_schema(
+        self, *, path_prefix: str | None = None, path_params: dict[str, object] | None = None
+    ) -> OpenAPISchema:
+        return add_pre_route_responses(self, super().get_openapi_schema(path_prefix=path_prefix, path_params=path_params))
+
+
+api: DocumentedAPI = DocumentedAPI()
 ```
 
 ```python
@@ -529,7 +543,8 @@ def list_orders(request):
 
 Django Ninja validation error의 default status·body는 framework-owned 응답이다. 새
 code-profile에서는 이를 BC 식별자 body로 맞추기 위한 전역 변환을 추가하지 않으며, 그 body를
-정확하고 안정적인 공개 식별자 계약이라고 주장하지 않는다. 별도 공개 계약이 필요하면 G1로
+정확하고 안정적인 공개 식별자 계약이라고 주장하지 않는다 — 문서에는 관찰된 꼴 그대로 경로 앞
+응답(§6.2)으로 적고, 그 꼴은 행마다 둔 시험이 지킨다. 별도 공개 계약이 필요하면 G1로
 돌아가 profile과 호환성 범위를 먼저 승인한다.
 
 ### 6.2 `dddjango-code-json` 오류 프로필
@@ -768,7 +783,8 @@ return result
 이름은 고정 문자열이며 값은 정적 값 또는 승인 사건 값 꼴이다.
 명세가 BC 오류 머리(retryable 503의 `Retry-After` · 사건 값 머리)를 승인했다면 controller
 method가 주입된 응답용(temporal) Django `HttpResponse`를 받아 선택된 mapping branch에서 오류를 만든 다음 header를 설정하고 두 인자 `Status`를
-반환한다(차례는 오류 생성 → 머리 → 반환이다). exception path의 구체 catch는 그 branch의 한 형태다.
+반환한다(차례는 오류 생성 → 머리 → 반환이다). exception path의 구체 catch는 그 branch의 한 형태다. 승인된 BC 오류 머리는 그 경로의 머리
+보충(아래 «경로 앞 응답»의 머리 보충 — `openapi_extra` 의 그 status 정수 키 `headers`)으로 생성 문서에도 선언한다.
 managed catch가 `as`로 잡은 자기 BC 구체 예외 하나의 승인 필드 값(사건 값)은 slot 10이 승인한
 선언 필드(그 예외 클래스 본문의 `f: T` — `discipline-houserules` 의 타입 어노테이션 절이 정한 꼴 — 또는
 `__init__`의 `self.f: T = …` · 상속 필드 아님)만 읽어 공통 shape의 유일한 일반 `str` 설명 칸 keyword
@@ -791,6 +807,9 @@ from django.http import HttpResponse
     response={200: OrderOut, 503: OrderTemporarilyUnavailableError},
     summary="주문 재시도",
     description="일시 경합이면 재시도 시점을 안내한다.",
+    openapi_extra={
+        "responses": {503: {"headers": {"Retry-After": {"description": "다시 시도하기까지 기다릴 초", "schema": {"type": "integer"}}}}},
+    },
 )
 def retry_order(
     self,
@@ -825,7 +844,8 @@ throttling 429, 일반 `HttpError`, 미식별 500은 framework가 소유한다. 
 이를 BC `ErrorSchema`/`<Bc>ErrorCode`로 바꾸지 않으며, 전역 handler나 catch-all mapper로
 가로채지 않는다. 깨진 JSON과 framework validation body도 정확하고 안정적인
 `dddjango-code-json` wire contract라고 주장하지 않는다. framework status를 특정 BC의
-`response={...}`에 광고하지 않는다.
+`response={...}`에 광고하지 않고 BC 오류로 바꾸지 않는다 — 그 가운데 경로 앞에서 나는 의도된 답만
+문서에 경로 앞 응답으로 관찰된 꼴 그대로 적는다(아래 «경로 앞 응답»).
 
 authentication adapter의 성공 반환값은 identity/principal이다. 실패는 `None`을 반환하거나
 framework `AuthenticationError`를 raise한다. `request.auth`에 `ErrorSchema`를 저장하거나
@@ -856,15 +876,464 @@ controller나 전역 recognizer가 문자열·SQLSTATE로 분류하지 않는다
 concrete 하나면 그 concrete, 둘 이상이면 `Union[...]`(`A | B`), 명시값으로 채운 base 인스턴스면
 base. concrete class가 runtime instance를 고정하므로 OpenAPI도 그 concrete의 고정 code·message를
 endpoint별로 드러낸다 — base로 뭉뚱그려 선언하지 않는다(2026-08-25 개정). 직접 반환하지 않는
-framework status는 BC 오류로 선언하지 않는다. 오류 응답 선언을 `openapi_extra`로 보충하거나
-`get_openapi_schema` override, monkeypatch, postprocessor로 사후 변형하지 않는다 — 이 금지의
-대상은 **오류 응답(4xx·5xx) 항목**이다. `response=`로 직접 선언된 성공·리다이렉트
-status(100–399)의 **메타데이터 보충**(header 문서화 등)은 허용한다: 보충 status 집합이
-`response=` 선언 집합의 부분집합이고 키 전부가 **리터럴**(정수·숫자 문자열)일 때만이며,
-오류 status 동거·변수/상수 표현식 키·`**` splat 은 위반이다(fail-closed — 2026-09-01 개정).
+framework status는 `response=`에 BC 오류로도 다른 Schema 로도 선언하지 않는다 — 그 가운데 경로 앞에서
+나는 의도된 답만 경로 앞 응답으로 문서에 적는다(아래). 오류 응답 선언을 `openapi_extra`로 보충하거나
+`get_openapi_schema` override, monkeypatch, postprocessor로 사후 변형하지 않는다 — 받는 것은
+경로 앞 응답을 붙이는 정해진 꼴 하나와 머리 보충이다. `openapi_extra` 의 응답 보충은 그 경로
+`response=`에 선언된 status 의 **정수 리터럴** 키만 받는다: 성공·리다이렉트 status(100–399)는
+**메타데이터 보충**(header 문서화 등), 오류 status(4xx·5xx)는 `headers` 만(**머리 보충** — 설명 ·
+몸통을 바꾸지 않는다)이다. 숫자 문자열 키(`"503"`)는 Ninja 가 정수 키 항목과 따로 남겨 문서에서
+그 응답의 몸통 · 설명이 사라지므로 위반이고, 변수/상수 표현식 키·`**` splat 도 위반이다
+(fail-closed — 2026-11-13 개정).
 성공 항목의 content/schema 기입은 기계 판정 밖이다 — `response=` 선언과의 문서 정합은
 리뷰어 소관. 공개 OpenAPI
 후보가 중앙 입장 심사에서 `add/update`이면 mounted API의 생성 문서에서 status별로 선언한 오류 schema를 확인한다.
+
+**경로 앞 응답.** 경로 코드보다 먼저 답하는 쪽 — Ninja 인증 401 · CSRF 403 · 권한 403 · throttle 429 ·
+몸통 400 · 입력 422, Django 몸통 · 쿼리 칸 수 상한 400, 응답을 직접 만드는 미들웨어(서드파티 포함), 앞단(nginx 등) —
+이 보내는 의도된 오류도 그 경로의 생성 문서에 적는다(`architecture-api` §5.2). 경로마다 손으로 적지 않고
+정해진 꼴 하나가 경로의 Ninja 경로 객체와 생성 문서 칸을 읽어 그 답이 실제로 나는 경로에만 붙인다.
+프로젝트에 한 번 두는 파일은 셋이다.
+
+- `framework/ninja/pre_route_responses.py` — 플러그인 정본. 아래 정본 코드 블록을 글자 그대로 둔다(프로젝트가
+  고치지 않는다 — 검사기가 정의를 정본과 맞춘다). 붙이는 함수 `add_pre_route_responses(api, schema)` 와 Ninja 기본 행
+  `NINJA_RESPONSES` · 그 몸통 Schema 가 여기 있다.
+- `framework/ninja/pre_route_response_table.py` — 프로젝트 표(설계 G1 승인). 프로젝트 행 `PRE_ROUTE_RESPONSES` 와
+  그 몸통 Schema, `BAD_REQUEST_RESPONSE`(Django 상한 400 의 꼴 — 기본 `{"media_type": "text/html"}` · 루트 URLconf 가
+  `handler400` 을 두면 그 답의 꼴), `NOT_API_MIDDLEWARE`(API 경로에 답하지 않는 프로젝트 미들웨어의 점 경로 글자
+  튜플)를 둔다. 기본 행은 여기 두지 않는다(빼서 401 · 422 를 끌 수 없다).
+- `<project>/api.py` — 루트 API 객체를 아래 꼴의 클래스 하나로 짓는다(루트 API 가 둘 이상이면 모두 이 클래스로).
+  클래스 이름과 기저(`NinjaAPI` · `NinjaExtraAPI`)는 프로젝트가 고르고, `get_openapi_schema` 의 서명 · 몸통은 글자
+  그대로다. 이 꼴 말고의 문서 재정의 · monkeypatch · 후처리는 금지다(위 «응답 선언과 OpenAPI»). 받는 판은 Ninja
+  1.6 · Python 3.12(정본이 `type` 별칭을 쓴다) · pydantic 2.5(`JsonValue`) 이상이다 — 낮으면 architect 가 G1 에서 판
+  올림을 먼저 적는다. 프레임워크 오류 핸들러(`api.py` 의 exception handler)가 Ninja 기본 401 · 422 등의 몸통을 바꾸는
+  scope 는 아래 기본 행 몸통과 맞지 않아 행 시험이 붉으므로 G1 에서 멈춘다(`STOP_FOR_USER_APPROVAL`).
+
+```python
+# config/api.py — 루트 API 객체를 이 꼴의 클래스로 짓는다(클래스 이름 · 기저는 프로젝트가 고른다).
+from ninja.openapi.schema import OpenAPISchema
+from ninja_extra import NinjaExtraAPI  # 또는 ninja.NinjaAPI
+
+from framework.ninja.pre_route_responses import add_pre_route_responses
+
+
+class DocumentedAPI(NinjaExtraAPI):
+    def get_openapi_schema(
+        self, *, path_prefix: str | None = None, path_params: dict[str, object] | None = None
+    ) -> OpenAPISchema:
+        return add_pre_route_responses(self, super().get_openapi_schema(path_prefix=path_prefix, path_params=path_params))
+
+
+api: DocumentedAPI = DocumentedAPI(...)
+```
+
+**Ninja 기본 행**(정본 `NINJA_RESPONSES` 와 Django 상한 행 — 프로젝트가 빼거나 고치지 않는다 · 몸통은 Ninja 1.6 의
+관찰값이다):
+
+- 401 — 인증이 걸린 경로(클래스 · 함수 · API · Router 단위 인증 모두) · `{"detail": str}`
+- 403 — 쿠키 인증의 CSRF 확인이 걸리고 안전하지 않은 메서드(`csrf_exempt` 경로는 뺀다) · `{"detail": str}`
+- 403 — ninja_extra 권한(`AllowAny` 를 상속하고 `has_permission` 을 바꾸지 않은 권한만 «누구나») · `{"detail": str}`
+- 429 — throttle(API · Router · operation 합) · `{"detail": str}` · 선택 머리 `Retry-After`
+- 400 — JSON 몸통의 깨진 JSON · `{"detail": str}`
+- 400 — 몸통 · 쿼리 parameter 가 있는 경로의 Django 상한(`DATA_UPLOAD_MAX_MEMORY_SIZE` ·
+  `DATA_UPLOAD_MAX_NUMBER_FIELDS`) · `BAD_REQUEST_RESPONSE` 의 꼴
+- 422 — 입력이 틀릴 수 있는 경로(몸통이 있다 · 변환기와 생성 schema 가 맞지 않는 경로 변수 · 제약 없는 글자가 아닌
+  경로 parameter · 필수이거나 제약 없는 글자가 아닌 쿼리 · 머리 · 쿠키 parameter) · `{"detail": [{type, loc, msg}]}`
+
+기계로 가를 수 없는 답(선택 인증의 401 · 파일만 받는 경로의 Django 상한 400 · 읽기만 허용하는 권한의 GET 403 ·
+`A | AllowAny` 권한의 403 · 필수 인증 경로의 익명 throttle 429 · 기본 비율 없는 ninja_extra `@throttle` 의 429)은
+«날 수 있다» 쪽으로 붙는다.
+
+**프로젝트 행.** 응답을 직접 만드는 미들웨어(서드파티 포함)와 앞단의 답을 행 하나에 하나씩 적는다. 칸은 `status`(400–599) ·
+`when`(`all` · `auth` · `body` · `input`) · `description` · 몸통 `body`(같은 파일의 Schema) 또는 `media_type` ·
+선택 `headers`(그 답이 싣는 머리)와 좁히는 칸 `methods`(대문자 HTTP 메서드) · `namespaces`(루트 API
+`urls_namespace=` 이름) · `exempt`(`(메서드 | None, "<settings 이름>")` — 그 설정 목록의 경로는 뺀다 · 목록은 base
+settings 에 둔다) · `operations`(`"GET /api/orders/{order_id}"` 꼴 — 메서드 + 생성 문서 경로 · `namespaces` 하나와
+함께 · 승인 endpoint 의 406 · 415 · 인증 안 `HttpError(403)` · 확립 표면(`preserve-established`)의 경로 코드가
+직접 raise 하는 `HttpError` 처럼 경로 객체로 못 가르는 답만)다. 좁히는 칸은 빈 튜플로 두지 않는다. 행마다 G1
+근거를 단다 — 그 답을 내는 미들웨어 코드 줄 · 설정 · 앞단 설정.
+`NOT_API_MIDDLEWARE` 줄은 그 미들웨어가 API 경로를 빼는 코드 줄을 근거로 단다 — 빼는 줄이 없는 미들웨어(서버렌더
+transient 미들웨어 등)는 API 경로에도 답하므로 이 목록에 넣지 않고 행으로 적는다. 검사기는 프로젝트 미들웨어의
+정해진 꼴 답만 표와 대조한다 — 그 답의 행이 좁힌 행(`methods` · `namespaces` · `exempt` · `operations` · `all` 이
+아닌 `when`)뿐이거나 그 답을 글자로 못 읽으면 위반이 아니라 ⓓ 후보 줄을 내고(G1 에서는 api 리뷰어가 그 행의
+근거가 그 미들웨어 줄인지 코드로 보고, G2 의 ⓓ 줄은 감수자가 닫는다), 서드파티 미들웨어 · 앞단 행은 대조하지
+않는다(api 리뷰어 몫).
+
+**표 검증.** 정본은 문서를 만들 때 표를 `TypeAdapter`(엄격 검증)로 본다 — 모르는 칸 · `status` 범위 · 소문자
+메서드 · 빈 좁히는 칸 · `operations` 꼴과 이름공간 하나 · 그 이름공간 문서에 없는 대상 · 잇지 못한 경로 객체 ·
+꼴이 다른 같은 이름 component 는 문서 생성 실패다(import 때는 보지 않는다 — `manage.py check` · 시험 수집을
+죽이지 않는다). 같은 (메서드, 문서 경로)가 둘이면 Ninja 문서처럼 뒤의 것이 이긴다. 칸 · 값 · 이름공간 ·
+`handler400` 대조 같은 정적 몫은 검사기가 G2 전에 잡는다. 표의 `dict[str, object]` 주석은 그대로 둔다 — 정본이
+문서를 만들 때 검증하는 즉시 검증 자리다(ⓓ#647 후보 줄의 답).
+
+**적는 것의 경계.** 코드 · 설정 · 앞단 설정에 그 status 가 적힌 의도된 답만 적는다. 미식별 500 · 앞단 502/504 는
+결함이라 약속이 아니고 꼴도 정해지지 않아 적지 않는다. 없는 경로 404 · 다른 메서드 405 는 그 operation 의 답이
+아니다. 같은 status 를 경로 코드의 BC 오류와 경로 앞 답이 함께 쓰면 한 응답 항목에 몸통 둘(`anyOf`)과 머리
+합집합이 실린다(경로 코드가 이미 적은 같은 이름 머리는 그대로 둔다).
+
+**머리 보충.** 경로 코드가 보내는 BC 오류의 머리(`Retry-After` · 사건 값 머리)는 그 경로
+`openapi_extra={"responses": {<정수 status>: {"headers": {…}}}}` 로 덧붙인다(위 `retry_order` 예). `<정수 status>` 는
+그 경로 `response=` 에 선언된 status 이고, 오류 status 에는 `headers` 만 싣는다 — 설명 · 몸통을 바꾸지 않는다. 키는
+정수 리터럴이다 — 숫자 문자열 키(`"503"`)는 Ninja 가 정수 키 항목과 따로 남겨 문서에서 그 응답의 몸통 · 설명이
+사라지고(섞인 키는 `export_openapi_schema --sorted` 도 죽인다), 숫자 문자열 키 · 변수 키 · `**` 는 성공 · 오류 모두
+위반이다. `openapi_extra=` 의 값은 (응답 보충이 없어도) 글자 Dict 이거나 같은 모듈 맨 위에서 한 번 묶은 글자 Dict
+상수다 — import 한 상수 · 도움 함수 호출 값은 검사기가 보충을 가릴 수 없어 막는다. `headers` 의 값도 글자 Dict
+이거나 같은 모듈 맨 위에서 한 번 묶은 글자 Dict 상수로 둔다 — 그 밖의 꼴은 검사기가 머리를 읽지 못해 사람이 볼
+ⓓ 후보 줄이 선다. 주입 응답에 싣는 머리 이름은 그 머리를 실은 뒤 반환하는 오류 status 의 머리 보충에 있어야
+한다. 머리 `description` 에 이름 · 값 꼴 · 값 없음(생략)의 뜻 · 소비법을 적는다.
+
+표를 만들거나 행을 바꾸는 실행은 그 프로젝트에 붙는 행마다 시험을 둔다(`implementation-test` §19.2.1). 정본은
+다음 글이다 — 프로젝트의 `framework/ninja/pre_route_responses.py` 에 글자 그대로 둔다.
+
+<!-- pre-route-canonical -->
+```python
+"""경로 앞 응답을 문서에 붙인다 — dddjango 플러그인 정본(고치지 않는다).
+
+경로 코드보다 먼저 답하는 쪽(Ninja 인증 · CSRF · 권한 · throttle · 입력 해석 · Django 상한 ·
+미들웨어(서드파티 포함) · 앞단)이 보내는 오류를 경로마다 생성 문서의 응답 항목으로 더한다.
+프로젝트 몫은 `framework/ninja/pre_route_response_table.py` 의 표다.
+"""
+import copy
+import re
+from typing import Literal, NotRequired, TypedDict
+
+from django.conf import settings
+from ninja import NinjaAPI, Schema
+from ninja.openapi.schema import OpenAPISchema
+from ninja.operation import Operation
+from ninja.utils import normalize_path
+from pydantic import JsonValue, TypeAdapter
+
+from framework.ninja.pre_route_response_table import BAD_REQUEST_RESPONSE, PRE_ROUTE_RESPONSES
+
+type When = Literal["all", "auth", "csrf", "permission", "throttle", "json_body", "body", "query", "input"]
+type OpenAPIObject = dict[str, JsonValue]
+
+
+class PreRouteResponse(TypedDict):
+    status: int
+    when: When
+    description: str
+    body: NotRequired[type[Schema]]
+    media_type: NotRequired[str]
+    methods: NotRequired[tuple[str, ...]]
+    namespaces: NotRequired[tuple[str, ...]]
+    operations: NotRequired[tuple[str, ...]]
+    exempt: NotRequired[tuple[str | None, str]]
+    headers: NotRequired[dict[str, JsonValue]]
+
+
+class BadRequestResponse(TypedDict):
+    media_type: str
+    body: NotRequired[type[Schema]]
+
+
+class OperationFact(TypedDict):
+    auth: bool
+    csrf: bool
+    throttle: bool
+    permission: bool
+    converters: dict[str, str]
+
+
+class NinjaDetailOut(Schema):
+    detail: str
+
+
+class NinjaValidationItemOut(Schema):
+    type: str
+    loc: list[str | int]
+    msg: str
+
+
+class NinjaValidationOut(Schema):
+    detail: list[NinjaValidationItemOut]
+
+
+HTTP_METHODS: frozenset[str] = frozenset({"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"})
+UNSAFE_METHODS: frozenset[str] = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+REF_TEMPLATE: str = "#/components/schemas/{model}"
+CONVERTER_PARAMETER: re.Pattern[str] = re.compile(r"{(\w+):(\w+)}")
+OPERATION_KEY: re.Pattern[str] = re.compile(r"(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS) /\S*")
+IGNORED_SCHEMA_KEYS: frozenset[str] = frozenset({"title", "description", "default", "examples", "example"})
+CONVERTER_SCHEMA: dict[str, dict[str, str]] = {
+    "int": {"type": "integer"},
+    "uuid": {"type": "string", "format": "uuid"},
+    "uuidstr": {"type": "string", "format": "uuid"},
+    "str": {"type": "string"},
+    "slug": {"type": "string"},
+    "path": {"type": "string"},
+}
+ROW_KEYS: frozenset[str] = PreRouteResponse.__required_keys__ | PreRouteResponse.__optional_keys__
+NINJA_RESPONSES: tuple[PreRouteResponse, ...] = (
+    {"status": 401, "when": "auth", "description": "인증 실패", "body": NinjaDetailOut},
+    {"status": 403, "when": "csrf", "description": "CSRF 확인 실패", "body": NinjaDetailOut},
+    {"status": 403, "when": "permission", "description": "권한 없음", "body": NinjaDetailOut},
+    {
+        "status": 429,
+        "when": "throttle",
+        "description": "요청이 너무 잦음",
+        "body": NinjaDetailOut,
+        "headers": {"Retry-After": {"schema": {"type": "integer"}}},
+    },
+    {"status": 400, "when": "json_body", "description": "몸통을 읽을 수 없음", "body": NinjaDetailOut},
+    {"status": 422, "when": "input", "description": "입력 검증 실패", "body": NinjaValidationOut},
+)
+
+
+def add_pre_route_responses(api: NinjaAPI, schema: OpenAPISchema) -> OpenAPISchema:
+    rows: tuple[PreRouteResponse, ...] = (*NINJA_RESPONSES, *_django_rows(), *_project_rows())
+    facts: dict[str, OperationFact] = _operation_facts(api, schema.path_prefix)
+    components: dict[str, JsonValue] = schema.setdefault("components", {}).setdefault("schemas", {})
+    paths: dict[str, dict[str, OpenAPIObject]] = schema.get("paths", {})
+    keys: set[str] = set()
+    for path, item in paths.items():
+        for method in list(item):
+            operation: OpenAPIObject = copy.deepcopy(item[method])
+            item[method] = operation
+            key: str = f"{method.upper()} {path}"
+            keys.add(key)
+            fact: OperationFact | None = facts.get(key)
+            if fact is None:
+                raise ValueError(f"pre-route operation not joined: {key}")
+            for entry in rows:
+                if _applies(entry, operation, fact, key, path, method.upper(), api.urls_namespace):
+                    _add(operation, entry, components)
+    for entry in rows:
+        if api.urls_namespace in entry.get("namespaces", ()):
+            for target in entry.get("operations", ()):
+                if target not in keys:
+                    raise ValueError(f"pre-route operation not in this document: {target}")
+    return schema
+
+
+def _django_rows() -> tuple[PreRouteResponse, ...]:
+    bad_request: BadRequestResponse = TypeAdapter(BadRequestResponse).validate_python(BAD_REQUEST_RESPONSE, strict=True)
+    rows: list[PreRouteResponse] = []
+    limits: tuple[tuple[When, str], ...] = (("body", "몸통이 Django 상한을 넘음"), ("query", "쿼리 칸 수가 Django 상한을 넘음"))
+    for when, description in limits:
+        row: PreRouteResponse = {"status": 400, "when": when, "description": description, "media_type": bad_request["media_type"]}
+        if "body" in bad_request:
+            row["body"] = bad_request["body"]
+        rows.append(row)
+    return tuple(rows)
+
+
+def _project_rows() -> tuple[PreRouteResponse, ...]:
+    for raw in PRE_ROUTE_RESPONSES:
+        unknown: set[str] = set(raw) - ROW_KEYS
+        if unknown:
+            raise ValueError(f"unknown pre-route row keys: {sorted(unknown)}")
+    rows: tuple[PreRouteResponse, ...] = TypeAdapter(tuple[PreRouteResponse, ...]).validate_python(
+        PRE_ROUTE_RESPONSES, strict=True
+    )
+    for row in rows:
+        if not 400 <= row["status"] <= 599:
+            raise ValueError(f"pre-route status out of 400-599: {row['status']}")
+        for values in (row.get("methods"), row.get("namespaces"), row.get("operations")):
+            if values is not None and not values:
+                raise ValueError(f"empty narrowing tuple in pre-route row {row['status']}")
+        if not set(row.get("methods", ())) <= HTTP_METHODS:
+            raise ValueError(f"pre-route methods must be upper-case HTTP methods: {row['methods']}")
+        if "operations" in row:
+            if len(row.get("namespaces", ())) != 1:
+                raise ValueError(f"pre-route row {row['status']} with operations needs exactly one namespace")
+            for target in row["operations"]:
+                if OPERATION_KEY.fullmatch(target) is None:
+                    raise ValueError(f"pre-route operation must be 'METHOD /path': {target}")
+    return rows
+
+
+def _operation_facts(api: NinjaAPI, path_prefix: str) -> dict[str, OperationFact]:
+    facts: dict[str, OperationFact] = {}
+    for router in api._get_bound_routers():
+        for raw_path, path_view in router.path_operations.items():
+            joined: str = normalize_path("/" + path_prefix + "/".join(i for i in (router.prefix, raw_path) if i))
+            converters: dict[str, str] = {name: kind for kind, name in CONVERTER_PARAMETER.findall(joined)}
+            doc_path: str = re.sub(r"{[^}:]+:", "{", joined)
+            for operation in path_view.operations:
+                if not operation.include_in_schema:
+                    continue
+                for method in operation.methods:
+                    facts[f"{method.upper()} {doc_path}"] = {
+                        "auth": bool(operation.auth_callbacks),
+                        "csrf": not operation.csrf_exempt
+                        and any(getattr(callback, "csrf", False) for callback in operation.auth_callbacks),
+                        "throttle": bool(operation.throttle_objects),
+                        "permission": _has_permission(operation),
+                        "converters": converters,
+                    }
+    return facts
+
+
+def _has_permission(operation: Operation) -> bool:
+    get_route_function: object = getattr(operation.view_func, "get_route_function", None)
+    if not callable(get_route_function):
+        return False
+    route_function: object = get_route_function()
+    route: object = getattr(route_function, "route", None)
+    controller: object = getattr(route_function, "api_controller", None)
+    permissions: object = getattr(route, "permissions", None) or getattr(controller, "permission_classes", None) or ()
+    if not isinstance(permissions, (list, tuple)):
+        return False
+    return any(not _allows_any(permission) for permission in permissions)
+
+
+def _allows_any(permission: object) -> bool:
+    kind: type = permission if isinstance(permission, type) else type(permission)
+    for base in kind.__mro__:
+        if base.__name__ == "AllowAny":
+            return getattr(kind, "has_permission", None) is getattr(base, "has_permission", None)
+    return False
+
+
+def _applies(
+    entry: PreRouteResponse, operation: OpenAPIObject, fact: OperationFact, key: str, path: str, method: str, namespace: str
+) -> bool:
+    body: JsonValue = operation.get("requestBody")
+    parameters: JsonValue = operation.get("parameters", [])
+    content: JsonValue = body.get("content") if isinstance(body, dict) else None
+    listed: list[dict[str, JsonValue]] = [p for p in parameters if isinstance(p, dict)] if isinstance(parameters, list) else []
+    checks: dict[When, bool] = {
+        "all": True,
+        "auth": fact["auth"],
+        "csrf": fact["csrf"] and method in UNSAFE_METHODS,
+        "permission": fact["permission"],
+        "throttle": fact["throttle"],
+        "body": isinstance(body, dict),
+        "json_body": isinstance(content, dict) and "application/json" in content,
+        "query": any(p.get("in") == "query" for p in listed),
+        "input": isinstance(body, dict) or any(_can_fail(p, fact["converters"]) for p in listed),
+    }
+    if not checks[entry["when"]]:
+        return False
+    if method not in entry.get("methods", (method,)):
+        return False
+    if namespace not in entry.get("namespaces", (namespace,)):
+        return False
+    if "operations" in entry and key not in entry["operations"]:
+        return False
+    exempt: tuple[str | None, str] | None = entry.get("exempt")
+    if exempt is not None:
+        only_method, setting_name = exempt
+        exempt_paths: object = getattr(settings, setting_name)
+        if (only_method is None or only_method == method) and isinstance(exempt_paths, (list, tuple)) and path in exempt_paths:
+            return False
+    return True
+
+
+def _can_fail(parameter: dict[str, JsonValue], converters: dict[str, str]) -> bool:
+    schema: JsonValue = parameter.get("schema", {})
+    if not isinstance(schema, dict):
+        return True
+    converter: str | None = converters.get(str(parameter.get("name"))) if parameter.get("in") == "path" else None
+    if converter is not None:
+        return CONVERTER_SCHEMA.get(converter) != {k: v for k, v in schema.items() if k not in IGNORED_SCHEMA_KEYS}
+    plain: bool = _plain(schema)
+    if parameter.get("in") == "path":
+        return not plain
+    return parameter.get("required", False) is True or not plain
+
+
+def _plain(schema: dict[str, JsonValue]) -> bool:
+    keys: set[str] = set(schema) - IGNORED_SCHEMA_KEYS
+    options: JsonValue = schema.get("anyOf")
+    items: JsonValue = schema.get("items")
+    if keys == {"type"}:
+        return schema["type"] == "string"
+    if keys == {"anyOf"} and isinstance(options, list):
+        return all(o == {"type": "null"} or (isinstance(o, dict) and _plain(o)) for o in options)
+    if keys == {"type", "items"} and schema["type"] == "array":
+        return isinstance(items, dict) and _plain(items)
+    return False
+
+
+def _add(operation: OpenAPIObject, entry: PreRouteResponse, components: dict[str, JsonValue]) -> None:
+    responses: dict[int, OpenAPIObject] = operation.setdefault("responses", {})  # type: ignore[assignment]
+    status: int = entry["status"]
+    content: dict[str, JsonValue] = _content(entry, components)
+    headers: dict[str, JsonValue] = entry.get("headers", {})
+    existing: OpenAPIObject | None = responses.get(status)
+    if existing is None:
+        added: OpenAPIObject = {"description": entry["description"], "content": content}
+        if headers:
+            added["headers"] = dict(headers)
+        responses[status] = added
+        return
+    current_content: dict[str, JsonValue] = existing.setdefault("content", {})  # type: ignore[assignment]
+    for media_type, item in content.items():
+        current: JsonValue = current_content.get(media_type)
+        if not isinstance(current, dict) or not isinstance(item, dict):
+            current_content[media_type] = item
+            continue
+        if item["schema"] != current["schema"]:
+            old: JsonValue = current["schema"]
+            options: list[JsonValue] = old["anyOf"] if isinstance(old, dict) and isinstance(old.get("anyOf"), list) else [old]  # type: ignore[assignment]
+            if item["schema"] not in options:
+                current["schema"] = {"anyOf": [*options, item["schema"]]}
+    if headers:
+        existing_headers: dict[str, JsonValue] = existing.setdefault("headers", {})  # type: ignore[assignment]
+        for name, header in headers.items():
+            existing_headers.setdefault(name, header)
+    existing["description"] = f'{existing.get("description", "")} · {entry["description"]}'.lstrip(" ·")
+
+
+def _content(entry: PreRouteResponse, components: dict[str, JsonValue]) -> dict[str, JsonValue]:
+    media_type: str = entry.get("media_type", "application/json")
+    body: type[Schema] | None = entry.get("body")
+    if body is None:
+        return {media_type: {"schema": {"type": "string"}}}
+    schema: dict[str, JsonValue] = body.model_json_schema(ref_template=REF_TEMPLATE, mode="serialization")
+    definitions: JsonValue = schema.pop("$defs", {})
+    for name, definition in {**(definitions if isinstance(definitions, dict) else {}), body.__name__: schema}.items():
+        if components.setdefault(name, definition) != definition:
+            raise ValueError(f"component name collision: {name}")
+    return {media_type: {"schema": {"$ref": REF_TEMPLATE.format(model=body.__name__)}}}
+```
+
+프로젝트 표는 이 꼴로 짓는다(행 · 값은 그 프로젝트의 G1 근거대로 · 몸통 Schema 는 같은 파일에).
+
+```python
+# framework/ninja/pre_route_response_table.py — 프로젝트 표의 예(행 · 값은 G1 승인 근거대로 적는다).
+"""경로 앞 응답 표 — 미들웨어(서드파티 포함) · 앞단이 보내는 답(설계 G1 승인)."""
+from ninja import Schema
+
+
+class CrossSiteRequestRejectedOut(Schema):
+    error: str
+    message: str
+
+
+class ServiceMaintenanceOut(Schema):
+    error: str
+    message: str
+
+
+PRE_ROUTE_RESPONSES: tuple[dict[str, object], ...] = (
+    {
+        "status": 403,
+        "when": "all",
+        "methods": ("POST", "PUT", "PATCH", "DELETE"),
+        "exempt": ("POST", "CROSS_SITE_REQUEST_EXEMPT_PATHS"),
+        "description": "다른 사이트에서 온 요청 거절",
+        "body": CrossSiteRequestRejectedOut,
+    },
+    {
+        "status": 503,
+        "when": "all",
+        "namespaces": ("api",),
+        "exempt": (None, "MAINTENANCE_MODE_EXEMPT_PATHS"),
+        "description": "점검 중",
+        "body": ServiceMaintenanceOut,
+        "headers": {"Retry-After": {"schema": {"type": "integer"}}},
+    },
+    {"status": 413, "when": "body", "description": "앞단이 받는 크기를 넘음", "media_type": "text/html"},
+)
+
+NOT_API_MIDDLEWARE: tuple[str, ...] = ()
+
+BAD_REQUEST_RESPONSE: dict[str, object] = {"media_type": "text/html"}
+```
 
 선언된 JSON 성공은 Schema 또는 `Status`를 통해 Ninja의 validation/serialization을 탄다.
 `FileResponse`, `StreamingHttpResponse`, redirect, schema-less 204는 성공 응답의
@@ -892,13 +1361,15 @@ helper·handler 레시피나 code-profile과의 혼합을 제시하지 않는다
   mount된 Django client로 `HttpError(415, "Unsupported media type")`가 415로 나가는지 검증한다.
 - 406/415는 framework `HttpError` body를 그대로 사용한다. BC `ErrorSchema`, code,
   오류 helper, custom handler, raw response를 만들지 않고 BC `response={...}`에도
-  광고하지 않는다.
+  광고하지 않는다 — 문서에는 경로 앞 응답의 `operations` 행(§6.2)으로 그 operation 에만
+  적는다.
 - 클래스 컨트롤러를 415 때문에 함수형 Router로 바꾸지 않는다. 기존 함수형 Router도
   오류 때문에 클래스 컨트롤러로 자동 변환하지 않는다.
 - 어느 경로에서도 `request.body`/`json.loads`로 본문을 수동 파싱하지 않는다.
   request body는 선언적 `payload: Schema`가 받는다.
 - Django 전역 middleware, root URL wrapper, 별도 dispatcher처럼 Ninja 라우팅 밖에서
-  status를 합성하지 않는다.
+  status를 합성하지 않는다. 미들웨어가 내는 답을 문서에 적는 것(§6.2 «경로 앞 응답»)은
+  합성이 아니다 — 적었다고 합성이 허용되는 것도 아니다.
 
 별도 승인이 없으면 framework의 현재 content negotiation/parsing 동작을 보존하고,
 그 body를 정확한 code-profile 공개 계약이라고 주장하지 않는다.
@@ -940,7 +1411,8 @@ runtime behavior뿐 아니라 generated schema의 client-visible contract를 바
 - enum, format, default
 - status별 response schema
 - 직접 반환하는 BC status별 `<Bc>ErrorSchema` schema와 승인 식별자 field의 Enum 값
-- framework-owned status가 BC `ErrorSchema`로 잘못 광고되지 않는지
+- framework-owned status가 `response=`에 BC `ErrorSchema` 등으로 잘못 광고되지 않는지
+- 경로 앞 응답(Ninja 기본 행 · 프로젝트 행)과 머리 보충이 그 operation 에 붙었는지(§6.2)
 - auth/security requirement
 - pagination/filtering parameter와 response metadata
 - deprecation/versioning note
@@ -989,7 +1461,8 @@ def test_create_order_returns_201():
 ```
 
 Framework 기본 401/403/404/422/429 body, Pydantic/Ninja 기본 직렬화, validator 배치,
-`ValidationError.loc`, private/helper/handler 직접 호출은 그 자체로 test 자격이 아니다. 별도 승인된
+`ValidationError.loc`, private/helper/handler 직접 호출은 그 자체로 test 자격이 아니다(경로 앞 응답 표의 행은 예외 — §6.2 ·
+`implementation-test` §19.2.1 · 예외로 일어나는 미들웨어는 `RequestFactory` 로 직접 부른다). 별도 승인된
 공개 Python consumer 계약은 중앙 입장 심사를 통과하면 그 공개 boundary에서 테스트할 수 있지만,
 그 근거가 없으면 오류 helper/handler 내부 unit test를 만들지 않는다. 승인된 공개 status/body/header,
 wire Enum·security 계약을 실제 mount에서 검증하는 테스트까지 금지하는 규칙은 아니다.

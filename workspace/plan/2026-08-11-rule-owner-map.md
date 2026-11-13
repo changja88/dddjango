@@ -59,7 +59,7 @@
 | 58 | path | scripts/check-layer-skeleton.py | — | 재작성 |  |
 | 59 | ast | scripts/check-api-error-controller-contract.py | — | 신설 |  |
 | 62 | ast | scripts/check-api-error-controller-contract.py | — | 신설 |  |
-| 63 | ast | scripts/check-openapi-error-declaration.py | — | 신설 | 08-25 개정(base 뭉뚱그림 금지 · R-0681 rev2) 반영 — 09-04 현장 보고 3 S-5 에서 검사기 docstring·조치 문면 정합 |
+| 63 | ast | scripts/check-openapi-error-declaration.py | — | 신설 | 08-25 개정(base 뭉뚱그림 금지 · R-0681 rev2) 반영 — 09-04 현장 보고 3 S-5 에서 검사기 docstring·조치 문면 정합 · 2026-11-13 개정(F4-173 · 사용자 결정) — 경로 앞 응답(루트 API 의 정해진 클래스 · `framework/ninja/` 정본 · 표) 꼴 받음 · 정본 지문 · 표 칸·값 · operation 마다 빠짐(모든 프로필 · R1 빚) · 미들웨어 답 ↔ 표 · 머리 보충(정수 키 · 오류는 headers 만) · 주입 응답 머리 · `response=` 의 framework status(code 만) — 기계 밖 몫(서드파티 미들웨어 · 앞단 행 · `operations` 행 · ⓓ 후보)은 agents/design-review-api.md |
 | 64 | ast | scripts/check-port-adapter-pairing.py (신설) | — | 신설 |  |
 | 67 | ast | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
 | 68 | ast+ | scripts/check-usecase-dto-placement.py | agents/discipline-reviewer.md | 재작성 |  |

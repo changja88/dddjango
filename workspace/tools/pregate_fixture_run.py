@@ -60,6 +60,11 @@
                           `__init__` · external) → 선언 확정 #541 2 · notify_order(생성자 없음) · archive_order(update · 기준선 생성자뿐)
                           → 후보 2 · rename_order(기준선 저장 경계) 0 · 귀속 0 → exit 2 · `--check-report` 미처분 3 → ignored 2 → 0.
   publish-green-spec.md — 저장 경계를 받는 발행 유스케이스 + 브로커 없는 `uow=none` 유스케이스 → exit 0 · #541 0.
+  묶음 pre-route(F4-173 경로 앞 응답 꼴 — 합성 저장소 = `mini_repo` + `pre_route_overlay/`(평범한 루트 API · 경로 하나 · framework
+  고정 칸) · 리포트 각 1): `pre-route-spec.md`(정본 add · 표 add · 루트 API update) → exit 0 · 예보 0 · 사본의 정본 = 플러그인 자산 byte ·
+  표는 사본에 없고 미시뮬레이션 줄 · 루트 API 는 기준선 그대로 / `pre-route-add-api-spec.md`(루트 API 를 새로 · `config/api.py` 를 뺀
+  저장소) → exit 0 · 예보 0 · 스텁 = 정해진 메서드 글 + 정형 import 각 한 번 / `pre-route-api-deviate-spec.md`(서명이 꼴 밖) → exit 2 ·
+  #437 · #63 a 각 1건(진탐 — 보통 스텁). `--only-pre-route` 는 이 묶음만.
   묶음 group(2.28.0 의미 묶음 · 설계 9.3 — 합성 저장소 = `mini_repo` + `group_overlay/` · 리포트 1): `group-move-spec.md` 를 산출물
   폴더(G0 ⓐ — 평평한 `term_c` 를 `term/` 에) 사본으로 돌림 → 사본이 앵커 커밋 «전» 에 `void_a` · `void_b`(이 실행의 형성) · `term_c`(ⓐ)
   를 옮겨 옛 위반(`django.db`)이 L∩N · exit 0 · 예보 줄 0. 유닛: `_domain_service_slot_shape` 묶음 꼴(7.4 의 17) ·
@@ -91,7 +96,8 @@ import ⑵ 비적용·namespace-dir 이름 U·`import *` 재수출/`__getattr__`
 불일치면 exit 1(실행 출력 첨부). 검사기·트리 개정이 pre-gate 스텁 오탐을 새로 만들면
 green 이 깨져 여기서 드러난다(설계 §9-3 드리프트 하네스의 픽스처 축).
 
-사용: python3 workspace/tools/pregate_fixture_run.py [--keep] [--only-group | --only-joint | --mutation-test] [--scripts <폴더>]
+사용: python3 workspace/tools/pregate_fixture_run.py [--keep] [--only-group | --only-joint | --only-pre-route | --mutation-test]
+      [--scripts <폴더>]
 """
 from __future__ import annotations
 
@@ -1998,6 +2004,105 @@ def _run_publish_bundle(scratch: Path, failures: "list[str]") -> None:
               "기대 일치")
 
 
+# 묶음 pre-route(F4-173 — 합성 저장소 = `mini_repo` + `pre_route_overlay/`(평범한 루트 API · 경로 하나 · framework 고정 칸)).
+PRE_ROUTE_CANONICAL: str = "framework/ninja/pre_route_responses.py"
+PRE_ROUTE_TABLE: str = "framework/ninja/pre_route_response_table.py"
+PRE_ROUTE_API: str = "config/api.py"
+PRE_ROUTE_ASSET: Path = REPO_ROOT / "dddjango" / "scripts" / "pre_route_responses_canonical.py"
+PRE_ROUTE_TABLE_NOTE: str = "미시뮬레이션: add(경로 앞 응답 표 — 행 · 몸통은 G1 승인 표라 기계 블록에 실리지 않는다"
+PRE_ROUTE_API_IMPORTS: "tuple[str, ...]" = (
+    "from ninja_extra import NinjaExtraAPI",
+    "from ninja.openapi.schema import OpenAPISchema",
+    "from framework.ninja.pre_route_responses import add_pre_route_responses",
+)
+PRE_ROUTE_API_BODY: str = (
+    "    return add_pre_route_responses(self, super().get_openapi_schema(path_prefix=path_prefix, path_params=path_params))")
+
+
+def _pre_route_repo(scratch: Path, name: str, *, drop_api: bool) -> Path:
+    repo: Path = scratch / name
+    shutil.copytree(FIXTURES / "mini_repo", repo)
+    shutil.copytree(FIXTURES / "pre_route_overlay", repo, dirs_exist_ok=True)
+    if drop_api:
+        (repo / PRE_ROUTE_API).unlink()
+    _git(repo, "init", "-q")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "fixture-baseline+pre-route-overlay")
+    return repo
+
+
+def _kept_texts(proc: "subprocess.CompletedProcess[str]", rels: "tuple[str, ...]") -> "dict[str, str | None] | None":
+    """`--keep` 사본의 계획 경로 원문 여럿(없는 파일은 None) — 사본은 읽은 뒤 지운다."""
+    m: "re.Match[str] | None" = _KEEP_RE.search(proc.stdout)
+    if m is None:
+        return None
+    kept: Path = Path(m.group(1))
+    try:
+        return {rel: ((kept / "copy" / rel).read_text(encoding="utf-8") if (kept / "copy" / rel).is_file() else None)
+                for rel in rels}
+    finally:
+        shutil.rmtree(kept, ignore_errors=True)
+
+
+def _run_pre_route_bundle(scratch: Path, failures: "list[str]") -> None:
+    """F4-173 — 경로 앞 응답 꼴을 세우는 명세의 예보가 G2 와 같다(검사기가 스텁을 정본 · 표 · 루트 API 위반으로 읽지 않는다).
+    ① `pre-route-spec`(정본 add · 표 add · 루트 API update) → exit 0 · 예보 0 · 사본의 정본 = 플러그인 자산 byte · 표 없음(미시뮬레이션
+    줄) · 루트 API 는 기준선 그대로. ② `pre-route-add-api-spec`(루트 API 를 새로) → exit 0 · 예보 0 · 스텁 = 정해진 메서드 글 +
+    빠진 정형 import 각 한 번. ③ `pre-route-api-deviate-spec`(서명이 꼴 밖) → exit 2 · #437 · #63 a 각 1건(진탐 — 보통 스텁 ·
+    그 계획대로 지으면 G2 도 같다)."""
+    asset: str = PRE_ROUTE_ASSET.read_text(encoding="utf-8")
+    plain: Path = _pre_route_repo(scratch, "repo-pre-route", drop_api=False)
+    fresh: Path = _pre_route_repo(scratch, "repo-pre-route-fresh", drop_api=True)
+    baseline_api: str = (FIXTURES / "pre_route_overlay" / PRE_ROUTE_API).read_text(encoding="utf-8")
+    cases: "tuple[tuple[str, Path, int, tuple[str, ...]], ...]" = (
+        ("pre-route-spec", plain, 0, ()),
+        ("pre-route-add-api-spec", fresh, 0, ()),
+        ("pre-route-api-deviate-spec", fresh, 2, (f"[#437] {PRE_ROUTE_API}:N: `DocumentedAPI` 정의",
+                                                  f"[#63] {PRE_ROUTE_API}:N: 루트 API 클래스 `DocumentedAPI` 의 "
+                                                  "`get_openapi_schema` 재정의가 정해진 꼴이 아니다")),
+    )
+    for name, repo, want_exit, want_items in cases:
+        report: Path = scratch / f"pregate-report-{name}.md"
+        proc: "subprocess.CompletedProcess[str]" = _run_pregate(FIXTURES / f"{name}.md", repo, report, ["--keep"])
+        texts: "dict[str, str | None] | None" = _kept_texts(proc, (PRE_ROUTE_CANONICAL, PRE_ROUTE_TABLE, PRE_ROUTE_API))
+        items: "list[str]" = [ln.strip() for ln in proc.stdout.splitlines() if re.match(r"^\s*`[0-9a-f]{12}` ", ln)]
+        report_text: str = report.read_text(encoding="utf-8") if report.is_file() else ""
+        bad_before: int = len(failures)
+        if proc.returncode != want_exit:
+            failures.append(f"[pre-route] {name} 기대 exit {want_exit} ≠ 실측 {proc.returncode}")
+        if len(items) != len(want_items) or any(sum(piece in it for it in items) != 1 for piece in want_items):
+            failures.append(f"[pre-route] {name} 예보 항목 {items} ≠ 기대 조각 {list(want_items)}")
+        if texts is None:
+            failures.append(f"[pre-route] {name} --keep 사본 경로 없음")
+        else:
+            if texts[PRE_ROUTE_CANONICAL] != asset:
+                failures.append(f"[pre-route] {name} 사본의 정본이 플러그인 자산 글 그대로가 아니다")
+            api_text: str = texts[PRE_ROUTE_API] or ""
+            if name == "pre-route-spec":
+                if texts[PRE_ROUTE_TABLE] is not None or PRE_ROUTE_TABLE_NOTE not in report_text:
+                    failures.append(f"[pre-route] {name} 표를 사본에 세우지 않고 미시뮬레이션으로 적어야 한다")
+                if api_text != baseline_api:
+                    failures.append(f"[pre-route] {name} 루트 API update 는 미시뮬레이션(기준선 그대로)이어야 한다")
+            elif name == "pre-route-add-api-spec":
+                if (PRE_ROUTE_API_BODY not in api_text or "NotImplementedError" in api_text
+                        or any(api_text.count(stmt) != 1 for stmt in PRE_ROUTE_API_IMPORTS)):
+                    failures.append(f"[pre-route] {name} 루트 API 스텁이 정해진 메서드 글 + 정형 import 각 한 번이 아니다: {api_text!r}")
+            elif "raise NotImplementedError" not in api_text or PRE_ROUTE_API_BODY in api_text:
+                failures.append(f"[pre-route] {name} 꼴 밖 서명은 보통 스텁이어야 한다: {api_text!r}")
+        if _header_count(report) != 1:
+            failures.append(f"[pre-route] {name} 리포트 헤더 {_header_count(report)} ≠ 1")
+        if len(failures) > bad_before:
+            _dump(f"pre-route {name}", proc)
+        else:
+            print(f"pre-route {name}: exit {proc.returncode} · 예보 {len(items)}건 — 기대 일치")
+
+
+def _only_pre_route(scratch: Path) -> "list[str]":
+    failures: "list[str]" = []
+    _run_pre_route_bundle(scratch, failures)
+    return failures
+
+
 _GROUP_SV: str = "application/orders/domain_layer/shared_value_object/"
 
 
@@ -2779,6 +2884,7 @@ def main(argv: "list[str]") -> int:
     ap.add_argument("--scripts", default=None, help="그 폴더의 design_pregate.py · registry_gate.py 로(변이 사본)")
     ap.add_argument("--only-group", action="store_true", help="묶음 이동(2.28.0) 유닛 · 묶음만")
     ap.add_argument("--only-joint", action="store_true", help="함께 커밋(2.36.0) 유닛 · G2 대조 장면 · 리포트만")
+    ap.add_argument("--only-pre-route", action="store_true", help="경로 앞 응답 꼴(F4-173) 묶음만")
     ap.add_argument("--mutation-test", action="store_true", help="계획 «단계 3 변이 회귀» pre-gate 변이 — 모두 red 여야 exit 0")
     ns: argparse.Namespace = ap.parse_args(argv)
     if ns.scripts is not None:
@@ -2798,6 +2904,19 @@ def main(argv: "list[str]") -> int:
                 print(f"  - {f}")
             return 1
         print("\nPASS — pre-gate 묶음 이동")
+        return 0
+    if ns.only_pre_route:
+        scratch_p: Path = Path(tempfile.mkdtemp(prefix="pregate-pre-route-"))
+        try:
+            pre_route_fails: "list[str]" = _only_pre_route(scratch_p)
+        finally:
+            shutil.rmtree(scratch_p, ignore_errors=True)
+        if pre_route_fails:
+            print("\nFAIL — pre-gate 픽스처 기대 불일치:")
+            for f in pre_route_fails:
+                print(f"  - {f}")
+            return 1
+        print("\nPASS — pre-gate 경로 앞 응답 꼴")
         return 0
     if ns.only_joint:
         scratch_j: Path = Path(tempfile.mkdtemp(prefix="pregate-joint-"))
@@ -2834,6 +2953,7 @@ def main(argv: "list[str]") -> int:
         _run_stub_bundle(scratch, failures)
         _run_stub_material_bundle(scratch, failures)      # D17 소유 · #652
         _run_publish_bundle(scratch, failures)            # F4-93 · #541 선언 예보
+        _run_pre_route_bundle(scratch, failures)          # F4-173 경로 앞 응답 꼴 — 정본 글 그대로 · 표 미시뮬레이션 · 루트 API 메서드 글
         _run_group_bundle(scratch, failures)              # 2.28.0 의미 묶음 — 사본 이동은 앵커 커밋 전(설계 9.3)
         _run_group_legacy_bundle(scratch, failures)       # 검토 B2 — 이관 빚이 붙든 묶음 자리(설계 5절 ⓪)
         _run_group_dissolve_bundle(scratch, failures)     # 합류 — 풀린 묶음의 빈 `__init__.py` 도 사본에서 지움
@@ -2850,6 +2970,7 @@ def main(argv: "list[str]") -> int:
               "--check-report 14단계 + 유닛 매트릭스 · 스텁 정형 stub 10 + 재료 글 10(재수출 __init__ 0 · 진탐 #640 유지 · 재료 정형 본문) · "
               "stub-material 7(D17 #652 — 재료 0 · 반환 주석 진탐 1) · "
               "publish 2(F4-93 #541 선언 확정 2·후보 2 / 0) + 유닛 매트릭스 · "
+              "pre-route 3(F4-173 — 정본 · 표 · 루트 API 예보 0 / 꼴 밖 서명 #437 · #63 a 각 1) · "
               "joint(2.36.0 함께 커밋 — 행 끝 칸 형식 · 지문 · 리포트 두 소절 · G2 대조 장면 21))")
         return 0
     finally:

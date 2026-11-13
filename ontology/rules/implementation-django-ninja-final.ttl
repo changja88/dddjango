@@ -59,12 +59,18 @@ djr:R-0007 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0008 a djr:Prohibition ;
-    skos:prefLabel "framework body의 안정 공개 계약 주장 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0008@2026-08-19> .
+    skos:prefLabel "framework body의 안정 공개 계약 주장 금지 · 문서에는 관찰된 꼴로 경로 앞 응답(행 시험이 지킴)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0008@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-0008@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0008 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0008@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-0008 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0008@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0009 a djr:Obligation ;
     skos:prefLabel "별도 공개 계약의 G1 선승인"@ko ;
@@ -625,8 +631,8 @@ djr:R-0068 a djr:Prohibition ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-0069 a djr:Obligation ;
-    skos:prefLabel "승인된 BC 오류 머리(retryable 503 Retry-After · 사건 값 머리)의 주입 HttpResponse header 설정 절차(오류 생성 → 머리 → 반환)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0069@2026-11-09> .
+    skos:prefLabel "승인된 BC 오류 머리(retryable 503 Retry-After · 사건 값 머리)의 주입 HttpResponse header 설정 절차(오류 생성 → 머리 → 반환) · 그 머리는 경로 머리 보충으로 문서에도 선언"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0069@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-0069@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0069 ;
@@ -643,6 +649,12 @@ djr:R-0069 a djr:Obligation ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-0069@2026-10-11> ;
     djr:revision 3 ;
     djr:revisionKind djr:revision-clarification .
+
+<https://numchida.com/ns/djr#R-0069@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-0069 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0069@2026-11-09> ;
+    djr:revision 4 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0070 a djr:Prohibition ;
     skos:prefLabel "오류 응답 helper·handler·builder 생성·호출 금지(추출 금지)"@ko ;
@@ -709,12 +721,18 @@ djr:R-0077 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0078 a djr:Prohibition ;
-    skos:prefLabel "framework status의 BC response= 광고 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0078@2026-08-19> .
+    skos:prefLabel "framework status의 BC response= 광고·BC 오류 전환 금지 · 그 가운데 경로 앞 의도된 답만 문서에 경로 앞 응답으로"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0078@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-0078@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0078 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0078@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-0078 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0078@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0079 a djr:Obligation ;
     skos:prefLabel "authentication adapter 성공 반환 = identity/principal"@ko ;
@@ -807,8 +825,8 @@ djr:R-0087 a djr:Obligation ;
     djr:revisionKind djr:revision-redefinition .
 
 djr:R-0088 a djr:Prohibition ;
-    skos:prefLabel "미반환 framework status의 BC 오류 선언 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0088@2026-08-25> .
+    skos:prefLabel "미반환 framework status의 response= 선언 금지(BC 오류·다른 Schema 모두) · 그 가운데 경로 앞 의도된 답만 문서에 경로 앞 응답으로"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0088@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-0088@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0088 ;
@@ -820,9 +838,15 @@ djr:R-0088 a djr:Prohibition ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-clarification .
 
+<https://numchida.com/ns/djr#R-0088@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-0088 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0088@2026-08-25> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-0089 a djr:Prohibition ;
-    skos:prefLabel "openapi_extra 보충·사후 변형 금지 — 오류 항목 한정·성공 메타데이터 보충 허용(⊆ response=·리터럴·fail-closed)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0089@2026-09-01> .
+    skos:prefLabel "openapi_extra 보충·사후 변형 금지 — 경로 앞 응답 꼴 하나 · 응답 보충은 response= 선언 status 의 정수 리터럴 키만(성공 메타데이터 · 오류는 headers 만 머리 보충 · 숫자 문자열·변수/상수 키·splat 위반 · fail-closed)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0089@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-0089@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0089 ;
@@ -832,6 +856,12 @@ djr:R-0089 a djr:Prohibition ;
     prov:specializationOf djr:R-0089 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-0089@2026-08-19> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-0089@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-0089 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0089@2026-09-01> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-0090 a djr:Obligation ;
@@ -1181,16 +1211,22 @@ djr:R-0681 a djr:Obligation ;
     djr:revisionKind djr:revision-redefinition .
 
 djr:R-0682 a djr:Prohibition ;
-    skos:prefLabel "framework 소유 status의 BC 직접 반환·BC ErrorSchema 광고 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0682@2026-08-22> .
+    skos:prefLabel "framework 소유 status의 BC 직접 반환·BC ErrorSchema 광고 금지 · 그 가운데 경로 앞 의도된 답만 문서에 경로 앞 응답으로"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0682@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-0682@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0682 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-0682@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-0682 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0682@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
+
 djr:R-0683 a djr:Prohibition ;
-    skos:prefLabel "openapi_extra·override·monkeypatch·postprocessor 수동 선언/사후 변형 금지 — 성공 메타데이터 보충 예외(⊆ response=·리터럴·fail-closed)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0683@2026-09-01> .
+    skos:prefLabel "openapi_extra·override·monkeypatch·postprocessor 수동 선언/사후 변형 금지 — 경로 앞 응답 꼴 하나만 · 응답 보충은 response= 선언 status 의 정수 리터럴 키만(성공 메타데이터 · 오류는 headers 만 · 숫자 문자열·변수/상수 키·splat 위반 · fail-closed)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0683@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-0683@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0683 ;
@@ -1200,6 +1236,12 @@ djr:R-0683 a djr:Prohibition ;
     prov:specializationOf djr:R-0683 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-0683@2026-08-22> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-0683@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-0683 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0683@2026-09-01> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-0684 a djr:Obligation ;
@@ -1423,12 +1465,18 @@ djr:R-0706 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0707 a djr:Obligation ;
-    skos:prefLabel "프로젝트 api.py의 NinjaExtraAPI 인스턴스 1개 소유"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0707@2026-08-22> .
+    skos:prefLabel "프로젝트 api.py의 NinjaExtraAPI 인스턴스 1개 소유 · 루트 API 는 경로 앞 응답의 정해진 클래스로"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0707@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-0707@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0707 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0707@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-0707 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0707@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0708 a djr:Obligation ;
     skos:prefLabel "BC의 side-effect-free register_<bc>_api(api)만 노출"@ko ;
@@ -2099,12 +2147,18 @@ djr:R-0789 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0790 a djr:Prohibition ;
-    skos:prefLabel "BC ErrorSchema·code·helper·custom handler·raw response 생성 및 response= 광고 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0790@2026-08-22> .
+    skos:prefLabel "BC ErrorSchema·code·helper·custom handler·raw response 생성 및 response= 광고 금지 · 문서에는 경로 앞 응답 operations 행으로"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0790@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-0790@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0790 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0790@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-0790 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0790@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0791 a djr:Prohibition ;
     skos:prefLabel "415 이유의 클래스 컨트롤러 → 함수형 Router 변경 금지"@ko ;
@@ -2139,12 +2193,18 @@ djr:R-0794 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0795 a djr:Prohibition ;
-    skos:prefLabel "전역 middleware·root URL wrapper·별도 dispatcher의 Ninja 밖 status 합성 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0795@2026-08-22> .
+    skos:prefLabel "전역 middleware·root URL wrapper·별도 dispatcher의 Ninja 밖 status 합성 금지 · 문서에 경로 앞 응답으로 적는 것은 합성 아님(적었다고 합성 허용 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0795@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-0795@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0795 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0795@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-0795 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0795@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0796 a djr:Obligation ;
     skos:prefLabel "승인 부재 시 framework 현재 협상/파싱 동작 보존·공개 계약 주장 금지"@ko ;
@@ -2299,12 +2359,18 @@ djr:R-0814 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0815 a djr:Prohibition ;
-    skos:prefLabel "framework 기본 body·기본 직렬화·validator 배치·private 직접 호출의 test 자격 부정"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0815@2026-08-22> .
+    skos:prefLabel "framework 기본 body·기본 직렬화·validator 배치·private 직접 호출의 test 자격 부정 · 경로 앞 응답 표 행은 예외"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0815@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-0815@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0815 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0815@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-0815 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0815@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0816 a djr:Prohibition ;
     skos:prefLabel "근거 없는 오류 helper/handler 내부 unit test 작성 금지"@ko ;
@@ -2526,6 +2592,30 @@ djr:R-3735 a djr:Prohibition ;
     prov:specializationOf djr:R-3735 ;
     djr:revision 1 .
 
+djr:R-3749 a djr:Obligation ;
+    skos:prefLabel "경로 앞 응답 꼴 — 파일 셋(정본 pre_route_responses.py 글자 그대로 · 프로젝트 표 pre_route_response_table.py · api.py 의 정해진 루트 API 클래스 — 서명·몸통 글자 그대로) · Ninja 기본 행(정본 · 뺄 수 없음 · 날 수 있다 쪽) · 그 밖 문서 재정의·후처리 금지 · 받는 판 Ninja 1.6 · Python 3.12 · pydantic 2.5 이상(낮으면 G1 판 올림) · 기본 몸통을 바꾸는 프레임워크 오류 핸들러면 G1 STOP · 붙는 행마다 시험"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3749@2026-11-13> .
+
+<https://numchida.com/ns/djr#R-3749@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-3749 ;
+    djr:revision 1 .
+
+djr:R-3750 a djr:Obligation ;
+    skos:prefLabel "경로 앞 응답 프로젝트 행(미들웨어 — 서드파티 포함 — 와 앞단) — 칸(status 400–599 · when · description · body|media_type · headers · methods · namespaces · exempt · operations) · 빈 좁히는 칸 금지 · 행마다 G1 근거(미들웨어 코드 줄 · 설정 · 앞단) · NOT_API_MIDDLEWARE 근거 = API 경로를 빼는 코드 줄 · 표 검증(문서 생성 때 엄격 · 뒤 열쇠가 이김) · operations 는 경로 객체로 못 가르는 답(406·415·인증 안 HttpError·preserve 경로 코드의 HttpError) · 적는 것의 경계(의도된 답만) · 검사기는 프로젝트 미들웨어만 대조(좁힌 행 — all 밖 when 포함 — 뿐이거나 못 읽으면 ⓓ 후보 · G1 근거는 api 리뷰어 · G2 ⓓ 줄은 감수자 · 서드파티·앞단은 리뷰어)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3750@2026-11-13> .
+
+<https://numchida.com/ns/djr#R-3750@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-3750 ;
+    djr:revision 1 .
+
+djr:R-3751 a djr:Obligation ;
+    skos:prefLabel "머리 보충 — BC 오류 머리는 그 경로 openapi_extra 의 response= 선언 status 정수 키 headers 로 · 오류 status 는 headers 만 · 숫자 문자열·변수 키·** 는 성공·오류 모두 위반 · openapi_extra 값은 글자 Dict 또는 같은 모듈 맨 위 글자 Dict 상수(import 상수·도움 함수는 막힘) · headers 값도 같은 꼴(그 밖은 ⓓ) · 주입 응답 머리 이름은 그 뒤 반환 오류 status 의 머리 보충에 · 머리 description 에 머리 계약"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3751@2026-11-13> .
+
+<https://numchida.com/ns/djr#R-3751@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-3751 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> a djr:Document ;
     skos:prefLabel "implementation-django-ninja-final"@ko .
 
@@ -2697,7 +2787,7 @@ djr:R-3735 a djr:Prohibition ;
     djr:order 10 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b34> ;
     djr:statesNorm djr:R-0683 ;
-    djr:text "- `openapi_extra`나 `get_openapi_schema` override·monkeypatch·postprocessor로 오류\n  응답을 수동 선언하거나 사후 변형하지 않는다. operation의 `response=`가 runtime과\n  OpenAPI가 함께 아는 계약이다. 예외는 하나 — `response=`로 직접 선언된 성공·리다이렉트\n  status(100–399)의 메타데이터 보충(header 문서화 등)은 허용한다: 보충 집합이 `response=`\n  선언 집합의 부분집합이고 키 전부 리터럴일 때만이며, 오류 status 동거·변수/상수 키·\n  `**` splat 은 위반이다(fail-closed — 2026-09-01).\n"@ko .
+    djr:text "- `openapi_extra`나 `get_openapi_schema` override·monkeypatch·postprocessor로 오류\n  응답을 수동 선언하거나 사후 변형하지 않는다 — 받는 것은 경로 앞 응답을 붙이는 정해진 꼴\n  하나(§6.2 «경로 앞 응답»)다. operation의 `response=`가 runtime과 OpenAPI가 함께 아는 경로\n  코드의 계약이다. `openapi_extra` 의 응답 보충은 그 경로 `response=`에 선언된 status 의 정수\n  리터럴 키만 받는다 — 성공·리다이렉트 status(100–399)는 메타데이터 보충(header 문서화 등),\n  오류 status 는 `headers` 만(머리 보충 — 설명 · 몸통을 바꾸지 않는다)이다. 숫자 문자열 키 ·\n  변수/상수 키 · `**` splat 은 성공 · 오류 모두 위반이다(fail-closed — 2026-11-13).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b11> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
@@ -2813,7 +2903,7 @@ djr:R-3735 a djr:Prohibition ;
     djr:order 9 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b30>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b34> ;
     djr:statesNorm djr:R-0681, djr:R-0682 ;
-    djr:text "- 직접 반환하는 BC 오류 status는 모두 `response={...}`에 그 status에서 실제로 반환하는\n  오류 타입 그대로 선언한다 — concrete 하나면 그 concrete, 둘 이상이면 `Union[...]`(`A | B`),\n  명시값으로 채운 base 인스턴스면 base. 상위 base로 뭉뚱그리거나 반환하지 않는 타입을 적지\n  않는다(OpenAPI가 endpoint별 code를 정확히 드러낸다 — 2026-08-25). framework가 소유하는 401/403/route 404/422/429/일반 `HttpError`/미식별\n  500은 BC 오류로 직접 반환하지도, BC `ErrorSchema`로 광고하지도 않는다.\n"@ko .
+    djr:text "- 직접 반환하는 BC 오류 status는 모두 `response={...}`에 그 status에서 실제로 반환하는\n  오류 타입 그대로 선언한다 — concrete 하나면 그 concrete, 둘 이상이면 `Union[...]`(`A | B`),\n  명시값으로 채운 base 인스턴스면 base. 상위 base로 뭉뚱그리거나 반환하지 않는 타입을 적지\n  않는다(OpenAPI가 endpoint별 code를 정확히 드러낸다 — 2026-08-25). framework가 소유하는 401/403/route 404/422/429/일반 `HttpError`/미식별\n  500은 BC 오류로 직접 반환하지도, BC `ErrorSchema`로 광고하지도 않는다 — 그 가운데 경로 앞에서 나는\n  의도된 답만 문서에 경로 앞 응답으로 적는다(§6.2).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> a djr:Section ;
     djr:headingSnapshot "### 2.3 클래스 컨트롤러 (ninja-extra) — 신규 표준"@ko ;
@@ -2832,7 +2922,7 @@ djr:R-3735 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-code ;
     djr:order 10 ;
-    djr:text "```python\n# config/api.py — 프로젝트가 contract scope의 API 인스턴스 하나를 소유한다.\nfrom ninja_extra import NinjaExtraAPI\n\napi = NinjaExtraAPI()\n```\n\n" .
+    djr:text "```python\n# config/api.py — 프로젝트가 contract scope의 API 인스턴스 하나를 소유한다(경로 앞 응답 꼴 — §6.2).\nfrom ninja.openapi.schema import OpenAPISchema\nfrom ninja_extra import NinjaExtraAPI\n\nfrom framework.ninja.pre_route_responses import add_pre_route_responses\n\n\nclass DocumentedAPI(NinjaExtraAPI):\n    def get_openapi_schema(\n        self, *, path_prefix: str | None = None, path_params: dict[str, object] | None = None\n    ) -> OpenAPISchema:\n        return add_pre_route_responses(self, super().get_openapi_schema(path_prefix=path_prefix, path_params=path_params))\n\n\napi: DocumentedAPI = DocumentedAPI()\n```\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b11> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
@@ -3009,7 +3099,7 @@ djr:R-3735 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 8 ;
     djr:statesNorm djr:R-0707, djr:R-0708, djr:R-0709, djr:R-0710 ;
-    djr:text "**등록 — 프로젝트 소유 API, BC 소유 registrar, URLconf 소유 합성.** contract scope 안에서\n프로젝트 `api.py`가 `NinjaExtraAPI` 인스턴스 하나를 소유한다. 각 BC는 project API를 import하지\n않는 side-effect-free `register_<bc>_api(api)`만 노출한다. 프로젝트 `urls.py`가 API와 registrar를\nimport하고, 각 registrar를 명시적으로 한 번 호출한 뒤 API를 mount한다. BC 모듈 import만으로\nregistration이 일어나면 안 된다.\n\n"@ko .
+    djr:text "**등록 — 프로젝트 소유 API, BC 소유 registrar, URLconf 소유 합성.** contract scope 안에서\n프로젝트 `api.py`가 `NinjaExtraAPI` 인스턴스 하나를 소유한다(루트 API 는 경로 앞 응답을 문서에 붙이는\n정해진 클래스로 짓는다 — §6.2 «경로 앞 응답»). 각 BC는 project API를 import하지\n않는 side-effect-free `register_<bc>_api(api)`만 노출한다. 프로젝트 `urls.py`가 API와 registrar를\nimport하고, 각 registrar를 명시적으로 한 번 호출한 뒤 API를 mount한다. BC 모듈 import만으로\nregistration이 일어나면 안 된다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b9> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
@@ -3442,7 +3532,7 @@ djr:R-3735 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 17 ;
     djr:statesNorm djr:R-0006, djr:R-0007, djr:R-0008, djr:R-0009 ;
-    djr:text "Django Ninja validation error의 default status·body는 framework-owned 응답이다. 새\ncode-profile에서는 이를 BC 식별자 body로 맞추기 위한 전역 변환을 추가하지 않으며, 그 body를\n정확하고 안정적인 공개 식별자 계약이라고 주장하지 않는다. 별도 공개 계약이 필요하면 G1로\n돌아가 profile과 호환성 범위를 먼저 승인한다.\n\n"@ko .
+    djr:text "Django Ninja validation error의 default status·body는 framework-owned 응답이다. 새\ncode-profile에서는 이를 BC 식별자 body로 맞추기 위한 전역 변환을 추가하지 않으며, 그 body를\n정확하고 안정적인 공개 식별자 계약이라고 주장하지 않는다 — 문서에는 관찰된 꼴 그대로 경로 앞\n응답(§6.2)으로 적고, 그 꼴은 행마다 둔 시험이 지킨다. 별도 공개 계약이 필요하면 G1로\n돌아가 profile과 호환성 범위를 먼저 승인한다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1> ;
@@ -3630,13 +3720,13 @@ djr:R-3735 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 27 ;
     djr:statesNorm djr:R-0068, djr:R-0069, djr:R-3654, djr:R-3655 ;
-    djr:text "승인된 BC 오류 헤더도 같은 controller가 소유하되 `Status` 생성자에 header를 넘기지 않고, 머리\n이름은 고정 문자열이며 값은 정적 값 또는 승인 사건 값 꼴이다.\n명세가 BC 오류 머리(retryable 503의 `Retry-After` · 사건 값 머리)를 승인했다면 controller\nmethod가 주입된 응답용(temporal) Django `HttpResponse`를 받아 선택된 mapping branch에서 오류를 만든 다음 header를 설정하고 두 인자 `Status`를\n반환한다(차례는 오류 생성 → 머리 → 반환이다). exception path의 구체 catch는 그 branch의 한 형태다.\nmanaged catch가 `as`로 잡은 자기 BC 구체 예외 하나의 승인 필드 값(사건 값)은 slot 10이 승인한\n선언 필드(그 예외 클래스 본문의 `f: T` — `discipline-houserules` 의 타입 어노테이션 절이 정한 꼴 — 또는\n`__init__`의 `self.f: T = …` · 상속 필드 아님)만 읽어 공통 shape의 유일한 일반 `str` 설명 칸 keyword\n값과 승인 머리 값에만 싣고, 꼴은\n`str` 필드 `n.f` · `datetime` 필드 `n.f.astimezone(UTC).isoformat()` · `int` 필드 f-string `{n.f}`\n뿐이며, 식별자 · status · 그 밖의 칸 · 머리 이름 · helper에는 싣지 않는다.\n승인 필드가 `T | None`이면 값이 없다는 까닭만으로 예외를 나누지 않고 catch 본문을\n`if <n>.<f> is not None:`과 `else:` 한 문장으로 두며, 두 가지는 각각 같은 concrete · 같은 코드 ·\n같은 실제 status 값으로 오류 생성 → 머리 → 반환을 따르고, `T | None` 필드는 검사식이 본 그 필드만\n값 있는 가지에서만 읽는다(값이 늘 있는 다른 승인 필드는 어느 가지에서든 읽을 수 있다) — 이 분기는\n값을 보일지 생략할지 고르는 응답 구성이라 입구 로직이 아니며, 다른 조건 · 중첩 · `else` 없는 꼴 ·\nhelper는 쓰지 않는다.\n\n"@ko .
+    djr:text "승인된 BC 오류 헤더도 같은 controller가 소유하되 `Status` 생성자에 header를 넘기지 않고, 머리\n이름은 고정 문자열이며 값은 정적 값 또는 승인 사건 값 꼴이다.\n명세가 BC 오류 머리(retryable 503의 `Retry-After` · 사건 값 머리)를 승인했다면 controller\nmethod가 주입된 응답용(temporal) Django `HttpResponse`를 받아 선택된 mapping branch에서 오류를 만든 다음 header를 설정하고 두 인자 `Status`를\n반환한다(차례는 오류 생성 → 머리 → 반환이다). exception path의 구체 catch는 그 branch의 한 형태다. 승인된 BC 오류 머리는 그 경로의 머리\n보충(아래 «경로 앞 응답»의 머리 보충 — `openapi_extra` 의 그 status 정수 키 `headers`)으로 생성 문서에도 선언한다.\nmanaged catch가 `as`로 잡은 자기 BC 구체 예외 하나의 승인 필드 값(사건 값)은 slot 10이 승인한\n선언 필드(그 예외 클래스 본문의 `f: T` — `discipline-houserules` 의 타입 어노테이션 절이 정한 꼴 — 또는\n`__init__`의 `self.f: T = …` · 상속 필드 아님)만 읽어 공통 shape의 유일한 일반 `str` 설명 칸 keyword\n값과 승인 머리 값에만 싣고, 꼴은\n`str` 필드 `n.f` · `datetime` 필드 `n.f.astimezone(UTC).isoformat()` · `int` 필드 f-string `{n.f}`\n뿐이며, 식별자 · status · 그 밖의 칸 · 머리 이름 · helper에는 싣지 않는다.\n승인 필드가 `T | None`이면 값이 없다는 까닭만으로 예외를 나누지 않고 catch 본문을\n`if <n>.<f> is not None:`과 `else:` 한 문장으로 두며, 두 가지는 각각 같은 concrete · 같은 코드 ·\n같은 실제 status 값으로 오류 생성 → 머리 → 반환을 따르고, `T | None` 필드는 검사식이 본 그 필드만\n값 있는 가지에서만 읽는다(값이 늘 있는 다른 승인 필드는 어느 가지에서든 읽을 수 있다) — 이 분기는\n값을 보일지 생략할지 고르는 응답 구성이라 입구 로직이 아니며, 다른 조건 · 중첩 · `else` 없는 꼴 ·\nhelper는 쓰지 않는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b28> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
     djr:kind djr:kind-code ;
     djr:order 28 ;
-    djr:text "```python\nfrom django.http import HttpResponse\n\n\n@route.post(\n    \"/retry\",\n    response={200: OrderOut, 503: OrderTemporarilyUnavailableError},\n    summary=\"주문 재시도\",\n    description=\"일시 경합이면 재시도 시점을 안내한다.\",\n)\ndef retry_order(\n    self,\n    request,\n    response: HttpResponse,\n    payload: RetryOrderIn,\n) -> OrderOut | Status[OrderTemporarilyUnavailableError]:\n    command = RetryOrderCommand(order_id=payload.order_id)\n    use_case = build_retry_order()\n\n    try:\n        order = use_case.execute(command)\n    except OrderContention:\n        error = OrderTemporarilyUnavailableError()\n        response[\"Retry-After\"] = \"1\"\n        return Status(status.HTTP_503_SERVICE_UNAVAILABLE, error)\n\n    return OrderOut.from_result(order)\n```\n\n" .
+    djr:text "```python\nfrom django.http import HttpResponse\n\n\n@route.post(\n    \"/retry\",\n    response={200: OrderOut, 503: OrderTemporarilyUnavailableError},\n    summary=\"주문 재시도\",\n    description=\"일시 경합이면 재시도 시점을 안내한다.\",\n    openapi_extra={\n        \"responses\": {503: {\"headers\": {\"Retry-After\": {\"description\": \"다시 시도하기까지 기다릴 초\", \"schema\": {\"type\": \"integer\"}}}}},\n    },\n)\ndef retry_order(\n    self,\n    request,\n    response: HttpResponse,\n    payload: RetryOrderIn,\n) -> OrderOut | Status[OrderTemporarilyUnavailableError]:\n    command = RetryOrderCommand(order_id=payload.order_id)\n    use_case = build_retry_order()\n\n    try:\n        order = use_case.execute(command)\n    except OrderContention:\n        error = OrderTemporarilyUnavailableError()\n        response[\"Retry-After\"] = \"1\"\n        return Status(status.HTTP_503_SERVICE_UNAVAILABLE, error)\n\n    return OrderOut.from_result(order)\n```\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b29> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
@@ -3657,7 +3747,7 @@ djr:R-3735 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 30 ;
     djr:statesNorm djr:R-0075, djr:R-0076, djr:R-0077, djr:R-0078 ;
-    djr:text "**framework 오류 경계.** 인증 401, 인가 403, route 404, request validation 422,\nthrottling 429, 일반 `HttpError`, 미식별 500은 framework가 소유한다. 새 code-profile은\n이를 BC `ErrorSchema`/`<Bc>ErrorCode`로 바꾸지 않으며, 전역 handler나 catch-all mapper로\n가로채지 않는다. 깨진 JSON과 framework validation body도 정확하고 안정적인\n`dddjango-code-json` wire contract라고 주장하지 않는다. framework status를 특정 BC의\n`response={...}`에 광고하지 않는다.\n\n"@ko .
+    djr:text "**framework 오류 경계.** 인증 401, 인가 403, route 404, request validation 422,\nthrottling 429, 일반 `HttpError`, 미식별 500은 framework가 소유한다. 새 code-profile은\n이를 BC `ErrorSchema`/`<Bc>ErrorCode`로 바꾸지 않으며, 전역 handler나 catch-all mapper로\n가로채지 않는다. 깨진 JSON과 framework validation body도 정확하고 안정적인\n`dddjango-code-json` wire contract라고 주장하지 않는다. framework status를 특정 BC의\n`response={...}`에 광고하지 않고 BC 오류로 바꾸지 않는다 — 그 가운데 경로 앞에서 나는 의도된 답만\n문서에 경로 앞 응답으로 관찰된 꼴 그대로 적는다(아래 «경로 앞 응답»).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b31> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
@@ -3684,21 +3774,40 @@ djr:R-3735 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 34 ;
     djr:statesNorm djr:R-0086, djr:R-0087, djr:R-0088, djr:R-0089, djr:R-0090 ;
-    djr:text "**응답 선언과 OpenAPI.** controller가 직접 반환할 수 있는 각 BC 오류 status는 operation의\n`response={...}`에서 그 status에서 실제로 반환하는 오류 타입 집합과 정확히 같게 매핑한다 —\nconcrete 하나면 그 concrete, 둘 이상이면 `Union[...]`(`A | B`), 명시값으로 채운 base 인스턴스면\nbase. concrete class가 runtime instance를 고정하므로 OpenAPI도 그 concrete의 고정 code·message를\nendpoint별로 드러낸다 — base로 뭉뚱그려 선언하지 않는다(2026-08-25 개정). 직접 반환하지 않는\nframework status는 BC 오류로 선언하지 않는다. 오류 응답 선언을 `openapi_extra`로 보충하거나\n`get_openapi_schema` override, monkeypatch, postprocessor로 사후 변형하지 않는다 — 이 금지의\n대상은 **오류 응답(4xx·5xx) 항목**이다. `response=`로 직접 선언된 성공·리다이렉트\nstatus(100–399)의 **메타데이터 보충**(header 문서화 등)은 허용한다: 보충 status 집합이\n`response=` 선언 집합의 부분집합이고 키 전부가 **리터럴**(정수·숫자 문자열)일 때만이며,\n오류 status 동거·변수/상수 표현식 키·`**` splat 은 위반이다(fail-closed — 2026-09-01 개정).\n성공 항목의 content/schema 기입은 기계 판정 밖이다 — `response=` 선언과의 문서 정합은\n리뷰어 소관. 공개 OpenAPI\n후보가 중앙 입장 심사에서 `add/update`이면 mounted API의 생성 문서에서 status별로 선언한 오류 schema를 확인한다.\n\n"@ko .
+    djr:text "**응답 선언과 OpenAPI.** controller가 직접 반환할 수 있는 각 BC 오류 status는 operation의\n`response={...}`에서 그 status에서 실제로 반환하는 오류 타입 집합과 정확히 같게 매핑한다 —\nconcrete 하나면 그 concrete, 둘 이상이면 `Union[...]`(`A | B`), 명시값으로 채운 base 인스턴스면\nbase. concrete class가 runtime instance를 고정하므로 OpenAPI도 그 concrete의 고정 code·message를\nendpoint별로 드러낸다 — base로 뭉뚱그려 선언하지 않는다(2026-08-25 개정). 직접 반환하지 않는\nframework status는 `response=`에 BC 오류로도 다른 Schema 로도 선언하지 않는다 — 그 가운데 경로 앞에서\n나는 의도된 답만 경로 앞 응답으로 문서에 적는다(아래). 오류 응답 선언을 `openapi_extra`로 보충하거나\n`get_openapi_schema` override, monkeypatch, postprocessor로 사후 변형하지 않는다 — 받는 것은\n경로 앞 응답을 붙이는 정해진 꼴 하나와 머리 보충이다. `openapi_extra` 의 응답 보충은 그 경로\n`response=`에 선언된 status 의 **정수 리터럴** 키만 받는다: 성공·리다이렉트 status(100–399)는\n**메타데이터 보충**(header 문서화 등), 오류 status(4xx·5xx)는 `headers` 만(**머리 보충** — 설명 ·\n몸통을 바꾸지 않는다)이다. 숫자 문자열 키(`\"503\"`)는 Ninja 가 정수 키 항목과 따로 남겨 문서에서\n그 응답의 몸통 · 설명이 사라지므로 위반이고, 변수/상수 표현식 키·`**` splat 도 위반이다\n(fail-closed — 2026-11-13 개정).\n성공 항목의 content/schema 기입은 기계 판정 밖이다 — `response=` 선언과의 문서 정합은\n리뷰어 소관. 공개 OpenAPI\n후보가 중앙 입장 심사에서 `add/update`이면 mounted API의 생성 문서에서 status별로 선언한 오류 schema를 확인한다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b35> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
     djr:kind djr:kind-norm ;
-    djr:order 35 ;
+    djr:order 44 ;
     djr:statesNorm djr:R-0091, djr:R-0092, djr:R-0093 ;
     djr:text "선언된 JSON 성공은 Schema 또는 `Status`를 통해 Ninja의 validation/serialization을 탄다.\n`FileResponse`, `StreamingHttpResponse`, redirect, schema-less 204는 성공 응답의\nframework-native carveout이다. 어느 carveout도 오류 helper나 raw 오류 응답을 허용하지 않는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b36> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
     djr:kind djr:kind-norm ;
-    djr:order 36 ;
+    djr:order 45 ;
     djr:statesNorm djr:R-0094, djr:R-0095, djr:R-0096, djr:R-0097 ;
     djr:text "**승인된 wire 보존 — 근거는 소비자 의존.** 기존 범위가 RFC 9457 Problem Details를 이미 공개하고\n소비자·테스트가 승인된 wire contract에 의존한다면 관찰한 status, body, header, media type을\n그대로 보존한다. 보존이 정당한 근거는 둘뿐이다 — ⑴ 밖이 의존한다(wire shape) ⑵ 되돌릴 수 없다.\n«먼저 작성돼 있음»(brownfield)은 근거가 아니며 코드의 «자리»는 둘 어디에도 안 걸린다(자리는\n백스톱 위반 = 기능 요청의 리팩터링 대상 · 리팩토링 모드는 BC 의미 점검 항목도 대상). 이 짧은 carveout은 wire 계약을 지키기 위한 것이며, 새\nhelper·handler 레시피나 code-profile과의 혼합을 제시하지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b37> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 35 ;
+    djr:statesNorm djr:R-3749 ;
+    djr:text "**경로 앞 응답.** 경로 코드보다 먼저 답하는 쪽 — Ninja 인증 401 · CSRF 403 · 권한 403 · throttle 429 ·\n몸통 400 · 입력 422, Django 몸통 · 쿼리 칸 수 상한 400, 응답을 직접 만드는 미들웨어(서드파티 포함), 앞단(nginx 등) —\n이 보내는 의도된 오류도 그 경로의 생성 문서에 적는다(`architecture-api` §5.2). 경로마다 손으로 적지 않고\n정해진 꼴 하나가 경로의 Ninja 경로 객체와 생성 문서 칸을 읽어 그 답이 실제로 나는 경로에만 붙인다.\n프로젝트에 한 번 두는 파일은 셋이다.\n\n- `framework/ninja/pre_route_responses.py` — 플러그인 정본. 아래 정본 코드 블록을 글자 그대로 둔다(프로젝트가\n  고치지 않는다 — 검사기가 정의를 정본과 맞춘다). 붙이는 함수 `add_pre_route_responses(api, schema)` 와 Ninja 기본 행\n  `NINJA_RESPONSES` · 그 몸통 Schema 가 여기 있다.\n- `framework/ninja/pre_route_response_table.py` — 프로젝트 표(설계 G1 승인). 프로젝트 행 `PRE_ROUTE_RESPONSES` 와\n  그 몸통 Schema, `BAD_REQUEST_RESPONSE`(Django 상한 400 의 꼴 — 기본 `{\"media_type\": \"text/html\"}` · 루트 URLconf 가\n  `handler400` 을 두면 그 답의 꼴), `NOT_API_MIDDLEWARE`(API 경로에 답하지 않는 프로젝트 미들웨어의 점 경로 글자\n  튜플)를 둔다. 기본 행은 여기 두지 않는다(빼서 401 · 422 를 끌 수 없다).\n- `<project>/api.py` — 루트 API 객체를 아래 꼴의 클래스 하나로 짓는다(루트 API 가 둘 이상이면 모두 이 클래스로).\n  클래스 이름과 기저(`NinjaAPI` · `NinjaExtraAPI`)는 프로젝트가 고르고, `get_openapi_schema` 의 서명 · 몸통은 글자\n  그대로다. 이 꼴 말고의 문서 재정의 · monkeypatch · 후처리는 금지다(위 «응답 선언과 OpenAPI»). 받는 판은 Ninja\n  1.6 · Python 3.12(정본이 `type` 별칭을 쓴다) · pydantic 2.5(`JsonValue`) 이상이다 — 낮으면 architect 가 G1 에서 판\n  올림을 먼저 적는다. 프레임워크 오류 핸들러(`api.py` 의 exception handler)가 Ninja 기본 401 · 422 등의 몸통을 바꾸는\n  scope 는 아래 기본 행 몸통과 맞지 않아 행 시험이 붉으므로 G1 에서 멈춘다(`STOP_FOR_USER_APPROVAL`).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b38> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
+    djr:kind djr:kind-code ;
+    djr:order 36 ;
+    djr:text "```python\n# config/api.py — 루트 API 객체를 이 꼴의 클래스로 짓는다(클래스 이름 · 기저는 프로젝트가 고른다).\nfrom ninja.openapi.schema import OpenAPISchema\nfrom ninja_extra import NinjaExtraAPI  # 또는 ninja.NinjaAPI\n\nfrom framework.ninja.pre_route_responses import add_pre_route_responses\n\n\nclass DocumentedAPI(NinjaExtraAPI):\n    def get_openapi_schema(\n        self, *, path_prefix: str | None = None, path_params: dict[str, object] | None = None\n    ) -> OpenAPISchema:\n        return add_pre_route_responses(self, super().get_openapi_schema(path_prefix=path_prefix, path_params=path_params))\n\n\napi: DocumentedAPI = DocumentedAPI(...)\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b39> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 37 ;
+    djr:text "**Ninja 기본 행**(정본 `NINJA_RESPONSES` 와 Django 상한 행 — 프로젝트가 빼거나 고치지 않는다 · 몸통은 Ninja 1.6 의\n관찰값이다):\n\n- 401 — 인증이 걸린 경로(클래스 · 함수 · API · Router 단위 인증 모두) · `{\"detail\": str}`\n- 403 — 쿠키 인증의 CSRF 확인이 걸리고 안전하지 않은 메서드(`csrf_exempt` 경로는 뺀다) · `{\"detail\": str}`\n- 403 — ninja_extra 권한(`AllowAny` 를 상속하고 `has_permission` 을 바꾸지 않은 권한만 «누구나») · `{\"detail\": str}`\n- 429 — throttle(API · Router · operation 합) · `{\"detail\": str}` · 선택 머리 `Retry-After`\n- 400 — JSON 몸통의 깨진 JSON · `{\"detail\": str}`\n- 400 — 몸통 · 쿼리 parameter 가 있는 경로의 Django 상한(`DATA_UPLOAD_MAX_MEMORY_SIZE` ·\n  `DATA_UPLOAD_MAX_NUMBER_FIELDS`) · `BAD_REQUEST_RESPONSE` 의 꼴\n- 422 — 입력이 틀릴 수 있는 경로(몸통이 있다 · 변환기와 생성 schema 가 맞지 않는 경로 변수 · 제약 없는 글자가 아닌\n  경로 parameter · 필수이거나 제약 없는 글자가 아닌 쿼리 · 머리 · 쿠키 parameter) · `{\"detail\": [{type, loc, msg}]}`\n\n기계로 가를 수 없는 답(선택 인증의 401 · 파일만 받는 경로의 Django 상한 400 · 읽기만 허용하는 권한의 GET 403 ·\n`A | AllowAny` 권한의 403 · 필수 인증 경로의 익명 throttle 429 · 기본 비율 없는 ninja_extra `@throttle` 의 429)은\n«날 수 있다» 쪽으로 붙는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
@@ -3706,6 +3815,44 @@ djr:R-3735 a djr:Prohibition ;
     djr:order 4 ;
     djr:statesNorm djr:R-0029, djr:R-0030 ;
     djr:text "새 단일-scope code-profile의 공통 오류 모듈은 `framework/ninja/framework_error_schema.py`\n하나다(validation 응답 schema가 필요하면 `framework_validation_error_schema.py`).\n`framework/ninja/`는 공유 `<technology>` 폴더라 이 계약 밖의 다른 `<module>.py`와 공존한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b40> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 38 ;
+    djr:statesNorm djr:R-3750 ;
+    djr:text "**프로젝트 행.** 응답을 직접 만드는 미들웨어(서드파티 포함)와 앞단의 답을 행 하나에 하나씩 적는다. 칸은 `status`(400–599) ·\n`when`(`all` · `auth` · `body` · `input`) · `description` · 몸통 `body`(같은 파일의 Schema) 또는 `media_type` ·\n선택 `headers`(그 답이 싣는 머리)와 좁히는 칸 `methods`(대문자 HTTP 메서드) · `namespaces`(루트 API\n`urls_namespace=` 이름) · `exempt`(`(메서드 | None, \"<settings 이름>\")` — 그 설정 목록의 경로는 뺀다 · 목록은 base\nsettings 에 둔다) · `operations`(`\"GET /api/orders/{order_id}\"` 꼴 — 메서드 + 생성 문서 경로 · `namespaces` 하나와\n함께 · 승인 endpoint 의 406 · 415 · 인증 안 `HttpError(403)` · 확립 표면(`preserve-established`)의 경로 코드가\n직접 raise 하는 `HttpError` 처럼 경로 객체로 못 가르는 답만)다. 좁히는 칸은 빈 튜플로 두지 않는다. 행마다 G1\n근거를 단다 — 그 답을 내는 미들웨어 코드 줄 · 설정 · 앞단 설정.\n`NOT_API_MIDDLEWARE` 줄은 그 미들웨어가 API 경로를 빼는 코드 줄을 근거로 단다 — 빼는 줄이 없는 미들웨어(서버렌더\ntransient 미들웨어 등)는 API 경로에도 답하므로 이 목록에 넣지 않고 행으로 적는다. 검사기는 프로젝트 미들웨어의\n정해진 꼴 답만 표와 대조한다 — 그 답의 행이 좁힌 행(`methods` · `namespaces` · `exempt` · `operations` · `all` 이\n아닌 `when`)뿐이거나 그 답을 글자로 못 읽으면 위반이 아니라 ⓓ 후보 줄을 내고(G1 에서는 api 리뷰어가 그 행의\n근거가 그 미들웨어 줄인지 코드로 보고, G2 의 ⓓ 줄은 감수자가 닫는다), 서드파티 미들웨어 · 앞단 행은 대조하지\n않는다(api 리뷰어 몫).\n\n**표 검증.** 정본은 문서를 만들 때 표를 `TypeAdapter`(엄격 검증)로 본다 — 모르는 칸 · `status` 범위 · 소문자\n메서드 · 빈 좁히는 칸 · `operations` 꼴과 이름공간 하나 · 그 이름공간 문서에 없는 대상 · 잇지 못한 경로 객체 ·\n꼴이 다른 같은 이름 component 는 문서 생성 실패다(import 때는 보지 않는다 — `manage.py check` · 시험 수집을\n죽이지 않는다). 같은 (메서드, 문서 경로)가 둘이면 Ninja 문서처럼 뒤의 것이 이긴다. 칸 · 값 · 이름공간 ·\n`handler400` 대조 같은 정적 몫은 검사기가 G2 전에 잡는다. 표의 `dict[str, object]` 주석은 그대로 둔다 — 정본이\n문서를 만들 때 검증하는 즉시 검증 자리다(ⓓ#647 후보 줄의 답).\n\n**적는 것의 경계.** 코드 · 설정 · 앞단 설정에 그 status 가 적힌 의도된 답만 적는다. 미식별 500 · 앞단 502/504 는\n결함이라 약속이 아니고 꼴도 정해지지 않아 적지 않는다. 없는 경로 404 · 다른 메서드 405 는 그 operation 의 답이\n아니다. 같은 status 를 경로 코드의 BC 오류와 경로 앞 답이 함께 쓰면 한 응답 항목에 몸통 둘(`anyOf`)과 머리\n합집합이 실린다(경로 코드가 이미 적은 같은 이름 머리는 그대로 둔다).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b41> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 39 ;
+    djr:statesNorm djr:R-3751 ;
+    djr:text "**머리 보충.** 경로 코드가 보내는 BC 오류의 머리(`Retry-After` · 사건 값 머리)는 그 경로\n`openapi_extra={\"responses\": {<정수 status>: {\"headers\": {…}}}}` 로 덧붙인다(위 `retry_order` 예). `<정수 status>` 는\n그 경로 `response=` 에 선언된 status 이고, 오류 status 에는 `headers` 만 싣는다 — 설명 · 몸통을 바꾸지 않는다. 키는\n정수 리터럴이다 — 숫자 문자열 키(`\"503\"`)는 Ninja 가 정수 키 항목과 따로 남겨 문서에서 그 응답의 몸통 · 설명이\n사라지고(섞인 키는 `export_openapi_schema --sorted` 도 죽인다), 숫자 문자열 키 · 변수 키 · `**` 는 성공 · 오류 모두\n위반이다. `openapi_extra=` 의 값은 (응답 보충이 없어도) 글자 Dict 이거나 같은 모듈 맨 위에서 한 번 묶은 글자 Dict\n상수다 — import 한 상수 · 도움 함수 호출 값은 검사기가 보충을 가릴 수 없어 막는다. `headers` 의 값도 글자 Dict\n이거나 같은 모듈 맨 위에서 한 번 묶은 글자 Dict 상수로 둔다 — 그 밖의 꼴은 검사기가 머리를 읽지 못해 사람이 볼\nⓓ 후보 줄이 선다. 주입 응답에 싣는 머리 이름은 그 머리를 실은 뒤 반환하는 오류 status 의 머리 보충에 있어야\n한다. 머리 `description` 에 이름 · 값 꼴 · 값 없음(생략)의 뜻 · 소비법을 적는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b42> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 40 ;
+    djr:text "표를 만들거나 행을 바꾸는 실행은 그 프로젝트에 붙는 행마다 시험을 둔다(`implementation-test` §19.2.1). 정본은\n다음 글이다 — 프로젝트의 `framework/ninja/pre_route_responses.py` 에 글자 그대로 둔다.\n\n<!-- pre-route-canonical -->\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b43> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
+    djr:kind djr:kind-code ;
+    djr:order 41 ;
+    djr:text "```python\n\"\"\"경로 앞 응답을 문서에 붙인다 — dddjango 플러그인 정본(고치지 않는다).\n\n경로 코드보다 먼저 답하는 쪽(Ninja 인증 · CSRF · 권한 · throttle · 입력 해석 · Django 상한 ·\n미들웨어(서드파티 포함) · 앞단)이 보내는 오류를 경로마다 생성 문서의 응답 항목으로 더한다.\n프로젝트 몫은 `framework/ninja/pre_route_response_table.py` 의 표다.\n\"\"\"\nimport copy\nimport re\nfrom typing import Literal, NotRequired, TypedDict\n\nfrom django.conf import settings\nfrom ninja import NinjaAPI, Schema\nfrom ninja.openapi.schema import OpenAPISchema\nfrom ninja.operation import Operation\nfrom ninja.utils import normalize_path\nfrom pydantic import JsonValue, TypeAdapter\n\nfrom framework.ninja.pre_route_response_table import BAD_REQUEST_RESPONSE, PRE_ROUTE_RESPONSES\n\ntype When = Literal[\"all\", \"auth\", \"csrf\", \"permission\", \"throttle\", \"json_body\", \"body\", \"query\", \"input\"]\ntype OpenAPIObject = dict[str, JsonValue]\n\n\nclass PreRouteResponse(TypedDict):\n    status: int\n    when: When\n    description: str\n    body: NotRequired[type[Schema]]\n    media_type: NotRequired[str]\n    methods: NotRequired[tuple[str, ...]]\n    namespaces: NotRequired[tuple[str, ...]]\n    operations: NotRequired[tuple[str, ...]]\n    exempt: NotRequired[tuple[str | None, str]]\n    headers: NotRequired[dict[str, JsonValue]]\n\n\nclass BadRequestResponse(TypedDict):\n    media_type: str\n    body: NotRequired[type[Schema]]\n\n\nclass OperationFact(TypedDict):\n    auth: bool\n    csrf: bool\n    throttle: bool\n    permission: bool\n    converters: dict[str, str]\n\n\nclass NinjaDetailOut(Schema):\n    detail: str\n\n\nclass NinjaValidationItemOut(Schema):\n    type: str\n    loc: list[str | int]\n    msg: str\n\n\nclass NinjaValidationOut(Schema):\n    detail: list[NinjaValidationItemOut]\n\n\nHTTP_METHODS: frozenset[str] = frozenset({\"GET\", \"POST\", \"PUT\", \"PATCH\", \"DELETE\", \"HEAD\", \"OPTIONS\"})\nUNSAFE_METHODS: frozenset[str] = frozenset({\"POST\", \"PUT\", \"PATCH\", \"DELETE\"})\nREF_TEMPLATE: str = \"#/components/schemas/{model}\"\nCONVERTER_PARAMETER: re.Pattern[str] = re.compile(r\"{(\\w+):(\\w+)}\")\nOPERATION_KEY: re.Pattern[str] = re.compile(r\"(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS) /\\S*\")\nIGNORED_SCHEMA_KEYS: frozenset[str] = frozenset({\"title\", \"description\", \"default\", \"examples\", \"example\"})\nCONVERTER_SCHEMA: dict[str, dict[str, str]] = {\n    \"int\": {\"type\": \"integer\"},\n    \"uuid\": {\"type\": \"string\", \"format\": \"uuid\"},\n    \"uuidstr\": {\"type\": \"string\", \"format\": \"uuid\"},\n    \"str\": {\"type\": \"string\"},\n    \"slug\": {\"type\": \"string\"},\n    \"path\": {\"type\": \"string\"},\n}\nROW_KEYS: frozenset[str] = PreRouteResponse.__required_keys__ | PreRouteResponse.__optional_keys__\nNINJA_RESPONSES: tuple[PreRouteResponse, ...] = (\n    {\"status\": 401, \"when\": \"auth\", \"description\": \"인증 실패\", \"body\": NinjaDetailOut},\n    {\"status\": 403, \"when\": \"csrf\", \"description\": \"CSRF 확인 실패\", \"body\": NinjaDetailOut},\n    {\"status\": 403, \"when\": \"permission\", \"description\": \"권한 없음\", \"body\": NinjaDetailOut},\n    {\n        \"status\": 429,\n        \"when\": \"throttle\",\n        \"description\": \"요청이 너무 잦음\",\n        \"body\": NinjaDetailOut,\n        \"headers\": {\"Retry-After\": {\"schema\": {\"type\": \"integer\"}}},\n    },\n    {\"status\": 400, \"when\": \"json_body\", \"description\": \"몸통을 읽을 수 없음\", \"body\": NinjaDetailOut},\n    {\"status\": 422, \"when\": \"input\", \"description\": \"입력 검증 실패\", \"body\": NinjaValidationOut},\n)\n\n\ndef add_pre_route_responses(api: NinjaAPI, schema: OpenAPISchema) -> OpenAPISchema:\n    rows: tuple[PreRouteResponse, ...] = (*NINJA_RESPONSES, *_django_rows(), *_project_rows())\n    facts: dict[str, OperationFact] = _operation_facts(api, schema.path_prefix)\n    components: dict[str, JsonValue] = schema.setdefault(\"components\", {}).setdefault(\"schemas\", {})\n    paths: dict[str, dict[str, OpenAPIObject]] = schema.get(\"paths\", {})\n    keys: set[str] = set()\n    for path, item in paths.items():\n        for method in list(item):\n            operation: OpenAPIObject = copy.deepcopy(item[method])\n            item[method] = operation\n            key: str = f\"{method.upper()} {path}\"\n            keys.add(key)\n            fact: OperationFact | None = facts.get(key)\n            if fact is None:\n                raise ValueError(f\"pre-route operation not joined: {key}\")\n            for entry in rows:\n                if _applies(entry, operation, fact, key, path, method.upper(), api.urls_namespace):\n                    _add(operation, entry, components)\n    for entry in rows:\n        if api.urls_namespace in entry.get(\"namespaces\", ()):\n            for target in entry.get(\"operations\", ()):\n                if target not in keys:\n                    raise ValueError(f\"pre-route operation not in this document: {target}\")\n    return schema\n\n\ndef _django_rows() -> tuple[PreRouteResponse, ...]:\n    bad_request: BadRequestResponse = TypeAdapter(BadRequestResponse).validate_python(BAD_REQUEST_RESPONSE, strict=True)\n    rows: list[PreRouteResponse] = []\n    limits: tuple[tuple[When, str], ...] = ((\"body\", \"몸통이 Django 상한을 넘음\"), (\"query\", \"쿼리 칸 수가 Django 상한을 넘음\"))\n    for when, description in limits:\n        row: PreRouteResponse = {\"status\": 400, \"when\": when, \"description\": description, \"media_type\": bad_request[\"media_type\"]}\n        if \"body\" in bad_request:\n            row[\"body\"] = bad_request[\"body\"]\n        rows.append(row)\n    return tuple(rows)\n\n\ndef _project_rows() -> tuple[PreRouteResponse, ...]:\n    for raw in PRE_ROUTE_RESPONSES:\n        unknown: set[str] = set(raw) - ROW_KEYS\n        if unknown:\n            raise ValueError(f\"unknown pre-route row keys: {sorted(unknown)}\")\n    rows: tuple[PreRouteResponse, ...] = TypeAdapter(tuple[PreRouteResponse, ...]).validate_python(\n        PRE_ROUTE_RESPONSES, strict=True\n    )\n    for row in rows:\n        if not 400 <= row[\"status\"] <= 599:\n            raise ValueError(f\"pre-route status out of 400-599: {row['status']}\")\n        for values in (row.get(\"methods\"), row.get(\"namespaces\"), row.get(\"operations\")):\n            if values is not None and not values:\n                raise ValueError(f\"empty narrowing tuple in pre-route row {row['status']}\")\n        if not set(row.get(\"methods\", ())) <= HTTP_METHODS:\n            raise ValueError(f\"pre-route methods must be upper-case HTTP methods: {row['methods']}\")\n        if \"operations\" in row:\n            if len(row.get(\"namespaces\", ())) != 1:\n                raise ValueError(f\"pre-route row {row['status']} with operations needs exactly one namespace\")\n            for target in row[\"operations\"]:\n                if OPERATION_KEY.fullmatch(target) is None:\n                    raise ValueError(f\"pre-route operation must be 'METHOD /path': {target}\")\n    return rows\n\n\ndef _operation_facts(api: NinjaAPI, path_prefix: str) -> dict[str, OperationFact]:\n    facts: dict[str, OperationFact] = {}\n    for router in api._get_bound_routers():\n        for raw_path, path_view in router.path_operations.items():\n            joined: str = normalize_path(\"/\" + path_prefix + \"/\".join(i for i in (router.prefix, raw_path) if i))\n            converters: dict[str, str] = {name: kind for kind, name in CONVERTER_PARAMETER.findall(joined)}\n            doc_path: str = re.sub(r\"{[^}:]+:\", \"{\", joined)\n            for operation in path_view.operations:\n                if not operation.include_in_schema:\n                    continue\n                for method in operation.methods:\n                    facts[f\"{method.upper()} {doc_path}\"] = {\n                        \"auth\": bool(operation.auth_callbacks),\n                        \"csrf\": not operation.csrf_exempt\n                        and any(getattr(callback, \"csrf\", False) for callback in operation.auth_callbacks),\n                        \"throttle\": bool(operation.throttle_objects),\n                        \"permission\": _has_permission(operation),\n                        \"converters\": converters,\n                    }\n    return facts\n\n\ndef _has_permission(operation: Operation) -> bool:\n    get_route_function: object = getattr(operation.view_func, \"get_route_function\", None)\n    if not callable(get_route_function):\n        return False\n    route_function: object = get_route_function()\n    route: object = getattr(route_function, \"route\", None)\n    controller: object = getattr(route_function, \"api_controller\", None)\n    permissions: object = getattr(route, \"permissions\", None) or getattr(controller, \"permission_classes\", None) or ()\n    if not isinstance(permissions, (list, tuple)):\n        return False\n    return any(not _allows_any(permission) for permission in permissions)\n\n\ndef _allows_any(permission: object) -> bool:\n    kind: type = permission if isinstance(permission, type) else type(permission)\n    for base in kind.__mro__:\n        if base.__name__ == \"AllowAny\":\n            return getattr(kind, \"has_permission\", None) is getattr(base, \"has_permission\", None)\n    return False\n\n\ndef _applies(\n    entry: PreRouteResponse, operation: OpenAPIObject, fact: OperationFact, key: str, path: str, method: str, namespace: str\n) -> bool:\n    body: JsonValue = operation.get(\"requestBody\")\n    parameters: JsonValue = operation.get(\"parameters\", [])\n    content: JsonValue = body.get(\"content\") if isinstance(body, dict) else None\n    listed: list[dict[str, JsonValue]] = [p for p in parameters if isinstance(p, dict)] if isinstance(parameters, list) else []\n    checks: dict[When, bool] = {\n        \"all\": True,\n        \"auth\": fact[\"auth\"],\n        \"csrf\": fact[\"csrf\"] and method in UNSAFE_METHODS,\n        \"permission\": fact[\"permission\"],\n        \"throttle\": fact[\"throttle\"],\n        \"body\": isinstance(body, dict),\n        \"json_body\": isinstance(content, dict) and \"application/json\" in content,\n        \"query\": any(p.get(\"in\") == \"query\" for p in listed),\n        \"input\": isinstance(body, dict) or any(_can_fail(p, fact[\"converters\"]) for p in listed),\n    }\n    if not checks[entry[\"when\"]]:\n        return False\n    if method not in entry.get(\"methods\", (method,)):\n        return False\n    if namespace not in entry.get(\"namespaces\", (namespace,)):\n        return False\n    if \"operations\" in entry and key not in entry[\"operations\"]:\n        return False\n    exempt: tuple[str | None, str] | None = entry.get(\"exempt\")\n    if exempt is not None:\n        only_method, setting_name = exempt\n        exempt_paths: object = getattr(settings, setting_name)\n        if (only_method is None or only_method == method) and isinstance(exempt_paths, (list, tuple)) and path in exempt_paths:\n            return False\n    return True\n\n\ndef _can_fail(parameter: dict[str, JsonValue], converters: dict[str, str]) -> bool:\n    schema: JsonValue = parameter.get(\"schema\", {})\n    if not isinstance(schema, dict):\n        return True\n    converter: str | None = converters.get(str(parameter.get(\"name\"))) if parameter.get(\"in\") == \"path\" else None\n    if converter is not None:\n        return CONVERTER_SCHEMA.get(converter) != {k: v for k, v in schema.items() if k not in IGNORED_SCHEMA_KEYS}\n    plain: bool = _plain(schema)\n    if parameter.get(\"in\") == \"path\":\n        return not plain\n    return parameter.get(\"required\", False) is True or not plain\n\n\ndef _plain(schema: dict[str, JsonValue]) -> bool:\n    keys: set[str] = set(schema) - IGNORED_SCHEMA_KEYS\n    options: JsonValue = schema.get(\"anyOf\")\n    items: JsonValue = schema.get(\"items\")\n    if keys == {\"type\"}:\n        return schema[\"type\"] == \"string\"\n    if keys == {\"anyOf\"} and isinstance(options, list):\n        return all(o == {\"type\": \"null\"} or (isinstance(o, dict) and _plain(o)) for o in options)\n    if keys == {\"type\", \"items\"} and schema[\"type\"] == \"array\":\n        return isinstance(items, dict) and _plain(items)\n    return False\n\n\ndef _add(operation: OpenAPIObject, entry: PreRouteResponse, components: dict[str, JsonValue]) -> None:\n    responses: dict[int, OpenAPIObject] = operation.setdefault(\"responses\", {})  # type: ignore[assignment]\n    status: int = entry[\"status\"]\n    content: dict[str, JsonValue] = _content(entry, components)\n    headers: dict[str, JsonValue] = entry.get(\"headers\", {})\n    existing: OpenAPIObject | None = responses.get(status)\n    if existing is None:\n        added: OpenAPIObject = {\"description\": entry[\"description\"], \"content\": content}\n        if headers:\n            added[\"headers\"] = dict(headers)\n        responses[status] = added\n        return\n    current_content: dict[str, JsonValue] = existing.setdefault(\"content\", {})  # type: ignore[assignment]\n    for media_type, item in content.items():\n        current: JsonValue = current_content.get(media_type)\n        if not isinstance(current, dict) or not isinstance(item, dict):\n            current_content[media_type] = item\n            continue\n        if item[\"schema\"] != current[\"schema\"]:\n            old: JsonValue = current[\"schema\"]\n            options: list[JsonValue] = old[\"anyOf\"] if isinstance(old, dict) and isinstance(old.get(\"anyOf\"), list) else [old]  # type: ignore[assignment]\n            if item[\"schema\"] not in options:\n                current[\"schema\"] = {\"anyOf\": [*options, item[\"schema\"]]}\n    if headers:\n        existing_headers: dict[str, JsonValue] = existing.setdefault(\"headers\", {})  # type: ignore[assignment]\n        for name, header in headers.items():\n            existing_headers.setdefault(name, header)\n    existing[\"description\"] = f'{existing.get(\"description\", \"\")} · {entry[\"description\"]}'.lstrip(\" ·\")\n\n\ndef _content(entry: PreRouteResponse, components: dict[str, JsonValue]) -> dict[str, JsonValue]:\n    media_type: str = entry.get(\"media_type\", \"application/json\")\n    body: type[Schema] | None = entry.get(\"body\")\n    if body is None:\n        return {media_type: {\"schema\": {\"type\": \"string\"}}}\n    schema: dict[str, JsonValue] = body.model_json_schema(ref_template=REF_TEMPLATE, mode=\"serialization\")\n    definitions: JsonValue = schema.pop(\"$defs\", {})\n    for name, definition in {**(definitions if isinstance(definitions, dict) else {}), body.__name__: schema}.items():\n        if components.setdefault(name, definition) != definition:\n            raise ValueError(f\"component name collision: {name}\")\n    return {media_type: {\"schema\": {\"$ref\": REF_TEMPLATE.format(model=body.__name__)}}}\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b44> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 42 ;
+    djr:text "프로젝트 표는 이 꼴로 짓는다(행 · 값은 그 프로젝트의 G1 근거대로 · 몸통 Schema 는 같은 파일에).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b45> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
+    djr:kind djr:kind-code ;
+    djr:order 43 ;
+    djr:text "```python\n# framework/ninja/pre_route_response_table.py — 프로젝트 표의 예(행 · 값은 G1 승인 근거대로 적는다).\n\"\"\"경로 앞 응답 표 — 미들웨어(서드파티 포함) · 앞단이 보내는 답(설계 G1 승인).\"\"\"\nfrom ninja import Schema\n\n\nclass CrossSiteRequestRejectedOut(Schema):\n    error: str\n    message: str\n\n\nclass ServiceMaintenanceOut(Schema):\n    error: str\n    message: str\n\n\nPRE_ROUTE_RESPONSES: tuple[dict[str, object], ...] = (\n    {\n        \"status\": 403,\n        \"when\": \"all\",\n        \"methods\": (\"POST\", \"PUT\", \"PATCH\", \"DELETE\"),\n        \"exempt\": (\"POST\", \"CROSS_SITE_REQUEST_EXEMPT_PATHS\"),\n        \"description\": \"다른 사이트에서 온 요청 거절\",\n        \"body\": CrossSiteRequestRejectedOut,\n    },\n    {\n        \"status\": 503,\n        \"when\": \"all\",\n        \"namespaces\": (\"api\",),\n        \"exempt\": (None, \"MAINTENANCE_MODE_EXEMPT_PATHS\"),\n        \"description\": \"점검 중\",\n        \"body\": ServiceMaintenanceOut,\n        \"headers\": {\"Retry-After\": {\"schema\": {\"type\": \"integer\"}}},\n    },\n    {\"status\": 413, \"when\": \"body\", \"description\": \"앞단이 받는 크기를 넘음\", \"media_type\": \"text/html\"},\n)\n\nNOT_API_MIDDLEWARE: tuple[str, ...] = ()\n\nBAD_REQUEST_RESPONSE: dict[str, object] = {\"media_type\": \"text/html\"}\n```\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
@@ -3772,7 +3919,7 @@ djr:R-3735 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
     djr:statesNorm djr:R-0789, djr:R-0790 ;
-    djr:text "- 406/415는 framework `HttpError` body를 그대로 사용한다. BC `ErrorSchema`, code,\n  오류 helper, custom handler, raw response를 만들지 않고 BC `response={...}`에도\n  광고하지 않는다.\n"@ko .
+    djr:text "- 406/415는 framework `HttpError` body를 그대로 사용한다. BC `ErrorSchema`, code,\n  오류 helper, custom handler, raw response를 만들지 않고 BC `response={...}`에도\n  광고하지 않는다 — 문서에는 경로 앞 응답의 `operations` 행(§6.2)으로 그 operation 에만\n  적는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3> ;
@@ -3794,7 +3941,7 @@ djr:R-3735 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
     djr:statesNorm djr:R-0795 ;
-    djr:text "- Django 전역 middleware, root URL wrapper, 별도 dispatcher처럼 Ninja 라우팅 밖에서\n  status를 합성하지 않는다.\n\n"@ko .
+    djr:text "- Django 전역 middleware, root URL wrapper, 별도 dispatcher처럼 Ninja 라우팅 밖에서\n  status를 합성하지 않는다. 미들웨어가 내는 답을 문서에 적는 것(§6.2 «경로 앞 응답»)은\n  합성이 아니다 — 적었다고 합성이 허용되는 것도 아니다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3/b8> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3> ;
@@ -3899,7 +4046,7 @@ djr:R-3735 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8> ;
     djr:kind djr:kind-prose ;
     djr:order 4 ;
-    djr:text "- path, method, tag, operation id, summary\n- request body, query/path/header parameter\n- required/optional/nullable field\n- enum, format, default\n- status별 response schema\n- 직접 반환하는 BC status별 `<Bc>ErrorSchema` schema와 승인 식별자 field의 Enum 값\n- framework-owned status가 BC `ErrorSchema`로 잘못 광고되지 않는지\n- auth/security requirement\n- pagination/filtering parameter와 response metadata\n- deprecation/versioning note\n\n"@ko .
+    djr:text "- path, method, tag, operation id, summary\n- request body, query/path/header parameter\n- required/optional/nullable field\n- enum, format, default\n- status별 response schema\n- 직접 반환하는 BC status별 `<Bc>ErrorSchema` schema와 승인 식별자 field의 Enum 값\n- framework-owned status가 `response=`에 BC `ErrorSchema` 등으로 잘못 광고되지 않는지\n- 경로 앞 응답(Ninja 기본 행 · 프로젝트 행)과 머리 보충이 그 operation 에 붙었는지(§6.2)\n- auth/security requirement\n- pagination/filtering parameter와 response metadata\n- deprecation/versioning note\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8> ;
@@ -3951,7 +4098,7 @@ djr:R-3735 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
     djr:statesNorm djr:R-0815, djr:R-0816, djr:R-0817 ;
-    djr:text "Framework 기본 401/403/404/422/429 body, Pydantic/Ninja 기본 직렬화, validator 배치,\n`ValidationError.loc`, private/helper/handler 직접 호출은 그 자체로 test 자격이 아니다. 별도 승인된\n공개 Python consumer 계약은 중앙 입장 심사를 통과하면 그 공개 boundary에서 테스트할 수 있지만,\n그 근거가 없으면 오류 helper/handler 내부 unit test를 만들지 않는다. 승인된 공개 status/body/header,\nwire Enum·security 계약을 실제 mount에서 검증하는 테스트까지 금지하는 규칙은 아니다.\n\n"@ko .
+    djr:text "Framework 기본 401/403/404/422/429 body, Pydantic/Ninja 기본 직렬화, validator 배치,\n`ValidationError.loc`, private/helper/handler 직접 호출은 그 자체로 test 자격이 아니다(경로 앞 응답 표의 행은 예외 — §6.2 ·\n`implementation-test` §19.2.1 · 예외로 일어나는 미들웨어는 `RequestFactory` 로 직접 부른다). 별도 승인된\n공개 Python consumer 계약은 중앙 입장 심사를 통과하면 그 공개 boundary에서 테스트할 수 있지만,\n그 근거가 없으면 오류 helper/handler 내부 unit test를 만들지 않는다. 승인된 공개 status/body/header,\nwire Enum·security 계약을 실제 mount에서 검증하는 테스트까지 금지하는 규칙은 아니다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s029-9.2> a djr:Section ;
     djr:headingSnapshot "### 9.2 검증 보고 기준"@ko ;

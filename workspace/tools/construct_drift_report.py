@@ -69,7 +69,7 @@ EXPECTED_SHA: "dict[str, str]" = {
     "check-api-error-controller-contract.py": "502f3ec47923489b6d6fe87e5757b04ff02f8e61cc3eec30afd1f20a7d42066d",
     "check-error-centralization.py": "4360dbfa8557143519bed6c38096004f93213472d4d9a9a7ceff635128ee932f",
     "check-composition-root.py": "4a12ac3325603484de4568ff910a984346731f1b7386c9b6085ab9a72d0e391a",
-    "check-openapi-error-declaration.py": "92eb113f8e75c74ea617737804420f4df82b841996cc910ce3bc3944ded097a0",
+    "check-openapi-error-declaration.py": "6842327c8fd1888af8e7bbb321297e15f514e8759d2c9394b165fbbba1694c85",
     "check-response-schema-bypass.py": "b1a77bebb4272f9eb817feb63f31b6715d52da9d0ad312a2f02d744717428793",
     "check-context-isolation.py": "c228ddac0be02ec81f0bfc31d2a7b8572d95b3ce97e64ed410c937fa43893903",
 }

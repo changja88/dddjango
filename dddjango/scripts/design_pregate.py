@@ -1237,6 +1237,62 @@ def _migration_stub(entry: PlanEntry) -> "str | None":
 _MATERIAL_SETTINGS_IMPORT: str = "from django.conf import settings"
 _MATERIAL_STUB_RETURN: str = "    return settings.PREGATE_STUB"
 
+# 경로 앞 응답(implementation-django-ninja §6.2 «경로 앞 응답»). 정본 파일은 플러그인 자산 글 그대로 세운다(G2 의 그 파일도
+# 이 글이다). 표는 행 · 몸통이 G1 승인 표라 기계 블록에 실리지 않으므로 사본에 세우지 않는다(미시뮬레이션). 루트 API 클래스는
+# 메서드 글이 정해져 있으므로 정해진 서명이면 그 글로 렌더한다.
+_PRE_ROUTE_CANONICAL_PARTS: "tuple[str, ...]" = ("framework", "ninja", "pre_route_responses.py")
+_PRE_ROUTE_TABLE_PARTS: "tuple[str, ...]" = ("framework", "ninja", "pre_route_response_table.py")
+_PRE_ROUTE_CANONICAL_ASSET: Path = SCRIPTS_DIR / "pre_route_responses_canonical.py"
+_DOCUMENTED_API_METHOD: str = (
+    "def get_openapi_schema(\n"
+    "    self, *, path_prefix: str | None = None, path_params: dict[str, object] | None = None\n"
+    ") -> OpenAPISchema:\n"
+    "    return add_pre_route_responses(self, super().get_openapi_schema(path_prefix=path_prefix, path_params=path_params))\n"
+)
+_DOCUMENTED_API_BASES: "dict[str, str]" = {
+    "NinjaAPI": "from ninja import NinjaAPI",
+    "NinjaExtraAPI": "from ninja_extra import NinjaExtraAPI",
+}
+_DOCUMENTED_API_IMPORTS: "dict[str, str]" = {
+    "OpenAPISchema": "from ninja.openapi.schema import OpenAPISchema",
+    "add_pre_route_responses": "from framework.ninja.pre_route_responses import add_pre_route_responses",
+}
+
+
+def _documented_api(sym: "Symbol") -> bool:
+    """루트 API 클래스 꼴 — 기저가 맨 `NinjaAPI` · `NinjaExtraAPI` 이고 필드 · 데코레이터 없이 메서드 `get_openapi_schema`
+    하나가 정해진 서명이다. 서명이 다르면 보통 스텁으로 둔다(그 어긋남은 예보에 남는다)."""
+    if (sym.kind != "class" or sym.base.strip() not in _DOCUMENTED_API_BASES or sym.fields or sym.decorators
+            or len(sym.methods) != 1 or sym.methods[0].name != "get_openapi_schema"):
+        return False
+    meth: Method = sym.methods[0]
+    try:
+        planned: ast.stmt = ast.parse(
+            f"def get_openapi_schema(self, {meth.params}) -> {meth.ret or 'object'}:\n    ...\n").body[0]
+    except SyntaxError:
+        return False
+    expected: ast.stmt = ast.parse(_DOCUMENTED_API_METHOD).body[0]
+    return (isinstance(planned, ast.FunctionDef) and isinstance(expected, ast.FunctionDef)
+            and ast.dump(planned.args) == ast.dump(expected.args)
+            and ast.dump(planned.returns) == ast.dump(expected.returns))
+
+
+def _documented_api_stub(sym: "Symbol") -> "list[str]":
+    """루트 API 클래스 — 메서드는 정해진 글 그대로(implementation-django-ninja §6.2)."""
+    return ([f"class {sym.name}({sym.base.strip()}):", '    """계획 스텁."""']
+            + [f"    {line}" if line else "" for line in _DOCUMENTED_API_METHOD.splitlines()])
+
+
+def _bound_import_names(nodes: "list[ast.stmt]") -> "set[str]":
+    """전사 import 가 묶는 이름 — `from m import a as b` 는 `b` · `import a.b` 는 `a`."""
+    names: "set[str]" = set()
+    for node in nodes:
+        if isinstance(node, ast.ImportFrom):
+            names.update(alias.asname or alias.name for alias in node.names)
+        elif isinstance(node, ast.Import):
+            names.update(alias.asname or alias.name.split(".")[0] for alias in node.names)
+    return names
+
 
 def _plan_parts(path: str) -> "tuple[str, ...]":
     """계획 경로의 정규화 POSIX 마디 — 파서는 원문 표기(앞 `./` · 겹친 `/`)를 키로 두므로 판정은 이 마디로 한다."""
@@ -1325,6 +1381,16 @@ def render_stub(entry: PlanEntry) -> str:
         if stmt and stmt not in emitted and stmt not in entry.imports:
             lines.append(stmt)
             emitted.add(stmt)
+    documented: "list[Symbol]" = [sym for sym in symbols if _documented_api(sym)]
+    if documented:
+        # 정해진 메서드 글이 읽는 이름 — 전사 import 가 묶지 않은 이름만 정형 import 로 보충한다(전사 우선).
+        bound: "set[str]" = _bound_import_names(_import_nodes(entry.imports))
+        needed: "dict[str, str]" = {sym.base.strip(): _DOCUMENTED_API_BASES[sym.base.strip()] for sym in documented}
+        needed.update(_DOCUMENTED_API_IMPORTS)
+        for name, stmt in needed.items():
+            if name not in bound and stmt not in emitted:
+                lines.append(stmt)
+                emitted.add(stmt)
     for stmt in entry.imports:
         if stmt.startswith("from __future__"):
             continue  # 최상단 하드코딩 1회가 유일한 자리 — 전사 재방출은 위치 오류(compile red)가 된다
@@ -1354,6 +1420,8 @@ def render_stub(entry: PlanEntry) -> str:
             lines.append(f"def {sym.name}({sym.params}) -> {ret}:")
             lines.append('    """계획 스텁."""')
             lines.append(_MATERIAL_STUB_RETURN if material else "    raise NotImplementedError")
+        elif sym in documented:
+            lines.extend(_documented_api_stub(sym))
         else:
             lines.extend(_class_stub(sym, _derived_db_table(entry.path, sym.name)))
         lines.append("")
@@ -4569,10 +4637,25 @@ def materialize(copy: Path, plan: Plan, *, realized: "frozenset[str]" = frozense
             if target.exists():
                 raise FormError(f"add 충돌(실존): {entry.path} — 기준선 부재·오버레이 실존: "
                                 "초기 예보의 새 파일 자리와 실물이 충돌한다. 구현 후 명세 개정은 승인 기준선을 명시한 재예보 목적을 검토한다")
+            if _plan_parts(entry.path) == _PRE_ROUTE_TABLE_PARTS:
+                report["unsimulated"].append(
+                    f"add(경로 앞 응답 표 — 행 · 몸통은 G1 승인 표라 기계 블록에 실리지 않는다 · 사본에 세우지 않음 · "
+                    f"표 판정은 G2 몫): {entry.path}")
+                continue
+            canonical: bool = _plan_parts(entry.path) == _PRE_ROUTE_CANONICAL_PARTS
             if entry.path in realized:
                 report["already_built"].append(
-                    f"add(기실현 — 기준선 {base_short} 부재·오버레이 실존 → 앵커 스냅숏에서 제외·스텁 대체 예보 · "
-                    f"실체화 목록에도 계수): {entry.path}")
+                    f"add(기실현 — 기준선 {base_short} 부재·오버레이 실존 → 앵커 스냅숏에서 제외·"
+                    f"{'플러그인 정본 글' if canonical else '스텁'} 대체 예보 · 실체화 목록에도 계수): {entry.path}")
+            if canonical:
+                try:
+                    canonical_text: str = _PRE_ROUTE_CANONICAL_ASSET.read_text(encoding="utf-8")
+                except OSError as exc:
+                    raise RunError(f"경로 앞 응답 정본 자산 결손: {_PRE_ROUTE_CANONICAL_ASSET.name} — {exc}") from exc
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(canonical_text, encoding="utf-8")
+                report["materialized"].append(entry.path)   # 플러그인 정본 글 그대로 — 스텁이 아니다(생성 메서드 기록 없음)
+                continue
             stub: str = render_stub(entry)
             try:
                 compile(stub, entry.path, "exec")  # symtable까지 — 중복 인자류는 ast.parse 가 못 잡는다

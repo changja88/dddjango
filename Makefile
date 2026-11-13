@@ -170,7 +170,7 @@ verify-base: verify-base-core verify-base-cross verify-base-backstop verify-base
 verify-base-core:
 	@set -euo pipefail; \
 	if [[ -n "$${DJR_FINDINGS_JSON:-}" ]]; then echo "[preflight] DJR_FINDINGS_JSON 감지 — 외부 레코드 경로 격리 고지(차단 아님 — S#7): 메타 하네스(baseline·count·cross·fixture·backstop·findings-smoke)는 subprocess env 에서 스스로 제거한다. 잔여: gate 스모크 3종(registry·bc·anchor)은 미격리 — 지정 경로에 스모크 레코드가 append 될 수 있다"; fi; \
-	echo "[verify-base-core] 검증 세트 (corpus·corpus-lint·spec·checker·tree·coverage·fixture·baseline·count-golden·findings-smoke·drift-golden·anchor-smoke·git-touched-smoke·bounce-counter·bounce-mutation·paths·rulepack·manifest·ab-score·byte-copy)"; \
+	echo "[verify-base-core] 검증 세트 (corpus·corpus-lint·spec·checker·tree·coverage·pre-route-canonical·fixture·baseline·count-golden·findings-smoke·drift-golden·anchor-smoke·git-touched-smoke·bounce-counter·bounce-mutation·paths·rulepack·manifest·ab-score·byte-copy)"; \
 	python3 workspace/tools/corpus_mirror_sync.py --check; \
 	PYTHONUTF8=1 python3 workspace/tools/corpus_lint.py; \
 	PYTHONUTF8=1 python3 workspace/tools/spec_lint.py; \
@@ -178,6 +178,7 @@ verify-base-core:
 	PYTHONUTF8=1 python3 workspace/tools/tree_mirror_check.py; \
 	PYTHONUTF8=1 python3 workspace/tools/adapter_layout_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/reverse_coverage.py; \
+	PYTHONUTF8=1 python3 workspace/tools/pre_route_canonical_check.py; \
 	PYTHONUTF8=1 python3 workspace/tools/fixture_matrix.py; \
 	PYTHONUTF8=1 python3 workspace/tools/checker_baseline_matrix.py; \
 	PYTHONUTF8=1 python3 workspace/tools/findings_count_matrix.py; \
@@ -247,7 +248,9 @@ verify-base-probe:
 	@set -euo pipefail; \
 	test -x .venv-probe/bin/python || { echo "ERROR: .venv-probe 부재 — make probe-env 필요"; exit 1; }; \
 	echo "[verify-base-probe] B0 영구 픽스처 (pytest 탐침·지원 확인·증거 실행 — behavior_probe_fixture_run)"; \
-	PYTHONUTF8=1 python3 workspace/tools/behavior_probe_fixture_run.py
+	PYTHONUTF8=1 python3 workspace/tools/behavior_probe_fixture_run.py; \
+	echo "[verify-base-probe] 경로 앞 응답 정본 동작 (생성 문서 = 실제 응답 · 표 검증 · mypy strict — pre_route_behavior_smoke)"; \
+	PYTHONUTF8=1 python3 workspace/tools/pre_route_behavior_smoke.py
 
 # 변이 자가검사 — 상시 verify 와 분리(T2-4 적대 리뷰 AQ-10: 검출력 증명은 무겁고 상시 아님).
 # 팩·selector 를 건드린 커밋은 이 타깃도 green 이어야 한다.
@@ -321,7 +324,7 @@ ontology-env:
 	.venv/bin/python workspace/tools/ontology_env_smoke.py
 
 # B0 픽스처 가상환경(.venv-probe) 구축 — 버전 고정: workspace/tools/probe-fixture-requirements.txt
-# pytest·xdist·Django·pytest-django·greenlet 은 이 venv 전용 (플러그인 배포물 침투 금지 — 블루프린트 E7)
+# pytest·xdist·Django·pytest-django·greenlet · ninja·ninja_extra·pydantic·mypy 는 이 venv 전용 (플러그인 배포물 침투 금지 — 블루프린트 E7)
 # uv 가 있으면 uv(캐시 우선), 없으면 pip 로 깐다. 설치 실패는 그대로 실패한다.
 probe-env:
 	@set -euo pipefail; \
@@ -335,7 +338,7 @@ probe-env:
 		.venv-probe/bin/pip install --quiet --upgrade pip; \
 		.venv-probe/bin/pip install --quiet --no-deps -r workspace/tools/probe-fixture-requirements.txt; \
 	fi; \
-	.venv-probe/bin/python -c "import pytest, xdist, django, pytest_django, greenlet; print('[probe-env] ok — pytest', pytest.__version__, '· Django', django.__version__, '· greenlet', greenlet.__version__)"
+	.venv-probe/bin/python -c "from django.conf import settings; settings.configure(); import pytest, xdist, django, pytest_django, greenlet, ninja, ninja_extra, mypy.version; print('[probe-env] ok — pytest', pytest.__version__, '· Django', django.__version__, '· greenlet', greenlet.__version__, '· ninja', ninja.__version__, '· ninja_extra', ninja_extra.__version__, '· mypy', mypy.version.__version__)"
 
 # 새 버전 릴리즈 — 플러그인별 타깃이 대상 변수만 지정하고 공통 절차(_release)를 부른다.
 #   release      : dddjango      (태그 dddjango--vX.Y.Z)

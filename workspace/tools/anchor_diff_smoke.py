@@ -85,6 +85,33 @@ def _reworded(result: "tuple[int, str]") -> "tuple[int, str]":
 
 _GIT_ID: "list[str]" = ["-c", "user.email=smoke@dddjango", "-c", "user.name=smoke"]
 
+# F4-173 — 경로 앞 응답 꼴(루트 API 의 정해진 클래스 + framework/ninja/ 정본 · 표). 이 꼴을 둔 사본에서 #5 는 operation 마다
+# 서는 c 줄(«경로 앞 오류가 문서에 없다»)을 내지 않는다 — 옛 판과 견주는 positional 렌더 · c 와 무관한 사다리 시험에 쓴다.
+_PRE_ROUTE_API_SRC: str = (
+    "from ninja.openapi.schema import OpenAPISchema\n"
+    "from ninja_extra import NinjaExtraAPI\n\n"
+    "from framework.ninja.pre_route_responses import add_pre_route_responses\n\n\n"
+    "class DocumentedAPI(NinjaExtraAPI):\n"
+    "    def get_openapi_schema(\n"
+    "        self, *, path_prefix: str | None = None, path_params: dict[str, object] | None = None\n"
+    "    ) -> OpenAPISchema:\n"
+    "        return add_pre_route_responses(self, super().get_openapi_schema(path_prefix=path_prefix, path_params=path_params))\n\n\n"
+    "api: DocumentedAPI = DocumentedAPI()\n"
+)
+_PRE_ROUTE_TABLE_SRC: str = (
+    '"""경로 앞 응답 표."""\n\n'
+    "PRE_ROUTE_RESPONSES: tuple[dict[str, object], ...] = ()\n\n"
+    "NOT_API_MIDDLEWARE: tuple[str, ...] = ()\n\n"
+    'BAD_REQUEST_RESPONSE: dict[str, object] = {"media_type": "text/html"}\n'
+)
+
+
+def _install_pre_route(write: "Callable[[str, str], None]") -> None:
+    write("config/api.py", _PRE_ROUTE_API_SRC)
+    write("framework/ninja/pre_route_responses.py", (S / "pre_route_responses_canonical.py").read_text(encoding="utf-8"))
+    write("framework/ninja/pre_route_response_table.py", _PRE_ROUTE_TABLE_SRC)
+
+
 # 위반 재료 — registry_gate_smoke 와 같은 잎(#95: driving 잎의 domain 애그리거트 import).
 _VIOLATION_REL: str = "application/orders/driving_layer/api/order/schema/schema_smoke.py"
 _VIOLATION_SRC: str = "from application.orders.domain_layer.order.order import Order\n\n_N: str = Order.__name__\n"
@@ -931,9 +958,22 @@ class BaselineSliceRegression(unittest.TestCase):
                   'openapi_extra={"responses": {404: {"description": "none"}}})\n'
                   "def get_lesson(request, lesson_id: int):\n"
                   '    return {"id": lesson_id}\n')
-    extra_code: str = "[#63] " + ctrl + ":N: openapi-extra: " + ctrl + ":N:get_lesson 오류 responses [404]를 openapi_extra로 수동 선언"
-    extra_tree: str = ("[#63] " + ctrl + ":N: `openapi_extra` 의 responses 보충 — 오류 응답은 `response=` 에 그 status 의 실제 오류 타입 "
-                       "그대로 직접 선언한다(허용은 `response=` 에 선언된 성공 status 의 리터럴 메타데이터 보충뿐)")
+    extra_code: str = ("[#63] " + ctrl + ":N: openapi-extra: " + ctrl + ":N:get_lesson openapi_extra responses 보충 — "
+                       "status 404 — `response=` 에 선언되지 않았다(implementation-django-ninja §6.2 «머리 보충»)")
+    _supplement_tail: str = (" (보충은 `response=` 에 선언된 status 의 정수 키뿐 — 오류 status 는 `headers` 만 · "
+                             "오류 응답 몸통은 `response=` 에 그 status 의 실제 오류 타입 그대로 · implementation-django-ninja §6.2 «머리 보충»)")
+    extra_tree: str = ("[#63] " + ctrl + ":N: `openapi_extra` 의 responses 보충 — status 404 — `response=` 에 선언되지 않았다"
+                       + _supplement_tail)
+    moved_tree: str = "[#63] " + ctrl + ":N: `openapi_extra` 의 responses 보충 — responses 값이 글자 Dict 가 아니다" + _supplement_tail
+
+    @staticmethod
+    def c63(name: str, ctrl: str = ctrl, receiver: str = "router") -> str:
+        """F4-173 c — 경로 앞 응답 꼴이 없는 저장소의 operation 줄(앵커에 있던 operation 이면 기존분 · 레인이 더한 operation 이면 신규분).
+        모듈 함수 operation 의 식별 글은 `<Router 이름>.<함수>` 다."""
+        return ("[#63] " + ctrl + f":N: operation `{receiver}.{name}` 의 경로 앞 오류(인증 · CSRF · 권한 · throttle · 입력 · 미들웨어 · 앞단 답)가 "
+                "생성 문서에 없다 — 루트 API 를 정해진 클래스로 짓고 framework/ninja/ 에 정본 · 표 파일을 둔다"
+                "(implementation-django-ninja §6.2 «경로 앞 응답»)")
+
     sel05: list[str] = _T_ARGS[:-4]  # #5 는 inventory selector(--project-code-error-module)를 받지 않는다
     pre05: list[str] = ["--error-profile", "preserve-established", "--scope", "public-v1", "--api-module", "config/api.py",
                         "--controller-module", ctrl, "--scope-bc", "lesson"]
@@ -1003,13 +1043,15 @@ class BaselineSliceRegression(unittest.TestCase):
         repo: Path
         anchor: str
         repo, anchor = self.lane("b1", {self.ctrl: self.missing, **self.tree05}, self.note)
-        self.assert_diff(_run(OPENAPI, repo, [*self.sel05, "--anchor", anchor]), 0, set(), {self.t63, self.c404})
+        self.assert_diff(_run(OPENAPI, repo, [*self.sel05, "--anchor", anchor]), 0, set(),
+                         {self.t63, self.c404, self.c63("get_lesson")})
 
     def test_B3_reg05_single_old_event_code_text_is_existing(self) -> None:
         repo: Path
         anchor: str
         repo, anchor = self.lane("b3", {self.ctrl: self.extra}, self.note)
-        self.assert_diff(_run(OPENAPI, repo, [*self.sel05, "--anchor", anchor]), 0, set(), {self.extra_code})
+        self.assert_diff(_run(OPENAPI, repo, [*self.sel05, "--anchor", anchor]), 0, set(),
+                         {self.extra_code, self.c63("get_lesson")})
 
     def test_B4b_reg05_preserve_touched_file_keeps_repo_scan_line_existing(self) -> None:
         # preserve 렌더: 옛 연산이 있는 파일을 레인이 커밋 전에 주석 한 줄만 건드렸다 — 저장소 전수 줄도 앵커에 있던 줄이다.
@@ -1018,8 +1060,8 @@ class BaselineSliceRegression(unittest.TestCase):
         repo, anchor = self.lane("b4b", {self.ctrl: self.extra}, {self.ctrl: self.extra + "\n\n# 레인이 주석 한 줄만 더했다\n"},
                                  commit=False)
         self.assert_diff(_run(OPENAPI, repo, [*self.pre05, "--anchor", anchor]), 0, set(), {
-            self.extra_tree,
-            "[#63] " + self.ctrl + ": operation 'get_lesson' (오류 [404] 가 openapi_extra 에만·response= 누락)"})
+            self.extra_tree, self.c63("get_lesson"),
+            "[#63] " + self.ctrl + ": operation 'get_lesson' (openapi_extra responses 보충 — status 404 — `response=` 에 선언되지 않았다)"})
 
     def test_guard_reg02_only_lane_lines_stay_new(self) -> None:
         # 막는 쪽 가드: 옛 줄이 기존분으로 가도 레인이 만든 다른 글자 줄은 신규로 남는다.
@@ -1041,9 +1083,11 @@ class BaselineSliceRegression(unittest.TestCase):
                       "def get_other(request):\n    return {}\n")
         repo, anchor = self.lane("guard05", {self.ctrl: self.missing, **self.tree05}, {self.ctrl: self.missing + added})
         out: str = self.assert_diff(_run(OPENAPI, repo, [*self.sel05, "--anchor", anchor]), 2, {
-            "[#63] " + self.ctrl + ":N: openapi-extra: " + self.ctrl + ":N:get_other 오류 responses [410]를 openapi_extra로 수동 선언",
-        }, {self.t63, self.c404})
-        self.assertIn("신규분(앵커 이후) 1건 · 앵커 기존분(잔존) 2건", out)
+            "[#63] " + self.ctrl + ":N: openapi-extra: " + self.ctrl + ":N:get_other openapi_extra responses 보충 — "
+            "status 410 — `response=` 에 선언되지 않았다(implementation-django-ninja §6.2 «머리 보충»)",
+            self.c63("get_other"),
+        }, {self.t63, self.c404, self.c63("get_lesson")})
+        self.assertIn("신규분(앵커 이후) 2건 · 앵커 기존분(잔존) 3건", out)
 
     def test_reverse_reg05_event_edited_to_tree_only_becomes_new(self) -> None:
         # 반대 방향: 앵커에서 코드 줄이 대표하던 사건을 레인이 손대(dict 를 모듈 상수로 뺌) 현재에는 트리 줄로만 나온다.
@@ -1054,7 +1098,7 @@ class BaselineSliceRegression(unittest.TestCase):
                       .replace('{"responses": {404: {"description": "none"}}}', '{"responses": NOT_FOUND}'))
         self.assertIn('openapi_extra={"responses": NOT_FOUND}', moved)
         repo, anchor = self.lane("reverse", {self.ctrl: self.extra}, {self.ctrl: moved})
-        self.assert_diff(_run(OPENAPI, repo, [*self.sel05, "--anchor", anchor]), 2, {self.extra_tree}, set())
+        self.assert_diff(_run(OPENAPI, repo, [*self.sel05, "--anchor", anchor]), 2, {self.moved_tree}, {self.c63("get_lesson")})
 
     def test_reverse_reg02_fixing_canonical_code_makes_other_old_tree_line_new(self) -> None:
         # 반대 방향의 넓은 꼴: #2 는 코드 줄 하나가 같은 (규칙, 파일)의 트리 줄을 모두 지운다. 앵커의 옛 #636 둘 가운데
@@ -1073,7 +1117,8 @@ class BaselineSliceRegression(unittest.TestCase):
         for name, script, selectors, files, entry, existing in (
             ("debt02", CENT, _T_ARGS, {_LESSON_SCHEMA_REL: _LESSON_BASE_DEFAULT_SRC, **self.tree02},
              "#572 BC base must preserve", {self.t114, self.c572}),
-            ("debt05", OPENAPI, self.sel05, {self.ctrl: self.missing, **self.tree05}, "#63 missing-response", {self.t63, self.c404}),
+            ("debt05", OPENAPI, self.sel05, {self.ctrl: self.missing, **self.tree05}, "#63 missing-response",
+             {self.t63, self.c404, self.c63("get_lesson")}),
         ):
             with self.subTest(checker=script.name):
                 repo, anchor = self.lane(name, files, self.note)
@@ -1081,7 +1126,7 @@ class BaselineSliceRegression(unittest.TestCase):
                 debt.write_text(entry + "\n", encoding="utf-8")
                 out: str = self.assert_diff(
                     _run(script, repo, [*selectors, "--anchor", anchor, "--legacy-debt-file", str(debt)]), 0, set(), existing)
-                self.assertIn("신규분(앵커 이후) 0건 · 앵커 기존분(잔존) 2건 · 이관 빚 0건", out)
+                self.assertIn(f"신규분(앵커 이후) 0건 · 앵커 기존분(잔존) {len(existing)}건 · 이관 빚 0건", out)
                 self.assertEqual(_section(out, "이관 빚"), set(), out)
 
     def test_ladder_rung2_reg05_skeleton_error_bc_keeps_old_code_line_existing(self) -> None:
@@ -1097,7 +1142,7 @@ class BaselineSliceRegression(unittest.TestCase):
         out: str = self.assert_diff(
             _run(OPENAPI, repo, [*self.sel05, "--controller-module", report + "/controller.py", "--scope-bc", "report",
                                  "--error-bc", "report", "--anchor", anchor]),
-            0, set(), {self.t63, self.c404},
+            0, set(), {self.t63, self.c404, self.c63("get_lesson")},
             "기준선=selector 렌더 재실행(빈 골격 --error-bc 걷음: report · 그 영역 아래 줄 제외) + positional 기준선):")
         self.assertNotIn("기준선 오류:", out)
 
@@ -1558,6 +1603,10 @@ class ApprovedInflowPartitionRegression(unittest.TestCase):
         anchor, merge = r.ledger()
         argv: list[str] = r.selectors(("accounts", "fortune_saju", "service_policy"))
         for script, count in ((CONTRACT, 4), (OPENAPI, 1)):
+            if script is OPENAPI:
+                # F4-173 — 레인이 만든 operation 의 c 줄은 신규(막음)가 맞다 · 이 사다리 시험은 c 와 무관하므로 레인 끝에 꼴을 둔다.
+                _install_pre_route(r.write)
+                r.commit("install pre-route responses")
             for flag in (False, True):
                 with self.subTest(script=script.name, flag=flag):
                     extra: list[str] = ["--approved-merge-file", str(r.approved(merge))] if flag else []
@@ -1763,10 +1812,18 @@ class ApprovedInflowPartitionRegression(unittest.TestCase):
         r: ApprovedInflowRepo = self.repo("contract")
         r.project("accounts"); r.controller("accounts"); r.schema("accounts", "acc")
         anchor: str = r.commit("A"); r.write("lane.txt", "dirty")
+        plain_api: str = (r.root / "config/api.py").read_text(encoding="utf-8")
         for script in (CENT, OPENAPI, CTX, CONTRACT, COMP):
+            if script is OPENAPI:
+                # F4-173 — #5 의 c 줄은 옛 판에 없는 새 판정이다 · 경로 앞 응답 꼴을 둔 작업 트리에서 옛 판과 글자 같다.
+                _install_pre_route(r.write)
             for argv in (["--help"], ["--ap", "config/api.py"], ["--anchor", anchor]):
                 with self.subTest(script=script.name, argv=argv):
                     self.assertEqual(_run(script, r.root, argv), _run(old / "dddjango/scripts" / script.name, r.root, argv))
+            if script is OPENAPI:
+                r.write("config/api.py", plain_api)
+                r.rm("framework/ninja/pre_route_responses.py")
+                r.rm("framework/ninja/pre_route_response_table.py")
 
     def test_Q3_helper_in_dropped_bc_is_not_baseline(self) -> None:
         r: ApprovedInflowRepo = self.repo("helper")
@@ -2464,6 +2521,26 @@ class RenamedBcBaselineRegression(unittest.TestCase):
         extra: list[str] = ["--anchor", anchor] + (["--approved-merge-file", str(r.approved(*merges))] if merges else [])
         return _run(script, r.root, argv + extra), _reworded(_run(self.released() / script.name, r.root, argv + extra))
 
+    def assert_kept_with_pre_route_lines(self, new: tuple[int, str], old: tuple[int, str]) -> None:
+        """F4-173 — #5 는 옛 판에 없는 c 줄(경로 앞 응답 꼴이 없는 저장소의 operation 마다 «경로 앞 오류가 문서에 없다»)을
+        더한다. 옛 판의 줄은 모두 같은 칸에 같은 글자로 남고 더한 줄은 c 줄(과 그 줄의 ↳ 줄)뿐이며, 레인이 만든 operation 의
+        c 줄만 신규라 그때만 exit 2 다(그 밖 exit 는 옛 판과 같다). 끝의 provenance 줄은 마지막 칸에 붙어 읽히므로 칸 대조에서
+        빼고 따로 대조한다 — 더한 c 줄을 유입으로 증명하느라 스냅숏 기준선 실행 수만 늘 수 있다."""
+        def provenance(out: str) -> list[str]:
+            return [re.sub(r"스냅숏 기준선 실행 \d+", "스냅숏 기준선 실행 N", line.strip())
+                    for line in out.splitlines() if line.strip().startswith("provenance:")]
+
+        self.assertEqual(provenance(new[1]), provenance(old[1]), new[1])
+        for title in ("신규분", "앵커 기존분", "이관 빚", "승인 유입"):
+            old_lines: set[str] = {line for line in _section(old[1], title)
+                                   if not line.startswith(("[M ", "provenance:"))}
+            new_lines: set[str] = {line for line in _section(new[1], title)
+                                   if not line.startswith(("[M ", "provenance:"))}
+            self.assertLessEqual(old_lines, new_lines, new[1])
+            self.assertTrue(all("의 경로 앞 오류(" in line or line.startswith("↳") for line in new_lines - old_lines), new[1])
+        added_new: set[str] = _section(new[1], "신규분") - _section(old[1], "신규분")
+        self.assertEqual(new[0], 2 if added_new else old[0], new[1])
+
     def assert_existing(self, new: tuple[int, str], lines: set[str], *, inflow: int, pairs: str) -> str:
         code: int
         out: str
@@ -2575,7 +2652,10 @@ class RenamedBcBaselineRegression(unittest.TestCase):
                              (CONTRACT, self.argv(*bcs, inventory=False)), (COMP, comp)):
             with self.subTest(script=script.name):
                 new, old = self.run_both(r, anchor, (merge,), argv, script)
-                self.assertEqual(new, old)
+                if script is OPENAPI:
+                    self.assert_kept_with_pre_route_lines(new, old)  # F4-173 c 줄은 옛 판에 없는 새 판정
+                else:
+                    self.assertEqual(new, old)
                 self.assertNotIn("영역 이름 대응", new[1])
                 seen += "앵커 차분(" in old[1]
         self.assertGreaterEqual(seen, 3)
@@ -2722,7 +2802,11 @@ class RenamedBcBaselineRegression(unittest.TestCase):
                     new, old = self.run_both(r, anchor, (merge,), self.argv(*bcs, inventory=script is CENT), script)
                     self.assertEqual(old[0], 0, old[1])
                     self.assertIn("↳ 유입: " + merge[:12], old[1])
-                    self.assertEqual(new, old)
+                    if script is OPENAPI:
+                        self.assert_kept_with_pre_route_lines(new, old)  # F4-173 c 줄은 옛 판에 없는 새 판정
+                        self.assertNotIn("측정 무효(M^1)", new[1])
+                    else:
+                        self.assertEqual(new, old)
 
     def test_A_lane_cannot_steer_or_forge_a_pair(self) -> None:
         """레인이 옛 폴더를 병합 결과에 남기거나 새 이름을 미리 만들어도 짝이 다른 옛 영역으로 가지 않는다(검토 차단 2 의 두 재현)."""

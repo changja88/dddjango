@@ -357,12 +357,18 @@ djr:R-3134 a djr:Obligation ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3135 a djr:Prohibition ;
-    skos:prefLabel "목록 밖 축에서 기존 실물의 관찰은 결정의 입력이 아니다"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3135@2026-08-22> .
+    skos:prefLabel "목록 밖 축에서 기존 실물의 관찰은 결정의 입력이 아니다 · OpenAPI 문서 후가공의 꼴은 경로 앞 응답 하나(기존 후가공은 근거 아님 · 표 행은 지금 내는 답)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3135@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-3135@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3135 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3135@2026-11-13> a djr:Expression ;
+    prov:specializationOf djr:R-3135 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3135@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3136 a djr:Obligation ;
     skos:prefLabel "배선 «값»은 Ninja 스택 조건부지만 ‹관찰 비입력› 원칙 자체는 무조건"@ko ;
@@ -1102,7 +1108,7 @@ djr:R-3717 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
     djr:statesNorm djr:R-3134, djr:R-3135, djr:R-3136, djr:R-3137 ;
-    djr:text "**관찰이 결정 입력인 축은 닫힌 목록이다**(라운드 1 「트리 답습」·라운드 1′ 「배선 답습」의 봉인 — 2026-08-12): ① 오류 wire 계약(12-slot `preserve-established`) ② API 스택 «정체»(근거=소비자 의존) ③ 주석 언어(§5) ④ 도구·러너(§6.1) ⑤ 지원 중 행동 계약. **여기 없는 축 — 파일트리·배선/등록·import 방향·테스트 규율·값 집합 선언·인증 경로·admin 구조·OpenAPI 문서 후가공 … — 에서 기존 실물의 관찰은 결정의 입력이 아니다.** 배선 «값»(#105~#112)은 Ninja 스택 조건부지만, ‹관찰 비입력› 원칙 자체는 무조건이다. 그리고 이 원칙은 **신규 산출물의 형태** 문장이다 — 승인 스코프 밖 기존 실물을 옮기거나 고칠 권한을 만들지 않는다(§1.1 판정 물음: 위반 판정은 빚 기록 권한일 뿐, 이동 권한은 G0 사용자 ⓐ 결정→리팩토링 슬라이스(슬라이스 0 · 리팩토링 모드 변경 슬라이스) 한 경로). 그리고 닫힌 목록의 관찰 금지 대상은 **대상 저장소의 기존 실물**이다 — 이번 슬라이스 산출물의 자기 형상은 이 축의 주어가 아니며, «동명 폴더 승격» 캐스케이드(아래) 판정의 유일한 입력이다.\n\n"@ko .
+    djr:text "**관찰이 결정 입력인 축은 닫힌 목록이다**(라운드 1 「트리 답습」·라운드 1′ 「배선 답습」의 봉인 — 2026-08-12): ① 오류 wire 계약(12-slot `preserve-established`) ② API 스택 «정체»(근거=소비자 의존) ③ 주석 언어(§5) ④ 도구·러너(§6.1) ⑤ 지원 중 행동 계약. **여기 없는 축 — 파일트리·배선/등록·import 방향·테스트 규율·값 집합 선언·인증 경로·admin 구조·OpenAPI 문서 후가공(꼴은 `implementation-django-ninja` §6.2 «경로 앞 응답» 하나다 — 기존 후가공 코드는 그 꼴 · 표 행의 근거가 아니고, 표 행은 미들웨어 · 앞단이 지금 내는 답(⑤)을 적는다) … — 에서 기존 실물의 관찰은 결정의 입력이 아니다.** 배선 «값»(#105~#112)은 Ninja 스택 조건부지만, ‹관찰 비입력› 원칙 자체는 무조건이다. 그리고 이 원칙은 **신규 산출물의 형태** 문장이다 — 승인 스코프 밖 기존 실물을 옮기거나 고칠 권한을 만들지 않는다(§1.1 판정 물음: 위반 판정은 빚 기록 권한일 뿐, 이동 권한은 G0 사용자 ⓐ 결정→리팩토링 슬라이스(슬라이스 0 · 리팩토링 모드 변경 슬라이스) 한 경로). 그리고 닫힌 목록의 관찰 금지 대상은 **대상 저장소의 기존 실물**이다 — 이번 슬라이스 산출물의 자기 형상은 이 축의 주어가 아니며, «동명 폴더 승격» 캐스케이드(아래) 판정의 유일한 입력이다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b7> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
