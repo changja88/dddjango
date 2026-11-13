@@ -19,7 +19,7 @@
     "check-missable-entrance.py": "e346bb84a932ff8a",
     "check-naming.py": "d7a7eaf0acbdff72",
     "check-ninja-boundary-middleware.py": "e2f4aed8fef47305",
-    "check-openapi-error-declaration.py": "0a2e4edebb7fd5bd",
+    "check-openapi-error-declaration.py": "a3892062d9782497",
     "check-port-adapter-pairing.py": "66499c55b8e4d59f",
     "check-public-surface-annotation.py": "829dba391d3a0eb1",
     "check-response-schema-bypass.py": "0fd510470a0ac985",

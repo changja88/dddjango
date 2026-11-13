@@ -1421,7 +1421,7 @@ djr:R-3656 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3748 a djr:Obligation ;
-    skos:prefLabel "API 문서는 그 경로의 의도된 오류를 누가 보내든 모두 적음 — BC 오류는 response= · 경로 앞(framework · 미들웨어 · 앞단) 답은 경로 앞 응답 · 오류 머리는 머리 보충 · 의도된 답의 경계(미식별 500 · 앞단 502/504 · 없는 경로 404 · 다른 메서드 405 는 적지 않음)"@ko ;
+    skos:prefLabel "API 문서는 그 경로의 의도된 오류를 누가 보내든 모두 적음 — BC 오류는 response= · 경로 앞(framework · 미들웨어 · 앞단) 답은 경로 앞 응답 · 오류 머리는 머리 보충(캐시 지시 머리 셋은 적지 않아도 됨) · 의도된 답의 경계(미식별 500 · 앞단 502/504 · 없는 경로 404 · 다른 메서드 405 는 적지 않음)"@ko ;
     djr:currentExpression <https://numchida.com/ns/djr#R-3748@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-3748@2026-11-13> a djr:Expression ;
@@ -1792,7 +1792,7 @@ djr:R-3748 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
     djr:statesNorm djr:R-3748 ;
-    djr:text "- **API 문서는 그 경로에서 날 수 있는 의도된 오류를 누가 보내든 모두 적는다** — 경로 코드가 보내는 BC 오류는 operation 응답 선언(`response=`)으로, 경로 앞에서 framework(인증 · CSRF · 권한 · throttle · 몸통 · 입력 검증) · 미들웨어 · 앞단이 보내는 답은 경로 앞 응답으로, 오류의 머리는 머리 보충으로 적는다(구현 꼴은 `implementation-django-ninja` §6.2). 적는 것은 코드 · 설정 · 앞단 설정에 그 status 가 적힌 의도된 답이다 — 미식별 500 · 앞단 502/504 는 결함이라 약속이 아니고, 없는 경로 404 · 다른 메서드 405 는 그 operation 의 답이 아니라 적지 않는다\n"@ko .
+    djr:text "- **API 문서는 그 경로에서 날 수 있는 의도된 오류를 누가 보내든 모두 적는다** — 경로 코드가 보내는 BC 오류는 operation 응답 선언(`response=`)으로, 경로 앞에서 framework(인증 · CSRF · 권한 · throttle · 몸통 · 입력 검증) · 미들웨어 · 앞단이 보내는 답은 경로 앞 응답으로, 오류의 머리는 머리 보충으로 적는다(구현 꼴은 `implementation-django-ninja` §6.2 — 캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)는 오류 문서에 적지 않아도 된다: 모든 응답에 붙는 공통 지시라 오류 내용이 아니다). 적는 것은 코드 · 설정 · 앞단 설정에 그 status 가 적힌 의도된 답이다 — 미식별 500 · 앞단 502/504 는 결함이라 약속이 아니고, 없는 경로 404 · 다른 메서드 405 는 그 operation 의 답이 아니라 적지 않는다\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3> a djr:Section ;
     djr:headingSnapshot "### 5.3 계약 체크리스트"@ko ;

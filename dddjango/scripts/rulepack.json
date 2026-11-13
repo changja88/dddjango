@@ -823,7 +823,7 @@
       ]
     },
     "dddjango/agents/design-architect.md/s005/b13": {
-      "h": "2ead0025e8ff914d",
+      "h": "d8bca1d94b7dbec5",
       "n": 2,
       "works": [
         "R-1626",
@@ -1472,7 +1472,7 @@
       ]
     },
     "dddjango/agents/design-review-api.md/s006/b11": {
-      "h": "d2173e266874d220",
+      "h": "d3099b980f5bb05f",
       "n": 1,
       "works": [
         "R-2674",
@@ -1498,7 +1498,7 @@
       ]
     },
     "dddjango/agents/design-review-api.md/s006/b13": {
-      "h": "b1368a9045223d02",
+      "h": "e022bd85f08c134f",
       "n": 2,
       "works": [
         "R-2686",
@@ -3687,7 +3687,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s007/b22": {
-      "h": "b02dc5734e66f978",
+      "h": "0b96ad81907d2649",
       "n": 1,
       "works": [
         "R-0339"
@@ -4845,7 +4845,7 @@
       ]
     },
     "dddjango/skills/architecture-api/references/final.md/s022-5.2/b8": {
-      "h": "ea36f2258db1ab9c",
+      "h": "02d69ea9d94f9551",
       "n": 1,
       "works": [
         "R-3748"
@@ -11126,15 +11126,15 @@
       ]
     },
     "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b40": {
-      "h": "be4d491c104fb698",
+      "h": "24a8cc6b3d195119",
       "n": 27,
       "works": [
         "R-3750"
       ]
     },
     "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b41": {
-      "h": "1d26cb08bf60ab87",
-      "n": 11,
+      "h": "1b1735d44c63780a",
+      "n": 13,
       "works": [
         "R-3751"
       ]
@@ -14991,11 +14991,11 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "160470a8d87535db5056d9ce28265ee9e59f744b08fca3fe5d73a9acd1f17d75"
+      "sha256": "067a27ed2abaff9a40339a677f4d79829fb051ee22b508da98109d37a61bb133"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
-      "sha256": "ff16396f9bc4f128ced6fc7d0ff9b13646ef2b9893e1b5934a7bb39f26471685"
+      "sha256": "c8ac95e3af4a800969e79f7ae8e5922b076c90a77322e6af4fd53da5eb899e58"
     },
     {
       "path": "ontology/rules/agent-design-review-db.ttl",
@@ -15011,7 +15011,7 @@
     },
     {
       "path": "ontology/rules/architecture-api-final.ttl",
-      "sha256": "8be22e0eb9f3ef1b6c6172c4f363f3e51ca3356db92848e7a88c39e7cf5a02a8"
+      "sha256": "a5842e5de3b9ad92c66dbc25e1edbb96ee3d20895a9a6a14772ce43c245d1c29"
     },
     {
       "path": "ontology/rules/architecture-api-skill.ttl",
@@ -15035,7 +15035,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "7b70f9710f568c4028ba207da131b6a693bdcf6dfd711e2b08b977dc0be6b6b5"
+      "sha256": "26859ab03eb550f89747dfb1986fb6c657614ae50af41084c3f69a8e7a5599e3"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -15067,7 +15067,7 @@
     },
     {
       "path": "ontology/rules/implementation-django-ninja-final.ttl",
-      "sha256": "e712e3a4e410785268669db336e21d7bd9dcbd4fc10132e7f5101817fba70eca"
+      "sha256": "32e78dde73aaafd04d02970c0d545d5f1c4934eec84b9cedd4ad331707f844f0"
     },
     {
       "path": "ontology/rules/implementation-django-ninja-skill.ttl",
@@ -28868,7 +28868,7 @@
       ],
       "document": "dddjango/commands/dddjango.md",
       "expression": "https://numchida.com/ns/djr#R-0339@2026-11-13",
-      "label": "registry #5 — OpenAPI 오류 선언 대조(반환 타입 그대로)·response= 의 framework status 금지·경로 앞 응답 꼴 밖 수동 후처리 금지 + 표준 트리 슬라이스(경로 앞 응답 꼴·빠짐·정본 지문·표·미들웨어 답·머리 보충 정수 키·주입 응답 머리)",
+      "label": "registry #5 — OpenAPI 오류 선언 대조(반환 타입 그대로)·response= 의 framework status 금지·경로 앞 응답 꼴 밖 수동 후처리 금지 + 표준 트리 슬라이스(경로 앞 응답 꼴·빠짐·정본 지문·표·미들웨어 답·머리 보충 정수 키·주입 응답 머리 — 머리 대조는 캐시 지시 머리 셋 뺌)",
       "norm_kind": "Prohibition",
       "order_rank": 1322,
       "overrides": [],
@@ -51359,7 +51359,7 @@
       ],
       "document": "dddjango/agents/design-architect.md",
       "expression": "https://numchida.com/ns/djr#R-1626@2026-11-13",
-      "label": "slot 12 — code-json 의 status/body/header mapping·OpenAPI 후보 기록과 입장 표 행 참조 · 사건 값 머리 계약 · 오류 status 머리는 머리 보충으로 선언(operation description 만은 선언 아님) · 두 profile 경로 앞 응답 행·행 시험 입장 행·프로젝트 행 근거(미들웨어 코드 줄·설정·앞단 · NOT_API_MIDDLEWARE = API 경로를 빼는 코드 줄) · operations 행",
+      "label": "slot 12 — code-json 의 status/body/header mapping·OpenAPI 후보 기록과 입장 표 행 참조 · 사건 값 머리 계약 · 오류 status 머리는 머리 보충으로 선언(operation description 만은 선언 아님 · 캐시 지시 머리 셋은 적지 않아도 됨) · 두 profile 경로 앞 응답 행·행 시험 입장 행·프로젝트 행 근거(미들웨어 코드 줄·설정·앞단 · NOT_API_MIDDLEWARE = API 경로를 빼는 코드 줄) · operations 행",
       "norm_kind": "Obligation",
       "order_rank": 314,
       "overrides": [],
@@ -69893,7 +69893,7 @@
       ],
       "document": "dddjango/agents/design-review-api.md",
       "expression": "https://numchida.com/ns/djr#R-2686@2026-11-13",
-      "label": "slot 12 — 승인 status/body/header·mounted runtime·공개 generated OpenAPI 후보의 입장 표 행 연결 확인 · 경로 앞 응답 행·머리 보충 기록 · 프로젝트 행 근거 대조 · 빠진 미들웨어(서드파티 행 포함)·빼는 줄 없는 NOT_API_MIDDLEWARE·operations 행 빠짐(preserve 경로 코드의 HttpError 포함) blocker · 서드파티·앞단·검사기가 못 읽는 답(좁힌 행 — all 밖 when 포함 — 뿐인 미들웨어 답은 G1 근거 확인 · G2 ⓓ 줄은 감수자)은 리뷰 몫",
+      "label": "slot 12 — 승인 status/body/header·mounted runtime·공개 generated OpenAPI 후보의 입장 표 행 연결 확인 · 경로 앞 응답 행·머리 보충 기록(캐시 지시 머리 셋은 빼도 됨) · 프로젝트 행 근거 대조 · 빠진 미들웨어(서드파티 행 포함)·빼는 줄 없는 NOT_API_MIDDLEWARE·operations 행 빠짐(preserve 경로 코드의 HttpError 포함) blocker · 서드파티·앞단·검사기가 못 읽는 답(좁힌 행 — all 밖 when 포함 — 뿐인 미들웨어 답은 G1 근거 확인 · G2 ⓓ 줄은 감수자)은 리뷰 몫",
       "norm_kind": "Obligation",
       "order_rank": 561,
       "overrides": [],
@@ -87040,7 +87040,7 @@
       "checkers": [],
       "document": "dddjango/agents/design-review-api.md",
       "expression": "https://numchida.com/ns/djr#R-3658@2026-11-13",
-      "label": "slot 10 — 사건 값 칸의 값 뜻·출처 대조(예외 생성부·던지는 자리)와 메시지·머리 대응·머리 계약 확인 · 오류 status 머리는 머리 보충으로(operation description 만이면 blocker)",
+      "label": "slot 10 — 사건 값 칸의 값 뜻·출처 대조(예외 생성부·던지는 자리)와 메시지·머리 대응·머리 계약 확인 · 오류 status 머리는 머리 보충으로(operation description 만이면 blocker · 캐시 지시 머리 셋은 빼도 됨)",
       "norm_kind": "Obligation",
       "order_rank": 552,
       "overrides": [],
@@ -88639,7 +88639,7 @@
       ],
       "document": "dddjango/skills/architecture-api/references/final.md",
       "expression": "https://numchida.com/ns/djr#R-3748@2026-11-13",
-      "label": "API 문서는 그 경로의 의도된 오류를 누가 보내든 모두 적음 — BC 오류는 response= · 경로 앞(framework · 미들웨어 · 앞단) 답은 경로 앞 응답 · 오류 머리는 머리 보충 · 의도된 답의 경계(미식별 500 · 앞단 502/504 · 없는 경로 404 · 다른 메서드 405 는 적지 않음)",
+      "label": "API 문서는 그 경로의 의도된 오류를 누가 보내든 모두 적음 — BC 오류는 response= · 경로 앞(framework · 미들웨어 · 앞단) 답은 경로 앞 응답 · 오류 머리는 머리 보충(캐시 지시 머리 셋은 적지 않아도 됨) · 의도된 답의 경계(미식별 500 · 앞단 502/504 · 없는 경로 404 · 다른 메서드 405 는 적지 않음)",
       "norm_kind": "Obligation",
       "order_rank": 1601,
       "overrides": [],
@@ -88676,7 +88676,7 @@
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
       "expression": "https://numchida.com/ns/djr#R-3750@2026-11-13",
-      "label": "경로 앞 응답 프로젝트 행(미들웨어 — 서드파티 포함 — 와 앞단) — 칸(status 400–599 · when · description · body|media_type · headers · methods · namespaces · exempt · operations) · 빈 좁히는 칸 금지 · 행마다 G1 근거(미들웨어 코드 줄 · 설정 · 앞단) · NOT_API_MIDDLEWARE 근거 = API 경로를 빼는 코드 줄 · 표 검증(문서 생성 때 엄격 · 뒤 열쇠가 이김) · operations 는 경로 객체로 못 가르는 답(406·415·인증 안 HttpError·preserve 경로 코드의 HttpError) · 적는 것의 경계(의도된 답만) · 검사기는 프로젝트 미들웨어만 대조(좁힌 행 — all 밖 when 포함 — 뿐이거나 못 읽으면 ⓓ 후보 · G1 근거는 api 리뷰어 · G2 ⓓ 줄은 감수자 · 서드파티·앞단은 리뷰어)",
+      "label": "경로 앞 응답 프로젝트 행(미들웨어 — 서드파티 포함 — 와 앞단) — 칸(status 400–599 · when · description · body|media_type · headers(캐시 지시 머리 셋은 빼도 됨) · methods · namespaces · exempt · operations) · 빈 좁히는 칸 금지 · 행마다 G1 근거(미들웨어 코드 줄 · 설정 · 앞단) · NOT_API_MIDDLEWARE 근거 = API 경로를 빼는 코드 줄 · 표 검증(문서 생성 때 엄격 · 뒤 열쇠가 이김) · operations 는 경로 객체로 못 가르는 답(406·415·인증 안 HttpError·preserve 경로 코드의 HttpError) · 적는 것의 경계(의도된 답만) · 검사기는 프로젝트 미들웨어만 대조(좁힌 행 — all 밖 when 포함 — 뿐이거나 못 읽으면 ⓓ 후보 · G1 근거는 api 리뷰어 · G2 ⓓ 줄은 감수자 · 서드파티·앞단은 리뷰어)",
       "norm_kind": "Obligation",
       "order_rank": 2969,
       "overrides": [],
@@ -88695,7 +88695,7 @@
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
       "expression": "https://numchida.com/ns/djr#R-3751@2026-11-13",
-      "label": "머리 보충 — BC 오류 머리는 그 경로 openapi_extra 의 response= 선언 status 정수 키 headers 로 · 오류 status 는 headers 만 · 숫자 문자열·변수 키·** 는 성공·오류 모두 위반 · openapi_extra 값은 글자 Dict 또는 같은 모듈 맨 위 글자 Dict 상수(import 상수·도움 함수는 막힘) · headers 값도 같은 꼴(그 밖은 ⓓ) · 주입 응답 머리 이름은 그 뒤 반환 오류 status 의 머리 보충에 · 머리 description 에 머리 계약",
+      "label": "머리 보충 — BC 오류 머리는 그 경로 openapi_extra 의 response= 선언 status 정수 키 headers 로 · 오류 status 는 headers 만 · 숫자 문자열·변수 키·** 는 성공·오류 모두 위반 · openapi_extra 값은 글자 Dict 또는 같은 모듈 맨 위 글자 Dict 상수(import 상수·도움 함수는 막힘) · headers 값도 같은 꼴(그 밖은 ⓓ) · 주입 응답 머리 이름은 그 뒤 반환 오류 status 의 머리 보충에(캐시 지시 머리 Cache-Control·Pragma·Expires 는 오류 문서에 적지 않아도 되고 검사기도 대조 안 함) · 머리 description 에 머리 계약",
       "norm_kind": "Obligation",
       "order_rank": 2970,
       "overrides": [],

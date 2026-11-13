@@ -6948,7 +6948,7 @@ class MaintenanceMiddleware:
 
     try_header = header_controller(error_extra).replace(
         '    if lesson_id < 0:\n        error = LessonConflictError()\n        response["Retry-After"] = "1"\n        return Status(409, error)\n',
-        '    try:\n        response["Cache-Control"] = "no-store"\n        if lesson_id < 0:\n            raise ValueError\n    except ValueError:\n        error = LessonConflictError()\n        return Status(409, error)\n',
+        '    try:\n        response["Login-Blocked-Reason"] = "conflict"\n        if lesson_id < 0:\n            raise ValueError\n    except ValueError:\n        error = LessonConflictError()\n        return Status(409, error)\n',
     )
     # 4차(구현 둘째 확인 N1 ~ N3 · M1 ~ M6) 재료
     run_head = header_controller(error_extra).split("@router.post", 1)[0].replace(
@@ -7014,7 +7014,7 @@ class MaintenanceMiddleware:
     def r5_f(body: str, response: str = "{200: dict, 201: dict, 404: LessonNotFoundError, 409: LessonConflictError}") -> str:
         return run_head + "\n\n@router.post(\"/{lesson_id}/retry\", response=" + response + ")\ndef retry_lesson(request, response: HttpResponse, lesson_id: int):\n" + body
 
-    r5_return_call = r5_f('    try:\n        response["Cache-Control"] = "no-store"\n        return Status(200, {"id": run_use_case(lesson_id)})\n    except ValueError:\n        return Status(409, LessonConflictError())\n')
+    r5_return_call = r5_f('    try:\n        response["Login-Blocked-Reason"] = "conflict"\n        return Status(200, {"id": run_use_case(lesson_id)})\n    except ValueError:\n        return Status(409, LessonConflictError())\n')
     r5_loop = r5_f('    try:\n        for item in (1, lesson_id):\n            run_use_case(item)\n            response["X-Last-Item"] = str(item)\n        return Status(200, {"id": lesson_id})\n    except ValueError:\n        return Status(409, LessonConflictError())\n')
     r5_ifelse = r5_f('    if lesson_id > 0:\n        response["ETag"] = str(lesson_id)\n        if lesson_id > 10:\n            return Status(200, {"id": lesson_id})\n        else:\n            return Status(201, {"id": lesson_id})\n    return Status(404, LessonNotFoundError())\n')
     r5_with = r5_f('    if lesson_id > 0:\n        response["ETag"] = str(lesson_id)\n        with open("/dev/null"):\n            return Status(200, {"id": lesson_id})\n    return Status(404, LessonNotFoundError())\n')
@@ -7126,7 +7126,7 @@ class MaintenanceMiddleware:
         Case("pre-route-f-error-status-attribute-code-resolved", with_files(("application/lesson/driving_layer/controller.py", header_controller("", "error.status")), base=base), openapi, openapi_args(), 2, "그 뒤 반환하는 409 의 머리 보충에 없다"),
         Case("pre-route-f-error-status-attribute-code-clean", with_files(("application/lesson/driving_layer/controller.py", header_controller(error_extra, "error.status")), base=base), openapi, openapi_args(), 0, ""),
         Case("pre-route-f-error-status-attribute-auto-candidate", with_files(("application/lesson/driving_layer/controller.py", header_controller(error_extra, "error.status")), base=base), openapi, auto, 0, "[ⓓ#63] application/lesson/driving_layer/controller.py"),
-        Case("pre-route-f-outer-header-reaches-error", with_files(("application/lesson/driving_layer/controller.py", header_controller(error_extra).replace("    if lesson_id < 0:", '    response["Cache-Control"] = "no-store"\n    if lesson_id < 0:').replace('    return {"id": lesson_id}', '    return Status(200, {"id": lesson_id})')), base=base), openapi, auto, 2, "머리 `Cache-Control` 가 그 뒤 반환하는 409 의 머리 보충에 없다", note="3차 I4 — 1차 판 exit 0(놓침)"),
+        Case("pre-route-f-outer-header-reaches-error", with_files(("application/lesson/driving_layer/controller.py", header_controller(error_extra).replace("    if lesson_id < 0:", '    response["Login-Blocked-Reason"] = "conflict"\n    if lesson_id < 0:').replace('    return {"id": lesson_id}', '    return Status(200, {"id": lesson_id})')), base=base), openapi, auto, 2, "머리 `Login-Blocked-Reason` 가 그 뒤 반환하는 409 의 머리 보충에 없다", note="3차 I4 — 1차 판 exit 0(놓침) · 6차: 머리를 캐시 지시 밖 이름으로(흐름 규칙 시험 유지)"),
         Case("pre-route-f-header-after-error-branch-clean", with_files(("application/lesson/driving_layer/controller.py", header_controller(error_extra).replace('    return {"id": lesson_id}', '    response["Cache-Control"] = "no-store"\n    return Status(200, {"id": lesson_id})')), base=base), openapi, auto, 0, "", note="대조군 — 오류 branch 뒤에 실은 성공 쪽 머리는 f 밖"),
         Case("pre-route-f-headers-attribute-candidate", with_files(("application/lesson/driving_layer/controller.py", header_controller(error_extra).replace('response["Retry-After"]', 'response.headers["Retry-After"]')), base=base), openapi, auto, 0, "`.headers[...]`"),
         # g — code 레인: response= 의 4xx · 5xx 에 직접 반환하지 않는 Schema 는 무엇이든 위반.
@@ -7157,7 +7157,7 @@ class MaintenanceMiddleware:
         Case("pre-route-e-module-constant-string-key-code", with_files(("application/lesson/driving_layer/controller.py", extra_const('{"responses": {"409": ' + header_409 + '}}')), base=base), openapi, openapi_args(), 2, '숫자 문자열 키 "409"', note="3차 S4 — 1차 판 · 2.36.0 exit 0"),
         Case("pre-route-e-module-constant-clean", with_files(("application/lesson/driving_layer/controller.py", extra_const('{"responses": {409: ' + header_409 + '}}')), base=base), openapi, auto, 0, "", note="대조군 — 같은 모듈 글자 Dict 상수는 풀어 같은 판정"),
         Case("pre-route-e-not-literal", with_files(("application/lesson/driving_layer/controller.py", header_controller("build_extra()").replace("router = Router()\n", "router = Router()\n\n\ndef build_extra():\n    return {}\n")), base=base), openapi, auto, 2, "`openapi_extra` 가 글자 Dict 가 아니다", note="3차 S4"),
-        Case("pre-route-f-try-body-header-reaches-except", with_files(("application/lesson/driving_layer/controller.py", try_header), base=base), openapi, auto, 2, "머리 `Cache-Control` 가 그 뒤 반환하는 409 의 머리 보충에 없다", note="3차 I4 — 1차 판 exit 0"),
+        Case("pre-route-f-try-body-header-reaches-except", with_files(("application/lesson/driving_layer/controller.py", try_header), base=base), openapi, auto, 2, "머리 `Login-Blocked-Reason` 가 그 뒤 반환하는 409 의 머리 보충에 없다", note="3차 I4 — 1차 판 exit 0 · 6차: 머리를 캐시 지시 밖 이름으로"),
         # 4차 — 구현 둘째 확인(N1 ~ N3 · M1 ~ M6). note 의 «3차 판» = 4차 고침 전 판.
         Case("pre-route-f-try-success-header-not-to-except", with_files(("application/lesson/driving_layer/controller.py", try_success_header), base=base), openapi, auto, 0, "", note="4차 N1 — 3차 판 exit 2(실리지 않는 Location 을 409 에 물림)"),
         Case("pre-route-f-try-last-header-not-to-except", with_files(("application/lesson/driving_layer/controller.py", try_last_header), base=base), openapi, auto, 0, "", note="4차 N1 — 3차 판 exit 2"),
@@ -7185,7 +7185,7 @@ class MaintenanceMiddleware:
         Case("pre-route-b-bad-request-json-unread-handler-candidate", with_files(("config/urls.py", urls_handler), ("config/settings.py", PRE_ROUTE_SETTINGS), ("framework/ninja/pre_route_response_table.py", json_bad_request_table), base=routed), openapi, auto, 0, "그 처리기가 그리는 Django 상한 400 의 꼴이 표에 적은 꼴인가", note="4차 M5"),
         Case("pre-route-b-exempt-setting-only-in-chain-middle", with_files(("config/settings.py", "<REMOVE>"), *exempt_chain.items(), ("framework/ninja/pre_route_response_table.py", exempt_table), base=mw), openapi, auto, 2, "`MAINTENANCE_MODE_EXEMPT_PATHS` 가 settings 에 없다", note="4차 M6 — 3차 판 exit 0"),
         # 5차 — 셋째 확인(R1 ~ R4 · S1 ~ S5). note 의 «4차 판» = 5차 고침 전 판.
-        Case("pre-route-f-try-header-then-return-call", with_files(("application/lesson/driving_layer/controller.py", r5_return_call), base=base), openapi, auto, 2, "머리 `Cache-Control` 가 그 뒤 반환하는 409 의 머리 보충에 없다", note="5차 R1 — 4차 판 exit 0"),
+        Case("pre-route-f-try-header-then-return-call", with_files(("application/lesson/driving_layer/controller.py", r5_return_call), base=base), openapi, auto, 2, "머리 `Login-Blocked-Reason` 가 그 뒤 반환하는 409 의 머리 보충에 없다", note="5차 R1 — 4차 판 exit 0 · 6차: 머리를 캐시 지시 밖 이름으로"),
         Case("pre-route-f-try-loop-header", with_files(("application/lesson/driving_layer/controller.py", r5_loop), base=base), openapi, auto, 2, "머리 `X-Last-Item` 가 그 뒤 반환하는 409 의 머리 보충에 없다", note="5차 R1 — 4차 판 exit 0"),
         Case("pre-route-f-block-ends-in-if-else", with_files(("application/lesson/driving_layer/controller.py", r5_ifelse), base=base), openapi, auto, 0, "", note="5차 R2 — 4차 판 exit 2(오탐)"),
         Case("pre-route-f-block-ends-in-with", with_files(("application/lesson/driving_layer/controller.py", r5_with), base=base), openapi, auto, 0, "", note="5차 R2 — 4차 판 exit 2"),
@@ -7203,6 +7203,19 @@ class MaintenanceMiddleware:
         Case("pre-route-b-root-urlconf-not-literal-candidate", with_files(("config/urls.py", urls_handler), ("config/settings.py", r5_settings_env), ("config/errors.py", json_handler), ("framework/ninja/pre_route_response_table.py", json_bad_request_table), base=routed), openapi, auto, 0, "그 처리기가 그리는 Django 상한 400 의 꼴이 표에 적은 꼴인가", note="5차 S4 — 4차 판 exit 2"),
         Case("pre-route-b-exempt-base-star-imports-component", with_files(("config/settings.py", "<REMOVE>"), *r5_component.items(), ("framework/ninja/pre_route_response_table.py", exempt_table), base=mw), openapi, auto, 0, "", note="5차 S5 — 4차 판 exit 2"),
         Case("pre-route-b-exempt-base-tail-override", with_files(("config/settings.py", "<REMOVE>"), *r5_tail_override.items(), ("framework/ninja/pre_route_response_table.py", exempt_table), base=mw), openapi, auto, 0, "", note="5차 S5 — 4차 판 exit 2"),
+        # 6차 — 캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires` · 이름 대소문자 무관)는 f · d 머리 대조 밖(2026-11-13 사용자 결정).
+        *(
+            Case(f"pre-route-f-cache-directive-{label}-ignored", with_files(("application/lesson/driving_layer/controller.py", header_controller(error_extra).replace("    if lesson_id < 0:", f'    response["{header}"] = "{value}"\n    if lesson_id < 0:').replace('    return {"id": lesson_id}', '    return Status(200, {"id": lesson_id})')), base=base), openapi, auto, 0, "", note="6차 — 5차 판 exit 2")
+            for label, header, value in (
+                ("cache-control", "Cache-Control", "no-store"),
+                ("lowercase", "cache-control", "no-store"),
+                ("pragma", "Pragma", "no-cache"),
+                ("expires", "Expires", "0"),
+            )
+        ),
+        Case("pre-route-f-outer-retry-after-still-red", with_files(("application/lesson/driving_layer/controller.py", header_controller("").replace("    if lesson_id < 0:", '    response["Retry-After"] = "1"\n    if lesson_id < 0:')), base=base), openapi, auto, 2, "머리 `Retry-After` 가 그 뒤 반환하는 409 의 머리 보충에 없다", note="6차 대조군 — 클라이언트가 읽고 행동하는 머리는 그대로 막는다"),
+        Case("pre-route-d-cache-directive-ignored", with_files(("framework/django/maintenance_middleware.py", PRE_ROUTE_MIDDLEWARE.replace('            response["Service-Maintenance-Ends-At"] = "2026-11-13T03:00:00Z"\n', '            response["Service-Maintenance-Ends-At"] = "2026-11-13T03:00:00Z"\n            response["Cache-Control"] = "no-store"\n')), base=mw), openapi, auto, 0, "", note="6차 — 5차 판 exit 2"),
+        Case("pre-route-d-retry-after-still-red", with_files(("framework/django/maintenance_middleware.py", PRE_ROUTE_MIDDLEWARE.replace('            response["Service-Maintenance-Ends-At"] = "2026-11-13T03:00:00Z"\n', '            response["Service-Maintenance-Ends-At"] = "2026-11-13T03:00:00Z"\n            response["Retry-After"] = "60"\n')), base=mw), openapi, auto, 2, "가 503 에 싣는 머리 `retry-after` 가 그 표 행 `headers` 에 없다", note="6차 대조군"),
     ]
 
 

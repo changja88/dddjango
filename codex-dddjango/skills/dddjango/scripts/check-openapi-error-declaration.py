@@ -3776,6 +3776,9 @@ MIDDLEWARE_RAISED_STATUS: dict[str, int] = {
     "django.http.response.Http404": 404,
 }
 
+# 캐시 지시 머리 — 오류 문서 대조 밖(2026-11-13 사용자 결정). f · d 의 머리 대조가 이 이름(소문자)은 보지 않는다.
+CACHE_DIRECTIVE_HEADERS: frozenset[str] = frozenset({"cache-control", "pragma", "expires"})
+
 _SOURCES: "dict[tuple[Path, Path], str | None]" = {}
 _PARSED: "dict[tuple[Path, Path], ast.Module | None]" = {}
 _DRIVING: "dict[Path, dict[Path, ast.Module]]" = {}
@@ -5300,7 +5303,7 @@ def _middleware_findings(
                 )
                 continue
             documented = set().union(*(row.headers for row in matching))  # 좁힌 행 포함 — 어느 행에도 없으면 어느 경로 문서에도 없다
-            for header in sorted(answer.headers - documented):
+            for header in sorted(answer.headers - documented - CACHE_DIRECTIVE_HEADERS):
                 sites.append(
                     _PreRouteSite(
                         "",
@@ -5594,6 +5597,8 @@ def _header_findings(
         if status is not None and not 400 <= status <= 599:
             return  # 성공 쪽 머리는 f 밖
         for statement, header, definite in headers:
+            if header is not None and header.lower() in CACHE_DIRECTIVE_HEADERS:
+                continue
             if header is None:
                 message = "주입 응답에 싣는 머리 이름을 글자로 읽지 못했다"
             elif status is None:

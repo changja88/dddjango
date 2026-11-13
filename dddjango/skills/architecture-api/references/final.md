@@ -204,7 +204,7 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 - `202 Accepted`는 작업 접수 응답과 결과 확인 방법을 함께 제공한다
 - `204 No Content`는 응답 본문이 없다는 점을 계약으로 둔다
 - 오류 응답은 선택한 에러 프로필의 media type·필드·상태 코드별 schema를 문서화한다
-- **API 문서는 그 경로에서 날 수 있는 의도된 오류를 누가 보내든 모두 적는다** — 경로 코드가 보내는 BC 오류는 operation 응답 선언(`response=`)으로, 경로 앞에서 framework(인증 · CSRF · 권한 · throttle · 몸통 · 입력 검증) · 미들웨어 · 앞단이 보내는 답은 경로 앞 응답으로, 오류의 머리는 머리 보충으로 적는다(구현 꼴은 `implementation-django-ninja` §6.2). 적는 것은 코드 · 설정 · 앞단 설정에 그 status 가 적힌 의도된 답이다 — 미식별 500 · 앞단 502/504 는 결함이라 약속이 아니고, 없는 경로 404 · 다른 메서드 405 는 그 operation 의 답이 아니라 적지 않는다
+- **API 문서는 그 경로에서 날 수 있는 의도된 오류를 누가 보내든 모두 적는다** — 경로 코드가 보내는 BC 오류는 operation 응답 선언(`response=`)으로, 경로 앞에서 framework(인증 · CSRF · 권한 · throttle · 몸통 · 입력 검증) · 미들웨어 · 앞단이 보내는 답은 경로 앞 응답으로, 오류의 머리는 머리 보충으로 적는다(구현 꼴은 `implementation-django-ninja` §6.2 — 캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)는 오류 문서에 적지 않아도 된다: 모든 응답에 붙는 공통 지시라 오류 내용이 아니다). 적는 것은 코드 · 설정 · 앞단 설정에 그 status 가 적힌 의도된 답이다 — 미식별 500 · 앞단 502/504 는 결함이라 약속이 아니고, 없는 경로 404 · 다른 메서드 405 는 그 operation 의 답이 아니라 적지 않는다
 - 캐시, rate limit, retry, deprecation, idempotency replay처럼 클라이언트 동작을 바꾸는 헤더는 응답 계약에 포함한다
 - 한 상태 코드의 성공 본문이 둘 이상의 모양이면 판별 필드(discriminator)를 가진 **이름 붙은 schema 하나**(`oneOf` + `discriminator`)로 계약한다 — 익명 `anyOf` 는 클라이언트가 분기할 이름과 판별 키를 잃는다. 오류 본문의 union 은 각 오류 schema 가 고정 공개 식별자(code 프로필의 `<Bc>ErrorCode` 값 · RFC 9457 의 `type`)로 자기 판별되므로 이 요구의 대상이 아니다(§5.4 에러 프로필)
 

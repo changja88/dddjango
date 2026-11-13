@@ -2025,7 +2025,7 @@ djr:R-0338 a djr:Obligation ;
     djr:revisionKind djr:revision-clarification .
 
 djr:R-0339 a djr:Prohibition ;
-    skos:prefLabel "registry #5 — OpenAPI 오류 선언 대조(반환 타입 그대로)·response= 의 framework status 금지·경로 앞 응답 꼴 밖 수동 후처리 금지 + 표준 트리 슬라이스(경로 앞 응답 꼴·빠짐·정본 지문·표·미들웨어 답·머리 보충 정수 키·주입 응답 머리)"@ko ;
+    skos:prefLabel "registry #5 — OpenAPI 오류 선언 대조(반환 타입 그대로)·response= 의 framework status 금지·경로 앞 응답 꼴 밖 수동 후처리 금지 + 표준 트리 슬라이스(경로 앞 응답 꼴·빠짐·정본 지문·표·미들웨어 답·머리 보충 정수 키·주입 응답 머리 — 머리 대조는 캐시 지시 머리 셋 뺌)"@ko ;
     djr:currentExpression <https://numchida.com/ns/djr#R-0339@2026-11-13> .
 
 <https://numchida.com/ns/djr#R-0339@2026-08-22> a djr:Expression ;
@@ -5810,7 +5810,7 @@ djr:R-3747 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 24 ;
     djr:statesNorm djr:R-0339 ;
-    djr:text "   5. `${CLAUDE_PLUGIN_ROOT}/scripts/check-openapi-error-declaration.py` — 표준 트리 슬라이스(#63 — 경로 앞 응답 꼴(루트 API 의 정해진 클래스 · `framework/ninja/` 정본 · 표)을 받고 꼴 · 파일이 없으면 operation 마다 «경로 앞 오류가 문서에 없다» · 정본 지문 · 표 칸 · 값 · 프로젝트 미들웨어 답 ↔ 표 · 머리 보충(`response=` 에 선언된 status 의 정수 키 · 오류 status 는 `headers` 만 — 숫자 문자열 키 · 변수 키 · `**` 는 위반 · 2026-11-13) · 주입 응답 머리 ↔ 머리 보충 · 그 밖 `openapi_extra` 응답 · `get_openapi_schema` 재정의 · monkeypatch 금지, 프로필 무관 선행) + preserve touched 저장소 전수 검사와 code-profile의 실제 direct-return BC status ↔ 반환 오류 타입 집합 그대로의 `response` 선언 대조(concrete·`Union`·명시값 base — 2026-08-25 개정), `response=` 의 framework status(직접 반환하지 않는 4xx · 5xx Schema) non-advertising, 경로 앞 응답 꼴 밖의 manual OpenAPI response postprocessing 금지.\n"@ko .
+    djr:text "   5. `${CLAUDE_PLUGIN_ROOT}/scripts/check-openapi-error-declaration.py` — 표준 트리 슬라이스(#63 — 경로 앞 응답 꼴(루트 API 의 정해진 클래스 · `framework/ninja/` 정본 · 표)을 받고 꼴 · 파일이 없으면 operation 마다 «경로 앞 오류가 문서에 없다» · 정본 지문 · 표 칸 · 값 · 프로젝트 미들웨어 답 ↔ 표 · 머리 보충(`response=` 에 선언된 status 의 정수 키 · 오류 status 는 `headers` 만 — 숫자 문자열 키 · 변수 키 · `**` 는 위반 · 2026-11-13) · 주입 응답 머리 ↔ 머리 보충(미들웨어 · 주입 응답의 머리 대조는 캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)를 뺀다) · 그 밖 `openapi_extra` 응답 · `get_openapi_schema` 재정의 · monkeypatch 금지, 프로필 무관 선행) + preserve touched 저장소 전수 검사와 code-profile의 실제 direct-return BC status ↔ 반환 오류 타입 집합 그대로의 `response` 선언 대조(concrete·`Union`·명시값 base — 2026-08-25 개정), `response=` 의 framework status(직접 반환하지 않는 4xx · 5xx Schema) non-advertising, 경로 앞 응답 꼴 밖의 manual OpenAPI response postprocessing 금지.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b23> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;

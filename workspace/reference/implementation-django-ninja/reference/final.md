@@ -946,7 +946,7 @@ api: DocumentedAPI = DocumentedAPI(...)
 
 **프로젝트 행.** 응답을 직접 만드는 미들웨어(서드파티 포함)와 앞단의 답을 행 하나에 하나씩 적는다. 칸은 `status`(400–599) ·
 `when`(`all` · `auth` · `body` · `input`) · `description` · 몸통 `body`(같은 파일의 Schema) 또는 `media_type` ·
-선택 `headers`(그 답이 싣는 머리)와 좁히는 칸 `methods`(대문자 HTTP 메서드) · `namespaces`(루트 API
+선택 `headers`(그 답이 싣는 머리 — 캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)는 적지 않아도 되고 검사기도 대조하지 않는다)와 좁히는 칸 `methods`(대문자 HTTP 메서드) · `namespaces`(루트 API
 `urls_namespace=` 이름) · `exempt`(`(메서드 | None, "<settings 이름>")` — 그 설정 목록의 경로는 뺀다 · 목록은 base
 settings 에 둔다) · `operations`(`"GET /api/orders/{order_id}"` 꼴 — 메서드 + 생성 문서 경로 · `namespaces` 하나와
 함께 · 승인 endpoint 의 406 · 415 · 인증 안 `HttpError(403)` · 확립 표면(`preserve-established`)의 경로 코드가
@@ -980,7 +980,9 @@ transient 미들웨어 등)는 API 경로에도 답하므로 이 목록에 넣�
 상수다 — import 한 상수 · 도움 함수 호출 값은 검사기가 보충을 가릴 수 없어 막는다. `headers` 의 값도 글자 Dict
 이거나 같은 모듈 맨 위에서 한 번 묶은 글자 Dict 상수로 둔다 — 그 밖의 꼴은 검사기가 머리를 읽지 못해 사람이 볼
 ⓓ 후보 줄이 선다. 주입 응답에 싣는 머리 이름은 그 머리를 실은 뒤 반환하는 오류 status 의 머리 보충에 있어야
-한다. 머리 `description` 에 이름 · 값 꼴 · 값 없음(생략)의 뜻 · 소비법을 적는다.
+한다. 캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)는 오류 문서에 적지 않아도 된다 — 모든 응답에 붙는
+공통 지시라 오류 내용이 아니다(설명 글에 적는 것은 그대로) · 검사기도 대조하지 않는다. 머리 `description` 에 이름 ·
+값 꼴 · 값 없음(생략)의 뜻 · 소비법을 적는다.
 
 표를 만들거나 행을 바꾸는 실행은 그 프로젝트에 붙는 행마다 시험을 둔다(`implementation-test` §19.2.1). 정본은
 다음 글이다 — 프로젝트의 `framework/ninja/pre_route_responses.py` 에 글자 그대로 둔다.
