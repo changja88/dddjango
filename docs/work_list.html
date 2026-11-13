@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>작업 리스트</title>
+<style>
+  :root {
+    --paper:#F2F4F3; --card:#FAFBFA; --sunk:#E7EBEA;
+    --ink:#141D20; --ink-2:#4E5F64; --ink-3:#7E9095;
+    --rule:#C9D2D2; --rule-soft:#DDE4E3;
+    --accent:#1B6E6B; --accent-bg:#DCEDEC;
+    --flag:#A8442E; --flag-bg:#F7E2DC;
+    --part:#2B4C7E; --part-bg:#E3EAF4;
+    --wait:#6E7A7E; --wait-bg:#E7EBEC;
+    --sans:'Apple SD Gothic Neo', Pretendard, 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif;
+    --mono:ui-monospace, 'SF Mono', SFMono-Regular, Menlo, 'Cascadia Mono', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#0F1618; --card:#182226; --sunk:#1E2A2E;
+      --ink:#E4EBEC; --ink-2:#9FB0B4; --ink-3:#74868B;
+      --rule:#2D3C42; --rule-soft:#223036;
+      --accent:#5FC0BC; --accent-bg:#122E2D;
+      --flag:#E8957F; --flag-bg:#3A211B;
+      --part:#93B4E6; --part-bg:#1C2738;
+      --wait:#A3B0B4; --wait-bg:#253136;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#0F1618; --card:#182226; --sunk:#1E2A2E;
+    --ink:#E4EBEC; --ink-2:#9FB0B4; --ink-3:#74868B;
+    --rule:#2D3C42; --rule-soft:#223036;
+    --accent:#5FC0BC; --accent-bg:#122E2D;
+    --flag:#E8957F; --flag-bg:#3A211B;
+    --part:#93B4E6; --part-bg:#1C2738;
+    --wait:#A3B0B4; --wait-bg:#253136;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: var(--sans); font-size: 14px; line-height: 1.6;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 32px 28px 56px; }
+  .kicker {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-3); margin: 0 0 6px;
+  }
+  h1 { font-size: 22px; margin: 0 0 8px; letter-spacing: -0.01em; }
+  .lead { color: var(--ink-2); margin: 0 0 24px; }
+  .lead b { color: var(--ink); }
+  section {
+    background: var(--card); border: 1px solid var(--rule);
+    border-radius: 12px; padding: 18px 20px 8px; margin: 0 0 16px;
+  }
+  section h2 { font-size: 15px; margin: 0 0 2px; }
+  section h2 .no { font-family: var(--mono); font-size: 11px; color: var(--accent); margin-right: 8px; }
+  section .why { color: var(--ink-3); font-size: 12.5px; margin: 0 0 10px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li {
+    display: grid; grid-template-columns: 132px 1fr auto; gap: 4px 14px;
+    align-items: baseline; padding: 9px 0; border-top: 1px solid var(--rule-soft);
+  }
+  .num { font-family: var(--mono); font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+  .what { min-width: 0; }
+  code { font-family: var(--mono); font-size: 12px; background: var(--sunk); padding: 0 4px; border-radius: 4px; overflow-wrap: anywhere; }
+  .st {
+    font-size: 11.5px; padding: 1px 8px; border-radius: 999px; white-space: nowrap;
+    border: 1px solid currentColor;
+  }
+  .st.left { color: var(--flag); background: var(--flag-bg); }
+  .st.part { color: var(--part); background: var(--part-bg); }
+  .st.wait { color: var(--wait); background: var(--wait-bg); }
+  .foot { color: var(--ink-3); font-size: 12.5px; margin-top: 22px; }
+  .foot p { margin: 0 0 6px; }
+  @media (max-width: 640px) {
+    .wrap { padding: 20px 16px 40px; }
+    li { grid-template-columns: 1fr auto; }
+    .num { grid-column: 1 / -1; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kicker">05 · dddjango · dddjango-web</p>
+  <h1>작업 리스트</h1>
+  <p class="lead">현장 보고 가운데 아직 고치지 않은 일 <b>39개</b>다. 위에서부터 차례로 한다 — 새 보고 재현 → 3판 → 4판 → 5판(web). 기준 판 dddjango 2.37.0 · dddjango-web 2.9.1(2026-11-13).</p>
+
+  <section>
+    <h2><span class="no">1</span>새 보고 — 재현부터 <span class="why">18개</span></h2>
+    <p class="why">배포판으로 재현해 소음 · 오판이면 3판에 합치고, 결함이면 따로 판을 정한다.</p>
+    <ul>
+      <li><span class="num">F4-158</span><span class="what">운영자 입구가 Django admin 하나가 된 응용 영역을 짝 없음으로 막는다</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-159</span><span class="what">Django admin 화면이 다른 영역을 읽어야 하는데 반대 방향 연결이 있으면 순환으로 막힌다</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-160</span><span class="what">이 실행이 영역 오류 모듈을 비우면 기준점이 서지 못해 다른 영역의 옛 위반까지 새 위반으로 잡는다</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-161</span><span class="what">응용 영역 옮기기를 «바로 정리» 로 적게 해 놓고, 동작 보존 검사는 보존 창을 요구해 마지막 관문 앞에서 붉다</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-162</span><span class="what">승인 머지로 들어온 다른 레인 몫의 폴더 진단을 들인 레인의 새 위반으로 남긴다</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-163</span><span class="what">admin 이름 규칙 검사가 표준 자리 <code>driven_layer/django_&lt;bc&gt;/</code> 에서 돌지 않는다</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-164</span><span class="what">지우고 스테이지하지 않은 파일 때문에 scope 렌더 검사기가 사용 오류로 끝난다</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-165</span><span class="what">이웃 줄 보호로 포맷하지 않은 기존 파일을 <code>ruff format --check</code> 가 실패로 센다</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-166</span><span class="what">주어가 영역 폴더인 도메인 모델 줄을 옛 줄과 짝 짓지 못해 새 줄로 센다(낮음)</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-167</span><span class="what">ACL 이 받은 글을 검증만 하는 try 에도 상대 창구 기저 예외를 요구한다(#473 오탐)</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-168</span><span class="what">두 scope 에 창구를 가진 BC 의 내부 scope 렌더가 공개 컨트롤러 라우트를 helper 로 읽는다(#126 오탐 · F4-150 계열)</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-169</span><span class="what">framework/test 의 <code>.models</code> 든 import 를 모두 잡아 Django <code>AnonymousUser</code>(DB 모델 아님) import 를 막는다(#53 오탐)</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-170</span><span class="what">이름이 Adapter 로 끝나는 호출을 모두 잡아 pydantic <code>TypeAdapter</code> 상수를 «어댑터 직접 생성» 으로 읽는다(#134 오탐)</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-171</span><span class="what">검사기 판정이 실행 파이썬에 깔린 배포판으로 갈린다(#396 · 시스템 python3 에서만)</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-172</span><span class="what">묶음 계산이 «이어서» 고른 재사용 폴더의 지난 실행 기준점 때문에 실행 불능이 된다</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-174</span><span class="what">BC <code>test/conftest.py</code> 를 시험 설정 검사는 받는데 #490 은 막는다</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-175</span><span class="what">공유 시험 재료를 둘 자리가 <code>factories/</code> 와 <code>fake/</code> 사이에서 좁다</span><span class="st wait">재현 전</span></li>
+      <li><span class="num">F4-176</span><span class="what">묶음 계산에 BC 를 여럿 주면 묶음 빚이 0 으로 나온다</span><span class="st wait">재현 전</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="no">2</span>3판 — 소음 · 작은 오판 · 글끼리 어긋남 <span class="why">9개</span></h2>
+    <p class="why">레인을 멈추지는 않지만 되돌아감과 헛 지적을 만든다. 새 보고 가운데 같은 부류도 여기에 합친다.</p>
+    <ul>
+      <li><span class="num">F4-27 · 136</span><span class="what">검사기를 직접 돌리면 위반 기록 파일이 작업 트리에 남는다</span><span class="st part">일부</span></li>
+      <li><span class="num">F4-26</span><span class="what">불변식 확인으로 끝나는 메서드에 «확인이 없다» 후보가 뜬다</span><span class="st left">그대로</span></li>
+      <li><span class="num">F4-28</span><span class="what">실제로는 안 고쳤는데 «옛 위반 해소 1» 로 잘못 센다</span><span class="st left">그대로</span></li>
+      <li><span class="num">F4-46</span><span class="what">옛 파일을 줄이기만 해도 새 지적으로 다시 뜬다</span><span class="st left">그대로</span></li>
+      <li><span class="num">F4-32</span><span class="what"><code>get_&lt;이름&gt;_detail</code> 꼴 조회 이름을 잘못 후보로 올린다(<code>draw</code> 쪽은 고쳐짐)</span><span class="st part">일부</span></li>
+      <li><span class="num">F4-95</span><span class="what">포트 이름 <code>url</code> 을 동사가 아니라고 후보로 올린다(<code>replace</code> · <code>link</code> 는 고쳐짐)</span><span class="st part">일부</span></li>
+      <li><span class="num">F4-56</span><span class="what">web 경로로 멈추는 일은 풀렸고, 폴더 귀속 판정만 조금 남았다</span><span class="st part">일부</span></li>
+      <li><span class="num">F4-29</span><span class="what">명세 안의 «셋 / 둘» 같은 수 어긋남을 자기 점검이 못 본다</span><span class="st left">그대로</span></li>
+      <li><span class="num">F4-45</span><span class="what">시험 준비 역할의 <code>git</code> 금지와 조정자의 <code>git show</code> 지시가 어긋난다</span><span class="st left">그대로</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="no">3</span>4판 — 큰 판 <span class="why">1개</span></h2>
+    <p class="why">사용자 결정(11-09 «나»): 내부 API 는 별도 API 객체 · 주소 뿌리 <code>/internal/</code> 를 표준 자리로 둔다. 작은 수리 판들 뒤에 따로 한다.</p>
+    <ul>
+      <li><span class="num">F4-150</span><span class="what">내부 API 를 별도 객체 · <code>/internal/</code> 주소로 둘 표준 자리가 없다</span><span class="st left">그대로</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="no">4</span>5판 — dddjango-web(맨 뒤) <span class="why">6개</span></h2>
+    <p class="why">web 은 core 판들이 끝난 뒤 한 판으로 묶는다.</p>
+    <ul>
+      <li><span class="num">F4-54</span><span class="what">web 시험 폴더가 호스트 전체 시험에 이어지지 않아, 머지 뒤 web 시험이 돌지 않는다</span><span class="st left">그대로</span></li>
+      <li><span class="num">F4-53</span><span class="what">web 마지막 관문에 호스트 타입 검사가 없어 mypy 오류가 있는 채 올라온다</span><span class="st left">그대로</span></li>
+      <li><span class="num">F4-106</span><span class="what">web CSS 링크 오탐은 대부분 풀렸고, JS 로 여는 자리만 남았다</span><span class="st part">일부</span></li>
+      <li><span class="num">F4-25</span><span class="what">낡은 디자인 목록 파일을 경고 없이 원천으로 쓴다</span><span class="st left">그대로</span></li>
+      <li><span class="num">F4-139</span><span class="what">미디어 기준점 시험에 관한 규칙 세 줄이 서로 다르다</span><span class="st left">그대로</span></li>
+      <li><span class="num">F4-141</span><span class="what">범위 밖 문서의 CSS 누락을 한 글은 반송하고 다른 글은 보고만 한다</span><span class="st left">그대로</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="no">5</span>보류 — 설계 때 미리 못 보고 구현 뒤에 드러남 <span class="why">5개</span></h2>
+    <p class="why">되돌아감 줄이기(11-08 ~ 11-09)를 접은 판단과 겹쳐 보류했다. 새 사례가 쌓이면 다시 연다.</p>
+    <ul>
+      <li><span class="num">F4-35 · 133</span><span class="what">포트 자료에 도메인 타입을 쓰면 구현 뒤에 걸린다 · 문서는 값 객체를 쓰라 하고 검사기는 막는다</span><span class="st left">그대로</span></li>
+      <li><span class="num">F4-41</span><span class="what">기존 ORM 모델에 더한 칸의 규칙 위반을 설계 때 못 본다</span><span class="st left">그대로</span></li>
+      <li><span class="num">F4-36</span><span class="what">기존 가짜 파일에 더한 클래스의 규칙 위반을 설계 때 못 본다</span><span class="st part">일부</span></li>
+      <li><span class="num">F4-30</span><span class="what">슬라이스 중에는 컨트롤러 오류 계약을 보지 않아 마지막에 몰아서 걸린다</span><span class="st left">그대로</span></li>
+      <li><span class="num">F4-31</span><span class="what">catch 안 로그 한 줄 같은 위반을 설계 때 못 본다</span><span class="st left">그대로</span></li>
+    </ul>
+  </section>
+
+  <div class="foot">
+    <p>상태 — <b>그대로</b>: 아직 손대지 않음 · <b>일부</b>: 앞 판에서 일부만 고쳐짐 · <b>재현 전</b>: 새 보고라 배포판으로 아직 재현하지 않음.</p>
+    <p>뺀 것 — 배포로 끝난 17개(dddjango 2.34.0 ~ 2.37.0) · 사용자가 고치지 않기로 정한 2개(F4-33 · F4-83 · 135 — 시험 본문 타입은 현행 유지).</p>
+    <p>판마다 배포가 끝나면 끝난 항목을 이 목록에서 지운다.</p>
+  </div>
+</div>
+</body>
+</html>
