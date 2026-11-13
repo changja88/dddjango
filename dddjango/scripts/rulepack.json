@@ -8813,7 +8813,7 @@
       ]
     },
     "dddjango/skills/discipline-houserules/references/final.md/s003-0/b11": {
-      "h": "9627006a2454d96d",
+      "h": "c7eccf8681c23485",
       "n": 2,
       "works": [
         "R-3412",
@@ -15047,7 +15047,7 @@
     },
     {
       "path": "ontology/rules/discipline-houserules-final.ttl",
-      "sha256": "54b1f304a0c94a3f6b92f1c5cd5e8e9d2fd0d0a600b0dfcf48496402c4f8e5ac"
+      "sha256": "388ef18a30641e52306bb06a2b2c78ca7df0a2db6ba7bb737d577ebcac1b36ed"
     },
     {
       "path": "ontology/rules/discipline-houserules-skill.ttl",

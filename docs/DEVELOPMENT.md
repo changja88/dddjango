@@ -1,6 +1,6 @@
 # dddjango 개발 가이드 (메인테이너)
 
-이 저장소에서 플러그인을 **고치고 검증하고 릴리즈하는 방법**을 담는다. 플러그인을 **쓰는** 방법은 [README](../README.md), 파이프라인이 실제로 어떻게 도는지는 [work_flow.html](work_flow.html)을 본다. 이 저장소에서 일하는 세션이 늘 지킬 규칙은 루트 [`CLAUDE.md`](../CLAUDE.md)에 있다 — 이 문서는 그 규칙을 실제로 수행하는 절차 · 명령 · 까닭이다.
+이 저장소에서 플러그인을 **고치고 검증하고 릴리즈하는 방법**을 담는다. 플러그인을 **쓰는** 방법은 [README](../README.md), 파이프라인이 실제로 어떻게 도는지는 [master/work_flow.html](master/work_flow.html)을 본다. 이 저장소에서 일하는 세션이 늘 지킬 규칙은 루트 [`CLAUDE.md`](../CLAUDE.md)에 있다 — 이 문서는 그 규칙을 실제로 수행하는 절차 · 명령 · 까닭이다.
 
 온톨로지 도입(릴리즈 2.17.0, 2026-08-23) 이후 규범 문서의 수정 방식이 근본적으로 바뀌었다 — **스킬 md를 직접 고치는 시대는 끝났다**. 이 문서의 핵심은 그 새 방식이다.
 
@@ -64,12 +64,14 @@ workspace/                ← 메인테이너 전용 (배포되지 않음)
 ├── scratch/               운영자 임시 · 작업 파일(git 무시 · 사본 · 클론 · 재현 · 재개 기록)
 └── hooks/                 pre-commit (훅 단일 루트)
 
-docs/                     ← 공식 문서 (이 문서 · master.html — 통합 진입점(좌측 인덱스로 아래 다섯 문서 전환)
+docs/                     ← 공식 문서 — 이 개발 문서와 master/ 폴더만
+└── master/               문서 마스터와 그것을 짓는 데 드는 것 전부
+                           · master.html — 통합 진입점(좌측 인덱스로 아래 다섯 문서 전환)
                            · work_flow.html — dddjango 동작 흐름(재생성 스펙 work_flow.spec.json)
                            · work_flow_web_guide.html — dddjango-web 동작 흐름(work_flow_web.html · 스펙을 싣는다)
-                           · file_tree.html — dddjango 표준 트리(생성기 mkrev2.py)
+                           · file_tree.html — dddjango 표준 트리 · 트리 171행의 정본(생성기 mkrev2.py)
                            · file_tree_web.html — dddjango-web 표준 트리
-                           · work_list.html — 남은 현장 보고 작업 리스트(판마다 끝난 항목을 지운다))
+                           · work_list.html — 남은 현장 보고 작업 리스트(판마다 끝난 항목을 지운다)
 ```
 
 세 층의 관계를 항상 기억한다:
@@ -94,7 +96,7 @@ dddjango-web 은 2.0.0 부터 Flutter 판 dddart 와 같은 절차 · 구조(간
 6. **실행 끝 커밋은 합치지 않는다**(2.8.3) — core 처럼 실행이 만든 커밋을 그대로 둔다.
 7. **멈춘 시험 깨우기**(2.9.0 · core 2.31.0 과 같은 도구) — 오래 걸리는 시험은 감시 도구 `scripts/test_watch.py` 로 돌려, 10분 동안 출력이 없으면 coder · Coordinator 를 깨우고 정해진 순서로 확인한 뒤에만 끈다(느린 시험을 실패시키지 않음). dddart 에는 없다.
 
-판마다 무엇이 바뀌었는지는 `docs/work_flow_web_guide.html` 의 «판마다 바뀐 것» 표(한 줄씩)와 판 기록 `workspace/plan/2026-10-06-web-dddart/plan-<판>.md`(문제 · 결정 · 고침 · 행동 변화 · 한계 · 검토 반영 · 검증)를 본다. 판 내력은 이 문서나 `CLAUDE.md` 에 쌓지 않는다.
+판마다 무엇이 바뀌었는지는 `docs/master/work_flow_web_guide.html` 의 «판마다 바뀐 것» 표(한 줄씩)와 판 기록 `workspace/plan/2026-10-06-web-dddart/plan-<판>.md`(문제 · 결정 · 고침 · 행동 변화 · 한계 · 검토 반영 · 검증)를 본다. 판 내력은 이 문서나 `CLAUDE.md` 에 쌓지 않는다.
 
 ### 사람용 작업 요청 가이드의 소유권
 
@@ -196,7 +198,7 @@ md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금
 | 바뀐 경로 | 검사 | 시간 |
 |---|---|---|
 | `CLAUDE.md` · `docs/` 의 md · html(아래 둘 빼고) · `workspace/plan/` · `workspace/design/` · `workspace/scratch/` | `PYTHONUTF8=1 python3 workspace/tools/manifest_seal.py --check --draft` | 몇 초 |
-| `docs/file_tree.html` · `docs/mkrev2.py` | 위 + `workspace/tools/tree_mirror_check.py` · `workspace/tools/spec_lint.py` | 1분 안 |
+| `docs/master/file_tree.html` · `docs/master/mkrev2.py` | 위 + `workspace/tools/tree_mirror_check.py` · `workspace/tools/spec_lint.py` | 1분 안 |
 | `README.md` · `*/REQUEST_GUIDE.md`(플러그인 폴더 안에 있어도 이 줄 — 런타임이 읽지 않는 사람용 문서) | 위 + §1 «사람용 작업 요청 가이드» 의 대상 명령(cmp · `request_guide_contract.py` · `reverse_coverage.py`) | 1분 안 |
 | `dddjango-web/` · `codex-dddjango-web/` 의 md 만 | `make verify-web` 레시피의 `run_fixtures.sh` 뒤 줄들(self-test · 표지 · 문단 대조 · 미러 대조 — 따로 떼어 돈다 · 별도 타깃은 아직 없다) | 1분쯤 |
 | `dddjango-web/scripts/` · `assets/`(+ Codex 짝) | `make verify-web` 전체 | 약 1시간 |
@@ -223,7 +225,7 @@ make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 �
 
 **릴리즈 창**(core): 배포 전에 타깃 저장소들의 진행 레인(G0 승인 뒤 G2 승인 전)을 센다. 배포를 미루거나 시점을 묻지 않고(2026-10-11 사용자 결정 — 그 전에는 레인 착륙까지 보류했다), 배포 보고에 «pre-gate 재예보 필요» 와 그 레인을 적는다. 특히 `dddjango/scripts/` 가 바뀐 릴리즈는 pre-gate 실행 트리 digest 를 바꾸므로, 진행 중 레인의 마지막 예보가 `--check-report` 에서 «툴체인 stale»이 되어 재예보를 요구한다 — Phase 1 레인은 싼 재실행으로 끝나지만 G1~G2 레인은 Phase 2 재발화가 든다(2026-09-27).
 
-**문서 현행화**: 사용자에게 보이는 동작이 바뀐 판은 릴리즈 전에 `README.md` 와 `docs/master.html` 이 싣는 네 문서(work_flow.html · work_flow_web_guide.html(work_flow_web.html 포함) · file_tree.html · file_tree_web.html)를 그 판 기준으로 고치고, master.html 아래쪽 «기준 판» 줄도 함께 올린다. 배포가 끝나면 다섯째 문서 `work_list.html`(작업 리스트)에서 그 판이 끝낸 항목을 지우고, 새로 들어온 현장 보고는 «새 보고» 칸에 더한다. web 판은 work_flow_web_guide.html 의 «판마다 바뀐 것» 표에 한 줄을 더한다(§1 dddjango-web). docs/ 에는 master.html 이 싣는 문서와 그 원본(스펙 · 생성기), 이 개발 문서만 둔다(사용자 로컬 파일 빼고). **요청 가이드**(`dddjango/REQUEST_GUIDE.md` · `dddjango-web/REQUEST_GUIDE.md`)는 판마다 확인한다 — 사용자가 요청에 쓰는 칸 · 좋은 예 · 나쁜 예 · 플러그인이 스스로 하거나 묻는 일이 바뀌었으면 §1 «사람용 작업 요청 가이드» 규칙대로 고치고(Codex 짝은 byte 복사), 아니면 «바뀔 것 없음» 을 배포 보고에 적는다.
+**문서 현행화**: 사용자에게 보이는 동작이 바뀐 판은 릴리즈 전에 `README.md` 와 `docs/master/master.html` 이 싣는 네 문서(work_flow.html · work_flow_web_guide.html(work_flow_web.html 포함) · file_tree.html · file_tree_web.html)를 그 판 기준으로 고치고, master.html 아래쪽 «기준 판» 줄도 함께 올린다. 배포가 끝나면 다섯째 문서 `work_list.html`(작업 리스트)에서 그 판이 끝낸 항목을 지우고, 새로 들어온 현장 보고는 «새 보고» 칸에 더한다. web 판은 work_flow_web_guide.html 의 «판마다 바뀐 것» 표에 한 줄을 더한다(§1 dddjango-web). docs/ 에는 이 개발 문서와 `master/` 폴더만 두고, master.html 이 싣는 문서와 그 원본(스펙 · 생성기)은 모두 `docs/master/` 에 둔다. **요청 가이드**(`dddjango/REQUEST_GUIDE.md` · `dddjango-web/REQUEST_GUIDE.md`)는 판마다 확인한다 — 사용자가 요청에 쓰는 칸 · 좋은 예 · 나쁜 예 · 플러그인이 스스로 하거나 묻는 일이 바뀌었으면 §1 «사람용 작업 요청 가이드» 규칙대로 고치고(Codex 짝은 byte 복사), 아니면 «바뀔 것 없음» 을 배포 보고에 적는다.
 
 봉인 ②(§4 «봉인은 두 번»): 판 올림은 마켓 매니페스트(봉인 대상)를 바꾸므로 배포 커밋 **뒤에** 별도 chore 커밋으로 재발행한다 — 변경 · 배포 커밋 안에 든 봉인(①)만으로는 `sealed_commit`이 그 커밋 이전을 가리켜 strict `--check`가 RED가 된다(`make verify`의 `--draft` 대조는 통과하므로 놓치기 쉽다).
 
@@ -309,9 +311,9 @@ make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 �
 
 ## 8. 더 읽기
 
-- [master.html](master.html) — 아래 네 문서와 작업 리스트(`work_list.html`)를 한 화면에서 고르는 통합 진입점
-- [work_flow.html](work_flow.html) — dddjango 파이프라인 실동작·온톨로지 적용 지점·기술 스택 시각 지도 (재생성 스펙: `work_flow.spec.json`)
-- [work_flow_web_guide.html](work_flow_web_guide.html) — dddjango-web 동작 흐름 (지도 `work_flow_web.html` · 스펙 `work_flow_web.spec.json`)
+- [master/master.html](master/master.html) — 아래 네 문서와 작업 리스트(`master/work_list.html`)를 한 화면에서 고르는 통합 진입점
+- [master/work_flow.html](master/work_flow.html) — dddjango 파이프라인 실동작·온톨로지 적용 지점·기술 스택 시각 지도 (재생성 스펙: `master/work_flow.spec.json`)
+- [master/work_flow_web_guide.html](master/work_flow_web_guide.html) — dddjango-web 동작 흐름 (지도 `master/work_flow_web.html` · 스펙 `master/work_flow_web.spec.json`)
 - [`workspace/tools/ontology-authoring.md`](../workspace/tools/ontology-authoring.md) — 저작 규약 정본 (금지 목록·게이트·채번·롤백)
 - `workspace/eval/t3/T3-REPORT.md` — 온톨로지 전량 이관(T3)의 총괄 기록
 - `workspace/design/ontology-adoption-map.html` — 도입 여정 조감도

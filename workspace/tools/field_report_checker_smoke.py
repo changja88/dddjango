@@ -1248,7 +1248,7 @@ class NormativeContractRegression(unittest.TestCase):
         self.assertNotIn("개별 50행 이상", skill)
         self.assertNotIn("출생 하한", reference)
         self.assertIn("부품이 0개", reference)
-        for rel in ("docs/file_tree.html", "docs/mkrev2.py"):
+        for rel in ("docs/master/file_tree.html", "docs/master/mkrev2.py"):
             self.assertNotIn("새 승격 부품은 각 50행 이상", (ROOT / rel).read_text())
 
     def test_optional_effects_poststate_and_s1_limits_are_explicit(self):

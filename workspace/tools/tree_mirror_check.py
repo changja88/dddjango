@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """표준 트리 삼중 동기 검사·재생성 도구 (메인테이너/빌드타임 — 런타임 게이트 아님).
 
-배경: 트리 171행이 «생성기 안»(docs/mkrev2.py:ROWS)에 살아 검사기가 못 읽었다(#609).
+배경: 트리 171행이 «생성기 안»(docs/master/mkrev2.py:ROWS)에 살아 검사기가 못 읽었다(#609).
 플러그인에 기계 가독 사본(`dddjango/scripts/standard_tree.py`)을 두고, 이 도구가
 정본과의 동기를 지킨다. `corpus_mirror_sync.py` 와 같은 부류다.
 
 세 자리:
-  A 정본     docs/file_tree.html 의 `data-r` 행 171개 — 명세 «자리»의 「트리 N행」이 이 번호다.
+  A 정본     docs/master/file_tree.html 의 `data-r` 행 171개 — 명세 «자리»의 「트리 N행」이 이 번호다.
              (mkrev2.py:ROWS 가 아니라 «생성된 HTML»을 읽는 까닭: data-r 는 파트 순서라
               ROWS 리스트 인덱스와 다르고, 사용자 정본은 HTML 이다.)
   B 플러그인  dddjango/scripts/standard_tree.py — 검사기들이 import 하는 유일한 트리 데이터.
@@ -34,7 +34,7 @@ EXIT_USAGE = 1
 EXIT_DRIFT = 2
 EXIT_STRUCTURE = 3
 
-CANON_REL = "docs/file_tree.html"
+CANON_REL = "docs/master/file_tree.html"
 PLUGIN_REL = "dddjango/scripts/standard_tree.py"
 FINAL_REL = "dddjango/skills/discipline-houserules/references/final.md"
 TREE_ROW_COUNT = 171
@@ -142,7 +142,7 @@ def emit_plugin(rows: list[RowT], root: Path) -> None:
     )
     module = f'''"""dddjango 표준 파일트리 — 정본의 기계 가독 사본 (데이터 모듈 · 게이트 아님).
 
-정본은 저장소의 `docs/file_tree.html`(트리 171행)이고, 이 파일은 검사기 19종이
+정본은 저장소의 `docs/master/file_tree.html`(트리 171행)이고, 이 파일은 검사기 19종이
 import 하는 유일한 트리 데이터다. **손으로 고치지 않는다** — 정본이 개정되면
 `workspace/tools/tree_mirror_check.py --write` 가 이 파일을 다시 쓰고,
 `--check` 가 «정본 ≡ 이 파일 ≡ houserules final.md 트리 블록» 삼중 동기를 지킨다.
@@ -154,11 +154,11 @@ import 하는 유일한 트리 데이터다. **손으로 고치지 않는다** �
 
 swappable=True 는 «동명 폴더 승격» 허용 표기다(#490 교체형 실현 — 파일 칸이
 `<이름>.py` ⇄ `<이름>/`(본체+`__init__.py`) 두 실현을 갖는다). 칸 유형이 아니라
-실현 형태의 직교 속성이며, 값의 정본은 docs/file_tree.html 의 data-sw 다.
+실현 형태의 직교 속성이며, 값의 정본은 docs/master/file_tree.html 의 data-sw 다.
 
 groupable=True 는 «의미 묶음» 허용 표기다(#654~#656 · D60 — 파일 칸의 인스턴스
 파일을 부모 바로 아래 묶음 폴더 한 계층으로 나눠 둘 수 있다). 이것도 칸 유형이
-아니라 실현 형태의 직교 속성이며, 값의 정본은 docs/file_tree.html 의 data-grp 다.
+아니라 실현 형태의 직교 속성이며, 값의 정본은 docs/master/file_tree.html 의 data-grp 다.
 묶음의 자리 판정은 `folder_group.place` 가 한다(#656).
 """
 from __future__ import annotations
@@ -166,7 +166,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-SOURCE: str = "docs/file_tree.html"
+SOURCE: str = "docs/master/file_tree.html"
 SOURCE_SHA: str = "{sha}"  # 생성 시점 정본 sha256[:16] — 출처 표시(동기 판정은 행 비교로 한다)
 
 Kind = Literal["fixed", "placeholder", "reappear"]

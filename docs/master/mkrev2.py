@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """file_tree.html 생성기 — 이 파일이 원본이고, HTML 은 산출물이다.
 
-    python3 docs/mkrev2.py        →  docs/file_tree.html 을 덮어쓴다
+    python3 docs/master/mkrev2.py        →  docs/master/file_tree.html 을 덮어쓴다
 
 고칠 때는 **HTML 이 아니라 이 파일을** 고친다. 손으로 HTML 을 고치면 다음 실행에 날아간다.
 구성 — ROWS(트리 행) · FLOW(도해 SVG) · CARDS(결정 카드) · TIPS(핀 툴팁) · body(뼈대·JS).
@@ -6655,7 +6655,7 @@ body = """<!doctype html>
       <p class="tguide"><b>왼쪽이 파일 트리, 오른쪽이 설명이다.</b> 파트를 누르면 그 아래로 트리가 펼쳐지고, 줄을 누르면 오른쪽의 그 칸으로 간다. 파트 순서는 요청이 <b>들어와 나가는 순서</b>다 — 루트 → 입구 → 조율 → 규칙 → 출구, 그다음이 테스트와 저장소 바깥이다.
       <span class="tg-v">설명에 나오는 <b>원전 어휘</b>는 계보를 색으로 말한다 — <b class="v d">DDD</b> Evans · <b class="v c">Clean</b> Martin · <b class="v h">Hexagonal</b> Cockburn</span></p>
       <p class="tguide"><b>현행 표준: 2026-10-04 결선 재료 칸 반영.</b> 171행의 경로·행 번호·승격 표시는 플러그인 트리와 함께 검증한다.
-      내용 규칙은 <a href="../dddjango/skills/discipline-houserules/references/final.md">하우스룰 정본</a>·<a href="../dddjango/skills/discipline-houserules/SKILL.md">배치·승격 규율</a>·<a href="../dddjango/skills/implementation-django-ninja/references/final.md">API 구현 계약</a>을 따른다.
+      내용 규칙은 <a href="../../dddjango/skills/discipline-houserules/references/final.md">하우스룰 정본</a>·<a href="../../dddjango/skills/discipline-houserules/SKILL.md">배치·승격 규율</a>·<a href="../../dddjango/skills/implementation-django-ninja/references/final.md">API 구현 계약</a>을 따른다.
       <b>⇄</b> 는 <a href="#promotion">동명 폴더 승격 허용</a> 표시다. D 표식과 «실측» 수치는 2026-08 초기 설계·이관 기록이며 현재 프로젝트 상태를 뜻하지 않는다.</p>
       <div class="tabwrap">
         <div class="tabrail" role="tablist">
@@ -6753,7 +6753,7 @@ body = """<!doctype html>
     <p><b>감사자가 판정하고 coder 가 집행한다.</b> coder 의 기본 작성형은 파일이다. 크기만으로 분할하거나 예비 패키지를 미리 만들지 않는다. 부품도 다른 유스케이스의 공용 helper 로 쓸 수 없고 저장(save)류 호출은 본체에 둔다.</p>
     <p>바깥 import 경로·공개 이름을 유지하고 <code>git mv</code> 로 이력을 보존한다. 재수출은 redundant alias 또는 <code>__all__</code>, 내부 참조는 모듈 직접 상대 import 로 쓴다.
     실행 전 모듈 객체·monkeypatch·<code>patch("pkg.mod.attr")</code>·설정 문자열·동적 import 참조를 전수 확인한다. 필요한 수정이 승인 범위 밖이면 먼저 보고한다.
-    상세 판정과 기존 폴더의 처리 경로는 <a href="../dddjango/skills/discipline-houserules/SKILL.md">동명 폴더 승격 캐스케이드</a>를 따른다.</p>
+    상세 판정과 기존 폴더의 처리 경로는 <a href="../../dddjango/skills/discipline-houserules/SKILL.md">동명 폴더 승격 캐스케이드</a>를 따른다.</p>
   </aside>
 
   <div class="duo" style="margin-top:20px">
@@ -6767,7 +6767,7 @@ body = """<!doctype html>
       <p><b>① 의존은 안쪽으로만 향한다</b>(클린) · <b>② 안쪽은 구체 기술을 모른다</b>(헥사고날) · <b>③ BC 경계는 «관문 또는 공표된 사실»로만 넘는다</b>(DDD) — <em>부르면 답하는 쪽은 <code>open_host_service/…/contract/</code>, 알리는 쪽은 <code>published_event/</code>. 그 둘뿐이다</em>.</p>
       <p>구역은 «누가 이 방의 말을 정하나»이고, 이 셋은 «집 전체에 걸린 규칙»이다.</p>
       <p><b>전제 — 첫 대입에 타입을 명시한다.</b> 시그니처·속성·지역 변수에 적용한다. 어노테이션 문법이 없는 바인딩, 재대입, 도구가 소유하는 선언적 클래스 본문·생성 골격·테스트 파일에는 정본의 면제가 있다. 선언적 클래스의 메서드까지 면제되는 것은 아니다.</p>
-      <p><b>현행 집행:</b> <code>check-public-surface-annotation.py</code> 가 첫 대입과 시그니처를 검사하고 <code>mypy strict</code> 가 타입 관계를 검사한다. bare <code>Any</code> 로 시그니처를 채우지 않고, 이름 있는 정적 자료 계약을 쓴다. 상세 면제·dict 레코드·Django 제네릭 표기는 <a href="../dddjango/skills/discipline-houserules/SKILL.md">하우스룰</a>과 타입 검사기 규약을 따른다.</p>
+      <p><b>현행 집행:</b> <code>check-public-surface-annotation.py</code> 가 첫 대입과 시그니처를 검사하고 <code>mypy strict</code> 가 타입 관계를 검사한다. bare <code>Any</code> 로 시그니처를 채우지 않고, 이름 있는 정적 자료 계약을 쓴다. 상세 면제·dict 레코드·Django 제네릭 표기는 <a href="../../dddjango/skills/discipline-houserules/SKILL.md">하우스룰</a>과 타입 검사기 규약을 따른다.</p>
     </aside>
   </div>
 
@@ -7035,7 +7035,7 @@ doc = re.sub(r'\sdata-go=\\?"[dp]\w*\\?"', "", doc)
 (D / "file_tree.html").write_text(doc, encoding="utf-8")
 
 REC, _ncard = _record()
-_recpath = D.parent / "workspace" / "design" / "2026-08-07-decision-record.md"
+_recpath = D.parent.parent / "workspace" / "design" / "2026-08-07-decision-record.md"
 _recpath.parent.mkdir(parents=True, exist_ok=True)
 _recpath.write_text(REC, encoding="utf-8")
 
