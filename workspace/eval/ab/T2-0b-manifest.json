@@ -735,7 +735,7 @@
     },
     "packs": {
       "files": {
-        "dddjango/scripts/pregate_symbol_kinds.json": "28b25f38aca8a23436455cfd06de1d9be19cbf3984c88f49b1c407f9bd0e1aac",
+        "dddjango/scripts/pregate_symbol_kinds.json": "a37e50024e0ef2c4bf26325d52baee3a0bf1d03dbfc144a87e3363efa113139d",
         "dddjango/scripts/rulepack.json": "c66f4d9c5927211d8566ea77a0044f7d4bbc814e68ab36d31cb1b8cb37f03dae",
         "workspace/eval/ab/T0-rule-owner-map-snapshot.md": "d3e75311118630d4c30bea1d69e7a1b31dc40dc3416f920a0f77ccfc37ad13ae"
       },
@@ -745,7 +745,7 @@
         "workspace/eval/ab/T0-rule-owner-map-snapshot.md"
       ],
       "n_files": 3,
-      "tree_sha256": "9b33f83aae5ad2beae4dcb1e90785bba1a8813d9805a98f348e1ac6ce2f8c340",
+      "tree_sha256": "49540ad3c66d65a12510422f3f078f8863d790ee0aa666ea9a2706dc26095e64",
       "why": "C암 규칙 팩과 B암 재료. 팩이 바뀌면 처치 자체가 바뀐다."
     },
     "pipeline": {
@@ -1024,11 +1024,11 @@
     "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.37.0/scripts",
     "cache-codex": "1257e41b8242c962ca6166a2303d2df7f4f6eaa87cf5663d5e066f1aef130504",
     "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.37.0/skills/dddjango/scripts",
-    "source-claude": "f0fa152e8b3d41e092282e09801a7832c42b536fbb2859833b44e12e31c03d4e",
-    "source-codex": "f0fa152e8b3d41e092282e09801a7832c42b536fbb2859833b44e12e31c03d4e"
+    "source-claude": "486b30ee5267d9ab904e3e0d9e3517de0df0d1347ab965805fc946c6c4cbd4e1",
+    "source-codex": "486b30ee5267d9ab904e3e0d9e3517de0df0d1347ab965805fc946c6c4cbd4e1"
   },
-  "sealed_commit": "a028918cdae3974bffa6db969b8b6fb37e321a5b",
-  "self_sha256": "99392c8be6230965b496a49347d30ced70ed9b2a1d84d43b7ee98b6eebb3c586",
+  "sealed_commit": "b0e92426e4fb4b51f67c08f77db1727bbc95f8b5",
+  "self_sha256": "da4f05a4b5efe4851c87896c133ace9216c031a743438ec14b78321d03224ff7",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [

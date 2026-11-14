@@ -4,7 +4,7 @@
     "check-api-error-controller-contract.py": "539dace1f4c07f32",
     "check-app-container.py": "f802e1d0b3995835",
     "check-broker-contract.py": "daf8705fbf3569cf",
-    "check-business-vocabulary.py": "d82da65b6967b6d4",
+    "check-business-vocabulary.py": "ae49dd337df8d686",
     "check-choices-literal-consumption.py": "c1f6a998f550c67c",
     "check-common-container.py": "83f6298c127862b5",
     "check-composition-root.py": "4462538b5ed50810",
@@ -25,7 +25,7 @@
     "check-response-schema-bypass.py": "0fd510470a0ac985",
     "check-synthetic-infra-exc.py": "f30d0f3e8320ee6b",
     "check-test-config.py": "2829ade23753386e",
-    "check-transaction-boundary.py": "cbf01b9badbaa469",
+    "check-transaction-boundary.py": "64969b7b865021ff",
     "check-transient-overmapping.py": "35ac532566baaf46",
     "check-usecase-dto-placement.py": "31608351b722e140",
     "checker_target.py": "be7a6f9f774c13ce"

@@ -318,8 +318,8 @@ def _existence_unit_checks() -> "list[str]":
     `import *` 재수출) — 합성 사본 디렉터리 + 합성 Plan 으로 `check_import_existence` 를 직접 부른다(git·검사기 비의존)."""
     out: "list[str]" = []
     dp: "types.ModuleType" = _load_module(EXECUTOR, "_pregate_exec_existence")
-    if dp._repo_root_packages() != frozenset({"application", "framework"}):
-        out.append(f"_repo_root_packages() = {sorted(dp._repo_root_packages())} ≠ {{application, framework}}")
+    if dp._repo_root_packages() != frozenset({"application", "cross_context", "framework"}):
+        out.append(f"_repo_root_packages() = {sorted(dp._repo_root_packages())} ≠ {{application, cross_context, framework}}")
     with tempfile.TemporaryDirectory() as td:
         copy: Path = Path(td)
         dl: str = "application/shop/domain_layer/"
