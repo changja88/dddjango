@@ -8,7 +8,7 @@
 - **C 발화**(G3) — 같은 위반 집합에 대해 순서·구성이 실제로 달라지고 `<rules>` 가 실린다.
   「파일이 존재한다」는 「처치가 발화했다」가 아니다(적대 리뷰 AQ-04).
 - **본문 미동봉**(G4) — 팩에도 프롬프트에도 블록 리터럴이 없다(동결 E8·개정 8).
-- **주입 경계**(G5) — 규범 명칭에 실제로 꺾쇠가 있다(`루트 평면 <app>/ 금지` — R-0122).
+- **주입 경계**(G5) — 규범 명칭에 실제로 꺾쇠가 있다(`루트 평면 <app>/ 금지(예외 하나 — …)` — R-0122).
 - **fail-closed**(G6) — 팩 부재·손상·스키마 이탈은 예외이지 조용한 B 폴백이 아니다.
 
 **변이 8종**(`--mutation-test`)은 위 단언들이 **실제로 무엇을 잡는지** 증명한다. T2-3에서
@@ -69,6 +69,7 @@ R-3440 R-3441 R-3661 R-3662
 R-3688 R-3689
 R-1651 R-3490 R-3697 R-3705 R-3706 R-3708 R-3710 R-3721 R-3722 R-3725 R-3727 R-3729
 R-3746
+R-3516 R-3676
 """.split())
 
 
@@ -181,7 +182,7 @@ def run(pack: "rp.Rulepack") -> "list":
         bad = sum(_payload_of(h, t).count(ch) for t in ("violations", "rules") for ch in "<>")
         restored = json.loads(_payload_of(h, "rules")
                               .replace("\\u003c", "<").replace("\\u003e", ">"))
-        return (bad == 0 and restored[0]["label"] == "루트 평면 <app>/ 금지",
+        return (bad == 0 and restored[0]["label"] == "루트 평면 <app>/ 금지(예외 하나 — 모델 없는 운영자 화면 합성 앱 cross_context/backoffice)",
                 f"리터럴 꺾쇠 {bad}")
 
     def g7():
