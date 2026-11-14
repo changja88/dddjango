@@ -13,6 +13,13 @@ Kernel 없음)·#83(BC 삭제 내성)은 아래 각론 진단이 집행한다.
          들어오는 화살표는 composition_root 뿐 · #328 django_<bc> 는 persistence 만
   타 BC  #12 부를 수 있는 것은 OHS·published_event 둘 · #13 OHS 소비는 ACL 뿐
          #98 타 BC composition_root 금지 · #102 driving 중 OHS 만 · #51 test→타 BC test 금지
+         #664 `cross_context/**`(트리 172~182행)는 BC 의 `driving_layer/open_host_service/` 만 import 하고 모델 클래스 ·
+         `get_model()` · 시험 밖 `get_user_model()` · 날 SQL 길(connection(s) · RawSQL · DB 드라이버 import · `.raw(` · `.extra(`)을 안 쓴다
+         #665 application · framework · <project> 는 cross_context 를 import 하지 않는다(<project> 의 `cross_context.` 문자열은
+         `include("cross_context.backoffice.urls")` 와 설정 모듈의 앱 문자열만) · #666 주소는 `cross_context/backoffice/urls.py` 에만 · 모두 `admin_view`
+  admin  #668 `django_<bc>/admin/**` 는 자기 BC 의 domain · application · composition_root · persistence · ACL 을 import 하지 않는다
+         (자기 `django_<bc>/` 모듈의 다시 내보내기 한 겹 포함 · 파일당 한 줄 · 걸린 import 는 푼 절대 경로를 정렬한 목록 칸 ·
+         2026-11-14 F4-158) · admin → 타 BC 는 다른 칸과 같은 타 BC 규칙(#12 · #13 · #98 · #102)
   OHS    #146 published_service 금지 · #149/#113 라우팅·등록 함수 금지 · #150 평면 .py 금지
          #152/#154/#155 service·contract 구조 · #156/#157/#159/#160 계약 1타입=1파일
          (주 계약이 어노테이션으로 참조하는 보조 공개 dataclass 는 면제 — 2026-08-24 좁은 정합화 ·
@@ -40,7 +47,7 @@ ast+ 후보 채널 (㉰ — exit 불산입, 마무리는 discipline-reviewer):
   비켜 준다 · 판정은 `checker_target.ohs_event_value_handler` 가 #474 와 함께 진다 · 프로필 무관,
   출처가 확인된 usecase 실행 수가 1이 아니거나 출처·반복 횟수가 미해소이면 후보;
   builder 준비·미호출 nested 정의는 실행 수에 불산입) · #171(접미사뿐인 예외 이름) · #347(admin feature 의
-  애그리거트 쓰기) · #11(경계 애너테이션의 Model/QuerySet 은 «확정», 그 외 후보)
+  애그리거트 쓰기 — 확정 몫은 #668) · #11(경계 애너테이션의 Model/QuerySet 은 «확정», 그 외 후보)
 
   framework #470 강등의 사후 신호 — 공개 시그니처에 `kind`·`mode`·`bc`·`is_*` 매개변수(D38)
   <project> #433 규칙을 «주소·예외 목록»으로 적지 않는다 — BC 경로 리터럴 컬렉션
@@ -327,8 +334,206 @@ def _import_target_names(target: Path) -> set[str]:
     return names
 
 
+# ── admin — #668(2026-11-14 F4-158) ─────────────────────────────────────────
+
+ADMIN_FORBIDDEN_SPOTS = DOMAIN_SPOTS | {"app", "app_port", "composition", "persistence", "acl"}
+_MODULE_LEVEL_BLOCKS = (ast.If, ast.Try, ast.With) + ((ast.TryStar,) if hasattr(ast, "TryStar") else ())
+
+
+def _admin_area(file_parts: tuple[str, ...]) -> bool:
+    """BC 의 admin 구역 파일인가 — 표준 자리 `driven_layer/django_<bc>/admin/**` 와 옛 자리 `django_*/admin/**`."""
+    if (len(file_parts) > 3 and file_parts[0] == "driven_layer"
+            and file_parts[1].startswith("django_") and file_parts[2] == "admin"):
+        return True
+    return len(file_parts) > 2 and file_parts[0].startswith("django_") and file_parts[1] == "admin"
+
+
+def _own_target(file_parts: tuple[str, ...], level: int, module: str | None, bc_name: str) -> tuple[str, ...] | None:
+    """import 가 가리키는 자기 BC 안 마디(BC 상대) — 자기 BC 밖 · BC 밖 탈출 · `application` 밖이면 None."""
+    if level > 0:
+        return _resolve_relative(file_parts, level, module)
+    parts = (module or "").split(".")
+    if "application" not in parts:
+        return None
+    i = parts.index("application")
+    if i + 1 < len(parts) and parts[i + 1] == bc_name:
+        return tuple(parts[i + 2:])
+    return None
+
+
+def _module_level(body: list[ast.stmt]):
+    """모듈 수준 문장 — `if` · `try` · `with` 블록 안은 들어가고 함수 · 클래스 몸은 들어가지 않는다."""
+    for node in body:
+        yield node
+        if isinstance(node, _MODULE_LEVEL_BLOCKS):
+            for field in ("body", "orelse", "finalbody"):
+                yield from _module_level(getattr(node, field, []))
+            for h in getattr(node, "handlers", []):
+                yield from _module_level(h.body)
+
+
+def _name_root(expr: ast.expr) -> str | None:
+    while isinstance(expr, ast.Attribute):
+        expr = expr.value
+    return expr.id if isinstance(expr, ast.Name) else None
+
+
+def _bc_module_file(bc: Path, parts: tuple[str, ...]) -> Path | None:
+    if not parts:
+        return None
+    p = bc.joinpath(*parts)
+    for c in (p.with_suffix(".py"), p / "__init__.py"):
+        if c.is_file():
+            return c
+    return None
+
+
+def _admin_reexports(bc: Path, parts: tuple[str, ...], cache: dict[tuple[str, ...], set[str]]) -> set[str]:
+    """#668 다시 내보내기 한 겹 — 자기 `django_<bc>/` 모듈이 모듈 수준에서 금지 자리 다섯에서 묶은 이름.
+
+    `from … import X [as Y]` · 모듈째 `import … as m` · 상대 import · 모듈 수준 대입 별칭(`Kind = OrderKind` —
+    오른쪽이 묶은 이름이거나 그 속성). 그 모듈이 다른 `django_<bc>/` 모듈에서 가져온 이름은 따라가지 않는다(한 겹).
+    """
+    if parts in cache:
+        return cache[parts]
+    names: set[str] = set()
+    cache[parts] = names
+    f = _bc_module_file(bc, parts)
+    mod = _parse(f) if f is not None else None
+    if mod is None:
+        return names
+    file_parts = f.relative_to(bc).parts
+    for node in _module_level(mod.body):
+        if isinstance(node, ast.ImportFrom):
+            base = _own_target(file_parts, node.level, node.module, bc.name)
+            if base is None:
+                continue
+            for a in node.names:
+                if a.name != "*" and ADMIN_FORBIDDEN_SPOTS & {_spot(base), _spot(base + (a.name,))}:
+                    names.add(a.asname or a.name)
+        elif isinstance(node, ast.Import):
+            for a in node.names:
+                base = _own_target(file_parts, 0, a.name, bc.name)
+                if a.asname and base is not None and _spot(base) in ADMIN_FORBIDDEN_SPOTS:
+                    names.add(a.asname)
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)) and node.value is not None:
+            if _name_root(node.value) in names:
+                targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                names.update(t.id for t in targets if isinstance(t, ast.Name))
+    return names
+
+
+def _attr_chain(node: ast.Attribute) -> list[str] | None:
+    """`a.b.c` → ['a', 'b', 'c'] · 이름에서 시작하지 않는 사슬은 None."""
+    chain: list[str] = []
+    cur: ast.expr = node
+    while isinstance(cur, ast.Attribute):
+        chain.append(cur.attr)
+        cur = cur.value
+    if not isinstance(cur, ast.Name):
+        return None
+    chain.append(cur.id)
+    return chain[::-1]
+
+
+def _scan_admin_imports(f: Path, file_parts: tuple[str, ...], bc: Path, bc_rel: Path, all_bcs: set[str],
+                        out: Findings) -> None:
+    """#668 — admin 은 자기 BC 의 domain · application · composition_root · persistence · ACL 을 import 하지 않는다.
+
+    함수 안 · 상대 import · 그 BC 꾸러미에서 층 이름을 가져오는 꼴 · 자기 `django_<bc>/` 모듈의 다시 내보내기 한 겹
+    (이름 · `import *` · 모듈째 가져와 별칭의 속성으로 씀) 포함. 줄은 파일당 하나 — 걸린 import 는 푼 절대 경로를
+    정렬한 목록 칸이다(줄 번호 없음 · 상대 ↔ 절대 · 차례만 바꾼 고침은 같은 줄). 자기 BC 의 `django_<bc>/` ·
+    `open_host_service/`(창구) · `published_event/` 는 연다. 타 BC 는 다른 칸과 같은 타 BC 규칙(#12 · #13 · #98 · #102).
+    """
+    mod = _parse(f)
+    if mod is None:
+        return
+    rel = bc_rel / f.relative_to(bc)
+    prefix: tuple[str, ...] = bc_rel.parts
+    hits: dict[str, None] = {}
+    modules: dict[str, tuple[str, ...]] = {}  # 별칭(점 경로) → 자기 django_<bc>/ 모듈 · 꾸러미(BC 상대)
+    cache: dict[tuple[str, ...], set[str]] = {}
+
+    def is_django_module(parts: tuple[str, ...]) -> bool:
+        return _spot(parts) == "django" and (_bc_module_file(bc, parts) is not None or bc.joinpath(*parts).is_dir())
+
+    for node in ast.walk(mod):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                parts = a.name.split(".")
+                if "application" in parts:
+                    i = parts.index("application")
+                    if i + 1 < len(parts) and parts[i + 1] in all_bcs and parts[i + 1] != bc.name:
+                        _apply_other_bc("django", _spot(tuple(parts[i + 2:])), parts[i + 1], rel, a.name, out)
+                        continue
+                tgt = _own_target(file_parts, 0, a.name, bc.name)
+                if tgt is None:
+                    continue
+                if _spot(tgt) in ADMIN_FORBIDDEN_SPOTS:
+                    hits.setdefault(".".join(prefix + tgt))
+                elif is_django_module(tgt):
+                    modules[a.asname or a.name] = tgt
+        elif isinstance(node, ast.ImportFrom):
+            if node.level > 0:
+                base = _resolve_relative(file_parts, node.level, node.module or None)
+                if base is None:
+                    out.add("#12", rel, "상대 import 가 BC 밖으로 탈출한다 — 타 BC 는 관문으로만 부른다")
+                    continue
+            else:
+                parts = (node.module or "").split(".")
+                if "application" not in parts:
+                    continue
+                i = parts.index("application")
+                if not (i + 1 < len(parts) and parts[i + 1] in all_bcs):
+                    continue
+                if parts[i + 1] != bc.name:
+                    _apply_other_bc("django", _spot(tuple(parts[i + 2:])), parts[i + 1], rel, node.module or "", out)
+                    continue
+                base = tuple(parts[i + 2:])
+            if _spot(base) in ADMIN_FORBIDDEN_SPOTS:
+                hits.setdefault(".".join(prefix + base))
+                continue
+            for a in node.names:
+                if _spot(base + (a.name,)) in ADMIN_FORBIDDEN_SPOTS:
+                    hits.setdefault(".".join(prefix + base + (a.name,)))
+                elif _spot(base) == "django":
+                    bound = _admin_reexports(bc, base, cache)
+                    if (a.name == "*" and bound) or a.name in bound:
+                        hits.setdefault(".".join(prefix + base + (a.name,)))
+                    elif a.name != "*" and is_django_module(base + (a.name,)):
+                        modules[a.asname or a.name] = base + (a.name,)
+    if modules:
+        # 모듈째 가져온 자기 django_<bc>/ 모듈의 속성으로 묶은 이름을 씀(`m.OrderKind`) — 다시 내보내기 한 겹의 속성 길.
+        for node in ast.walk(mod):
+            chain = _attr_chain(node) if isinstance(node, ast.Attribute) else None
+            if chain is None:
+                continue
+            for cut in range(len(chain) - 1, 0, -1):
+                alias = ".".join(chain[:cut])
+                if alias not in modules:
+                    continue
+                cur = modules[alias]
+                for attr in chain[cut:]:
+                    if attr in _admin_reexports(bc, cur, cache):
+                        hits.setdefault(".".join(prefix + cur + (attr,)))
+                        break
+                    if not is_django_module(cur + (attr,)):
+                        break
+                    cur = cur + (attr,)
+                break
+    if hits:
+        out.add("#668", rel, "admin 은 자기 BC 의 `domain_layer/` · `application_layer/` · `composition_root/` · "
+                "`adapter/persistence/` · `adapter/anticorruption_layer/` 를 import 하지 않는다(자기 `django_<bc>/` 모듈을 "
+                "거쳐 다시 가져와도 같다) — 단순 자료는 ORM 값(모델 필드 · 모델의 속성 · 메서드)으로 읽고 쓰고, DB 로 걸 수 "
+                "없는 규칙이 있는 쓰기는 그 BC 창구(`driving_layer/open_host_service/`)를 부른다 · 두 BC 이상의 값을 보이는 "
+                f"화면은 `cross_context/backoffice/` 다 — {sorted(hits)}")
+
+
 def _scan_imports(f: Path, bc: Path, bc_rel: Path, all_bcs: set[str], out: Findings) -> None:
     file_parts = f.relative_to(bc).parts
+    if _admin_area(file_parts):
+        _scan_admin_imports(f, file_parts, bc, bc_rel, all_bcs, out)
+        return
     loc = _spot(file_parts)
     if loc in ("django", "composition", "other", "bc_root"):
         return  # django 는 #326(check-db-table) 소유 · composition_root 는 전부를 안다
@@ -2673,7 +2878,7 @@ def _check_admin_features(bc: Path, bc_rel: Path, cand: Candidates) -> None:
             for n in ast.walk(mod)
         )
         if has_domain and has_repo_write:
-            cand.add("#347", bc_rel / f.relative_to(bc), "admin feature 가 애그리거트를 부르고 리포지토리 쓰기를 한다 — 공유 유스케이스는 `application_layer` 에 남긴다", "「이 조작을 사용자 API 도 하나」")
+            cand.add("#347", bc_rel / f.relative_to(bc), "admin feature 가 애그리거트를 부르고 리포지토리 쓰기를 한다 — 업무 규칙이 있는 운영 쓰기는 그 BC 창구(`driving_layer/open_host_service/`)로 부르고 `feature/` 에는 화면만 둔다(도메인 · 응용 import 는 #668)", "「이 쓰기에 DB 로 걸 수 없는 업무 규칙이 걸리나 — 걸리면 그 BC 창구로 부르나」")
 
 
 def _check_boundary_annotations(bc: Path, bc_rel: Path, out: Findings) -> None:
@@ -2809,6 +3014,241 @@ def _check_project_registration(target: Path, out: Findings) -> None:
         for nm, path in sorted(imported.items()):
             if nm not in used:
                 out.add("#431", rel, f"쓰이지 않는 BC import — 부작용 등록이다(`{path}`)")
+
+
+# ── cross_context — #664 · #665 · #666(트리 172~182행 · 2026-11-14 F4-159) ──────────
+
+CROSS_URLS_MODULE = "cross_context.backoffice.urls"
+CROSS_APP_RE = re.compile(r"cross_context\.backoffice(?:\.apps\.[A-Za-z_][A-Za-z0-9_]*)?")
+DJANGO_MODEL_BASES = {"django.db.models.Model", "django.db.models.base.Model"}
+RAW_SQL_IMPORTS = {
+    "django.db": {"connection", "connections"},
+    "django.db.models": {"RawSQL"},
+    "django.db.models.expressions": {"RawSQL"},
+}
+DB_DRIVER_MODULES = {"sqlite3", "psycopg", "psycopg2", "MySQLdb", "pymysql", "cx_Oracle", "oracledb"}
+ROUTE_CALLS = {"path", "re_path"}
+MODEL_META_KEYS = {"db_table", "managed", "proxy"}
+
+
+def _call_name(node: ast.Call) -> str:
+    fn = node.func
+    return fn.attr if isinstance(fn, ast.Attribute) else (fn.id if isinstance(fn, ast.Name) else "")
+
+
+def _ohs_window(dotted: str) -> bool:
+    """#664 — `application.<bc>.driving_layer.open_host_service…` 꼴인가(창구 서비스 · 계약 · 창구 예외)."""
+    parts = dotted.split(".")
+    return len(parts) >= 4 and parts[0] == "application" and parts[2:4] == ["driving_layer", "open_host_service"]
+
+
+def _import_origins(mod: ast.Module, file_parts: tuple[str, ...]) -> dict[str, str]:
+    """모듈 수준 import 가 묶은 이름 → 출처 점 경로(상대 import 는 저장소 뿌리 기준으로 푼다)."""
+    origins: dict[str, str] = {}
+    for node in _module_level(mod.body):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                origins[a.asname or a.name.split(".")[0]] = a.name if a.asname else a.name.split(".")[0]
+        elif isinstance(node, ast.ImportFrom):
+            if node.level:
+                base = _resolve_relative(file_parts, node.level, node.module or None)
+                if base is None:
+                    continue
+                src = ".".join(base)
+            else:
+                src = node.module or ""
+            for a in node.names:
+                if a.name != "*":
+                    origins[a.asname or a.name] = f"{src}.{a.name}" if src else a.name
+    return origins
+
+
+def _dotted_origin(expr: ast.expr, origins: dict[str, str]) -> str | None:
+    chain: list[str] = []
+    while isinstance(expr, ast.Attribute):
+        chain.append(expr.attr)
+        expr = expr.value
+    if not isinstance(expr, ast.Name) or expr.id not in origins:
+        return None
+    return ".".join([origins[expr.id], *reversed(chain)])
+
+
+def _project_class(target: Path, dotted: str) -> tuple[ast.ClassDef, dict[str, str]] | None:
+    """저장소 안 모듈의 맨 위 클래스(기저 한 번 따라가기용) — 없거나 못 읽으면 None."""
+    module, _, name = dotted.rpartition(".")
+    if not module:
+        return None
+    p = target.joinpath(*module.split("."))
+    f = next((c for c in (p.with_suffix(".py"), p / "__init__.py") if c.is_file()), None)
+    if f is None or set(f.relative_to(target).parts) & SKIP_DIRS:
+        return None
+    mod = _parse(f)
+    if mod is None:
+        return None
+    cls = next((n for n in mod.body if isinstance(n, ast.ClassDef) and n.name == name), None)
+    return (cls, _import_origins(mod, f.relative_to(target).parts)) if cls is not None else None
+
+
+def _django_model_base(cls: ast.ClassDef, origins: dict[str, str], local: dict[str, ast.ClassDef],
+                       target: Path, follow: bool) -> bool:
+    """밑 클래스의 import 출처가 `django.db.models.Model` 인가 — follow 면 같은 파일 · 저장소 안 기저를 한 번 따라간다."""
+    for b in cls.bases:
+        d = _dotted_origin(b, origins)
+        if d in DJANGO_MODEL_BASES:
+            return True
+        if not follow:
+            continue
+        if d is None and isinstance(b, ast.Name) and b.id in local and local[b.id] is not cls:
+            if _django_model_base(local[b.id], origins, local, target, False):
+                return True
+        elif d is not None:
+            found = _project_class(target, d)
+            if found is not None and _django_model_base(found[0], found[1], {}, target, False):
+                return True
+    return False
+
+
+def _model_class(cls: ast.ClassDef, origins: dict[str, str], local: dict[str, ast.ClassDef], target: Path) -> bool:
+    """#664 모델 클래스 — 밑 클래스가 Django 모델(별칭 · 프로젝트 기저 한 번 포함)이거나 안 `Meta` 에 표 표지가 있다."""
+    for inner in cls.body:
+        if isinstance(inner, ast.ClassDef) and inner.name == "Meta":
+            for st in inner.body:
+                targets = st.targets if isinstance(st, ast.Assign) else ([st.target] if isinstance(st, ast.AnnAssign) else [])
+                if any(isinstance(t, ast.Name) and t.id in MODEL_META_KEYS for t in targets):
+                    return True
+    return _django_model_base(cls, origins, local, target, True)
+
+
+def _raw_sql_import(node: ast.AST) -> str | None:
+    """#664 날 SQL 길의 import — `django.db` 의 connection(s) · RawSQL · DB 드라이버 모듈."""
+    if isinstance(node, ast.Import):
+        hit = next((a.name for a in node.names if a.name.split(".")[0] in DB_DRIVER_MODULES), None)
+        return hit
+    if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+        if node.module.split(".")[0] in DB_DRIVER_MODULES:
+            return node.module
+        names = RAW_SQL_IMPORTS.get(node.module, set()) & {a.name for a in node.names}
+        if names:
+            return f"{node.module}.{sorted(names)[0]}"
+    return None
+
+
+def _check_cross_inbound(target: Path, proj: Path | None, out: Findings) -> None:
+    """#665 — `application/**` · `framework/**` · `<project>/**` 는 `cross_context` 를 import 하지 않는다(admin · 합성 루트 · 함수 안 포함)."""
+    roots: list[Path] = [target / "application", target / "framework"]
+    if proj is not None:
+        roots.append(proj)
+    for base in roots:
+        if not base.is_dir():
+            continue
+        for f in sorted(base.rglob("*.py")):
+            if set(f.relative_to(target).parts) & SKIP_DIRS:
+                continue
+            mod = _parse(f)
+            if mod is None:
+                continue
+            for inbound in ast.walk(mod):
+                if isinstance(inbound, ast.Import):
+                    paths = [a.name for a in inbound.names]
+                elif isinstance(inbound, ast.ImportFrom) and inbound.level == 0 and inbound.module:
+                    paths = [inbound.module]
+                else:
+                    continue
+                for p in paths:
+                    if p.split(".")[0] == "cross_context":
+                        out.add("#665", f.relative_to(target), "BC · framework · `<project>/` 는 `cross_context/` 를 import 하지 "
+                                f"않는다(`<project>/urls.py` 는 `include(\"{CROSS_URLS_MODULE}\")` 문자열로만) — `{p}`")
+
+
+def _check_cross_strings(proj: Path, target: Path, out: Findings) -> None:
+    """#665 — `<project>/` 의 `cross_context.` 문자열은 `include` 첫 인자의 urls 모듈과 설정 모듈의 앱 문자열만."""
+    for f in sorted(proj.rglob("*.py")):
+        rp = f.relative_to(proj).parts
+        if set(rp) & SKIP_DIRS:
+            continue
+        mod = _parse(f)
+        if mod is None:
+            continue
+        settings_module = rp[-1] == "settings.py" or "settings" in rp[:-1]
+        ok: set[int] = set()
+        for node in ast.walk(mod):
+            if isinstance(node, ast.Call) and _call_name(node) == "include":
+                first = node.args[0] if node.args else next((k.value for k in node.keywords if k.arg == "arg"), None)
+                if isinstance(first, ast.Tuple) and first.elts:
+                    first = first.elts[0]
+                if isinstance(first, ast.Constant) and first.value == CROSS_URLS_MODULE:
+                    ok.add(id(first))
+        for node in ast.walk(mod):
+            if not (isinstance(node, ast.Constant) and isinstance(node.value, str)
+                    and node.value.startswith("cross_context.")) or id(node) in ok:
+                continue
+            if settings_module and CROSS_APP_RE.fullmatch(node.value):
+                continue
+            out.add("#665", f"{f.relative_to(target)}:{node.lineno}", "`<project>/` 가 `cross_context` 에 닿는 문자열은 "
+                    f"`include(\"{CROSS_URLS_MODULE}\")` 와 설정 모듈의 앱 문자열(`cross_context.backoffice` · 그 `apps` 모듈의 "
+                    f"설정 클래스)뿐이다 — 주소는 `cross_context/backoffice/urls.py` 한 곳에서 `admin_view` 로 감싼다 — `{node.value}`")
+
+
+def _check_cross_context(target: Path, out: Findings) -> None:
+    """#664 · #665 · #666 — BC 밖 합성 칸 `cross_context/`(트리 172~182행)."""
+    proj = _find_project_pkg(target)
+    _check_cross_inbound(target, proj, out)
+    if proj is not None:
+        _check_cross_strings(proj, target, out)
+    cc = target / "cross_context"
+    if not cc.is_dir():
+        return
+    urls = cc / "backoffice" / "urls.py"
+    for f in sorted(cc.rglob("*.py")):
+        rel = f.relative_to(target)
+        if set(rel.parts) & SKIP_DIRS:
+            continue
+        mod = _parse(f)
+        if mod is None:
+            continue
+        is_test = "test" in rel.parts
+        for node in ast.walk(mod):
+            if not isinstance(node, (ast.Import, ast.ImportFrom)):
+                continue
+            raw = _raw_sql_import(node)
+            if raw is not None:
+                out.add("#664", rel, f"`cross_context/` 는 날 SQL 길을 쓰지 않는다 — `{raw}` (값은 그 BC 창구로)")
+            if isinstance(node, ast.ImportFrom) and node.level > 0:
+                if node.level - 1 >= len(rel.parts) - 1:
+                    out.add("#664", rel, f"상대 import 가 `cross_context/` 밖으로 나간다 — `{'.' * node.level}{node.module or ''}`")
+                continue
+            if isinstance(node, ast.Import):
+                bad = [a.name for a in node.names if a.name.split(".")[0] == "application" and not _ohs_window(a.name)]
+            elif (node.module or "").split(".")[0] == "application" and not _ohs_window(node.module or ""):
+                names = [a.name for a in node.names]
+                bad = [] if names and all(_ohs_window(f"{node.module}.{n}") for n in names) else [node.module or ""]
+            else:
+                bad = []
+            for p in bad:
+                out.add("#664", rel, "`cross_context/` 가 BC 에서 import 하는 것은 그 BC 의 `driving_layer/open_host_service/` "
+                        f"아래(창구 서비스 · 계약 · 창구 예외)뿐이다 — `{p}`")
+        origins = _import_origins(mod, rel.parts)
+        local = {n.name: n for n in mod.body if isinstance(n, ast.ClassDef)}
+        for node in ast.walk(mod):
+            if isinstance(node, ast.ClassDef) and _model_class(node, origins, local, target):
+                out.add("#664", f"{rel}:{node.lineno}", f"`cross_context/` 는 모델 클래스를 두지 않는다 — `{node.name}`"
+                        "(`managed = False` · 프로젝트 기저 · 표 표지 `Meta` 도) · 값은 그 BC 창구로 읽는다")
+            if not isinstance(node, ast.Call):
+                continue
+            name = _call_name(node)
+            if name == "get_model" or (name == "get_user_model" and not is_test):
+                out.add("#664", f"{rel}:{node.lineno}", f"`cross_context/` 는 BC 모델을 꺼내지 않는다 — `{name}()` (값은 그 BC 창구로)")
+            if isinstance(node.func, ast.Attribute) and name in ("raw", "extra"):
+                out.add("#664", f"{rel}:{node.lineno}", f"`cross_context/` 는 날 SQL 을 쓰지 않는다 — `.{name}(…)` (값은 그 BC 창구로)")
+            if f == urls and name in ROUTE_CALLS:
+                view = node.args[1] if len(node.args) > 1 else next((k.value for k in node.keywords if k.arg == "view"), None)
+                wrapped = isinstance(view, ast.Call) and isinstance(view.func, ast.Attribute) and view.func.attr == "admin_view"
+                if not wrapped:
+                    out.add("#666", f"{rel}:{node.lineno}", f"화면 주소는 `admin.site.admin_view(…)` 로 감싼다 — `{name}(…)`"
+                            "(admin 로그인 · 권한을 그대로 쓴다 · `include` 도 두지 않는다)")
+            elif f != urls and name in ROUTE_CALLS | {"Router"}:
+                out.add("#666", f"{rel}:{node.lineno}", f"`cross_context/` 의 주소는 `cross_context/backoffice/urls.py` 한 파일에만 "
+                        f"적는다 — `{name}(…)`")
 
 
 # ── main ────────────────────────────────────────────────────────────────────
@@ -2949,6 +3389,7 @@ def main(argv: list[str]) -> int:
 
     _check_framework_demotion(target, findings)
     _check_project_registration(target, findings)
+    _check_cross_context(target, findings)
 
     if cand:
         print(f"ⓓ 후보 {len(cand)}건 — 기계가 좁힌 후보다(exit 불산입). 마무리는 discipline-reviewer 의 물음이 한다:")

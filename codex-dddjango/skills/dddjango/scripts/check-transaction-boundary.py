@@ -11,7 +11,8 @@
               인자는 «같은 함수 안에서 루트 메서드 호출을 받은» 객체여야 하고, UoW 를
               받았는데 루트 메서드 호출이 0 이어도 위반. 글자 고리(함께 커밋 승인 꼴 S —
               `for x in sorted((a, b), key=…)`)의 반복 변수는 원소 이름이 모두 루트 메서드 호출을 받았고
-              그 고리에서만 묶이면 받은 것으로 본다.
+              그 고리에서만 묶이면 받은 것으로 본다. 같은 BC 도메인 서비스(트리 74–75행)에 한 번 넘겨
+              그 안에서 루트 메서드 호출을 받은 인자도 받은 것으로 본다(F4-177 — 아래 «도메인 서비스 넘김»).
   #197 [ast]  읽기 전용 유스케이스는 UnitOfWork 를 받지 않는다 — `*UnitOfWork` 파라미터가
               있는데 본문에 `with uow:`·save·remove·after_commit 이 0 이면 위반. ②′ 승격 폴더는
               본체 + 틀(`<x>_frame.py`)을 한 단위로 본다 — 본체 도달 범위는 `self.<틀 속성>.<m>(…)`
@@ -49,7 +50,8 @@
 판정의 자(predicates ⓓ): 「무엇이 리포지토리인가」는 이름이 아니라 «타입이
 `<aggregate>_repository.py` 에서 온 것»으로 가른다 — audit_log.save() 는 안 걸린다.
 
-단순화(정직 기록): #195 의 «루트 메서드 호출을 받은 객체» 판정은 지역 흐름만 본다 —
+단순화(정직 기록): #195 의 «루트 메서드 호출을 받은 객체» 판정은 지역 흐름만 본다(같은 BC 도메인 서비스 한 홉은
+아래 «도메인 서비스 넘김») —
 save 인자가 같은 함수에서 메서드 호출을 받았거나 팩토리 호출로 태어났으면 통과(스칼라의
 «팩토리 호출» = 리포지토리가 수신자가 아닌 호출 전부라 넓다 — `next(iter(조회))` 도 통과한다),
 `obj.field = x` 직접 대입만 받았거나 아무 일도 없었으면 위반. 반복 변수(for·컴프리헨션
@@ -118,6 +120,22 @@ import·def)이 하나라도 있으면 물려받지 않는다. 한계(fail-open)
 속으며, 비교·`in` 의 상대 객체가 사용자 정의 `__eq__`/`__contains__` 로 피연산자를 바꾸는 코드는
 가정 밖이다(2026-09-26 F4-20 · 2026-09-29 R8-D2 리뷰 M-1 · 재검토 M-1·m-1 · 순수 읽기 확장).
 
+도메인 서비스 넘김(F4-177 · 한 홉): 같은 BC 도메인 서비스(트리 74–75행 `domain_layer/domain_service/**`)에 넘긴 save
+인자는, 넘겨받은 파라미터가 그 몸 안에서 `p.m(…)` 루트 메서드 호출을 받고, 그 몸 어디서도(중첩 범위 포함) 파라미터 너머
+바꿈(속성 · 첨자 사슬의 대입 · 덧셈 대입 · 주석 대입 · 지움 · `setattr`/`delattr`/`vars` · `__dict__` · 속성 너머 그릇 바꿈
+메서드 `p.<속성>.append(…)` 류 — CONTAINER_MUTATORS)을 받지 않고, 다시 묶이지도 않고, 다른 호출의 인자로 다시 넘겨지지도
+않으면(읽기 전용 내장 `isinstance` · `type` · `id` · `repr` · `str` · `len` · `bool` · `hash` 는 넘김으로 치지 않는다) «받은»
+것으로 본다. 유스케이스 안에서 그 인자가 같은 꼴의 바꿈을 받았거나 다른 호출(해소된 서비스 호출 · 리포지토리 · UoW 받는 쪽
+호출 · 읽기 전용 내장 밖 — 응용 층 도우미 포함)의 인자로 넘겨졌으면 서비스 쪽 루트 호출로 가리지 않는다(바꿈은 두 쪽이 같은
+술어 `_bypassed` 를 쓴다 — 그 밖의 `p.<속성>.m(…)` 은 값 객체 읽기로 본다). 서비스 안에서 다시 넘긴 것은 따라가지 않고 «받지
+않음» 으로 본다. 따라가는 꼴은 셋 — `f(…)`(데코레이터 없는 최상위 동기 def) · `C.m(…)`(staticmethod · classmethod) ·
+`self.<속성>.m(…)`(`__init__` 이 `C` 로 주석한 파라미터나 `C()` 로 물리고 클래스 어디서도 다시 대입하지 않은 속성)이고, 이름은
+유스케이스 모듈의 최상위 절대 import 로 들여와 모듈 범위 · 그 함수에서 다시 묶이지 않은 것만 해소한다. 따라가지 않는 꼴(지금처럼
+위반): 두 홉(서비스 안 `cls.m` · `self.m` · 형제 서비스 · 모듈 도우미) · `C().m(…)` · `staticmethod` · `classmethod` 밖
+데코레이터 · 클래스 데코레이터 · metaclass · 상속 메서드 · async · 별표 풀기 · `**` · 가변 인자 자리 · 다른 BC · 응용 층 도우미.
+조회 메서드(`p.is_active()`)도 루트 메서드 호출로 센다 — 지역 판정과 같은 너그러움. 한계(fail-open): 그릇에 담거나(`f([p])`)
+속성 너머 값을 넘긴 것(`f(p.items)`)은 넘김으로 보지 않고, 읽기 전용 내장 이름이 가려졌는지는 보지 않는다.
+
 이관 계약(명세 조각 ⓐ): 채택 신호 2원(#78) · 대상 0건 가드(#74, touched 필터 없음) ·
 ImportError fail-closed. ⓓ 후보는 exit 에 불산입, `[ⓓ#N]` 으로만 출력.
 
@@ -175,6 +193,12 @@ BUILD_ELEMENT_ARG = {"append": 0, "add": 0, "insert": 1}
 BUILD_COLLECTION_METHODS = ("extend", "update")
 # #195 — 글자 고리(함께 커밋 승인 꼴 S · 2.36.0)의 반복 대상을 싸는 내장 — check-domain-model #550 행 3 글자 고리와 같은 목록.
 LITERAL_LOOP_WRAPPERS = ("sorted", "list", "tuple", "reversed")
+# #195 — 도메인 서비스 넘김(F4-177): 속성 · 첨자 너머 그릇을 바꾸는 메서드(`p.items.append(…)` 류 — 그 밖의 `p.<속성>.m(…)` 은
+# 값 객체 읽기) · 넘김으로 치지 않는 읽기 전용 내장 · 서비스 몸에서 받은 일의 차례.
+CONTAINER_MUTATORS = frozenset({"append", "extend", "insert", "remove", "pop", "popitem", "clear", "update", "add", "discard",
+                                "setdefault", "sort", "reverse", "__setitem__", "__delitem__"})
+READ_ONLY_BUILTINS = frozenset({"isinstance", "type", "id", "repr", "str", "len", "bool", "hash"})
+SERVICE_EFFECT_RANK = {"none": 0, "root": 1, "bypass": 2}
 
 # #659 — 승격 부품의 쓰기 경계 자원(주석 이름 끝)과 문면 조각.
 WRITE_BOUNDARY_SUFFIXES = ("Repository", "UnitOfWork")
@@ -912,11 +936,224 @@ def _domain_collection_factories(
     return out
 
 
+# ── #195 — 같은 BC 도메인 서비스(트리 74–75행)에 넘긴 save 인자(F4-177 · 한 홉) ──────────────────
+
+def _domain_service_index(root: Path, bc: Path) -> "dict[tuple[str, ...], tuple[int, ast.Module]]":
+    """같은 BC `domain_layer/domain_service/**.py` — 키 = 대상 루트부터의 모듈 경로, 값 = (BC 폴더 한 칸 위부터의 경로 길이, 모듈)."""
+    index: "dict[tuple[str, ...], tuple[int, ast.Module]]" = {}
+    service_dir: Path = bc / "domain_layer" / "domain_service"
+    if not service_dir.is_dir():
+        return index
+    for py in _py_files(service_dir):
+        mod = _parse(py)
+        if mod is not None:
+            index[py.relative_to(root).with_suffix("").parts] = (len(py.relative_to(bc.parent).parts), mod)
+    return index
+
+
+def _service_names(mod: ast.Module, index: "dict[tuple[str, ...], tuple[int, ast.Module]]"
+                   ) -> "dict[str, ast.ClassDef | ast.FunctionDef]":
+    """유스케이스 모듈 안 이름 → 같은 BC 도메인 서비스의 최상위 클래스 · 데코레이터 없는 최상위 동기 def.
+
+    최상위 절대 `from <…>.application.<bc>.domain_layer.domain_service.<…> import X` 만 해소한다(접미 규칙은
+    `_domain_collection_factories` 와 같다). 모듈 범위에서 다시 묶인 이름은 해소하지 않는다(fail-closed).
+    """
+    rebound = _module_rebound_names(mod)
+    out: "dict[str, ast.ClassDef | ast.FunctionDef]" = {}
+    for node in mod.body:
+        if not isinstance(node, ast.ImportFrom) or node.level or not node.module:
+            continue
+        mparts = tuple(node.module.split("."))
+        for parts, (bc_len, smod) in index.items():
+            if not (bc_len < len(mparts) <= len(parts) and parts[-len(mparts):] == mparts):
+                continue
+            defs = {n.name: n for n in smod.body
+                    if isinstance(n, ast.ClassDef) or (isinstance(n, ast.FunctionDef) and not n.decorator_list)}
+            for a in node.names:
+                local = a.asname or a.name
+                if a.name in defs and local not in rebound:
+                    out[local] = defs[a.name]
+    return out
+
+
+def _service_method(cdef: ast.ClassDef, name: str) -> "tuple[ast.FunctionDef, str] | None":
+    """클래스 본문에서 한 번만 묶인 동기 def 와 그 종류("static" · "class" · "instance").
+
+    데코레이터가 `staticmethod` · `classmethod` 하나뿐이거나 없을 때만 해소한다 — 클래스 데코레이터 · metaclass · 상속한
+    메서드 · 그 밖의 데코레이터는 해소하지 않는다(fail-closed).
+    """
+    if cdef.decorator_list or any(k.arg == "metaclass" for k in cdef.keywords):
+        return None
+    binds: "list[ast.AST]" = []
+    for st in cdef.body:
+        if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and st.name == name:
+            binds.append(st)
+        elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+            targets = st.targets if isinstance(st, ast.Assign) else [st.target]
+            binds.extend(t for t in targets if isinstance(t, ast.Name) and t.id == name)
+    if len(binds) != 1 or not isinstance(binds[0], ast.FunctionDef):
+        return None
+    decos = [d.id if isinstance(d, ast.Name) else "" for d in binds[0].decorator_list]
+    kind = {(): "instance", ("staticmethod",): "static", ("classmethod",): "class"}.get(tuple(decos))
+    return (binds[0], kind) if kind else None
+
+
+def _init_attr_services(cls: ast.ClassDef, names: "dict[str, ast.ClassDef | ast.FunctionDef]") -> "dict[str, ast.ClassDef]":
+    """유스케이스 `__init__` 이 같은 BC 도메인 서비스 클래스 C 로 물린 `self.<속성>` — `self.x = <C 로 주석한 파라미터>` ·
+    `self.x: … = <그 파라미터>` · `self.x = C()`. 속성이 클래스 어디서든 두 번 이상 대입되거나 그 파라미터가 `__init__` 에서
+    다시 묶이면 해소하지 않는다(fail-closed)."""
+    stores: "dict[str, int]" = {}
+    for n in ast.walk(cls):
+        if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name) and n.value.id == "self" \
+                and not isinstance(n.ctx, ast.Load):
+            stores[n.attr] = stores.get(n.attr, 0) + 1
+    out: "dict[str, ast.ClassDef]" = {}
+    for m in cls.body:
+        if not (isinstance(m, ast.FunctionDef) and m.name == "__init__"):
+            continue
+        typed: "dict[str, str]" = {}                     # 파라미터 → 주석 이름
+        for a in m.args.posonlyargs + m.args.args + m.args.kwonlyargs:
+            ann = a.annotation
+            if isinstance(ann, ast.Constant) and isinstance(ann.value, str):
+                try:
+                    ann = ast.parse(ann.value, mode="eval").body
+                except (SyntaxError, ValueError):
+                    ann = None
+            if isinstance(ann, ast.Name):
+                typed[a.arg] = ann.id
+        init_local = {n.id for n in ast.walk(m) if isinstance(n, ast.Name) and not isinstance(n.ctx, ast.Load)}
+        for st in m.body:
+            if isinstance(st, ast.Assign) and len(st.targets) == 1:
+                tgt, val = st.targets[0], st.value
+            elif isinstance(st, ast.AnnAssign) and st.value is not None:
+                tgt, val = st.target, st.value
+            else:
+                continue
+            if not (isinstance(tgt, ast.Attribute) and isinstance(tgt.value, ast.Name) and tgt.value.id == "self"
+                    and stores.get(tgt.attr) == 1):
+                continue
+            cname: "str | None" = None
+            if isinstance(val, ast.Name) and val.id not in init_local:
+                cname = typed.get(val.id)
+            elif (isinstance(val, ast.Call) and not val.args and not val.keywords and isinstance(val.func, ast.Name)
+                  and val.func.id not in init_local):
+                cname = val.func.id
+            target = names.get(cname) if cname else None
+            if isinstance(target, ast.ClassDef):
+                out[tgt.attr] = target
+    return out
+
+
+def _service_call(call: ast.Call, names: "dict[str, ast.ClassDef | ast.FunctionDef]", local: "set[str]",
+                  attr_services: "dict[str, ast.ClassDef]") -> "tuple[ast.FunctionDef, int, str] | None":
+    """유스케이스의 call → 같은 BC 도메인 서비스의 (def, 앞에서 뗄 파라미터 수, 이름표) — 해소 못 하면 None.
+
+    꼴은 셋: `f(…)`(최상위 def) · `C.m(…)`(staticmethod · classmethod) · `self.<속성>.m(…)`(`_init_attr_services`).
+    이 함수에서 묶인 이름(local)은 해소하지 않는다.
+    """
+    func = call.func
+    if isinstance(func, ast.Name):
+        hit = names.get(func.id)
+        if func.id in local or not isinstance(hit, ast.FunctionDef):
+            return None
+        return hit, 0, func.id
+    if not isinstance(func, ast.Attribute):
+        return None
+    recv = func.value
+    cdef: "ast.ClassDef | ast.FunctionDef | None" = None
+    if isinstance(recv, ast.Name) and recv.id not in local:
+        cdef, bound, label = names.get(recv.id), False, recv.id
+    elif (isinstance(recv, ast.Attribute) and isinstance(recv.value, ast.Name) and recv.value.id == "self"
+          and recv.attr in attr_services):
+        cdef, bound = attr_services[recv.attr], True
+        label = cdef.name
+    if not isinstance(cdef, ast.ClassDef):
+        return None
+    found = _service_method(cdef, func.attr)
+    if found is None or (found[1] == "instance" and not bound):
+        return None
+    return found[0], 0 if found[1] == "static" else 1, f"{label}.{func.attr}"
+
+
+def _bound_params(call: ast.Call, fdef: ast.FunctionDef, drop: int, name: str) -> "list[str] | None":
+    """call 에서 `name` 이 묶이는 fdef 의 파라미터 이름 — 별표 풀기 · `**` · 가변 인자 자리 · 없는 키워드면 None(해소 안 함)."""
+    if any(isinstance(a, ast.Starred) for a in call.args) or any(k.arg is None for k in call.keywords):
+        return None
+    ordered = fdef.args.posonlyargs + fdef.args.args
+    if len(ordered) < drop:
+        return None
+    positional = ordered[drop:]
+    by_keyword = {p.arg for p in fdef.args.args + fdef.args.kwonlyargs} - {p.arg for p in ordered[:drop]}
+    out: "list[str]" = []
+    for i, a in enumerate(call.args):
+        if isinstance(a, ast.Name) and a.id == name:
+            if i >= len(positional):
+                return None
+            out.append(positional[i].arg)
+    for k in call.keywords:
+        if isinstance(k.value, ast.Name) and k.value.id == name:
+            if k.arg not in by_keyword:
+                return None
+            out.append(k.arg)
+    return out
+
+
+def _chain_root(node: ast.AST) -> "str | None":
+    while isinstance(node, (ast.Attribute, ast.Subscript)):
+        node = node.value
+    return node.id if isinstance(node, ast.Name) else None
+
+
+def _bypassed(n: ast.AST) -> "str | None":
+    """n 이 루트 메서드를 건너뛰고 바꾸는 객체의 이름 — 유스케이스 쪽 가림과 서비스 쪽 우회가 같은 술어를 쓴다(F4-177).
+
+    과녁이 Store/Del 인 속성 · 첨자 사슬의 뿌리(덧셈 대입 · 주석 대입 포함) · `__dict__` 너머 · `setattr`/`delattr`/`vars` 와
+    `__setattr__`/`__delattr__` 의 첫 인자 · 속성 · 첨자 너머 그릇 바꿈 메서드(CONTAINER_MUTATORS)의 뿌리.
+    """
+    if isinstance(n, (ast.Attribute, ast.Subscript)) and not isinstance(n.ctx, ast.Load):
+        return _chain_root(n)
+    if isinstance(n, ast.Attribute) and n.attr == "__dict__":
+        return _chain_root(n)
+    if not isinstance(n, ast.Call):
+        return None
+    func = n.func
+    if (isinstance(func, ast.Attribute) and func.attr in CONTAINER_MUTATORS
+            and isinstance(func.value, (ast.Attribute, ast.Subscript))):
+        return _chain_root(func.value)
+    if n.args and isinstance(n.args[0], ast.Name) and (
+            (isinstance(func, ast.Name) and func.id in ("setattr", "delattr", "vars"))
+            or (isinstance(func, ast.Attribute) and func.attr in ("__setattr__", "__delattr__"))):
+        return n.args[0].id
+    return None
+
+
+def _service_effect(fdef: ast.FunctionDef, param: str) -> str:
+    """넘겨받은 파라미터가 서비스 몸에서 받는 일 — "bypass"(파라미터 너머 바꿈 · 중첩 범위 포함) > "none"(다시 묶임 · 다른
+    호출의 인자로 다시 넘김 — 읽기 전용 내장은 빼고 · 따라가지 않는다 · fail-closed) > "root"(몸 범위의 `p.m(…)` 루트 메서드
+    호출) > "none"."""
+    nodes: "list[ast.AST]" = list(ast.walk(fdef))
+    if any(_bypassed(n) == param for n in nodes):
+        return "bypass"
+    for n in nodes:
+        if isinstance(n, ast.Name) and n.id == param and not isinstance(n.ctx, ast.Load):
+            return "none"
+        if isinstance(n, (ast.Global, ast.Nonlocal)) and param in n.names:
+            return "none"
+        if (isinstance(n, ast.Call) and not (isinstance(n.func, ast.Name) and n.func.id in READ_ONLY_BUILTINS)
+                and any(isinstance(a, ast.Name) and a.id == param for a in [*n.args, *(k.value for k in n.keywords)])):
+            return "none"
+    if any(isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and isinstance(n.func.value, ast.Name)
+           and n.func.value.id == param and not n.func.attr.startswith("__") for n in _scope_nodes(list(fdef.body))):
+        return "root"
+    return "none"
+
+
 def _check_use_case_writes(root: Path, bc: Path, f: Findings) -> None:
     app_layer = bc / "application_layer"
     if not app_layer.is_dir():
         return
     domain_classes = _domain_class_index(root, bc)
+    service_index = _domain_service_index(root, bc)
     for py in _py_files(app_layer):
         # rglob+이름 필터라 동명 폴더 승격(#490 교체형)의 본체
         # (`<uc>_use_case/<uc>_use_case.py`)도 그대로 걸린다 — slot_glob 등가.
@@ -931,10 +1168,12 @@ def _check_use_case_writes(root: Path, bc: Path, f: Findings) -> None:
             continue
         frames = _frame_links(py) if promoted else {}
         collection_factories = _domain_collection_factories(mod, domain_classes)
+        service_names = _service_names(mod, service_index)
         classes = [n for n in mod.body if isinstance(n, ast.ClassDef)]
         for cls in classes:
             attr_repos = _init_attr_repos(cls)
             attr_uows = _init_attr_uows(cls)
+            services = (service_names, _init_attr_services(cls, service_names))
             helpers = {
                 m.name: m for m in cls.body
                 if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))
@@ -944,7 +1183,7 @@ def _check_use_case_writes(root: Path, bc: Path, f: Findings) -> None:
                 if not isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef)) or m.name.startswith("_"):
                     continue
                 _check_execute_body(root, py, m, attr_repos, attr_uows, helpers, collection_factories, f,
-                                    frames.get(cls.name))
+                                    frames.get(cls.name), services)
 
 
 def _literal_loop_elements(it: ast.AST, shadowed: "set[str]") -> "list[str] | None":
@@ -963,7 +1202,9 @@ def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFun
                         helpers: "dict[str, ast.FunctionDef | ast.AsyncFunctionDef]",
                         collection_factories: "dict[str, dict[str, bool]]",
                         f: Findings,
-                        frames: "dict[str, tuple[dict, dict, set[str], set[str]]] | None" = None) -> None:
+                        frames: "dict[str, tuple[dict, dict, set[str], set[str]]] | None" = None,
+                        services: "tuple[dict[str, ast.ClassDef | ast.FunctionDef], dict[str, ast.ClassDef]] | None" = None
+                        ) -> None:
     repo_names = _repo_param_names(fn)
     uow_names = _uow_param_names(fn)
     has_uow = bool(uow_names or attr_uows)
@@ -1154,6 +1395,34 @@ def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFun
               f"`{fn.name}` 이 UnitOfWork 를 받는데 도달 범위에 save/remove/after_commit 이 없다"
               "(with 진입만으로는 쓰기가 아니다) — 읽기 전용 유스케이스는 UnitOfWork 를 받지 않는다")
 
+    # #195 — 같은 BC 도메인 서비스에 넘긴 save 인자(F4-177 · 한 홉 — docstring «도메인 서비스 넘김»): 넘겨받은 파라미터가 그
+    # 서비스 몸에서 루트 메서드 호출을 받았고 이 함수 안에서 같은 꼴의 바꿈(`_bypassed`)을 받지 않았으면 받은 것으로 본다.
+    service_effect: "dict[str, tuple[str, str]]" = {}   # 이름 → (서비스 몸에서 받은 일, 이름표)
+    if services is not None:
+        names, attr_services = services
+        for node in ast.walk(fn):
+            hit = _service_call(node, names, local_names, attr_services) if isinstance(node, ast.Call) else None
+            if hit is None:
+                continue
+            sdef, drop, label = hit
+            passed = dict.fromkeys(a.id for a in [*node.args, *(k.value for k in node.keywords)] if isinstance(a, ast.Name))
+            for name in passed:
+                for param in _bound_params(node, sdef, drop, name) or []:
+                    got = _service_effect(sdef, param)
+                    if SERVICE_EFFECT_RANK[got] >= SERVICE_EFFECT_RANK[service_effect.get(name, ("none", ""))[0]]:
+                        service_effect[name] = (got, label)
+        mutated: "set[str]" = {r for r in map(_bypassed, ast.walk(fn)) if r}
+        # 유스케이스 쪽 다시 넘김도 fail-closed(서비스 쪽 다시 넘김과 같은 뜻 · 검토 I-1) — 해소된 서비스 호출 · 리포지토리 · UoW 받는
+        # 쪽 호출 · 읽기 전용 내장 밖의 호출에 인자로 넘긴 이름은 서비스 쪽 루트 호출로 가리지 않는다(응용 층 도우미는 따라가지 않는다).
+        for node in ast.walk(fn):
+            if (not isinstance(node, ast.Call) or _service_call(node, names, local_names, attr_services) is not None
+                    or (isinstance(node.func, ast.Name) and node.func.id in READ_ONLY_BUILTINS)
+                    or (isinstance(node.func, ast.Attribute)
+                        and (_is_repo_recv(node.func.value) or _uow_context(node.func.value, uow_names, attr_uows)))):
+                continue
+            mutated |= {a.id for a in [*node.args, *(k.value for k in node.keywords)] if isinstance(a, ast.Name)}
+        method_called |= {n for n, (got, _) in service_effect.items() if got == "root" and n not in mutated}
+
     # #195 — 글자 고리(함께 커밋 승인 꼴 S — `for x in sorted((a, b), key=…)`): 원소 이름이 모두 루트 메서드 호출을 받았고
     # 반복 변수가 이 고리에서만 묶이면 반복 변수도 받은 것으로 본다(2.36.0 — 원소 하나라도 받지 않았으면 그대로 위반).
     loop_binds: "dict[str, int]" = {}
@@ -1174,7 +1443,10 @@ def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFun
             continue
         if arg_name in method_called or arg_name in factory_born:
             continue
+        effect, label = service_effect.get(arg_name, ("", ""))
         why = ("루트 메서드 호출 없이 필드 직접 대입만 받았다" if arg_name in attr_assigned
+               else f"넘긴 도메인 서비스 `{label}` 안에서 루트 메서드를 건너뛰고 필드를 직접 바꾼다" if effect == "bypass"
+               else f"넘긴 도메인 서비스 `{label}` 안에서도 루트 메서드 호출을 받지 않았다" if effect == "none"
                else "같은 함수 안에서 루트 메서드 호출을 받은 적이 없다")
         f.add("#195", _rel(root, py, call.lineno),
               f"save/remove 인자 `{arg_name}` — {why}. 상태 변경은 애그리거트를 건너뛰지 않는다")

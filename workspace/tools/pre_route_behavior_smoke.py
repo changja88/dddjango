@@ -16,9 +16,12 @@ pre_route_responses_canonical.py` 를 그 사본의 `framework/ninja/pre_route_r
   ③ Django 400 처리기를 JSON 으로 둔 표(`BAD_REQUEST_RESPONSE`)와 URLconf — 몸통 상한 · 쿼리 칸 상한 400 이 그 꼴로 문서 = 실제.
   ④ 표가 틀린 꼴 — `manage.py check` · 보통 경로 요청은 서고 문서를 만들 때만 정해진 ValueError(마운트 문서 500).
   ⑤ mypy strict 0 — 정본 · 표 · 3.2 `api.py` 둘(`--strict` · django-stubs).
+  ⑥ ruff 0(F4-178) — 플러그인 정본 자산이 흔한 ruff 기본을 지난다: `.venv-probe` 의 ruff(고정 판) `--isolated` 로 기본 규칙 +
+     복잡도(C90 · 10) · `format --check` 줄 88 · 130. 정본은 코드를 못 고치는 파일이라 프로젝트 린트에 막히면 안 된다.
 exit 0 = 전 단언 통과 · 1 = 불일치 · 실행 불능.
 
-  --canonical <파일>  정본 대신 그 파일을 붙여 돈다(옛 시제품 정본이 붉은지 보는 대조용).
+  --canonical <파일>  ①~⑤ 를 정본 대신 그 파일을 붙여 돈다(옛 시제품 정본이 붉은지 보는 대조용). ⑥ 은 늘 플러그인 정본 자산을
+                      본다 — 함께 받는 옛 판(2.37.0) 자산은 동작만 같고 ruff 는 못 지난다.
 """
 from __future__ import annotations
 
@@ -36,6 +39,7 @@ ROOT: Path = Path(__file__).resolve().parents[2]
 FIXTURE: Path = ROOT / "workspace" / "eval" / "fixtures" / "pre_route_behavior"
 CANONICAL: Path = ROOT / "dddjango" / "scripts" / "pre_route_responses_canonical.py"
 PROBE_PY: Path = ROOT / ".venv-probe" / "bin" / "python"
+RUFF: Path = ROOT / ".venv-probe" / "bin" / "ruff"
 CANON_REL: str = "framework/ninja/pre_route_responses.py"
 TABLE_REL: str = "framework/ninja/pre_route_response_table.py"
 MYPY_TARGETS: "tuple[str, ...]" = (CANON_REL, TABLE_REL, "toyproj/api.py", "toyproj/extra_api.py")
@@ -45,6 +49,13 @@ WATCHED_HEADERS: "tuple[str, ...]" = ("Retry-After", "Service-Maintenance-Ends-A
 TOKEN: "dict[str, str]" = {"HTTP_AUTHORIZATION": "Bearer good"}
 CROSS: "dict[str, str]" = {"HTTP_SEC_FETCH_SITE": "cross-site"}
 MANY_FIELDS: str = "&".join(f"k{i}=v" for i in range(1001))   # DATA_UPLOAD_MAX_NUMBER_FIELDS(1000) 넘김
+# ⑥ ruff — 설정 파일을 안 읽고(`--isolated`) 흔한 기본만: 기본 규칙 + 복잡도 10 · 서식 줄 88(기본) · 130
+RUFF_COMMON: "tuple[str, ...]" = ("--isolated", "--no-cache", "--target-version", "py312")
+RUFF_RUNS: "tuple[tuple[str, ...], ...]" = (
+    ("check", *RUFF_COMMON, "--extend-select", "C90", "--config", "lint.mccabe.max-complexity = 10"),
+    ("format", *RUFF_COMMON, "--check"),
+    ("format", *RUFF_COMMON, "--check", "--line-length", "130"),
+)
 
 # ① operation 마다 생성 문서 status 집합(마운트 문서 · 빠짐 · 남는 operation 없음)
 DOCS: "dict[str, dict[str, list[int]]]" = {
@@ -423,6 +434,19 @@ def _mypy(td: Path, canonical: Path) -> "list[str]":
     return [] if proc.returncode == 0 and want in out else [f"[mypy strict] exit {proc.returncode} — {out[-1500:]}"]
 
 
+def _ruff(td: Path) -> "list[str]":
+    """⑥ — 플러그인 정본 자산을 장난감 자리(`framework` 가 프로젝트 꾸러미)에 두고 ruff 를 돈다."""
+    if not RUFF.is_file():
+        return ["[ruff] .venv-probe 에 ruff 가 없다(make probe-env 필요 — probe-fixture-requirements.txt 의 고정 판)"]
+    toy: Path = _toy(td / "ruff", CANONICAL)
+    fails: "list[str]" = []
+    for args in RUFF_RUNS:
+        proc = subprocess.run([str(RUFF), *args, CANON_REL], cwd=toy, capture_output=True, text=True, timeout=CHILD_TIMEOUT)
+        if proc.returncode != 0:
+            fails.append(f"[ruff] `ruff {' '.join(args)}` exit {proc.returncode} — {(proc.stdout + proc.stderr).strip()[-1500:]}")
+    return fails
+
+
 def main() -> int:
     canonical: Path = CANONICAL
     if "--canonical" in sys.argv[1:-1]:
@@ -448,7 +472,7 @@ def main() -> int:
             return (_doc_checks(run["docs"], None, JSON400_PARTS, "[JSON 400]")
                     + _response_checks(run["docs"], run["responses"], JSON400_REQUESTS, "[JSON 400]"))
         for stage, label in ((main_stage, "기본"), (json_stage, "JSON 400"), (lambda: _fail_checks(td, canonical), "표 실패 꼴"),
-                             (lambda: _mypy(td, canonical), "mypy strict")):
+                             (lambda: _mypy(td, canonical), "mypy strict"), (lambda: _ruff(td), "ruff")):
             try:
                 fails += stage()
             except (RuntimeError, subprocess.TimeoutExpired, OSError, ValueError, KeyError) as exc:
@@ -456,13 +480,13 @@ def main() -> int:
     ops: int = sum(map(len, DOCS.values()))
     print(f"요약: 경로 앞 응답 동작 — 문서 operation {ops} · 꼴 {len(PARTS) + len(JSON400_PARTS)} · 머리 정의 {len(HEADER_DEFS)} · 실제 요청 "
           f"{len(REQUESTS) + len(JSON400_REQUESTS)} · 표 실패 꼴 {len(FAILS)} · mypy strict {len(MYPY_TARGETS)} 파일 · "
-          f"어긋남 {len(fails)}")
+          f"ruff {len(RUFF_RUNS)} 단(정본 자산) · 어긋남 {len(fails)}")
     if fails:
         print("FAIL — 경로 앞 응답 정본 동작 스모크:")
         for f in fails:
             print("  - " + f.replace("\n", "\n    "))
         return 1
-    print("PASS — 경로 앞 응답 정본 동작 스모크(생성 문서 = 실제 응답 · 표 검증 · mypy strict)")
+    print("PASS — 경로 앞 응답 정본 동작 스모크(생성 문서 = 실제 응답 · 표 검증 · mypy strict · ruff)")
     return 0
 
 

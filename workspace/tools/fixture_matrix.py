@@ -7,7 +7,7 @@ FROZEN 이므로 실측은 이 fixture 결정 레인만 쓴다.
 
 케이스: skeleton 9 + 기존 15종×2 + API-error 3종×2(--error-profile auto)
        + 신설 8종×2 + checker_lint 2 + 호출 계약 27 + 수정 사이클 레인 3×2 + 음성 · 양성 단독 레인
-       = exit 대조 126 + 줄 대조 29(GROUP_CASES — 아래) = 155(실행 표 끝 «케이스» 줄이 실측이다).
+       = exit 대조 127 + 줄 대조 43(GROUP_CASES — 아래) = 170(실행 표 끝 «케이스» 줄이 실측이다).
 
 의미 묶음 줄 대조(2.28.0 · #654~#656 · 설계 7.4): exit 만 보는 레인은 ⓓ 후보 줄(exit 불산입)과
 줄 글자(#656 주어)를 못 본다 — 이 레인은 거름 규칙의 줄 전부를 글자 그대로 기대와 대조한다.
@@ -121,6 +121,8 @@ POSITIVE_LANES: "list[tuple[str, str, str]]" = [
     ("check-domain-model.py", "domain_model", "joint_commit"),
     # 2.36.0 — #195 글자 고리 넓힘(승인 꼴 S · 줄은 GROUP_CASES 가 고정).
     ("check-transaction-boundary.py", "transaction_boundary", "literal_loop"),
+    # F4-177 — #195 같은 BC 도메인 서비스 한 홉(넘긴 인자 · 서비스 안 바꿈 · 다시 넘김 · 지역 바꿈 — 줄은 GROUP_CASES 가 고정).
+    ("check-transaction-boundary.py", "transaction_boundary", "service_reach"),
     # F4-92 가드 — 위 한계의 경계: 같은 영역의 다른 업무 낱말(`booked` — 폴더 이름에는 없는 낱말)이 `event` 와 함께
     # 새면 그 낱말로 계속 잡는다.
     ("check-business-vocabulary.py", "business_vocabulary", "event_noun_leak_guard"),
@@ -202,6 +204,14 @@ _JC_LOOP: str = ("승인 구간 안에서 쓰기를 감싼 고리는 잠금 정�
 # transaction_boundary/literal_loop — #195 문면 조각(2.36.0 글자 고리 넓힘).
 _LL: str = ("[#195] application/orders/application_layer/order/{u}/{u}_use_case.py:{n}: save/remove 인자 `order` — 같은 함수 안에서 "
             "루트 메서드 호출을 받은 적이 없다. 상태 변경은 애그리거트를 건너뛰지 않는다")
+# transaction_boundary/service_reach — #195 문면 조각(F4-177 · 같은 BC 도메인 서비스 한 홉 · 사례마다 유스케이스 폴더 하나).
+_SR: str = "[#195] application/orders/application_layer/order/{u}/{u}_use_case.py:{n}: "
+_SR_ARG: str = "save/remove 인자 `order` — {w}. 상태 변경은 애그리거트를 건너뛰지 않는다"
+_SR_LOCAL: str = "같은 함수 안에서 루트 메서드 호출을 받은 적이 없다"
+_SR_FIELD: str = "루트 메서드 호출 없이 필드 직접 대입만 받았다"
+_SR_NONE: str = "넘긴 도메인 서비스 `{s}` 안에서도 루트 메서드 호출을 받지 않았다"
+_SR_BYPASS: str = "넘긴 도메인 서비스 `{s}` 안에서 루트 메서드를 건너뛰고 필드를 직접 바꾼다"
+_SR_ZERO: str = "`execute` 이 UnitOfWork 로 쓰기를 하는데 루트 메서드 호출이 0 이다"
 # transaction_boundary/write_returns — #355 문면 조각(F4-49).
 _WR: str = "application/orders/domain_layer/order/order_repository.py"
 _M355: str = " — 리포지토리는 {애그리거트, Sequence[애그리거트], 값객체, bool·int·None} 만 돌려준다"
@@ -227,8 +237,44 @@ _AE_PUBLIC: str = "[#292] " + _AE + "{f}: 예외 클래스 `{c}` 가 application
 _AE_PRIVATE: str = ("[#292] " + _AE + "{f}: 사설 예외 클래스 `{c}` 를 모듈 밖 제품 코드(`application/orders/{u}`)가 import 한다 — "
                     "바깥이 잡으면 사설 이름이어도 예외 자리 규칙을 따른다. " + _AE_FIX)
 
+# usecase_dto/entrance_pairs — #188 문면 조각(F4-158 · 검사기 문면 그대로 · 영역마다 한 줄).
+_UC188_ADMIN: str = (
+    "`{a}/` 를 부르는 것이 admin 뿐이다 — 입구(같은 이름의 `api/<area>` · `open_host_service/<area>` · 이 영역을 부르는 "
+    "`open_host_service/` · `event_subscription/` · `cron_job/` · `api/webhook/` 파일)가 없다. admin 은 ORM 으로 읽고 쓰거나, "
+    "DB 로 걸 수 없는 규칙이 있는 쓰기는 그 BC 창구(`open_host_service`)를 부른다"
+)
+_UC188_NONE: str = (
+    "`<area>` 는 입구와 짝이다 — 같은 이름의 `driving_layer/api/<area>` · `driving_layer/open_host_service/<area>` 도, "
+    "이 영역을 부르는 `open_host_service/` · `event_subscription/` · `cron_job/` · `api/webhook/` 파일도 `{a}/` 에 없다"
+)
+
 # (라벨, 검사기, fixture, 거름(줄에 search 하는 정규식 · 빈 글 = 모든 줄), 기대 줄) — 기대는 리터럴(고침 번호는 설계 7.4).
 _PURE562: str = " — 한 글자라도 나오면 위반(Shared Kernel 차단 기계)"
+# 판 B C2 — cross_context #664 · #665 · #666(F4-159) · admin #668(F4-158) · #101 부칙 문면 조각(검사기 문면 그대로).
+_CC: str = "cross_context/backoffice/"
+_CCF: str = _CC + "suspension/feature/"
+_M664_BC: str = ("`cross_context/` 가 BC 에서 import 하는 것은 그 BC 의 `driving_layer/open_host_service/` 아래"
+                 "(창구 서비스 · 계약 · 창구 예외)뿐이다 — `{m}`")
+_M664_MODEL: str = ("`cross_context/` 는 모델 클래스를 두지 않는다 — `{c}`(`managed = False` · 프로젝트 기저 · 표 표지 `Meta` 도)"
+                    " · 값은 그 BC 창구로 읽는다")
+_M664_SQL: str = "`cross_context/` 는 날 SQL 길을 쓰지 않는다 — `{m}` (값은 그 BC 창구로)"
+_M664_CALL: str = "`cross_context/` 는 날 SQL 을 쓰지 않는다 — `.{n}(…)` (값은 그 BC 창구로)"
+_M664_GET: str = "`cross_context/` 는 BC 모델을 꺼내지 않는다 — `{n}()` (값은 그 BC 창구로)"
+_M665_IMP: str = ("BC · framework · `<project>/` 는 `cross_context/` 를 import 하지 않는다(`<project>/urls.py` 는 "
+                  "`include(\"cross_context.backoffice.urls\")` 문자열로만) — `{m}`")
+_M665_STR: str = ("`<project>/` 가 `cross_context` 에 닿는 문자열은 `include(\"cross_context.backoffice.urls\")` 와 설정 모듈의 "
+                  "앱 문자열(`cross_context.backoffice` · 그 `apps` 모듈의 설정 클래스)뿐이다 — 주소는 "
+                  "`cross_context/backoffice/urls.py` 한 곳에서 `admin_view` 로 감싼다 — `{s}`")
+_M666_WRAP: str = ("화면 주소는 `admin.site.admin_view(…)` 로 감싼다 — `{n}(…)`"
+                   "(admin 로그인 · 권한을 그대로 쓴다 · `include` 도 두지 않는다)")
+_M666_OUT: str = "`cross_context/` 의 주소는 `cross_context/backoffice/urls.py` 한 파일에만 적는다 — `{n}(…)`"
+_AO: str = "application/orders/driven_layer/django_orders/admin/order/feature/"
+_OM: str = "application.orders.driven_layer.django_orders.models."
+_M668: str = ("admin 은 자기 BC 의 `domain_layer/` · `application_layer/` · `composition_root/` · `adapter/persistence/` · "
+              "`adapter/anticorruption_layer/` 를 import 하지 않는다(자기 `django_<bc>/` 모듈을 거쳐 다시 가져와도 같다) — "
+              "단순 자료는 ORM 값(모델 필드 · 모델의 속성 · 메서드)으로 읽고 쓰고, DB 로 걸 수 없는 규칙이 있는 쓰기는 그 BC "
+              "창구(`driving_layer/open_host_service/`)를 부른다 · 두 BC 이상의 값을 보이는 화면은 `cross_context/backoffice/` 다 — {l}")
+_M101: str = "BC 안쪽과 composition_root 은 자기 BC 의 driving 층을 import 하지 않는다(rd-2 · 타 BC 는 open_host_service 만 — #13/#102)"
 GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
     # 19 · 20 — 묶음 · C2 · 묶음 안 승격 · 캐시만 남은 폴더(부모 · 묶음 안)는 0 줄.
     ("skeleton/good_grouped", "check-layer-skeleton.py", "skeleton/good_grouped", _ALL, ()),
@@ -401,6 +447,14 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
         "[ⓓ#194] application/orders/application_layer/order/ship_parcel/ship_parcel_use_case/parcel_dispatch.py:15: "
         "조건이 도메인 속성 깊이를 들여다본다 — 업무 규칙이면 도메인으로 내린다 — 물음: Q2(이 판정의 주인이 유스케이스인가)",
      )),
+    # F4-158 — #188 이름 다른 입구가 부르는 영역은 짝이다: 창구(이름 다름) · 빌더만(별칭 import · 같은 파일 안 부름) ·
+    # cron(`import <경로>`) · webhook(`application_layer` 꾸러미에서 영역 이름) · 사건 구독(상대 import) · admin 과 구독이
+    # 함께 부름 → 0 줄. admin 만 부르는 영역(표준 자리 · 옛 자리 `django_<bc>/admin/`)은 admin 문구 · 시험이나
+    # `composition_root/event_wiring.py` 만 부르는 영역은 입구 없음 문구(#89 — 입구는 driving 뿐 · 모두 REST 표면 있는 BC).
+    ("usecase_dto/entrance_pairs", "check-usecase-dto-placement.py", "usecase_dto/entrance_pairs", r"^\[#188\]", tuple(
+        f"[#188] application/orders/application_layer/{a}: " + m.format(a=a)
+        for a, m in (("archive", _UC188_NONE), ("coupon", _UC188_ADMIN), ("notice", _UC188_NONE),
+                     ("voucher", _UC188_ADMIN)))),
     # ②′ 역할 내 독립 흐름(10-29) — #659 승격 부품의 쓰기 경계(ⓐ 쥠 · ⓑ 닿음 · ⓒ 발행) · 틀 쪽 팔(범용 트랜잭션
     # 콜백) · #197 본체 + 틀 한 단위(틀 클래스 단위 · (i) 꼴 도달 범위가 틀로 이어짐) · #195 는 틀로 넓히지 않음.
     # 오탐 경계 0 줄: 바깥 port · 스트림 방출 · 변경 함수(주석 있음 · 없음) · 틀 부품이 애그리거트 하나를 저장
@@ -565,6 +619,54 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
         _LL.format(u="move_pair_name_reused", n=22),
         _LL.format(u="move_pair_one_untouched", n=21),
      )),
+    # F4-177 — #195 같은 BC 도메인 서비스 한 홉. 0 줄 = 키워드 · 위치로 넘김 · 주입 속성 · `C()` 로 물린 속성 · classmethod ·
+    # 최상위 def · 파라미터 이름 다름 · 값 객체 읽기(서비스 · 유스케이스) · `isinstance` 뒤 루트 호출 · 받아들인 한계 둘(서비스가
+    # 조회 메서드만 · 키워드 뒤바꿈 자리가 조회 메서드를 받음). 그대로 #195 = 서비스가 읽기만 · 서비스 안 바꿈(칸 대입 · 루트 호출과
+    # 함께 · 속성 너머 그릇) · 서비스가 다시 넘김(모듈 도우미 · 형제 서비스) · 다시 묶음 · 다른 파라미터 · 키워드 뒤바꿈 · 다른 BC ·
+    # 응용 층 도우미 둘 · 다른 데코레이터(메서드 · 최상위 def) · 별표 풀기 · 함수 안 가림 · 속성 두 번 대입 · 유스케이스 지역 바꿈
+    # (대입 · `+=` · 첨자 · `setattr` · 속성 너머 그릇 · 서비스 없이 대입) · 조회 서비스 뒤 유스케이스가 응용 층 도우미(모듈 · `self._`)에
+    # 넘김(검토 I-1) · 받아들인 한계(두 홉 넷 · `C().m` · 서비스 안 별칭).
+    ("transaction_boundary/service_reach", "check-transaction-boundary.py", "transaction_boundary/service_reach",
+     r"^\[(ⓓ)?#195\]", (
+        _SR.format(u="alias_inside_service", n=20) + _SR_ARG.format(w=_SR_NONE.format(s="OrderLinkPolicy.link_alias")),
+        _SR.format(u="app_class_helper", n=22) + _SR_ARG.format(w=_SR_LOCAL),
+        _SR.format(u="app_module_helper", n=14) + _SR_ZERO,
+        _SR.format(u="app_module_helper", n=19) + _SR_ARG.format(w=_SR_LOCAL),
+        _SR.format(u="decorated_module_function", n=15) + _SR_ZERO,
+        _SR.format(u="decorated_module_function", n=20) + _SR_ARG.format(w=_SR_LOCAL),
+        _SR.format(u="field_assign_and_method_service", n=20) + _SR_ARG.format(w=_SR_BYPASS.format(s="OrderFieldPolicy.link_and_patch")),
+        _SR.format(u="field_assign_service", n=20) + _SR_ARG.format(w=_SR_BYPASS.format(s="OrderFieldPolicy.link")),
+        _SR.format(u="field_method_service", n=20) + _SR_ARG.format(w=_SR_BYPASS.format(s="NotePolicy.link")),
+        _SR.format(u="helper_after_query", n=21) + _SR_ARG.format(w=_SR_LOCAL),
+        _SR.format(u="hidden_module_helper", n=20) + _SR_ARG.format(w=_SR_NONE.format(s="HiddenStampPolicy.link")),
+        _SR.format(u="hidden_sibling_service", n=20) + _SR_ARG.format(w=_SR_NONE.format(s="SiblingStampPolicy.link")),
+        _SR.format(u="inline_constructed_policy", n=15) + _SR_ZERO,
+        _SR.format(u="inline_constructed_policy", n=20) + _SR_ARG.format(w=_SR_LOCAL),
+        _SR.format(u="local_append_after_query", n=21) + _SR_ARG.format(w=_SR_LOCAL),
+        _SR.format(u="local_assign_after_query", n=21) + _SR_ARG.format(w=_SR_FIELD),
+        _SR.format(u="local_assign_only", n=14) + _SR_ZERO,
+        _SR.format(u="local_assign_only", n=19) + _SR_ARG.format(w=_SR_FIELD),
+        _SR.format(u="local_aug_after_query", n=21) + _SR_ARG.format(w=_SR_LOCAL),
+        _SR.format(u="local_setattr_after_query", n=21) + _SR_ARG.format(w=_SR_LOCAL),
+        _SR.format(u="local_subscript_after_query", n=21) + _SR_ARG.format(w=_SR_LOCAL),
+        _SR.format(u="other_bc_service", n=20) + _SR_ARG.format(w=_SR_LOCAL),
+        _SR.format(u="other_decorator", n=20) + _SR_ARG.format(w=_SR_LOCAL),
+        _SR.format(u="param_rebound_in_service", n=20) + _SR_ARG.format(w=_SR_NONE.format(s="OrderRebindPolicy.link")),
+        _SR.format(u="read_only_service", n=20) + _SR_ARG.format(w=_SR_NONE.format(s="OrderReadPolicy.ensure")),
+        _SR.format(u="root_call_on_other_param", n=20) + _SR_ARG.format(w=_SR_NONE.format(s="OrderLeadPolicy.link")),
+        _SR.format(u="self_attr_reassigned", n=20) + _SR_ZERO,
+        _SR.format(u="self_attr_reassigned", n=25) + _SR_ARG.format(w=_SR_LOCAL),
+        _SR.format(u="self_helper_after_query", n=24) + _SR_ARG.format(w=_SR_LOCAL),
+        _SR.format(u="shadowed_policy_name", n=21) + _SR_ARG.format(w=_SR_LOCAL),
+        _SR.format(u="starred_before_aggregate", n=21) + _SR_ARG.format(w=_SR_LOCAL),
+        _SR.format(u="swapped_keywords", n=20) + _SR_ARG.format(w=_SR_NONE.format(s="OrderLinkPolicy.link_by_class")),
+        _SR.format(u="two_hops_cls_helper", n=20) + _SR_ARG.format(w=_SR_NONE.format(s="OrderFlowPolicy.run")),
+        _SR.format(u="two_hops_module_helper", n=15) + _SR_ZERO,
+        _SR.format(u="two_hops_module_helper", n=20) + _SR_ARG.format(w=_SR_NONE.format(s="settle_link")),
+        _SR.format(u="two_hops_self_helper", n=17) + _SR_ZERO,
+        _SR.format(u="two_hops_self_helper", n=22) + _SR_ARG.format(w=_SR_NONE.format(s="OrderFlowPolicy.run_with")),
+        _SR.format(u="two_hops_sibling", n=20) + _SR_ARG.format(w=_SR_NONE.format(s="OrderSettlementPolicy.settle")),
+     )),
     # F4-49 — 쓰기 메서드(save · remove)의 반환도 #355 허용 목록(dict · str · QuerySet · 도메인 밖 타입 · 모델 이름).
     # 0 줄: None · 애그리거트 · 그 목록 · 값 객체 · 쓰기의 bool(CAS) · int(지운 개수 — 후보 물음도 없음). 조회 줄은 그대로.
     ("transaction_boundary/write_returns", "check-transaction-boundary.py", "transaction_boundary/write_returns",
@@ -634,6 +736,41 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
         "[#490] application/orders/domain_layer/conftest.py: 트리가 이 층에 이름을 준 파일이 아니다",
         "[#490] application/orders/test/helpers.py: 트리가 이 층에 이름을 준 파일이 아니다",
     )),
+    # 판 B C1 · F4-159 — 결정대로 지은 `cross_context/backoffice/`(화면 하나 · 평평한 템플릿 둘 · 화면 시험 폴더의 conftest)는
+    # 골격 · 앱 자리 · 타입 규율 모두 0 줄.
+    ("skeleton/good_cross", "check-layer-skeleton.py", "skeleton/good_cross", _ALL, ()),
+    ("skeleton/good_cross (app-container)", "check-app-container.py", "skeleton/good_cross", _ALL, ()),
+    ("skeleton/good_cross (public-surface)", "check-public-surface-annotation.py", "skeleton/good_cross", _ALL, ()),
+    # 판 B C1 · F4-159 — `cross_context/` 도 #488 · #490 의 주어다(있을 때만): `__init__.py` · `apps.py` 없음 · 칸 밖 파일 ·
+    # `<screen>/` 안 도우미 · 화면으로 읽힌 `static/`(`panel.py` 부재) · 템플릿 하위 폴더 · 트리에 없는 `cross_context/reporting/`.
+    ("skeleton/bad_cross", "check-layer-skeleton.py", "skeleton/bad_cross", r"^\[#\d+\] cross_context", (
+        "[#488] cross_context: 고정 칸 폴더에 `__init__.py` 가 없다",
+        "[#488] cross_context/backoffice/apps.py: 고정 파일 부재 — 비면 빈 파일로 만든다 (트리 174행)",
+        "[#488] cross_context/backoffice/static/panel.py: 고정 파일 부재 — 비면 빈 파일로 만든다 (트리 177행)",
+        "[#490] cross_context/backoffice/static/backoffice: 트리에 없는 칸이다 — 반환",
+        "[#490] cross_context/backoffice/suspension/helpers.py: 트리가 이 층에 이름을 준 파일이 아니다",
+        "[#490] cross_context/backoffice/templates/admin/backoffice/suspension: 트리에 없는 칸이다 — 반환",
+        "[#490] cross_context/backoffice/models.py: 트리가 이 층에 이름을 준 파일이 아니다",
+        "[#490] cross_context/backoffice/utils.py: 트리가 이 층에 이름을 준 파일이 아니다",
+        "[#490] cross_context/reporting: 트리에 없는 칸이다 — 반환",
+    )),
+    # 판 B C1 · F4-159 — app-container 의 예외는 저장소 상대 `cross_context/backoffice` 에 모델 표지가 없을 때 하나뿐이다:
+    # 이름만 닮은 `cross_context/back_office/` · `cross_context/` 아래 다른 앱은 지금처럼 «`application/` 밖 평면» ·
+    # 그 자리에 `models.py` 가 있으면 «모델 없는 앱» 한 줄(규칙 번호 없는 계약 줄 `- 자리: 글` 을 대조한다).
+    ("app_container/cross_backoffice", "check-app-container.py", "app_container/cross_backoffice", _ALL, tuple(
+        f"- cross_context/{d}: Django 앱이 `application/` 밖 평면에 있다 — 앱은 `application/<app>/` 아래(houserules §0-1)"
+        for d in ("back_office", "reporting"))),
+    ("app_container/cross_backoffice_models", "check-app-container.py", "app_container/cross_backoffice_models", _ALL, (
+        "- cross_context/backoffice: `cross_context/backoffice` 는 모델 없는 앱이다 — 모델 · 마이그레이션은 그 BC 의 "
+        "`django_<bc>/` 에 둔다",
+    )),
+    # 판 B C1 · F4-159 — `RULE_ROOTS` 에 `cross_context`: 그 칸의 제품 파일 · 시험 본문에 #647 차단이 한 줄씩
+    # (옛 판은 제품 파일 ⓓ#645 후보 · 시험 본문 0).
+    ("public_surface/cross_rule_roots", "check-public-surface-annotation.py", "public_surface/cross_rule_roots",
+     r"^\[(ⓓ)?#\d+\] cross_context/", (
+        f"[#647] cross_context/backoffice/suspension/feature/suspension_rows.py:4: `suspension_rows()` 반환 타입의 {_M647.format(v='Any')}",
+        f"[#647] cross_context/backoffice/test/integration/test_suspension_rows.py:5: `state` 주석의 {_M647.format(v='Any')}",
+    )),
     # F4-62 ① — BC `test/` 직계 conftest.py 의 autouse=True 만 #383(autouse=False · 인자 없는 · 아래 폴더의 conftest 는 0 줄) ·
     # F4-138 추기 — e2e 의 자기 BC cron_job 입구 import 는 #390 이 아니다(다른 driving_layer import 는 그대로).
     ("test_config/bc_conftest_entrances", "check-test-config.py", "test_config/bc_conftest_entrances", r"^\[#(383|390)\]", (
@@ -656,6 +793,104 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
     ("business_vocabulary/broker_port_fake", "check-business-vocabulary.py",
      "business_vocabulary/broker_port_fake", r"^\[#623\]", (
         "[#623] framework/test/fake/ghost_port.py: `ghost_port` 에 대응하는 framework 선언이 없다 — fake 와 선언은 1:1 이다",
+    )),
+    # 판 B C2 · F4-159 — 결정대로 지은 `cross_context/backoffice/`(창구 서비스 · 계약 · 창구 예외 import · 꾸러미 꼴 창구 ·
+    # 시험 안 `get_user_model` · 창구가 준 페이지 값의 `page.cursor()` · pydantic `BaseModel` · 폼 `Meta`) · `<project>/` 의
+    # `include` 문자열(튜플 꼴 포함) · 설정 모듈 앱 문자열(나눈 목록 · 다른 설정 파일 `+=` · 로거 이름)은 0 줄.
+    ("context_isolation/cross_good", "check-context-isolation.py", "context_isolation/cross_good", _ALL, ()),
+    # 판 B C2 · F4-159 — #664 창구 밖 BC import(응용 · driven · 합성 루트 · BC 꾸러미 · api · BC 시험 재료) · 밖으로 나가는
+    # 상대 import · `get_model` · 시험 밖 `get_user_model` · 모델 클래스(`managed = False` · 프로젝트 기저 · `Model as M` ·
+    # 표 표지 `Meta`) · 날 SQL(connection · chunked_cursor · connections · RawSQL 별칭 · 드라이버 · `.raw` · `.extra`) ·
+    # #665 도메인 · admin 함수 안 · 합성 루트 · framework · `<project>/urls.py` 직접 import · `<project>/` 문자열(다른 include ·
+    # 앱 꾸러미 include · import_string · add_router) · #666 감싸지 않은 주소(맨 뷰 · include · `+` · `+=` · append · extend ·
+    # 따로 둔 목록 · `view=`) · urls.py 밖 `path` · ninja `Router`.
+    ("context_isolation/cross_bad", "check-context-isolation.py", "context_isolation/cross_bad", r"^\[#66[4-6]\]", (
+        *(f"[#664] {_CCF}{f}: " + _M664_BC.format(m=m) for f, m in (
+            ("via_api.py", "application.orders.driving_layer.api.order.order_controller"),
+            ("via_bc_package.py", "application"),
+            ("via_composition.py", "application.orders.composition_root.dependency_wiring"),
+            ("via_driven.py", "application.billing.driven_layer.adapter.ledger_load.django_adapter"),
+            ("via_use_case.py", "application.orders.application_layer.order.place_order.place_order_use_case"),
+        )),
+        f"[#664] {_CC}test/integration/conftest.py: " + _M664_BC.format(m="application.orders.test.factories.order_factory"),
+        f"[#664] {_CCF}via_relative_escape.py: 상대 import 가 `cross_context/` 밖으로 나간다 — `.....config`",
+        f"[#664] {_CCF}model_lookup.py:5: " + _M664_GET.format(n="get_model"),
+        f"[#664] {_CCF}user_lookup.py:5: " + _M664_GET.format(n="get_user_model"),
+        *(f"[#664] {_CCF}{f}:4: " + _M664_MODEL.format(c=c) for f, c in (
+            ("mirror_alias.py", "AliasMirror"), ("mirror_managed.py", "OrderMirror"),
+            ("mirror_meta.py", "MetaMirror"), ("mirror_project_base.py", "StampedMirror"),
+        )),
+        *(f"[#664] {_CCF}{f}: " + _M664_SQL.format(m=m) for f, m in (
+            ("sql_chunked.py", "django.db.connection"), ("sql_connections.py", "django.db.connections"),
+            ("sql_cursor.py", "django.db.connection"), ("sql_driver.py", "psycopg2"),
+            ("sql_rawsql.py", "django.db.models.expressions.RawSQL"),
+        )),
+        f"[#664] {_CCF}sql_queryset.py:2: " + _M664_CALL.format(n="raw"),
+        f"[#664] {_CCF}sql_queryset.py:2: " + _M664_CALL.format(n="extra"),
+        *(f"[#665] {f}: " + _M665_IMP.format(m=m) for f, m in (
+            ("application/orders/composition_root/dependency_wiring.py", "cross_context.backoffice.urls"),
+            ("application/orders/domain_layer/order/order_screen_link.py", "cross_context.backoffice.suspension.panel"),
+            ("application/orders/driven_layer/django_orders/admin/order/panel.py", "cross_context.backoffice.suspension.feature"),
+            ("framework/notify/screen_link.py", "cross_context.backoffice"),
+            ("config/urls.py", "cross_context.backoffice.suspension.panel"),
+        )),
+        *(f"[#665] {f}: " + _M665_STR.format(s=s) for f, s in (
+            ("config/api.py:4", "cross_context.backoffice.suspension.feature.ops_api.router"),
+            ("config/urls.py:9", "cross_context.backoffice.suspension.feature.raw_routes"),
+            ("config/urls.py:10", "cross_context.backoffice"),
+            ("config/urls.py:12", "cross_context.backoffice.suspension.panel.SuspensionPanel"),
+        )),
+        *(f"[#666] {_CC}urls.py:{n}: " + _M666_WRAP.format(n="path") for n in (7, 10, 11, 12, 13, 14)),
+        f"[#666] {_CC}urls.py:16: " + _M666_WRAP.format(n="re_path"),
+        f"[#666] {_CCF}ops_api.py:3: " + _M666_OUT.format(n="Router"),
+        f"[#666] {_CCF}raw_routes.py:5: " + _M666_OUT.format(n="path"),
+    )),
+    # 판 B C2 · F4-158 — #668 admin 은 자기 BC 금지 자리 다섯을 import 하지 않는다(도메인 · 상대 · 함수 안 · 합성 루트 · 저장
+    # 어댑터 · 자기 ACL · 꾸러미 꼴 절대 · 상대 · 꼴 섞임(절대 별칭 · 상대 · 응용 — 한 모듈은 한 칸 · 정렬) · 옛 자리) · 자기 모델
+    # 모듈 다시 내보내기 한 겹(이름 · 모듈째 가져와 속성 · `import … as` · 대입 별칭 · 모델 모듈의 `import … as` · 모델 모듈 상대
+    # import · `import *`) → 파일당 한 줄. 자기 모델 · 자기 창구 · 모델 모듈의 모델 클래스는 0 줄 · 다른 BC 창구 #13 · 모델 #12.
+    ("context_isolation/admin_imports", "check-context-isolation.py", "context_isolation/admin_imports", r"^\[#(668|12|13)\]", (
+        *(f"[#668] {_AO}{f}: " + _M668.format(l=str(sorted(m))) for f, m in (
+            ("acl_read.py", ["application.orders.driven_layer.adapter.anticorruption_layer.billing.billing_ledger_adapter"]),
+            ("builder_call.py", ["application.orders.composition_root.dependency_wiring"]),
+            ("domain_read.py", ["application.orders.domain_layer.order.order"]),
+            ("local_import.py", ["application.orders.application_layer.order.place_order.place_order_use_case"]),
+            ("mixed_forms.py", ["application.orders.domain_layer.order.order",
+                                "application.orders.application_layer.order.place_order.place_order_use_case"]),
+            ("package_layers.py", ["application.orders.domain_layer", "application.orders.application_layer",
+                                   "application.orders.composition_root"]),
+            ("relative_package.py", ["application.orders.domain_layer"]),
+            ("relative_read.py", ["application.orders.domain_layer.order.order"]),
+            ("repository_read.py", ["application.orders.driven_layer.adapter.persistence.repository.django_order_repository"]),
+            ("reexport_assign_alias.py", [_OM + "order_model.Amount"]),
+            ("reexport_import_as.py", [_OM + "order_model.Money"]),
+            ("reexport_module_alias.py", [_OM + "order_model.money_mod"]),
+            ("reexport_module_attr.py", [_OM + "order_model.Money"]),
+            ("reexport_name.py", [_OM + "order_model.Money"]),
+            ("reexport_relative_model.py", [_OM + "note_model.Money"]),
+            ("reexport_star.py", [_OM + "order_model.*"]),
+        )),
+        "[#668] application/orders/django_orders/admin/legacy/feature/old_screen.py: "
+        + _M668.format(l=str(["application.orders.domain_layer.order.order"])),
+        f"[#12] {_AO}other_model.py: 타 BC 에서 부를 수 있는 것은 OHS·published_event 둘이다(#83 — 이 import 는 BC 삭제 내성을 깬다)"
+        " — `application.billing.driven_layer.django_billing.models.ledger_model`",
+        f"[#13] {_AO}other_window.py: 타 BC 의 `open_host_service/` 를 import 하는 것은 `anticorruption_layer/` 뿐이다"
+        " — `application.billing.driving_layer.open_host_service.ledger.ledger_service`",
+    )),
+    # 판 B C2 · F4-158 — 기존 위반 픽스처의 admin 기능 파일(도메인 import)이 #668 한 줄을 더 낸다.
+    ("context_isolation/bad_rules #668", "check-context-isolation.py", "context_isolation/bad_rules", r"^\[#668\]", (
+        f"[#668] {_AO}bulk_close.py: " + _M668.format(l=str(["application.orders.domain_layer.order.order"])),
+    )),
+    # 판 B C7 · F4-158 — #101 부칙: 표준 자리 admin → 자기 창구는 0 줄 · admin → 자기 api · cron_job · 구독(함수 안)과
+    # admin 밖 driven 파일 → 자기 창구는 그대로 · 다른 BC 창구는 #13 · #102 소관(0 줄).
+    ("composition_root/admin_window", "check-composition-root.py", "composition_root/admin_window", r"^\[#101\]", tuple(
+        f"[#101] application/orders/driven_layer/django_orders/{f}: `application.orders.driving_layer.{m}` — " + _M101
+        for f, m in (
+            ("admin/order/feature/own_api.py:1", "api.order.order_controller"),
+            ("admin/order/feature/own_cron.py:1", "cron_job.sweep_cron_job"),
+            ("admin/order/feature/own_subscription.py:2", "event_subscription.order_paid_subscription"),
+            ("models/order_model.py:1", "open_host_service.order_desk.order_desk_service"),
+        )
     )),
 ]
 
@@ -697,6 +932,16 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
     ("#661 공개 이름 ⓑ 지움", _SK, "    _check_public_calls(kinds, mods, out)\n", "", _SK),
     ("#643 ②′ 갈래 지움", _SK,
      "elif kinds is not None and _split(kinds) and not kinds.flow_parts:", "elif False:", _SK),
+    # 판 B C1 · F4-159 — cross_context(skeleton/bad_cross · app_container/cross_* · public_surface/cross_rule_roots 레인이 잡는다).
+    ("F4-159 layer-skeleton cross_context 부르기 지움", _SK,
+     '        _check_cross_context(target / "cross_context", findings, cand)', "        pass", _SK),
+    ("F4-159 app-container 모델 표지 대조 지움", "check-app-container.py",
+     "            if any((d / m).exists() for m in MODEL_MARKERS):", "            if False:", "check-app-container.py"),
+    ("F4-159 app-container 자리 대조를 이름 끝으로 넓힘(위장 이름 통과)", "check-app-container.py",
+     "        if d.relative_to(root).parts == BACKOFFICE_APP:", '        if d.name.endswith("office"):', "check-app-container.py"),
+    ("F4-159 public-surface RULE_ROOTS 에서 cross_context 뺌", "check-public-surface-annotation.py",
+     'RULE_ROOTS = {"application", "framework", "cross_context"}', 'RULE_ROOTS = {"application", "framework"}',
+     "check-public-surface-annotation.py"),
     ("1 shared 값 객체 파일을 직계 glob 으로", _DM,
      'for py in folder_group.group_members(shared, "*.py", promotable=False):\n                _check_value_object_file',
      'for py in sorted(shared.glob("*.py")):\n                _check_value_object_file', _DM),
@@ -864,6 +1109,52 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
      "all(e in method_called for e in elements) and loop_binds[name] == 1\n"
      "                    and name not in bound_other and name not in simple):",
      "all(e in method_called for e in elements)):", "check-transaction-boundary.py"),
+    # F4-177 — #195 같은 BC 도메인 서비스 한 홉(설계 §6 변이 — 넘김 · 바꿈 · 대응 · 한정 · 지역 가림 · 넘김 fail-closed · 그릇 바꿈 목록).
+    ("F4-177 #195 도메인 서비스 넘김 인정 걷음", "check-transaction-boundary.py",
+     'method_called |= {n for n, (got, _) in service_effect.items() if got == "root" and n not in mutated}',
+     "method_called |= set()", "check-transaction-boundary.py"),
+    ("F4-177 서비스 안 필드 대입 막음 걷음", "check-transaction-boundary.py",
+     '    if any(_bypassed(n) == param for n in nodes):\n        return "bypass"',
+     '    if False:\n        return "bypass"', "check-transaction-boundary.py"),
+    ("F4-177 파라미터 대응 걷음(자리 넘김을 같은 이름으로)", "check-transaction-boundary.py",
+     "            out.append(positional[i].arg)",
+     "            out.append(name)", "check-transaction-boundary.py"),
+    ("F4-177 같은 BC 한정 걷음", "check-transaction-boundary.py",
+     'service_dir: Path = bc / "domain_layer" / "domain_service"',
+     "service_dir: Path = bc.parent", "check-transaction-boundary.py"),
+    ("F4-177 서비스 안 다시 묶임 걷음", "check-transaction-boundary.py",
+     '        if isinstance(n, ast.Name) and n.id == param and not isinstance(n.ctx, ast.Load):\n            return "none"',
+     '        if False:\n            return "none"', "check-transaction-boundary.py"),
+    ("F4-177 함수 안 가림 걷음", "check-transaction-boundary.py",
+     "if isinstance(recv, ast.Name) and recv.id not in local:",
+     "if isinstance(recv, ast.Name):", "check-transaction-boundary.py"),
+    ("F4-177 속성 한 번 대입 걷음", "check-transaction-boundary.py",
+     "and stores.get(tgt.attr) == 1):",
+     "and True):", "check-transaction-boundary.py"),
+    ("F4-177 데코레이터 한정 걷음", "check-transaction-boundary.py",
+     "for d in binds[0].decorator_list]",
+     "for d in binds[0].decorator_list[:1]]", "check-transaction-boundary.py"),
+    ("F4-177 별표 풀기 걷음", "check-transaction-boundary.py",
+     "    if any(isinstance(a, ast.Starred) for a in call.args) or any(k.arg is None for k in call.keywords):\n        return None",
+     "    if False:\n        return None", "check-transaction-boundary.py"),
+    ("F4-177 키워드 대응 걷음(키워드 넘김을 같은 이름으로)", "check-transaction-boundary.py",
+     "            out.append(k.arg)",
+     "            out.append(name)", "check-transaction-boundary.py"),
+    ("F4-177 지역 변경 가림 걷음(검토 B1)", "check-transaction-boundary.py",
+     " and n not in mutated}",
+     "}", "check-transaction-boundary.py"),
+    ("F4-177 지역 가림을 `x.f = v` 대입으로 좁힘(재확인 N1)", "check-transaction-boundary.py",
+     'mutated: "set[str]" = {r for r in map(_bypassed, ast.walk(fn)) if r}',
+     'mutated: "set[str]" = set(attr_assigned)', "check-transaction-boundary.py"),
+    ("F4-177 넘김 fail-closed 걷음(재확인 N2)", "check-transaction-boundary.py",
+     "        if (isinstance(n, ast.Call) and not (isinstance(n.func, ast.Name) and n.func.id in READ_ONLY_BUILTINS)",
+     "        if (False and not (isinstance(n.func, ast.Name) and n.func.id in READ_ONLY_BUILTINS)", "check-transaction-boundary.py"),
+    ("F4-177 그릇 바꿈 메서드 목록을 아무 메서드로 넓힘(셋째 확인 A)", "check-transaction-boundary.py",
+     "if (isinstance(func, ast.Attribute) and func.attr in CONTAINER_MUTATORS\n",
+     "if (isinstance(func, ast.Attribute)\n", "check-transaction-boundary.py"),
+    ("F4-177 유스케이스 쪽 넘김 fail-closed 걷음(검토 I-1)", "check-transaction-boundary.py",
+     "            mutated |= {a.id for a in [*node.args, *(k.value for k in node.keywords)] if isinstance(a, ast.Name)}",
+     "            pass", "check-transaction-boundary.py"),
     ("10 이벤트 이름 검사를 */event/*.py 로", _EP,
      'for py in [e for d in sorted(domain.iterdir()) if d.is_dir()\n                   for e in folder_group.group_members(d / "event", "*.py", promotable=False)]:',
      'for py in sorted(domain.glob("*/event/*.py")):', _EP),
@@ -904,6 +1195,17 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
     ("24 길이 상한 걷음(두 칸 통과)", _UC, "if len(parts) not in (6, 7) or", "if len(parts) < 6 or", _UC),
     ("#662 스캔 지움", _UC, "_check_part_imports(target, bc, ucs, findings)", "pass", _UC),
     ("#541 본체가 커밋 뒤 등록한 틀 메서드 무시", _UC, "False, findings, _frame_committed(uc))", "False, findings)", _UC),
+    ("F4-158 #188 이름 다른 입구 무시", _UC, "            if name in entrance_areas:\n                continue",
+     "            if False:\n                continue", _UC),
+    ("F4-158 #188 빌더 길 무시", _UC, "                for name, _ in names:\n                    got |= builders.get(name, set())",
+     "                for name, _ in names:\n                    pass", _UC),
+    ("F4-158 #188 빌더 별칭을 원래 이름으로", _UC, "origin.setdefault(bound, set()).update(areas)",
+     "origin.setdefault(name, set()).update(areas)", _UC),
+    ("F4-158 #188 빌더 안 부름 따라가지 않음", _UC, "                    if ident in fns:\n                        stack.append(ident)",
+     "                    if False:\n                        stack.append(ident)", _UC),
+    ("F4-158 #188 상대 import 건너뜀", _UC, "elif node.level - 1 <= len(pkg) - 2:", "elif False:", _UC),
+    ("F4-158 #188 admin 문구 합침", _UC, "            if name in admin_areas:", "            if False:", _UC),
+    ("F4-158 #188 옛 자리 admin 안 봄", _UC, '*sorted(bc.glob("django_*/admin"))', "", _UC),
     ("26 #291 옛 문면", _CI,
      "도메인 예외의 자리는 애그리거트 밑 `exception/` 과 공유 개념의 `shared_value_object/` 둘이다(#657)",
      "도메인 예외의 표준 자리는 애그리거트 밑 하나뿐이다", _CI),
@@ -965,6 +1267,65 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
      '        if name == "Exception" or name.endswith(("Exception", "Error")):\n            return True\n'
      '        if name in declared and exception_based(declared[name], declared, depth + 1):\n'
      '            return True\n', _CI),
+    # 판 B C2 · F4-159 — #664 · #665 · #666(cross_context/{cross_good,cross_bad} 레인이 잡는다).
+    ("F4-159 #664 창구 꼴을 driving_layer 까지로 넓힘", _CI,
+     'parts[2:4] == ["driving_layer", "open_host_service"]', 'parts[2:3] == ["driving_layer"]', _CI),
+    ("F4-159 #664 get_model 지움", _CI, 'if name == "get_model" or (name == "get_user_model" and not is_test):',
+     'if name == "get_user_model" and not is_test:', _CI),
+    ("F4-159 #664 시험 안 get_user_model 도 셈", _CI, 'if name == "get_model" or (name == "get_user_model" and not is_test):',
+     'if name in ("get_model", "get_user_model"):', _CI),
+    ("F4-159 #664 모델 클래스 지움", _CI,
+     "if isinstance(node, ast.ClassDef) and _model_class(node, origins, local, target):", "if False:", _CI),
+    ("F4-159 #664 모델 판정을 밑 이름 Model 하나로 좁힘(N5)", _CI,
+     "    return _django_model_base(cls, origins, local, target, True)\n",
+     '    return any((b.attr if isinstance(b, ast.Attribute) else getattr(b, "id", "")) == "Model" for b in cls.bases)\n',
+     _CI),
+    ("F4-159 #664 날 SQL(.raw · .extra) 지움", _CI,
+     'if isinstance(node.func, ast.Attribute) and name in ("raw", "extra"):', "if False:", _CI),
+    ("F4-159 #664 드라이버 · connection import 대조 지움(N6)", _CI,
+     "            raw = _raw_sql_import(node)\n", "            raw = None\n", _CI),
+    ("F4-159 #665 framework 훑기 지움", _CI, 'roots: list[Path] = [target / "application", target / "framework"]',
+     'roots: list[Path] = [target / "application"]', _CI),
+    ("F4-159 #665 <project> 훑기 지움", _CI, "        roots.append(proj)\n", "        pass\n", _CI),
+    ("F4-159 #665 함수 안 import 를 안 봄", _CI, "for inbound in ast.walk(mod):", "for inbound in mod.body:", _CI),
+    ("F4-159 #665 문자열 상수 훑기 지움(N4)", _CI, "        _check_cross_strings(proj, target, out)\n", "        pass\n", _CI),
+    ("F4-159 #665 include 튜플 꼴 걷음", _CI,
+     "                if isinstance(first, ast.Tuple) and first.elts:\n                    first = first.elts[0]\n", "", _CI),
+    ("F4-159 #665 설정 모듈 밖 앱 문자열도 받음", _CI,
+     'settings_module = rp[-1] == "settings.py" or "settings" in rp[:-1]', "settings_module = True", _CI),
+    ("F4-159 #666 urlpatterns 대입만 봄", _CI, "if f == urls and name in ROUTE_CALLS:",
+     "if f == urls and name in ROUTE_CALLS and any(node in ast.walk(n) for n in mod.body"
+     " if isinstance(n, (ast.Assign, ast.AnnAssign)) and \"urlpatterns\" in"
+     " ast.unparse(n.targets[0] if isinstance(n, ast.Assign) else n.target)):", _CI),
+    ("F4-159 #666 감쌈 대조 지움", _CI,
+     'wrapped = isinstance(view, ast.Call) and isinstance(view.func, ast.Attribute) and view.func.attr == "admin_view"',
+     "wrapped = True", _CI),
+    ("F4-159 #666 을 urls.py 한 파일만 봄(N4)", _CI, 'elif f != urls and name in ROUTE_CALLS | {"Router"}:', "elif False:", _CI),
+    # 판 B C2 · F4-158 — #668(context_isolation/admin_imports · bad_rules #668 레인이 잡는다).
+    ("F4-158 #668 _admin_area 끔", _CI, "    if _admin_area(file_parts):\n        _scan_admin_imports(",
+     "    if False:\n        _scan_admin_imports(", _CI),
+    ("F4-158 #668 상대 import 건너뜀", _CI,
+     "            if node.level > 0:\n                base = _resolve_relative(file_parts, node.level, node.module or None)\n"
+     "                if base is None:\n                    out.add(\"#12\"",
+     "            if node.level > 0:\n                continue\n                base = None\n"
+     "                if base is None:\n                    out.add(\"#12\"", _CI),
+    ("F4-158 #668 합성 루트 허용", _CI,
+     'ADMIN_FORBIDDEN_SPOTS = DOMAIN_SPOTS | {"app", "app_port", "composition", "persistence", "acl"}',
+     'ADMIN_FORBIDDEN_SPOTS = DOMAIN_SPOTS | {"app", "app_port", "persistence", "acl"}', _CI),
+    ("F4-158 #668 persistence · ACL 허용", _CI,
+     'ADMIN_FORBIDDEN_SPOTS = DOMAIN_SPOTS | {"app", "app_port", "composition", "persistence", "acl"}',
+     'ADMIN_FORBIDDEN_SPOTS = DOMAIN_SPOTS | {"app", "app_port", "composition"}', _CI),
+    ("F4-158 #668 다시 내보내기 한 겹 끔", _CI, 'if (a.name == "*" and bound) or a.name in bound:', "if False:", _CI),
+    ("F4-158 #668 다시 내보내기 속성 길 끔(N8)", _CI, "    if modules:\n", "    if False:\n", _CI),
+    ("F4-158 #668 import * 끔(셋째 확인)", _CI, 'if (a.name == "*" and bound) or a.name in bound:',
+     "if a.name in bound:", _CI),
+    ("F4-158 #668 목록 칸 정렬 걷음(N9)", _CI, "{sorted(hits)}\")", "{list(hits)}\")", _CI),
+    ("F4-158 #668 옛 자리 끔", _CI,
+     '    return len(file_parts) > 2 and file_parts[0].startswith("django_") and file_parts[1] == "admin"',
+     "    return False", _CI),
+    # 판 B C7 · F4-158 — #101 부칙(composition_root/admin_window 레인이 잡는다).
+    ("F4-158 #101 부칙을 driving 전체로 넓힘", "check-composition-root.py",
+     "if admin_window and _admin_ohs_import(path_str):", "if admin_window:", "check-composition-root.py"),
 ]
 
 
@@ -1047,6 +1408,9 @@ def _copy_fixture(src: Path, dest: Path, rel: str) -> None:
 
 
 _LINE: "re.Pattern[str]" = re.compile(r"^\s*\[(?:ⓓ)?(#\d+)\]\s")
+# 규칙 번호 없이 계약 문법 `- {where}: {msg}` 로만 줄을 내는 검사기(T2-1 출력 계약 v2) — 그 줄도 대조한다(판 B · F4-159).
+_CONTRACT_LINE: "re.Pattern[str]" = re.compile(r"^\s*- \S")
+_CONTRACT_LINE_CHECKERS: "frozenset[str]" = frozenset({"check-app-container.py"})
 
 
 def run_lines(scripts: Path, checker: str, fixture: str) -> "tuple[int, list[str], str]":
@@ -1059,9 +1423,10 @@ def run_lines(scripts: Path, checker: str, fixture: str) -> "tuple[int, list[str
         prefixes: "list[str]" = sorted({str(tmp_fx) + "/", str(tmp_fx.resolve()) + "/"}, key=len, reverse=True)
         proc = subprocess.run([sys.executable, str(scripts / checker), str(tmp_fx)], cwd=str(ROOT),
                               capture_output=True, text=True, env=env)
+    contract: bool = checker in _CONTRACT_LINE_CHECKERS
     out: "list[str]" = []
     for ln in proc.stdout.splitlines():
-        if _LINE.match(ln):
+        if _LINE.match(ln) or (contract and _CONTRACT_LINE.match(ln)):
             text: str = ln.strip()
             for pre in prefixes:
                 text = text.replace(pre, "")

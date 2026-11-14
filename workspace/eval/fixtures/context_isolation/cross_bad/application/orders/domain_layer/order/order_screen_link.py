@@ -1,0 +1,1 @@
+from cross_context.backoffice.suspension.panel import SuspensionPanel

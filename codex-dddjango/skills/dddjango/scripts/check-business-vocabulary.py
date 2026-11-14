@@ -716,10 +716,11 @@ def _check_contract_evolution(root: Path, fw: Path, f: Findings, cand: Candidate
                     f.add("#606", _rel(root, py, m.lineno),
                           f"계약 메서드 `{m.name}` 에 기본값 인자 — 강등 신호로 센다"
                           "(BC 별 분기가 스며드는 자리다)")
-    # #604 — 계약은 가산만(git diff 로 기존 시그니처 변경 검출).
+    # #604 — 계약은 가산만(git diff 로 기존 시그니처 변경 검출). 경로는 framework 아래 `*_port.py` 글롭 하나로 준다 —
+    # 디스크 목록을 주면 계약 파일이 없을 때 빈 경로 목록(= 저장소 전체 diff)이 되고, 지운 계약 파일은 목록에서 빠진다.
     try:
         diff = subprocess.run(
-            ["git", "-C", str(root), "diff", "HEAD", "--", *[str(p.relative_to(root)) for p in port_files]],
+            ["git", "-C", str(root), "diff", "HEAD", "--", f":(glob){fw.relative_to(root).as_posix()}/**/*_port.py"],
             capture_output=True, text=True, timeout=30)
         if diff.returncode == 0 and diff.stdout:
             for line in diff.stdout.splitlines():

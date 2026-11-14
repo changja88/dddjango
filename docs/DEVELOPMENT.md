@@ -69,7 +69,7 @@ docs/                     ← 공식 문서 — 이 개발 문서와 master/ 폴
                            · master.html — 통합 진입점(좌측 인덱스로 아래 다섯 문서 전환)
                            · work_flow.html — dddjango 동작 흐름(재생성 스펙 work_flow.spec.json)
                            · work_flow_web_guide.html — dddjango-web 동작 흐름(work_flow_web.html · 스펙을 싣는다)
-                           · file_tree.html — dddjango 표준 트리 · 트리 171행의 정본(생성기 mkrev2.py)
+                           · file_tree.html — dddjango 표준 트리 · 트리 182행의 정본(생성기 mkrev2.py)
                            · file_tree_web.html — dddjango-web 표준 트리
                            · work_list.html — 남은 현장 보고 작업 리스트(판마다 끝난 항목을 지운다)
 ```

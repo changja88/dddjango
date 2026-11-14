@@ -1831,7 +1831,9 @@ def _code_overlap_keys(
 #   #101 BC 안쪽·composition_root 은 자기 BC 의 driving 층을 import 하지 않는다(타 BC 의
 #        open_host_service 소비는 #13·#102 축 — 2026-08-31 자기-BC 한정 부칙 · 자기
 #        event_wiring.py → 자기 event_subscription/event_router 한 쌍은 #498·#508 의 결선이라
-#        면제 — 2026-11-09 부칙 · 구독 함수 import 는 그대로 위반)
+#        면제 — 2026-11-09 부칙 · 구독 함수 import 는 그대로 위반 · 표준 자리 admin
+#        `driven_layer/django_<bc>/admin/**` → 자기 `open_host_service/` 는 #668 의 창구 부름이라
+#        면제 — 2026-11-14 부칙 · admin → 자기 api · cron_job · event_subscription 은 그대로 위반)
 #   #105/#112 api/ 직계 파일 둘뿐 · 등록 파일 이름은 api_router.py(접두 금지)
 #   #107/#108/#109/#111 api_router.py 의 등록 함수 하나·전역 API import 금지·
 #        top-level 부작용 등록 금지·등록 밖 일 금지
@@ -2679,6 +2681,15 @@ def _own_event_router_imports(mod: ast.Module, own_bc: str) -> set[tuple[int, st
     return found
 
 
+def _admin_ohs_import(path_str: str) -> bool:
+    """#101 부칙(2026-11-14 F4-158) — 경로의 첫 driving 마디 바로 다음이 `open_host_service` 인가(자기 BC 창구)."""
+    parts = path_str.split(".")
+    for i, seg in enumerate(parts):
+        if seg in _DRIVING_SEGMENTS:
+            return i + 1 < len(parts) and parts[i + 1] == "open_host_service"
+    return False
+
+
 def _check_inner_driving_imports(bc: Path, bc_rel: Path, findings: Findings) -> None:
     for seg in _INNER_SEGMENTS:
         base = bc / seg
@@ -2696,6 +2707,9 @@ def _check_inner_driving_imports(bc: Path, bc_rel: Path, findings: Findings) -> 
                 if seg == "composition_root" and f == base / "event_wiring.py"
                 else set()
             )
+            rel_parts: tuple[str, ...] = f.relative_to(bc).parts
+            admin_window: bool = (seg == "driven_layer" and len(rel_parts) > 3
+                                  and rel_parts[1].startswith("django_") and rel_parts[2] == "admin")
             for lineno, path_str in _slice_imports(mod):
                 if not (set(path_str.split(".")) & _DRIVING_SEGMENTS):
                     continue
@@ -2703,6 +2717,8 @@ def _check_inner_driving_imports(bc: Path, bc_rel: Path, findings: Findings) -> 
                     continue  # 타 BC driving — 허용면(open_host_service · ACL)은 #13/#102 소관
                 if (lineno, path_str) in allowed:
                     continue  # 표준 결선 — event_wiring 이 구독 표를 꽂는다(#498 · #508 · 2026-11-09 부칙)
+                if admin_window and _admin_ohs_import(path_str):
+                    continue  # admin 은 자기 BC 창구를 부른다(#668 · 2026-11-14 부칙) — api · cron_job · 구독은 그대로 #101
                 findings.add(
                     "#101",
                     f"{bc_rel / f.relative_to(bc)}:{lineno}",

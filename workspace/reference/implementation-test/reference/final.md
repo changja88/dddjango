@@ -369,7 +369,8 @@ DJANGO_SETTINGS_MODULE = "config.settings"
 
 # 테스트 검색 경로 — 앱별 test 루트(application/<bounded_context>/test/{unit,integration}/).
 # 생략하고 rootdir 자동 수집에 맡겨도 되며, 명시하려면 앱 test 루트를 나열한다.
-testpaths = ["application"]
+# cross_context/ 를 두는 저장소는 그 시험 루트(cross_context/backoffice/test/integration/)도 나열한다.
+testpaths = ["application", "cross_context"]
 
 # 기본 명령줄 옵션
 addopts = [
@@ -1162,7 +1163,7 @@ factory_boy는 테스트 객체 생성을 위한 "청사진" 역할을 한다. J
 pip install factory_boy faker
 ```
 
-factory_boy는 **ORM 애그리거트/엔티티 영속 픽스처의 기본**이다 — 모든 객체에 강제하지 않는다. *정확한 필드 값*이 검증의 핵심인 행(동시성·경계 테스트; 예: §20.5의 CAS-충돌 스파이는 `ProductModel.objects.create(stock=5, version=0)`으로 일부러 정확한 행을 만든다)과 VO/dataclass 구성은 직접 생성이 더 명확하므로 그대로 둔다. 팩토리는 **`application/<bounded_context>/test/factories/`**(패키지)에 둔다 — 이 폴더는 테스트 트리 단일 출처(`discipline-houserules` §2)에 별도로 추가되므로 여기서는 위치만 가리킨다.
+factory_boy는 **ORM 애그리거트/엔티티 영속 픽스처의 기본**이다 — 모든 객체에 강제하지 않는다. *정확한 필드 값*이 검증의 핵심인 행(동시성·경계 테스트; 예: §20.5의 CAS-충돌 스파이는 `ProductModel.objects.create(stock=5, version=0)`으로 일부러 정확한 행을 만든다)과 VO/dataclass 구성은 직접 생성이 더 명확하므로 그대로 둔다. 팩토리는 **`application/<bounded_context>/test/factories/`**(패키지)에 둔다 — factory_boy 를 쓰지 않는 공용 도메인 객체 생성은 같은 폴더의 `make_<x>()` 함수로 둔다(#392). 자리 규칙은 `discipline-houserules` §1 이 단일 출처라 여기서는 위치만 가리킨다.
 
 ### 9.2 기본 팩토리 정의
 

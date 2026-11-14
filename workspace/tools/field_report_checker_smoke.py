@@ -846,7 +846,8 @@ class BookAdmin(TranslatableAdmin):
 
 
 class UsecaseAreaPairingRegression(unittest.TestCase):
-    """F4-86 — REST BC 의 응용 영역은 API 또는 같은 이름의 창구와 짝이다."""
+    """F4-86 — REST BC 의 응용 영역은 API 또는 같은 이름의 창구와 짝이다(F4-158 — 이름 다른 입구가 부르는 영역도 짝이다 ·
+    그 사례는 fixture_matrix 줄 대조 `usecase_dto/entrance_pairs` 가 본다)."""
 
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory(prefix="field-area-pairing-")
@@ -876,7 +877,9 @@ class UsecaseAreaPairingRegression(unittest.TestCase):
         cases = (
             ("ohs_only_area", 0, []),
             ("orphan_area", 2, [("#188", "application/orders/application_layer/content_catalog",
-                                "`<area>` 는 `driving_layer/api/<area>` 또는 `driving_layer/open_host_service/<area>` 와 짝이다 — 둘 다 `content_catalog/` 이 없다")]),
+                                "`<area>` 는 입구와 짝이다 — 같은 이름의 `driving_layer/api/<area>` · "
+                                "`driving_layer/open_host_service/<area>` 도, 이 영역을 부르는 `open_host_service/` · "
+                                "`event_subscription/` · `cron_job/` · `api/webhook/` 파일도 `content_catalog/` 에 없다")]),
             ("api_only_area", 2, [("#188", "application/orders/driving_layer/api/content_catalog",
                                   "`<area>` 는 `application_layer/<area>` 와 1:1 이다 — application_layer 쪽에 `content_catalog/` 이 없다")]),
         )
@@ -8477,6 +8480,204 @@ class IndexOnlyPathRegression(unittest.TestCase):
                 self.assertEqual(self.run_checker(script, args), base[script])
 
 
+def _toy_rule_lines(files: dict[str, str], script: str, rules: frozenset[str], prefix: str) -> list[tuple[str, str, str]]:
+    """장난감 저장소를 임시 폴더에 쓰고 검사기를 돌려 (규칙, 경로[:줄], 글) — 고른 규칙만 · 다른 판정은 보지 않는다."""
+    with tempfile.TemporaryDirectory(prefix=prefix) as tmp:
+        root: Path = Path(tmp)
+        for rel, text in files.items():
+            path: Path = root / rel
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
+        env: dict[str, str] = dict(os.environ, DJR_FINDINGS_JSON=str(root / "findings.jsonl"),
+                                   DJR_VIOLATIONS_DIR=str(root / "violations"), PYTHONDONTWRITEBYTECODE="1")
+        done = subprocess.run([sys.executable, "-B", str(SCRIPTS / script), str(root)], capture_output=True, text=True,
+                              env=env)
+        prefixes: list[str] = sorted({f"{root}/", f"{root.resolve()}/"}, key=len, reverse=True)
+    if done.returncode not in (0, 2) or done.stderr:
+        raise AssertionError(f"{script}: exit {done.returncode} — {done.stderr[-300:]}")
+    out: list[tuple[str, str, str]] = []
+    for line in done.stdout.splitlines():
+        m = re.match(r"^\s*\[(#\d+)\] (\S+?): (.*)$", line)
+        if m and m.group(1) in rules:
+            where: str = m.group(2)
+            for prefix_path in prefixes:
+                where = where.replace(prefix_path, "")
+            out.append((m.group(1), where, m.group(3)))
+    return sorted(out)
+
+
+_TOY_PORT: str = """from __future__ import annotations
+
+from abc import ABC, abstractmethod
+
+
+class {cls}(ABC):
+    @abstractmethod
+    def {meth}(self, code: str) -> str: ...
+"""
+_TOY_FAKE: str = "from application.accounts.application_layer.port.{mod} import {base}\n\n\nclass {cls}({base}):\n" \
+                 "    def {meth}(self, code: str) -> str:\n        return code\n"
+
+
+class FakeVariantRegression(unittest.TestCase):
+    """F4-175 — BC `test/fake/` 는 기본 페이크 `<선언>.py` 옆에 같은 선언의 둘째 대역 `<선언>_<변형>.py` 를 받는다(#576 · #577).
+
+    짝 선언은 앞머리가 `<선언>_` 로 맞는 선언 가운데 가장 긴 것이다(`stock_query` ⊂ `stock_query_port` 겹침에서 긴 쪽).
+    변형은 그 선언 파일의 클래스를 바로 상속한다 — 다른 선언(짧은 겹침 쪽 포함)을 상속하면 #577 이고, 상속이 없으면 기존 접미사
+    #577 하나만 난다(겹쳐 내지 않는다). 기본 페이크가 옆에 없거나 맞는 선언이 없는 이름(선언 이름 없이 지은 현장 꼴 포함)은
+    #576 이다. 변형도 페이크 규칙을 그대로 진다(#578).
+    """
+
+    PORT: str = "application/accounts/application_layer/port"
+    FAKE: str = "application/accounts/test/fake"
+    FILES: dict[str, str] = {
+        "application/__init__.py": "",
+        "application/accounts/__init__.py": "",
+        "application/accounts/application_layer/__init__.py": "",
+        f"{PORT}/__init__.py": "",
+        f"{PORT}/place_directory/place_directory_port.py": _TOY_PORT.format(cls="PlaceDirectoryPort", meth="resolve_city"),
+        f"{PORT}/clock/clock_port.py": _TOY_PORT.format(cls="ClockPort", meth="now"),
+        f"{PORT}/mailbox/mailbox_port.py": _TOY_PORT.format(cls="MailboxPort", meth="send"),
+        f"{PORT}/domain_bypass_query/stock/stock_query.py": _TOY_PORT.format(cls="StockDomainBypassQuery", meth="count"),
+        f"{PORT}/stock_query/stock_query_port.py": _TOY_PORT.format(cls="StockQueryPort", meth="ask"),
+        "application/accounts/test/__init__.py": "",
+        f"{FAKE}/__init__.py": "",
+        f"{FAKE}/place_directory_port.py": _TOY_FAKE.format(
+            mod="place_directory.place_directory_port", base="PlaceDirectoryPort", cls="FakePlaceDirectoryPort",
+            meth="resolve_city"),
+        f"{FAKE}/place_directory_port_recorder.py": _TOY_FAKE.format(
+            mod="place_directory.place_directory_port", base="PlaceDirectoryPort", cls="PlaceDirectoryRecorder",
+            meth="resolve_city"),
+        f"{FAKE}/clock_port.py": _TOY_FAKE.format(mod="clock.clock_port", base="ClockPort", cls="FakeClockPort", meth="now"),
+        f"{FAKE}/clock_port_frozen.py": "class FrozenClock:\n    def now(self, code: str) -> str:\n        return code\n",
+        f"{FAKE}/clock_port_wrong.py": _TOY_FAKE.format(
+            mod="place_directory.place_directory_port", base="PlaceDirectoryPort", cls="WrongClock", meth="resolve_city"),
+        f"{FAKE}/clock_port_network.py": "import requests\n\n" + _TOY_FAKE.format(
+            mod="clock.clock_port", base="ClockPort", cls="NetworkClock", meth="now"),
+        f"{FAKE}/mailbox_port_recorder.py": _TOY_FAKE.format(
+            mod="mailbox.mailbox_port", base="MailboxPort", cls="MailboxRecorder", meth="send"),
+        f"{FAKE}/ghost_port_recorder.py": _TOY_FAKE.format(
+            mod="clock.clock_port", base="ClockPort", cls="GhostRecorder", meth="now"),
+        f"{FAKE}/place_directory_recorder.py": _TOY_FAKE.format(
+            mod="place_directory.place_directory_port", base="PlaceDirectoryPort", cls="PlaceRecorder",
+            meth="resolve_city"),
+        f"{FAKE}/stock_query.py": _TOY_FAKE.format(
+            mod="domain_bypass_query.stock.stock_query", base="StockDomainBypassQuery", cls="FakeStockQuery", meth="count"),
+        f"{FAKE}/stock_query_port.py": _TOY_FAKE.format(
+            mod="stock_query.stock_query_port", base="StockQueryPort", cls="FakeStockQueryPort", meth="ask"),
+        f"{FAKE}/stock_query_port_recorder.py": _TOY_FAKE.format(
+            mod="stock_query.stock_query_port", base="StockQueryPort", cls="StockQueryRecorder", meth="ask"),
+        f"{FAKE}/stock_query_port_spy.py": _TOY_FAKE.format(
+            mod="domain_bypass_query.stock.stock_query", base="StockDomainBypassQuery", cls="StockQuerySpy", meth="count"),
+        f"{FAKE}/stock_query_audit.py": _TOY_FAKE.format(
+            mod="domain_bypass_query.stock.stock_query", base="StockDomainBypassQuery", cls="StockQueryAudit", meth="count"),
+    }
+    NO_DECL: str = ("`{s}` 의 짝이 될 «선언»이 없다 — 이름은 `<선언>.py` 또는 그 변형 `<선언>_<변형>.py` 다 · "
+                    "검사는 한 방향뿐이다(선언에 페이크를 강제하지는 않는다)")
+    WRONG: str = ("변형 페이크 `{s}` 이 선언 `{c}` 을 바로 상속하지 않는다 — 변형도 그 선언 클래스를 바로 상속한다"
+                  "(기본 페이크를 상속하지 않는다)")
+
+    def test_variant_fakes_pair_with_the_longest_declaration(self) -> None:
+        got: list[tuple[str, str, str]] = _toy_rule_lines(
+            self.FILES, "check-port-adapter-pairing.py", frozenset({"#576", "#577", "#578"}), "fake-variant-")
+        self.assertEqual(got, sorted([
+            ("#577", f"{self.FAKE}/clock_port_frozen.py:1",
+             "`FrozenClock` 이 선언을 상속하지 않는다 — 페이크는 선언 상속·같은 파일 이름으로 짝을 진다"),
+            ("#577", f"{self.FAKE}/clock_port_wrong.py", self.WRONG.format(s="clock_port_wrong", c="ClockPort")),
+            ("#578", f"{self.FAKE}/clock_port_network.py:1", "페이크가 기술을 만진다(DB·네트워크) — 그건 페이크가 아니라 어댑터다"),
+            ("#576", f"{self.FAKE}/mailbox_port_recorder.py",
+             "변형 페이크 `mailbox_port_recorder` 옆에 기본 페이크 `mailbox_port.py` 가 없다 — 변형은 기본 페이크 옆에 둔다"),
+            ("#576", f"{self.FAKE}/ghost_port_recorder.py", self.NO_DECL.format(s="ghost_port_recorder")),
+            ("#576", f"{self.FAKE}/place_directory_recorder.py", self.NO_DECL.format(s="place_directory_recorder")),
+            ("#577", f"{self.FAKE}/stock_query_port_spy.py", self.WRONG.format(s="stock_query_port_spy", c="StockQueryPort")),
+        ]))
+
+
+class FactoriesMaterialRegression(unittest.TestCase):
+    """F4-175 — BC `test/factories/` 에는 factory_boy 팩토리와 `make_` 로 시작하는 만드는 함수가 온다(#392 · 맨 위 정의마다).
+
+    받음: `…Factory` 밑 클래스(제네릭 꼴 `DjangoModelFactory[M]` 포함) · `make_` 함수(ORM 행을 만들어도 — 무엇을 돌려주는지는 안
+    본다) · 비공개 `_` 도우미(함수 · 클래스) · import · 상수. 막음: 선언 상속(가짜 구현 · 비공개 클래스여도) · pytest 고정물 ·
+    `test_*` · 그 밖 공개 클래스 · 공개 함수
+    (`create_` 꼴도 «`make_` 로» 안내) · 재료가 하나도 없는 모듈 · factory_boy 파일 안 공개 도우미. F4-174 — BC `test/conftest.py`
+    는 autouse 고정물만 #383 이다.
+    """
+
+    T: str = "application/accounts/test"
+    FILES: dict[str, str] = {
+        "pytest.ini": "[pytest]\nDJANGO_SETTINGS_MODULE = config.settings.test\n",
+        "config/__init__.py": "",
+        "config/settings/__init__.py": "",
+        "config/settings/base.py": "DEBUG: bool = False\n",
+        "config/settings/test.py": "from .base import *  # noqa: F401,F403\n",
+        "application/__init__.py": "",
+        "application/accounts/__init__.py": "",
+        "application/accounts/application_layer/__init__.py": "",
+        f"{T}/__init__.py": "",
+        f"{T}/conftest.py": "import pytest\n\n\n@pytest.fixture\ndef guest_session(db):\n    return None\n",
+        f"{T}/factories/__init__.py": "",
+        f"{T}/factories/account_model_factory.py": ("import factory\n\n\nclass AccountModelFactory(factory.django.DjangoModelFactory):\n"
+                                                   "    class Meta:\n        model = 'accounts.AccountModel'\n"),
+        f"{T}/factories/generic_factory.py": ("from factory.django import DjangoModelFactory\n\n\n"
+                                             "class AccountModelFactory(DjangoModelFactory[AccountModel]):\n"
+                                             "    class Meta:\n        model = AccountModel\n"),
+        f"{T}/factories/account.py": ("from application.accounts.domain_layer.account.account import Account\n\n"
+                                     "DEFAULT_NICKNAME: str = 'kim'\n\n\ndef _nickname(suffix: str) -> str:\n"
+                                     "    return DEFAULT_NICKNAME + suffix\n\n\ndef make_account(*, suffix: str = '') -> Account:\n"
+                                     "    return Account(nickname=_nickname(suffix))\n"),
+        f"{T}/factories/account_row.py": ("def make_account_row(**fields):\n"
+                                         "    from application.accounts.driven_layer.django_accounts.models import AccountModel\n"
+                                         "    return AccountModel.objects.create(**fields)\n"),
+        f"{T}/factories/clock_double.py": ("from application.accounts.application_layer.port.clock.clock_port import ClockPort\n\n\n"
+                                          "class FakeClock(ClockPort):\n    def now(self) -> str:\n        return ''\n"),
+        f"{T}/factories/account_fixture.py": "import pytest\n\n\n@pytest.fixture\ndef account_row(db):\n    return None\n",
+        f"{T}/factories/test_account_factory.py": "def test_make_account() -> None:\n    assert True\n",
+        f"{T}/factories/account_builder.py": "class AccountBuilder:\n    def build(self) -> None:\n        return None\n",
+        f"{T}/factories/random_helpers.py": "def random_name() -> str:\n    return 'kim'\n",
+        f"{T}/factories/defaults.py": "DEFAULT_NICKNAME: str = 'kim'\n",
+        f"{T}/factories/account_mixed.py": ("import pytest\n\n\ndef make_guest() -> str:\n    return 'guest'\n\n\n"
+                                           "@pytest.fixture\ndef guest() -> str:\n    return make_guest()\n"),
+        f"{T}/factories/account_create.py": "def create_account(name: str = 'a') -> dict[str, str]:\n    return {'name': name}\n",
+        f"{T}/factories/account_helper_class.py": ("import factory\n\n\nclass _Nickname:\n    value: str = 'kim'\n\n\n"
+                                                  "class AccountProfileFactory(factory.django.DjangoModelFactory):\n"
+                                                  "    class Meta:\n        model = 'accounts.AccountModel'\n\n"
+                                                  "    nickname = _Nickname.value\n"),
+        f"{T}/factories/private_clock.py": ("from application.accounts.application_layer.port.clock.clock_port import ClockPort\n\n\n"
+                                           "class _FakeClock(ClockPort):\n    def now(self) -> str:\n        return ''\n\n\n"
+                                           "def make_clock() -> ClockPort:\n    return _FakeClock()\n"),
+        f"{T}/factories/profile_model_factory.py": ("import factory\n\n\ndef random_bio() -> str:\n    return 'hi'\n\n\n"
+                                                   "class ProfileModelFactory(factory.django.DjangoModelFactory):\n"
+                                                   "    class Meta:\n        model = 'accounts.ProfileModel'\n\n"
+                                                   "    bio = factory.LazyFunction(random_bio)\n"),
+        "application/billing/__init__.py": "",
+        "application/billing/test/__init__.py": "",
+        "application/billing/test/conftest.py": ("import pytest\n\n\n@pytest.fixture(autouse=True)\n"
+                                                 "def database_for_every_test(db):\n    return None\n"),
+    }
+    HEAD: str = "`factories/` 에는 factory_boy 팩토리와 `make_` 함수만 온다 — "
+    MAKE: str = "`{f}()` 는 `make_` 함수가 아니다(만드는 함수면 `make_` 로 이름을 바꾸거나, 쓰는 시험 파일 안으로)"
+
+    def test_factories_take_factory_boy_and_make_functions_per_definition(self) -> None:
+        got: list[tuple[str, str, str]] = _toy_rule_lines(
+            self.FILES, "check-test-config.py", frozenset({"#392", "#383"}), "factories-material-")
+        f: str = f"{self.T}/factories"
+        self.assertEqual(got, sorted([
+            ("#392", f"{f}/clock_double.py", self.HEAD + "`FakeClock` 는 가짜 구현이다(`fake/<선언>.py` 로)"),
+            ("#392", f"{f}/private_clock.py", self.HEAD + "`_FakeClock` 는 가짜 구현이다(`fake/<선언>.py` 로)"),
+            ("#392", f"{f}/account_fixture.py", self.HEAD + "`account_row` 는 pytest 고정물이다(`conftest.py` 로)"),
+            ("#392", f"{f}/test_account_factory.py", self.HEAD + "`test_make_account` 는 시험이다(`unit/`·`integration/`·`e2e/` 로)"),
+            ("#392", f"{f}/account_builder.py", self.HEAD + "`AccountBuilder` 는 팩토리가 아니다(쓰는 시험 파일 안으로)"),
+            ("#392", f"{f}/random_helpers.py", self.HEAD + self.MAKE.format(f="random_name")),
+            ("#392", f"{f}/defaults.py", self.HEAD + "factory_boy 팩토리도 `make_` 함수도 없다"),
+            ("#392", f"{f}/account_mixed.py", self.HEAD + "`guest` 는 pytest 고정물이다(`conftest.py` 로)"),
+            ("#392", f"{f}/account_create.py", self.HEAD + self.MAKE.format(f="create_account")),
+            ("#392", f"{f}/profile_model_factory.py", self.HEAD + self.MAKE.format(f="random_bio")),
+            ("#383", "application/billing/test/conftest.py",
+             "`database_for_every_test` — BC `test/conftest.py` 의 `autouse=True` 고정물은 unit 까지 함께 켠다(폴더 이름만 보고 "
+             "무엇을 켜는지 알아야 한다) — 쓰는 시험이 인자로 받게 하거나 그 폴더의 `conftest.py` 로 옮긴다"),
+        ]))
+
+
 # 변이 — (이름, 검사기 파일, ((옛 글, 새 글), …), 붉어야 할 시험 클래스). 옛 글은 그 파일에 정확히 한 번 있어야 한다.
 # 고침을 옛 코드로 되돌린 것 하나씩과, 설계 검토 · 구현 검토가 짚은 조건을 하나씩 무른 것.
 _CI_FILE: str = "check-context-isolation.py"
@@ -8753,7 +8954,117 @@ _MUTATIONS: tuple[tuple[str, str, tuple[tuple[str, str], ...], tuple[str, ...]],
     ("F4-164 #2 지운 경로 거르기 뺌", "check-error-centralization.py", (
         ("        if not os.path.lexists(git_root / git_relative):\n            continue  # 스테이지하지 않은 삭제",
          "        if False:\n            continue  # 스테이지하지 않은 삭제"),), ("IndexOnlyPathRegression",)),
+    ("F4-175 #576 변형 받기 걷음", "check-port-adapter-pairing.py", (
+        ('heads: list[str] = [d for d in decl_stems if stem.startswith(d + "_")]', "heads: list[str] = []"),),
+     ("FakeVariantRegression",)),
+    ("F4-175 #576 가장 긴 앞머리를 가장 짧은 것으로", "check-port-adapter-pairing.py", (
+        ("return max(heads, key=len) if heads else None", "return min(heads, key=len) if heads else None"),),
+     ("FakeVariantRegression",)),
+    ("F4-175 #576 기본 페이크 옆 조건 걷음", "check-port-adapter-pairing.py", (
+        ('elif variant and not (fake / f"{decl}.py").is_file():', "elif False:"),), ("FakeVariantRegression",)),
+    ("F4-175 #577 변형 선언 상속 대조 걷음", "check-port-adapter-pairing.py", (
+        ("and not any(_bases(c) & decl_classes[decl] for c in classes):", "and False:"),), ("FakeVariantRegression",)),
+    ("F4-175 #392 make_ 함수 받기 걷음", "check-test-config.py", (
+        ('elif node.name.startswith("make_"):\n                material = True',
+         "elif False:\n                material = True"),), ("FactoriesMaterialRegression",)),
+    ("F4-175 #392 고정물 알아보기 걷음", "check-test-config.py", (
+        ('        if _base_name(target) == "fixture":\n            return True', "        if False:\n            return True"),),
+     ("FactoriesMaterialRegression",)),
+    ("F4-175 #392 가짜 구현 갈래 걷음", "check-test-config.py", (
+        ("elif any(b.endswith(_DECLARATION_SUFFIXES) for b in bases):", "elif False:"),), ("FactoriesMaterialRegression",)),
+    ("F4-175 #392 재료 없는 모듈 막기 걷음", "check-test-config.py", (
+        ("if not misfits and not material:", "if False:"),), ("FactoriesMaterialRegression",)),
+    ("F4-175 #392 공개 비 make_ 함수 막기 걷음", "check-test-config.py", (
+        ('elif not node.name.startswith("_"):\n                misfits.append(f"`{node.name}()` 는',
+         'elif False:\n                misfits.append(f"`{node.name}()` 는'),), ("FactoriesMaterialRegression",)),
+    ("F4-175 #392 비공개 클래스도 막음", "check-test-config.py", (
+        ('elif not node.name.startswith("_"):\n                misfits.append(f"`{node.name}` 는 팩토리가',
+         'else:\n                misfits.append(f"`{node.name}` 는 팩토리가'),), ("FactoriesMaterialRegression",)),
+    ("F4-175 #392 제네릭 기저 풀기 지움", "check-test-config.py", (
+        ("    if isinstance(node, ast.Subscript):\n        node = node.value\n", ""),), ("FactoriesMaterialRegression",)),
+    ("#604 경로 글롭 대신 빈 경로 목록(= 저장소 전체 diff)", "check-business-vocabulary.py", (
+        ('"diff", "HEAD", "--", f":(glob){fw.relative_to(root).as_posix()}/**/*_port.py"]', '"diff", "HEAD", "--"]'),),
+     ("ContractEvolutionPathspecRegression",)),
+    ("#604 경로 글롭 대신 디스크 계약 목록(지운 계약 파일이 빠짐)", "check-business-vocabulary.py", (
+        ('f":(glob){fw.relative_to(root).as_posix()}/**/*_port.py"]', '*([str(p.relative_to(root)) for p in port_files] or ["framework/__none__"])]'),),
+     ("ContractEvolutionPathspecRegression",)),
 )
+
+
+class ContractEvolutionPathspecRegression(unittest.TestCase):
+    """#604(계약은 «더하기»만) 은 framework 계약 파일(`*_port.py`)의 변경만 본다 — 계약 파일이 없으면 판정하지 않는다.
+
+    빈 경로 목록으로 `git diff HEAD --` 를 돌면 저장소 전체 diff 라, 계약 밖 BC 파일의 함수 이름 바꿈까지 «framework 계약
+    시그니처 변경» 차단으로 셌다(2.37.0 재현 · 2026-11-14 · 판 B 구현 중 발견). 경로는 framework 아래 `*_port.py` 글롭이라
+    계약 파일의 지운 `def` 줄만 세고, 계약 파일을 통째로 지운 변경도 센다.
+    """
+
+    def make_repo(self, with_port: bool) -> Path:
+        tmp = tempfile.TemporaryDirectory(prefix="contract-pathspec-")
+        self.addCleanup(tmp.cleanup)
+        root: Path = Path(tmp.name) / "repo"
+        files: dict[str, str] = {
+            "framework/__init__.py": "",
+            "framework/pure/__init__.py": "",
+            "application/__init__.py": "",
+            "application/orders/__init__.py": "",
+            "application/orders/domain_layer/calc.py": "def total(x):\n    return x\n",
+        }
+        if with_port:
+            files["framework/clock/__init__.py"] = ""
+            files["framework/clock/clock_port.py"] = (
+                "from typing import Protocol\n\n\nclass ClockPort(Protocol):\n    def now(self) -> int:\n        ...\n")
+        for rel, text in files.items():
+            (root / rel).parent.mkdir(parents=True, exist_ok=True)
+            (root / rel).write_text(text, encoding="utf-8")
+        _git(root, "init", "-q")
+        _git(root, "add", "-A")
+        _git(root, "commit", "-qm", "anchor")
+        self.env = dict(os.environ, DJR_FINDINGS_JSON=str(Path(tmp.name) / "findings.jsonl"),
+                        DJR_VIOLATIONS_DIR=str(Path(tmp.name) / "violations"), PYTHONDONTWRITEBYTECODE="1")
+        return root
+
+    def lines_604(self, root: Path) -> list[str]:
+        done = subprocess.run([sys.executable, "-B", str(SCRIPTS / "check-business-vocabulary.py"), str(root)],
+                              capture_output=True, text=True, env=self.env)
+        return [ln.strip() for ln in (done.stdout + done.stderr).splitlines() if "[#604]" in ln]
+
+    def test_no_port_files_ignores_renames_outside_contracts(self) -> None:
+        root: Path = self.make_repo(with_port=False)
+        (root / "application/orders/domain_layer/calc.py").write_text("def total_amount(x):\n    return x\n", encoding="utf-8")
+        self.assertEqual(self.lines_604(root), [])
+
+    def test_port_file_change_still_blocks(self) -> None:
+        root: Path = self.make_repo(with_port=True)
+        port: Path = root / "framework/clock/clock_port.py"
+        port.write_text(port.read_text(encoding="utf-8").replace("def now(self)", "def current(self)"), encoding="utf-8")
+        (root / "application/orders/domain_layer/calc.py").write_text("def total_amount(x):\n    return x\n", encoding="utf-8")
+        got: list[str] = self.lines_604(root)
+        self.assertEqual(len(got), 1, got)
+        self.assertIn("def now(self) -> int:", got[0])
+
+    def test_deleted_port_file_still_blocks(self) -> None:
+        root: Path = self.make_repo(with_port=True)
+        (root / "framework/clock/clock_port.py").unlink()
+        got: list[str] = self.lines_604(root)
+        self.assertEqual(len(got), 1, got)
+        self.assertIn("def now(self) -> int:", got[0])
+
+    def test_subfolder_target_sees_only_its_own_contracts(self) -> None:
+        outer: Path = self.make_repo(with_port=True)
+        proj: Path = outer / "proj"
+        for rel, text in {"framework/__init__.py": "", "framework/pure/__init__.py": "", "application/__init__.py": "",
+                          "application/billing/__init__.py": "",
+                          "application/billing/domain_layer/fee.py": "def fee(x):\n    return x\n"}.items():
+            (proj / rel).parent.mkdir(parents=True, exist_ok=True)
+            (proj / rel).write_text(text, encoding="utf-8")
+        _git(outer, "add", "-A")
+        _git(outer, "commit", "-qm", "subfolder project")
+        port: Path = outer / "framework/clock/clock_port.py"
+        port.write_text(port.read_text(encoding="utf-8").replace("def now(self)", "def current(self)"), encoding="utf-8")
+        (proj / "application/billing/domain_layer/fee.py").write_text("def fee_amount(x):\n    return x\n", encoding="utf-8")
+        self.assertEqual(self.lines_604(proj), [])
+        self.assertEqual(len(self.lines_604(outer)), 1)
 
 
 def _mutation_test() -> int:

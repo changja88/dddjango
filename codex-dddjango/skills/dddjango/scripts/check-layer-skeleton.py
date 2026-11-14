@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
 """표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱.
 
-트리 데이터는 `standard_tree.py`(정본 171행의 기계 사본) 하나에서 온다 — 이 파일에
+트리 데이터는 `standard_tree.py`(정본 182행의 기계 사본) 하나에서 온다 — 이 파일에
 경로 문자열을 다시 적지 않는다. 정본이 개정되면 데이터만 갈리고 이 검사기는 그대로다.
 
 무엇을 잡나 (규칙 번호는 트리 개정 명세):
   #486  어느 BC 를 열어도 골격이 그대로 있다 — 내용 유무 무관. 채택 저장소에서는
         `application/` 직계 전부가 BC 다(신호 없는 평면 BC 도 검사 대상).
   #488  고정(·재등장) 칸은 부모가 있으면 반드시 있다 — 폴더는 비어도 `__init__.py` 로,
-        파일도 비면 빈 파일로. `<project>/`(트리 167~170행)·`framework/` 고정 서브트리에도 적용.
+        파일도 비면 빈 파일로. `<project>/`(트리 167~170행)·`framework/`·`cross_context/`(트리
+        172~182행) 고정 서브트리에도 적용.
   #489  `<…>` 자리표시자 칸만 그 개념이 생길 때 생긴다.
   #490  BC 안에 트리에 없는 경로가 있으면 위반. 재량은 «리프로 닫은 폴더 안»의 추가
         모듈뿐이다(#15 작성자 재량) — 자리표시자 «파일» 칸이 있는 층만 파일 이름이 자유다.
+        BC `test/` 바로 아래 `conftest.py` 한 파일은 트리 행 없이 둘 수 있다(이 원칙의 부칙 —
+        그 고정물은 `autouse=True` 로 두지 않는다 #383).
+        `cross_context/**` 도 주어다(트리 172~182행 · 있을 때만 본다 — `framework/` 와 같은 판) —
+        `backoffice/` 의 폴더는 화면(`<screen>/`)뿐이라 `static/` 같은 폴더는 화면으로 읽혀
+        `panel.py` 부재(#488)로 난다 · 템플릿은 `templates/admin/backoffice/` 바로 아래 평평하게 ·
+        `test/integration/` 안은 pytest 가 이름을 소유한다.
   #81   BC 직계는 일곱뿐. / #429·#436  `<project>/` 직계 폐쇄(면제는 넷뿐 — `settings.py` 는 아님).
   #58 #314 #393  금지 경로(management/commands · domain_layer 의 specification · BC 안 framework).
   #395  `framework/` 의 자식은 다섯(고정 셋 + `<capability>/`·`<technology>/`) — 고정 셋의
@@ -904,6 +911,19 @@ def _check_project(pkg: Path, out: Findings) -> None:
         out.add("#488", pkg / "settings", "고정 칸 `settings/` 부재 (트리 170행)")
 
 
+# ── cross_context/ — BC 밖 합성 칸(트리 172~182행) · 폐쇄(#490)의 주어다 ──
+
+def _cross_context_row() -> "tree.Row":
+    return next(r for r in tree.ROWS if r.depth == 0 and r.name == "cross_context/")
+
+
+def _check_cross_context(cc_dir: Path, out: Findings, cand: Candidates) -> None:
+    """#488 · #490 — 칸 자체의 존재는 묻지 않고(있을 때만 부른다) 그 아래를 BC 와 같은 트리 대조에 건다."""
+    if not (cc_dir / "__init__.py").is_file():
+        out.add("#488", cc_dir, "고정 칸 폴더에 `__init__.py` 가 없다")
+    _check_level(cc_dir, _cross_context_row(), {}, out, cand)
+
+
 def main(argv: list[str]) -> int:
     if len(argv) > 1:
         print(f"사용법: {Path(sys.argv[0]).name} [TARGET_DIR]", file=sys.stderr)
@@ -947,6 +967,8 @@ def main(argv: list[str]) -> int:
         _check_bc(bc, findings, cand)
     if fw_dir.is_dir():
         _check_framework(fw_dir, findings)
+    if (target / "cross_context").is_dir():
+        _check_cross_context(target / "cross_context", findings, cand)
     pkg, how = _find_project_pkg(target)
     if pkg is not None:
         _check_project(pkg, findings)

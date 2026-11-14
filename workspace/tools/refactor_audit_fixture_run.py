@@ -5772,6 +5772,50 @@ class LandToy:
         return proc.returncode, proc.stdout + proc.stderr
 
 
+CX_PANEL: str = "cross_context/backoffice/thing_board/panel.py"
+
+
+def deps_cross_context_cases(fails: "list[str]", td: Path) -> None:
+    """F4-159 — `cross_context/`(BC 밖 합성 칸)만 쓰는 실행은 BC 가 비어도 보류하지 않고 경로 겹침(경로 필터 줄의 `cross_context/…` 조각 ·
+    명세 file-plan)과 계획된 소비(boundary-imports)로 가른다. G1 전(명세 없음)에는 소비할 창구를 몰라 경로 겹침만 본다(받아들인 한계).
+    레인은 demo 리팩토링 실행(G0) — demo 창구를 부르는 여러 BC 운영 화면 `thing_board/panel.py` 가 이 레인의 «공유 표면» 이다."""
+    panel: str = ("from application.demo.driving_layer.open_host_service.thing.thing_service import get\n\n\n"
+                  "THING_COUNT = get\n")
+    repo: Path = _project(td / "dcx", {**DEPS_FILES, "cross_context/__init__.py": "", "cross_context/backoffice/__init__.py": "",
+                                         CX_PANEL: panel})
+    own: Path = repo / ".dddjango" / "20261114-2200-refactor-demo"
+    own.mkdir(parents=True)
+    (own / "refactor-scope.md").write_text("실행 · G0 승인 20261114-2200 · 모드 리팩토링 · audit 20261114-2150\n", encoding="utf-8")
+    dp = lambda n: run(repo, "deps", "demo", "--out", str(own / "deps" / n), "--at", "new")  # noqa: E731
+    cx: Path = repo / ".dddjango" / "20261114-2100-stop-board"
+    cx.mkdir(parents=True)
+    label: str = "겹침: 이 작업 트리 .dddjango/20261114-2100-stop-board — "
+
+    def scope(path_filter: str, anchor: bool) -> None:
+        (cx / "refactor-scope.md").write_text(f"실행 · G0 승인 20261114-2100{' · build_anchor abc' if anchor else ''}\n\n"
+                                              f"- 대상 BC 경로 필터: {path_filter}\n", encoding="utf-8")
+    plan: str = ("# 설계 명세 — 정지 화면\n\n<!-- machine: file-plan -->\n```paths\n"
+                 "add cross_context/backoffice/stop_board/panel.py  # S1\n```\n")
+    imports: str = ("\n<!-- machine: boundary-imports -->\n```imports\ncross_context/backoffice/stop_board/panel.py  "
+                    "from application.demo.driving_layer.open_host_service.thing.thing_service import get\n```\n")
+    scope("cross_context/backoffice/stop_board/", True)
+    (cx / "design-spec.md").write_text(plan, encoding="utf-8")
+    expect(fails, "RD-X1 `cross_context/` 만 쓰는 실행(BC 없음 · 다른 화면) → 보류 없음 · 겹침 없음(exit 0 · 옛 판: 대상 BC 를 모른다 보류)",
+           dp("x1"), 0, "레인 겹침 없음", "보류 0")
+    (cx / "design-spec.md").unlink()
+    scope("cross_context/backoffice/thing_board/", False)
+    expect(fails, "RD-X2 이 레인의 공유 표면 화면(thing_board/panel.py)을 그 실행 경로 필터 줄이 덮음 → 경로 겹침 정지(옛 판: 보류)",
+           dp("x2"), 2, label + "경로 cross_context/backoffice/thing_board/", "레인 겹침 1")
+    scope("cross_context/backoffice/stop_board/", True)
+    (cx / "design-spec.md").write_text(plan + imports, encoding="utf-8")
+    expect(fails, "RD-X3 그 실행 명세 boundary-imports 가 이 BC 창구를 가리킴 → 계획된 소비 겹침 정지", dp("x3"), 2,
+           label + "계획된 소비", "계획된 소비 1")
+    (cx / "design-spec.md").unlink()
+    scope("cross_context/backoffice/stop_board/", False)
+    expect(fails, "RD-X4 G1 전(명세 없음) · 다른 화면 → 보류 없음 · 겹침 못 봄(소비할 창구를 아직 모른다 — 받아들인 한계 · exit 0)",
+           dp("x4"), 0, "레인 겹침 없음", "보류 0")
+
+
 def s1_main_cases(fails: "list[str]", td: Path) -> None:
     """S1 주 작업 트리 사례(설계 §1 재측정 표 a · b · b2 · c · d1 · d0 · e · h · n · i5) — deps 와 같은 트리의 run-state(셋째 확인
     matrix)를 함께 본다. 끝 = 표식 ∨ 착륙(① 실행 기록 파일의 MH 첫 부모 마지막 손질이 머지 · ② · ③ 폴더 전체 자기 변경 없음)."""
@@ -6872,6 +6916,10 @@ _S1_MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...], str], ...]" = (
      (('    landing.narrow(runs) ', '    landing.narrow([]) '),
       ('        if self._scope is not None and rel not in self._scope:   # 좁힌 status 밖 폴더 — 넓혀 다시 읽는다',
        '        if False:')), "s1_run_state_cases"),
+    # F4-159 — `cross_context/` 만 쓰는 실행의 보류 예외(판 B 설계 §1 «refactor_audit»).
+    ("F4-159 cross_context 보류 예외 지움(BC 없는 cross_context 실행이 보류로 돌아감)",
+     (('    if not run.bcs and not any(p.startswith("cross_context/") for p in run.paths):', "    if not run.bcs:"),),
+     "deps_cross_context_cases"),
 )
 MUTATION_WORKERS: int = min(8, os.cpu_count() or 2)
 
@@ -6986,6 +7034,7 @@ def main() -> int:
         deps_supplier_cases(fails, td)
         deps_doc_kwarg_cases(fails, td)
         deps_own_copy_cases(fails, td)
+        deps_cross_context_cases(fails, td)
         s1_main_cases(fails, td)
         s1_trunk_cases(fails, td)
         s1_lane_cases(fails, td)

@@ -64,16 +64,17 @@
        AnnAssign/Return 값이면 원소 슬롯 · 호출 인자면 비후보) · 컴프리헨션 요소 · 직접 첨자/속성 접근)로
        흐르면 후보 · union 은 전 구성원이 `object` 슬롯일 때만 비후보 · `x: object = …` 와 파서 직접
        인자·무주석 Assign(#493 몫)은 후보 아님. 좌표 = AnnAssign/Return 문장 줄 · 그 밖 호출 줄.
-  #646·#647·#650 은 뿌리 `application/`·`framework/` 아래 파일만 본다(BC 마다 도는 검사기의 BC 고르기와 같은 판 — 자매
+  #646·#647·#650 은 뿌리 `application/`·`framework/`·`cross_context/` 아래 파일만 본다(BC 마다 도는 검사기의 BC 고르기와 같은 판 — 자매
        플러그인 구역 `web/application/**`·`web_test/**` · 운영 스크립트 · 뿌리 밖 중첩 컨테이너 `src/application/**` 제외 —
-       기존 5규칙의 대상은 무변). 그 뿌리 아래 시험 본문은 #647 차단만 산다(아래 «시험 본문»).
+       기존 5규칙의 대상은 무변). BC 밖 합성 칸 `cross_context/`(트리 172~182행)도 BC admin 과 같은 타입 규율을 진다.
+       그 뿌리 아래 시험 본문은 #647 차단만 산다(아래 «시험 본문»).
 
 문법 외 면제(도구·프로토콜 소유 — 사람이 짓는 자리가 아니다):
   - `migrations/`(#593 이 모양을 소유) · `manage.py`/`wsgi.py`/`asgi.py`(생성 골격).
   - 던더(`__all__` 등)·`urlpatterns` — 인터프리터/Django 가 이름과 형을 소유한다.
 
 시험 본문 — #647 차단만 산다(F4-126): `test/`·`tests/` 아래 재료 칸 밖(unit/integration/e2e 와 그 밖 —
-  재료 칸 안이라도 unit/integration/e2e 아래면 본문)과 `test_*.py`·`conftest.py` 는 뿌리 `application/`·`framework/`
+  재료 칸 안이라도 unit/integration/e2e 아래면 본문)과 `test_*.py`·`conftest.py` 는 뿌리 `application/`·`framework/`·`cross_context/`
   아래에서 #647 «차단»만 잰다 — `Any` 값 자리는 전 자리 · `object` 값 자리는 반환·클래스 속성. #493·#645·#646·#650·
   #358·#456 과 ⓓ 후보(#647 ⓓ 포함)는 내지 않는다(시험 본문의 #493 은 F4-33 으로 따로). 규칙 글(houserules §4 «테스트와
   테스트 재료까지 전부»)은 시험을 면제하지 않는다 — #384 «안이 자유»는 트리 모양 규칙이지 타입 면제가 아니다.
@@ -172,7 +173,7 @@ STUB_GENERIC_MODULES = (
     "django.views.generic", "django.views.generic.detail", "django.views.generic.list",
     "django.views.generic.edit", "django.views.generic.dates",
 )
-RULE_ROOTS = {"application", "framework"}  # #646·#647·#650 뿌리 필터(상대 경로 첫 성분 · 신규 3규칙만 — 기존 규칙 무변)
+RULE_ROOTS = {"application", "framework", "cross_context"}  # #646·#647·#650 뿌리 필터(상대 경로 첫 성분 · 신규 3규칙만 — 기존 규칙 무변 · 트리 172행)
 TYPE_IGNORE_RE = re.compile(r"#\s*type:\s*ignore(?:\[([^\]]*)\])?")
 
 # #647 — 값 자리 판정 재료.
@@ -1270,7 +1271,7 @@ def _check_explicit_any(mod: ast.Module, rel: Path, out: Findings, cands: Candid
     #647 — 같은 애너테이션에서 먼저 판정한다: `dict/Mapping` 값 자리 `Any` 는 전 자리 차단 · `object` 는
     반환/클래스 속성 차단 · 매개변수/변수 ⓓ(면제 = `TypeIs/TypeGuard` 루트 · 스텁 강제 오버라이드).
     #647 위반이 난 애너테이션은 #645 nested ⓓ 를 생략한다(bare 는 유지 — 슬롯이 다르다). #647 은
-    뿌리 `application/`·`framework/` 아래만 — 뿌리 밖 파일은 #647 이 없으니 nested `Any` 는 #645 ⓓ 다. #493 과 독립이다(«존재»는 #493 · «내용»은 #645/#647).
+    뿌리 `application/`·`framework/`·`cross_context/` 아래만 — 뿌리 밖 파일은 #647 이 없으니 nested `Any` 는 #645 ⓓ 다. #493 과 독립이다(«존재»는 #493 · «내용»은 #645/#647).
     #647 의 값 판정은 모듈 수준 별칭을 펼친다(`_alias_defs(record=True)` — `aliases` 인자는 오버라이드 면제의 기저 해소용).
     `test_body` 면 #647 차단만 낸다 — #645 와 ⓓ 후보는 버린다(시험 본문 갈래)."""
     names, mods = _any_bindings(mod)
@@ -1700,7 +1701,7 @@ def main(argv: list[str]) -> int:
 
     # 숨김 디렉터리(도구·하네스 영역 — `.codex/` 등)는 공개 표면이 아니다(2026-08-14 F-C ·
     # 라운드 3 실측: 클린룸 가드 훅 파일이 #493 귀속으로 오탐). 상대 경로 성분만 본다.
-    # 시험 본문은 뿌리 `application/`·`framework/` 아래만 «#647 차단만» 갈래로 돈다(F4-126) — 가드·clean 계수는 전 규칙 파일만.
+    # 시험 본문은 뿌리 `application/`·`framework/`·`cross_context/` 아래만 «#647 차단만» 갈래로 돈다(F4-126) — 가드·clean 계수는 전 규칙 파일만.
     walked: "list[tuple[Path, str]]" = []
     for p in sorted(target.rglob("*.py")):
         if any(seg.startswith(".") for seg in p.relative_to(target).parts[:-1]):

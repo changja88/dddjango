@@ -267,12 +267,18 @@ djr:R-3393 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3394 a djr:Obligation ;
-    skos:prefLabel "컨텍스트 간 접근의 ACL/open_host_service 한정 명세 확인(타 컨텍스트 domain_layer/driven_layer 직접 import 금지)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3394@2026-08-22> .
+    skos:prefLabel "컨텍스트 간 접근의 ACL/open_host_service 한정 명세 확인(타 컨텍스트 domain_layer/driven_layer 직접 import 금지) · 여러 BC 값 화면은 cross_context/ 에서 각 BC 창구만 부르고 판정은 그 BC 창구(#664·#667)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3394@2026-11-14> .
 
 <https://numchida.com/ns/djr#R-3394@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3394 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3394@2026-11-14> a djr:Expression ;
+    prov:specializationOf djr:R-3394 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3394@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3395 a djr:Obligation ;
     skos:prefLabel "도메인 이벤트 채택 여부 판단(과채택/누락) 타당성 점검"@ko ;
@@ -607,7 +613,7 @@ djr:R-3741 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
     djr:statesNorm djr:R-3393, djr:R-3394 ;
-    djr:text "- 컨텍스트 경계가 적절한가 — 그리고 컨텍스트 간 접근이 ACL/open_host_service(OHS)로만 명세됐는가(다른 컨텍스트의 `domain_layer`/`driven_layer`를 직접 import하지 않도록, `architecture-ddd` §2.5).\n"@ko .
+    djr:text "- 컨텍스트 경계가 적절한가 — 그리고 컨텍스트 간 접근이 ACL/open_host_service(OHS)로만 명세됐는가(다른 컨텍스트의 `domain_layer`/`driven_layer`를 직접 import하지 않도록, `architecture-ddd` §2.5) · 여러 BC 값을 보이는 운영자 화면이 `cross_context/backoffice/` 에서 각 BC 창구만 부르고 판정을 그 BC 창구에 두는가(`discipline-houserules` `references/final.md` §6 #664 · #667).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-ddd.md/s004/b7> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-ddd.md/s004> ;

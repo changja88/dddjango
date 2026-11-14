@@ -37,9 +37,10 @@
          #554 계약이 선언한 실패로 · #555 벤더 예외 그대로 흘림 금지 · #556 재시도 기계는
          framework 몫 · #557[ast+] code/errno/status_code 비교 수신자의 확인된 vendor 출처는 확정,
          확인된 domain 또는 application의 command/query/result/port 계약은 허용, 미해소·혼합 출처는 후보
-  fake   #575 test/fake/ 에만 · #576 짝 선언 없는 페이크(한 방향) · #577 선언 상속·같은
-         이름 · #578 기술 만지면 어댑터 · #579 프로덕션의 페이크 import · #580
-         dependency_wiring 의 페이크 주입 · #581 평평하게
+  fake   #575 test/fake/ 에만 · #576 짝 선언 없는 페이크(한 방향 · 둘째 대역 `<선언>_<변형>.py` 는 앞머리가
+         맞는 가장 긴 선언의 변형이고 기본 페이크 `<선언>.py` 옆에 둔다 — 2026-11-14 F4-175) · #577 선언
+         상속·같은 이름(변형은 그 선언 파일의 클래스를 바로 상속) · #578 기술 만지면 어댑터 · #579 프로덕션의
+         페이크 import · #580 dependency_wiring 의 페이크 주입 · #581 평평하게
   기타   #134 컨트롤러는 build_* 만(직접 생성 금지 — 모듈 수준 `from pydantic import` 로만 한 번 묶인 이름(검증
          도구 `TypeAdapter`)은 세지 않는다 · 다시 묶인 이름 · 이름을 실행 때 바꾸는 장치를 쓰는 파일은 그대로 ·
          2026-11-14 F4-170) · #574 <data>_in 생성은 어댑터만 ·
@@ -1071,17 +1072,32 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
 
 # ── fake — #575~#581 ───────────────────────────────────────────────────────
 
+def _fake_declaration(stem: str, decl_stems: set[str]) -> str | None:
+    """#576 — 페이크 파일 이름이 짝 지는 선언. `<선언>.py` 는 그 선언(기본 페이크)이고, `<선언>_<변형>.py` 는 앞머리가
+    `<선언>_` 로 맞는 선언 가운데 가장 긴 것의 변형이다(`stock_query` · `stock_query_port` 가 함께 있으면
+    `stock_query_port_spy` 는 `stock_query_port` 의 변형). 맞는 선언이 없으면 None."""
+    if stem in decl_stems:
+        return stem
+    heads: list[str] = [d for d in decl_stems if stem.startswith(d + "_")]
+    return max(heads, key=len) if heads else None
+
+
 def _check_fake(root: Path, bc: Path, f: Findings) -> None:
     fake = bc / "test" / "fake"
-    decl_stems: set[str] = set()
+    decl_files: list[Path] = []
     port = bc / "application_layer" / "port"
     if port.is_dir():
-        decl_stems |= {p.stem for p in port.rglob("*_port.py")}
-        decl_stems |= {p.stem for p in port.rglob("*_query.py")}
-        decl_stems |= {p.stem for p in port.rglob("*_unit_of_work.py")}
+        for pattern in ("*_port.py", "*_query.py", "*_unit_of_work.py"):
+            decl_files += sorted(port.rglob(pattern))
     domain = bc / "domain_layer"
     if domain.is_dir():
-        decl_stems |= {p.stem for p in domain.glob("*/*_repository.py")}
+        decl_files += sorted(domain.glob("*/*_repository.py"))
+    decl_classes: dict[str, set[str]] = {}  # 선언 파일 이름 → 그 파일 맨 위 클래스 이름(변형 페이크의 상속 대조)
+    for p in decl_files:
+        decl_mod: ast.Module | None = _parse(p)
+        decl_classes.setdefault(p.stem, set()).update(
+            n.name for n in (decl_mod.body if decl_mod else []) if isinstance(n, ast.ClassDef))
+    decl_stems: set[str] = set(decl_classes)
     if fake.is_dir():
         for p in sorted(fake.iterdir()):
             if p.is_dir() and p.name != "__pycache__":
@@ -1089,20 +1105,34 @@ def _check_fake(root: Path, bc: Path, f: Findings) -> None:
         for py in sorted(fake.glob("*.py")):
             if py.name == "__init__.py":
                 continue
-            if py.stem not in decl_stems:
+            decl: str | None = _fake_declaration(py.stem, decl_stems)
+            variant: bool = decl is not None and decl != py.stem
+            if decl is None:
                 f.add("#576", _rel(root, py),
-                      f"`{py.stem}` 의 짝이 될 «선언»이 없다 — 검사는 한 방향뿐이다"
-                      "(선언에 페이크를 강제하지는 않는다)")
+                      f"`{py.stem}` 의 짝이 될 «선언»이 없다 — 이름은 `<선언>.py` 또는 그 변형 `<선언>_<변형>.py` 다 · "
+                      "검사는 한 방향뿐이다(선언에 페이크를 강제하지는 않는다)")
+            elif variant and not (fake / f"{decl}.py").is_file():
+                f.add("#576", _rel(root, py),
+                      f"변형 페이크 `{py.stem}` 옆에 기본 페이크 `{decl}.py` 가 없다 — 변형은 기본 페이크 옆에 둔다")
             mod = _parse(py)
             if mod is None:
                 continue
-            for cls in [n for n in mod.body if isinstance(n, ast.ClassDef)]:
+            classes: list[ast.ClassDef] = [n for n in mod.body if isinstance(n, ast.ClassDef)]
+            unbased: bool = False
+            for cls in classes:
                 bases = _bases(cls)
                 if not any(b.endswith(("Port", "Repository", "UnitOfWork", "DomainBypassQuery"))
                            for b in bases):
+                    unbased = True
                     f.add("#577", _rel(root, py, cls.lineno),
                           f"`{cls.name}` 이 선언을 상속하지 않는다 — 페이크는 선언 상속·같은 파일 "
                           "이름으로 짝을 진다")
+            if variant and decl is not None and not unbased \
+                    and not any(_bases(c) & decl_classes[decl] for c in classes):
+                declared: str = "` · `".join(sorted(decl_classes[decl])) or decl
+                f.add("#577", _rel(root, py),
+                      f"변형 페이크 `{py.stem}` 이 선언 `{declared}` 을 바로 상속하지 않는다 — 변형도 그 선언 클래스를 "
+                      "바로 상속한다(기본 페이크를 상속하지 않는다)")
             for node in ast.walk(mod):
                 if isinstance(node, (ast.Import, ast.ImportFrom)):
                     mods = [a.name for a in node.names] if isinstance(node, ast.Import) \

@@ -30,6 +30,10 @@
         존재만으론 면제 안 됨(빈 껍데기 `__init__.py` 토큰 회피 차단). `application/**/
         django_<D>/` 또는 `application/<D>/` 가 *실제 모델/마이그레이션 내용* 을 보유해야 면제.
   G1 ∧ ∃D(후보 ∧ G2 ∧ G3) → exit 2(blocker). 아니면 exit 0.
+  예외 하나(트리 173행 · `architecture-ddd` §3.2 항-(2)): 저장소 상대 경로가 정확히 `cross_context/backoffice` 인
+      모델 없는 운영자 화면 합성 앱(`models.py`·`models/`·`migrations/` 모두 없음)은 후보에서 뺀다. 그 자리에 모델
+      표지가 하나라도 있으면 G2·G3 와 무관하게 blocker 한 줄이다. 이름만 닮은 자리(`cross_context/back_office/` 등)와
+      `cross_context/` 아래 다른 앱은 지금처럼 후보다.
 
 사용법: check-app-container.py [TARGET_DIR]   (기본 TARGET_DIR=현재 디렉터리)
 종료코드: 0=clean(또는 표준 미적용), 2=blocker(발견 출력), 1=사용 오류.
@@ -63,6 +67,8 @@ SKIP_DIRS = {
 
 APP_MARKER_FILES = ("apps.py", "models.py")
 APP_MARKER_DIRS = ("models", "migrations")
+BACKOFFICE_APP = ("cross_context", "backoffice")  # 트리 173행 — 모델 없는 운영자 화면 합성 앱의 단 하나의 자리
+MODEL_MARKERS = ("models.py", "models", "migrations")
 
 
 def _root_application(root: Path) -> Path | None:
@@ -242,6 +248,14 @@ def main(argv: list[str]) -> int:
     # 인쇄와 레코드 방출을 같은 순서로 수행한다(출력 계약 v2).
     findings = ContractFindings(CONTRACT_REF, defer=True)
     for d in _iter_candidate_apps(root, app_container):
+        if d.relative_to(root).parts == BACKOFFICE_APP:
+            if any((d / m).exists() for m in MODEL_MARKERS):
+                findings.add(
+                    where=d.relative_to(root).as_posix(),
+                    msg="`cross_context/backoffice` 는 모델 없는 앱이다 — 모델 · 마이그레이션은 그 BC 의 `django_<bc>/` 에 둔다",
+                    symbol=d.name,
+                )
+            continue  # 이 자리는 모델 표지 한 줄로만 판정한다(건드림 · 이주 짝 무관 — 트리 173행)
         if not _touched_with_new_domain(root, d):
             continue  # git 판정 가능 + 미touch → 존중(§1.1 — touched 만 본다)
         if _has_migrated_counterpart(app_container, d.name):

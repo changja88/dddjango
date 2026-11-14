@@ -1,0 +1,1 @@
+from application.orders.composition_root.dependency_wiring import build_place_order_use_case

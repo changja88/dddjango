@@ -3,10 +3,11 @@
 
 #63(check-openapi-error-declaration)은 프로젝트의 `framework/ninja/pre_route_responses.py` 를 검사기 옆
 자산 `dddjango/scripts/pre_route_responses_canonical.py` 와 AST 로 대조하고, coder 는 그 파일을
-implementation-django-ninja 참조 글의 정본 코드 블록에서 글자 그대로 옮긴다. 둘이 어긋나면 글대로 짠
+implementation-django-ninja 참조 글의 정본 코드 블록에서 코드 그대로 옮긴다(서식 · 주석은 대조 밖). 둘이 어긋나면 글대로 짠
 프로젝트가 검사기에 막힌다. 이 시험이 지킨다.
 
-  ① 자산 ↔ Codex byte 미러 · 픽스처(`workspace/eval/fixtures/openapi_*`)의 정본 사본도 byte 동일.
+  ① #63 이 받는 자산마다(검사기 `PRE_ROUTE_CANONICAL_ASSETS` — 첫 이름 = 이 자산 · 둘째 = 옛 판 2.37.0 정본) Codex byte
+     미러 · 픽스처(`workspace/eval/fixtures/openapi_*`)의 정본 사본은 첫 자산과 byte 동일.
   ② 참조 글(Claude · Codex)에서 `def add_pre_route_responses(` 를 담은 ```python 블록이 정확히 하나이고,
      그 블록 글(펜스 사이 줄 + 끝 줄바꿈)이 자산과 byte 동일.
   ③ 루트 API 클래스 꼴(3.2) — #63 · #437 두 검사기와 pre-gate(`design_pregate.py` — 루트 API 클래스 스텁을 이 글로
@@ -26,8 +27,10 @@ import sys
 from pathlib import Path
 
 ROOT: Path = Path(__file__).resolve().parents[2]
-ASSET: Path = ROOT / "dddjango" / "scripts" / "pre_route_responses_canonical.py"
-ASSET_MIRROR: Path = ROOT / "codex-dddjango" / "skills" / "dddjango" / "scripts" / "pre_route_responses_canonical.py"
+SCRIPTS: Path = ROOT / "dddjango" / "scripts"
+SCRIPTS_MIRROR: Path = ROOT / "codex-dddjango" / "skills" / "dddjango" / "scripts"
+ASSET: Path = SCRIPTS / "pre_route_responses_canonical.py"
+ASSETS_CONSTANT: str = "PRE_ROUTE_CANONICAL_ASSETS"
 REFERENCES: tuple[Path, ...] = (
     ROOT / "dddjango" / "skills" / "implementation-django-ninja" / "references" / "final.md",
     ROOT / "codex-dddjango" / "skills" / "implementation-django-ninja" / "references" / "final.md",
@@ -58,6 +61,16 @@ def method_constant(source: str) -> str | None:
         if any(isinstance(t, ast.Name) and t.id in METHOD_CONSTANTS for t in targets):
             value = ast.literal_eval(statement.value)  # type: ignore[arg-type]
             return value if isinstance(value, str) else None
+    return None
+
+
+def accepted_assets(source: str) -> tuple[str, ...] | None:
+    """검사기 소스에서 받는 정본 자산 이름 튜플을 읽는다."""
+    for statement in ast.parse(source).body:
+        target = statement.target if isinstance(statement, ast.AnnAssign) else None
+        if isinstance(target, ast.Name) and target.id == ASSETS_CONSTANT and statement.value is not None:
+            value = ast.literal_eval(statement.value)
+            return value if isinstance(value, tuple) and all(isinstance(name, str) for name in value) else None
     return None
 
 
@@ -130,15 +143,19 @@ def self_test(asset: str, method: str) -> list[str]:
 def main(argv: list[str]) -> int:
     try:
         asset = ASSET.read_text(encoding="utf-8")
-        mirror = ASSET_MIRROR.read_bytes()
+        assets = accepted_assets(CHECKERS[0].read_text(encoding="utf-8"))
+        pairs = {name: ((SCRIPTS / name).read_bytes(), (SCRIPTS_MIRROR / name).read_bytes()) for name in assets or ()}
         references = {str(path.relative_to(ROOT)): path.read_text(encoding="utf-8") for path in REFERENCES}
         methods = {str(path.relative_to(ROOT)): method_constant(path.read_text(encoding="utf-8")) for path in CHECKERS}
     except (OSError, UnicodeError, SyntaxError, ValueError) as exc:
         print(f"재료 결손: {exc}", file=sys.stderr)
         return 1
     problems: list[str] = []
-    if mirror != asset.encode("utf-8"):
-        problems.append(f"① 자산 Codex 미러가 byte 동일이 아니다: {ASSET_MIRROR.relative_to(ROOT)}")
+    if not assets or assets[0] != ASSET.name:
+        problems.append(f"① {CHECKERS[0].name} 의 `{ASSETS_CONSTANT}` 첫 이름이 `{ASSET.name}` 이 아니다: {assets}")
+    for name, (own, mirrored) in pairs.items():
+        if own != mirrored:
+            problems.append(f"① 자산 Codex 미러가 byte 동일이 아니다: {(SCRIPTS_MIRROR / name).relative_to(ROOT)}")
     copies = sorted(ROOT.glob(FIXTURE_COPIES))
     if not copies:
         problems.append(f"① 픽스처 정본 사본이 하나도 없다: {FIXTURE_COPIES}")

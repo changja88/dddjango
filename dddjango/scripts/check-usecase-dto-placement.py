@@ -7,8 +7,11 @@
 무엇을 잡나 (규칙 번호는 트리 개정 명세):
   구조   #182 `application_layer/` 직계는 `<area>/`·`port/` 둘뿐(종류 폴더 금지)
          #183 `validation/`·`*_validation.py` 금지 · #192 `<area>/` 직계 종류 폴더 금지
-         #188 응용 `<area>` 는 같은 이름의 `driving_layer/api/<area>` 또는
-         `driving_layer/open_host_service/<area>` 와 짝 · api → 응용은 1:1
+         #188 REST 표면이 있는 BC 의 응용 `<area>` 는 입구와 짝 — 같은 이름의 `driving_layer/api/<area>` ·
+         `driving_layer/open_host_service/<area>`, 또는 그 영역을 import 하는(직접 · 그 영역을 짓는
+         `composition_root` 빌더) 같은 BC `open_host_service/` · `event_subscription/` · `cron_job/` ·
+         `api/webhook/` 파일(시험 · `event_wiring.py` 는 입구가 아니다 · 부르는 것이 admin 뿐이면 ORM 또는
+         그 BC 창구를 가리키는 글 · 2026-11-14 F4-158) · api → 응용은 1:1
          #190/#193 유스케이스
          하나=폴더 하나=진입점 하나(`<use_case>_use_case.py`)
   자료   #201 자료는 세 파일(`_command`·`_query`·`_result`) — `dto/` 겹 금지
@@ -280,6 +283,131 @@ def _has_concrete_api_surface(root: Path, api: Path, bc_name: str) -> bool:
     return _project_uses_registrar(root, f"register_{bc_name}_api")
 
 
+# #188 의 이름 안 맞는 입구 — 이 폴더 아래 파일이 `application_layer/<area>/` 를 import 하면(직접 · 그 영역을 짓는
+# `composition_root` 빌더) 그 영역의 짝이다. 같은 이름의 `api/<area>/` · `open_host_service/<area>/` 짝은 이름 대조가 본다.
+# 시험 파일과 `composition_root/event_wiring.py` 는 입구가 아니다(#89 — 입구는 driving 뿐).
+ENTRANCE_DIRS: tuple[tuple[str, ...], ...] = (
+    ("driving_layer", "open_host_service"),
+    ("driving_layer", "event_subscription"),
+    ("driving_layer", "cron_job"),
+    ("driving_layer", "api", "webhook"),
+)
+_ADMIN_ONLY_MSG: str = (
+    "`{name}/` 를 부르는 것이 admin 뿐이다 — 입구(같은 이름의 `api/<area>` · `open_host_service/<area>` · 이 영역을 부르는 "
+    "`open_host_service/` · `event_subscription/` · `cron_job/` · `api/webhook/` 파일)가 없다. admin 은 ORM 으로 읽고 쓰거나, "
+    "DB 로 걸 수 없는 규칙이 있는 쓰기는 그 BC 창구(`open_host_service`)를 부른다"
+)
+_NO_ENTRANCE_MSG: str = (
+    "`<area>` 는 입구와 짝이다 — 같은 이름의 `driving_layer/api/<area>` · `driving_layer/open_host_service/<area>` 도, "
+    "이 영역을 부르는 `open_host_service/` · `event_subscription/` · `cron_job/` · `api/webhook/` 파일도 `{name}/` 에 없다"
+)
+
+
+def _absolute_imports(mod: ast.Module, f: Path, bc: Path) -> list[tuple[str, list[tuple[str, str]]]]:
+    """파일의 import — (점 경로, [(가져온 이름, 묶인 이름)]). 같은 BC 안 상대 import 는 `application.<bc>.…` 점 경로로 편다.
+
+    `import a.b as m` 은 가져온 이름 없이 묶인 이름만(`("", "m")`) 두고, 별칭 없는 `import a.b` 는 빈 목록이다."""
+    pkg: tuple[str, ...] = ("application", bc.name, *f.relative_to(bc).parts[:-1])
+    out: list[tuple[str, list[tuple[str, str]]]] = []
+    for node in ast.walk(mod):
+        if isinstance(node, ast.Import):
+            out.extend((a.name, [("", a.asname)] if a.asname else []) for a in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            names: list[tuple[str, str]] = [(a.name, a.asname or a.name) for a in node.names]
+            if node.level == 0:
+                if node.module:
+                    out.append((node.module, names))
+            elif node.level - 1 <= len(pkg) - 2:  # BC 밖으로 나가는 상대 import 는 이 판정의 몫이 아니다
+                base: tuple[str, ...] = pkg[: len(pkg) - (node.level - 1)]
+                out.append((".".join((*base, *(node.module.split(".") if node.module else ()))), names))
+    return out
+
+
+def _named_areas(mod_path: str, names: list[str], bc_name: str) -> set[str]:
+    """점 경로가 이 BC 의 응용 영역을 가리키면 그 영역 이름들 — `application_layer` 꾸러미에서 가져온 이름은 영역 이름이다
+    (`port/` 는 영역이 아니다)."""
+    parts: list[str] = mod_path.split(".")
+    if parts[:3] != ["application", bc_name, "application_layer"]:
+        return set()
+    if len(parts) > 3:
+        return set() if parts[3] == "port" else {parts[3]}
+    return {n for n in names if n not in ("port", "*")}
+
+
+def _builder_areas(bc: Path) -> dict[str, set[str]]:
+    """`composition_root/` 맨 위 함수 이름 → 그 본문(같은 파일 안에서 부르는 함수 포함)이 쓰는 응용 영역."""
+    out: dict[str, set[str]] = {}
+    root_dir: Path = bc / "composition_root"
+    if not root_dir.is_dir():
+        return out
+    for f in sorted(root_dir.rglob("*.py")):
+        if set(f.relative_to(bc).parts) & SKIP_DIRS:
+            continue
+        mod = _parse(f)
+        if mod is None:
+            continue
+        origin: dict[str, set[str]] = {}  # 이 파일에서 묶인 이름 → 그 이름이 가리키는 응용 영역
+        for mod_path, names in _absolute_imports(mod, f, bc):
+            for name, bound in names:
+                areas: set[str] = _named_areas(mod_path, [name] if name else [], bc.name)
+                if areas:
+                    origin.setdefault(bound, set()).update(areas)
+        fns: dict[str, ast.FunctionDef | ast.AsyncFunctionDef] = {
+            n.name: n for n in mod.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+        used: dict[str, set[str]] = {
+            name: {n.id for n in ast.walk(fn) if isinstance(n, ast.Name)} for name, fn in fns.items()}
+        for name in fns:
+            seen: set[str] = set()
+            stack: list[str] = [name]
+            acc: set[str] = set()
+            while stack:
+                cur: str = stack.pop()
+                if cur in seen:
+                    continue
+                seen.add(cur)
+                for ident in used.get(cur, set()):
+                    acc |= origin.get(ident, set())
+                    if ident in fns:
+                        stack.append(ident)
+            out.setdefault(name, set()).update(acc)
+    return out
+
+
+def _area_callers(bc: Path) -> tuple[set[str], set[str]]:
+    """(이름 안 맞는 입구가 부르는 응용 영역, admin 이 부르는 응용 영역) — 직접 import 와 빌더 import 둘 다 센다."""
+    builders: dict[str, set[str]] | None = None
+
+    def reached(f: Path) -> set[str]:
+        nonlocal builders
+        mod = _parse(f)
+        if mod is None:
+            return set()
+        got: set[str] = set()
+        for mod_path, names in _absolute_imports(mod, f, bc):
+            got |= _named_areas(mod_path, [name for name, _ in names if name], bc.name)
+            if mod_path.split(".")[:3] == ["application", bc.name, "composition_root"]:
+                if builders is None:
+                    builders = _builder_areas(bc)
+                for name, _ in names:
+                    got |= builders.get(name, set())
+        return got
+
+    def files(base: Path) -> list[Path]:
+        if not base.is_dir():
+            return []
+        return [f for f in sorted(base.rglob("*.py")) if not set(f.relative_to(bc).parts) & SKIP_DIRS]
+
+    entrance: set[str] = set()
+    for parts in ENTRANCE_DIRS:
+        for f in files(bc.joinpath(*parts)):
+            entrance |= reached(f)
+    admin: set[str] = set()
+    for base in (bc / "driven_layer" / f"django_{bc.name}" / "admin", *sorted(bc.glob("django_*/admin"))):
+        for f in files(base):
+            admin |= reached(f)
+    return entrance, admin
+
+
 def _check_structure(root: Path, bc: Path, bc_rel: Path, out: Findings) -> list[Path]:
     """구조 규칙 검사 후 <use_case>/ 폴더 목록을 돌려준다."""
     app = _app_layer(bc)
@@ -322,8 +450,15 @@ def _check_structure(root: Path, bc: Path, bc_rel: Path, out: Findings) -> list[
         ohs_areas = {p.name for p in ohs_dirs
                      if not checker_target.cache_only_instance(p)}
         app_areas = {p.name for p in areas}
-        for name in sorted(app_areas - (api_areas | ohs_areas)):
-            out.add("#188", rel / name, f"`<area>` 는 `driving_layer/api/<area>` 또는 `driving_layer/open_host_service/<area>` 와 짝이다 — 둘 다 `{name}/` 이 없다")
+        unpaired: list[str] = sorted(app_areas - (api_areas | ohs_areas))
+        entrance_areas, admin_areas = _area_callers(bc) if unpaired else (set(), set())
+        for name in unpaired:
+            if name in entrance_areas:
+                continue  # 이름 다른 입구(창구 · 사건 구독 · cron · webhook)가 이 영역을 부른다
+            if name in admin_areas:
+                out.add("#188", rel / name, _ADMIN_ONLY_MSG.format(name=name))
+            else:
+                out.add("#188", rel / name, _NO_ENTRANCE_MSG.format(name=name))
         for name in sorted(api_areas - app_areas):
             out.add("#188", bc_rel / api.relative_to(bc) / name, f"`<area>` 는 `application_layer/<area>` 와 1:1 이다 — application_layer 쪽에 `{name}/` 이 없다")
 

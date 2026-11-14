@@ -165,7 +165,7 @@
 | 185 | ast | scripts/check-context-isolation.py | — | 신설 |  |
 | 186 | ast | scripts/check-context-isolation.py | — | 신설 |  |
 | 187 | path | scripts/check-layer-skeleton.py | — | 재작성 |  |
-| 188 | path | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
+| 188 | ast | scripts/check-usecase-dto-placement.py | — | 재작성 | 11-14 등급 path → ast(F4-158 — 이름 다른 입구의 import 짝) |
 | 189 | ast | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
 | 190 | path | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
 | 191 | ast+ | scripts/check-usecase-dto-placement.py | agents/discipline-reviewer.md | 재작성 |  |
@@ -574,3 +574,8 @@
 | 661 | ast | scripts/check-layer-skeleton.py | — | 신설 | 10-29 ②′ 이름 — ②′ 폴더만 · 부품 파일 이름 금지 낱말 · 틀 이름 `<유스케이스 이름>_frame.py` 하나 · 부품 클래스 `…UseCase` · 공개 이름(부품 클래스 · 받는 쪽 셋의 `_` 메서드) |
 | 662 | ast | scripts/check-usecase-dto-placement.py | — | 신설 | 10-29 ②′ 바깥 import — 같은 BC `application_layer/` 밖 시험 아닌 제품 코드가 ②′ 부품 모듈을 import(패키지 경로 통과 · 기존 ② 폴더 밖) |
 | 663 | ast | scripts/design_pregate.py | — | 신설 | 11-10 프레임워크가 대신 부르는 메서드(F4-52) — 예보기 자기 판정 · update 칸 직계 베이스가 사용자 매니저 · 인증 백엔드인 클래스가 직접 정의한 `create_superuser` · `get_by_natural_key` · `get_user` 의 symbols 행 무기재 · 서명 못 읽음 · 기본값 없는 인자 더함(행 끝 `대신부름` 칸으로 풀림 · 칸 파일은 file-plan 안) = 선언 확정 · 처분 `corrected` 만 |
+| 664 | ast | scripts/check-context-isolation.py | — | 신설 | 11-14 BC 밖 합성 칸(F4-159) — `cross_context/**` 의 `application/` import 는 각 BC 창구(`driving_layer/open_host_service/`)뿐 · `get_model()` · 시험 밖 `get_user_model()` · 모델 클래스 정의 · 날 SQL 길 · 밖으로 나가는 상대 import |
+| 665 | ast | scripts/check-context-isolation.py | — | 신설 | 11-14 BC 밖 합성 칸(F4-159) — `application/**` · `framework/**` · `<project>/` 의 `cross_context` import · `<project>/` 의 받는 꼴 밖 `cross_context.` 문자열 상수 |
+| 666 | ast | scripts/check-context-isolation.py | — | 신설 | 11-14 BC 밖 합성 칸(F4-159) — `cross_context/backoffice/urls.py` 의 `path` · `re_path` 둘째 인자가 `admin_view(…)` 호출 · 그 파일 밖 `path` · `re_path` · `Router` |
+| 667 | human | — | agents/discipline-reviewer.md | 신설 | 11-14 BC 밖 합성 칸(F4-159) — 업무 판정 0 · 창구 예외를 화면 알림으로 · 한 BC 화면은 BC admin |
+| 668 | ast | scripts/check-context-isolation.py | — | 신설 | 11-14 admin 은 ORM · 폼 · 화면만(F4-158) — admin 파일이 자기 BC 다섯 자리(도메인 · 응용 · 합성 루트 · 저장 어댑터 · ACL)를 import(다시 내보내기 한 겹) · 파일당 한 줄(정렬한 목록 칸 · 줄 번호 없음) |

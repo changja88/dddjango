@@ -4,6 +4,8 @@
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s051-8> djr:pathGlob "application/*/**" .
 
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s019-6> djr:pathGlob "cross_context/**" .
+
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1> djr:pathGlob "application/*/driving_layer/api/**" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> djr:pathGlob "application/*/driving_layer/api/**" .

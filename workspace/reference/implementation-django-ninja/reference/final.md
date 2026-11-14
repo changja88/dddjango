@@ -895,16 +895,22 @@ framework status는 `response=`에 BC 오류로도 다른 Schema 로도 선언�
 정해진 꼴 하나가 경로의 Ninja 경로 객체와 생성 문서 칸을 읽어 그 답이 실제로 나는 경로에만 붙인다.
 프로젝트에 한 번 두는 파일은 셋이다.
 
-- `framework/ninja/pre_route_responses.py` — 플러그인 정본. 아래 정본 코드 블록을 글자 그대로 둔다(프로젝트가
-  고치지 않는다 — 검사기가 정의를 정본과 맞춘다). 붙이는 함수 `add_pre_route_responses(api, schema)` 와 Ninja 기본 행
+- `framework/ninja/pre_route_responses.py` — 플러그인 정본. 아래 정본 코드 블록을 옮기고 **코드는 고치지 않는다** —
+  검사기가 코드(구문 나무)를 정본과 맞춘다. 코드가 아닌 것은 프로젝트 포매터 · 린터에 맞춰도 되고 검사기도 보지
+  않는다: 서식(줄 나눔 · 괄호 · 끝 쉼표 · 빈 줄 · 따옴표 꼴), import 의 차례 · 묶음 · 줄 나눔,
+  `from __future__ import annotations`, 주석(`# noqa: …` · `# type: ignore[…]`), 맨 위 모듈 docstring. 정의 · 문장 ·
+  값 · 이름 · 차례와 함수 · 클래스 안 docstring 은 코드다. 린트가 정본 코드를 짚으면 코드를 고치지 않고 그 줄
+  `# noqa: <규칙>` 이나 파일 단위 무시로 둔다(코드를 바꾸는 자동 고침은 검사기가 막는다). 옛 판(2.37.0) 정본도
+  받는다 — 동작이 같아 바꾸지 않아도 된다. 붙이는 함수 `add_pre_route_responses(api, schema)` 와 Ninja 기본 행
   `NINJA_RESPONSES` · 그 몸통 Schema 가 여기 있다.
 - `framework/ninja/pre_route_response_table.py` — 프로젝트 표(설계 G1 승인). 프로젝트 행 `PRE_ROUTE_RESPONSES` 와
   그 몸통 Schema, `BAD_REQUEST_RESPONSE`(Django 상한 400 의 꼴 — 기본 `{"media_type": "text/html"}` · 루트 URLconf 가
   `handler400` 을 두면 그 답의 꼴), `NOT_API_MIDDLEWARE`(API 경로에 답하지 않는 프로젝트 미들웨어의 점 경로 글자
   튜플)를 둔다. 기본 행은 여기 두지 않는다(빼서 401 · 422 를 끌 수 없다).
 - `<project>/api.py` — 루트 API 객체를 아래 꼴의 클래스 하나로 짓는다(루트 API 가 둘 이상이면 모두 이 클래스로).
-  클래스 이름과 기저(`NinjaAPI` · `NinjaExtraAPI`)는 프로젝트가 고르고, `get_openapi_schema` 의 서명 · 몸통은 글자
-  그대로다. 이 꼴 말고의 문서 재정의 · monkeypatch · 후처리는 금지다(위 «응답 선언과 OpenAPI»). 받는 판은 Ninja
+  클래스 이름과 기저(`NinjaAPI` · `NinjaExtraAPI`)는 프로젝트가 고르고, `get_openapi_schema` 의 서명 · 몸통은 코드
+  그대로다(서식 · 주석은 위 정본과 같이 프로젝트 도구 몫). 이 꼴 말고의 문서 재정의 · monkeypatch · 후처리는
+  금지다(위 «응답 선언과 OpenAPI»). 받는 판은 Ninja
   1.6 · Python 3.12(정본이 `type` 별칭을 쓴다) · pydantic 2.5(`JsonValue`) 이상이다 — 낮으면 architect 가 G1 에서 판
   올림을 먼저 적는다. 프레임워크 오류 핸들러(`api.py` 의 exception handler)가 Ninja 기본 401 · 422 등의 몸통을 바꾸는
   scope 는 아래 기본 행 몸통과 맞지 않아 행 시험이 붉으므로 G1 에서 멈춘다(`STOP_FOR_USER_APPROVAL`).
@@ -985,16 +991,20 @@ transient 미들웨어 등)는 API 경로에도 답하므로 이 목록에 넣�
 값 꼴 · 값 없음(생략)의 뜻 · 소비법을 적는다.
 
 표를 만들거나 행을 바꾸는 실행은 그 프로젝트에 붙는 행마다 시험을 둔다(`implementation-test` §19.2.1). 정본은
-다음 글이다 — 프로젝트의 `framework/ninja/pre_route_responses.py` 에 글자 그대로 둔다.
+다음 글이다 — 프로젝트의 `framework/ninja/pre_route_responses.py` 에 옮긴다(코드는 그대로 · 서식 · 주석은 위
+«경로 앞 응답» 첫 항목대로).
 
 <!-- pre-route-canonical -->
 ```python
-"""경로 앞 응답을 문서에 붙인다 — dddjango 플러그인 정본(고치지 않는다).
+"""경로 앞 응답을 문서에 붙인다 — dddjango 플러그인 정본(코드는 고치지 않는다).
 
-경로 코드보다 먼저 답하는 쪽(Ninja 인증 · CSRF · 권한 · throttle · 입력 해석 · Django 상한 ·
-미들웨어(서드파티 포함) · 앞단)이 보내는 오류를 경로마다 생성 문서의 응답 항목으로 더한다.
-프로젝트 몫은 `framework/ninja/pre_route_response_table.py` 의 표다.
+경로 코드보다 먼저 답하는 쪽(Ninja 인증 · CSRF · 권한 · throttle · 입력 해석 ·
+Django 상한 · 미들웨어(서드파티 포함) · 앞단)이 보내는 오류를 경로마다 생성 문서의
+응답 항목으로 더한다. 프로젝트 몫은 `framework/ninja/pre_route_response_table.py`
+의 표다. 검사기는 코드만 정본과 맞춘다 — 서식 · 주석 · 이 docstring 은 프로젝트
+도구(포매터 · 린터)에 맞춰도 된다.
 """
+
 import copy
 import re
 from typing import Literal, NotRequired, TypedDict
@@ -1006,9 +1016,22 @@ from ninja.operation import Operation
 from ninja.utils import normalize_path
 from pydantic import JsonValue, TypeAdapter
 
-from framework.ninja.pre_route_response_table import BAD_REQUEST_RESPONSE, PRE_ROUTE_RESPONSES
+from framework.ninja.pre_route_response_table import (
+    BAD_REQUEST_RESPONSE,
+    PRE_ROUTE_RESPONSES,
+)
 
-type When = Literal["all", "auth", "csrf", "permission", "throttle", "json_body", "body", "query", "input"]
+type When = Literal[
+    "all",
+    "auth",
+    "csrf",
+    "permission",
+    "throttle",
+    "json_body",
+    "body",
+    "query",
+    "input",
+]
 type OpenAPIObject = dict[str, JsonValue]
 
 
@@ -1052,12 +1075,18 @@ class NinjaValidationOut(Schema):
     detail: list[NinjaValidationItemOut]
 
 
-HTTP_METHODS: frozenset[str] = frozenset({"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"})
+HTTP_METHODS: frozenset[str] = frozenset(
+    {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+)
 UNSAFE_METHODS: frozenset[str] = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 REF_TEMPLATE: str = "#/components/schemas/{model}"
 CONVERTER_PARAMETER: re.Pattern[str] = re.compile(r"{(\w+):(\w+)}")
-OPERATION_KEY: re.Pattern[str] = re.compile(r"(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS) /\S*")
-IGNORED_SCHEMA_KEYS: frozenset[str] = frozenset({"title", "description", "default", "examples", "example"})
+OPERATION_KEY: re.Pattern[str] = re.compile(
+    r"(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS) /\S*",
+)
+IGNORED_SCHEMA_KEYS: frozenset[str] = frozenset(
+    {"title", "description", "default", "examples", "example"},
+)
 CONVERTER_SCHEMA: dict[str, dict[str, str]] = {
     "int": {"type": "integer"},
     "uuid": {"type": "string", "format": "uuid"},
@@ -1066,11 +1095,24 @@ CONVERTER_SCHEMA: dict[str, dict[str, str]] = {
     "slug": {"type": "string"},
     "path": {"type": "string"},
 }
-ROW_KEYS: frozenset[str] = PreRouteResponse.__required_keys__ | PreRouteResponse.__optional_keys__
+ROW_KEYS: frozenset[str] = frozenset.union(
+    PreRouteResponse.__required_keys__,
+    PreRouteResponse.__optional_keys__,
+)
 NINJA_RESPONSES: tuple[PreRouteResponse, ...] = (
     {"status": 401, "when": "auth", "description": "인증 실패", "body": NinjaDetailOut},
-    {"status": 403, "when": "csrf", "description": "CSRF 확인 실패", "body": NinjaDetailOut},
-    {"status": 403, "when": "permission", "description": "권한 없음", "body": NinjaDetailOut},
+    {
+        "status": 403,
+        "when": "csrf",
+        "description": "CSRF 확인 실패",
+        "body": NinjaDetailOut,
+    },
+    {
+        "status": 403,
+        "when": "permission",
+        "description": "권한 없음",
+        "body": NinjaDetailOut,
+    },
     {
         "status": 429,
         "when": "throttle",
@@ -1078,43 +1120,80 @@ NINJA_RESPONSES: tuple[PreRouteResponse, ...] = (
         "body": NinjaDetailOut,
         "headers": {"Retry-After": {"schema": {"type": "integer"}}},
     },
-    {"status": 400, "when": "json_body", "description": "몸통을 읽을 수 없음", "body": NinjaDetailOut},
-    {"status": 422, "when": "input", "description": "입력 검증 실패", "body": NinjaValidationOut},
+    {
+        "status": 400,
+        "when": "json_body",
+        "description": "몸통을 읽을 수 없음",
+        "body": NinjaDetailOut,
+    },
+    {
+        "status": 422,
+        "when": "input",
+        "description": "입력 검증 실패",
+        "body": NinjaValidationOut,
+    },
 )
 
 
 def add_pre_route_responses(api: NinjaAPI, schema: OpenAPISchema) -> OpenAPISchema:
-    rows: tuple[PreRouteResponse, ...] = (*NINJA_RESPONSES, *_django_rows(), *_project_rows())
+    rows: tuple[PreRouteResponse, ...] = (
+        *NINJA_RESPONSES,
+        *_django_rows(),
+        *_project_rows(),
+    )
     facts: dict[str, OperationFact] = _operation_facts(api, schema.path_prefix)
-    components: dict[str, JsonValue] = schema.setdefault("components", {}).setdefault("schemas", {})
+    section: dict[str, dict[str, JsonValue]] = schema.setdefault("components", {})
+    components: dict[str, JsonValue] = section.setdefault("schemas", {})
     paths: dict[str, dict[str, OpenAPIObject]] = schema.get("paths", {})
+    namespace: str = api.urls_namespace
     keys: set[str] = set()
     for path, item in paths.items():
         for method in list(item):
             operation: OpenAPIObject = copy.deepcopy(item[method])
             item[method] = operation
-            key: str = f"{method.upper()} {path}"
+            verb: str = method.upper()
+            key: str = f"{verb} {path}"
             keys.add(key)
             fact: OperationFact | None = facts.get(key)
             if fact is None:
                 raise ValueError(f"pre-route operation not joined: {key}")
             for entry in rows:
-                if _applies(entry, operation, fact, key, path, method.upper(), api.urls_namespace):
+                if _applies(entry, operation, fact, key, path, verb, namespace):
                     _add(operation, entry, components)
-    for entry in rows:
-        if api.urls_namespace in entry.get("namespaces", ()):
-            for target in entry.get("operations", ()):
-                if target not in keys:
-                    raise ValueError(f"pre-route operation not in this document: {target}")
+    _check_targets(rows, keys, namespace)
     return schema
 
 
+def _check_targets(
+    rows: tuple[PreRouteResponse, ...],
+    keys: set[str],
+    namespace: str,
+) -> None:
+    for entry in rows:
+        if namespace not in entry.get("namespaces", ()):
+            continue
+        for target in entry.get("operations", ()):
+            if target not in keys:
+                raise ValueError(f"pre-route operation not in this document: {target}")
+
+
 def _django_rows() -> tuple[PreRouteResponse, ...]:
-    bad_request: BadRequestResponse = TypeAdapter(BadRequestResponse).validate_python(BAD_REQUEST_RESPONSE, strict=True)
+    bad_request: BadRequestResponse = TypeAdapter(BadRequestResponse).validate_python(
+        BAD_REQUEST_RESPONSE,
+        strict=True,
+    )
     rows: list[PreRouteResponse] = []
-    limits: tuple[tuple[When, str], ...] = (("body", "몸통이 Django 상한을 넘음"), ("query", "쿼리 칸 수가 Django 상한을 넘음"))
+    limits: tuple[tuple[When, str], ...] = (
+        ("body", "몸통이 Django 상한을 넘음"),
+        ("query", "쿼리 칸 수가 Django 상한을 넘음"),
+    )
     for when, description in limits:
-        row: PreRouteResponse = {"status": 400, "when": when, "description": description, "media_type": bad_request["media_type"]}
+        row: PreRouteResponse = {
+            "status": 400,
+            "when": when,
+            "description": description,
+            "media_type": bad_request["media_type"],
+        }
         if "body" in bad_request:
             row["body"] = bad_request["body"]
         rows.append(row)
@@ -1126,32 +1205,48 @@ def _project_rows() -> tuple[PreRouteResponse, ...]:
         unknown: set[str] = set(raw) - ROW_KEYS
         if unknown:
             raise ValueError(f"unknown pre-route row keys: {sorted(unknown)}")
-    rows: tuple[PreRouteResponse, ...] = TypeAdapter(tuple[PreRouteResponse, ...]).validate_python(
-        PRE_ROUTE_RESPONSES, strict=True
-    )
+    rows: tuple[PreRouteResponse, ...] = TypeAdapter(
+        tuple[PreRouteResponse, ...],
+    ).validate_python(PRE_ROUTE_RESPONSES, strict=True)
     for row in rows:
-        if not 400 <= row["status"] <= 599:
-            raise ValueError(f"pre-route status out of 400-599: {row['status']}")
-        for values in (row.get("methods"), row.get("namespaces"), row.get("operations")):
-            if values is not None and not values:
-                raise ValueError(f"empty narrowing tuple in pre-route row {row['status']}")
-        if not set(row.get("methods", ())) <= HTTP_METHODS:
-            raise ValueError(f"pre-route methods must be upper-case HTTP methods: {row['methods']}")
-        if "operations" in row:
-            if len(row.get("namespaces", ())) != 1:
-                raise ValueError(f"pre-route row {row['status']} with operations needs exactly one namespace")
-            for target in row["operations"]:
-                if OPERATION_KEY.fullmatch(target) is None:
-                    raise ValueError(f"pre-route operation must be 'METHOD /path': {target}")
+        _check_row(row)
     return rows
+
+
+def _check_row(row: PreRouteResponse) -> None:
+    status: int = row["status"]
+    if not 400 <= status <= 599:
+        raise ValueError(f"pre-route status out of 400-599: {status}")
+    for values in (row.get("methods"), row.get("namespaces"), row.get("operations")):
+        if values is not None and not values:
+            raise ValueError(f"empty narrowing tuple in pre-route row {status}")
+    if not set(row.get("methods", ())) <= HTTP_METHODS:
+        raise ValueError(
+            f"pre-route methods must be upper-case HTTP methods: {row['methods']}",
+        )
+    if "operations" in row:
+        _check_operations(row)
+
+
+def _check_operations(row: PreRouteResponse) -> None:
+    status: int = row["status"]
+    if len(row.get("namespaces", ())) != 1:
+        raise ValueError(
+            f"pre-route row {status} with operations needs exactly one namespace",
+        )
+    for target in row["operations"]:
+        if OPERATION_KEY.fullmatch(target) is None:
+            raise ValueError(f"pre-route operation must be 'METHOD /path': {target}")
 
 
 def _operation_facts(api: NinjaAPI, path_prefix: str) -> dict[str, OperationFact]:
     facts: dict[str, OperationFact] = {}
     for router in api._get_bound_routers():
         for raw_path, path_view in router.path_operations.items():
-            joined: str = normalize_path("/" + path_prefix + "/".join(i for i in (router.prefix, raw_path) if i))
-            converters: dict[str, str] = {name: kind for kind, name in CONVERTER_PARAMETER.findall(joined)}
+            parts: str = "/".join(i for i in (router.prefix, raw_path) if i)
+            joined: str = normalize_path("/" + path_prefix + parts)
+            found: list[tuple[str, str]] = CONVERTER_PARAMETER.findall(joined)
+            converters: dict[str, str] = {name: kind for kind, name in found}
             doc_path: str = re.sub(r"{[^}:]+:", "{", joined)
             for operation in path_view.operations:
                 if not operation.include_in_schema:
@@ -1159,8 +1254,7 @@ def _operation_facts(api: NinjaAPI, path_prefix: str) -> dict[str, OperationFact
                 for method in operation.methods:
                     facts[f"{method.upper()} {doc_path}"] = {
                         "auth": bool(operation.auth_callbacks),
-                        "csrf": not operation.csrf_exempt
-                        and any(getattr(callback, "csrf", False) for callback in operation.auth_callbacks),
+                        "csrf": _checks_csrf(operation),
                         "throttle": bool(operation.throttle_objects),
                         "permission": _has_permission(operation),
                         "converters": converters,
@@ -1168,14 +1262,22 @@ def _operation_facts(api: NinjaAPI, path_prefix: str) -> dict[str, OperationFact
     return facts
 
 
-def _has_permission(operation: Operation) -> bool:
-    get_route_function: object = getattr(operation.view_func, "get_route_function", None)
-    if not callable(get_route_function):
+def _checks_csrf(operation: Operation) -> bool:
+    if operation.csrf_exempt:
         return False
-    route_function: object = get_route_function()
+    return any(getattr(auth, "csrf", False) for auth in operation.auth_callbacks)
+
+
+def _has_permission(operation: Operation) -> bool:
+    route_getter: object = getattr(operation.view_func, "get_route_function", None)
+    if not callable(route_getter):
+        return False
+    route_function: object = route_getter()
     route: object = getattr(route_function, "route", None)
     controller: object = getattr(route_function, "api_controller", None)
-    permissions: object = getattr(route, "permissions", None) or getattr(controller, "permission_classes", None) or ()
+    permissions: object = getattr(route, "permissions", None)
+    if not permissions:
+        permissions = getattr(controller, "permission_classes", None) or ()
     if not isinstance(permissions, (list, tuple)):
         return False
     return any(not _allows_any(permission) for permission in permissions)
@@ -1185,29 +1287,21 @@ def _allows_any(permission: object) -> bool:
     kind: type = permission if isinstance(permission, type) else type(permission)
     for base in kind.__mro__:
         if base.__name__ == "AllowAny":
-            return getattr(kind, "has_permission", None) is getattr(base, "has_permission", None)
+            own: object = getattr(kind, "has_permission", None)
+            return own is getattr(base, "has_permission", None)
     return False
 
 
 def _applies(
-    entry: PreRouteResponse, operation: OpenAPIObject, fact: OperationFact, key: str, path: str, method: str, namespace: str
+    entry: PreRouteResponse,
+    operation: OpenAPIObject,
+    fact: OperationFact,
+    key: str,
+    path: str,
+    method: str,
+    namespace: str,
 ) -> bool:
-    body: JsonValue = operation.get("requestBody")
-    parameters: JsonValue = operation.get("parameters", [])
-    content: JsonValue = body.get("content") if isinstance(body, dict) else None
-    listed: list[dict[str, JsonValue]] = [p for p in parameters if isinstance(p, dict)] if isinstance(parameters, list) else []
-    checks: dict[When, bool] = {
-        "all": True,
-        "auth": fact["auth"],
-        "csrf": fact["csrf"] and method in UNSAFE_METHODS,
-        "permission": fact["permission"],
-        "throttle": fact["throttle"],
-        "body": isinstance(body, dict),
-        "json_body": isinstance(content, dict) and "application/json" in content,
-        "query": any(p.get("in") == "query" for p in listed),
-        "input": isinstance(body, dict) or any(_can_fail(p, fact["converters"]) for p in listed),
-    }
-    if not checks[entry["when"]]:
+    if not _when_holds(entry["when"], operation, fact, method):
         return False
     if method not in entry.get("methods", (method,)):
         return False
@@ -1215,26 +1309,64 @@ def _applies(
         return False
     if "operations" in entry and key not in entry["operations"]:
         return False
+    return not _exempted(entry, path, method)
+
+
+def _when_holds(
+    when: When,
+    operation: OpenAPIObject,
+    fact: OperationFact,
+    method: str,
+) -> bool:
+    body: JsonValue = operation.get("requestBody")
+    parameters: JsonValue = operation.get("parameters", [])
+    content: JsonValue = body.get("content") if isinstance(body, dict) else None
+    raw: list[JsonValue] = parameters if isinstance(parameters, list) else []
+    listed: list[dict[str, JsonValue]] = [p for p in raw if isinstance(p, dict)]
+    converters: dict[str, str] = fact["converters"]
+    has_body: bool = isinstance(body, dict)
+    checks: dict[When, bool] = {
+        "all": True,
+        "auth": fact["auth"],
+        "csrf": fact["csrf"] and method in UNSAFE_METHODS,
+        "permission": fact["permission"],
+        "throttle": fact["throttle"],
+        "body": has_body,
+        "json_body": isinstance(content, dict) and "application/json" in content,
+        "query": any(p.get("in") == "query" for p in listed),
+        "input": has_body or any(_can_fail(p, converters) for p in listed),
+    }
+    return checks[when]
+
+
+def _exempted(entry: PreRouteResponse, path: str, method: str) -> bool:
     exempt: tuple[str | None, str] | None = entry.get("exempt")
-    if exempt is not None:
-        only_method, setting_name = exempt
-        exempt_paths: object = getattr(settings, setting_name)
-        if (only_method is None or only_method == method) and isinstance(exempt_paths, (list, tuple)) and path in exempt_paths:
-            return False
-    return True
+    if exempt is None:
+        return False
+    only_method, setting_name = exempt
+    exempt_paths: object = getattr(settings, setting_name)
+    if only_method is not None and only_method != method:
+        return False
+    return isinstance(exempt_paths, (list, tuple)) and path in exempt_paths
 
 
 def _can_fail(parameter: dict[str, JsonValue], converters: dict[str, str]) -> bool:
     schema: JsonValue = parameter.get("schema", {})
     if not isinstance(schema, dict):
         return True
-    converter: str | None = converters.get(str(parameter.get("name"))) if parameter.get("in") == "path" else None
+    in_path: bool = parameter.get("in") == "path"
+    name: str = str(parameter.get("name"))
+    converter: str | None = converters.get(name) if in_path else None
     if converter is not None:
-        return CONVERTER_SCHEMA.get(converter) != {k: v for k, v in schema.items() if k not in IGNORED_SCHEMA_KEYS}
+        return CONVERTER_SCHEMA.get(converter) != _significant(schema)
     plain: bool = _plain(schema)
-    if parameter.get("in") == "path":
+    if in_path:
         return not plain
     return parameter.get("required", False) is True or not plain
+
+
+def _significant(schema: dict[str, JsonValue]) -> dict[str, JsonValue]:
+    return {k: v for k, v in schema.items() if k not in IGNORED_SCHEMA_KEYS}
 
 
 def _plain(schema: dict[str, JsonValue]) -> bool:
@@ -1244,13 +1376,21 @@ def _plain(schema: dict[str, JsonValue]) -> bool:
     if keys == {"type"}:
         return schema["type"] == "string"
     if keys == {"anyOf"} and isinstance(options, list):
-        return all(o == {"type": "null"} or (isinstance(o, dict) and _plain(o)) for o in options)
+        return all(_plain_option(o) for o in options)
     if keys == {"type", "items"} and schema["type"] == "array":
         return isinstance(items, dict) and _plain(items)
     return False
 
 
-def _add(operation: OpenAPIObject, entry: PreRouteResponse, components: dict[str, JsonValue]) -> None:
+def _plain_option(option: JsonValue) -> bool:
+    return option == {"type": "null"} or (isinstance(option, dict) and _plain(option))
+
+
+def _add(
+    operation: OpenAPIObject,
+    entry: PreRouteResponse,
+    components: dict[str, JsonValue],
+) -> None:
     responses: dict[int, OpenAPIObject] = operation.setdefault("responses", {})  # type: ignore[assignment]
     status: int = entry["status"]
     content: dict[str, JsonValue] = _content(entry, components)
@@ -1262,6 +1402,16 @@ def _add(operation: OpenAPIObject, entry: PreRouteResponse, components: dict[str
             added["headers"] = dict(headers)
         responses[status] = added
         return
+    _merge_content(existing, content)
+    if headers:
+        existing_headers: dict[str, JsonValue] = existing.setdefault("headers", {})  # type: ignore[assignment]
+        for name, header in headers.items():
+            existing_headers.setdefault(name, header)
+    described: str = f"{existing.get('description', '')} · {entry['description']}"
+    existing["description"] = described.lstrip(" ·")
+
+
+def _merge_content(existing: OpenAPIObject, content: dict[str, JsonValue]) -> None:
     current_content: dict[str, JsonValue] = existing.setdefault("content", {})  # type: ignore[assignment]
     for media_type, item in content.items():
         current: JsonValue = current_content.get(media_type)
@@ -1269,25 +1419,31 @@ def _add(operation: OpenAPIObject, entry: PreRouteResponse, components: dict[str
             current_content[media_type] = item
             continue
         if item["schema"] != current["schema"]:
-            old: JsonValue = current["schema"]
-            options: list[JsonValue] = old["anyOf"] if isinstance(old, dict) and isinstance(old.get("anyOf"), list) else [old]  # type: ignore[assignment]
+            options: list[JsonValue] = _schema_options(current["schema"])
             if item["schema"] not in options:
                 current["schema"] = {"anyOf": [*options, item["schema"]]}
-    if headers:
-        existing_headers: dict[str, JsonValue] = existing.setdefault("headers", {})  # type: ignore[assignment]
-        for name, header in headers.items():
-            existing_headers.setdefault(name, header)
-    existing["description"] = f'{existing.get("description", "")} · {entry["description"]}'.lstrip(" ·")
 
 
-def _content(entry: PreRouteResponse, components: dict[str, JsonValue]) -> dict[str, JsonValue]:
+def _schema_options(schema: JsonValue) -> list[JsonValue]:
+    options: JsonValue = schema.get("anyOf") if isinstance(schema, dict) else None
+    return options if isinstance(options, list) else [schema]
+
+
+def _content(
+    entry: PreRouteResponse,
+    components: dict[str, JsonValue],
+) -> dict[str, JsonValue]:
     media_type: str = entry.get("media_type", "application/json")
     body: type[Schema] | None = entry.get("body")
     if body is None:
         return {media_type: {"schema": {"type": "string"}}}
-    schema: dict[str, JsonValue] = body.model_json_schema(ref_template=REF_TEMPLATE, mode="serialization")
+    schema: dict[str, JsonValue] = body.model_json_schema(
+        ref_template=REF_TEMPLATE,
+        mode="serialization",
+    )
     definitions: JsonValue = schema.pop("$defs", {})
-    for name, definition in {**(definitions if isinstance(definitions, dict) else {}), body.__name__: schema}.items():
+    named: dict[str, JsonValue] = definitions if isinstance(definitions, dict) else {}
+    for name, definition in {**named, body.__name__: schema}.items():
         if components.setdefault(name, definition) != definition:
             raise ValueError(f"component name collision: {name}")
     return {media_type: {"schema": {"$ref": REF_TEMPLATE.format(model=body.__name__)}}}

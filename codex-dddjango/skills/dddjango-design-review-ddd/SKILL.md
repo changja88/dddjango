@@ -38,7 +38,7 @@ description: dddjango 코디네이터가 Phase 1(설계)에서 spawn_agent로 �
 - 판정 소유 → 구조 이주(컨텍스트 멤버십): 판정·불변식을 얹는 코드의 이주와 데이터소스 골격 실현의 «값»은 `dddjango-architecture-ddd` references §3.2 «판정 소유→구조 이주» 항-(1)·항-(2)가 소유한다 — 명세가 그 규정대로인지 대조한다: 판정을 얹는 코드를 평면 모델에 남기지 않았는가(항-(1) — 평면 모델 위 판정 메서드 금지), 데이터소스라는 이유로 위치·4계층·빈 애그리거트 골격 실현까지 면제하지 않았는가(항-(2) — 실내용 면제는 판정 `.py` 코드 한정·깊이 면제 폐지 2026-06-08, 루트 평면·골격 생략은 houserules final.md §0 위반·칸의 값 정본은 `dddjango-discipline-houserules` `references/final.md` §0·§1). 기준은 "레거시냐"가 아니라 "판정·불변식 소유냐"다.
 - 상태 전이가 도메인 규칙과 맞는가, 누락된 규칙·엣지가 없는가.
 - 유비쿼터스 언어가 명세 전반에 일관되게 쓰였는가.
-- 컨텍스트 경계가 적절한가 — 그리고 컨텍스트 간 접근이 ACL/open_host_service(OHS)로만 명세됐는가(다른 컨텍스트의 `domain_layer`/`driven_layer`를 직접 import하지 않도록, `dddjango-architecture-ddd` §2.5).
+- 컨텍스트 경계가 적절한가 — 그리고 컨텍스트 간 접근이 ACL/open_host_service(OHS)로만 명세됐는가(다른 컨텍스트의 `domain_layer`/`driven_layer`를 직접 import하지 않도록, `dddjango-architecture-ddd` §2.5) · 여러 BC 값을 보이는 운영자 화면이 `cross_context/backoffice/` 에서 각 BC 창구만 부르고 판정을 그 BC 창구에 두는가(`dddjango-discipline-houserules` `references/final.md` §6 #664 · #667).
 - 도메인 이벤트 채택 여부 판단이 타당한가(과채택 / 누락).
 - 사실 · 도메인 이벤트를 «어느 길로» 내보내는가 — dddjango 생성 코드의 길은 하나다: 유스케이스가 저장 구간(`with <uow>:`) 안에서 `uow.after_commit(<이름 있는 함수>)` 로 등록하고 그 함수 안에서만 `.publish(` 한다(#539 ~ #541 · `dddjango-architecture-ddd` §3.7). 그 함수는 메서드이거나 `with` · `if` · `try` 밖 본문 바로 아래의 지역 함수로 둔다(구간 안에 정의하면 검사기가 커밋 전 발행으로 읽는다). 명세가 «구간을 나온 뒤 · 저장 줄 뒤 직접 `.publish(`» · «`transaction.on_commit` 직접» · «리포지토리 · 애그리거트가 발행» 을 적거나, 사실 · 도메인 이벤트를 내보내는 유스케이스에 저장 경계(UoW)가 없으면 blocker 다(스트림 조각 · 바깥 저장소 쓰기는 대상이 아니다). Phase 2 백스톱은 유스케이스의 직접 `.publish(` 를 «커밋 뒤» 라는 때가 맞아도 #541 로, `transaction.on_commit` 직접을 #200 으로, 애그리거트의 발행을 #272 로, 리포지토리의 `pull_events()` 를 #539 로 반송한다 — 리포지토리가 `pull_events()` 없이 발행하는 꼴은 백스톱이 없으니 이 리뷰가 잡는다.
 

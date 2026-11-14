@@ -41,7 +41,9 @@
   #390 `test/e2e/` 는 입구를 거친다 — TestClient/Client·cron_job 신호가 없으면 위반
        (자기 BC `driving_layer.cron_job` import 는 입구라 구현 칸 import 로 세지 않는다).
   #391 `factories/` 는 `integration/` «안»이 아니라 그 형제다.
-  #392 `factories/` 에는 factory_boy 픽스처만 온다.
+  #392 `factories/` 에는 factory_boy 팩토리와 `make_` 로 시작하는 만드는 함수만 온다(맨 위 정의마다 — 비공개
+       `_` 도우미(함수 · 클래스) · import · 상수는 곁에 둔다 · 가짜 구현 · pytest 고정물 · 시험 · 그 밖 공개 클래스 ·
+       함수와 재료가 하나도 없는 모듈은 위반 — 2026-11-14 F4-175).
 
 ⑶ 트리 개정 명세 몫 — `<project>/settings/` 환경축 (트리 170·171행):
   #445 갈리는 축은 환경 하나뿐 — 기능별 분할 파일(celery.py·logging.py 등) 금지.
@@ -451,12 +453,65 @@ def _check_bc_test(bc: Path, bc_rel: Path, out: Findings, root_pkgs: "frozenset[
                 ):
                     out.add("#390", rel, f"`{p}` import — `test/e2e/` 는 blackbox 다(입구에서 출구까지 한 흐름 통째로): 자기 BC 구현 칸 import 는 입구 우회 신호다")
         if top == "factories" and f.name != "__init__.py":
-            has_factory = any(p == "factory" or p.startswith("factory.") for p in imports) or any(
-                isinstance(n, ast.ClassDef) and any(str(getattr(b, "attr", getattr(b, "id", ""))).endswith("Factory") for b in n.bases)
-                for n in ast.walk(mod)
-            )
-            if not has_factory:
-                out.add("#392", rel, "`factories/` 에는 factory_boy 픽스처만 온다 — 다른 재료는 `fake/` 또는 테스트 안으로")
+            misfits: "list[str]" = _factories_misfits(mod)
+            if misfits:
+                out.add("#392", rel, "`factories/` 에는 factory_boy 팩토리와 `make_` 함수만 온다 — " + " · ".join(misfits))
+
+
+_DECLARATION_SUFFIXES: "tuple[str, ...]" = ("Port", "Repository", "UnitOfWork", "DomainBypassQuery")
+
+
+def _base_name(node: ast.expr) -> str:
+    """밑 클래스 식의 끝 이름 — `factory.django.DjangoModelFactory` → `DjangoModelFactory` · 제네릭 꼴
+    `DjangoModelFactory[AccountModel]` 은 첨자 앞 이름으로 본다."""
+    if isinstance(node, ast.Subscript):
+        node = node.value
+    return str(getattr(node, "attr", getattr(node, "id", "")))
+
+
+def _is_fixture(fn: "ast.FunctionDef | ast.AsyncFunctionDef") -> bool:
+    """pytest 고정물 장식 — `@pytest.fixture` · `@fixture` · 둘 다 `(...)` 호출 꼴 포함."""
+    for d in fn.decorator_list:
+        target: ast.expr = d.func if isinstance(d, ast.Call) else d
+        if _base_name(target) == "fixture":
+            return True
+    return False
+
+
+def _factories_misfits(mod: ast.Module) -> "list[str]":
+    """#392 — `factories/` 모듈 맨 위 정의 가운데 재료가 아닌 것(없으면 빈 목록).
+
+    재료는 둘이다 — factory_boy 팩토리 클래스(밑 클래스 이름이 `…Factory`)와 `make_` 로 시작하는 만드는 함수.
+    `_` 로 시작하는 비공개 도우미(함수 · 클래스) · import · 상수는 재료 곁에 둘 수 있다(선언을 상속한 비공개 클래스 ·
+    고정물은 그대로 위반). 가짜 구현(선언 상속)은 `fake/`,
+    pytest 고정물은 `conftest.py`, 시험은 `unit/`·`integration/`·`e2e/`, 그 밖은 쓰는 시험 파일 안이다.
+    재료가 하나도 없는 모듈도 위반이다."""
+    misfits: "list[str]" = []
+    material: bool = False
+    for node in mod.body:
+        if isinstance(node, ast.ClassDef):
+            bases: "set[str]" = {_base_name(b) for b in node.bases}
+            if any(b.endswith("Factory") for b in bases):
+                material = True
+            elif any(b.endswith(_DECLARATION_SUFFIXES) for b in bases):
+                misfits.append(f"`{node.name}` 는 가짜 구현이다(`fake/<선언>.py` 로)")
+            elif node.name.startswith("Test"):
+                misfits.append(f"`{node.name}` 는 시험이다(`unit/`·`integration/`·`e2e/` 로)")
+            elif not node.name.startswith("_"):
+                misfits.append(f"`{node.name}` 는 팩토리가 아니다(쓰는 시험 파일 안으로)")
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if _is_fixture(node):
+                misfits.append(f"`{node.name}` 는 pytest 고정물이다(`conftest.py` 로)")
+            elif node.name.startswith("test_"):
+                misfits.append(f"`{node.name}` 는 시험이다(`unit/`·`integration/`·`e2e/` 로)")
+            elif node.name.startswith("make_"):
+                material = True
+            elif not node.name.startswith("_"):
+                misfits.append(f"`{node.name}()` 는 `make_` 함수가 아니다(만드는 함수면 `make_` 로 이름을 바꾸거나, "
+                               "쓰는 시험 파일 안으로)")
+    if not misfits and not material:
+        misfits.append("factory_boy 팩토리도 `make_` 함수도 없다")
+    return misfits
 
 
 def _root_test_packages(root: Path) -> "frozenset[str]":

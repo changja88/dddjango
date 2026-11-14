@@ -3716,7 +3716,12 @@ PRE_ROUTE_FUNCTION: str = "framework.ninja.pre_route_responses.add_pre_route_res
 OPENAPI_SCHEMA_TYPE: str = "ninja.openapi.schema.OpenAPISchema"
 # 받는 정본 — 이 검사기와 같은 폴더의 자산 파일. 정본 판이 바뀌어 옛 판도 받을 때는 그 판 자산을
 # 파일로 더하고 여기 이름을 잇는다(지문 = 그 자산의 AST 대조 꼴 — 실행 Python 이 같은 꼴로 읽는다).
-PRE_ROUTE_CANONICAL_ASSETS: tuple[str, ...] = ("pre_route_responses_canonical.py",)
+# 첫 이름이 지금 판(참조 글 블록 = 이 자산)이고 표 칸 이름 · 메서드 낱말 · operation 꼴은 첫 자산에서만 읽는다 —
+# 2.37.0 판은 동작이 같아 함께 받는다(F4-178 · 2.38.0 · TypedDict 가 바뀌는 판에서 뺀다).
+PRE_ROUTE_CANONICAL_ASSETS: tuple[str, ...] = (
+    "pre_route_responses_canonical.py",
+    "pre_route_responses_canonical_2_37_0.py",
+)
 DOCUMENTED_API_METHOD: str = (
     "def get_openapi_schema(\n"
     "    self, *, path_prefix: str | None = None, path_params: dict[str, object] | None = None\n"
@@ -4316,14 +4321,24 @@ def _canonical_spec() -> _CanonicalSpec:
     return spec
 
 
+def _shared_prefix(left: tuple[str, ...], right: tuple[str, ...]) -> int:
+    """앞에서부터 같은 정의 수(한쪽이 다른 쪽의 앞머리면 짧은 쪽 길이)."""
+    return next(
+        (index for index, (mine, theirs) in enumerate(zip(left, right)) if mine != theirs),
+        min(len(left), len(right)),
+    )
+
+
 def _canonical_findings(relative: Path, tree: ast.Module) -> list[_PreRouteSite]:
-    """b — 프로젝트 정본 파일 ↔ 받는 정본(자산)의 AST 대조."""
+    """b — 프로젝트 정본 파일 ↔ 받는 정본(자산)의 AST 대조. 어긋나면 앞머리 정의가 가장 길게 같은 자산과
+    견준다(같으면 앞 자산 — 옛 판 사본을 고친 주인에게 그 판과 견준 자리를 댄다)."""
     spec = _canonical_spec()
     imports, definitions, names = _canonical_form(tree)
     if (imports, definitions) in spec.forms:
         return []
-    want_imports, want_definitions = spec.forms[0]
-    want_names = spec.names[0]
+    nearest: int = max(range(len(spec.forms)), key=lambda index: _shared_prefix(definitions, spec.forms[index][1]))
+    want_imports, want_definitions = spec.forms[nearest]
+    want_names = spec.names[nearest]
     detail: list[str] = []
     if imports != want_imports:
         missing = sorted(want_imports - imports)
@@ -4333,27 +4348,18 @@ def _canonical_findings(relative: Path, tree: ast.Module) -> list[_PreRouteSite]
         if extra:
             detail.append(f"더한 import {len(extra)}")
     if definitions != want_definitions:
-        differing = next(
-            (
-                index
-                for index in range(max(len(definitions), len(want_definitions)))
-                if index >= len(definitions)
-                or index >= len(want_definitions)
-                or definitions[index] != want_definitions[index]
-            ),
-            None,
-        )
-        if differing is not None:
-            shown = names[differing] if differing < len(names) else want_names[differing]
-            detail.append(f"{differing + 1}번째 정의(`{shown}`)부터 다름")
+        differing = _shared_prefix(definitions, want_definitions)
+        shown = names[differing] if differing < len(names) else want_names[differing]
+        detail.append(f"{differing + 1}번째 정의(`{shown}`)부터 다름")
     lineno = 1
     return [
         _PreRouteSite(
             "",
             relative,
             lineno,
-            f"경로 앞 응답 정본이 플러그인 정본과 글자 그대로가 아니다({' · '.join(detail) or '꼴 다름'}) — "
-            f"정본은 고치지 않는다 · 참조 글의 정본 코드를 글자 그대로 둔다({PRE_ROUTE_SECTION})",
+            f"경로 앞 응답 정본의 코드가 플러그인 정본과 다르다(`{PRE_ROUTE_CANONICAL_ASSETS[nearest]}` 와 견줘 "
+            f"{' · '.join(detail) or '꼴 다름'}) — 참조 글의 정본 코드는 고치지 않는다 · 서식 · 주석은 대조 밖이고 "
+            f"린트가 짚으면 그 줄 `# noqa: <규칙>` 으로 둔다({PRE_ROUTE_SECTION})",
         )
     ]
 

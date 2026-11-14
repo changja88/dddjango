@@ -4920,7 +4920,7 @@ _TRY_NODES: "tuple[type, ...]" = tuple(t for t in (ast.Try, getattr(ast, "TrySta
 
 
 def _repo_root_packages() -> "frozenset[str]":
-    """표준 트리 최상위(depth-0) 칸의 첫 세그먼트 중 미해소 `<…>` 가 아닌 것 → {application, framework}.
+    """표준 트리 최상위(depth-0) 칸의 첫 세그먼트 중 미해소 `<…>` 가 아닌 것 → {application, framework, cross_context}.
     `<project>/`(settings 패키지)는 사본 실존으로 잡는다(`_is_repo_target`). 하드코딩 아님 — `standard_tree` 재사용."""
     out: "set[str]" = set()
     for row in tree.children(None):

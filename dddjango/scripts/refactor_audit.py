@@ -4971,6 +4971,7 @@ def _dddjango_run(read: Reader, name: str, where: str, label: str, bc: str) -> "
                 run.bcs.add(fm.group(1).replace("-", "_"))
         for fl in re.findall(r"^.*대상 BC 경로 필터.*$", re.split(r"(?m)^#+\s*앞 실행", text)[0], re.M):
             run.bcs |= set(re.findall(r"application/([a-z_][a-z0-9_]*)", fl))
+            run.paths |= set(re.findall(r"(?<![A-Za-z0-9_./])cross_context/[A-Za-z0-9_./-]*", fl))   # BC 밖 합성 칸(F4-159)
         spec_text: str = _record_text(read, spec_name, where)
     except _Undecodable as exc:
         run.unreadable = str(exc)
@@ -4996,9 +4997,9 @@ def _dddjango_run(read: Reader, name: str, where: str, label: str, bc: str) -> "
         run.paths |= set(plan)
         run.bcs |= {p.split("/")[1] for p in plan if p.startswith("application/") and p.count("/") >= 2}
     run.consumes = [ln for ln in _boundary_imports(spec_text) if f"application.{bc}." in ln or ln.endswith(f"application.{bc}")]
-    if not run.bcs:
-        run.hold = "대상 BC 를 모른다(리팩토링 실행 줄 · 경로 필터 줄 · 명세 file-plan 없음)"
-    elif not plan:
+    if not run.bcs and not any(p.startswith("cross_context/") for p in run.paths):   # `cross_context/` 만 쓰는 실행은 보류 없이
+        run.hold = "대상 BC 를 모른다(리팩토링 실행 줄 · 경로 필터 줄 · 명세 file-plan 없음)"       # 경로 겹침으로 가른다(F4-159)
+    elif run.bcs and not plan:
         run.hold = "명세 file-plan 이 아직 없다"           # 판정 단계에서 «겹칠 수 있음»일 때만 보류로 쓴다
     return run
 

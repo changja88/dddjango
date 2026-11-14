@@ -7,9 +7,10 @@
     "globs": [
       "application/*/**",
       "application/*/domain_layer/**",
-      "application/*/driving_layer/api/**"
+      "application/*/driving_layer/api/**",
+      "cross_context/**"
     ],
-    "rows": 4
+    "rows": 5
   },
   "q2:exp-A": [
     "R-0124×1",
@@ -34,8 +35,8 @@
   },
   "q3:미바인딩거절": true,
   "q4": {
-    "distinct_works": 3752,
-    "rows": 3752,
+    "distinct_works": 3759,
+    "rows": 3759,
     "with_alias": [
       "R-0091",
       "R-0122",
@@ -69,7 +70,12 @@
       "R-3691",
       "R-3692",
       "R-3693",
-      "R-3694"
+      "R-3694",
+      "R-3753",
+      "R-3754",
+      "R-3755",
+      "R-3756",
+      "R-3757"
     ]
   }
 }

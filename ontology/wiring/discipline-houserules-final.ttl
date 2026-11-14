@@ -178,3 +178,17 @@ djr:R-3719 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder>, <https:/
     djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
 
 djr:R-3740 djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py>, <https://numchida.com/ns/djr#c/check-test-config.py> .
+
+djr:R-3753 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
+
+djr:R-3754 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
+
+djr:R-3755 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
+
+djr:R-3756 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-3757 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
+
+djr:R-3758 djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .
+
+djr:R-3759 djr:enforcedBy <https://numchida.com/ns/djr#c/check-test-config.py> .

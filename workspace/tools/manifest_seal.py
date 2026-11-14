@@ -64,6 +64,8 @@ GROUPS: "dict[str, dict]" = {
             "dddjango/scripts/folder_group.py",
             # 경로 앞 응답 정본 자산 — #63 b 가 프로젝트 정본 파일을 이 글과 대조해 위반 수를 만든다(2.37.0 · F4-173).
             "dddjango/scripts/pre_route_responses_canonical.py",
+            # 옛 판(2.37.0) 정본 자산 — #63 b 가 함께 받는 꼴이다(2.38.0 · F4-178).
+            "dddjango/scripts/pre_route_responses_canonical_2_37_0.py",
             "workspace/eval/rubric/*.md",
             "workspace/eval/tools/FC-GOLDEN.md",
             # **계수 규약의 실행체**. 검사기 파일만 동결하고 «어떻게 부르는가»를 두면, 재는 법이

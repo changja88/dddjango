@@ -33,3 +33,5 @@ ast-serialize==0.13.1
 django-stubs==6.1.2
 django-stubs-ext==6.1.2
 types-pyyaml==6.0.12.20261111
+# 경로 앞 응답 정본이 흔한 ruff 기본(복잡도 10 · 서식 줄 88 · 130)을 지나는지(F4-178 · pre_route_behavior_smoke ⑥) — 의존 없음.
+ruff==0.17.3

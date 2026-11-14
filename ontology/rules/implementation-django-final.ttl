@@ -1763,12 +1763,18 @@ djr:R-1367 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-3460 a djr:Obligation ;
-    skos:prefLabel "admin 저작 화면의 ModelForm·BaseInlineFormSet·ModelAdmin·TabularInline/StackedInline 은 django-stubs 제네릭(런타임 subscript 불가) — 규칙은 houserules §4·§6.1 소유 · 이 절은 한 벌 예시 · 웹 폼 ModelForm 도 같은 표기"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3460@2026-09-04> .
+    skos:prefLabel "admin 저작 화면(자리 둘 — BC admin · cross_context/backoffice/ · 표기 같음)의 ModelForm·BaseInlineFormSet·ModelAdmin·TabularInline/StackedInline 은 django-stubs 제네릭(런타임 subscript 불가) — 규칙은 houserules §4·§6.1 소유 · 이 절은 한 벌 예시 · 웹 폼 ModelForm 도 같은 표기"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3460@2026-11-14> .
 
 <https://numchida.com/ns/djr#R-3460@2026-09-04> a djr:Expression ;
     prov:specializationOf djr:R-3460 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3460@2026-11-14> a djr:Expression ;
+    prov:specializationOf djr:R-3460 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3460@2026-09-04> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3461 a djr:Obligation ;
     skos:prefLabel "monkeypatch 채택 시 admin.ModelAdmin[Parent] 직접 표기 · 그 밖은 별칭 · BaseInlineFormSet 셋째 인자(폼)는 적지 않는다(기본값만 admin.formset 불변 자리와 맞음) · # type: ignore[type-arg] 로 맨몸을 덮지 않는다(#646)"@ko ;
@@ -3817,7 +3823,7 @@ djr:R-3461 a djr:Obligation ;
     djr:order 1 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4/b16> ;
     djr:statesNorm djr:R-3460 ;
-    djr:text "\nadmin 저작 화면(`driven_layer/django_<bc>/admin/` — 배치·import 방향은 `discipline-houserules` §1 트리 83행·§5)의 `ModelForm`·`BaseInlineFormSet`·`ModelAdmin`·`TabularInline`/`StackedInline` 은 django-stubs 가 제네릭으로 선언하지만 런타임 클래스는 subscript 를 못 한다 — 규칙(타입 인자 필수 · `# type: ignore[type-arg]` 금지 · 별칭 기본 / monkeypatch 채택 시 직접)은 houserules §4·§6.1 이 소유하고, 이 절은 그 «어떻게»를 한 벌로 보인다. 웹 폼의 `ModelForm` 도 같은 표기다(`implementation-django-web` §6).\n\n"@ko .
+    djr:text "\nadmin 저작 화면(자리는 둘 — BC 의 `driven_layer/django_<bc>/admin/`(배치·import 방향은 `discipline-houserules` §1 트리 83행·§5)과 여러 BC 값을 보이는 운영자 화면 `cross_context/backoffice/`(`discipline-houserules` `references/final.md` §1 트리 172~182행·§6) — 표기는 같다)의 `ModelForm`·`BaseInlineFormSet`·`ModelAdmin`·`TabularInline`/`StackedInline` 은 django-stubs 가 제네릭으로 선언하지만 런타임 클래스는 subscript 를 못 한다 — 규칙(타입 인자 필수 · `# type: ignore[type-arg]` 금지 · 별칭 기본 / monkeypatch 채택 시 직접)은 houserules §4·§6.1 이 소유하고, 이 절은 그 «어떻게»를 한 벌로 보인다. 웹 폼의 `ModelForm` 도 같은 표기다(`implementation-django-web` §6).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s094-18/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s094-18> ;

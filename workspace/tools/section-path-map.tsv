@@ -3,3 +3,4 @@ architecture-ddd-final	3.2	60	엔티티·판정·불변식 절 — 표준 트리
 architecture-ddd-final	8	1	의사결정 요약 절 — 특정 층이 아니라 BC 전역 결정
 implementation-django-ninja-final	6.1	9	Status code mapping 절 — HTTP 응답 표면(driving_layer/api)
 implementation-django-ninja-final	6.2	9	dddjango-code-json 오류 프로필 절 — HTTP 오류 응답 표면(driving_layer/api)
+discipline-houserules-final	6	172	BC 밖 합성 칸 절 — 표준 트리 cross_context/ 소관(BC 둘 이상의 값을 함께 쓰는 운영자 화면 합성)

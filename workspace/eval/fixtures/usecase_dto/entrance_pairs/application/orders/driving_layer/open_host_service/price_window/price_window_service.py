@@ -1,0 +1,1 @@
+from application.orders.composition_root.dependency_wiring import build_quote_price_use_case

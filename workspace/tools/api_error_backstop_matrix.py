@@ -5347,6 +5347,8 @@ def get_lesson(request, lesson_id: int):
 # 경로 앞 응답 꼴(F4-173 · #63 a · b · c) — 루트 API 의 정해진 클래스 하나 + framework/ninja/ 정본 · 표.
 # 정본 글은 검사기 옆 자산에서 읽는다(이 행렬은 글과 하위 프로세스만 쓴다 — Django · Ninja 를 import 하지 않는다).
 PRE_ROUTE_CANONICAL: Final = (CHECKER_DIR / "pre_route_responses_canonical.py").read_text(encoding="utf-8")
+# 옛 판(2.37.0) 정본 — #63 b 가 함께 받는다(F4-178 · 2.38.0 — 이미 옮긴 프로젝트는 바꾸지 않아도 된다).
+PRE_ROUTE_CANONICAL_2_37_0: Final = (CHECKER_DIR / "pre_route_responses_canonical_2_37_0.py").read_text(encoding="utf-8")
 DOCUMENTED_API: Final = """from ninja.openapi.schema import OpenAPISchema
 from ninja_extra import NinjaExtraAPI
 
@@ -6791,11 +6793,51 @@ def pre_route_cases() -> list[Case]:
     second_api = DOCUMENTED_API + '\ninternal: NinjaExtraAPI = NinjaExtraAPI(urls_namespace="internal")\n'
     docstring_class = DOCUMENTED_API.replace("class DocumentedAPI(NinjaExtraAPI):\n", 'class DocumentedAPI(NinjaExtraAPI):\n    """경로 앞 응답을 붙이는 루트 API."""\n\n')
     two_ops = PRE_ROUTE_TWO_OPERATIONS
-    canonical_edit = PRE_ROUTE_CANONICAL.replace('"description": "인증 실패"', '"description": "인증 실패함"', 1)
-    canonical_import_order = PRE_ROUTE_CANONICAL.replace("import copy\nimport re\n", "import re\nimport copy\n", 1)
-    canonical_future = PRE_ROUTE_CANONICAL.replace('"""\nimport copy', '"""\nfrom __future__ import annotations\n\nimport copy', 1)
-    canonical_docstring = PRE_ROUTE_CANONICAL.replace("dddjango 플러그인 정본(고치지 않는다)", "프로젝트가 옮긴 정본", 1)
+
+    def canonical_with(text: str, *edits: tuple[str, str]) -> str:
+        # 고친 글이 원본과 다르다(바꿀 글이 없어 원본 그대로 도는 헛 초록 막기 — 정본 글이 바뀌면 여기서 멈춘다).
+        for old, new in edits:
+            if text.count(old) != 1:
+                raise ValueError(f"canonical_with(): {old!r} 가 정본에 정확히 한 번이 아니다")
+            text = text.replace(old, new, 1)
+        return text
+
+    one_char = ('"description": "인증 실패"', '"description": "인증 실패함"')
+    canonical_edit = canonical_with(PRE_ROUTE_CANONICAL, one_char)
+    canonical_import_order = canonical_with(PRE_ROUTE_CANONICAL, ("import copy\nimport re\n", "import re\nimport copy\n"))
+    canonical_future = canonical_with(PRE_ROUTE_CANONICAL, ('"""\n\nimport copy', '"""\n\nfrom __future__ import annotations\n\nimport copy'))
+    canonical_docstring = canonical_with(PRE_ROUTE_CANONICAL, ("dddjango 플러그인 정본(코드는 고치지 않는다)", "프로젝트가 옮긴 정본"))
     canonical_extra = PRE_ROUTE_CANONICAL + "\n\nLOCAL_FLAG: bool = True\n"
+    # F4-178 — 포매터 · 린터가 바꾸는 서식 · 주석은 대조 밖(줄 묶음 · 홑따옴표 · import 한 줄씩 · `# noqa`) · 코드는 안.
+    canonical_reformatted = canonical_with(
+        PRE_ROUTE_CANONICAL,
+        ("from framework.ninja.pre_route_response_table import (\n    BAD_REQUEST_RESPONSE,\n    PRE_ROUTE_RESPONSES,\n)\n",
+         "from framework.ninja.pre_route_response_table import BAD_REQUEST_RESPONSE, PRE_ROUTE_RESPONSES\n"),
+        ("from typing import Literal, NotRequired, TypedDict\n",
+         "from typing import Literal\nfrom typing import NotRequired\nfrom typing import TypedDict\n"),
+        ('HTTP_METHODS: frozenset[str] = frozenset(\n    {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},\n)\n',
+         "HTTP_METHODS: frozenset[str] = frozenset({'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'})\n"),
+        ('REF_TEMPLATE: str = "#/components/schemas/{model}"\n', "REF_TEMPLATE: str = '#/components/schemas/{model}'\n"),
+        ("    rows: tuple[PreRouteResponse, ...] = (\n        *NINJA_RESPONSES,\n        *_django_rows(),\n        *_project_rows(),\n    )\n",
+         "    rows: tuple[PreRouteResponse, ...] = (*NINJA_RESPONSES, *_django_rows(), *_project_rows())\n"),
+    )
+    canonical_noqa = canonical_with(PRE_ROUTE_CANONICAL, ("def _applies(\n", "def _applies(  # noqa: PLR0913\n"))
+    canonical_function_docstring = canonical_with(
+        PRE_ROUTE_CANONICAL,
+        ("def _plain(schema: dict[str, JsonValue]) -> bool:\n", 'def _plain(schema: dict[str, JsonValue]) -> bool:\n    """평범한 글자 꼴인가."""\n'),
+    )
+    canonical_type_checking = canonical_with(
+        PRE_ROUTE_CANONICAL,
+        ("from ninja.operation import Operation\n", "from typing import TYPE_CHECKING\n\nif TYPE_CHECKING:\n    from ninja.operation import Operation\n"),
+    )
+    # 옛 판(2.37.0) 정본 — 그대로 · 현장 꼴(포매터 줄 130 의 고침 두 곳 + `# noqa: C901`) · 한 글자 고침.
+    old_field_form = canonical_with(
+        PRE_ROUTE_CANONICAL_2_37_0,
+        ('"""\nimport copy', '"""\n\nimport copy'),
+        ("def _project_rows() -> tuple[PreRouteResponse, ...]:\n", "def _project_rows() -> tuple[PreRouteResponse, ...]:  # noqa: C901\n"),
+        ("""f'{existing.get("description", "")} · {entry["description"]}'""", """f"{existing.get('description', '')} · {entry['description']}\""""),
+    )
+    old_edit = canonical_with(PRE_ROUTE_CANONICAL_2_37_0, one_char)
     mw_status_var = PRE_ROUTE_MIDDLEWARE.replace("status=503)", "status=MAINTENANCE_STATUS)").replace(
         "from django.http import JsonResponse\n", "from django.http import JsonResponse\n\nfrom framework.django.codes import MAINTENANCE_STATUS\n"
     )
@@ -7074,11 +7116,19 @@ class MaintenanceMiddleware:
         Case("pre-route-a-postprocess-code", with_files(("config/api.py", postprocessed), base=base), openapi, openapi_args(), 2, "openapi-postprocess", note="2.36.0 exit 2"),
         Case("pre-route-a-second-class-not-documented", with_files(("config/api.py", second_class), base=base), openapi, auto, 2, "정해진 클래스로 지어지지 않았다"),
         # b — 정본 파일 AST 대조(import 집합 · `__future__` 뺌 · 모듈 docstring 뺌 · 정의 차례) · 표 정적 검증.
-        Case("pre-route-b-canonical-edited", with_files(("framework/ninja/pre_route_responses.py", canonical_edit), base=base), openapi, auto, 2, "플러그인 정본과 글자 그대로가 아니다", note="2.36.0 exit 0"),
+        Case("pre-route-b-canonical-edited", with_files(("framework/ninja/pre_route_responses.py", canonical_edit), base=base), openapi, auto, 2, "정본의 코드가 플러그인 정본과 다르다(`pre_route_responses_canonical.py` 와 견줘 17번째 정의(`NINJA_RESPONSES`)부터 다름) — 참조 글의 정본 코드는 고치지 않는다 · 서식 · 주석은 대조 밖이고 린트가 짚으면 그 줄 `# noqa: <규칙>` 으로 둔다", note="2.36.0 exit 0"),
         Case("pre-route-b-canonical-extra-definition", with_files(("framework/ninja/pre_route_responses.py", canonical_extra), base=base), openapi, auto, 2, "`LOCAL_FLAG`"),
         Case("pre-route-b-canonical-import-order-clean", with_files(("framework/ninja/pre_route_responses.py", canonical_import_order), base=base), openapi, auto, 0, ""),
         Case("pre-route-b-canonical-future-import-clean", with_files(("framework/ninja/pre_route_responses.py", canonical_future), base=base), openapi, auto, 0, ""),
         Case("pre-route-b-canonical-docstring-clean", with_files(("framework/ninja/pre_route_responses.py", canonical_docstring), base=base), openapi, auto, 0, ""),
+        # F4-178 — 서식 · 주석은 대조 밖 · 옛 판(2.37.0) 정본도 받는다 · 코드(함수 안 docstring · import 자리)는 대조 안.
+        Case("pre-route-b-canonical-reformatted-clean", with_files(("framework/ninja/pre_route_responses.py", canonical_reformatted), base=base), openapi, auto, 0, "", note="F4-178 — 줄 묶음 · 홑따옴표 · import 한 줄씩"),
+        Case("pre-route-b-canonical-noqa-clean", with_files(("framework/ninja/pre_route_responses.py", canonical_noqa), base=base), openapi, auto, 0, "", note="F4-178 — 린트는 `# noqa`"),
+        Case("pre-route-b-canonical-function-docstring", with_files(("framework/ninja/pre_route_responses.py", canonical_function_docstring), base=base), openapi, auto, 2, "(`pre_route_responses_canonical.py` 와 견줘 33번째 정의(`_plain`)부터 다름)", note="F4-178 — 함수 안 docstring 은 코드"),
+        Case("pre-route-b-canonical-type-checking", with_files(("framework/ninja/pre_route_responses.py", canonical_type_checking), base=base), openapi, auto, 2, "(`pre_route_responses_canonical.py` 와 견줘 빠진 import 1 · 더한 import 1 · 1번째 정의(`If`)부터 다름)", note="F4-178 — import 를 `TYPE_CHECKING` 으로 옮기면 코드가 바뀐다"),
+        Case("pre-route-b-canonical-2-37-0-clean", with_files(("framework/ninja/pre_route_responses.py", PRE_ROUTE_CANONICAL_2_37_0), base=base), openapi, auto, 0, "", note="F4-178 — 2.38.0 정본만 받으면 exit 2(이미 옮긴 프로젝트)"),
+        Case("pre-route-b-canonical-2-37-0-field-form-clean", with_files(("framework/ninja/pre_route_responses.py", old_field_form), base=base), openapi, auto, 0, "", note="F4-178 — 현장 꼴(포매터 고침 두 곳 + `# noqa: C901`)"),
+        Case("pre-route-b-canonical-2-37-0-edited", with_files(("framework/ninja/pre_route_responses.py", old_edit), base=base), openapi, auto, 2, "(`pre_route_responses_canonical_2_37_0.py` 와 견줘 17번째 정의(`NINJA_RESPONSES`)부터 다름)", note="F4-178 — 옛 판 사본은 그 판과 견준 자리를 댄다(검토 m4)"),
         Case("pre-route-b-table-unknown-key", with_files(("framework/ninja/pre_route_response_table.py", table_with('"when": "all",\n        "namespaces"', '"when": "all",\n        "namespace": ("api",),\n        "namespaces"')), base=base), openapi, auto, 2, "모르는 칸 `namespace`", note="2.36.0 exit 0"),
         Case("pre-route-b-table-status-range", with_files(("framework/ninja/pre_route_response_table.py", table_with('"status": 503', '"status": 200')), base=base), openapi, auto, 2, "`status` 200 — 400–599 밖"),
         Case("pre-route-b-table-when", with_files(("framework/ninja/pre_route_response_table.py", table_with('"when": "all"', '"when": "always"')), base=base), openapi, auto, 2, "`when` 은"),

@@ -128,7 +128,7 @@ human 158  →  path 11 · ast 63 · ast+ 57 · human 27
 | 181 | ast+ | 확정: `cron_job/**` 에 「이미 했나」 판정(조회 후 조기 반환·`get_or_create`·중복 키·락) / 후보: **바깥이 부르는 입구 전부**(`cron_job/`·`webhook/**/*_controller.py`·`event_subscription/`) → 도달 유스케이스 중 리포지토리 읽기 0 + `save()` 만 있는 것 / 물음: 「두 번 와도 결과가 같나」 ← **멱등 물음의 소유자**(08-11 · C8 에 #513 에서 이관) |
 | 191 | ast+ | 자동 통과: 첫 토큰이 애그리거트 루트 공개 메서드 이름과 같은 것 / 후보: 이름 전체가 애그리거트 이름이거나 `_list`·`_info`·`_detail`·`_status` 로 끝나는 것 / 물음: **Q1** |
 | 194 | ast+ | 후보: `<use_case>_use_case.py` 의 `If`/`Match`/`Assert` 중 피연산자가 도메인 타입 속성 접근·값 객체 비교인 것 (제외: `Is None` 존재 확인 · 포트 실패 필드 확인) / 물음: **Q2** |
-| 195 | ast | `repository.save/remove` 인자가 «같은 함수 안에서 루트 메서드 호출을 받은» 객체가 아니면 위반. `unit_of_work` 를 받았는데 루트 메서드 호출 0이어도 위반. 면제 셋(조회 전용·순수 위임·외부 조회)이 전부 기계로 보인다 |
+| 195 | ast | `repository.save/remove` 인자가 «같은 함수 안에서 루트 메서드 호출을 받은» 객체가 아니면 위반 — 같은 BC `domain_layer/domain_service/**` 에 한 번 넘겨 그 몸 안에서 파라미터가 `p.m(…)` 루트 메서드 호출을 받고 파라미터 너머 바꿈 · 다시 묶임 · 다른 호출로 다시 넘김(읽기 전용 내장 여덟 밖)이 없으면 «받은» 것으로 본다(유스케이스 안에서 그 인자가 같은 꼴의 바꿈을 받았으면 가리지 않는다 · 한 홉만). `unit_of_work` 를 받았는데 루트 메서드 호출 0이어도 위반. 면제 셋(조회 전용·순수 위임·외부 조회)이 전부 기계로 보인다 |
 | 196 | ast | `application_layer/**` 에 ①`port/` 밖 `ABC`/`Protocol` 상속 ②이름 `*Presenter`·`*InputBoundary`·`*OutputBoundary` ③진입 함수 반환이 `None` 인데 결과를 다른 객체에 넘김 |
 | 197 | ast | 파라미터 애너테이션에 `*UnitOfWork` 가 있는데 본문에 `with <uow>:`·`save`·`remove`·`after_commit` 이 0이면 위반 / 설계 선언 별도: 설계 pre-gate는 명시 read-only/UoW 모순과 출처가 확인된 UoW 주입을 선언 확정, 미해소 출처를 선언 후보로 분리한다. 선언 처분은 architect·해당 설계 리뷰/감수자 소유이며 기존 실코드 검사 범위와 다르다. 효과 무기재는 미검증이다. |
 | 202 | ast | 실코드 DTO의 domain aggregate/entity/ORM 누수 검사를 유지한다. 설계 선언 별도: 설계 pre-gate는 add/update 공개 Result/Out/Response에서 명시 import·별칭·중첩/사설 DTO·표준 컨테이너로 출처가 결합된 aggregate/entity 누수를 선언 확정으로, 미해소 출처를 후보로 보고한다. VO/shared VO는 허용하고 이름만으로 확정하거나 OHS import를 합성하지 않는다. 선언 처분은 architect·해당 설계 리뷰/감수자 소유이며 실코드 검사를 대체하지 않는다. |
@@ -166,7 +166,7 @@ human 158  →  path 11 · ast 63 · ast+ 57 · human 27
 | 316 | **human** | **Q2** — 전건(「재료를 한 번에 못 모으는 경우」)이 코드에 흔적을 안 남긴다 |
 | 319 | ast | 4갈래를 import 로 계산해 폴더와 대조 — `ORM`(#462) → persistence · `CONTRACT` → acl · `SOCKET`(#367) → external_system · 나머지 → capability |
 | 343 | ast+ | 후보: `panel.py` 의 django 훅 본문에 `.objects`·`transaction`·루프·모델 필드 조건 / 물음: 「이 문장이 운영 «기능»인가 장고 «배선»인가」 |
-| 347 | ast+ | 후보: `admin/<entity>/feature/*.py` 중 애그리거트를 import 하고 리포지토리 쓰기를 부르는 것 / 물음: 「이 조작을 사용자 API 도 하나」 |
+| 347 | ast+ | 확정: admin 이 자기 BC 도메인 · 응용(과 합성 루트 · 저장 어댑터 · ACL)을 import 하는 것은 #668(blocker)이 잡는다 / 후보: `admin/<entity>/feature/*.py` 중 도메인을 import 하고 리포지토리 쓰기를 부르는 것(#668 과 함께 뜬다) / 물음: 「이 쓰기에 DB 로 걸 수 없는 업무 규칙이 걸리나 — 걸리면 그 BC 창구로 부르나」 |
 | 355 | ast+ | 확정: `<A>_repository.py` 반환이 {A, Sequence[A], 값객체, bool·int·None} 밖(조회 · 쓰기 모두) / 후보: 조회가 bool·int 로 남은 것(쓰기의 bool·int 는 CAS 성공 · 지운 개수) / 물음: 「주어가 애그리거트인가 화면인가」 |
 | 365 | path | `anticorruption_layer/*/` 이름이 `application/*/` BC 폴더 이름 집합의 원소가 아니면 위반 |
 | 366 | ast | **#367 의 술어 그대로** — 「이 라이브러리가 소켓을 여나」 |
@@ -174,7 +174,7 @@ human 158  →  path 11 · ast 63 · ast+ 57 · human 27
 | 372 | ast | 두 방향 — framework: `framework/*/*_port.py` 토큰 ∩ **전 BC 합집합** ≠ ∅ 이면 위반 / BC: `port/*/*_port.py` 토큰 ∩ **자기 BC 집합** = ∅ 이면 위반(framework 로 올라가야) |
 | 389 | ast | `test/integration/**` 이 django_db 마커/`db`/`TestCase` 중 하나 + 리포지토리 구현 또는 HTTP 클라이언트 사용. 아니면 위반 (**#387 의 뒤집힌 술어**) |
 | 390 | ast | 확정: `test/e2e/**` 중 입구(TestClient·API·`<job>_cron_job`)를 안 거치는 것 ※ 「수가 적어야」는 임계값이 없어 ㉰ 가 문면에서 걷었다 |
-| 392 | ast | `test/factories/**` 의 모든 최상위 정의가 `factory.Factory`/`DjangoModelFactory` 상속 클래스여야 한다 |
+| 392 | ast | `test/factories/**` 의 맨 위 정의마다 — `…Factory` 밑 클래스(제네릭 꼴 `DjangoModelFactory[M]` 포함) · `make_` 로 시작하는 함수 · `_` 비공개 함수 · import · 상수만 받는다. 선언을 상속한 클래스 · pytest 고정물 · `test_*` 함수 · `Test*` 클래스 · 그 밖의 공개 클래스 · 함수 · 재료가 하나도 없는 모듈은 위반(한 파일 한 줄) |
 | 393 | path | `framework/` 가 저장소 루트의 자식이고 `application/<bc>/**` 아래에 `framework/` 가 없다 ※ 「BC 가 하나도 없어도 존재하나」는 C2 가 #448 로 옮긴 옛 축 — ㉰ 가 걷었다 |
 | 415 | ast | 모듈이 `<technology>` 라이브러리를 import 하고 공개 정의마다 그 라이브러리 이름을 하나 이상 참조 (**#396③ 과 같은 술어**) |
 | 416 | ast | `framework/**`→`application/**` import 0(#46) + BC 폴더 이름 문자열 0 + #628 합집합 교집합 0 |
