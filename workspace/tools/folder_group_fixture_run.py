@@ -1107,6 +1107,109 @@ def scen_review_subfolder(fg, scripts: Path, run: Run, td: Path) -> None:
            (0, 0, [], 0, []))
 
 
+# ── F4-176 draft --bc 대조(리팩토링 판 A 설계 §2) ──────────────────────────────────────────────────────────
+# git 장난감은 검토 하네스(`f176_toys`)의 사례를 옮긴 것이다. 받는 꼴은 옛 판(FG_OLD_SHA 의 folder_group.py · 같은 보조 모듈)과 출력이
+# 줄마다 같아야 하고, 막는 꼴은 exit 1 · `요약: 실행 불능 — …` 한 줄이다.
+
+FG_OLD_SHA: str = "097b80b918b4f8caa6b434e508bf4a5533662d81"   # dddjango 2.37.0 배포 커밋 — 옛 판 대조는 HEAD 가 아니라 이 판에
+BC_SPEC: str = "".join(["# 명세\n\n<!-- machine: file-plan -->\n```text\n"]
+                       + [f"add application/gamma/{p}\n" for p in (
+                           "__init__.py", "domain_layer/__init__.py", "domain_layer/ticket/__init__.py",
+                           "domain_layer/ticket/ticket.py", "domain_layer/ticket/value_object/__init__.py",
+                           "domain_layer/ticket/value_object/seat_row.py", "domain_layer/ticket/value_object/seat_number.py",
+                           "domain_layer/ticket/value_object/seat_zone.py", "domain_layer/ticket/value_object/fare_amount.py")]
+                       + ["add application/alpha/domain_layer/order/value_object/price_discount.py\n```\n"])
+BC_ONE_WORD: str = "요약: 실행 불능 — BC 이름이 한 낱말이 아님 — "
+BC_MISSING: str = "요약: 실행 불능 — 대상 BC 없음 — "
+
+
+def _bc_repo(td: Path) -> Repo:
+    """BC alpha · beta — 애그리거트 order 의 값 객체 넷(price_* 셋이 묶음 빚)."""
+    repo = Repo(td)
+    files: "dict[str, str]" = {}
+    for bc in ("alpha", "beta"):
+        vo: str = f"application/{bc}/domain_layer/order/value_object/"
+        files.update({f"application/{bc}/__init__.py": "", f"application/{bc}/domain_layer/__init__.py": "",
+                      f"application/{bc}/domain_layer/order/__init__.py": "",
+                      f"application/{bc}/domain_layer/order/order.py": "class Order:\n    pass\n", vo + "__init__.py": ""})
+        files.update({f"{vo}{n}.py": "class V:\n    pass\n" for n in ("price_amount", "price_currency", "price_rounding", "seat_row")})
+    repo.write(files)
+    repo.commit("base")
+    return repo
+
+
+def _old_fg_scripts(scripts: Path, td: Path) -> Path:
+    """지금 scripts 사본에 folder_group.py 만 옛 판(FG_OLD_SHA)으로 — 이 판에서 바뀐 `draft` 대조만 가른다."""
+    copy: Path = td / "old-scripts"
+    if not copy.is_dir():
+        shutil.copytree(scripts, copy, symlinks=False, ignore=shutil.ignore_patterns("__pycache__"))
+        old: str = subprocess.run(["git", "show", f"{FG_OLD_SHA}:dddjango/scripts/folder_group.py"], cwd=ROOT, capture_output=True,
+                                  text=True, check=True).stdout
+        (copy / "folder_group.py").write_text(old, encoding="utf-8")
+    return copy
+
+
+def scen_bc_names(fg, scripts: Path, run: Run, td: Path) -> None:
+    """F4-176 — `draft --bc` 는 모든 꼴에서 BC 이름이 한 낱말이어야 하고, G0 꼴(`--run` · `--spec` 없음)에서만 있는 BC 여야 한다.
+    이번 실행이 만드는 BC(Phase 1 묶음 자리 · Phase 2 열기 앞 · 끝 맞춤)와 지운 BC 는 `--run` 꼴로 받는다."""
+    old: Path = _old_fg_scripts(scripts, td)
+    repo = _bc_repo(td / "new-bc")
+    folder: Path = repo.root / ".dddjango" / "20261114-1000-gamma-feature"
+    folder.mkdir(parents=True)
+    (folder / "refactor-scope.md").write_text("실행 · G0 승인 20261114-1000\n", encoding="utf-8")
+    (folder / "design-spec.md").write_text(BC_SPEC, encoding="utf-8")
+    spec: Path = folder / "design-spec.md"
+
+    def same(name: str, root: Path, lines: int, *args: object) -> None:
+        """받는 꼴 — exit 0 · 줄 수 · 옛 판과 줄마다 같음."""
+        rc, out = _tool(scripts, "draft", root, *args)
+        orc, oout = _tool(old, "draft", root, *args)
+        run.eq(f"F4-176 {name} — 받음(exit 0 · 줄 {lines} · 옛 판과 같음)", (rc, len(out), orc, out == oout), (0, lines, 0, True))
+
+    def stop(name: str, root: Path, head: str, *args: object) -> None:
+        """막는 꼴 — exit 1 · `요약: 실행 불능 — …` 한 줄(옛 판은 exit 0 으로 지나갔다)."""
+        rc, out = _tool(scripts, "draft", root, *args)
+        orc, _oout = _tool(old, "draft", root, *args)
+        run.eq(f"F4-176 {name} — 막음(exit 1 · 한 줄 «{head}…» · 옛 판은 exit 0 으로 지나감)",
+               (rc, len(out), bool(out) and out[0].startswith(head), orc), (1, 1, True, 0))
+
+    same("새 BC 만 · --spec · --run(Phase 1 묶음 자리 ②)", repo.root, 9, "--bc", "gamma", "--spec", spec, "--run", folder)
+    same("있는 BC + 새 BC · --spec · --run", repo.root, 11, "--bc", "alpha", "gamma", "--spec", spec, "--run", folder)
+    same("있는 BC 만 · --spec · --run", repo.root, 3, "--bc", "alpha", "--spec", spec, "--run", folder)
+    anchor: str = repo.git("rev-parse", "HEAD")
+    (folder / "refactor-scope.md").write_text(f"실행 · G0 승인 20261114-1000 · build_anchor {anchor}\n", encoding="utf-8")
+    (folder / "build_anchor").write_text(anchor + "\n", encoding="utf-8")
+    same("Phase 2 열기 앞(앵커 뒤 · 새 BC 아직 없음) · --run", repo.root, 2, "--bc", "alpha", "gamma", "--run", folder)
+    vo: str = "application/gamma/domain_layer/ticket/value_object/"
+    repo.write({"application/gamma/__init__.py": "", "application/gamma/domain_layer/__init__.py": "",
+                "application/gamma/domain_layer/ticket/__init__.py": "", vo + "__init__.py": "",
+                "application/gamma/domain_layer/ticket/ticket.py": "class Ticket:\n    pass\n",
+                **{f"{vo}{n}.py": "class T:\n    pass\n" for n in ("seat_row", "seat_number", "seat_zone", "fare_amount")}})
+    same("Phase 2 끝 맞춤(새 BC 디스크에만) · --run", repo.root, 10, "--bc", "alpha", "gamma", "--run", folder)
+
+    repo = _bc_repo(td / "removed-bc")
+    folder = repo.root / ".dddjango" / "20261114-1100-drop-beta"
+    folder.mkdir(parents=True)
+    anchor = repo.git("rev-parse", "HEAD")
+    (folder / "refactor-scope.md").write_text(f"실행 · G0 승인 20261114-1100 · build_anchor {anchor}\n", encoding="utf-8")
+    (folder / "build_anchor").write_text(anchor + "\n", encoding="utf-8")
+    shutil.rmtree(repo.root / "application" / "beta")
+    same("지운 BC · --run 앵커", repo.root, 2, "--bc", "alpha", "beta", "--run", folder)
+    stop("지운 BC · G0 꼴(--run 없음)", repo.root, BC_MISSING + "application/beta", "--bc", "alpha", "beta")
+
+    repo = _bc_repo(td / "typo-bc")
+    stop("없는 이름 · G0 묶음 빚(--summary)", repo.root, BC_MISSING + "application/no_such_bc", "--bc", "no_such_bc", "--summary")
+    stop("공백 낀 한 덩이 · --summary", repo.root, BC_ONE_WORD + "'alpha beta'", "--bc", "alpha beta", "--summary")
+    same("바르게 나눈 여럿 · --summary", repo.root, 5, "--bc", "alpha", "beta", "--summary")
+    folder = repo.root / ".dddjango" / "20261114-1200-chunk"
+    folder.mkdir(parents=True)
+    (folder / "refactor-scope.md").write_text("실행 · G0 승인 20261114-1200\n", encoding="utf-8")
+    (folder / "design-spec.md").write_text(BC_SPEC, encoding="utf-8")
+    stop("공백 낀 한 덩이 · --run", repo.root, BC_ONE_WORD + "'alpha beta'", "--bc", "alpha beta", "--run", folder)
+    stop("경로 꼴 · --spec · --run", repo.root, BC_ONE_WORD + "'application/alpha'", "--bc", "application/alpha", "--spec",
+         folder / "design-spec.md", "--run", folder)
+
+
 # ── 진입 ──────────────────────────────────────────────────────────────────────
 
 def run_all(scripts: Path, fail_fast: bool = False) -> "tuple[Run, object]":
@@ -1127,6 +1230,7 @@ def run_all(scripts: Path, fail_fast: bool = False) -> "tuple[Run, object]":
              ("검토 승격", lambda td: scen_review_promotion(fg, scripts, run, td)),
              ("검토 링크", lambda td: scen_review_symlink(fg, scripts, run, td)),
              ("검토 하위 폴더", lambda td: scen_review_subfolder(fg, scripts, run, td)),
+             ("F4-176 BC 이름", lambda td: scen_bc_names(fg, scripts, run, td)),
              ("검사기", lambda td: check_checkers(fg, scripts, run, td)))
     with tempfile.TemporaryDirectory(prefix="fg-fixture-") as tmp:
         for name, step in steps:
@@ -1289,6 +1393,11 @@ _MUTATIONS: "tuple[tuple[str, str, str], ...]" = (
      "if written and not (written.startswith(sha) or sha.startswith(written)):"),
     ("F4-157 앞 실행 절의 실행 줄도 읽음", '_RUN_LINE_RE.search(_this_run_text(_read_folder(folder, "refactor-scope.md")))',
      '_RUN_LINE_RE.search(_read_folder(folder, "refactor-scope.md"))'),
+    # F4-176 — draft --bc 대조(설계 판 A §2 «시험» 변이 둘)
+    ("F4-176 있는지 대조를 모든 꼴에 걺(새 BC 를 만드는 실행이 exit 1)", "_check_bcs(root, bcs, g0=not args.run and not args.spec)",
+     "_check_bcs(root, bcs, g0=True)"),
+    ("F4-176 한 낱말 대조 지움(공백 덩이 · 경로 꼴의 --run 이 exit 0)",
+     '    if bad:\n        raise FolderGroupError("BC 이름이 한 낱말이 아님', '    if False:\n        raise FolderGroupError("BC 이름이 한 낱말이 아님'),
     ("F4-157 apply 가 앞 실행 파일로 창을 엶", 'if not run_anchor(folder):\n        raise FolderGroupError(f"{folder}: 이번 실행의 build_anchor 없음 — apply',
      'if not _read_folder(folder, "build_anchor"):\n        raise FolderGroupError(f"{folder}: 이번 실행의 build_anchor 없음 — apply'),
 )

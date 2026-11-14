@@ -3283,7 +3283,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s005/b13": {
-      "h": "314cb77ea0a90ea9",
+      "h": "96926a62e32cf805",
       "n": 1,
       "works": [
         "R-3482",
@@ -3301,7 +3301,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s005/b15": {
-      "h": "070355126ef489af",
+      "h": "43fe4e6c21cc4ee2",
       "n": 1,
       "works": [
         "R-3695",
@@ -3376,7 +3376,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s005/b9": {
-      "h": "cb18f5229996378c",
+      "h": "310188ca67f9d79f",
       "n": 2,
       "works": [
         "R-0196",
@@ -3429,7 +3429,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s006/b13": {
-      "h": "53e92c9abf76027e",
+      "h": "45e7c5cc90b284fe",
       "n": 2,
       "works": [
         "R-3697",
@@ -4056,7 +4056,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s007/b61": {
-      "h": "d82b5de14bed2125",
+      "h": "bb74de9ce6ae6656",
       "n": 1,
       "works": [
         "R-3700",
@@ -4261,7 +4261,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s011/b5": {
-      "h": "cba3fb9f4d2d8d06",
+      "h": "788b59cf76e10077",
       "n": 1,
       "works": [
         "R-0451",
@@ -4284,7 +4284,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s012/b1": {
-      "h": "276c457ee4c9198a",
+      "h": "c4ff1aedb3530e45",
       "n": 9,
       "works": [
         "R-3514",
@@ -4383,7 +4383,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s012/b2": {
-      "h": "b2730747dd868a0a",
+      "h": "bf8304915175dbd1",
       "n": 2,
       "works": [
         "R-3516",
@@ -4392,7 +4392,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s012/b3": {
-      "h": "daaff8eabd58f595",
+      "h": "9ad62401708b44c7",
       "n": 6,
       "works": [
         "R-3519",
@@ -4440,7 +4440,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s012/b9": {
-      "h": "602ec9c1ca908a5c",
+      "h": "f091208d311102ab",
       "n": 2,
       "works": [
         "R-3527",
@@ -15035,7 +15035,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "26859ab03eb550f89747dfb1986fb6c657614ae50af41084c3f69a8e7a5599e3"
+      "sha256": "8ca935816215152d7b376c08074e6a9470c6e751ddd8dea0870c98e3ff3bf219"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -26565,8 +26565,8 @@
       "block_order": 9,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-0206@2026-09-26",
-      "label": "폴더 목록 선택(기존 폴더 이어서 / 새 기능)·기존 폴더면 실행 판정·확정 구체 경로 전달·이후 재계산 금지",
+      "expression": "https://numchida.com/ns/djr#R-0206@2026-11-14",
+      "label": "폴더 목록 선택(기존 폴더 이어서 / 새 기능)·목록 전에 ls 폴더 모두로 run-state 한 번(목록에는 미종료 폴더 줄과 요약 한 줄 · 실행 폴더 아님은 목록 밖 · 미종료 아님)·기존 폴더면 실행 판정·확정 구체 경로 전달·이후 재계산 금지",
       "norm_kind": "Obligation",
       "order_rank": 1129,
       "overrides": [],
@@ -83872,8 +83872,8 @@
       "block_order": 14,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3483@2026-09-26",
-      "label": "기존 폴더 실행 판정 ⑴~⑶(실행 줄 없는 이 규칙 이전 폴더 = 끝남 → 새 실행) — 미종료(⑵)면 실행 선택(잇기/승인됨/폐기) 대가와 함께 필수 · 목록 표시는 ⑵ 만 · 출처 없는 폐기 위임 불가",
+      "expression": "https://numchida.com/ns/djr#R-3483@2026-11-14",
+      "label": "기존 폴더 실행 판정 ⑴~⑶ = 그 폴더 run-state 줄(폴더 목록 때 · 목록 없으면 그 폴더 하나 · 쓰기 전) — ⑴ 끝(표식 — G2 승인 또는 착륙 표식)·끝(착륙 · 표식 없음) → 새 실행 ⑵ 미종료(표식·착륙 없음 · 착륙 판정 꺼짐 · 다른 작업 트리가 쓰는 중 · 보수 쪽 미종료) ⑶ 끝(실행 줄 없음 — 이 규칙 이전 폴더) → 새 실행 · 끝이면 실행 선택 없음 · 끝(착륙)이면 처음 쓰기 전에 옛 실행 줄 끝에 · 착륙 <sha12>(지우거나 내리지 않음 · 이 실행 기록과 함께 커밋) · 공급자 정리 줄(예 · 아니오 · 못 읽음)은 폴더 선택에 안 씀 · exit 2 는 정지 아님 · exit 1(폴더 아님 · 이름 글자 다름 · 인자 오류 · git 접두 · main 판 못 읽음)은 명령 고쳐 다시(못 고치면 G0 정지) — 쓰는 중이면 실행 선택 없음(기능·수정 = 끝난 뒤 다시 시작 / 다른 폴더 · 그 폴더에 정지 기록 안 씀 · 리팩토링 R0′ = G0 정지 · 까닭에 (쓰는 중) 이 들면 쌓인 레인 꼴도) · 보수 쪽 미종료도 실행 선택 없음(기능·수정 = 까닭 고친 뒤 다시 시작 / 다른 폴더 · prunable 이면 사용자가 git worktree prune · 너는 안 돌림 · 리팩토링 R0′ = G0 정지) · 그 밖의 미종료면 실행 선택(잇기/승인됨/폐기) 대가·까닭 줄과 함께 필수 · 목록 표시는 미종료만 · 출처 없는 폐기 위임 불가",
       "norm_kind": "Obligation",
       "order_rank": 1144,
       "overrides": [],
@@ -84059,8 +84059,8 @@
       "block_order": 5,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3494@2026-11-10",
-      "label": "실행 줄 기계 기록·재개 G0·G0 정지·파견 정지·ⓐ 재상정 절·pregate-report 행 append·behavior/ 창 기록·리팩토링 모드 audit/·residual/·deps/·g1/·behavior/support/ 산출·운영 전 표기·시험 명령 줄·G1 변경 결정 절·확정 줄과 모드 표기는 사후 개정 아님",
+      "expression": "https://numchida.com/ns/djr#R-3494@2026-11-14",
+      "label": "실행 줄 기계 기록(착륙 표식 포함)·재개 G0·G0 정지·파견 정지·ⓐ 재상정 절·pregate-report 행 append·behavior/ 창 기록·리팩토링 모드 audit/·residual/·deps/·g1/·behavior/support/ 산출·운영 전 표기·시험 명령 줄·G1 변경 결정 절·확정 줄과 모드 표기는 사후 개정 아님",
       "norm_kind": "Permission",
       "order_rank": 1453,
       "overrides": [],
@@ -84387,8 +84387,8 @@
       "block_order": 9,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3513@2026-09-27",
-      "label": "기능 모드 폴더 목록의 refactor- 폴더는 미종료 리팩토링 실행이 있을 때만 «잇기»로 표시 — 기능 실행은 리팩토링 폴더에 들어가지 않음",
+      "expression": "https://numchida.com/ns/djr#R-3513@2026-11-14",
+      "label": "기능 모드 폴더 목록의 refactor- 폴더는 run-state 가 미종료(쓰는 중 · 보수 쪽 미종료 빼고)로 낸 리팩토링 실행이 있을 때만 «잇기»로 표시 — 기능 실행은 리팩토링 폴더에 들어가지 않음",
       "norm_kind": "Obligation",
       "order_rank": 1131,
       "overrides": [],
@@ -84438,8 +84438,8 @@
       "block_order": 2,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3516@2026-09-27",
-      "label": "R0′ 폴더 후보 = 같은 BC refactor-<bc 케밥> 폴더뿐(없으면 새 폴더·slug 즉시 확정) — R1 전에 확정",
+      "expression": "https://numchida.com/ns/djr#R-3516@2026-11-14",
+      "label": "R0′ 폴더 후보 = 같은 BC refactor-<bc 케밥> 폴더뿐(없으면 새 폴더·slug 즉시 확정) — R1 전에 확정 · 있으면 쓰기 전 run-state 로 끝 판정(끝(착륙)도 끝 — 처음 쓰기 전 착륙 표식 · 같은 폴더 새 실행 · 쓰는 중 · 보수 쪽 미종료면 실행 선택 없이 G0 정지 — 그 폴더에 정지 기록 안 씀 · 재개 = 그 작업 트리가 끝난 뒤 · 그 까닭을 고친 뒤)",
       "norm_kind": "Obligation",
       "order_rank": 1474,
       "overrides": [],
@@ -86435,8 +86435,8 @@
         "refactor_audit.py"
       ],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3625@2026-10-28",
-      "label": "deps — R1 과 같은 때·첫 파견 직전(G1′ 뒤는 파견 정지 절) · --at new|continue|dispatch 필수(new = 새로 시작하는 실행의 R1 — 앞 실행 기록은 판정 시점·맞물림·이 레인 경로에 안 씀 · 이 실행 사본 빼기에만 앞 실행 줄 · continue = 잇기 R1 — 끝나지 않은 실행 줄 필요 · 맞물림은 G1 확정 무관 이 실행 G0 승인 값 · dispatch = 첫 파견 직전·G1′ 직후·파견 정지 잇기 — 실행 줄·G1 확정 필요 · 낡음도 봄 · 빠짐·어긋남·refactor-scope.md UTF-8 아님 = exit 1 · G0 정지 재개 R1 은 실행 선택 답으로 · 아무것도 쓰지 않음) · 끝 판정은 끝 표식만(다른 작업 트리 옛 사본은 main 판 기록 · main 에서 지워진 실행 뺌 · 이 폴더와 이름이 같은 옛 사본은 활성 실행에서 뺌 — 이 폴더 옛 사본 뺌 n) · 기록 UTF-8 해독 실패는 경로 단 보류(재개 = 그 기록을 UTF-8 로 고친 뒤 · 공급자는 못 읽음) · G0 exit 2·1(순환 묶음·레인 겹침·보류·실행 불능)이면 묻지 않고 G0 정지 · 파견 직전 exit 2·1 은 파견 정지(낡음 줄만이면 낡음 처분) · 미정리·못 읽음 직접 공급자는 G0 순서 예외 질문 · 출력은 BC 의존 행·다른 BC 편집 목록 대조",
+      "expression": "https://numchida.com/ns/djr#R-3625@2026-11-14",
+      "label": "deps — R1 과 같은 때·첫 파견 직전(G1′ 뒤는 파견 정지 절) · --at new|continue|dispatch 필수(new = 새로 시작하는 실행의 R1 — 앞 실행 기록은 판정 시점·맞물림·이 레인 경로에 안 씀 · 이 실행 사본 빼기에만 앞 실행 줄 · continue = 잇기 R1 — 끝나지 않은 실행 줄 필요 · 맞물림은 G1 확정 무관 이 실행 G0 승인 값 · dispatch = 첫 파견 직전·G1′ 직후·파견 정지 잇기 — 실행 줄·G1 확정 필요 · 낡음도 봄 · 빠짐·어긋남·refactor-scope.md UTF-8 아님 = exit 1 · G0 정지 재개 R1 은 실행 선택 답으로 · 아무것도 쓰지 않음) · 끝 판정은 끝 표식(G2 승인 · 착륙 표식) 또는 착륙(표식 없는 dddjango 실행 줄 — 실행 기록 파일을 마지막으로 바꾼 main 첫 부모 커밋이 머지 · 어느 작업 트리도 그 폴더 자기 변경 없음 · git 실패·모름은 끝 아님 · 착륙 · 표식 없음 n · 착륙 전제 = --no-ff 머지 · main 을 빨리 감지 않음 · 주 작업 트리 HEAD 가 trunk(origin/HEAD · main · master)일 때만 — 아니면 착륙 판정 꺼짐 머리 줄 · 표식 없는 줄은 끝 아님 · 이 실행 폴더 끝은 run-state · 다른 작업 트리 옛 사본은 main 판 기록 · main 에서 지워진 실행 뺌 · 이 폴더와 이름이 같은 옛 사본은 활성 실행에서 뺌 — 이 폴더 옛 사본 뺌 n) · 기록 UTF-8 해독 실패는 경로 단 보류(재개 = 그 기록을 UTF-8 로 고친 뒤 · 공급자는 못 읽음) · G0 exit 2·1(순환 묶음·레인 겹침·보류·실행 불능)이면 묻지 않고 G0 정지 · 파견 직전 exit 2·1 은 파견 정지(낡음 줄만이면 낡음 처분) · 미정리·못 읽음 직접 공급자는 G0 순서 예외 질문(정리 = G2 승인 표식 또는 착륙(착륙 표식 포함 — 착륙 머지 판 기록 · 못 풀면 못 읽음) + build_anchor + G1 확정 · 마지막 G1 확정 뒤 정지 절·작업 중단 없음) · 출력은 BC 의존 행·다른 BC 편집 목록 대조",
       "norm_kind": "Obligation",
       "order_rank": 1468,
       "overrides": [],
@@ -86469,8 +86469,8 @@
       "block_order": 9,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3627@2026-10-28",
-      "label": "순서 예외(규칙 1) — 미정리(G2 승인 리팩토링 실행 없음 · 겹침으로 선 도는 실행은 미정리(도는 실행 <폴더>) — 정지는 겹침)·못 읽음(정리 기록 UTF-8 해독 실패 — 그 경로를 질문에) 직접 공급자면 «내주는 BC 먼저(정지) / 이 BC 먼저(출처 필요)» 질문 · 대리 불가 · 출처 없는 이 BC 먼저는 정지 기록 · 결정 줄 정형 · 도는 실행(맞물림 — 이 실행 뒤)은 묻지 않고 미정리로 세지 않음",
+      "expression": "https://numchida.com/ns/djr#R-3627@2026-11-14",
+      "label": "순서 예외(규칙 1) — 미정리(G2 로 끝난 리팩토링 실행 없음 — deps 공급자 «정리» · 겹침으로 선 도는 실행은 미정리(도는 실행 <폴더>) — 정지는 겹침)·못 읽음(정리 기록 UTF-8 해독 실패 · 착륙 표식 판 못 풂 — 그 경로를 질문에) 직접 공급자면 «내주는 BC 먼저(정지) / 이 BC 먼저(출처 필요)» 질문 · 대리 불가 · 출처 없는 이 BC 먼저는 정지 기록 · 결정 줄 정형 · 도는 실행(맞물림 — 이 실행 뒤)은 묻지 않고 미정리로 세지 않음",
       "norm_kind": "Obligation",
       "order_rank": 1493,
       "overrides": [],
@@ -87352,8 +87352,8 @@
       "block_order": 3,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3676@2026-10-28",
-      "label": "파견 정지 재개 — 같은 폴더 재시작이면 실행 선택 전에 G0 정지 재개의 무변 조건(plan.md BC 미커밋 변경 0·BC 무변·미추적 없음 → check-verdict exit 0 · 앵커 없는 정지는 main 에만 착륙한 대상 BC 변경 없음도) · 맞으면 잇기(파견 직전 deps --at dispatch 다시 → exit 0 이면 앵커·파견) · 어긋나면 첫 파견 정지는 잇기 없음(main 착륙이면 main 받기 뒤 실행 선택 폐기 — 앵커 전이라 대가 없음 → R2·R3 다시) · G1′ 뒤 정지는 잇기 뒤 수정 모드 G1′ 로 바뀐 BC 를 설계에 합침 · 앵커 있는 정지 중 main 받기는 승인 병합(approved-merges.txt 등재)",
+      "expression": "https://numchida.com/ns/djr#R-3676@2026-11-14",
+      "label": "파견 정지 재개 — 같은 폴더 재시작이면(파견 정지 실행은 착륙 전이라 run-state 미종료 · 끝이면 재개 없이 새 실행) 실행 선택 전에 G0 정지 재개의 무변 조건(plan.md BC 미커밋 변경 0·BC 무변·미추적 없음 → check-verdict exit 0 · 앵커 없는 정지는 main 에만 착륙한 대상 BC 변경 없음도) · 맞으면 잇기(파견 직전 deps --at dispatch 다시 → exit 0 이면 앵커·파견) · 어긋나면 첫 파견 정지는 잇기 없음(main 착륙이면 main 받기 뒤 실행 선택 폐기 — 앵커 전이라 대가 없음 → R2·R3 다시) · G1′ 뒤 정지는 잇기 뒤 수정 모드 G1′ 로 바뀐 BC 를 설계에 합침 · 앵커 있는 정지 중 main 받기는 승인 병합(approved-merges.txt 등재)",
       "norm_kind": "Obligation",
       "order_rank": 1480,
       "overrides": [],
@@ -87712,8 +87712,8 @@
       "block_order": 11,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3695@2026-10-27",
-      "label": "G0 묶음 빚 규모 — #654~#656 줄이 든 대상 BC 마다 folder_group draft --summary 의 요약 줄을 G0 배너 슬라이스 0 규모 1행 뒤에(빚 질문은 그대로)",
+      "expression": "https://numchida.com/ns/djr#R-3695@2026-11-14",
+      "label": "G0 묶음 빚 규모 — #654~#656 줄이 든 대상 BC 마다 folder_group draft --summary 의 요약 줄을 G0 배너 슬라이스 0 규모 1행 뒤에(빚 질문은 그대로) · draft exit 1(대상 BC 없음 · BC 이름이 한 낱말이 아님)은 사용 오류 — BC 를 낱말마다 바른 이름으로 고쳐 다시 · 고칠 것이 없으면 G0 정지(요약 줄 기록)",
       "norm_kind": "Obligation",
       "order_rank": 1139,
       "overrides": [],
@@ -87746,8 +87746,8 @@
       "block_order": 12,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3697@2026-10-27",
-      "label": "묶음 자리는 folder_group.py 가 계산(Coordinator·architect 판정 없음 · 이 실행이 부른 묶음 이동은 명세에 적지 않음) — architect 파견 입력에 draft --run 출력 · 명세 개정마다 pre-gate 와 같은 응답에서 draft --spec --run(이관 빚 목록이 있으면 --legacy-debt-file — pre-gate 도) · 새 파일 자리가 다르면 architect 가 file-plan 경로를 그 자리로",
+      "expression": "https://numchida.com/ns/djr#R-3697@2026-11-14",
+      "label": "묶음 자리는 folder_group.py 가 계산(Coordinator·architect 판정 없음 · 이 실행이 부른 묶음 이동은 명세에 적지 않음) — architect 파견 입력에 draft --run 출력 · 명세 개정마다 pre-gate 와 같은 응답에서 draft --spec --run(이관 빚 목록이 있으면 --legacy-debt-file — pre-gate 도) · 새 파일 자리가 다르면 architect 가 file-plan 경로를 그 자리로 · 두 명령의 한 낱말 아님 exit 1 은 사용 오류 — BC 를 낱말마다 고쳐 다시(--run 꼴은 있는지 대조 없음 — 만드는 BC 도 줌)",
       "norm_kind": "Obligation",
       "order_rank": 1218,
       "overrides": [],
@@ -87814,8 +87814,8 @@
       "block_order": 4,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3701@2026-10-27",
-      "label": "묶음 창 열기 앞 — draft --run 의 미커밋 설정 줄 → 커밋하는 실행은 그 파일을 먼저 커밋 · 아니면 STOP(커밋해 달라/종료)",
+      "expression": "https://numchida.com/ns/djr#R-3701@2026-11-14",
+      "label": "묶음 창 열기 앞 — draft --run 의 미커밋 설정 줄 → 커밋하는 실행은 그 파일을 먼저 커밋 · 아니면 STOP(커밋해 달라/종료) · 열기 앞·끝 맞춤 draft --run 의 한 낱말 아님 exit 1 은 사용 오류 — BC 를 낱말마다 고쳐 다시",
       "norm_kind": "Obligation",
       "order_rank": 1246,
       "overrides": [],

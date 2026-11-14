@@ -12,6 +12,9 @@
   folder_group.py apply <루트> --run <산출물 폴더> (--debt | --run-moves) [--legacy-debt-file <목록>]
   folder_group.py verify <루트> --run <산출물 폴더> [--window <n>] [--legacy-debt-file <목록>]
 
+`draft --bc` 는 BC 를 낱말마다 따로 준다 — 한 낱말이 아닌 값(공백 덩이 · 경로 꼴)과, `--run` · `--spec` 이 없는 G0 꼴에서 없는 BC 는
+사용 오류(exit 1)다.
+
 코드를 실행하지 않는다(`ast.parse` 만). git 은 읽기만 한다(`apply` 의 `git mv` 밖).
 종료: 0 정상(판정 결과는 출력 줄) · 1 사용 · 분석 실패 · 2 `verify` red.
 """
@@ -152,6 +155,9 @@ SERVICE_ROW: int = 75
 VO_RETURN_ROWS: "frozenset[int]" = frozenset({66, 73})
 GROUPABLE_ROWS: "frozenset[int]" = frozenset(r.r for r in standard_tree.ROWS if r.groupable)
 _SKIP_DIRS: "frozenset[str]" = frozenset(business_vocab.SKIP_DIRS)
+
+
+_BC_NAME: "re.Pattern[str]" = re.compile(r"[a-z_][a-z0-9_]*")    # `--bc` 한 값 = BC 폴더 이름 한 낱말
 
 
 class FolderGroupError(Exception):
@@ -2219,10 +2225,26 @@ def _run_paths(folder: "Optional[Path]") -> "Optional[Path]":
     return folder.resolve() if folder is not None else None
 
 
+def _check_bcs(root: Path, bcs: "set[str]", g0: bool) -> None:
+    """`--bc` 값 대조(F4-176) — 모든 꼴에서 BC 이름은 한 낱말(공백 덩이 · 쉼표 · 경로 꼴 아님)이고, G0 꼴(`--run` · `--spec` 둘 다
+    없음 — 이미 있는 BC 만 준다)에서만 서버 BC 폴더(`business_vocab.server_bc_dirs`)에 있어야 한다. `--run` · `--spec` 꼴은 이번
+    실행이 만드는 BC(디스크 · 앵커 트리에 아직 없음)와 지운 BC 를 받으므로 있는지를 대조하지 않는다. 어기면 FolderGroupError(exit 1)."""
+    bad: "list[str]" = sorted(b for b in bcs if not _BC_NAME.fullmatch(b))
+    if bad:
+        raise FolderGroupError("BC 이름이 한 낱말이 아님 — " + " · ".join(repr(b) for b in bad)
+                               + " (BC 는 낱말마다 따로 준다: --bc a b)")
+    if g0:
+        known: "set[str]" = {d.name for d in business_vocab.server_bc_dirs(root)}
+        missing: "list[str]" = sorted(b for b in bcs if b not in known)
+        if missing:
+            raise FolderGroupError("대상 BC 없음 — " + " · ".join(f"application/{b}" for b in missing))
+
+
 def cmd_draft(args: argparse.Namespace) -> int:
     root: Path = Path(args.root).resolve()
     folder: "Optional[Path]" = _run_paths(Path(args.run) if args.run else None)
     bcs: "set[str]" = set(args.bc)
+    _check_bcs(root, bcs, g0=not args.run and not args.spec)
     now_override: "Optional[dict[str, str]]" = None
     adds: "list[str]" = []
     if args.spec:

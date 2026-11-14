@@ -25,13 +25,18 @@ Coordinator «리팩토링 모드» 절이 이 도구를 부른다. 리뷰어·a
   refactor_audit.py deps <bc> --out <산출물 폴더>/deps/<시각>/ --at <new|continue|dispatch>
                                                         BC 의존(SCC · 받는 쪽 · HTTP 소비 · 공유 표면 · 레인 겹침 · 보류) —
                                                         다른 작업 트리 옛 사본은 주 작업 트리 HEAD 판 기록으로 읽고(끝 판정은
-                                                        표식만) · 판정 시점은 조정자가 밝힌다(필수): new = 새 실행(이 폴더 앞 실행
+                                                        표식 · 착륙) · 판정 시점은 조정자가 밝힌다(필수): new = 새 실행(이 폴더 앞 실행
                                                         기록을 안 씀 · G0) · continue = 잇기(끝나지 않은 실행 줄 필수 · G1 확정
                                                         유무로 G0/파견 직전 셈 · 맞물림은 이 실행 줄 G0 승인 값) · dispatch =
                                                         파견 직전(실행 줄 · G1 확정 필수 · 앵커 없으면 대상 · 설계 낡음도 잰다).
                                                         G0 은 web HTTP 소비로만 선 겹침 · 보류가 예보 · 파견 직전은 G1 확정판
                                                         밖 동작 V 0 이면 그 겹침 · 보류를 세지 않음 · 늦게 G0 승인한 앵커 없는
                                                         리팩토링 실행은 안 셈
+  refactor_audit.py run-state <실행 폴더>…              실행 폴더마다 끝(표식 — G2 승인 · 착륙 표식 · 착륙 · 실행 줄 없음) ·
+                                                        미종료와 그 까닭(읽기만 · 폴더 여럿을 한 프로세스로) — 다른 작업
+                                                        트리가 그 폴더를 자기 변경으로 가지면 먼저 미종료 · 리팩토링 실행 줄이면
+                                                        공급자 정리 줄 · 검사기 출력 `.dddjango/violations` 는 건너뜀 · exit 0
+                                                        모두 끝 · 2 미종료 하나 이상 · 1 실행 불능
   refactor_audit.py residual <산출물 폴더> [--candidates <검사기 출력>] [--finalize <시각>]
                                                         G2 의미 항목 잔존(결정적 바닥 → 리뷰어 재확인 묶음) — 리뷰어 확인
                                                         대상이 남은 첫 호출은 exit 0 + `M_m 미정`(판정은 --finalize) ·
@@ -54,6 +59,7 @@ import re
 import stat
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Iterable
@@ -4797,6 +4803,7 @@ class ActiveRun:
                                                          # 섞지 않는다 · 공급자 상태 — 설계 A3)
         self.known: "set[str]" = set()                   # 믿는 고침 목록(이번 실행 승인 명세 file-plan · web 파일 · 미착륙 커밋 경로)
         self.unknown_why: str = ""                       # 기능 실행의 고침 목록을 못 믿는 까닭(빈 글 = 믿음)
+        self.line_g0: "str | None" = None                # 실행 줄의 G0 승인 값(같은 실행 줄의 착륙 표식 사본 가르기)
 
 
 # 끝 판정(`_dddjango_run` · `_web_run`)이 읽는 실행 기록 파일 — 다른 작업 트리 사본 가르기(디스크 바이트 대 그 트리 커밋본 · MH 판)도
@@ -4879,9 +4886,22 @@ def _run_line(scope_text: str) -> "str | None":
     return m.group(0) if m else None
 
 
-def _line_ended(line: "str | None") -> bool:
-    """dddjango 실행의 끝 표식 — 실행 줄이 없거나(끝난 것) 실행 줄에 G2 승인이 있다."""
+# 착륙 표식 — 표식 없이 착륙한 실행 줄 끝에 다음 시도가 그 폴더에 처음 쓰기 전에 붙인다(`· 착륙 <그 착륙 머지 sha12>`).
+_LANDING_STAMP: "re.Pattern[str]" = re.compile(r"· 착륙 ([0-9a-f]{12})(?![0-9a-f])")
+# 착륙 표식이 붙은 실행 줄(앞 실행 절 포함 · 묶음 1 = 그 실행 줄의 G0 승인 값 · 묶음 2 = 표식 sha12) — 같은 실행 줄의 다른 사본을
+# 끝으로 본다(deps · 표식 sha12 가 머지 커밋으로 풀릴 때만).
+_STAMPED_RUN: "re.Pattern[str]" = re.compile(r"^\s*[-*]?\s*실행 · G0 승인 (\S+)[^\n]*· 착륙 ([0-9a-f]{12})(?![0-9a-f])", re.M)
+
+
+def _line_marked(line: "str | None") -> bool:
+    """git 없이 가르는 dddjango 실행의 끝 표식 — 실행 줄이 없거나(끝난 것) 실행 줄에 G2 승인이 있다. 착륙 표식(`· 착륙 <sha12>`)은 그
+    sha12 가 머지 커밋으로 풀려야 끝이라 여기서 보지 않는다(deps 는 `_Landing.stamped` · run-state 는 `_run_ended`)."""
     return line is None or "G2 승인" in line
+
+
+def _line_ended(line: "str | None") -> bool:
+    """이 실행 폴더 자신의 실행 줄이 끝났는가(deps `--at`) — 끝 표식 ∨ 착륙 표식 글자(풀리는지 보지 않는다 · 잇기를 막는 쪽)."""
+    return _line_marked(line) or bool(_LANDING_STAMP.search(line or ""))
 
 
 def _state_ended(state: dict) -> bool:
@@ -4890,10 +4910,10 @@ def _state_ended(state: dict) -> bool:
 
 
 def _marker_ended(kind: str, data: bytes) -> bool:
-    """끝 표식 파일 바이트만으로 끝인가 — 끝 판정 함수와 같은 규칙(`_line_ended` · `_state_ended`) · 못 읽으면 끝 아님."""
+    """끝 표식 파일 바이트만으로 끝인가 — 끝 판정 함수와 같은 규칙(`_line_marked` · `_state_ended`) · 못 읽으면 끝 아님."""
     try:
         if kind == "dddjango":
-            return _line_ended(_run_line(_decode(data)))
+            return _line_marked(_run_line(_decode(data)))
         state: object = json.loads(_decode(data))
         return isinstance(state, dict) and _state_ended(state)
     except ValueError:                                    # UnicodeDecodeError · JSONDecodeError
@@ -4931,7 +4951,7 @@ def _dddjango_run(read: Reader, name: str, where: str, label: str, bc: str) -> "
     try:
         text: str = _record_text(read, scope_name, where)
         line: "str | None" = _run_line(text)
-        if line is None or _line_ended(line):
+        if line is None or _line_marked(line):
             return None
         am = re.search(r"모드 리팩토링 · audit (\S+)", line)
         run.refactor = bool(am)
@@ -4961,6 +4981,7 @@ def _dddjango_run(read: Reader, name: str, where: str, label: str, bc: str) -> "
         report = None                                     # 못 읽으면 «이번 실행 명세인지 모름»(보류를 새로 만들지 않는다)
     plan: "list[str] | None" = _file_plan(spec_text) if spec_text else None
     g0v = re.search(r"실행 · G0 승인 (\S+)", line)
+    run.line_g0 = g0v.group(1) if g0v else None
     if not plan:
         run.unknown_why = "명세 file-plan 없음"
     elif "build_anchor" not in line:
@@ -5235,6 +5256,19 @@ class _History:
             self._this_reach = self._reach(self.this)
         return (set().union(*(graph[c][1] for c in mine)), set().union(*(graph[c][1] for c in mine - self._this_reach)))
 
+    def first_parents(self) -> "set[str]":
+        """MH 첫 부모 사슬의 커밋(`rev-list --first-parent` 한 번)."""
+        if self._fp_mh is None:
+            self._fp_mh = set(self.git("rev-list", "--first-parent", self.mh).decode("ascii").split())
+        return self._fp_mh
+
+    def attach(self, head: str) -> "set[str]":
+        """`head` 사슬이 MH 이력에 닿는 첫 커밋들 — 미착륙 그래프 안 커밋의 그래프 밖 부모(`head` 가 MH 에서 닿으면 `head` 자신)."""
+        graph: "dict[str, tuple[list[str], set[str]]]" = self.graph()
+        if head not in graph:
+            return {head}
+        return {p for c in self._reach(head) for p in graph[c][0] if p not in graph}
+
     def main_overlay(self) -> "set[str]":
         """주 작업 트리 몫 덧씌울 경로 — `--first-parent --no-merges MH ^THIS`(main 에서 직접 한 커밋 가운데 이 트리에 없는 것)."""
         if self.mh == self.this:
@@ -5252,12 +5286,11 @@ class _History:
             paths |= changed if len(parents) < 2 else set()
             c = parents[0] if parents else None
         if c is not None:
-            if self._fp_mh is None:
-                self._fp_mh = set(self.git("rev-list", "--first-parent", self.mh).decode("ascii").split())
+            fp_mh: "set[str]" = self.first_parents()
             rest: "list[str]" = []
-            if c not in self._fp_mh:
+            if c not in fp_mh:
                 for commit in self.git("rev-list", "--first-parent", c).decode("ascii").split():
-                    if commit in self._fp_mh:
+                    if commit in fp_mh:
                         break
                     rest.append(commit)
             if rest:
@@ -5318,11 +5351,447 @@ class _History:
         return out
 
 
+_STATUS_WORKERS: int = 8                                     # 작업 트리 `git status` 를 함께 읽는 일꾼 수(처음 물을 때 한 번)
+
+
+class _LandedRecordError(Exception):
+    """착륙 표식이 가리키는 판의 실행 기록을 못 풂 · 못 읽음 — 글은 «<폴더>/refactor-scope.md@<sha12>(착륙 표식 판)» 꼴 자리다."""
+
+
+_UNBORN: "re.Pattern[str]" = re.compile(r"0{40}|0{64}")   # `worktree list` 의 태어나지 않은 가지 HEAD(`worktree add --orphan`)
+
+
+class _Landing:
+    """표식 없는 dddjango 실행 폴더의 «착륙» 과 «다른 작업 트리가 그 폴더를 쓰는 중» — 폴더마다 한 번 잰다(주 작업 트리 HEAD = MH).
+
+    착륙 = ① MH 첫 부모 사슬에서 그 폴더 실행 기록 파일(`refactor-scope.md` — 실행 줄이 사는 파일)을 마지막으로 바꾼 커밋이 머지(부모
+    둘 이상) ② 어느 작업 트리도 그 폴더를 자기 변경으로 갖지 않음 ③ 주 작업 트리 디스크의 그 폴더 = MH 판(② 의 주 작업 트리 몫).
+    착륙은 «trunk 에 합쳐짐» 이라, 주 작업 트리 HEAD 가 trunk 가지(`refs/remotes/origin/HEAD` 가 가리키는 가지 — 그 가지가 풀릴 때만 ·
+    없으면 `main` · 그것도 없으면 `master`)에 있을 때만 켠다 — 다른 가지 · 분리된 HEAD · trunk 를 모르면 끈다(표식만 · `off_reason`).
+    자기 변경 = 그 트리 `git status`(트리마다 한 번 · 이 프로젝트 `.dddjango` 아래 — 부른 쪽이 물을 폴더로 좁힐 수 있다(`narrow`) · 미커밋 ·
+    스테이지 · 추적 안 됨 · 무시 · 지우고 스테이지 안 함 — `__pycache__` · `.DS_Store` 는 뺌)에 그 폴더 경로가 있음 ∨ 그 트리 HEAD 의 미착륙
+    커밋(`_History.unlanded`)이 그 폴더를 바꿈 ∨ 그 트리가 착륙 머지 아래 쌓인 레인(HEAD 와 그 머지의 merge-base 가 그 머지가 들인 커밋이고
+    그 머지의 부모 자신은 아님)이며 그 사슬이 그 폴더를 바꿈. 태어나지 않은 가지 트리는 커밋이 없어 status 만 본다. 폴더가 정말 없는
+    작업 트리(`os.lstat` 이 FileNotFoundError 이고 `worktree list` 가 locked 로 적지 않음)는 status 를 읽지 않고 미착륙 커밋만 본다 —
+    잠근 트리의 폴더가 없거나 폴더를 못 읽으면(권한 · macOS TCC) status 를 못 읽은 것이다. 프로젝트가 git 뿌리 아래 하위 폴더면 모든 git
+    경로에 그 접두(`rev-parse --show-prefix` — 작업 트리마다 같다)를 붙이고 결과에서 뗀다. git 실패 · 모름은 자기 변경이다(보수 — 끝으로
+    세지 않는다). 착륙 표식(`· 착륙 <sha12>`)은 그 sha12 가 머지 커밋(부모 둘 이상)으로 풀릴 때만 표식이다(`stamp_merge`). 착륙은 표식
+    blob 이 아니라 폴더 · 작업 트리 상태의 성질이라 표식 판정 캐시(`_History.seed` · `ended`)에 섞지 않는다. 다른 작업 트리에서도
+    `git status` 는 읽기만이다(`GIT_OPTIONAL_LOCKS=0` · `core.fsmonitor=false` — index 를 쓰지 않고 fsmonitor 훅을 부르지 않는다 ·
+    `GIT_CEILING_DIRECTORIES` 로 그 트리 위 저장소를 찾아 올라가지 않는다)."""
+
+    def __init__(self, hist: "_History", trees: "list[tuple[Path, str]]") -> None:
+        self.hist: _History = hist
+        self.why: "dict[str, str]" = {}                    # 폴더 → 착륙 · 착륙 표식 끝이 아닌 까닭(미종료 줄에 싣는다)
+        self._first: "dict[str, list[str] | None]" = {}    # 폴더 → ① [착륙 머지, 첫 부모, 다른 부모…](None = ① 아님)
+        self._merge: "dict[str, str | None]" = {}          # 폴더 → 착륙 머지(None = 착륙 아님)
+        self._dirty: "dict[Path, set[str] | str]" = {}     # 작업 트리 → `git status` 의 실행 폴더(글 = 못 읽은 까닭)
+        self._scope: "set[str] | None" = None              # `git status` 를 좁힌 실행 폴더(None = 이 프로젝트 `.dddjango` 전부)
+        self._unlanded: "dict[str, set[str] | None]" = {}  # HEAD → 미착륙 커밋이 바꾼 실행 폴더(None = 못 읽음)
+        self._brought: "dict[str, set[str] | None]" = {}   # 착륙 머지 → 그 머지가 들인 커밋(None = 못 읽음)
+        self._gone: "set[Path] | None" = None              # 폴더가 정말 없는 작업 트리(잠그지 않음)
+        self._locked: "set[Path] | None" = None            # 잠근(locked) 작업 트리(None = 목록을 못 읽음)
+        self._stamps: "dict[str, list[str] | None]" = {}   # 착륙 표식 sha12 → [머지, 첫 부모, 다른 부모…](None = 머지로 못 풂)
+        self.stamp_why: "dict[str, str]" = {}              # 착륙 표식 sha12 → 머지로 못 푼 까닭(«<sha12> » 뒤에 잇는 글)
+        self._off: "str | None" = None                     # 착륙 판정을 끈 까닭(빈 글 = 켬 · None = 아직 안 잼)
+        project: Path = Path(hist.project).resolve()
+        try:
+            self.prefix: "str | None" = os.fsdecode(hist.git("rev-parse", "--show-prefix")).strip()
+            top: Path = Path(os.fsdecode(hist.git("rev-parse", "--show-toplevel")).strip()).resolve()
+        except (subprocess.CalledProcessError, OSError, ValueError):
+            self.prefix, top = None, project
+        self.me: Path = top                                # 이 프로젝트가 든 작업 트리 뿌리
+        # 하위 폴더 프로젝트를 부른 쪽이 따로 세운 칸(프로젝트 = 작업 트리 뿌리가 아님)은 그 트리(top) 하나로 센다.
+        self.trees: "list[tuple[Path, str]]" = [(r, h) for r, h in trees if not (r == project and r != top)]
+        if not any(r == top for r, _h in self.trees):
+            self.trees.append((top, next((h for r, h in trees if r == project), "")))
+        self._heads: "dict[Path, str]" = dict(self.trees)
+
+    def _folders_of(self, paths: "Iterable[str]") -> "set[str]":
+        """git 뿌리 기준 경로 가운데 이 프로젝트 `.dddjango/<폴더>` 안 경로의 그 폴더(접두를 뗀 꼴) — 파이썬 캐시 · Finder 파일은 빼고."""
+        pre: str = self.prefix or ""
+        out: "set[str]" = set()
+        for p in paths:
+            if not p.startswith(pre):
+                continue
+            parts: "list[str]" = p[len(pre):].split("/")
+            if (len(parts) >= 2 and parts[0] == RUN_DIRS[0][1] and parts[1] and "__pycache__" not in parts
+                    and parts[-1] != ".DS_Store"):
+                out.add(f"{parts[0]}/{parts[1]}")
+        return out
+
+    def narrow(self, rels: "Iterable[str]") -> None:
+        """`git status` 를 이 실행 폴더들로 좁힌다 — status 를 처음 읽기 전에만(그 밖 폴더를 물으면 `_own` 이 넓혀 다시 읽는다)."""
+        if not self._dirty:
+            self._scope = set(rels)
+
+    def _status(self, root: Path) -> "set[str] | str":
+        """그 작업 트리 `git status` 의 실행 폴더 — 못 읽으면 그 까닭(글). 폴더가 정말 없는 트리는 여기 오지 않는다(`_gone_trees`)."""
+        try:
+            os.lstat(root)
+        except FileNotFoundError:
+            return ("폴더가 없음(잠근 작업 트리 — 그 디스크를 못 읽음)" if root in (self._locked or set()) else
+                    "폴더가 없음(잠금 여부를 못 읽음)")
+        except OSError as exc:                             # 권한(EACCES · EPERM — macOS TCC 포함)
+            return f"폴더를 못 읽음({type(exc).__name__})"
+        if self._scope is not None and not self._scope:
+            return set()
+        specs: "list[str]" = ([f":(top){self.prefix}{rel}" for rel in sorted(self._scope)] if self._scope is not None else
+                              [f":(top){self.prefix}{RUN_DIRS[0][1]}"])
+        env: "dict[str, str]" = {**os.environ, "GIT_OPTIONAL_LOCKS": "0", "GIT_CEILING_DIRECTORIES": str(root.parent)}
+        try:
+            out: bytes = subprocess.run(
+                ["git", *_GIT_PINS, "-c", "core.fsmonitor=false", "-C", str(root), "status", "--porcelain=v1", "-z",
+                 "--untracked-files=all", "--ignored=matching", "--no-renames", "--ignore-submodules=all", "--", *specs],
+                capture_output=True, check=True, env=env).stdout
+        except (subprocess.CalledProcessError, OSError):
+            return "git status 를 못 읽음"
+        return self._folders_of(os.fsdecode(ent[3:]) for ent in out.split(b"\0") if len(ent) > 3)
+
+    def _gone_trees(self) -> "set[Path]":
+        """폴더가 정말 없는 작업 트리 — `os.lstat` 이 FileNotFoundError 이고 `worktree list --porcelain` 이 locked 로 적지 않은 트리. 권한
+        오류 · 잠근 트리 · 잠금 목록을 못 읽음은 폴더 없음이 아니다(status 를 못 읽은 보수 쪽)."""
+        if self._gone is None:
+            missing: "set[Path]" = set()
+            for r, _h in self.trees:
+                try:
+                    os.lstat(r)
+                except FileNotFoundError:
+                    missing.add(r)
+                except OSError:
+                    continue
+            if missing:
+                try:
+                    locked: "set[Path]" = set()
+                    cur: "Path | None" = None
+                    for ln in os.fsdecode(self.hist.git("worktree", "list", "--porcelain")).splitlines():
+                        if ln.startswith("worktree "):
+                            cur = Path(ln[len("worktree "):]).resolve()
+                        elif (ln == "locked" or ln.startswith("locked ")) and cur is not None:
+                            locked.add(cur)
+                    self._locked = locked
+                except (subprocess.CalledProcessError, OSError, ValueError):
+                    self._locked = None
+            self._gone = missing - self._locked if self._locked is not None else set()
+        return self._gone
+
+    def _changed(self, root: Path) -> "set[str] | str":
+        """그 작업 트리 디스크가 그 트리 HEAD 와 다른 실행 폴더(글 = 못 읽은 까닭) — 처음 물을 때 모든 작업 트리를 함께 읽는다(트리마다
+        한 번 · 폴더가 정말 없는 트리는 디스크가 없어 빈 집합)."""
+        if not self._dirty:
+            gone: "set[Path]" = self._gone_trees()
+            roots: "list[Path]" = [r for r, _h in self.trees if r not in gone]
+            with ThreadPoolExecutor(max_workers=_STATUS_WORKERS) as pool:
+                self._dirty.update(zip(roots, pool.map(self._status, roots)))
+            self._dirty.update({r: set() for r in gone})
+        if root not in self._dirty:
+            self._dirty[root] = set() if root in self._gone_trees() else self._status(root)
+        return self._dirty[root]
+
+    def _own(self, root: Path, head: str, rel: str) -> "tuple[str, bool] | None":
+        """그 트리가 그 폴더를 자기 변경으로 갖는가 — (까닭, 쓰는 중) · None = 아님. 쓰는 중이 아닌 까닭은 모름 · 못 읽음(보수 쪽)이다."""
+        if self.prefix is None:
+            return "이 프로젝트의 git 접두를 못 읽음", False
+        unborn: bool = bool(_UNBORN.fullmatch(head))       # 태어나지 않은 가지 — 커밋이 없어 status 만 본다
+        if not unborn and not _commit_name(head):
+            return f"작업 트리 {root} 의 HEAD 를 모름({head or '없음'})", False
+        if not unborn and head != self.hist.mh:
+            if head not in self._unlanded:
+                try:
+                    self._unlanded[head] = self._folders_of(self.hist.unlanded(head)[0])
+                except (subprocess.CalledProcessError, OSError, ValueError):
+                    self._unlanded[head] = None
+            got: "set[str] | None" = self._unlanded[head]
+            if got is None:
+                return f"작업 트리 {root} 의 미착륙 커밋을 못 읽음", False
+            if rel in got:
+                return ((f"폴더 없는 작업 트리 {root}(prunable — `git worktree prune` 전)의 미착륙 커밋이 이 폴더를 바꿈", False)
+                        if root in self._gone_trees() else (f"작업 트리 {root} 가 이 폴더를 자기 변경으로 가짐", True))
+        if self._scope is not None and rel not in self._scope:   # 좁힌 status 밖 폴더 — 넓혀 다시 읽는다
+            self._scope, self._dirty = None, {}
+        dirty: "set[str] | str" = self._changed(root)
+        if isinstance(dirty, str):
+            return f"작업 트리 {root} 의 {dirty}", False
+        return (f"작업 트리 {root} 가 이 폴더를 자기 변경으로 가짐", True) if rel in dirty else None
+
+    def owns(self, root: Path, rel: str) -> bool:
+        """작업 트리 `root` 가 그 폴더를 자기 변경으로 갖는가(모름 · 못 읽음 포함) — 작업 트리 목록에 없는 트리는 모름(자기 변경)."""
+        head: "str | None" = self._heads.get(root)
+        return head is None or self._own(root, head, rel) is not None
+
+    def owner(self, rel: str, skip: "Iterable[Path]" = ()) -> "tuple[str, bool] | None":
+        """그 폴더를 자기 변경으로 가진 첫 작업 트리의 (까닭, 쓰는 중) — `skip` 트리는 빼고 · 없으면 None."""
+        skipped: "set[Path]" = set(skip)
+        for root, head in self.trees:
+            found: "tuple[str, bool] | None" = self._own(root, head, rel) if root not in skipped else None
+            if found is not None:
+                return found
+        return None
+
+    def _stacked(self, rel: str, merge: str, first: str, others: "list[str]", skip: "Iterable[Path]" = ()) -> "str | None":
+        """착륙 머지 아래 쌓인 레인 — 작업 트리(`skip` 은 빼고)의 HEAD 사슬이 그 머지가 들인 커밋(첫 부모 밖 · 다른 부모에서 닿음 · 그
+        부모 자신은 아님 — «속 커밋»)에 걸려 있고 그 사슬(`<첫 부모>..<HEAD>`)이 그 폴더를 바꿨으면 그 트리가 그 실행을 돈다(미종료 까닭 ·
+        None = 없음) · git 실패도 미종료다. 걸림 = HEAD 와 그 머지의 merge-base 가 속 커밋 ∨ HEAD 사슬이 MH 이력에 닿는 첫 커밋
+        (`_History.attach` — HEAD 가 MH 에서 닿으면 HEAD 자신)이 속 커밋(쌓인 레인이 main 을 받아 merge-base 가 그 머지가 된 꼴). 스스로 착륙한
+        레인(닿는 커밋 = 그 머지 부모)과 그 뒤로 나아간 레인은 걸리지 않는다. merge-base 는 닿는 커밋이 MH 첫 부모 사슬 밖이고 그 머지가 들인
+        커밋도 아닐 때만 묻는다(그 밖은 merge-base 가 속 커밋일 수 없다)."""
+        if merge not in self._brought:
+            try:
+                self._brought[merge] = set(os.fsdecode(self.hist.git("rev-list", *others, f"^{first}")).split())
+            except (subprocess.CalledProcessError, OSError, ValueError):
+                self._brought[merge] = None
+        brought: "set[str] | None" = self._brought[merge]
+        if brought is None:
+            return f"② 착륙 머지 {merge[:12]} 가 들인 커밋을 못 읽음 — 보수 쪽 미종료"
+        inner: "set[str]" = brought - set(others)
+        skipped: "set[Path]" = set(skip)
+        for root, head in self.trees:
+            if root in skipped or not _commit_name(head):
+                continue
+            try:
+                touch: "set[str]" = self.hist.attach(head)
+                if not touch & inner and not (touch - brought - self.hist.first_parents()
+                                              and os.fsdecode(self.hist.git("merge-base", head, merge)).strip() in inner):
+                    continue
+                hit: bytes = self.hist.git("log", "-1", "--format=%H", f"{first}..{head}", "--", f":(top){self.prefix}{rel}")
+            except (subprocess.CalledProcessError, OSError, ValueError):
+                return f"② 작업 트리 {root} 의 쌓인 레인 사슬을 못 읽음 — 보수 쪽 미종료"
+            if hit.strip():
+                tail: str = f" — 착륙 머지 {merge[:12]} 아래 쌓인 레인(HEAD {head[:12]})"
+                return (f"② · ③ 작업 트리 {root} 가 이 폴더를 자기 변경으로 가짐{tail}" if root == self.me else
+                        f"② 작업 트리 {root} 가 이 폴더를 자기 변경으로 가짐(쓰는 중){tail}")
+        return None
+
+    def _ref(self, root: Path, *args: str) -> "str | None":
+        """읽기만 하는 git 참조 물음의 첫 줄 — 없거나(exit ≠ 0) 못 읽으면 None."""
+        env: "dict[str, str]" = {**os.environ, "GIT_OPTIONAL_LOCKS": "0"}
+        try:
+            proc = subprocess.run(["git", *_GIT_PINS, "-C", str(root), *args], capture_output=True, text=True, env=env)
+        except OSError:
+            return None
+        return proc.stdout.strip().split("\n")[0] if proc.returncode == 0 and proc.stdout.strip() else None
+
+    def off_reason(self) -> str:
+        """착륙 판정을 끈 까닭 한 줄 — 빈 글 = 켬(주 작업 트리 HEAD 가 trunk 가지). 처음 물을 때 한 번 잰다."""
+        if self._off is None:
+            main_root: Path = self.trees[0][0]
+            origin: "str | None" = self._ref(main_root, "symbolic-ref", "-q", "refs/remotes/origin/HEAD")
+            remote: str = "refs/remotes/origin/"
+            trunk: "str | None" = (origin[len(remote):] if origin and origin.startswith(remote)
+                                   and self._ref(main_root, "rev-parse", "--verify", "-q", origin) else None)
+            if trunk is None:                             # origin/HEAD 가 없거나 가리키는 가지가 안 풀림 — main · master 로 물러섬
+                trunk = next((b for b in ("main", "master")
+                              if self._ref(main_root, "rev-parse", "--verify", "-q", f"refs/heads/{b}")), None)
+            head: "str | None" = self._ref(main_root, "symbolic-ref", "-q", "HEAD")
+            branch: str = head[len("refs/heads/"):] if head and head.startswith("refs/heads/") else "detached"
+            self._off = ("착륙 판정 꺼짐 — trunk 가지를 모름(origin/HEAD · main · master 없음)" if trunk is None else
+                         "" if branch == trunk else
+                         f"착륙 판정 꺼짐 — 주 작업 트리 HEAD 가 trunk({trunk})가 아님({branch})")
+        return self._off
+
+    def first_merge(self, rel: str) -> "list[str] | None":
+        """① — MH 첫 부모 사슬에서 그 폴더 실행 기록 파일을 마지막으로 바꾼 커밋이 머지면 [그 머지, 첫 부모, 다른 부모…] · 아니면 None
+        (까닭은 `why[rel]` — 착륙 판정 꺼짐 · 접두 모름 · git 실패 포함). 처음 물을 때 한 번 잰다."""
+        if rel not in self._first:
+            found: "list[str] | None" = None
+            if self.off_reason():
+                self.why[rel] = self.off_reason()
+            elif self.prefix is None:
+                self.why[rel] = "② · ③ 이 프로젝트의 git 접두를 못 읽음 — 보수 쪽 미종료"
+            else:
+                try:
+                    got: "list[str]" = self.hist.git("log", "--first-parent", "-1", "--format=%H %P", self.hist.mh, "--",
+                                                     f":(top){self.prefix}{rel}/{RUN_RECORDS['dddjango'][0]}").decode("ascii").split()
+                    if len(got) < 3:
+                        self.why[rel] = (f"① 실행 기록 파일을 마지막으로 바꾼 main 첫 부모 커밋 {got[0][:12]} 이 머지가 아님" if got
+                                         else "① main 에 실행 기록 파일이 없음")
+                    else:
+                        found = got
+                except (subprocess.CalledProcessError, OSError, ValueError) as exc:
+                    self.why[rel] = f"git 읽기 실패({type(exc).__name__}) — 보수 쪽 미종료"
+            self._first[rel] = found
+        return self._first[rel]
+
+    def merge_of(self, rel: str) -> "str | None":
+        """착륙 머지 SHA(trunk 위 · ① · ② · ③ 이 모두 참 · 쌓인 레인 없음) — 아니면 None 이고 까닭은 `why[rel]`."""
+        if rel not in self._merge:
+            merge: "str | None" = None
+            got: "list[str] | None" = self.first_merge(rel)
+            if got is not None:
+                owner: "tuple[str, bool] | None" = self.owner(rel)
+                stacked: "str | None" = self._stacked(rel, got[0], got[1], got[2:]) if owner is None else None
+                if owner is not None:
+                    self.why[rel] = f"② · ③ {owner[0]}{'' if owner[1] else ' — 보수 쪽 미종료'}"
+                elif stacked is not None:
+                    self.why[rel] = stacked
+                else:
+                    merge = got[0]
+            self._merge[rel] = merge
+        return self._merge[rel]
+
+    def stamp_merge(self, sha12: str) -> "list[str] | None":
+        """착륙 표식 sha12 가 풀리는 머지 커밋(부모 둘 이상)의 [머지, 첫 부모, 다른 부모…] — 커밋으로 못 풀거나 머지가 아니면 None(까닭은
+        `stamp_why[sha12]`)."""
+        if sha12 not in self._stamps:
+            found: "list[str] | None" = None
+            try:
+                got: "list[str]" = self.hist.git("log", "-1", "--format=%H %P", f"{sha12}^{{commit}}", "--").decode("ascii").split()
+                if len(got) >= 3:
+                    found = got
+                else:
+                    self.stamp_why[sha12] = "가 머지 커밋이 아님"
+            except (subprocess.CalledProcessError, OSError, ValueError):
+                self.stamp_why[sha12] = "를 커밋으로 못 풂"
+            self._stamps[sha12] = found
+        return self._stamps[sha12]
+
+    def held(self, rel: str, shas: "Iterable[str]", skip: "Iterable[Path]") -> "str | None":
+        """착륙 표식으로 끝인 그 폴더를 표식을 든 트리(`skip`) 밖 작업 트리가 아직 갖는가 — ② 자기 변경(미커밋 · 미착륙 커밋 · 모름) ∨ 그
+        표식 머지 아래 쌓인 레인. 까닭 · None = 아무도 안 가짐."""
+        owner: "tuple[str, bool] | None" = self.owner(rel, skip)
+        if owner is not None:
+            return owner[0]
+        for sha12 in sorted(shas):
+            got: "list[str] | None" = self.stamp_merge(sha12)
+            stacked: "str | None" = self._stacked(rel, got[0], got[1], got[2:], skip) if got is not None else None
+            if stacked is not None:
+                return stacked
+        return None
+
+    def stamp_end(self, rel: str, sha12: str) -> bool:
+        """이 트리(`me`)가 읽은 실행 줄의 착륙 표식이 끝인가(run-state — 다른 트리의 자기 변경 ② 는 부른 쪽이 먼저 본다) — sha12 가 머지
+        커밋으로 풀리고 그 머지 아래 쌓인 레인(이 트리 밖)이 그 폴더를 바꾸지 않음. 아니면 False 이고 까닭은 `why[rel]`."""
+        got: "list[str] | None" = self.stamp_merge(sha12)
+        if got is None:
+            self.why[rel] = f"착륙 표식 {sha12} {self.stamp_why[sha12]} — 보수 쪽 미종료"
+            return False
+        stacked: "str | None" = self._stacked(rel, got[0], got[1], got[2:], {self.me})
+        if stacked is not None:
+            self.why[rel] = stacked
+            return False
+        return True
+
+    def stamped(self, rels: "list[str]") -> "dict[str, dict[str, tuple[set[Path], set[str]]]]":
+        """폴더 → {착륙 표식이 붙은 실행 줄의 G0 승인 값 → (그 표식을 디스크 사본에 든 작업 트리, 표식 sha12)} — MH 판과 모든 작업 트리
+        디스크 사본의 실행 기록에서 모은다(못 읽는 사본은 건너뜀 · MH 판에서 온 표식 · MH 판에 이미 든 표식을 받은 사본은 든 트리 없음 — 운반 트리는 표식이 그 트리의 미커밋 · 미착륙 커밋에만 있을 때). sha12 가 머지 커밋으로 풀리는 표식만
+        센다. 표식은 다음 시도가 그 폴더에 처음 쓰기 전에 붙이는 기록이라, 한 사본에라도 있으면 같은 실행 줄의 다른 사본도 끝이다 — 단
+        표식을 든 트리 밖에서 그 폴더를 아직 가진 트리가 있으면(`held`) 부른 쪽이 끝으로 세지 않는다."""
+        scope_name: str = RUN_RECORDS["dddjango"][0]
+        texts: "dict[str, list[tuple[Path | None, bytes]]]" = {rel: [] for rel in rels}
+        if self.prefix is None or not rels:
+            return {}
+        try:
+            named: "dict[str, str]" = {}
+            for ent in self.hist.git("ls-tree", "-z", "--full-tree", self.hist.mh, "--",
+                                     *(f"{self.prefix}{rel}/{scope_name}" for rel in rels)).split(b"\0"):
+                meta, _tab, raw = ent.partition(b"\t")
+                if raw and meta.split()[1:2] == [b"blob"] and not meta.startswith(b"120000 "):
+                    named[os.fsdecode(raw)[len(self.prefix):]] = meta.split()[2].decode("ascii")
+            blobs: "dict[str, bytes]" = self.hist.blobs(sorted(set(named.values())))
+            for path, sha in named.items():
+                texts[path.rsplit("/", 1)[0]].append((None, blobs[sha]))
+        except (subprocess.CalledProcessError, OSError, ValueError, KeyError, IndexError):
+            pass                                           # MH 판을 못 읽으면 디스크 사본만 본다
+        for root, _h in self.trees:
+            for rel in rels:
+                try:
+                    texts[rel].append((root, (root / self.prefix / rel / scope_name).read_bytes()))
+                except OSError:
+                    continue
+        out: "dict[str, dict[str, tuple[set[Path], set[str]]]]" = {}
+        for rel, datas in texts.items():
+            in_mh: "set[tuple[str, str]]" = set()          # MH 판에 이미 든 표식(G0 · sha12) — 그 사본을 든 트리는 운반 트리가 아니다
+            for carrier, data in datas:                    # MH 판이 먼저 온다
+                try:
+                    text: str = _decode(data)
+                except UnicodeDecodeError:
+                    continue
+                for m in _STAMPED_RUN.finditer(text):
+                    if self.stamp_merge(m.group(2)) is None:
+                        continue
+                    carriers, shas = out.setdefault(rel, {}).setdefault(m.group(1), (set(), set()))
+                    shas.add(m.group(2))
+                    if carrier is None:
+                        in_mh.add((m.group(1), m.group(2)))
+                    elif (m.group(1), m.group(2)) not in in_mh:
+                        carriers.add(carrier)
+        return out
+
+    def landed_record(self, sha: str, rel: str) -> str:
+        """착륙 표식이 가리키는 판(`<그 머지>:<접두><폴더>/refactor-scope.md`)의 실행 기록 글 — sha12 가 머지 커밋으로 안 풀리거나 못 읽으면
+        _LandedRecordError."""
+        where: str = f"{rel}/{RUN_RECORDS['dddjango'][0]}@{sha}(착륙 표식 판)"
+        got: "list[str] | None" = self.stamp_merge(sha) if self.prefix is not None else None
+        if got is None:
+            raise _LandedRecordError(where)
+        try:
+            return _decode(self.hist.git("cat-file", "blob", f"{got[0]}:{self.prefix}{rel}/{RUN_RECORDS['dddjango'][0]}"))
+        except (subprocess.CalledProcessError, OSError, ValueError):   # UnicodeDecodeError 포함
+            raise _LandedRecordError(where) from None
+
+
+def _run_ended(line: "str | None", rel: str, landing: "_Landing | None") -> "tuple[str, str] | None":
+    """dddjango 실행의 끝 판정 한 함수 — (갈래 «실행 줄 없음» | «표식» | «착륙», 착륙 표식 · 착륙 머지 SHA 또는 빈 글) · None = 미종료.
+
+    끝 = 실행 줄 없음 ∨ 실행 줄에 G2 승인 ∨ 착륙 표식(`· 착륙 <sha12>` — sha12 가 머지 커밋으로 풀리고 그 머지 아래 쌓인 레인이 없을
+    때 · `_Landing.stamp_end` · 갈래 «표식», 둘째 칸이 그 sha12) ∨ 표식 없는 실행 줄인데 그 폴더가 착륙(`_Landing.merge_of`). `landing`
+    이 None 이면 G2 승인만 본다(착륙 표식은 풀어 봐야 끝이다). 공급자 상태(`_refactor_settled`)와 `run-state` 가 쓰고, deps `_active_runs`
+    는 사본마다 표식으로 판정한 뒤 남은 활성 실행 묶음에 착륙 표식(`_Landing.stamped` · `held`)과 같은 `merge_of` 를 건다."""
+    if line is None:
+        return "실행 줄 없음", ""
+    if "G2 승인" in line:
+        return "표식", ""
+    stamp: "re.Match[str] | None" = _LANDING_STAMP.search(line)
+    if stamp:
+        return ("표식", stamp.group(1)) if landing is not None and landing.stamp_end(rel, stamp.group(1)) else None
+    merge: "str | None" = landing.merge_of(rel) if landing is not None else None
+    return ("착륙", merge) if merge else None
+
+
+_REFACTOR_STAMPED: "re.Pattern[str]" = re.compile(r"^.*실행 · G0 승인 .*모드 리팩토링.*G2 승인.*$", re.M)
+_REFACTOR_LANDED: "re.Pattern[str]" = re.compile(r"^.*실행 · G0 승인 .*모드 리팩토링.*· 착륙 ([0-9a-f]{12})(?![0-9a-f]).*$", re.M)
+_G1_SETTLED: "re.Pattern[str]" = re.compile(rf"^(?:[-*]\s+)?(?:{G1_CONFIRMED}|G1 확정)\s", re.M)
+_STOP_AFTER_G1: "re.Pattern[str]" = re.compile(r"^(?:#+\s*(?:파견 정지|G0 정지)|.*결정 = 작업 중단)", re.M)
+
+
+def _settled_record(current: str) -> bool:
+    """착륙한 리팩토링 실행 기록(이번 실행 절)이 «정리» 인가 — 실행 줄에 `build_anchor` 와 G1 확정 줄이 있고 마지막 G1 확정 줄 뒤에
+    `## 파견 정지` · `## G0 정지` 절이나 `결정 = 작업 중단` 줄이 없다."""
+    line: "str | None" = _run_line(current)
+    confirms: "list[re.Match[str]]" = list(_G1_SETTLED.finditer(current))
+    return (line is not None and "모드 리팩토링" in line and "build_anchor" in line and bool(confirms)
+            and not _STOP_AFTER_G1.search(current, confirms[-1].end()))
+
+
+def _refactor_settled(text: str, rel: str, landing: "_Landing | None") -> "tuple[str, str] | None":
+    """공급 BC 리팩토링 폴더 기록의 «정리» 근거 — («표식» | «착륙», 재상정을 셀 이번 실행 절 글) · None(미정리).
+
+    표식 = 리팩토링 실행 줄에 G2 승인이 있다(앞 실행 절 포함). 착륙 표식(`· 착륙 <sha12>`)이 붙은 리팩토링 실행 줄이면 «착륙» 이고, 정리
+    여부는 그 sha12 판의 기록(`<sha12>:<폴더>/refactor-scope.md`)으로 본다 — 표식 뒤의 절은 다음 시도 몫이다(못 풀거나 못 읽으면
+    _LandedRecordError — 못 읽음). 그 밖은 이번 실행 줄이 표식 없는 리팩토링 줄이고 그 폴더가 착륙했을 때(`_run_ended`)만 «착륙» 후보다.
+    착륙이면 `_settled_record`(앵커 · G1 확정 · 그 뒤 정지 없음)가 참일 때만 정리다. «끝» 은 지금 아무도 그 폴더를 돌지 않는다는 동시성의
+    뜻일 뿐 «그 BC 리팩토링이 G2 로 끝남» 이 아니라서, G0 만 하고 접은 기록 · G1 확정 없는 착륙 · G1 확정 뒤 정지한 착륙은 미정리다."""
+    current: str = re.split(r"(?m)^#+\s*앞 실행", text)[0]
+    if _REFACTOR_STAMPED.search(text):
+        return "표식", current
+    stamped: "re.Match[str] | None" = _REFACTOR_LANDED.search(text)
+    if stamped:
+        if landing is None:
+            raise _LandedRecordError(f"{rel}/{RUN_RECORDS['dddjango'][0]}@{stamped.group(1)}(착륙 표식 판)")
+        landed: str = re.split(r"(?m)^#+\s*앞 실행", landing.landed_record(stamped.group(1), rel))[0]
+        return ("착륙", landed) if _settled_record(landed) else None
+    if not _settled_record(current):
+        return None
+    ended: "tuple[str, str] | None" = _run_ended(_run_line(current), rel, landing)
+    return ("착륙", current) if ended is not None and ended[0] == "착륙" else None
+
+
 def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan", wanted: "set[str] | None" = None
-                 ) -> "tuple[list[ActiveRun], int, int, dict, dict[str, bytes | None]]":
-    """(활성 실행, 본 작업 트리 수, 본 web 실행 수, 가르기 수{사본 · MH 판 · 지움}, 이 트리 `wanted` 폴더(내주는 쪽)의
+                 ) -> "tuple[list[ActiveRun], int, int, dict, dict[str, bytes | None], _Landing, list[tuple[str, str]]]":
+    """(활성 실행, 본 작업 트리 수, 본 web 실행 수, 가르기 수{사본 · MH 판 · 지움 · 착륙}, 이 트리 `wanted` 폴더(내주는 쪽)의
     refactor-scope.md 를 디스크가 아닌 판으로 읽을 것 {폴더: MH 판 바이트 | None(지운 실행 · 기록 없음 — 읽지 않음)} — 없는 폴더는
-    디스크 사본) — 설계 3판 §A1 · §A2. 끝 판정은 표식만이다.
+    디스크 사본, 착륙 판정기(공급자 상태가 같은 판정을 다시 쓴다), 착륙 · 표식 없음으로 뺀 [(폴더, 착륙 머지)]) — 설계 3판 §A1 · §A2.
+    끝 판정은 사본마다 표식으로 하고, 표식으로 활성인 dddjango 실행 묶음(종류, 폴더)을 다 모은 뒤 마지막에 착륙(`_Landing`)을 건다.
 
     주 작업 트리(`worktree list` 첫 비-bare · HEAD = MH)의 실행 폴더는 디스크 사본으로 판정한다(그 사본은 자기 변경이거나 MH 판과 같다).
     다른 작업 트리 T 의 실행 폴더 d 는 차례로 ① 자기 변경(d 안 경로가 `T ^MH` 머지 아닌 커밋 경로에 있음 · 기록 파일 디스크 바이트가 T
@@ -5524,6 +5993,28 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan", w
                     copies.setdefault((kind, name), []).append((f"{where}(main 판)", run, ov))
         scopes.update({rel: None for rel in this_mh if scope_name not in mh_idx[rel]})   # MH 판에 기록 없음 — 읽지 않음
         scopes.update({rel: got[sha] for rel, sha in this_scope.items()})
+    landing: _Landing = _Landing(hist, trees)
+    stamped: "dict[str, dict[str, tuple[set[Path], set[str]]]]" = landing.stamped(
+        sorted(f".dddjango/{name}" for kind, name in copies if kind == "dddjango"))
+    readable: "list[str]" = [f".dddjango/{name}" for kind, name in copies if kind == "dddjango" and f".dddjango/{name}" not in stamped
+                             and not any(r.unreadable for _t, r, _o in copies[(kind, name)])]
+    landing.narrow(set(stamped) | {rel for rel in readable if landing.first_merge(rel) is not None})   # status 는 물을 폴더만
+    for kind, name in list(copies):                      # 착륙 표식 — 한 사본에라도 있으면 같은 실행 줄(G0 승인 값)의 사본은 모두 끝
+        marks: "dict[str, tuple[set[Path], set[str]]]" = stamped.get(f".dddjango/{name}", {}) if kind == "dddjango" else {}
+        for g0, (carriers, shas) in sorted(marks.items()):
+            if landing.held(f".dddjango/{name}", shas, carriers) is None:   # 표식 든 트리 밖에서 그 폴더를 가진 트리가 없을 때만
+                copies[(kind, name)] = [item for item in copies[(kind, name)] if item[1].line_g0 != g0]
+        if not copies[(kind, name)]:
+            del copies[(kind, name)]
+    landed_runs: "list[tuple[str, str]]" = []
+    for kind, name in list(copies):                      # 표식 없는 실행 줄만 남았다(`_dddjango_run`) — 착륙이면 끝
+        if kind != "dddjango" or any(r.unreadable for _t, r, _o in copies[(kind, name)]):
+            continue                                       # web 실행은 표식만 · 기록을 UTF-8 로 못 읽으면 끝인지 모름
+        merge: "str | None" = landing.merge_of(f".dddjango/{name}")
+        if merge is not None:
+            landed_runs.append((f".dddjango/{name}", merge))
+            del copies[(kind, name)]
+    seen["landed"] = len(landed_runs)
     runs: "list[ActiveRun]" = list(holds)
     for (kind, name), items in copies.items():
         first: ActiveRun = items[0][1]
@@ -5549,7 +6040,7 @@ def _active_runs(project: Path, own: "Path | None", bc: str, scan: "DepsScan", w
         out.refactor_bcs = {b for _t, r, _o in items for b in r.refactor_bcs}
         runs.append(out)
     seen.update(runs=len(copies), copies=sum(len(v) for v in copies.values()))
-    return runs, len(trees), webs, seen, scopes
+    return runs, len(trees), webs, seen, scopes, landing, landed_runs
 
 
 FACE_CHAIN_CAP: int = 2000                                  # 공급 면 이름 사슬 걸음 상한 — 닿으면 그 BC 전체를 면으로(안전 쪽)
@@ -5788,10 +6279,13 @@ def _refactor_folders(supplier: str, pool: "list[ActiveRun]") -> "list[str]":
     return sorted({f".dddjango/{r.folder}" for r in pool if r.kind == "dddjango" and r.refactor and supplier in r.refactor_bcs})
 
 
-def _supplier_state(project: Path, folders: "list[Path]", scopes: "dict[str, bytes | None]") -> str:
-    """직접 공급자의 정리 상태 — 그 폴더들 `refactor-scope.md` 의 G2 승인 리팩토링 실행 · 남은 재상정 수. 기록은 A1 과 같은 판으로
-    읽는다(`scopes` 에 있으면 그 판 — None 은 읽지 않음 · 없으면 디스크 사본). 정리 실행이 없는데 UTF-8 로 못 읽은 기록이 있으면
-    «못 읽음(<경로>)»(미정리 공급자로 센다 — 순서 예외 질문이 빠지지 않게)."""
+def _supplier_state(project: Path, folders: "list[Path]", scopes: "dict[str, bytes | None]",
+                    landing: "_Landing | None") -> str:
+    """직접 공급자의 정리 상태 — 그 폴더들 `refactor-scope.md` 의 정리된 리팩토링 실행(`_refactor_settled` — 표식 · 착륙(착륙 표식 포함)
+    + 앵커 + G1 확정(뒤 정지 없음)) · 남은 재상정 수. 착륙으로 정리면 `정리(재상정 n · 착륙 · 표식 없음)` 이다(착륙 표식이면 재상정은 그
+    표식 판 기록으로 센다). 기록은 A1 과 같은 판으로 읽는다(`scopes` 에 있으면 그 판 — None 은 읽지 않음 · 없으면 디스크 사본). 정리
+    실행이 없는데 UTF-8 로 못 읽은 기록 · 못 푼 착륙 표식 판이 있으면 «못 읽음(<경로>)»(미정리 공급자로 센다 — 순서 예외 질문이 빠지지
+    않게)."""
     unread: "list[str]" = []
     for folder in folders:
         rel: str = f".dddjango/{folder.name}"
@@ -5808,13 +6302,17 @@ def _supplier_state(project: Path, folders: "list[Path]", scopes: "dict[str, byt
         except UnicodeDecodeError:                        # F4-108 — 미정리로 조용히 떨어뜨리지 않는다
             unread.append(f"{rel}/refactor-scope.md{'(main 판)' if rel in scopes else ''}")
             continue
-        if re.search(r"^.*실행 · G0 승인 .*모드 리팩토링.*G2 승인.*$", text, re.M):
-            current: str = re.split(r"(?m)^#+\s*앞 실행", text)[0]
+        try:
+            settled: "tuple[str, str] | None" = _refactor_settled(text, rel, landing)
+        except _LandedRecordError as exc:
+            unread.append(str(exc))
+            continue
+        if settled is not None:
             left: "set[str]" = set()
-            for sec in re.split(r"(?m)^#+\s", current):
+            for sec in re.split(r"(?m)^#+\s", settled[1]):
                 if sec.startswith("ⓐ 재상정") or "ⓐ 재상정" in sec.split("\n", 1)[0]:
                     left |= set(re.findall(r"\bM\d+\b", sec))
-            return f"정리(재상정 {len(left)})"
+            return f"정리(재상정 {len(left)}{' · 착륙 · 표식 없음' if settled[0] == '착륙' else ''})"
     if unread:
         return f"못 읽음({unread[0]}{f' 외 {len(unread) - 1}' if len(unread) > 1 else ''})"
     return "미정리"
@@ -6043,8 +6541,9 @@ def cmd_deps(project: Path, bc: str, out: Path, at: str) -> int:
     our_paths: "set[str]" = {f"application/{bc}/"} | set(lane)
     if at != "new" and own is not None and (own / "design-spec.md").is_file():   # G1 뒤 — 이 실행의 다른 BC 편집 목록도 우리 경로다
         our_paths |= {e["path"] for e in _other_edits(_read(own / "design-spec.md"), set())[0]}
-    runs, trees, webs, seen, scopes = _active_runs(project, own, bc, scan,
-                                                   {f".dddjango/{d.name}" for ds in sup_dirs.values() for d in ds})
+    runs, trees, webs, seen, scopes, landing, landed = _active_runs(
+        project, own, bc, scan, {f".dddjango/{d.name}" for ds in sup_dirs.values() for d in ds})
+    landed_lines: "list[str]" = [f"착륙 · 표식 없음(끝으로 셈): {rel} · 착륙 머지 {sha[:12]}" for rel, sha in landed]
     g0: bool = own is not None and g1 is None             # 이 실행 폴더가 없으면 판정 시점을 모른다 — 그대로 센다
     outward, outward_why = _outward_v(own, project, g1[1]) if own is not None and g1 is not None else (None, "")
     http_free: bool = g1 is not None and outward == 0     # 밖 동작 V 0 — web 실행의 HTTP 소비로만 선 겹침 · 보류는 세지 않는다
@@ -6153,7 +6652,7 @@ def cmd_deps(project: Path, bc: str, out: Path, at: str) -> int:
         live, after = _refactor_folders(s, counted), _refactor_folders(s, late_runs)
         states[s] = (f"미정리(도는 실행 {live[0]}{f' 외 {len(live) - 1}' if len(live) > 1 else ''})" if live else
                      f"도는 실행(맞물림 — 이 실행 뒤) {' · '.join(after)}" if after else
-                     _supplier_state(project, sup_dirs[s], scopes))
+                     _supplier_state(project, sup_dirs[s], scopes, landing))
     stale: Stale = Stale()
     if at == "dispatch" and own is not None and open_line is not None:
         if "build_anchor" in open_line:
@@ -6178,9 +6677,12 @@ def cmd_deps(project: Path, bc: str, out: Path, at: str) -> int:
                   "forecast_holds": forecasts, "forecast_overlaps": forecast_overlaps,
                   "stale_target": stale.target, "stale_design": stale.design, "stale_report": stale.report,
                   "stale_skipped": stale.skipped,
-                  "dropped": dropped, "active_runs": seen, "parse_errors": scan.parse_errors}
+                  "dropped": dropped, "landed_unstamped": dict(landed), "active_runs": seen,
+                  "parse_errors": scan.parse_errors}
     runs_note: str = (f"활성 실행 {seen['runs']}(사본 {seen['copies']} · 트리 {trees}) · MH 판으로 판정 {seen['mh']} · "
-                      f"MH 에서 지워져 뺌 {seen['gone']} · 이 폴더 옛 사본 뺌 {seen['own_old']}")
+                      f"MH 에서 지워져 뺌 {seen['gone']} · 이 폴더 옛 사본 뺌 {seen['own_old']} · "
+                      f"착륙 · 표식 없음 {seen['landed']}(끝으로 셈)"
+                      + (f" · {landing.off_reason()}" if landing.off_reason() else ""))
     stage: str = ("판정 시점 모름(이 실행 폴더 없음) — web HTTP 소비 겹침 · 보류를 그대로 센다" if own is None else
                   f"판정 시점 G0 · 예보 보류 {len(forecasts)} · 예보 겹침 {len(forecast_overlaps)} · "
                   f"예보 보류 가운데 공급 BC 고침 목록 모름 {sup_forecasts}" if g1 is None else
@@ -6212,10 +6714,12 @@ def cmd_deps(project: Path, bc: str, out: Path, at: str) -> int:
                                                    or [f"- {'판정 밖(' + stale.skipped + ')' if stale.skipped else '없음'}"]) + [""]
     md += ["## 예보 보류(G0 — 정지 아님)", ""] + ([f"- {f}" for f in forecasts] or ["- 없음"]) + [""]
     md += ["## 예보 겹침(G0 — 정지 아님)", ""] + ([f"- {f}" for f in forecast_overlaps] or ["- 없음"]) + [""]
-    md += ["## 뺀 겹침 · 보류", ""] + ([f"- {d}" for d in dropped] or ["- 없음"]) + [""]
+    md += ["## 뺀 겹침 · 보류", ""] + ([f"- {d}" for d in landed_lines + dropped] or ["- 없음"]) + [""]
     md += [f"- 본 범위: 작업 트리 {trees} · web 실행 {webs} · 저장소 밖은 보지 않는다", f"- {runs_note} · {stage}"]
     md += [f"- 밖 동작 V 를 모르는 까닭: {outward_why}", ""] if outward_why else [""]
     (out / "deps.md").write_text("\n".join(md), encoding="utf-8")
+    for x in landed_lines:
+        print(f"  {x}")
     for o in overlaps:
         print(f"  겹침: {o}")
     for h in holds:
@@ -6241,6 +6745,129 @@ def cmd_deps(project: Path, bc: str, out: Path, at: str) -> int:
           f"보류 {len(holds)} · 본 범위: 작업 트리 {trees} · web 실행 {webs} · 관찰 못 한 활성 실행 {len(holds)} · {runs_note} · "
           f"--at {at} · {stage}{' · 파싱 못 한 파일 ' + str(len(scan.parse_errors)) if scan.parse_errors else ''} → {out}")
     return DEPS_STOP_EXIT if cyc or overlaps or holds or stale.target or stale.design else EXIT_OK
+
+
+# ── run-state ────────────────────────────────────────────────────────────────
+
+RUN_STATE_KINDS: "tuple[str, ...]" = ("표식", "착륙", "실행 줄 없음")      # 끝 갈래(`요약:` 차례)
+# `.dddjango/` 아래 실행 폴더가 아닌 이름 — 검사기 기본 출력 자리(findings.py ③ `VIOLATIONS_SUBDIR`).
+CHECKER_OUTPUT_DIR: str = "violations"
+
+
+def cmd_run_state(project: Path, folders: "list[Path]") -> int:
+    """실행 폴더들의 끝 · 미종료와 그 까닭(읽기만 · 폴더 여럿을 한 프로세스로) — 폴더 · 실행 선택과 Phase 0 폴더 목록이 부른다.
+
+    deps 는 이 실행 폴더를 늘 빼고 기능 · 수정 모드는 deps 를 돌지 않으므로, 고를 폴더의 끝 여부는 여기서 본다. 폴더마다 차례로:
+    ① 이 트리 말고 그 폴더를 자기 변경으로 가진 작업 트리가 있으면 미종료(쓰는 중 — 이 트리 사본이 표식이든 실행 줄이 없든 먼저 ·
+    그 트리를 못 읽으면 보수 쪽 미종료) ② 읽을 판 — 이 트리 사본이 자기 변경이면 디스크 `refactor-scope.md`, 아니면 MH 판(deps 와 같은
+    판 · `ls-tree` 한 번 + `cat-file --batch` 한 번 · MH 판이 링크면 디스크) ③ `_run_ended`(표식 — G2 승인 · 착륙 표식(sha12 가 머지
+    커밋으로 풀리고 그 머지 아래 쌓인 레인 없음 · 아니면 보수 쪽 미종료) · 실행 줄 없음 · 착륙). 리팩토링 실행 줄이면 공급자 정리 줄을 더한다. 기록을 UTF-8 로 못 읽으면 그 폴더는 미종료(끝인지 모름)다. 검사기 출력 자리
+    (`.dddjango/violations`)는 실행 폴더가 아니라 건너뛴다. 이 폴더에 deps · plan 이 쓰기 전에 부른다 — 쓴 뒤에는 추적 안 된 산출물로
+    미종료가 된다(보수).
+    exit 0 = 모두 끝 · 2 = 미종료 하나 이상 · 1 = 실행 불능(`.dddjango/<폴더>` 가 아님 · 이름 글자가 디스크와 다름 · MH 판을 못 읽음)."""
+    me_dir: Path = project.resolve()
+    base: Path = me_dir / RUN_DIRS[0][1]
+    try:
+        listed: "set[str]" = set(os.listdir(base))
+    except OSError:
+        listed = set()
+    rels: "list[str]" = []
+    for folder in folders:
+        path: Path = (folder if folder.is_absolute() else project / folder).resolve()
+        if path.parent != base or not path.is_dir() or path.name not in listed:   # 대소문자까지 디스크 이름 그대로
+            raise ToolError(f"실행 폴더가 아니다 — {path}(`{base}/<폴더>` 이고 이름이 디스크와 글자까지 같아야 한다)")
+        rels.append(f"{RUN_DIRS[0][1]}/{path.name}")
+    trees: "list[tuple[Path, str]]" = _worktrees(project)
+    if not any(root == me_dir for root, _h in trees):
+        trees.append((me_dir, _git_ro(project, "rev-parse", "HEAD").strip()))
+    mh: str = trees[0][1]
+    this: str = next(h for root, h in trees if root == me_dir)
+    hist: _History = _History(project, mh, this, {h for root, h in trees if root != me_dir}, set())
+    landing: _Landing = _Landing(hist, trees)
+    if landing.prefix is None:
+        raise ToolError("이 프로젝트의 git 접두(`rev-parse --show-prefix`)를 못 읽는다 — run-state 실행 불능")
+    me: Path = landing.me                                  # 이 프로젝트가 든 작업 트리 뿌리
+    scope_name: str = RUN_RECORDS["dddjango"][0]
+    runs: "list[str]" = [rel for rel in rels if rel.split("/", 1)[1] != CHECKER_OUTPUT_DIR]
+    landing.narrow(runs)                                   # status 는 물은 폴더만(② · ③ 은 이 폴더들만 묻는다)
+    busy: "dict[str, tuple[str, bool] | None]" = {rel: landing.owner(rel, skip={me}) for rel in runs}
+    mine: "dict[str, bool]" = {rel: landing.owns(me, rel) for rel in runs}
+    want: "list[str]" = [f"{landing.prefix}{rel}/{scope_name}" for rel in runs if busy[rel] is None and not mine[rel]]
+    named: "dict[str, str]" = {}                          # MH 판 기록 경로(접두를 뗀 꼴) → blob
+    linked: "set[str]" = set()                            # MH 판 기록이 링크 — 그 사본(디스크)으로(deps 와 같은 물러섬)
+    try:
+        for ent in (hist.git("ls-tree", "-z", "--full-tree", mh, "--", *want).split(b"\0") if want else []):
+            meta, _tab, raw_path = ent.partition(b"\t")
+            if not raw_path or meta.split()[1] != b"blob":
+                continue
+            record_path: str = os.fsdecode(raw_path)[len(landing.prefix):]
+            if meta.startswith(b"120000 "):
+                linked.add(record_path)
+            else:
+                named[record_path] = meta.split()[2].decode("ascii")
+        blobs: "dict[str, bytes]" = hist.blobs(sorted(set(named.values())))
+    except (subprocess.CalledProcessError, OSError, ValueError, IndexError) as exc:
+        raise ToolError(f"MH 판 기록을 못 읽는다({type(exc).__name__}) — run-state 실행 불능") from exc
+    counts: "dict[str, int]" = dict.fromkeys(RUN_STATE_KINDS, 0)
+    open_count: int = 0
+    writing: int = 0                                       # 미종료 가운데 다른 작업 트리가 쓰는 중
+    skipped: int = 0                                       # 실행 폴더 아님(검사기 출력)
+    if landing.off_reason():
+        print(f"{landing.off_reason()} — 표식 없는 실행 줄은 미종료로 본다")
+    for rel in rels:
+        if rel not in busy:
+            print(f"실행 상태 {rel}: 실행 폴더 아님(검사기 출력) — 건너뜀")
+            skipped += 1
+            continue
+        owner: "tuple[str, bool] | None" = busy[rel]
+        if owner is not None:
+            print(f"실행 상태 {rel}: 미종료 · 까닭: ② {owner[0]}{'(쓰는 중)' if owner[1] else ' — 보수 쪽 미종료'}")
+            open_count += 1
+            writing += owner[1]
+            continue
+        record: str = f"{rel}/{scope_name}"
+        where: str = "디스크"
+        try:
+            if record in linked and not (me_dir / record).exists():
+                raise FileNotFoundError("MH 판 기록이 링크인데 그 사본을 디스크에서 못 읽는다")
+            if mine[rel] or record in linked:
+                data: "bytes | None" = (me_dir / record).read_bytes() if (me_dir / record).is_file() else None
+            else:
+                where = f"MH {mh[:12]} 판"
+                data = blobs[named[record]] if record in named else None   # 없음 = MH 판에 기록 없음(새 폴더 · MH 에서 지운 실행)
+            text: str = _decode(data) if data is not None else ""
+        except (UnicodeDecodeError, OSError) as exc:
+            print(f"실행 상태 {rel}: 미종료 · 까닭: {where} {scope_name} 를 못 읽는다({type(exc).__name__} — 끝인지 모름)")
+            open_count += 1
+            continue
+        line: "str | None" = _run_line(text)
+        ended: "tuple[str, str] | None" = _run_ended(line, rel, landing)
+        if ended is None:
+            why: str = landing.why.get(rel, "표식 없음 · 착륙 아님")
+            print(f"실행 상태 {rel}: 미종료 · 까닭: {why}")
+            open_count += 1
+            writing += "(쓰는 중)" in why
+            continue
+        counts[ended[0]] += 1
+        if ended[0] == "실행 줄 없음":
+            print(f"실행 상태 {rel}: 끝(실행 줄 없음 — {where}에 실행 줄 · 기록 없음)")
+        elif ended[0] == "표식" and ended[1]:
+            print(f"실행 상태 {rel}: 끝(표식 · 착륙 {ended[1]})")
+        elif ended[0] == "표식":
+            print(f"실행 상태 {rel}: 끝(표식 · G2 승인 · {where})")
+        else:
+            print(f"실행 상태 {rel}: 끝(착륙 {ended[1][:12]} · 표식 없음) — 그 착륙 머지를 근거로 끝난 실행")
+        if line is not None and "모드 리팩토링" in line:
+            try:
+                settled: "tuple[str, str] | None" = _refactor_settled(text, rel, landing)
+                supplier: str = (f"예({settled[0]})" if settled else
+                                 "아니오 — 표식 없음 · «착륙 + 앵커 + G1 확정(뒤 정지 없음)» 아님")
+            except _LandedRecordError as exc:
+                supplier = f"못 읽음({exc})"
+            print(f"공급자 정리 {rel}: {supplier}")
+    print(f"요약: run-state 폴더 {len(rels)} · " + " · ".join(f"{k} {counts[k]}" for k in RUN_STATE_KINDS)
+          + f" · 미종료 {open_count}(쓰는 중 {writing})" + (f" · 실행 폴더 아님 {skipped}" if skipped else ""))
+    return DEPS_STOP_EXIT if open_count else EXIT_OK
 
 
 # ── self-test ────────────────────────────────────────────────────────────────
@@ -6402,6 +7029,7 @@ def main(argv: "list[str]") -> int:
     p.add_argument("--candidates")
     p.add_argument("--finalize")
     p.add_argument("--gate-json", help="registry_gate.py --group-moves 로 돈 sidecar(--introduced-json) — 묶음 이동 쌍")
+    sub.add_parser("run-state").add_argument("folder", nargs="+", help="실행 폴더(`.dddjango/<폴더>`) — 여럿")
     p = sub.add_parser("changes")
     p.add_argument("folder")
     group = p.add_mutually_exclusive_group()
@@ -6432,6 +7060,8 @@ def main(argv: "list[str]") -> int:
             return cmd_outline(project, ns.bc, Path(ns.out))
         if ns.command == "deps":
             return cmd_deps(project, ns.bc, Path(ns.out), ns.at)
+        if ns.command == "run-state":
+            return cmd_run_state(project, [Path(x) for x in ns.folder])
         if ns.command == "residual":
             return cmd_residual(project, Path(ns.folder), Path(ns.candidates) if ns.candidates else None, ns.finalize,
                                 Path(ns.gate_json) if ns.gate_json else None)

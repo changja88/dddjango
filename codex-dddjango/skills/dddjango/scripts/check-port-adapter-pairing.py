@@ -40,7 +40,9 @@
   fake   #575 test/fake/ 에만 · #576 짝 선언 없는 페이크(한 방향) · #577 선언 상속·같은
          이름 · #578 기술 만지면 어댑터 · #579 프로덕션의 페이크 import · #580
          dependency_wiring 의 페이크 주입 · #581 평평하게
-  기타   #134 컨트롤러는 build_* 만(직접 생성 금지) · #574 <data>_in 생성은 어댑터만 ·
+  기타   #134 컨트롤러는 build_* 만(직접 생성 금지 — 모듈 수준 `from pydantic import` 로만 한 번 묶인 이름(검증
+         도구 `TypeAdapter`)은 세지 않는다 · 다시 묶인 이름 · 이름을 실행 때 바꾸는 장치를 쓰는 파일은 그대로 ·
+         2026-11-14 F4-170) · #574 <data>_in 생성은 어댑터만 ·
          #71(=#304·#305·#8)·#40(=#403·#408·#219·#220)·#463(=#319)·#480(dto 이름 — usecase-dto
          관할과 자리 분리해 port 구역만) — 참조·중복 진단 금지 원칙대로 실체는 한 곳만.
 
@@ -1136,6 +1138,98 @@ def _check_fake(root: Path, bc: Path, f: Findings) -> None:
 
 # ── 응용·입구 쪽 — #134 · #574 · #475 · #553 · #557 · #460 ─────────────────
 
+# #134 — 이름을 실행 때 바꾸는 장치. 이것을 쓰는 컨트롤러 파일은 pydantic 이름 면제가 없다(묶기 셈 · 장치 목록은
+# check-context-isolation #473 과 같은 꼴 — 독립 스크립트라 공용 모듈로 모으지 않고 같은 글로 둔다).
+_NAME_DEVICES: frozenset[str] = frozenset({
+    "globals", "locals", "vars", "setattr", "delattr", "__import__", "importlib", "exec", "eval"})
+
+
+def _uses_name_device(mod: ast.Module) -> bool:
+    """이름 · 값을 실행 때 바꾸는 장치를 쓰나 — globals · locals(모듈 수준에서는 globals 와 같다) · vars · setattr · delattr ·
+    `__import__` · importlib · exec · eval(맨 이름 · `builtins` 의 속성 · `from builtins import …` · `__builtins__`) · `__dict__` ·
+    함수의 `__globals__` · 내장 함수의 `__self__`(= builtins) · 모듈의 `.__builtins__` · `sys.modules` · `sys._getframe` · 틀의
+    `f_globals` · `f_locals`(`sys` · `builtins` 는 `import … as` 별칭도 같다) · 별 import(`from .x import *`). 맨 속성 이름
+    (`x.vars`)은 세지 않는다. 쓰는 파일은 이름에 기대는 면제(#473 받은 글 검증 허용 목록 · wire 모듈 · #134 pydantic 이름)를
+    쓰지 않는다."""
+    modules: dict[str, str] = {"sys": "sys", "builtins": "builtins"}  # 이름 → 그 이름이 가리키는 sys · builtins
+    for n in ast.walk(mod):
+        if isinstance(n, ast.Import):
+            modules.update({a.asname: a.name for a in n.names if a.asname and a.name in ("sys", "builtins")})
+    for n in ast.walk(mod):
+        if isinstance(n, ast.ImportFrom) and any(a.name == "*" for a in n.names):
+            return True
+        if isinstance(n, ast.Name) and (n.id in _NAME_DEVICES or n.id == "__builtins__"):
+            return True
+        if isinstance(n, ast.Attribute) and n.attr in (
+                "__dict__", "f_globals", "f_locals", "__globals__", "__self__", "__builtins__"):
+            return True
+        if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name) and (
+                (modules.get(n.value.id) == "sys" and n.attr in ("modules", "_getframe"))
+                or (modules.get(n.value.id) == "builtins" and n.attr in _NAME_DEVICES)):
+            return True
+        if isinstance(n, ast.Import) and any(a.name.split(".")[0] == "importlib" for a in n.names):
+            return True
+        if isinstance(n, ast.ImportFrom) and (n.module or "").split(".")[0] == "importlib":
+            return True
+        if isinstance(n, ast.ImportFrom) and (
+                (n.module == "sys" and any(a.name in ("modules", "_getframe") for a in n.names))
+                or (n.module == "builtins" and any(a.name in _NAME_DEVICES for a in n.names))):
+            return True
+    return False
+
+
+def _bind_counts(node: ast.AST) -> dict[str, int]:
+    """이 마디 안에서 이름마다 묶는 자리 수 — 대입 · 지움 · 매개변수 · def · class · import · `except … as` ·
+    `match` 갈래 이름 · 타입 매개변수."""
+    out: dict[str, int] = {}
+
+    def add(name: str | None) -> None:
+        if name:
+            out[name] = out.get(name, 0) + 1
+
+    for n in ast.walk(node):
+        kind: str = type(n).__name__  # match · 타입 매개변수 마디는 해석기 판에 따라 없다(3.10 · 3.12)
+        if isinstance(n, ast.Name) and not isinstance(n.ctx, ast.Load):
+            add(n.id)
+        elif isinstance(n, ast.arg):
+            add(n.arg)
+        elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            add(n.name)
+        elif isinstance(n, (ast.Import, ast.ImportFrom)):
+            for a in n.names:
+                add(a.asname or a.name.split(".")[0])
+        elif isinstance(n, ast.ExceptHandler):
+            add(n.name)
+        elif kind in ("MatchAs", "MatchStar"):
+            add(n.name)
+        elif kind == "MatchMapping":
+            add(n.rest)
+        elif kind in ("TypeVar", "ParamSpec", "TypeVarTuple"):
+            add(getattr(n, "name", None))
+    return out
+
+
+def _pydantic_only_names(mod: ast.Module) -> set[str]:
+    """모듈 수준 `from pydantic(.…) import …` 로만 한 번 묶인 이름 — #134 가 «직접 생성» 으로 세지 않는다.
+
+    #134 의 목적은 컨트롤러가 인프라를 직접 만들지 않는 것이다. pydantic `TypeAdapter` 는 인프라가 아니라
+    검증 도구다(F4-170). 묶기는 import · 대입 · 지움 · def · class · 매개변수 · `except … as` · `match` 갈래 이름 ·
+    타입 매개변수를 모두 센다 — 파일 안에서 한 번이라도 다른 길로 다시 묶인 이름(지역
+    `from vendor_sdk import TypeAdapter` 같은 가림)은 면제하지 않는다. 이름을 실행 때 바꾸는 장치(`_uses_name_device` —
+    globals · locals · vars · setattr · `sys.modules` · 별 import …)를 쓰는 파일도 면제하지 않는다. 바깥 인프라 어댑터
+    (`requests` · allauth · 루트 모듈 …)는 pydantic 에서 오지 않으니 그대로 잡힌다.
+    """
+    if _uses_name_device(mod):
+        return set()
+    binds: dict[str, int] = _bind_counts(mod)
+    out: set[str] = set()
+    for stmt in mod.body:
+        if isinstance(stmt, ast.ImportFrom) and stmt.level == 0 and stmt.module and (
+                stmt.module == "pydantic" or stmt.module.startswith("pydantic.")):
+            out |= {a.asname or a.name for a in stmt.names if binds.get(a.asname or a.name) == 1}
+    return out
+
+
 def _check_property_origins(root: Path, py: Path, mod: ast.Module,
                             f: Findings, cand: Candidates) -> None:
     """#557: 로컬 계약 선언/명시 re-export와 닫힌 vendor 타입 목록만 확정한다."""
@@ -1398,9 +1492,10 @@ def _check_use_side(root: Path, bc: Path, bc_vocab_set: set, f: Findings, cand: 
             if not py.name.endswith("_controller.py"):
                 continue
             mod = _parse(py)
+            validators: set[str] = _pydantic_only_names(mod) if mod else set()
             for node in ast.walk(mod) if mod else []:
                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and (
-                        node.func.id.endswith(("UseCase", "Repository", "Adapter"))):
+                        node.func.id.endswith(("UseCase", "Repository", "Adapter"))) and node.func.id not in validators:
                     f.add("#134", _rel(root, py, node.lineno),
                           f"컨트롤러가 `{node.func.id}` 를 직접 만든다 — 매 요청 build_<use_case>() "
                           "를 부른다(직접 생성 금지)")

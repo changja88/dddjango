@@ -24,7 +24,9 @@ Kernel 없음)·#83(BC 삭제 내성)은 아래 각론 진단이 집행한다.
          #633 인자는 request 하나 · #634 공개 표면은 함수만 · #295 raw 재노출 금지
   ACL    #361 상대 BC 하나=폴더 하나 · #363 클래스명 <Bc><Capability>Adapter
          #364 포트 파일명에 공급자 BC 금지 · #450 상호 ACL 금지 · #473 기저 예외를 잡는다
-         (상대 창구 코드가 돌 수 있는 try 만 — 모르면 돈다고 본다 · 2026-10-26)
+         (상대 창구 코드가 돌 수 있는 try 만 — 모르면 돈다고 본다 · 2026-10-26 · 받은 글 `model_validate_json`
+         검증은 받는 쪽이 선언만 있는 wire · 값 자료만 받는 모델 짓기 함수 · 같은 BC 가 import 하지 않는 사설
+         함수의 `type[T]` 일 때만 안 돈다고 본다 — `_WindowTry` · 2026-11-14 F4-167)
          (#151·#364 의 «타 BC 이름» = 같은 `application/` 컨테이너의 BC — 자매 플러그인
          `web/application/<단위>` 같은 다른 컨테이너의 폴더 이름은 세지 않는다)
   기타   #14 `with unit_of_work:` 안에서 크로스-BC 포트 호출 금지 · #110 auto_import=False
@@ -955,6 +957,535 @@ def _root(expr: ast.expr) -> str | None:
     return expr.id if isinstance(expr, ast.Name) else None
 
 
+# ── #473 받은 글 검증 — `model_validate_json` 받는 쪽의 허용 목록(2026-11-14 F4-167) ────────────────
+# 검증 때도 모델의 검증기 · 칸 기본값 짓기 · 바탕 클래스 코드가 돈다. 그래서 받는 쪽이 «검증 코드가 끼어들 수 없는 꼴» 일 때만
+# 그 부르기를 «안 돈다» 로 본다. `model_validate` · `model_validate_strings` 는 넘긴 값을 끝까지 읽어(창구 생성기 · property)
+# 받지 않는다.
+_TEXT_VALIDATORS: frozenset[str] = frozenset({"model_validate_json"})
+_FACTORY_BUILTINS: frozenset[str] = frozenset({
+    "tuple", "list", "dict", "set", "frozenset", "str", "int", "float", "bool", "len", "enumerate", "zip", "range",
+    "isinstance"})
+_DATA_BUILTINS: frozenset[str] = frozenset({
+    "str", "int", "float", "bool", "bytes", "tuple", "list", "dict", "set", "frozenset", "None", "type"})
+_DATA_TYPING: frozenset[str] = frozenset({"Literal", "Optional", "Union", "Final", "Annotated", "ClassVar"})
+_STD_DATA: dict[str, frozenset[str]] = {
+    "datetime": frozenset({"date", "datetime", "time", "timedelta", "timezone"}), "decimal": frozenset({"Decimal"}),
+    "uuid": frozenset({"UUID"}), "types": frozenset({"EllipsisType", "NoneType"})}
+_WIRE_IMPORT_TOPS: frozenset[str] = frozenset({
+    "__future__", "typing", "typing_extensions", "pydantic", "datetime", "decimal", "enum", "uuid", "types"})
+_NAME_DEVICES: frozenset[str] = frozenset({
+    "globals", "locals", "vars", "setattr", "delattr", "__import__", "importlib", "exec", "eval"})
+_NAME_DEVICE_ATTRS: frozenset[str] = frozenset({"__dict__", "__setattr__", "__delattr__"})
+# 짝 폴더에서 pydantic 모델의 칸 · 짓기를 실행 때 바꾸는 속성(`model_fields[...] = …` · `model_rebuild(force=True)`).
+_MODEL_REBUILD_ATTRS: frozenset[str] = frozenset({"model_fields", "model_rebuild"})
+# 칸 정의 자리의 `Field(...)` 에서 아무 값이나 받는 꼬리표 인자 — 검증 때 부르지 않는 이름 · 설명 글이다.
+_FIELD_LABELS: frozenset[str] = frozenset({"alias", "title", "description", "validation_alias", "serialization_alias"})
+# 칸 정의 자리의 세 꼴 — 칸 타입 · 칸 하나(타입 또는 (타입, 기본값)) · 칸 묶음(`**` 로 펼치는 dict).
+_FIELD_TYPE: str = "type"
+_FIELD_SPEC: str = "spec"
+_FIELD_DICT: str = "dict"
+_PYDANTIC_MODEL_BASES: frozenset[str] = frozenset({"BaseModel", "RootModel"})
+_WIRE_ENUM_BASES: frozenset[str] = frozenset({"Enum", "StrEnum", "IntEnum"})
+_NOT_DATA_SUFFIXES: tuple[str, ...] = ("Port", "Repository", "Protocol", "Command", "Query", "UnitOfWork", "Service",
+                                       "Adapter", "Gateway", "Client")
+_PLAIN_TYPE_BUILTINS: frozenset[str] = frozenset({
+    "str", "int", "float", "bool", "bytes", "tuple", "list", "dict", "set", "frozenset"})
+_BUILTIN_CONTAINERS: frozenset[str] = frozenset({"tuple", "list", "dict", "set", "frozenset"})
+_PLAIN_TYPING: frozenset[str] = frozenset({
+    "Optional", "Union", "Literal", "ClassVar", "Final", "List", "Dict", "Tuple", "Set", "FrozenSet"})
+_OLD_CONTAINERS: tuple[str, ...] = ("List", "Dict", "Tuple", "Set", "FrozenSet")
+
+
+def _uses_name_device(mod: ast.Module) -> bool:
+    """이름 · 값을 실행 때 바꾸는 장치를 쓰나 — globals · locals(모듈 수준에서는 globals 와 같다) · vars · setattr · delattr ·
+    `__import__` · importlib · exec · eval(맨 이름 · `builtins` 의 속성 · `from builtins import …` · `__builtins__`) · `__dict__` ·
+    함수의 `__globals__` · 내장 함수의 `__self__`(= builtins) · 모듈의 `.__builtins__` · `sys.modules` · `sys._getframe` · 틀의
+    `f_globals` · `f_locals`(`sys` · `builtins` 는 `import … as` 별칭도 같다) · 별 import(`from .x import *`). 맨 속성 이름
+    (`x.vars`)은 세지 않는다. 쓰는 파일은 이름에 기대는 면제(#473 받은 글 검증 허용 목록 · wire 모듈 · #134 pydantic 이름)를
+    쓰지 않는다."""
+    modules: dict[str, str] = {"sys": "sys", "builtins": "builtins"}  # 이름 → 그 이름이 가리키는 sys · builtins
+    for n in ast.walk(mod):
+        if isinstance(n, ast.Import):
+            modules.update({a.asname: a.name for a in n.names if a.asname and a.name in ("sys", "builtins")})
+    for n in ast.walk(mod):
+        if isinstance(n, ast.ImportFrom) and any(a.name == "*" for a in n.names):
+            return True
+        if isinstance(n, ast.Name) and (n.id in _NAME_DEVICES or n.id == "__builtins__"):
+            return True
+        if isinstance(n, ast.Attribute) and n.attr in (
+                "__dict__", "f_globals", "f_locals", "__globals__", "__self__", "__builtins__"):
+            return True
+        if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name) and (
+                (modules.get(n.value.id) == "sys" and n.attr in ("modules", "_getframe"))
+                or (modules.get(n.value.id) == "builtins" and n.attr in _NAME_DEVICES)):
+            return True
+        if isinstance(n, ast.Import) and any(a.name.split(".")[0] == "importlib" for a in n.names):
+            return True
+        if isinstance(n, ast.ImportFrom) and (n.module or "").split(".")[0] == "importlib":
+            return True
+        if isinstance(n, ast.ImportFrom) and (
+                (n.module == "sys" and any(a.name in ("modules", "_getframe") for a in n.names))
+                or (n.module == "builtins" and any(a.name in _NAME_DEVICES for a in n.names))):
+            return True
+    return False
+
+
+def _bind_counts(node: ast.AST) -> dict[str, int]:
+    """이 마디 안에서 이름마다 묶는 자리 수 — 대입 · 지움 · 매개변수 · def · class · import · `except … as` ·
+    `match` 갈래 이름 · 타입 매개변수."""
+    out: dict[str, int] = {}
+
+    def add(name: str | None) -> None:
+        if name:
+            out[name] = out.get(name, 0) + 1
+
+    for n in ast.walk(node):
+        kind: str = type(n).__name__  # match · 타입 매개변수 마디는 해석기 판에 따라 없다(3.10 · 3.12)
+        if isinstance(n, ast.Name) and not isinstance(n.ctx, ast.Load):
+            add(n.id)
+        elif isinstance(n, ast.arg):
+            add(n.arg)
+        elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            add(n.name)
+        elif isinstance(n, (ast.Import, ast.ImportFrom)):
+            for a in n.names:
+                add(a.asname or a.name.split(".")[0])
+        elif isinstance(n, ast.ExceptHandler):
+            add(n.name)
+        elif kind in ("MatchAs", "MatchStar"):
+            add(n.name)
+        elif kind == "MatchMapping":
+            add(n.rest)
+        elif kind in ("TypeVar", "ParamSpec", "TypeVarTuple"):
+            add(getattr(n, "name", None))
+    return out
+
+
+def _plain_field_annotation(ann: ast.AST | None, leaf: set[str], typing_of: dict[str, str],
+                            in_classvar: bool = False) -> bool:
+    """wire 칸 주석이 «검증 코드가 끼어들 수 없는 꼴» 인가.
+
+    끝 이름은 `leaf`(다시 묶이지 않은 맨 타입 · 계약 · 표준 값 이름 · 같은 조건 wire)뿐이고, 첨자 머리는 내장 그릇과
+    `typing` 의 Optional · Union · Final · ClassVar · Literal · 옛 그릇 이름뿐이다. `|` · `...` · `None` 은 받는다.
+    부르기 · 람다 · 속성 · 글자 주석(Literal 안 글자 빼고) · `Annotated` 는 받지 않는다. `ClassVar[...]` 안은 검증 칸이 아니라
+    이름을 가리지 않는다(부르기 · 람다 · 속성 · 글자는 거기서도 받지 않는다).
+    """
+    if ann is None:
+        return False
+    if isinstance(ann, ast.Constant):
+        return ann.value is None or ann.value is Ellipsis
+    if isinstance(ann, ast.Name):
+        return in_classvar or ann.id in leaf or typing_of.get(ann.id) in _OLD_CONTAINERS
+    if isinstance(ann, ast.BinOp) and isinstance(ann.op, ast.BitOr):
+        return (_plain_field_annotation(ann.left, leaf, typing_of, in_classvar)
+                and _plain_field_annotation(ann.right, leaf, typing_of, in_classvar))
+    if isinstance(ann, ast.Tuple):
+        return all(_plain_field_annotation(e, leaf, typing_of, in_classvar) for e in ann.elts)
+    if isinstance(ann, ast.Subscript) and isinstance(ann.value, ast.Name):
+        head: str = ann.value.id
+        origin: str | None = typing_of.get(head)
+        if origin == "Literal":
+            elts: list[ast.expr] = ann.slice.elts if isinstance(ann.slice, ast.Tuple) else [ann.slice]
+            return all(isinstance(e, ast.Constant) and (e.value is None or isinstance(e.value, (str, int, bool)))
+                       for e in elts)
+        if origin == "ClassVar":
+            return _plain_field_annotation(ann.slice, leaf, typing_of, True)
+        if (head in _BUILTIN_CONTAINERS and head in leaf) or origin in ("Optional", "Union", "Final", *_OLD_CONTAINERS):
+            return _plain_field_annotation(ann.slice, leaf, typing_of, in_classvar)
+    return False
+
+
+def _typing_imports(mod: ast.Module, binds: dict[str, int]) -> dict[str, str]:
+    """모듈 최상위 `from typing(_extensions) import X [as Y]` 가운데 한 번만 묶인 그릇 · 꾸밈 이름 → 원 이름."""
+    out: dict[str, str] = {}
+    for st in mod.body:
+        if isinstance(st, ast.ImportFrom) and st.level == 0 and st.module in ("typing", "typing_extensions"):
+            for a in st.names:
+                name: str = a.asname or a.name
+                if binds.get(name) == 1 and a.name in _PLAIN_TYPING:
+                    out[name] = a.name
+    return out
+
+
+_PARTNER_ALTERED: dict[Path, bool] = {}  # 짝 ACL 폴더 → 바꿔 끼우기 있음(_check_acl 이 부를 때마다 비운다)
+
+
+def _plain_methods(mod: ast.Module, into: dict[str, set[str]]) -> None:
+    """모듈의 클래스마다 보통 메서드(classmethod · staticmethod 빼고) 이름을 `into` 에 모은다."""
+    for cls in ast.walk(mod):
+        if isinstance(cls, ast.ClassDef):
+            into.setdefault(cls.name, set()).update(
+                f.name for f in cls.body if isinstance(f, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and not any(isinstance(d, ast.Name) and d.id in ("classmethod", "staticmethod") for d in f.decorator_list))
+
+
+def _foreign_attribute_write(mod: ast.Module, plain: dict[str, set[str]]) -> bool:
+    """메서드 첫 매개변수 `self` · `cls` 의 칸 말고 다른 속성을 바꾸나(대입 · 지움 · 덧셈 대입) — 이름이 `cls` 인 보통 함수
+    매개변수(`def _install(cls): cls.model_validate_json = …`) · `@staticmethod` 의 첫 매개변수는 메서드 첫 매개변수가 아니라
+    바꾸기로 센다. 짝 폴더 클래스(`plain` = 폴더 전체의 클래스 → 보통 메서드)의 보통 메서드를 클래스에서 꺼내면
+    (`_Patch.install(PartWire)` — 아무 값이나 `self` 가 된다 · 다른 파일에서 import 한 클래스 · `모듈.클래스.메서드` 도) 그것도
+    바꾸기로 센다."""
+
+    def static(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+        return any(isinstance(d, ast.Name) and d.id == "staticmethod" for d in fn.decorator_list)
+
+    held: dict[str, set[str]] = {}  # 이 파일에서 짝 폴더 클래스를 가리키는 이름 → 보통 메서드
+    _plain_methods(mod, held)
+    for n in ast.walk(mod):
+        if isinstance(n, (ast.Import, ast.ImportFrom)):
+            for a in n.names:
+                if a.name.split(".")[-1] in plain:
+                    held.setdefault(a.asname or a.name, set()).update(plain[a.name.split(".")[-1]])
+    for n in ast.walk(mod):
+        if isinstance(n, ast.Attribute):
+            methods: set[str] = (held.get(n.value.id, set()) if isinstance(n.value, ast.Name)
+                                 else plain.get(n.value.attr, set()) if isinstance(n.value, ast.Attribute) else set())
+            if n.attr in methods:
+                return True
+
+    def visit(node: ast.AST, owner: str | None) -> bool:
+        for child in ast.iter_child_nodes(node):
+            inner: str | None = owner
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                first: list[ast.arg] = [*child.args.posonlyargs, *child.args.args][:1]
+                inner = (first[0].arg if isinstance(node, ast.ClassDef) and first and first[0].arg in ("self", "cls")
+                         and not static(child) else None)
+            elif isinstance(child, (ast.ClassDef, ast.Lambda)):
+                inner = None
+            if isinstance(child, ast.Attribute) and not isinstance(child.ctx, ast.Load) and not (
+                    inner is not None and isinstance(child.value, ast.Name) and child.value.id == inner):
+                return True
+            if visit(child, inner):
+                return True
+        return False
+
+    return visit(mod, None)
+
+
+def _partner_altered(partner: Path) -> bool:
+    """짝 ACL 폴더 파일 하나라도 이름 · 값을 실행 때 바꾸는 장치(`__setattr__` · `__delattr__` 포함)를 쓰거나, 메서드 첫
+    매개변수 `self` · `cls` 의 칸 밖의 속성을 바꾸거나(대입 · 지움 · 덧셈 대입 — wire · 그 칸 타입(계약 dataclass 등) · pydantic
+    바탕 어느 것이든 검증 때 도는 코드를 꽂을 수 있다), 짝 폴더 클래스의 보통 메서드를 클래스에서 꺼내거나(파일을 건너도),
+    pydantic 모델의 칸 · 짓기를 실행 때 바꾸는 속성(`model_fields` ·
+    `model_rebuild` · `__pydantic_*`)을 쓰나 · 못 읽는 파일이 있나. 그러면 그 폴더 파일들은 허용 목록을 쓰지 않는다."""
+    partner = partner.resolve()
+    if partner not in _PARTNER_ALTERED:
+        altered: bool = False
+        mods: list[ast.Module] = []
+        for f in sorted(partner.rglob("*.py")):
+            try:
+                mods.append(ast.parse(f.read_text(encoding="utf-8")))
+            except (OSError, SyntaxError, UnicodeDecodeError, ValueError):
+                altered = True  # 못 읽는 파일 — 바꿔 끼우는지 모른다
+                break
+        plain: dict[str, set[str]] = {}  # 짝 폴더 전체의 클래스 → 보통 메서드
+        for mod in mods:
+            _plain_methods(mod, plain)
+        for mod in [] if altered else mods:
+            if _uses_name_device(mod) or _foreign_attribute_write(mod, plain) or any(
+                    isinstance(n, ast.Attribute) and (n.attr in _NAME_DEVICE_ATTRS or n.attr in _MODEL_REBUILD_ATTRS
+                                                      or n.attr.startswith("__pydantic"))
+                    for n in ast.walk(mod)):
+                altered = True
+                break
+        _PARTNER_ALTERED[partner] = altered
+    return _PARTNER_ALTERED[partner]
+
+
+_DOMAIN_DATA: dict[tuple[Path, str], bool] = {}  # (도메인 모듈 파일, 이름) → 자료 클래스(_check_acl 이 부를 때마다 비운다)
+
+
+def _domain_data_class(path: Path, module: str, name: str) -> bool:
+    """`domain_layer` 에서 온 이름이 자료 클래스인가 — 그 모듈 파일의 최상위 클래스이고, 같은 모듈 바탕을 끝까지 따라가
+    metaclass 가 없고 다른 모듈 바탕은 enum 바탕(`Enum` · `StrEnum` · `IntEnum` · `Flag` · `IntFlag`)과 `str` · `int` ·
+    `object` 뿐일 때만. ABC · Protocol · Generic · 그 밖의 다른 모듈 바탕은 직접이든 간접이든 자료가 아니다(못 찾아도 아니다)."""
+    parts: tuple[str, ...] = path.resolve().parts
+    if "application" not in parts:
+        return False
+    i: int = len(parts) - 1 - parts[::-1].index("application")
+    base: Path = Path(*parts[:i]).joinpath(*module.split("."))
+    module_file: Path = base.with_suffix(".py") if base.with_suffix(".py").is_file() else base / "__init__.py"
+    key: tuple[Path, str] = (module_file, name)
+    if key not in _DOMAIN_DATA:
+        ok: bool = False
+        try:
+            mod: ast.Module = ast.parse(module_file.read_text(encoding="utf-8"))
+            classes: dict[str, ast.ClassDef] = {st.name: st for st in mod.body if isinstance(st, ast.ClassDef)}
+            enum_bases: set[str] = {a.asname or a.name for st in mod.body if isinstance(st, ast.ImportFrom)
+                                    and st.level == 0 and st.module == "enum" for a in st.names
+                                    if a.name in ("Enum", "StrEnum", "IntEnum", "Flag", "IntFlag")}
+
+            def plain(cname: str, seen: set[str]) -> bool:
+                if cname in seen or cname not in classes:
+                    return False
+                seen.add(cname)
+                cls: ast.ClassDef = classes[cname]
+                if any(k.arg == "metaclass" for k in cls.keywords):
+                    return False
+                for b in cls.bases:
+                    if isinstance(b, ast.Name) and b.id in classes:
+                        if not plain(b.id, seen):
+                            return False
+                    elif not (isinstance(b, ast.Name) and (b.id in enum_bases or b.id in ("str", "int", "object"))):
+                        return False  # ABC · Protocol · Generic · 다른 모듈 바탕(보수)
+                return True
+
+            ok = plain(name, set())
+        except (OSError, SyntaxError, UnicodeDecodeError, ValueError, RecursionError):
+            ok = False
+        _DOMAIN_DATA[key] = ok
+    return _DOMAIN_DATA[key]
+
+
+def _partner_root(path: Path) -> Path | None:
+    """이 파일이 든 짝 ACL 폴더 `…/anticorruption_layer/<partner>/`."""
+    parts: tuple[str, ...] = path.parts
+    if "anticorruption_layer" not in parts:
+        return None
+    i: int = len(parts) - 1 - parts[::-1].index("anticorruption_layer")
+    return Path(*parts[: i + 2]) if i + 1 < len(parts) else None
+
+
+class _BcImports:
+    """꼴 C 판정 재료 — 한 BC 의 프로덕션 파일(BC 바로 아래 `test/` · SKIP_DIRS 뺌)이 import 마디로 들이는 모듈 · 이름. 처음 물을 때
+    한 번 읽는다(`_check_acl` 이 BC 마다 하나 짓는다). 못 읽거나 못 파싱하는 파일이 하나라도 있으면 «모른다» 다."""
+
+    def __init__(self, bc: Path) -> None:
+        self.bc: Path = bc
+        self._built: bool = False
+        self._unknown: bool = False
+        self._whole: list[tuple[str, ...]] = []  # 통째로 들인 모듈 · 꾸러미 마디(`import` · `from 꾸러미 import 아래 모듈` · 별 import)
+        self._named: set[tuple[tuple[str, ...], str]] = set()  # (모듈 마디, 이름) — `from 모듈 import 이름`
+
+    def _parts(self, path: Path) -> tuple[str, ...]:
+        """BC 를 담은 폴더의 부모 기준 모듈 마디 — `…/application/billing/x/y.py` → ("application", "billing", "x", "y")."""
+        parts: list[str] = list(path.relative_to(self.bc.parent.parent).parts)
+        parts[-1] = parts[-1].removesuffix(".py")
+        if parts[-1] == "__init__":
+            parts.pop()
+        return tuple(parts)
+
+    def _absolute(self, dotted: str) -> tuple[str, ...] | None:
+        """절대 import 의 모듈 마디 — BC 를 담은 폴더 이름(`application`)부터. 그 이름이 없으면 이 저장소 BC 밖이다."""
+        names: tuple[str, ...] = tuple(dotted.split("."))
+        top: str = self.bc.parent.name
+        return names[names.index(top):] if top in names else None
+
+    def _build(self) -> None:
+        self._built = True
+        for f in sorted(self.bc.rglob("*.py")):
+            rp: tuple[str, ...] = f.relative_to(self.bc).parts
+            if set(rp) & SKIP_DIRS or rp[0] == "test":
+                continue
+            try:
+                mod: ast.Module = ast.parse(f.read_text(encoding="utf-8"))
+            except (OSError, SyntaxError, UnicodeDecodeError, ValueError):
+                self._unknown = True  # 못 읽는 파일 — 무엇을 import 하는지 모른다
+                return
+            here: tuple[str, ...] = self._parts(f)
+            package: tuple[str, ...] = here if f.name == "__init__.py" else here[:-1]
+            for n in ast.walk(mod):
+                if isinstance(n, ast.Import):
+                    for a in n.names:
+                        target: tuple[str, ...] | None = self._absolute(a.name)
+                        if target is not None:  # `import a.b` 는 꼭대기 `a` 를 묶어 그 아래 모두에 닿는다
+                            self._whole.append(target if a.asname else target[:1])
+                elif isinstance(n, ast.ImportFrom):
+                    if n.level == 0:
+                        target = self._absolute(n.module or "")
+                    elif n.level - 1 <= len(package):
+                        target = package[:len(package) - (n.level - 1)] + (tuple(n.module.split(".")) if n.module else ())
+                    else:
+                        target = None
+                    if target is None:
+                        continue
+                    for a in n.names:
+                        if a.name == "*":
+                            self._whole.append(target)
+                        else:
+                            self._named.add((target, a.name))
+                            self._whole.append(target + (a.name,))  # 아래 모듈 · 꾸러미를 이름으로 들임
+
+    def private(self, path: Path, name: str) -> bool:
+        """그 BC 프로덕션 파일 어디서도 그 모듈의 그 이름을 import 하지 않고(짝 폴더 파일 · 다시 내보내기 포함) 그 모듈이나 그 위
+        꾸러미를 통째로 · 별 import 로 들이지 않나(같은 모듈의 다른 이름 import 는 세지 않는다). 모르면 아니다."""
+        if not self._built:
+            self._build()
+        if self._unknown:
+            return False
+        module: tuple[str, ...] = self._parts(path)
+        return (module, name) not in self._named and not any(module[:len(w)] == w for w in self._whole)
+
+
+def _window_import(module: str, name: str) -> bool:
+    """`from <module> import <name>` 이 창구(`open_host_service` — 계약 `contract` 아래는 빼고) 쪽인가."""
+    parts: list[str] = f"{module}.{name}".split(".")
+    return "open_host_service" in parts and "contract" not in parts
+
+
+def _contract_import(module: str) -> bool:
+    """상대 창구 계약(`open_host_service/…/contract/…`) 모듈인가."""
+    parts: list[str] = module.split(".")
+    return "open_host_service" in parts and "contract" in parts
+
+
+class _PartnerWires:
+    """짝 ACL 폴더 안의 «선언만 있는 wire 모듈» 판정 — 모듈마다 한 번 잰다."""
+
+    def __init__(self, partner: Path) -> None:
+        self.partner: Path = partner.resolve()
+        self.cache: dict[Path, bool] = {}
+
+    def _inside(self, p: Path | None) -> bool:
+        return p is not None and p.resolve().is_relative_to(self.partner)
+
+    def resolve(self, here: Path, node: ast.ImportFrom) -> tuple[Path | None, dict[str, Path | None]]:
+        """상대 import 의 (대상 모듈 파일, {이름 → 하위 모듈 파일}) — 짝 폴더 밖이면 (None, {})."""
+        base: Path = here.parent
+        for _ in range(node.level - 1):
+            base = base.parent
+        target: Path = base.joinpath(*node.module.split(".")) if node.module else base
+        module_file: Path | None = (target / "__init__.py") if target.is_dir() else target.with_suffix(".py")
+        subs: dict[str, Path | None] = {}
+        for a in node.names:
+            candidates: list[Path] = [target / f"{a.name}.py", target / a.name / "__init__.py"]
+            subs[a.asname or a.name] = next((c for c in candidates if c.is_file()), None)
+        if not self._inside(target if target.exists() else target.with_suffix(".py")):
+            return None, {}
+        if module_file is not None and not (module_file.is_file() and self._inside(module_file)):
+            module_file = None
+        subs = {k: v for k, v in subs.items() if v is None or self._inside(v)}
+        return module_file, subs
+
+    def module_ok(self, f: Path, seen: set[Path] | None = None) -> bool:
+        """선언만 있는 wire 모듈인가 — 상대 import 로 닿는 짝 폴더 모듈도 같은 조건을 지나야 한다."""
+        f = f.resolve()
+        if f in self.cache:
+            return self.cache[f]
+        seen = set() if seen is None else seen
+        if f in seen:
+            return True
+        seen.add(f)
+        ok: bool = self._module_ok(f, seen)
+        self.cache[f] = ok
+        return ok
+
+    def _module_ok(self, f: Path, seen: set[Path]) -> bool:
+        """짝 폴더 안 · 이름 장치 0 · import 는 표준 몇 · pydantic · 계약 · 같은 조건 짝 폴더 모듈뿐 · 최상위는 import ·
+        wire 클래스 · 글자 · 부르기(람다) 없는 대입 · `type` 별칭뿐."""
+        if not f.is_relative_to(self.partner) or len(seen) > 30:
+            return False
+        try:
+            mod: ast.Module = ast.parse(f.read_text(encoding="utf-8"))
+        except (OSError, SyntaxError, UnicodeDecodeError):
+            return False
+        if _uses_name_device(mod):
+            return False
+        binds: dict[str, int] = _bind_counts(mod)
+        typing_of: dict[str, str] = _typing_imports(mod, binds)
+        leaf: set[str] = {n for n in _PLAIN_TYPE_BUILTINS if n not in binds}  # 다시 묶인 내장 이름은 맨 타입이 아니다
+        # 이 모듈 클래스(앞 참조 포함) — 모두 아래 클래스 조건을 지나야 모듈이 선다.
+        leaf |= {st.name for st in mod.body if isinstance(st, ast.ClassDef) and binds.get(st.name) == 1}
+        for st in mod.body:
+            if isinstance(st, ast.ImportFrom) and st.level == 0 and st.module:
+                for a in st.names:
+                    name: str = a.asname or a.name
+                    if binds.get(name) == 1 and (_contract_import(st.module)
+                                                 or a.name in _STD_DATA.get(st.module, frozenset())):
+                        leaf.add(name)
+            elif isinstance(st, ast.ImportFrom):  # 상대 import 이름 — 아래에서 그 모듈도 module_ok 로 거른다
+                leaf |= {a.asname or a.name for a in st.names if binds.get(a.asname or a.name) == 1}
+        bases: set[str] = {"str", "int"}
+        for stmt in mod.body:
+            if isinstance(stmt, ast.Import):
+                if any(a.name.split(".")[0] not in _WIRE_IMPORT_TOPS for a in stmt.names):
+                    return False
+            elif isinstance(stmt, ast.ImportFrom):
+                if stmt.level == 0:
+                    top: str = (stmt.module or "").split(".")[0]
+                    if not (top in _WIRE_IMPORT_TOPS or _contract_import(stmt.module or "")):
+                        return False
+                    if top == "pydantic":
+                        bases |= {a.asname or a.name for a in stmt.names if a.name in _PYDANTIC_MODEL_BASES}
+                    if top == "enum":
+                        bases |= {a.asname or a.name for a in stmt.names if a.name in _WIRE_ENUM_BASES}
+                else:
+                    module_file, subs = self.resolve(f, stmt)
+                    if module_file is None and not any(subs.values()):
+                        return False
+                    for alias in stmt.names:
+                        target_file: Path | None = subs.get(alias.asname or alias.name) or module_file
+                        if target_file is None or not self.module_ok(target_file, seen):
+                            return False
+                        bases.add(alias.asname or alias.name)
+            elif isinstance(stmt, ast.ClassDef):
+                if not _wire_class(stmt, bases, leaf, typing_of):
+                    return False
+                bases.add(stmt.name)
+            elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant):
+                continue
+            elif isinstance(stmt, (ast.Assign, ast.AnnAssign)) or type(stmt).__name__ == "TypeAlias":
+                value: ast.expr | None = getattr(stmt, "value", None)
+                if value is not None and any(isinstance(x, (ast.Call, ast.Lambda)) for x in ast.walk(value)):
+                    return False
+            else:
+                return False
+        return True
+
+
+def _literal_call(node: ast.AST, names: frozenset[str]) -> bool:
+    """`ConfigDict(...)` · `Field(...)` 처럼 글자 값만 받는 짓기 부르기인가."""
+    return (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in names
+            and all(isinstance(a, ast.Constant) for a in node.args)
+            and all(isinstance(k.value, ast.Constant) for k in node.keywords))
+
+
+def _wire_class(cls: ast.ClassDef, bases: set[str], leaf: set[str], typing_of: dict[str, str]) -> bool:
+    """선언만 있는 wire 클래스인가 — 데코레이터 0 · 바탕은 `bases`(pydantic 모델 · enum · 다른 wire)뿐 · 몸통은 칸 · 설정 ·
+    글자 · `pass` 뿐(메서드 · 검증기 0) · 칸 주석은 `_plain_field_annotation` 꼴 · 칸 값은 글자 · 글자만 받는 `Field(...)` ·
+    `ConfigDict(...)`."""
+    if cls.decorator_list or not cls.bases:
+        return False
+    if not all(isinstance(b, ast.Name) and b.id in bases for b in cls.bases):
+        return False
+    if not all(isinstance(k.value, ast.Constant) for k in cls.keywords):
+        return False
+    for item in cls.body:
+        if isinstance(item, ast.Expr) and isinstance(item.value, ast.Constant):
+            continue
+        if isinstance(item, ast.Pass):
+            continue
+        if isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
+            if not _plain_field_annotation(item.annotation, leaf, typing_of):
+                return False  # Annotated 검증기 · default_factory · 같은 파일 자료 클래스 · 모듈 별칭 칸 타입
+            if item.value is None or isinstance(item.value, ast.Constant) or _literal_call(
+                    item.value, frozenset({"ConfigDict", "Field"})):
+                continue
+            return False
+        if isinstance(item, ast.Assign) and all(isinstance(t, ast.Name) for t in item.targets):
+            if isinstance(item.value, ast.Constant) or _literal_call(item.value, frozenset({"ConfigDict"})):
+                continue
+            return False
+        return False
+    return True
+
+
+def _enclosing_functions(mod: ast.Module) -> dict[int, ast.FunctionDef | ast.AsyncFunctionDef]:
+    """try(id) → 그 try 를 둘러싼 가장 안쪽 함수 — 받은 글 검증 허용 목록이 그 함수의 매개변수를 본다."""
+    out: dict[int, ast.FunctionDef | ast.AsyncFunctionDef] = {}
+
+    def visit(node: ast.AST, fn: ast.FunctionDef | ast.AsyncFunctionDef | None) -> None:
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, ast.Try) and fn is not None:
+                out[id(child)] = fn
+            inner: ast.FunctionDef | ast.AsyncFunctionDef | None = (
+                child if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) else fn)
+            visit(child, inner)
+
+    visit(mod, None)
+    return out
+
+
 class _WindowTry:
     """기저를 안 잡는 try 에서 상대 창구 코드가 돌 수 있나(#473) — 모르면 돈다고 본다.
 
@@ -965,10 +1496,43 @@ class _WindowTry:
       ③ self · cls 의 속성 · 같은 파일 함수 이름의 속성 · 같은 파일에서 값을 담는 속성을 읽지 않고
       ④ 넘긴 값을 읽거나 넘긴 함수를 부르는 내장에 바깥 아닌 맨 이름을 넘기지 않을 때뿐이다.
     알려진 바깥 함수는 넘겨받은 맨 이름(지역 · 매개변수)과 그 칸을 자료로 쓴다고 본다 — 이 판정의 한계다.
+
+    받은 글 검증(2026-11-14 F4-167): 몸통의 `model_validate_json` 부르기는 받는 쪽이 아래 셋 가운데 하나일 때만 그 부르기와
+    받는 쪽 마디를 «안 돈다» 로 본다. 인자와 몸통의 다른 마디는 위 판정 그대로다(검증 말고 같은 파일 함수를 함께 부르면 붉다).
+      A 선언만 있는 wire 클래스 — 같은 파일 클래스, 또는 짝 ACL 폴더 안 상대 import(그 import 말고 묶기 0). 바탕은 같은 파일
+        wire 면 pydantic 모델 · 다른 wire, 상대 wire 모듈이면 거기에 enum 도. 데코레이터 · 메서드 · 검증기 0 · 클래스 키워드는 글자만,
+        몸통은 칸 · 글자 · 글자만 받는 `Field(...)` · `ConfigDict(...)` 뿐, 칸 주석은 맨 타입 · 계약 · 표준 값 이름 · 같은 조건
+        wire · 표준 그릇뿐(`Annotated` · 부르기 · 람다 · 속성 · 글자 주석 0 — 같은 파일 enum 은 칸 타입이 아니다). 상대 wire
+        모듈은 최상위가 import · 클래스 · 글자 · 부르기 없는 대입뿐이고, import 는 표준 몇 · pydantic · 계약 · 같은 조건을 지나는
+        짝 폴더 모듈뿐이다.
+      B 같은 파일 모델 짓기 함수의 부르기 `F(인자…)` — 인자는 글자이거나 둘러싼 함수의 «값 자료» 매개변수(자료 타입 주석 ·
+        기본값 0 · 다시 안 묶음 · 주석에 `type` · pydantic 이름이 별칭 안까지 없음)뿐. F 는 `_model_factory` 꼴이고, `create_model`
+        의 칸 정의(칸 키워드 값 · `**` · 예약 칸)는 짓기 함수 몸통에 글자로 적은 타입 식과 파일 안에서 고쳐지지 않는 모듈 상수 표의
+        첨자 꺼냄으로만 짓는다(`_factory_fields_ok` · `_plain_reads` · `_unaltered` — `__config__` 상수도 그 자리 말고는 첨자 ·
+        `in` 으로만 읽고 고쳐지지 않아야 한다). 짓기 함수 매개변수는
+        키 고르기 · 칸 이름으로만 — dict · tuple · list · str 매개변수가 칸 정의로 흘러가면 받지 않는다(다른 짓기 함수만 부르고 그
+        자리가 같은 꼴로 넘길 때만 실어 나르기로 받는다).
+      C `_` 로 시작하는 함수의 `type[T]`(T 의 바운드 = pydantic 모델) · `type[<wire>]` 매개변수 — 기본값 0 · 다시 안 묶음 · 그
+        함수 이름이 값으로 새지 않고 파일 안 부르는 자리마다 그 칸에 wire 를 넘김. 그리고 같은 BC 프로덕션 파일(`test/` 뺌 — 짝
+        폴더 파일 · 다시 내보내기 포함) 어디서도 그 이름을 import 하지 않고 그 모듈(그 위 꾸러미 포함)을 통째로 · 별 import 로
+        들이지 않을 때만(같은 모듈의 다른 이름 import 는 세지 않는다 · 못 읽는 파일이 있으면 받지 않는다 · `_BcImports`). 다른 BC ·
+        같은 BC 응용 층의 import 는 #186 · #185 가 따로 막는다(다른 BC driven 층은 #12).
+    파일이 이름 · 값을 실행 때 바꾸는 장치(globals · locals · vars · setattr · importlib · exec · `builtins` 의 그 이름 · `__dict__` ·
+    `__globals__` · `__self__` · `__builtins__` · `sys.modules`(별칭 포함) · 별 import …)를 쓰거나, 짝 ACL 폴더의 어느 파일이 그 장치 ·
+    pydantic 의 칸 바꾸기(`model_fields` · `model_rebuild` · `__pydantic_*`)를 쓰거나 메서드 첫 매개변수 `self` · `cls` 의 칸 밖의
+    속성을 바꾸거나 짝 폴더 클래스의 보통 메서드를 클래스에서 꺼내면(파일을 건너도 · 못 읽는 파일 포함) 허용 목록 전체를 쓰지 않는다. 묶기는 대입 · 지움 · 매개변수 · def · class · import ·
+    `except … as` · `match` 갈래 이름 · 타입 매개변수를 센다.
+    남는 한계: `TypeAdapter(<TypedDict · wire>)` 모듈 상수의 `validate_json` 은 받는 쪽 허용 목록 밖이다(붉음 그대로 — 다음 판 후보).
+    꼴 C 는 같은 BC 다른 파일의 동적 import(importlib · `__import__` · `sys.modules` 꺼냄)를 보지 않고, 꼴 B 의 표 · 설정 상수는 그릇
+    글자에 담아 다른 이름으로 옮겨 고치는 길(깊이 1 이상 — `t = (_T["a"],)`)을 보지 않는다. `getattr(…, "<장치 이름>")` 꼴의 장치
+    꺼냄도 보지 않는다. 꼴 C 는 `application/` 밖(framework 등) 파일의 import 를 보지 않는다 — 그 import 는
+    check-business-vocabulary #46(«framework 가 application/ 쪽을 import 한다»)이 따로 막는다.
     """
 
-    def __init__(self, mod: ast.Module, base_names: set[str]) -> None:
+    def __init__(self, mod: ast.Module, base_names: set[str], path: Path | None = None,
+                 bc_imports: _BcImports | None = None) -> None:
         self.base_names: set[str] = base_names
+        self._bc_imports: _BcImports | None = bc_imports
         self.defs: set[str] = set()
         self.holders: set[str] = set()  # 파일 안에서 값을 담는 속성 이름(`x.a = …` · 클래스 몸통 `a = …`) — 창구를 담았을 수 있다
         self.inside: set[str] = set()
@@ -1011,13 +1575,689 @@ class _WindowTry:
                     not isinstance(x, ast.Lambda) and (not isinstance(x, ast.Name) or x.id in self.known)
                     for x in ast.walk(stmt.value)):
                 self.known.add(target.id)
+        self._setup_validation(mod, path, bound)
 
-    def may_run_window(self, node: ast.Try) -> bool:
+    def _setup_validation(self, mod: ast.Module, path: Path | None, bound: dict[str, int]) -> None:
+        """받은 글 검증 허용 목록의 재료 — wire · 자료 이름 · 자료 별칭 · 모델 짓기 함수 · `type[T]` 매개변수."""
+        self.wires: set[str] = set()
+        self.data_names: set[str] = set()
+        self.data_alias: set[str] = set()
+        self.alias_values: dict[str, ast.expr] = {}
+        self.factories: set[str] = set()
+        self.model_factories: set[str] = set()
+        self.factory_constants: set[str] = set()  # 짓기 함수만 읽을 수 있는 모듈 상수(알려진 바깥 · wire 로만 지음)
+        self.typed_params: dict[str, set[str]] = {}
+        self.pydantic: dict[str, str] = {}  # pydantic 에서 import 한 이름 → 원 이름
+        self._module: ast.Module = mod
+        self._path: Path | None = path
+        self._functions: dict[str, ast.FunctionDef] = {}
+        self._makers: set[str] = set()  # create_model 을 (짓기 함수를 거쳐) 부르는 짓기 함수 — 칸 정의를 보기 전
+        self._call_sites: dict[str, list[tuple[ast.Call, str | None]]] = {}  # 함수 → (부르기, 그 부르기가 든 최상위 함수)
+        self._leaked: set[str] = set()  # 맨 부르기 말고 값으로 쓰인 최상위 함수 이름
+        self._parents: dict[int, ast.AST] = {}
+        self._constant_values: dict[str, ast.expr] = {}
+        self._type_leaves: set[str] = set()
+        self._fields_memo: dict[str, bool] = {}
+        self._returns_memo: dict[tuple[str, str], tuple[bool, frozenset[tuple[str, str, str]]]] = {}
+        self._local_memo: dict[tuple[str, str], tuple[bool, frozenset[tuple[str, str, str]]]] = {}
+        self._carrier_memo: dict[tuple[str, str], bool] = {}
+        self._table_memo: dict[tuple[str, str], bool] = {}
+        self._busy: set[tuple[str, ...]] = set()
+        partner: Path | None = _partner_root(path) if path is not None else None
+        self._partner: Path | None = partner
+        self.allowlist: bool = partner is not None and not _uses_name_device(mod) and not _partner_altered(partner)
+        if not self.allowlist:
+            return
+        binds: dict[str, int] = _bind_counts(mod)
+        self._binds: dict[str, int] = binds
+        for node in ast.walk(mod):
+            for child in ast.iter_child_nodes(node):
+                self._parents[id(child)] = node
+        contract_names: set[str] = set()
+        std_names: set[str] = set()
+        imported: dict[str, int] = {}
+        window: set[str] = set()
+        for n in ast.walk(mod):
+            if isinstance(n, ast.Import):
+                for a in n.names:
+                    name: str = a.asname or a.name.split(".")[0]
+                    imported[name] = imported.get(name, 0) + 1
+            elif isinstance(n, ast.ImportFrom):
+                for a in n.names:
+                    name = a.asname or a.name
+                    imported[name] = imported.get(name, 0) + 1
+                    if n.level == 0 and _window_import(n.module or "", a.name):
+                        window.add(name)
+        wire_modules: _PartnerWires = _PartnerWires(partner)
+        for stmt in mod.body:
+            if isinstance(stmt, ast.ImportFrom) and stmt.level == 0 and stmt.module:
+                for a in stmt.names:
+                    name = a.asname or a.name
+                    if imported.get(name) != 1:
+                        continue
+                    if stmt.module.split(".")[0] == "pydantic":
+                        self.pydantic[name] = a.name
+                    if binds.get(name) != 1:
+                        continue  # import 말고 다른 묶기가 있다(가림)
+                    not_data: bool = a.name.endswith(_NOT_DATA_SUFFIXES)
+                    if _contract_import(stmt.module) and not not_data:
+                        contract_names.add(name)
+                        self.data_names.add(name)
+                    if a.name in _STD_DATA.get(stmt.module, frozenset()):
+                        std_names.add(name)
+                        self.data_names.add(name)
+                    parts: list[str] = stmt.module.split(".")
+                    if (parts[0] == "application" and "domain_layer" in parts and not stmt.module.endswith("_repository")
+                            and not not_data and _domain_data_class(path, stmt.module, a.name)):
+                        self.data_names.add(name)
+            elif isinstance(stmt, ast.ImportFrom) and stmt.level > 0:
+                module_file, subs = wire_modules.resolve(path, stmt)
+                for a in stmt.names:
+                    name = a.asname or a.name
+                    target_file: Path | None = subs.get(name) or module_file
+                    if (imported.get(name) == 1 and binds.get(name) == 1
+                            and target_file is not None and wire_modules.module_ok(target_file)):
+                        self.wires.add(name)  # 짝 폴더 안 선언만 있는 wire — import 말고 다시 묶기 · 가림 0
+        pydantic_bases: set[str] = {k for k, v in self.pydantic.items()
+                                    if v in _PYDANTIC_MODEL_BASES and binds.get(k) == 1}
+        typing_of: dict[str, str] = _typing_imports(mod, binds)
+        self._typing_of: dict[str, str] = typing_of
+        base_leaf: set[str] = {n for n in _PLAIN_TYPE_BUILTINS if n not in binds} | contract_names | std_names
+        grew: bool = True
+        while grew:  # 같은 파일 wire 클래스 — 다른 같은 파일 wire 를 칸 타입으로 쓰는 것까지(고정점)
+            grew = False
+            for stmt in mod.body:
+                if isinstance(stmt, ast.ClassDef) and binds.get(stmt.name) == 1 and stmt.name not in self.wires:
+                    names_in: set[str] = {x.id for x in ast.walk(stmt) if isinstance(x, ast.Name)}
+                    if (_wire_class(stmt, pydantic_bases | self.wires, base_leaf | self.wires, typing_of)
+                            and not (names_in & window)):
+                        self.wires.add(stmt.name)
+                        grew = True
+        for stmt in mod.body:
+            target: ast.expr | None = None
+            if isinstance(stmt, ast.Assign) and len(stmt.targets) == 1:
+                target = stmt.targets[0]
+            elif isinstance(stmt, ast.AnnAssign) and stmt.value is not None:
+                target = stmt.target
+            if isinstance(target, ast.Name) and bound.get(target.id) == 1 and target.id not in imported and all(
+                    not isinstance(x, ast.Lambda) and (not isinstance(x, ast.Name) or x.id in self.known
+                                                       or x.id in self.wires or x.id in self.factory_constants)
+                    for x in ast.walk(stmt.value)) and not any(isinstance(x, ast.Call) and not (
+                        isinstance(x.func, ast.Name) and (x.func.id in self.pydantic or x.func.id in self.wires))
+                        for x in ast.walk(stmt.value)):
+                self.factory_constants.add(target.id)
+                self._constant_values[target.id] = stmt.value
+        for stmt in mod.body:  # 자료 타입 별칭 — `X: TypeAlias = …` · `type X = …`
+            alias: str | None = None
+            value: ast.expr | None = None
+            if (isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name)
+                    and isinstance(stmt.annotation, ast.Name) and stmt.annotation.id == "TypeAlias"
+                    and stmt.value is not None):
+                alias, value = stmt.target.id, stmt.value
+            elif type(stmt).__name__ == "TypeAlias" and isinstance(stmt.name, ast.Name):
+                alias, value = stmt.name.id, stmt.value
+            if alias is not None and binds.get(alias) == 1 and self._data_annotation(value, alias=True):
+                self.data_alias.add(alias)
+                self.alias_values[alias] = value
+        self.data_alias |= self.wires  # 상대 wire 모듈에서 온 별칭 이름(`_WireType`)도 자료 별칭이다
+        functions: dict[str, ast.FunctionDef] = {
+            fn.name: fn for fn in mod.body if isinstance(fn, ast.FunctionDef)
+            and binds.get(fn.name) == 1 and fn.name not in imported and not fn.decorator_list}
+        self._functions = functions
+        called: set[int] = set()
+        for top in mod.body:  # 부르는 자리마다 그 부르기가 든 최상위 함수(메서드 · 모듈 수준이면 None)
+            owner: str | None = top.name if isinstance(top, ast.FunctionDef) else None
+            for n in ast.walk(top):
+                if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in functions:
+                    self._call_sites.setdefault(n.func.id, []).append((n, owner))
+                    called.add(id(n.func))
+        self._leaked = {n.id for n in ast.walk(mod) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)
+                        and n.id in functions and id(n) not in called}
+        self._type_leaves = ({n for n in _PLAIN_TYPE_BUILTINS if n not in binds} | self.wires | self.data_names
+                             | self.data_alias)
+        creates: dict[str, bool] = {}
+        changed: bool = True
+        while changed:
+            changed = False
+            for name, fn in functions.items():
+                if name not in self.factories:
+                    ok, makes = self._model_factory(fn)
+                    if ok:
+                        self.factories.add(name)
+                        creates[name] = makes
+                        changed = True
+        reach: dict[str, set[str]] = {n: {c.func.id for c in ast.walk(functions[n]) if isinstance(c, ast.Call)
+                                          and isinstance(c.func, ast.Name) and c.func.id in self.factories}
+                                      for n in self.factories}
+        for n in self.factories:  # 자신이나 부르는 짓기 함수가 create_model 을 부르면 모델 짓기 함수다
+            todo: list[str] = [n]
+            seen: set[str] = set()
+            while todo:
+                m: str = todo.pop()
+                if m in seen:
+                    continue
+                seen.add(m)
+                todo += list(reach.get(m, ()))
+            if any(creates.get(m) for m in seen):
+                self._makers.add(n)
+        self.model_factories = {n for n in sorted(self._makers) if self._factory_fields_ok(n)}
+        dropped: bool = True
+        while dropped:  # 서로 부르는 모델 짓기 함수 — 받지 않은 짓기 함수를 부르는 짓기 함수도 받지 않는다
+            dropped = False
+            for name in sorted(self.model_factories):
+                if any(isinstance(c, ast.Call) and isinstance(c.func, ast.Name)
+                       and c.func.id in self._makers - self.model_factories for c in ast.walk(functions[name])):
+                    self.model_factories.discard(name)
+                    dropped = True
+        self._collect_typed_params(mod, functions)
+
+    def _carries_class(self, ann: ast.AST | None, seen: set[str] | None = None) -> bool:
+        """주석이 클래스를 실어 나를 수 있나 — `type` · pydantic 이름이 직접 또는 별칭 안(별칭의 별칭까지)에 있다."""
+        seen = set() if seen is None else seen
+        for x in ast.walk(ann) if ann is not None else ():
+            if isinstance(x, ast.Name):
+                if x.id == "type" or x.id in self.pydantic:
+                    return True
+                if x.id in self.data_alias and x.id not in self.wires and x.id not in seen:
+                    seen.add(x.id)
+                    if self._carries_class(self.alias_values.get(x.id), seen):
+                        return True
+        return False
+
+    def _data_annotation(self, ann: ast.AST | None, alias: bool = False) -> bool:
+        """«자료 타입» 주석인가 — 내장 값 · 그릇 · Literal · Optional · Union · Final · Annotated · ClassVar · 같은 BC 도메인
+        자료 클래스 · 계약 · 표준 값 이름 · wire · 자료 별칭뿐. 문자열 · Any · object · Callable · Iterator · Generator ·
+        Protocol · Sequence · Mapping 은 목록 밖이라 자료가 아니다. `alias`(별칭 값 안)에서는 `type[…]` · pydantic 모델도
+        받는다 — 그런 별칭은 «값 자료» 가 아니다(`_carries_class`)."""
+        if ann is None or (isinstance(ann, ast.Constant) and isinstance(ann.value, str)):
+            return False
+        if isinstance(ann, ast.Constant):
+            return ann.value is None or ann.value is Ellipsis
+        if isinstance(ann, ast.Name):
+            if ann.id in _DATA_BUILTINS or ann.id in self.data_names or ann.id in self.data_alias:
+                return ann.id != "type" or alias
+            if ann.id in self.wires:
+                return True
+            return alias and self.pydantic.get(ann.id) in _PYDANTIC_MODEL_BASES
+        if isinstance(ann, ast.BinOp) and isinstance(ann.op, ast.BitOr):
+            return self._data_annotation(ann.left, alias) and self._data_annotation(ann.right, alias)
+        if isinstance(ann, ast.Tuple):
+            return all(self._data_annotation(e, alias) for e in ann.elts)
+        if isinstance(ann, ast.Subscript) and isinstance(ann.value, ast.Name):
+            head: str = ann.value.id
+            if head == "Literal":
+                return True
+            if head == "type":
+                return self._data_annotation(ann.slice, alias=True)
+            if head in _BUILTIN_CONTAINERS or head in _DATA_TYPING:
+                return self._data_annotation(ann.slice, alias)
+        return False
+
+    def _model_factory(self, fn: ast.FunctionDef) -> tuple[bool, bool]:
+        """(같은 파일 모델 짓기 함수로 받나, `create_model` 을 부르나).
+
+        매개변수는 모두 자료 타입 주석 · 기본값은 글자 · `*args` · `**kwargs` 0 · 몸통에서 다시 묶지 않는다. 몸통에 중첩 정의 ·
+        람다 · 클래스 · yield · await · global · nonlocal · with 가 없고, 읽는 이름은 매개변수 · 지역 · 알려진 바깥 · wire ·
+        짓기 함수 · 자료 이름 · 자료 별칭 · pydantic 이름 · 짓기 함수용 모듈 상수 · `__name__` 뿐이다(창구 쪽 이름은 읽지도
+        않는다). 맨 이름 부르기는 `create_model` · `Field` · 내장 몇 · 짓기 함수 · wire · 자료 이름뿐이고, 속성 부르기의 뿌리는
+        매개변수 · 지역 · 자료 이름 · wire 뿐이다. `create_model` 에 넘기는 칸 정의는 `_factory_fields_ok` 가 따로 본다.
+        """
+        a: ast.arguments = fn.args
+        params: list[ast.arg] = [*a.posonlyargs, *a.args, *a.kwonlyargs]
+        if a.vararg or a.kwarg or not all(self._data_annotation(x.annotation) for x in params):
+            return False, False
+        if not all(isinstance(d, ast.Constant) for d in [*a.defaults, *(d for d in a.kw_defaults if d is not None)]):
+            return False, False
+        param_names: set[str] = {x.arg for x in params}
+        in_annotation: set[int] = set()
+        for n in ast.walk(fn):  # 주석은 이름 검사 밖이다(평가되지 않거나 def 때 한 번)
+            for ann in ([n.annotation] if isinstance(n, (ast.AnnAssign, ast.arg)) else []) + (
+                    [n.returns] if isinstance(n, ast.FunctionDef) else []):
+                if ann is not None:
+                    in_annotation |= {id(x) for x in ast.walk(ann)}
+        locals_: set[str] = set(_bind_counts(ast.Module(body=fn.body, type_ignores=[])))
+        if locals_ & param_names:
+            return False, False  # 매개변수를 다시 묶는다(`except … as` · `match` 갈래까지)
+        readable: set[str] = (param_names | locals_ | self.known | self.wires | self.factories | self.data_names
+                              | self.data_alias | set(self.pydantic) | self.factory_constants | {"__name__"})
+        makes: bool = False
+        for n in ast.walk(fn):
+            if n is not fn and isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef,
+                                              ast.Yield, ast.YieldFrom, ast.Await, ast.Global, ast.Nonlocal,
+                                              ast.With, ast.AsyncWith, ast.AsyncFor)):
+                return False, False
+            if id(n) in in_annotation:
+                continue
+            if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load):
+                if n.id not in readable or (n.id in self.inside and n.id not in self.factories | self.wires):
+                    return False, False
+            if isinstance(n, ast.Call):
+                func: ast.expr = n.func
+                if isinstance(func, ast.Name):
+                    if self.pydantic.get(func.id) == "create_model":
+                        makes = True
+                    elif not (func.id in _FACTORY_BUILTINS or self.pydantic.get(func.id) == "Field"
+                              or func.id in self.factories or func.id in self.wires or func.id in self.data_names):
+                        return False, False
+                elif isinstance(func, ast.Attribute):
+                    root: str | None = _root(func)
+                    if root is None or not (root in param_names or root in locals_ or root in self.data_names
+                                            or root in self.wires):
+                        return False, False
+                else:
+                    return False, False
+        return True, makes
+
+    # ── 꼴 B 의 칸 정의 — 글자 그대로의 타입 식 · 고쳐지지 않는 모듈 상수 표의 첨자 꺼냄에서만 ──────────────
+    # 칸 정의 자리(`create_model` 의 칸 키워드 값 · `**` · 그 안의 dict 값)는 짓기 함수 몸통에 글자로 적은 타입 식, 또는 파일 안에서
+    # 첨자 대입 · 메서드로 바뀌지 않는 모듈 상수 표의 첨자 꺼냄으로만 짓는다. 짓기 함수 매개변수는 키 고르기 · 칸 이름으로만 쓴다 —
+    # 매개변수가 칸 정의 자리에 닿으면 «그 함수를 부르는 자리가 모두 다른 짓기 함수 안이고 그 인자가 같은 꼴» 일 때만 받는다
+    # (`needs` 의 (함수, 매개변수, 꼴) — 부르는 자리마다 다시 본다).
+
+    def _factory_fields_ok(self, name: str) -> bool:
+        """모델 짓기 함수의 `create_model` 칸 정의 · 예약 칸이 모두 위 꼴이고, 부르는 다른 모델 짓기 함수도 그러한가."""
+        if name in self._fields_memo:
+            return self._fields_memo[name]
+        if ("factory", name) in self._busy:
+            return True  # 지금 재는 중 — 그 판정이 부르는 자리까지 모두 보고 정한다
+        self._busy.add(("factory", name))
+        fn: ast.FunctionDef = self._functions[name]
+        needs: set[tuple[str, str, str]] = set()
+        ok: bool = True
+        for n in ast.walk(fn):
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name):
+                if self.pydantic.get(n.func.id) == "create_model":
+                    ok = ok and self._create_model_ok(n, fn, needs)
+                elif n.func.id in self._makers and n.func.id != name:
+                    ok = ok and self._factory_fields_ok(n.func.id)
+        ok = ok and self._needs_met(needs)
+        self._busy.discard(("factory", name))
+        self._fields_memo[name] = ok
+        if not ok:  # «재는 중 = 받음» 으로 잰 중간 값을 버린다
+            self._returns_memo.clear()
+            self._local_memo.clear()
+        return ok
+
+    def _create_model_ok(self, call: ast.Call, fn: ast.FunctionDef, needs: set[tuple[str, str, str]]) -> bool:
+        """`create_model(<이름>, …)` — 이름 말고 자리 인자 0 · 예약 칸(`__…`)은 글자 · `__module__=__name__` ·
+        `__config__=<고쳐지지 않는 모듈 상수>` · `__base__=<wire>` 뿐 · 칸 키워드 값은 칸 하나 · `**` 는 칸 묶음."""
+        if len(call.args) > 1 or any(isinstance(a, ast.Starred) for a in call.args):
+            return False
+        for k in call.keywords:
+            if k.arg is None:
+                if not self._field_ok(k.value, _FIELD_DICT, fn, needs):
+                    return False
+            elif k.arg.startswith("__"):
+                v: ast.expr = k.value
+                if not (isinstance(v, ast.Constant)
+                        or (k.arg == "__module__" and isinstance(v, ast.Name) and v.id == "__name__")
+                        or (k.arg == "__config__" and isinstance(v, ast.Name) and v.id in self.factory_constants
+                            and self._plain_reads(v.id, config=True) and self._unaltered(v.id))
+                        or (k.arg == "__base__" and isinstance(v, ast.Name) and v.id in self.wires)):
+                    return False
+            elif not self._field_ok(k.value, _FIELD_SPEC, fn, needs):
+                return False
+        return True
+
+    def _field_ok(self, expr: ast.expr | None, kind: str, fn: ast.FunctionDef | None,
+                  needs: set[tuple[str, str, str]]) -> bool:
+        """칸 정의 자리의 식이 그 꼴(칸 타입 · 칸 하나 · 칸 묶음)로 글자 그대로의 타입 식 · 고쳐지지 않는 모듈 상수 표의 첨자
+        꺼냄에서만 오나. `fn` 이 None 이면 모듈 수준(상수 표의 값)이다."""
+        if expr is None:
+            return False
+        if isinstance(expr, ast.Constant):
+            return kind == _FIELD_TYPE and expr.value is None  # 글자 타입 이름은 모듈 이름공간에서 eval 된다
+        if isinstance(expr, ast.Name):
+            return self._name_field_ok(expr.id, kind, fn, needs)
+        if isinstance(expr, ast.IfExp):
+            return self._field_ok(expr.body, kind, fn, needs) and self._field_ok(expr.orelse, kind, fn, needs)
+        if (isinstance(expr, ast.Call) and isinstance(expr.func, ast.Name) and expr.func.id in self.factories
+                and fn is not None and expr.func.id not in self._scope_names(fn)):
+            if any(isinstance(a, ast.Starred) for a in expr.args) or any(k.arg is None for k in expr.keywords):
+                return False
+            if kind in (_FIELD_TYPE, _FIELD_SPEC) and expr.func.id in self._makers:
+                return self._factory_fields_ok(expr.func.id)  # 지은 모델은 칸 타입이 된다
+            return self._returns_ok(expr.func.id, kind, needs)
+        if (isinstance(expr, ast.Subscript) and isinstance(expr.value, ast.Name)
+                and (fn is None or expr.value.id not in self._scope_names(fn)) and self._frozen_table(expr.value.id)):
+            return self._table_ok(expr.value.id, kind)
+        if kind == _FIELD_TYPE:
+            return self._type_expr_ok(expr, fn, needs)
+        if kind == _FIELD_SPEC:
+            if isinstance(expr, ast.Tuple) and len(expr.elts) == 2:
+                return self._field_ok(expr.elts[0], _FIELD_TYPE, fn, needs) and self._default_ok(expr.elts[1])
+            return self._type_expr_ok(expr, fn, needs)
+        if isinstance(expr, ast.Dict):
+            return all(self._field_ok(v, _FIELD_DICT if k is None else _FIELD_SPEC, fn, needs)
+                       for k, v in zip(expr.keys, expr.values))
+        if isinstance(expr, ast.DictComp):
+            return self._field_ok(expr.value, _FIELD_SPEC, fn, needs)
+        return False
+
+    def _scope_names(self, fn: ast.FunctionDef) -> set[str]:
+        """짓기 함수의 매개변수 · 지역 이름."""
+        a: ast.arguments = fn.args
+        return {x.arg for x in [*a.posonlyargs, *a.args, *a.kwonlyargs]} | set(
+            _bind_counts(ast.Module(body=fn.body, type_ignores=[])))
+
+    def _name_field_ok(self, name: str, kind: str, fn: ast.FunctionDef | None, needs: set[tuple[str, str, str]]) -> bool:
+        """칸 정의 자리의 이름 — 매개변수면 needs 에 적고, 지역이면 그 지역 칸 묶음을 보고, 모듈 이름이면 맨 타입 · wire ·
+        자료 이름 · 자료 별칭만(칸 묶음 자리의 모듈 이름은 받지 않는다 — 표를 통째로 펼치지 않는다)."""
+        if fn is not None:
+            a: ast.arguments = fn.args
+            if name in {x.arg for x in [*a.posonlyargs, *a.args, *a.kwonlyargs]}:
+                needs.add((fn.name, name, kind))
+                return True
+            if name in self._scope_names(fn):
+                return self._local_ok(fn, name, kind, needs)
+        return kind != _FIELD_DICT and name in self._type_leaves
+
+    def _type_expr_ok(self, expr: ast.expr, fn: ast.FunctionDef | None, needs: set[tuple[str, str, str]]) -> bool:
+        """글자 그대로의 타입 식 — 맨 타입 · wire · 자료 이름 · 자료 별칭 · `None`, 그것들을 내장 그릇 · `typing` 의 Optional ·
+        Union · 옛 그릇 이름 · Literal(글자만) · `|` 로 묶은 것(`Annotated` · 부르기 · 속성 · 글자 타입 0)."""
+        if isinstance(expr, ast.Constant):
+            return expr.value is None
+        if isinstance(expr, ast.Name):
+            return self._name_field_ok(expr.id, _FIELD_TYPE, fn, needs)
+        if isinstance(expr, ast.BinOp) and isinstance(expr.op, ast.BitOr):
+            return self._type_expr_ok(expr.left, fn, needs) and self._type_expr_ok(expr.right, fn, needs)
+        if isinstance(expr, ast.Subscript) and isinstance(expr.value, ast.Name):
+            head: str = expr.value.id
+            if fn is not None and head in self._scope_names(fn):
+                return False
+            origin: str | None = self._typing_of.get(head)
+            elts: list[ast.expr] = expr.slice.elts if isinstance(expr.slice, ast.Tuple) else [expr.slice]
+            if origin == "Literal":
+                return all(isinstance(e, ast.Constant) and (e.value is None or isinstance(e.value, (str, int, bool)))
+                           for e in elts)
+            if (head in _BUILTIN_CONTAINERS and head not in self._binds) or origin in ("Optional", "Union", *_OLD_CONTAINERS):
+                return all((isinstance(e, ast.Constant) and e.value is Ellipsis) or self._type_expr_ok(e, fn, needs)
+                           for e in elts)
+        return False
+
+    def _default_ok(self, expr: ast.expr) -> bool:
+        """`(타입, 기본값)` 의 기본값 — 글자, 또는 자리 인자가 글자이고 꼬리표(alias · title · description …) 밖 키워드가 글자인
+        pydantic `Field(...)`(`default_factory` 같은 이름 값은 받지 않는다)."""
+        if isinstance(expr, ast.Constant):
+            return True
+        return (isinstance(expr, ast.Call) and isinstance(expr.func, ast.Name) and self.pydantic.get(expr.func.id) == "Field"
+                and all(isinstance(a, ast.Constant) for a in expr.args)
+                and all(k.arg is not None and (k.arg in _FIELD_LABELS or isinstance(k.value, ast.Constant))
+                        for k in expr.keywords))
+
+    def _returns_ok(self, name: str, kind: str, needs: set[tuple[str, str, str]]) -> bool:
+        """짓기 함수의 돌려주는 값이 모두 그 꼴인가(돌려주기 없는 끝 = None)."""
+        key: tuple[str, str] = (name, kind)
+        if key not in self._returns_memo:
+            if ("returns", name, kind) in self._busy:
+                return False
+            self._busy.add(("returns", name, kind))
+            fn: ast.FunctionDef = self._functions[name]
+            sub: set[tuple[str, str, str]] = set()
+            ok: bool = all(self._field_ok(r.value if r.value is not None else ast.Constant(value=None), kind, fn, sub)
+                           for r in ast.walk(fn) if isinstance(r, ast.Return))
+            self._busy.discard(("returns", name, kind))
+            self._returns_memo[key] = (ok, frozenset(sub))
+        ok, sub = self._returns_memo[key]
+        needs |= sub
+        return ok
+
+    def _local_ok(self, fn: ast.FunctionDef, name: str, kind: str, needs: set[tuple[str, str, str]]) -> bool:
+        """짓기 함수 지역 칸 묶음 — 묶기는 단순 대입 · 주석 대입뿐이고 그 값이 칸 묶음, 첨자 대입 `x[k] = v` 의 v 는 칸 하나,
+        읽기는 칸 정의 자리 · `{**x}` · 첨자 대입 바탕 · 다른 짓기 함수의 실어 나르기 칸뿐(메서드 · 덧셈 대입 · 지움 0).
+        칸 타입 · 칸 하나 꼴의 지역은 받지 않는다."""
+        if kind != _FIELD_DICT:
+            return False
+        key: tuple[str, str] = (fn.name, name)
+        if key not in self._local_memo:
+            if ("local", fn.name, name) in self._busy:
+                return False
+            self._busy.add(("local", fn.name, name))
+            body: ast.Module = ast.Module(body=fn.body, type_ignores=[])
+            sub: set[tuple[str, str, str]] = set()
+            simple: int = 0
+            ok: bool = True
+            for n in ast.walk(body):
+                if not ok:
+                    break
+                parent: ast.AST | None = self._parents.get(id(n))
+                if isinstance(n, ast.Name) and n.id == name:
+                    if isinstance(n.ctx, ast.Load):
+                        ok = self._carried_load_ok(n, allow_store=True)
+                    elif ((isinstance(parent, ast.Assign) and len(parent.targets) == 1 and parent.targets[0] is n)
+                          or (isinstance(parent, ast.AnnAssign) and parent.target is n and parent.value is not None)):
+                        simple += 1
+                        ok = self._field_ok(parent.value, _FIELD_DICT, fn, sub)
+                    else:
+                        ok = False
+                elif (isinstance(n, ast.Subscript) and not isinstance(n.ctx, ast.Load) and isinstance(n.value, ast.Name)
+                      and n.value.id == name):
+                    ok = (isinstance(parent, ast.Assign) and len(parent.targets) == 1 and parent.targets[0] is n
+                          and self._field_ok(parent.value, _FIELD_SPEC, fn, sub))
+            ok = ok and simple >= 1 and simple == _bind_counts(body).get(name, 0)
+            self._busy.discard(("local", fn.name, name))
+            self._local_memo[key] = (ok, frozenset(sub))
+        ok, sub = self._local_memo[key]
+        needs |= sub
+        return ok
+
+    def _carried_load_ok(self, node: ast.Name, allow_store: bool) -> bool:
+        """칸 묶음을 실어 나르는 이름의 읽기 자리 — `create_model(**x)` · `{**x}` · 다른 짓기 함수의 실어 나르기 칸 ·
+        (지역이면) 첨자 대입 바탕 `x[k] = v`."""
+        parent: ast.AST | None = self._parents.get(id(node))
+        if isinstance(parent, ast.keyword):
+            call: ast.AST | None = self._parents.get(id(parent))
+            if not isinstance(call, ast.Call) or not isinstance(call.func, ast.Name):
+                return False
+            if parent.arg is None:
+                return self.pydantic.get(call.func.id) == "create_model"
+            return call.func.id in self.factories and self._pure_carrier(call.func.id, parent.arg)
+        if isinstance(parent, ast.Dict):
+            return any(k is None and v is node for k, v in zip(parent.keys, parent.values))
+        if isinstance(parent, ast.Call) and isinstance(parent.func, ast.Name) and parent.func.id in self.factories:
+            positional: list[ast.arg] = [*self._functions[parent.func.id].args.posonlyargs,
+                                         *self._functions[parent.func.id].args.args]
+            index: int = next((i for i, a in enumerate(parent.args) if a is node), -1)
+            return 0 <= index < len(positional) and self._pure_carrier(parent.func.id, positional[index].arg)
+        return (allow_store and isinstance(parent, ast.Subscript) and parent.value is node
+                and isinstance(parent.ctx, ast.Store))
+
+    def _pure_carrier(self, name: str, param: str) -> bool:
+        """그 짓기 함수가 그 매개변수를 칸 묶음으로 실어 나르기만 하나(읽기가 모두 `_carried_load_ok` 자리 · 첨자 대입 0) —
+        넘겨받은 지역 칸 묶음을 거기서 바꾸지 못하게."""
+        key: tuple[str, str] = (name, param)
+        if key not in self._carrier_memo:
+            if ("carrier", name, param) in self._busy:
+                return False
+            self._busy.add(("carrier", name, param))
+            fn: ast.FunctionDef = self._functions[name]
+            self._carrier_memo[key] = all(
+                self._carried_load_ok(n, allow_store=False) for n in ast.walk(ast.Module(body=fn.body, type_ignores=[]))
+                if isinstance(n, ast.Name) and n.id == param)
+            self._busy.discard(("carrier", name, param))
+        return self._carrier_memo[key]
+
+    def _frozen_table(self, name: str) -> bool:
+        """모듈 상수 표(dict · tuple · list 글자)이고 파일 안에서 첨자 꺼냄 · `in` 견줌 말고 다른 읽기가 없고(`_plain_reads`)
+        고쳐지지 않나(`_unaltered`)."""
+        if name not in self.factory_constants or not isinstance(self._constant_values.get(name),
+                                                                 (ast.Dict, ast.Tuple, ast.List)):
+            return False
+        return self._plain_reads(name) and self._unaltered(name)
+
+    def _plain_reads(self, name: str, config: bool = False) -> bool:
+        """모듈 상수의 맨 이름 읽기가 첨자 꺼냄 · `in` 견줌뿐인가(`config` 면 `create_model(…, __config__=이름)` 자리도) — 그릇
+        글자 · 함수 기본값 · 다른 이름에 담아 옮겨 고치는 길(깊이 0)을 막는다."""
+        makers: set[str] = {k for k, v in self.pydantic.items() if v == "create_model"}
+        for n in ast.walk(self._module):
+            if isinstance(n, ast.Name) and n.id == name and isinstance(n.ctx, ast.Load):
+                parent: ast.AST | None = self._parents.get(id(n))
+                if (isinstance(parent, ast.Subscript) and parent.value is n) or (
+                        isinstance(parent, ast.Compare) and any(isinstance(op, (ast.In, ast.NotIn)) for op in parent.ops)):
+                    continue
+                call: ast.AST | None = self._parents.get(id(parent)) if isinstance(parent, ast.keyword) else None
+                if (config and isinstance(parent, ast.keyword) and parent.arg == "__config__" and isinstance(call, ast.Call)
+                        and isinstance(call.func, ast.Name) and call.func.id in makers):
+                    continue
+                return False
+        return True
+
+    def _unaltered(self, name: str) -> bool:
+        """모듈 상수(표 · `__config__` 설정)가 파일 안에서 고쳐지지 않나 — 그 이름의 읽기마다 이름에서 시작하는 첨자 사슬이 모두
+        읽기이고(`_T["a"]["x"] = …` · `del _T["a"]` 0), 사슬 끝(`IfExp` · `and` · `or` 는 건너 본다)이 속성(메서드 · 칸) · 대입 ·
+        덧셈 대입 · `:=` · 반복 · with · 펼치기 · 돌려주기 · 람다 · 부르는 함수 자리로 가지 않고, 부르기 인자면 그 부르기가
+        `create_model` · 짓기 함수일 때만. 그릇 글자에 담아 다른 이름으로 옮겨 고치는 길은 보지 않는다(한계)."""
+        makers: set[str] = self.factories | {k for k, v in self.pydantic.items() if v == "create_model"}
+        for n in ast.walk(self._module):
+            if not (isinstance(n, ast.Name) and n.id == name and isinstance(n.ctx, ast.Load)):
+                continue
+            top: ast.AST = n
+            parent: ast.AST | None = self._parents.get(id(n))
+            while True:
+                if isinstance(parent, ast.Subscript) and parent.value is top:
+                    if not isinstance(parent.ctx, ast.Load):
+                        return False  # 사슬 첨자 대입 · 지움
+                elif not (isinstance(parent, ast.BoolOp) or (isinstance(parent, ast.IfExp) and parent.test is not top)):
+                    break
+                top, parent = parent, self._parents.get(id(parent))
+            if isinstance(parent, (ast.Attribute, ast.Assign, ast.AnnAssign, ast.AugAssign, ast.NamedExpr, ast.For,
+                                   ast.AsyncFor, ast.comprehension, ast.withitem, ast.Starred, ast.Return, ast.Yield,
+                                   ast.YieldFrom, ast.Await, ast.Lambda)):
+                return False
+            call: ast.AST | None = self._parents.get(id(parent)) if isinstance(parent, ast.keyword) else parent
+            if isinstance(call, ast.Call) and (call.func is top or not (isinstance(call.func, ast.Name)
+                                                                        and call.func.id in makers)):
+                return False
+        return True
+
+    def _table_ok(self, name: str, kind: str) -> bool:
+        """모듈 상수 표의 값이 모두 그 꼴인가(키는 묻지 않는다)."""
+        key: tuple[str, str] = (name, kind)
+        if key not in self._table_memo:
+            table: ast.expr = self._constant_values[name]
+            values: list[ast.expr] = table.values if isinstance(table, ast.Dict) else list(table.elts)
+            self._table_memo[key] = bool(values) and all(self._field_ok(v, kind, None, set()) for v in values)
+        return self._table_memo[key]
+
+    def _needs_met(self, needs: set[tuple[str, str, str]]) -> bool:
+        """칸 정의 자리에 닿은 매개변수마다 — 그 함수가 값으로 새지 않고, 부르는 자리가 하나 이상이며 모두 다른 짓기 함수 안이고,
+        그 칸 인자가 같은 꼴인가(그 인자가 다시 매개변수에 닿으면 이어서 본다)."""
+        done: set[tuple[str, str, str]] = set()
+        todo: list[tuple[str, str, str]] = list(needs)
+        while todo:
+            item: tuple[str, str, str] = todo.pop()
+            if item in done:
+                continue
+            done.add(item)
+            name, param, kind = item
+            sites: list[tuple[ast.Call, str | None]] = self._call_sites.get(name, [])
+            if name in self._leaked or not sites:
+                return False
+            for call, owner in sites:
+                if owner is None or owner not in self.factories:
+                    return False
+                if any(isinstance(a, ast.Starred) for a in call.args) or any(k.arg is None for k in call.keywords):
+                    return False
+                positional: list[ast.arg] = [*self._functions[name].args.posonlyargs, *self._functions[name].args.args]
+                index: int = next((i for i, a in enumerate(positional) if a.arg == param), -1)
+                arg: ast.expr | None = (call.args[index] if 0 <= index < len(call.args)
+                                        else next((k.value for k in call.keywords if k.arg == param), None))
+                sub: set[tuple[str, str, str]] = set()
+                if arg is None or not self._field_ok(arg, kind, self._functions[owner], sub):
+                    return False
+                todo.extend(sub - done)
+        return True
+
+    def _collect_typed_params(self, mod: ast.Module, functions: dict[str, ast.FunctionDef]) -> None:
+        """꼴 C — `_` 로 시작하는 함수의 `type[T]`(T 의 바운드 = pydantic 모델) · `type[<wire>]` 매개변수를 함수마다 모은다(파일
+        안 부르는 자리 기준 — 다른 파일의 import 는 받을 때 `_BcImports.private` 가 본다)."""
+        old_bounds: dict[str, str] = {}
+        for stmt in mod.body:  # 옛 꼴 `T = TypeVar("T", bound=…)`
+            if (isinstance(stmt, ast.Assign) and len(stmt.targets) == 1 and isinstance(stmt.targets[0], ast.Name)
+                    and isinstance(stmt.value, ast.Call) and isinstance(stmt.value.func, ast.Name)
+                    and stmt.value.func.id == "TypeVar"):
+                for k in stmt.value.keywords:
+                    if k.arg == "bound" and isinstance(k.value, ast.Name):
+                        old_bounds[stmt.targets[0].id] = k.value.id
+        calls: dict[str, list[ast.Call]] = {name: [c for c, _ in self._call_sites.get(name, [])] for name in functions}
+        for name, fn in functions.items():
+            if not name.startswith("_") or name in self._leaked or not calls[name]:
+                continue
+            bounds: dict[str, str] = dict(old_bounds)
+            for tp in getattr(fn, "type_params", None) or []:
+                bound_name: ast.expr | None = getattr(tp, "bound", None)
+                if isinstance(bound_name, ast.Name):
+                    bounds[tp.name] = bound_name.id
+            a: ast.arguments = fn.args
+            params: list[ast.arg] = [*a.posonlyargs, *a.args]
+            rebound: dict[str, int] = _bind_counts(ast.Module(body=fn.body, type_ignores=[]))
+            for i, param in enumerate(params):
+                ann: ast.expr | None = param.annotation
+                if not (isinstance(ann, ast.Subscript) and isinstance(ann.value, ast.Name) and ann.value.id == "type"
+                        and isinstance(ann.slice, ast.Name)):
+                    continue
+                inner: str = ann.slice.id
+                if not (self.pydantic.get(bounds.get(inner, "")) in _PYDANTIC_MODEL_BASES or inner in self.wires):
+                    continue
+                if i >= len(params) - len(a.defaults) or param.arg in rebound:
+                    continue  # 기본값이 있거나 몸통에서 다시 묶는다
+                if all(self._passes_wire(c, i, param.arg) for c in calls[name]):
+                    self.typed_params.setdefault(name, set()).add(param.arg)
+
+    def _passes_wire(self, call: ast.Call, index: int, param: str) -> bool:
+        """이 부르기가 그 칸에 wire 클래스 이름을 넘기나(`*` · `**` 펼치기 0)."""
+        if any(isinstance(x, ast.Starred) for x in call.args) or any(k.arg is None for k in call.keywords):
+            return False
+        got: ast.expr | None = call.args[index] if index < len(call.args) else next(
+            (k.value for k in call.keywords if k.arg == param), None)
+        return isinstance(got, ast.Name) and got.id in self.wires
+
+    def _validation_nodes(self, node: ast.Try, encl: ast.FunctionDef | ast.AsyncFunctionDef | None) -> set[int]:
+        """try 몸통에서 «안 돈다» 로 받는 마디(id) — `model_validate_json` 부르기와 그 받는 쪽이 A · B · C 일 때만."""
+        out: set[int] = set()
+        if not self.allowlist:
+            return out
+        data_params: set[str] = set()
+        typed: set[str] = set()
+        if encl is not None:
+            a: ast.arguments = encl.args
+            positional: list[ast.arg] = [*a.posonlyargs, *a.args]
+            defaulted: set[str] = {x.arg for x in positional[len(positional) - len(a.defaults):]} if a.defaults else set()
+            defaulted |= {x.arg for x, d in zip(a.kwonlyargs, a.kw_defaults) if d is not None}
+            rebound: dict[str, int] = _bind_counts(ast.Module(body=encl.body, type_ignores=[]))
+            data_params = {x.arg for x in [*positional, *a.kwonlyargs] if self._data_annotation(x.annotation)
+                           and not self._carries_class(x.annotation) and x.arg not in defaulted and x.arg not in rebound}
+            if (self._functions.get(encl.name) is encl and encl.name in self.typed_params  # 같은 이름의 메서드가 아니라 그 최상위 함수
+                    and self._bc_imports is not None and self._path is not None
+                    and self._bc_imports.private(self._path, encl.name)):
+                typed = self.typed_params[encl.name]
+        for n in ast.walk(ast.Module(body=node.body, type_ignores=[])):
+            if not (isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr in _TEXT_VALIDATORS):
+                continue
+            receiver: ast.expr = n.func.value
+            if isinstance(receiver, ast.Name) and (receiver.id in typed or receiver.id in self.wires):
+                out |= {id(n), id(receiver)}
+            elif (isinstance(receiver, ast.Call) and isinstance(receiver.func, ast.Name)
+                  and receiver.func.id in self.model_factories
+                  and all((isinstance(x, ast.Name) and x.id in data_params) or isinstance(x, ast.Constant)
+                          for x in [*receiver.args, *(k.value for k in receiver.keywords)])
+                  and all(k.arg is not None for k in receiver.keywords)):
+                out |= {id(n), id(receiver), id(receiver.func)}
+        return out
+
+    def may_run_window(self, node: ast.Try, encl: ast.FunctionDef | ast.AsyncFunctionDef | None = None) -> bool:
+        approved: set[int] = self._validation_nodes(node, encl)
         stack: list[ast.AST] = list(node.body)
         while stack:
             n: ast.AST = stack.pop()
             if isinstance(n, ast.Try) and _covers_base(n, self.base_names) and not _reraises(n):
                 stack.extend([*n.handlers, *n.orelse, *n.finalbody])  # 몸통의 창구 예외는 안쪽 try 에서 끝난다
+                continue
+            if id(n) in approved:  # 받은 글 검증 부르기 · 그 받는 쪽 — 인자와 받는 쪽 안만 더 본다
+                if isinstance(n, ast.Call):
+                    stack.extend([*n.args, *(k.value for k in n.keywords)])
+                    if isinstance(n.func, ast.Attribute):
+                        stack.append(n.func.value)
                 continue
             if self._runs(n):
                 return True
@@ -1040,6 +2280,9 @@ class _WindowTry:
 
 
 def _check_acl(acl: Path, bc: Path, bc_rel: Path, out: Findings) -> set[str]:
+    for cache in (_PARTNER_ALTERED, _DOMAIN_DATA):
+        cache.clear()  # 받은 글 검증 판정 재료는 부를 때의 디스크로만 잰다
+    bc_imports: _BcImports = _BcImports(bc)  # 꼴 C 가 처음 물을 때 이 BC 프로덕션 파일을 한 번 읽는다
     rel0 = bc_rel / acl.relative_to(bc)
     dirs, files = _entries(acl)
     for f in files:
@@ -1083,11 +2326,12 @@ def _check_acl(acl: Path, bc: Path, bc_rel: Path, out: Findings) -> set[str]:
                 out.add("#473", rel, "ACL 어댑터는 상대 창구의 «기저 예외»를 반드시 잡는다 — 기저(`*_published_error`) import 가 없다")
                 continue
             reach: _WindowTry | None = None  # 기저를 안 잡는 try 가 있을 때만 짓는다
+            enclosing: dict[int, ast.FunctionDef | ast.AsyncFunctionDef] = _enclosing_functions(mod)
             for node, owner in _tries(mod, ""):
                 if _covers_base(node, base_names):
                     continue
-                reach = reach or _WindowTry(mod, base_names)
-                if reach.may_run_window(node):
+                reach = reach or _WindowTry(mod, base_names, f, bc_imports)
+                if reach.may_run_window(node, enclosing.get(id(node))):
                     out.add("#473", f"{rel}:{node.lineno}",
                             "try 의 마지막 except 에 상대 창구의 기저 예외가 있어야 한다(#167 짝 — 둘이 닫혀야 약속이 선다)"
                             f" — 상대 창구가 돌 수 있는 try · `{owner or '모듈'}`")

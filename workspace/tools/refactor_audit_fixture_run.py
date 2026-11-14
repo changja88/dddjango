@@ -3,7 +3,7 @@
 
 리팩토링 대상 프로젝트의 테스트가 아니라 플러그인 도구의 시험이다. 합성 git 저장소(BC `demo`)에
 리뷰어 표·판정 표·명세를 써 넣고 `plan`·`outline`·`check`·`sections`·`check-verdict`·`resolution`·`changes`·
-`deps`·`residual`·`--self-test` 의 exit 와 요약을 대조한다. 결속·판정 사례의 코퍼스는 작업 트리
+`deps`·`run-state`·`residual`·`--self-test` 의 exit 와 요약을 대조한다. 결속·판정 사례의 코퍼스는 작업 트리
 설치본(`dddjango/`·`codex-dddjango/`)과 그 규칙 팩이고, 인용·R-ID 는 실제 규범이다(Override 번호는
 도구의 역할 표 상수에서 끌어 쓴다 — 번호 글자를 박지 않는다).
 exit 0 = 전건 기대 일치 · 1 = 불일치.
@@ -23,6 +23,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT: Path = Path(__file__).resolve().parents[2]
@@ -3595,7 +3596,9 @@ def _feat(name: str, bc: str, end: str = "") -> "dict[str, str]":
 
 def deps_tree_cases(fails: "list[str]", td: Path) -> None:
     """설계 3판 §A1(F4-110 · F4-108 ㉡) — 자기 변경 사본은 그 사본 · MH 에 없는 폴더는 «이 트리가 만든 폴더»면 그 사본 · 아니면 뺌 ·
-    그 밖은 주 작업 트리 HEAD(MH) 판 기록으로 판정(표식만 — 착륙 근거 없음) · 덧씌우기 · (종류, 폴더)로 묶기. 사례 S* · M* · W1 · R1 · H1 ·
+    그 밖은 주 작업 트리 HEAD(MH) 판 기록으로 판정(표식 — 표식 없는 실행 줄은 판 A S1 착륙으로 끝: S5 · M1 · G4B · 주 작업 트리가
+    trunk 가지가 아니면 착륙 판정 꺼짐: H1) · 덧씌우기 ·
+    (종류, 폴더)로 묶기. 사례 S* · M* · W1 · R1 · H1 ·
     E1 은 재검토 합성(`review-deps/v2/mk2.sh` · `sc/`)과 같은 꼴."""
     L = TreeLanes
     # ── 센다 ──
@@ -3630,14 +3633,15 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
     z = s4.tree("wt-z", "lane-z", "lane-y")
     L.own(z)
     expect(fails, "RD-L5 S4 쌓인 레인 → Y 실행 한 번 겹침", L.dp(z, "s4"), 2, "레인 겹침 1 ", "(사본 2 · 트리 3)")
-    s5 = TreeLanes(td, "ts5")                               # S5 착륙했지만 MH 판에 표식 없음(지금과 같음 — 센다)
+    s5 = TreeLanes(td, "ts5")                               # S5 착륙했지만 MH 판에 표식 없음(판 A S1 — 착륙이면 끝)
     y = s5.tree("wt-y", "lane-y")
     L.commit(y, "Y 실행 · 코드(끝 표식 빠짐)", {**_feat("20261024-0200-feature-demo", "demo"),
                                                "application/demo/domain_layer/m.py": "X: int = 2\n"})
     _git(s5.main, "merge", "-q", "--no-ff", "lane-y", "-m", "Merge lane-y")
     x = s5.tree("wt-x", "lane-x")
     L.own(x)
-    expect(fails, "RD-L6 S5 착륙했지만 MH 판에 끝 표식 없는 실행 → 센다(한 번)", L.dp(x, "s5"), 2, "레인 겹침 1 ")
+    expect(fails, "RD-L6 S5 착륙했지만 MH 판에 끝 표식 없는 실행 → 끝(착륙 · 표식 없음 — 판 A S1)", L.dp(x, "s5"), 0,
+           "착륙 · 표식 없음(끝으로 셈): .dddjango/20261024-0200-feature-demo", "레인 겹침 없음")
     for tag, after in (("m1", "code"), ("m1b", ""), ("m1c", "dirty")):   # M1 · M1b · M1c 중간 착륙 뒤 같은 레인에서 계속
         m = TreeLanes(td, f"t{tag}")
         y = m.tree("wt-y", "lane-y")
@@ -3650,8 +3654,9 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
             L.write(y, {"application/demo/domain_layer/s3.py": "Y3: int = 4\n"})
         x = m.tree("wt-x", "lane-x")
         L.own(x)
-        expect(fails, f"RD-L7 {tag.upper()} 중간 착륙 뒤 계속하는 실행(표식 없음) → 센다(착륙 근거로 빼지 않는다)", L.dp(x, tag), 2,
-               ".dddjango/20261024-0200-feature-demo", "레인 겹침 1 ")
+        expect(fails, f"RD-L7 {tag.upper()} 중간 착륙 뒤 그 레인이 실행 폴더를 안 고침(표식 없음) → 끝으로 셈(받아들인 한계 N4 — "
+               f"바뀌면 알림 · 폴더에 쓰면 활성은 S1-mid)", L.dp(x, tag), 0,
+               "착륙 · 표식 없음(끝으로 셈): .dddjango/20261024-0200-feature-demo")
     w1 = TreeLanes(td, "tw1")                               # W1 web 중간 착륙
     w = w1.tree("wt-w", "lane-w")
     L.commit(w, "W 기록 + S1", {
@@ -3697,7 +3702,8 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
     L.own(x)
     _git(h1.main, "checkout", "-q", "-b", "lane-a")
     _git(h1.main, "merge", "-q", "--no-ff", "lane-b", "-m", "lane-a 가 lane-b 를 받음")
-    expect(fails, "RD-L10 H1 주 작업 트리 HEAD 가 main 이 아님 → 센다(한 번)", L.dp(x, "h1"), 2, "레인 겹침 1 ")
+    expect(fails, "RD-L10 H1 주 작업 트리 HEAD 가 main 이 아님(lane-a 가 lane-b 를 머지) → 착륙 판정 꺼짐(trunk 아님) · 센다(한 번)",
+           L.dp(x, "h1"), 2, "레인 겹침 1 ", "착륙 판정 꺼짐 — 주 작업 트리 HEAD 가 trunk(main)가 아님(lane-a)")
     e1 = TreeLanes(td, "te1")                               # E1 다른 트리 빈 web 폴더(보류) · 다른 트리 미커밋 실행 폴더(센다)
     y = e1.tree("wt-y", "lane-y")
     (y / ".dddjango-web" / "20261024-0000-empty").mkdir(parents=True)
@@ -3789,18 +3795,26 @@ def deps_tree_cases(fails: "list[str]", td: Path) -> None:
     L.own(x)
     expect(fails, "RD-L19 MH 에서 끝난 폴더를 레인이 새 요청으로 다시 씀(커밋 · 미착륙) → 미착륙 경로 = 자기 변경 → 그 사본 → 센다",
            L.dp(x, "g1"), 2, ".dddjango/20261001-0100-feature-demo — BC demo", "레인 겹침 1 ")
-    for tag, landed in (("g4", False), ("g4b", True)):       # 덧씌우기 — 자기 변경 사본 · MH 판 판정 사본 모두
+    zeta_scope: str = ".dddjango/20261024-0200-feature-zeta/refactor-scope.md"
+    for tag, landed in (("g4", ""), ("g4b", "merge"), ("g4c", "main-edit")):   # 덧씌우기 — 자기 변경 사본 · MH 판 판정 사본 모두
         g = TreeLanes(td, f"t{tag}")
         y = g.tree("wt-y", "lane-y")
         L.commit(y, "Y G0 기록(zeta)", _feat("20261024-0200-feature-zeta", "zeta"))
         if landed:
             _git(g.main, "merge", "-q", "--no-ff", "lane-y", "-m", "Merge lane-y — 첫 착륙")
+        if landed == "main-edit":                           # 착륙 뒤 main 이 실행 기록 파일을 직접 고침 — ① 아님(MH 판 판정 · 활성)
+            L.commit(g.main, "main: 기록 메모", {zeta_scope: _feat("20261024-0200-feature-zeta", "zeta")[zeta_scope] + "- 메모\n"})
         L.commit(y, "Y 코드가 demo 를 고침", {"application/demo/domain_layer/m.py": "X: int = 3\n"})
         x = g.tree("wt-x", "lane-x")
         L.own(x)
-        expect(fails, f"RD-L20{'b' if landed else ''} {tag.upper()} 레인 실행(zeta · {'중간 착륙 — MH 판 판정' if landed else '미착륙 — 자기 변경'})에 "
+        if landed == "merge":
+            expect(fails, "RD-L20b G4B 레인 실행(zeta · 중간 착륙 뒤 코드만 커밋) → 끝으로 셈(받아들인 한계 N4 — 바뀌면 알림)",
+                   L.dp(x, tag), 0, "착륙 · 표식 없음(끝으로 셈): .dddjango/20261024-0200-feature-zeta")
+            continue
+        expect(fails, f"RD-L20{'c' if landed else ''} {tag.upper()} 레인 실행(zeta · "
+               f"{'착륙 뒤 main 이 기록 고침 — MH 판 판정' if landed else '미착륙 — 자기 변경'})에 "
                f"그 트리 `T ^MH ^THIS` 경로(demo 코드)를 덧씌움 → 경로 겹침", L.dp(x, tag), 2,
-               "경로 application/demo/domain_layer/m.py", "레인 겹침 1 ")
+               "경로 application/demo/domain_layer/m.py", "레인 겹침 1 ", *(["(main 판)"] if landed else []))
     g6 = TreeLanes(td, "tg6")                               # 표식 밖 기록(design-spec.md)만 미커밋 — 자기 변경
     y = g6.tree("wt-y", "lane-y")
     L.commit(y, "Y G0 기록(zeta)", _feat("20261024-0200-feature-zeta", "zeta"))
@@ -5654,6 +5668,910 @@ def deps_doc_kwarg_cases(fails: "list[str]", td: Path) -> None:
                f"파일 {'있음(옛 판)' if want else '없음'}", (0 if ok else 9, str(faces)), 0)
 
 
+# ── S1 착륙(리팩토링 판 A 설계 §1) — 표식 없는 dddjango 실행의 «착륙» 끝 판정 · `run-state` ────────────────────────────
+# git 장난감은 검토 하네스(`s1_toys` · `s1_recheck` · `s1_recheck2`)의 사례를 옮긴 것이다. 기대는 설계 §1 «재측정 표» · «재확인 사례» ·
+# «셋째 확인 사례» 의 기대 칸이고, b · b2 · e · k · mid 는 받아들인 한계라 지금 값을 고정한다(바뀌면 알린다). 옛 판 = LAND_OLD_SHA.
+
+LAND_OLD_SHA: str = "097b80b918b4f8caa6b434e508bf4a5533662d81"   # dddjango 2.37.0 배포 커밋 — 옛 판 대조는 HEAD 가 아니라 이 판에
+LAND_ENV: "dict[str, str]" = {**os.environ, "GIT_OPTIONAL_LOCKS": "0", "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.invalid",
+                              "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.invalid",
+                              "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"}   # 사용자 git 설정을 읽지 않는다
+LAND_OWN: str = "20261114-0000-own"                        # deps 를 도는 이 실행 폴더(R1 · `--at new`)
+LAND_FEAT: str = ".dddjango/20261101-1000-feat"
+LAND_ALPHA: str = ".dddjango/20261021-1254-refactor-alpha"
+LAND_BETA: str = ".dddjango/20261021-1254-refactor-beta"
+LAND_G1: str = ("\n## G1 변경 결정 20261021-1400\n\n- 후보 0123456789ab\n\n"
+                "G1 변경판 확정 20261021-1500 · digest 0123456789ab · 후보 0123456789ab\n")
+LAND_ENDED: str = "착륙 · 표식 없음(끝으로 셈): "
+LAND_NOT_MERGE: str = "① 실행 기록 파일을 마지막으로 바꾼 main 첫 부모 커밋"
+LAND_NOT_SETTLED: str = "아니오 — 표식 없음 · «착륙 + 앵커 + G1 확정(뒤 정지 없음)» 아님"
+
+
+def _land_scope(g0: str, bc: str = "alpha", anchor: str = "", stamp: str = "", title: bool = False,
+                refactor: bool = False) -> str:
+    """실행 기록 `refactor-scope.md` — 실행 줄(G0 승인 · [모드 리팩토링] · [build_anchor] · [G2 승인]) + 대상 BC 경로 필터."""
+    line: str = f"실행 · G0 승인 {g0}"
+    line += f" · 모드 리팩토링 · audit {g0}" if refactor else ""
+    line += f" · build_anchor {anchor}" if anchor else ""
+    line += f" · G2 승인 {stamp}" if stamp else ""
+    return f"{'# 리팩터링 스코프 — toy' + chr(10) * 2 if title else ''}{line}\n\n- 대상 BC 경로 필터: application/{bc}/\n"
+
+
+def _land_old_tool(td: Path) -> Path:
+    """옛 판(2.37.0) refactor_audit.py 사본 — 도구는 표준 라이브러리만 써서 한 파일로 돈다."""
+    tool: Path = td / "land-old" / "refactor_audit.py"
+    if not tool.is_file():
+        tool.parent.mkdir(parents=True, exist_ok=True)
+        tool.write_text(_git(ROOT, "show", f"{LAND_OLD_SHA}:dddjango/scripts/refactor_audit.py"), encoding="utf-8")
+    return tool
+
+
+class LandToy:
+    """S1 git 장난감 — 주 작업 트리 `main`(BC alpha 가 beta 를 import) · 레인 작업 트리 · `.dddjango/*/deps/` 는 git 무시. `sub` 가
+    있으면 git 뿌리 아래 그 하위 폴더가 프로젝트다(기록 경로 · `deps` · `state` 의 트리는 모두 그 폴더 기준 — `proj(tree)`)."""
+
+    def __init__(self, td: Path, name: str, env: "dict[str, str] | None" = None, sub: str = "") -> None:
+        self.env: "dict[str, str]" = env or LAND_ENV
+        self.sub: str = sub
+        main: Path = td / f"s1-{name}" / "main"
+        main.mkdir(parents=True)
+        self.main: Path = main.resolve()                   # 도구가 내는 작업 트리 경로(`worktree list` · resolve)와 같은 꼴
+        self.seq: int = 0
+        self.git(self.main, "init", "-q", "-b", "main")
+        self.commit(self.main, "base", {f"{sub}{rel}": body for rel, body in {
+            "application/alpha/__init__.py": "", "application/alpha/domain_layer/__init__.py": "",
+            "application/alpha/domain_layer/a.py": "from application.beta.domain_layer.b import B\nX: int = 1\n",
+            "application/beta/__init__.py": "", "application/beta/domain_layer/__init__.py": "",
+            "application/beta/domain_layer/b.py": "class B:\n    pass\n", ".gitignore": ".dddjango/*/deps/\n"}.items()})
+
+    def proj(self, tree: Path) -> Path:
+        """그 작업 트리 안 프로젝트 폴더(하위 폴더 프로젝트면 그 폴더)."""
+        return tree / self.sub if self.sub else tree
+
+    def git(self, tree: Path, *args: str) -> str:
+        return subprocess.run(["git", *args], cwd=tree, env=self.env, capture_output=True, text=True, check=True).stdout
+
+    @staticmethod
+    def write(tree: Path, files: "dict[str, str]") -> None:
+        for rel, body in files.items():
+            (tree / rel).parent.mkdir(parents=True, exist_ok=True)
+            (tree / rel).write_text(body, encoding="utf-8")
+
+    def commit(self, tree: Path, msg: str, files: "dict[str, str] | None" = None) -> str:
+        self.write(tree, files or {})
+        self.git(tree, "add", "-A")
+        self.git(tree, "commit", "-q", "-m", msg)
+        return self.git(tree, "rev-parse", "HEAD").strip()
+
+    def lane(self, name: str, start: str = "main") -> Path:
+        tree: Path = self.main.parent / f"wt-{name}"
+        self.git(self.main, "worktree", "add", "-q", "-b", name, str(tree), start)
+        return tree.resolve()
+
+    def landed_lane(self, files: "dict[str, str]", keep: bool = False) -> Path:
+        """레인 l1 이 그 기록(프로젝트 상대 경로)을 커밋하고 main 이 `--no-ff` 로 착륙 — keep 이 아니면 그 작업 트리를 치운다."""
+        tree: Path = self.lane("l1")
+        self.commit(tree, "l1 run", {f"{self.sub}{rel}": body for rel, body in files.items()})
+        self.git(self.main, "merge", "-q", "--no-ff", "-m", "land l1", "l1")
+        if not keep:
+            self.git(self.main, "worktree", "remove", str(tree))
+        return tree
+
+    def deps(self, tree: Path, bc: str = "alpha", own: str = LAND_OWN, tool: Path = TOOL, at: str = "new") -> "tuple[int, str]":
+        """`deps <bc> --at <at>`(기본 new) — 출력 뒤에 deps.md 를 붙인다(«뺀 겹침 · 보류» 절도 대조한다)."""
+        self.seq += 1
+        out: Path = tree / ".dddjango" / own / "deps" / f"d{self.seq}"
+        proc = subprocess.run([sys.executable, str(tool), "--project", str(tree), "deps", bc, "--out", str(out), "--at", at],
+                              cwd=tree, env=self.env, capture_output=True, text=True)
+        md: str = (out / "deps.md").read_text(encoding="utf-8") if (out / "deps.md").is_file() else ""
+        return proc.returncode, proc.stdout + proc.stderr + md
+
+    def state(self, tree: Path, *folders: str, tool: Path = TOOL) -> "tuple[int, str]":
+        proc = subprocess.run([sys.executable, str(tool), "--project", str(tree), "run-state", *folders], cwd=tree, env=self.env,
+                              capture_output=True, text=True)
+        return proc.returncode, proc.stdout + proc.stderr
+
+
+def s1_main_cases(fails: "list[str]", td: Path) -> None:
+    """S1 주 작업 트리 사례(설계 §1 재측정 표 a · b · b2 · c · d1 · d0 · e · h · n · i5) — deps 와 같은 트리의 run-state(셋째 확인
+    matrix)를 함께 본다. 끝 = 표식 ∨ 착륙(① 실행 기록 파일의 MH 첫 부모 마지막 손질이 머지 · ② · ③ 폴더 전체 자기 변경 없음)."""
+    feat: "dict[str, str]" = {f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234")}
+    t = LandToy(td, "a")
+    t.landed_lane({f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor="0000001")})
+    expect(fails, "S1-a `--no-ff` 착륙 · 표식 없음 → 끝(착륙 줄 · deps.md «뺀 겹침 · 보류» · 요약 꼬리)", t.deps(t.main), 0,
+           f"  {LAND_ENDED}{LAND_FEAT} · 착륙 머지 ", f"- {LAND_ENDED}{LAND_FEAT} · 착륙 머지 ", "레인 겹침 없음",
+           "착륙 · 표식 없음 1(끝으로 셈)")
+    expect(fails, "S1-a 옛 판(2.37.0)은 같은 실행을 도는 실행으로 셈(겹침 · exit 2)", t.deps(t.main, tool=_land_old_tool(td)), 2,
+           f"겹침: 이 작업 트리 {LAND_FEAT} — BC alpha")
+    expect(fails, "S1-a run-state — 끝(착륙 <sha> · 표식 없음) · 요약 갈래", t.state(t.main, LAND_FEAT), 0,
+           f"실행 상태 {LAND_FEAT}: 끝(착륙 ", " · 표식 없음) — 그 착륙 머지를 근거로 끝난 실행",
+           "요약: run-state 폴더 1 · 표식 0 · 착륙 1 · 실행 줄 없음 0 · 미종료 0(쓰는 중 0)")
+
+    t = LandToy(td, "b")
+    l1: Path = t.lane("l1")
+    t.commit(t.main, "main moves", {"application/beta/domain_layer/c.py": "Y: int = 2\n"})
+    t.commit(l1, "l1 run", feat)
+    t.git(l1, "merge", "-q", "--no-edit", "main")
+    t.git(t.main, "merge", "-q", "--ff-only", "l1")
+    t.git(t.main, "worktree", "remove", str(l1))
+    expect(fails, "S1-b 승인 머지 뒤 빨리 감기 착륙 → 활성(받아들인 한계 I1 — 바뀌면 알림)", t.deps(t.main), 2,
+           f"겹침: 이 작업 트리 {LAND_FEAT} — BC alpha", "착륙 · 표식 없음 0(끝으로 셈)")
+    expect(fails, "S1-b run-state → 미종료(① 머지 아님)", t.state(t.main, LAND_FEAT), 2, LAND_NOT_MERGE, "이 머지가 아님")
+
+    t = LandToy(td, "b2")
+    l1 = t.lane("l1")
+    t.commit(l1, "l1 run", feat)
+    t.git(t.main, "merge", "-q", "--squash", "l1")
+    t.git(t.main, "commit", "-q", "-m", "land l1 (squash)")
+    t.git(t.main, "worktree", "remove", str(l1))
+    expect(fails, "S1-b2 squash 착륙 → 활성(받아들인 한계 I1)", t.deps(t.main), 2, f"겹침: 이 작업 트리 {LAND_FEAT}")
+    expect(fails, "S1-b2 run-state → 미종료(①)", t.state(t.main, LAND_FEAT), 2, LAND_NOT_MERGE)
+
+    t = LandToy(td, "c")
+    t.commit(t.main, "main-direct run", feat)
+    expect(fails, "S1-c main 에서 직접 도는 실행(커밋) → 활성", t.deps(t.main), 2, f"겹침: 이 작업 트리 {LAND_FEAT}")
+    expect(fails, "S1-c run-state → 미종료(①)", t.state(t.main, LAND_FEAT), 2, LAND_NOT_MERGE)
+
+    for committed in (True, False):
+        tag: str = "d1" if committed else "d0"
+        t = LandToy(td, tag)
+        t.landed_lane(feat)
+        scope_path: Path = t.main / LAND_FEAT / "refactor-scope.md"
+        t.write(t.main, {f"{LAND_FEAT}/refactor-scope.md": scope_path.read_text(encoding="utf-8")
+                         + "\n## 재개 G0 20261114-0900\n\n- 새 빚 없음 · 잇기(실행 선택 — 사용자 20261114-0858)\n",
+                         f"{LAND_FEAT}/design-spec.md": "# 명세 — 재개\n",
+                         "application/alpha/domain_layer/a.py": "from application.beta.domain_layer.b import B\nX: int = 3\n"})
+        if committed:
+            t.commit(t.main, "resume: 재개 G0 + 슬라이스 1 창 커밋(main 직접)")
+        expect(fails, f"S1-{tag} 착륙 폴더를 main 에서 «잇기»({'커밋' if committed else '미커밋'}) → 활성", t.deps(t.main), 2,
+               f"겹침: 이 작업 트리 {LAND_FEAT}")
+        expect(fails, f"S1-{tag} run-state → 미종료({'① 기록 파일을 main 이 고침' if committed else '② · ③ 주 작업 트리 디스크'})",
+               t.state(t.main, LAND_FEAT), 2,
+               LAND_NOT_MERGE if committed else f"② · ③ 작업 트리 {t.main} 가 이 폴더를 자기 변경으로 가짐")
+
+    t = LandToy(td, "e")
+    l1 = t.lane("l1")
+    main_run: str = ".dddjango/20261101-1000-main-run"
+    t.commit(t.main, "main-direct run (도는 중)", {f"{main_run}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234")})
+    t.commit(l1, "l1 run (G2 승인 표식 있음)", {".dddjango/20261102-1000-l1/refactor-scope.md":
+                                            _land_scope("20261102-1000", bc="beta", anchor="def5678", stamp="20261103-1000")})
+    t.git(l1, "merge", "-q", "--no-edit", "main")
+    t.git(t.main, "merge", "-q", "--ff-only", "l1")
+    t.git(t.main, "worktree", "remove", str(l1))
+    expect(fails, "S1-e main 직접 실행 + 빨리 감기 착륙 → 거짓 끝(받아들인 한계 I2 — 바뀌면 알림)", t.deps(t.main), 0,
+           f"{LAND_ENDED}{main_run}")
+    expect(fails, "S1-e run-state → 끝(착륙)(같은 한계)", t.state(t.main, main_run), 0, f"실행 상태 {main_run}: 끝(착륙 ")
+
+    t = LandToy(td, "h")
+    t.landed_lane({f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234", title=True)})
+    expect(fails, "S1-h 제목 + 빈 줄 뒤 실행 줄 · 착륙 → 끝", t.deps(t.main), 0, f"{LAND_ENDED}{LAND_FEAT}")
+    expect(fails, "S1-h run-state → 끝(착륙)", t.state(t.main, LAND_FEAT), 0, f"실행 상태 {LAND_FEAT}: 끝(착륙 ")
+
+    t = LandToy(td, "n")
+    t.landed_lane(feat)
+    scope_path = t.main / LAND_FEAT / "refactor-scope.md"
+    t.commit(t.main, "main: 메모 덧붙임", {f"{LAND_FEAT}/refactor-scope.md": scope_path.read_text(encoding="utf-8") + "\n- 운영자 메모\n"})
+    expect(fails, "S1-n 첫째 착륙 뒤 main 이 같은 기록 파일의 실행 줄 밖을 직접 고침 → 활성(보수)", t.deps(t.main), 2,
+           f"겹침: 이 작업 트리 {LAND_FEAT}")
+    t.commit(t.main, "main: 실행 줄 서식 고침", {f"{LAND_FEAT}/refactor-scope.md": scope_path.read_text(encoding="utf-8").replace(
+        "build_anchor abc1234", "build_anchor `abc1234`")})
+    expect(fails, "S1-n 둘째 착륙 뒤 main 이 실행 줄을 직접 고침 → 활성", t.deps(t.main), 2, f"겹침: 이 작업 트리 {LAND_FEAT}")
+    expect(fails, "S1-n 둘째 run-state → 미종료(①)", t.state(t.main, LAND_FEAT), 2, LAND_NOT_MERGE)
+
+    conf: Path = td / "s1-gitconfig-ignorerevs"
+    conf.parent.mkdir(parents=True, exist_ok=True)
+    conf.write_text("[blame]\n\tignoreRevsFile = .git-blame-ignore-revs\n", encoding="utf-8")
+    t = LandToy(td, "i5", {**LAND_ENV, "GIT_CONFIG_GLOBAL": str(conf)})
+    t.landed_lane(feat)
+    expect(fails, "S1-i5 전역 blame.ignoreRevsFile(없는 파일) · 착륙 → 끝(실행 불능 아님)", t.deps(t.main), 0, f"{LAND_ENDED}{LAND_FEAT}")
+    expect(fails, "S1-i5 run-state → 끝(착륙)", t.state(t.main, LAND_FEAT), 0, f"실행 상태 {LAND_FEAT}: 끝(착륙 ")
+
+
+def s1_trunk_cases(fails: "list[str]", td: Path) -> None:
+    """S1 착륙은 «trunk 에 합쳐짐» — 주 작업 트리 HEAD 가 trunk 가지(`origin/HEAD` 가 가리키는 가지 · 없으면 main · 그다음 master)에
+    있을 때만 켠다. 분리된 HEAD · 다른 가지면 꺼서 표식만 본다(deps `요약:` 꼬리 · run-state 머리 줄 · 미종료 까닭)."""
+    feat: "dict[str, str]" = {f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234")}
+    t = LandToy(td, "detached")
+    t.landed_lane(feat)
+    t.git(t.main, "checkout", "-q", "--detach")
+    off: str = "착륙 판정 꺼짐 — 주 작업 트리 HEAD 가 trunk(main)가 아님(detached)"
+    expect(fails, "S1-trunk 주 작업 트리 HEAD 분리 · 착륙 폴더 → 착륙 판정 꺼짐 · 활성(표식만)", t.deps(t.main), 2,
+           f"겹침: 이 작업 트리 {LAND_FEAT} — BC alpha", f"착륙 · 표식 없음 0(끝으로 셈) · {off}")
+    expect(fails, "S1-trunk 분리된 HEAD run-state → 머리 줄 · 미종료(까닭 = 꺼짐)", t.state(t.main, LAND_FEAT), 2,
+           f"{off} — 표식 없는 실행 줄은 미종료로 본다", f"실행 상태 {LAND_FEAT}: 미종료 · 까닭: {off}")
+    t = LandToy(td, "origin-develop")
+    t.landed_lane(feat)
+    t.git(t.main, "update-ref", "refs/remotes/origin/develop", "HEAD")
+    t.git(t.main, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/develop")
+    off = "착륙 판정 꺼짐 — 주 작업 트리 HEAD 가 trunk(develop)가 아님(main)"
+    expect(fails, "S1-trunk origin/HEAD = develop · 주 작업 트리는 main → 착륙 판정 꺼짐 · 활성", t.deps(t.main), 2,
+           f"겹침: 이 작업 트리 {LAND_FEAT} — BC alpha", off)
+    expect(fails, "S1-trunk origin/HEAD = develop · main 에서 run-state → 미종료(까닭 = 꺼짐)", t.state(t.main, LAND_FEAT), 2,
+           f"실행 상태 {LAND_FEAT}: 미종료 · 까닭: {off}")
+    t.git(t.main, "checkout", "-q", "-b", "develop")
+    expect(fails, "S1-trunk origin/HEAD = develop · 주 작업 트리도 develop → 착륙 판정 켬 · 끝", t.deps(t.main), 0,
+           f"{LAND_ENDED}{LAND_FEAT}", "착륙 · 표식 없음 1(끝으로 셈)")
+    got: "tuple[int, str]" = t.state(t.main, LAND_FEAT)
+    expect(fails, "S1-trunk 같은 것 run-state → 끝(착륙) · 꺼짐 줄 없음", (got[0] if "착륙 판정 꺼짐" not in got[1] else 9, got[1]), 0,
+           f"실행 상태 {LAND_FEAT}: 끝(착륙 ")
+    t = LandToy(td, "stale-origin")
+    t.landed_lane(feat)
+    t.git(t.main, "update-ref", "refs/remotes/origin/main", "HEAD")
+    t.git(t.main, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/master")   # 가리키는 가지가 없다(기본 가지 이름을 바꾼 뒤)
+    got = t.state(t.main, LAND_FEAT)
+    expect(fails, "S1-trunk 끊긴 origin/HEAD(→ 없는 origin/master) → 믿지 않고 main 으로 물러섬 · 착륙 판정 켬 · 끝",
+           (got[0] if "착륙 판정 꺼짐" not in got[1] else 9, got[1]), 0, f"실행 상태 {LAND_FEAT}: 끝(착륙 ")
+
+
+def _land_stamp(t: "LandToy", tree: Path, folder: str, sha: str, extra: str = "") -> None:
+    """착륙 표식 — 그 폴더 실행 기록의 첫 실행 줄 끝에 `· 착륙 <sha12>` 를 붙이고 `extra`(다음 시도의 절)를 덧붙인다(커밋 안 함)."""
+    path: Path = t.proj(tree) / folder / "refactor-scope.md"
+    text: str = path.read_text(encoding="utf-8")
+    line: str = next(ln for ln in text.split("\n") if "실행 · G0 승인" in ln)
+    path.write_text(text.replace(line, f"{line} · 착륙 {sha}", 1) + extra, encoding="utf-8")
+
+
+def _landed_sha(t: "LandToy", tree: Path, folder: str) -> str:
+    """run-state 의 `끝(착륙 <sha12> · 표식 없음)` 의 sha12 — 착륙 표식에 붙일 값(조정자가 읽는 자리와 같다)."""
+    got: "re.Match[str] | None" = re.search(r"끝\(착륙 ([0-9a-f]{12}) · 표식 없음\)", t.state(t.proj(tree), folder)[1])
+    return got.group(1) if got else "?" * 12
+
+
+def s1_marker_cases(fails: "list[str]", td: Path) -> None:
+    """S1 착륙 표식(검토 B1) — `끝(착륙 …)` 폴더를 고른 다음 시도가 옛 실행 줄에 `· 착륙 <sha12>` 를 붙인 뒤에는 그 실행이 G2 표식처럼
+    끝이다(run-state `끝(표식 · 착륙 <sha12>)` · deps 는 같은 실행 줄(G0 승인 값)의 다른 사본도 끝 · 착륙 · 표식 없음 수에 안 듦). ② 는
+    그대로 먼저다. 공급자 정리는 그 sha12 판 기록으로 본다(표식 뒤 절은 다음 시도 몫 · 못 풀면 못 읽음)."""
+    feat: "dict[str, str]" = {f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234")}
+    stop: str = "\n## G0 정지 20261114-1000\n\n- 순서: 다른 레인 착륙 뒤\n"
+    t = LandToy(td, "marker-main")
+    t.landed_lane(feat)
+    sha: str = _landed_sha(t, t.main, LAND_FEAT)
+    _land_stamp(t, t.main, LAND_FEAT, sha, stop)
+    t.commit(t.main, "main: 새 시도 — 착륙 표식 + G0 정지")
+    expect(fails, "S1-marker main 에서 착륙 표식 + G0 정지(커밋) → run-state 끝(표식 · 착륙 <sha12>) · 표식으로 셈", t.state(t.main, LAND_FEAT),
+           0, f"실행 상태 {LAND_FEAT}: 끝(표식 · 착륙 {sha})", "요약: run-state 폴더 1 · 표식 1 · 착륙 0 · 실행 줄 없음 0 · 미종료 0(쓰는 중 0)")
+    l9: Path = t.lane("l9")
+    expect(fails, "S1-marker main 표식 · 다른 레인 L9 의 deps → 끝(겹침 없음 · 착륙 · 표식 없음 수에 안 듦)", t.deps(l9), 0, "레인 겹침 없음",
+           "착륙 · 표식 없음 0(끝으로 셈)")
+    expect(fails, "S1-marker 착륙 표식 폴더를 이 실행 폴더로 `--at continue` → 실행 불능(끝난 실행은 잇지 않는다)",
+           t.deps(t.main, own=LAND_FEAT.split("/")[1], at="continue"), 1, "끝나지 않은 실행 줄이 없다")
+
+    t = LandToy(td, "marker-lane")
+    t.landed_lane(feat)
+    sha = _landed_sha(t, t.main, LAND_FEAT)
+    l3: Path = t.lane("l3")
+    _land_stamp(t, l3, LAND_FEAT, sha, stop)
+    t.commit(l3, "l3: 새 시도 — 착륙 표식 + G0 정지")
+    expect(fails, "S1-marker 레인 L3 에서 표식 · L3 의 run-state → 끝(표식 · 착륙 <sha12>)", t.state(l3, LAND_FEAT), 0,
+           f"실행 상태 {LAND_FEAT}: 끝(표식 · 착륙 {sha})")
+    expect(fails, "S1-marker 레인 L3 에서 표식 · main 의 run-state → 미종료(② L3 쓰는 중 — 그 트리 자기 변경)", t.state(t.main, LAND_FEAT), 2,
+           f"② 작업 트리 {l3} 가 이 폴더를 자기 변경으로 가짐(쓰는 중)", "미종료 1(쓰는 중 1)")
+    l9 = t.lane("l9")
+    expect(fails, "S1-marker 레인 표식 · 다른 레인 L9 의 deps → 끝(main · L9 의 표식 없는 옛 사본도 같은 실행 줄이라 끝)", t.deps(l9), 0,
+           "레인 겹침 없음", "착륙 · 표식 없음 0(끝으로 셈)")
+
+    t = LandToy(td, "marker-stale")
+    t.landed_lane(feat)
+    sha = _landed_sha(t, t.main, LAND_FEAT)
+    l2: Path = t.lane("l2")                                # 표식 전 옛 사본을 든 깨끗한 레인
+    _land_stamp(t, t.main, LAND_FEAT, sha)
+    expect(fails, "S1-marker main 미커밋 표식 · 옛 사본 든 깨끗한 레인 L2 — main 의 deps → 끝(L2 옛 사본이 되살리지 않음)", t.deps(t.main), 0,
+           "레인 겹침 없음")
+    expect(fails, "S1-marker 같은 때 L2 의 deps → 끝", t.deps(l2), 0, "레인 겹침 없음")
+    t.commit(t.main, "main: 착륙 표식")
+    expect(fails, "S1-marker 표식 커밋 뒤 뒤처진 L2 의 deps → 끝(MH 판 표식)", t.deps(l2), 0, "레인 겹침 없음")
+    expect(fails, "S1-marker 뒤처진 L2 의 run-state → 끝(표식 · 착륙 — MH 판)", t.state(l2, LAND_FEAT), 0,
+           f"실행 상태 {LAND_FEAT}: 끝(표식 · 착륙 {sha})")
+
+    beta: "dict[str, str]" = {f"{LAND_BETA}/audit/20261021-1254/plan.md": "- BC: `beta`\n"}
+    for name, tag, extra, sha_of, settled in (
+            ("ok", "정리", LAND_G1, None, "beta(정리(재상정 0 · 착륙 · 표식 없음))"),
+            ("stop", "정지", LAND_G1 + "\n## 파견 정지 20261021-1700\n\n- 작업 중단(사용자)\n", None, "beta(미정리)"),
+            ("old", "옛 머지", LAND_G1, "M0", "beta(못 읽음({LAND_BETA}/refactor-scope.md@{sha}(착륙 표식 판)))")):
+        t = LandToy(td, f"marker-sup-{name}")
+        if sha_of == "M0":                                 # 기록이 없는 옛 착륙 머지(머지로는 풀림 · 그 판에 기록 없음 → 못 읽음)
+            l0: Path = t.lane("l0")
+            t.commit(l0, "l0: 다른 일", {"application/beta/domain_layer/c.py": "Y: int = 2\n"})
+            t.git(t.main, "merge", "-q", "--no-ff", "-m", "land l0", "l0")
+            t.git(t.main, "worktree", "remove", str(l0))
+            sha_of = t.git(t.main, "rev-parse", "HEAD").strip()[:12]
+        t.landed_lane({f"{LAND_BETA}/refactor-scope.md": _land_scope("20261021-1254", bc="beta", anchor="abc1234", refactor=True) + extra,
+                       **beta})
+        sha = sha_of or _landed_sha(t, t.main, LAND_BETA)
+        settled = settled.format(LAND_BETA=LAND_BETA, sha=sha)
+        _land_stamp(t, t.main, LAND_BETA, sha, "\n## G0 정지 20261114-1000\n\n- 순서 예외 질문 대기\n")
+        t.commit(t.main, "main: 공급 BC 새 시도 — 착륙 표식 + 그 시도의 G0 정지")
+        want: str = {"정리": "예(착륙)", "정지": LAND_NOT_SETTLED, "옛 머지": f"못 읽음({LAND_BETA}/refactor-scope.md@{sha}(착륙 표식 판))"}[tag]
+        expect(fails, f"S1-marker 공급 BC 착륙 표식({tag}) → deps 내주는 쪽 {settled} · 표식 판 기록으로 봄(표식 뒤 G0 정지는 다음 시도 몫)",
+               t.deps(t.main), 0, f"내주는 쪽 {settled}")
+        expect(fails, f"S1-marker 공급 BC 착륙 표식({tag}) → run-state 끝(표식 · 착륙) · 공급자 정리 {want.split('(')[0]}",
+               t.state(t.main, LAND_BETA), 0, f"실행 상태 {LAND_BETA}: 끝(표식 · 착륙 {sha})", f"공급자 정리 {LAND_BETA}: {want}")
+    t = LandToy(td, "marker-sup-bad")                      # 머지로 안 풀리는 sha12 — 표식 아님(도는 실행 · 보수 쪽 미종료)
+    t.landed_lane({f"{LAND_BETA}/refactor-scope.md": _land_scope("20261021-1254", bc="beta", anchor="abc1234", refactor=True) + LAND_G1,
+                   **beta})
+    _land_stamp(t, t.main, LAND_BETA, "0123456789ab", "\n## G0 정지 20261114-1000\n\n- 순서 예외 질문 대기\n")
+    t.commit(t.main, "main: 공급 BC 새 시도 — 못 푸는 착륙 표식")
+    expect(fails, "S1-marker 공급 BC 착륙 표식(못 풂 · 머지로 안 풀림) → deps 그 실행을 끝으로 안 셈(내주는 쪽 미정리 · 도는 실행 · 겹침)",
+           t.deps(t.main), 2, f"내주는 쪽 beta(미정리(도는 실행 {LAND_BETA}))", f"겹침: 이 작업 트리 {LAND_BETA} — BC beta (리팩토링 실행")
+    expect(fails, "S1-marker 공급 BC 착륙 표식(못 풂) → run-state 미종료(보수 쪽 · 공급자 줄 없음)", t.state(t.main, LAND_BETA), 2,
+           f"실행 상태 {LAND_BETA}: 미종료 · 까닭: 착륙 표식 0123456789ab 를 커밋으로 못 풂 — 보수 쪽 미종료", "미종료 1(쓰는 중 0)")
+
+    # 검토 재확인 R4 — 표식 sha12 가 머지 커밋으로 풀릴 때만 표식(도는 main 직접 실행에 머지 아닌 sha · 없는 sha)
+    t = LandToy(td, "marker-wrong")
+    base: str = t.git(t.main, "rev-parse", "HEAD").strip()
+    t.commit(t.main, "main 직접 실행 X(도는 중)", {f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor=base[:12])})
+    one: str = t.git(t.main, "rev-parse", "HEAD").strip()   # 부모 하나인 보통 커밋(뿌리 커밋이 아님 — 셋째 확인 S4)
+    _land_stamp(t, t.main, LAND_FEAT, one[:12])
+    t.commit(t.main, "실수로 붙인 착륙 표식(머지 아님)")
+    l9 = t.lane("l9")
+    expect(fails, "S1-marker R4 머지 아닌 sha 표식 → run-state 미종료(보수 쪽 · 표식으로 안 셈)", t.state(t.main, LAND_FEAT), 2,
+           f"실행 상태 {LAND_FEAT}: 미종료 · 까닭: 착륙 표식 {one[:12]} 가 머지 커밋이 아님 — 보수 쪽 미종료", "미종료 1(쓰는 중 0)")
+    expect(fails, "S1-marker R4 머지 아닌 sha 표식 → 다른 레인 L9 의 deps 활성", t.deps(l9), 2, f"{LAND_FEAT} — BC alpha")
+    path_x: Path = t.main / LAND_FEAT / "refactor-scope.md"
+    path_x.write_text(path_x.read_text(encoding="utf-8").replace(f"· 착륙 {one[:12]}", "· 착륙 0123456789ab"), encoding="utf-8")
+    t.commit(t.main, "없는 sha 표식")
+    expect(fails, "S1-marker R4 없는 sha 표식 → run-state 미종료(보수 쪽)", t.state(t.main, LAND_FEAT), 2,
+           f"실행 상태 {LAND_FEAT}: 미종료 · 까닭: 착륙 표식 0123456789ab 를 커밋으로 못 풂 — 보수 쪽 미종료")
+    expect(fails, "S1-marker R4 없는 sha 표식 → L9 의 deps 활성", t.deps(l9), 2, f"{LAND_FEAT} — BC alpha")
+
+    # 검토 재확인 R1 — 표식 든 트리 밖에서 그 폴더를 아직 가진 트리가 있으면 표식 사본도 활성(deps = run-state)
+    t = LandToy(td, "marker-held")
+    l1: Path = t.landed_lane(feat, keep=True)
+    sha = _landed_sha(t, t.main, LAND_FEAT)
+    t3: Path = t.lane("t3")
+    _land_stamp(t, t3, LAND_FEAT, sha, stop)               # 실행 중간 착륙을 끝으로 본 T3 의 표식 + G0 정지(미커밋)
+    t.write(l1, {f"{LAND_FEAT}/design-spec.md": "# L1 이 X 를 잇는 중(미커밋)\n"})
+    l9 = t.lane("l9")
+    expect(fails, "S1-marker R1 T3 표식 · L1 이 그 폴더를 쓰는 중 → L9 의 deps 활성(표식이 L1 의 쓰기를 이기지 않음)", t.deps(l9), 2,
+           f"{LAND_FEAT} — BC alpha")
+    expect(fails, "S1-marker R1 같은 때 main 의 run-state → 미종료(쓰는 중)", t.state(t.main, LAND_FEAT), 2, "(쓰는 중)")
+    (l1 / LAND_FEAT / "design-spec.md").unlink()
+    expect(fails, "S1-marker R1 대조 L1 깨끗 · 표식 든 T3 만 그 폴더를 가짐 → L9 의 deps 끝", t.deps(l9), 0, "레인 겹침 없음")
+
+    # 셋째 확인 S1 — T3 의 표식이 main 에 착륙하고 L1 이 main 을 받아 표식 사본을 든 채 그 폴더를 다시 씀 → 받은 표식은 운반 트리가 아님
+    t = LandToy(td, "marker-synced")
+    l1 = t.landed_lane(feat, keep=True)
+    sha = _landed_sha(t, t.main, LAND_FEAT)
+    t3 = t.lane("t3")
+    _land_stamp(t, t3, LAND_FEAT, sha, stop)
+    t.commit(t3, "t3: 표식 + G0 정지")
+    t.git(t.main, "merge", "-q", "--no-ff", "-m", "land t3", "t3")
+    t.git(t.main, "worktree", "remove", str(t3))
+    t.git(l1, "merge", "-q", "--no-edit", "main")
+    t.write(l1, {f"{LAND_FEAT}/design-spec.md": "# L1 이 X 를 다시 잇는 중(미커밋)\n"})
+    l9 = t.lane("l9")
+    expect(fails, "S1-marker S1 main 에서 받은 표식을 든 L1 이 그 폴더를 쓰는 중 → L9 의 deps 활성", t.deps(l9), 2, f"{LAND_FEAT} — BC alpha")
+    expect(fails, "S1-marker S1 같은 때 main 의 run-state → 미종료(쓰는 중)", t.state(t.main, LAND_FEAT), 2, "(쓰는 중)")
+    (l1 / LAND_FEAT / "design-spec.md").unlink()
+    expect(fails, "S1-marker S1 대조 L1 깨끗 → L9 의 deps 끝", t.deps(l9), 0, "레인 겹침 없음")
+
+    t = LandToy(td, "marker-stacked")                     # 쌓인 레인 아래 착륙을 (잘못) 표식으로 끝냄 — 표식 머지 아래 쌓인 레인은 여전히 활성
+    l1 = t.lane("l1")
+    t.commit(l1, "l1: X G0 — 도는 중", {f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234")})
+    l2: Path = t.lane("l2", "l1")
+    t.commit(l2, "l2: 자기 일", {"application/beta/domain_layer/c.py": "Y: int = 2\n"})
+    t.git(t.main, "merge", "-q", "--no-ff", "-m", "land l2", "l2")
+    t.git(t.main, "worktree", "remove", str(l2))
+    sha = t.git(t.main, "rev-parse", "HEAD").strip()[:12]
+    _land_stamp(t, t.main, LAND_FEAT, sha, stop)
+    t.commit(t.main, "main: 잘못 붙인 착륙 표식")
+    l9 = t.lane("l9")
+    expect(fails, "S1-marker R1 쌓인 레인 L1 아래 머지로 표식 → L9 의 deps 활성", t.deps(l9), 2, f"{LAND_FEAT} — BC alpha")
+    expect(fails, "S1-marker R1 같은 때 main 의 run-state → 미종료(쌓인 레인 · 쓰는 중)", t.state(t.main, LAND_FEAT), 2,
+           f"② 작업 트리 {l1} 가 이 폴더를 자기 변경으로 가짐(쓰는 중) — 착륙 머지 {sha} 아래 쌓인 레인(HEAD ")
+
+    # 검토 재확인 R7 — 같은 폴더에 표식 붙은 옛 실행(MH 판)과 표식을 든 레인의 새 실행(다른 G0) — 새 실행은 활성
+    t = LandToy(td, "marker-next")
+    t.landed_lane(feat)
+    sha = _landed_sha(t, t.main, LAND_FEAT)
+    _land_stamp(t, t.main, LAND_FEAT, sha, stop)
+    t.commit(t.main, "main: 옛 실행에 착륙 표식")
+    l4: Path = t.lane("l4")
+    old_text: str = (l4 / LAND_FEAT / "refactor-scope.md").read_text(encoding="utf-8")
+    t.write(l4, {f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261114-1200", anchor="abc1234") + "\n## 앞 실행 20261101-1000\n\n"
+                 + old_text})
+    l9 = t.lane("l9")
+    expect(fails, "S1-marker R7 옛 실행 표식(MH) · L4 가 같은 폴더에서 새 실행(다른 G0 · 미커밋) → L9 의 deps 활성(새 실행)", t.deps(l9), 2,
+           f"{LAND_FEAT} — BC alpha")
+
+
+def s1_stacked_cases(fails: "list[str]", td: Path) -> None:
+    """S1 쌓인 레인(검토 I1) — 착륙 머지 M 의 둘째 부모 P 보다 엄격히 앞선 HEAD(M 이 들인 커밋 · P 아님)를 가진 작업 트리의 사슬이 그
+    폴더를 바꿨으면 그 트리가 그 실행을 돈다(미종료 · ② 쌓인 레인). 스스로 착륙한 레인(HEAD = P)과 P 뒤로 나아갔으나 그 폴더를 안 고친
+    레인은 끝이다."""
+    t = LandToy(td, "stacked")
+    l1: Path = t.lane("l1")
+    t.commit(l1, "l1: X G0 + 첫 파견 기록 — 도는 중", {f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234")})
+    l2: Path = t.lane("l2", "l1")
+    t.commit(l2, "l2: 자기 실행 Y(끝)", {".dddjango/20261102-1000-other/refactor-scope.md":
+                                     _land_scope("20261102-1000", bc="beta", anchor="def5678", stamp="20261102-1800")})
+    t.git(t.main, "merge", "-q", "--no-ff", "-m", "land l2", "l2")
+    t.git(t.main, "worktree", "remove", str(l2))
+    expect(fails, "S1-stacked L1 위에 쌓인 L2 착륙 · L1 은 X 를 도는 중(깨끗) — main 의 deps → 활성", t.deps(t.main), 2,
+           f"{LAND_FEAT} — BC alpha", "착륙 · 표식 없음 0(끝으로 셈)")
+    expect(fails, "S1-stacked main 의 run-state → 미종료(② 쌓인 아래 레인 L1 쓰는 중)", t.state(t.main, LAND_FEAT), 2,
+           f"② 작업 트리 {l1} 가 이 폴더를 자기 변경으로 가짐(쓰는 중) — 착륙 머지 ", " 아래 쌓인 레인(HEAD ", "미종료 1(쓰는 중 1)")
+    l3: Path = t.lane("l3")
+    expect(fails, "S1-stacked 새 레인 L3 의 deps → 활성", t.deps(l3), 2, f"{LAND_FEAT} — BC alpha")
+    expect(fails, "S1-stacked 새 레인 L3 의 run-state → 미종료", t.state(l3, LAND_FEAT), 2, f"② 작업 트리 {l1} 가 이 폴더를")
+    t.commit(l1, "l1: 코드만(창 편집)", {"application/alpha/domain_layer/a.py": "from application.beta.domain_layer.b import B\nX: int = 7\n"})
+    expect(fails, "S1-stacked R3 쌓인 L1 이 코드만 한 커밋 더(트리 깨끗) → main 의 deps 활성(merge-base 가 들인 커밋)", t.deps(t.main), 2,
+           f"{LAND_FEAT} — BC alpha")
+    expect(fails, "S1-stacked R3 같은 때 run-state → 미종료(쌓인 레인 · 쓰는 중)", t.state(t.main, LAND_FEAT), 2,
+           f"② 작업 트리 {l1} 가 이 폴더를 자기 변경으로 가짐(쓰는 중) — 착륙 머지 ", "미종료 1(쓰는 중 1)")
+    t.git(l1, "merge", "-q", "--no-edit", "main")
+    expect(fails, "S1-stacked 쌓인 L1 이 main 을 받음(merge-base = 그 머지) → run-state 미종료(L1 사슬이 들인 커밋에 걸림)",
+           t.state(t.main, LAND_FEAT), 2, f"② 작업 트리 {l1} 가 이 폴더를 자기 변경으로 가짐(쓰는 중) — 착륙 머지 ")
+
+    t = LandToy(td, "stacked-fork")                       # 들인 커밋 d1 에서 갈라져 뒤에 착륙한 가지(L3) 위 레인 L5 — merge-base 가 d1
+    l1 = t.lane("l1")
+    t.commit(l1, "l1: X G0", {f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234")})
+    l2 = t.lane("l2", "l1")
+    t.commit(l2, "l2: d1", {"application/beta/domain_layer/c.py": "Y: int = 2\n"})
+    l3 = t.lane("l3", "l2")
+    t.commit(l2, "l2: d2", {"application/beta/domain_layer/c.py": "Y: int = 3\n"})
+    t.commit(l3, "l3: e1", {"application/beta/domain_layer/e.py": "E: int = 1\n"})
+    t.git(t.main, "merge", "-q", "--no-ff", "-m", "land l2", "l2")
+    t.git(t.main, "merge", "-q", "--no-ff", "-m", "land l3", "l3")
+    l5: Path = t.lane("l5", "l3")
+    t.commit(l5, "l5: f1", {"application/beta/domain_layer/f.py": "F: int = 1\n"})
+    for tree in (l1, l2, l3):
+        t.git(t.main, "worktree", "remove", str(tree))
+    got = t.state(t.main, LAND_FEAT)
+    expect(fails, "S1-stacked merge-base 갈래 — L5(L3 위) 의 merge-base(HEAD, land l2) = 들인 커밋 d1 → run-state 미종료(쌓인 레인)", got, 2,
+           f"② 작업 트리 {l5} 가 이 폴더를 자기 변경으로 가짐(쓰는 중) — 착륙 머지 ")
+
+    t = LandToy(td, "stacked-ctl")
+    l1 = t.landed_lane({f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234")}, keep=True)
+    l4: Path = t.lane("l4", "l1")                          # P(= L1 끝) 위로 나아간 레인 — 그 폴더는 안 고침
+    t.commit(l4, "l4: 다른 일", {"application/beta/domain_layer/c.py": "Y: int = 2\n"})
+    expect(fails, "S1-stacked 대조 스스로 착륙한 레인(HEAD = P) · P 뒤로 나아가 폴더 안 고친 레인 → deps 끝", t.deps(t.main), 0,
+           f"{LAND_ENDED}{LAND_FEAT}")
+    expect(fails, "S1-stacked 대조 run-state → 끝(착륙)", t.state(t.main, LAND_FEAT), 0, f"실행 상태 {LAND_FEAT}: 끝(착륙 ")
+
+
+def s1_subdir_cases(fails: "list[str]", td: Path) -> None:
+    """S1 하위 폴더 프로젝트(검토 I2) — 프로젝트가 git 뿌리 아래 `proj/` 이면 자기 변경 판정(status · 미착륙 커밋)과 MH 판 읽기에 그 접두를
+    붙인다. 착륙 뒤 주 작업 트리 «잇기»(미커밋) · 다른 트리의 고침은 끝이 아니고(2.37.0 처럼 활성), 이 트리에만 있는 끊긴 실행은 뿌리
+    프로젝트와 같은 미종료다."""
+    feat: "dict[str, str]" = {f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234")}
+    t = LandToy(td, "subdir", sub="proj/")
+    t.landed_lane(feat)
+    proj: Path = t.proj(t.main)
+    expect(fails, "S1-subdir 하위 폴더 프로젝트 · 착륙 직후 → deps 끝", t.deps(proj), 0, f"{LAND_ENDED}{LAND_FEAT}")
+    scope_path: Path = proj / LAND_FEAT / "refactor-scope.md"
+    before: str = scope_path.read_text(encoding="utf-8")
+    scope_path.write_text(before + "\n## 재개 G0 20261114-0900\n\n- 잇기(사용자)\n", encoding="utf-8")
+    expect(fails, "S1-subdir 주 작업 트리 «잇기»(미커밋) → deps 활성(2.37.0 처럼)", t.deps(proj), 2, f"{LAND_FEAT} — BC alpha")
+    expect(fails, "S1-subdir 같은 때 run-state → 미종료(② · ③ 주 작업 트리)", t.state(proj, LAND_FEAT), 2,
+           f"② · ③ 작업 트리 {t.main} 가 이 폴더를 자기 변경으로 가짐")
+    scope_path.write_text(before, encoding="utf-8")
+    l2: Path = t.lane("l2")
+    t.write(t.proj(l2), {f"{LAND_FEAT}/design-spec.md": "# L2 잇기 초안\n"})
+    expect(fails, "S1-subdir 다른 트리 L2 가 고치는 중 → deps 활성", t.deps(proj), 2, f"{LAND_FEAT} — BC alpha")
+    expect(fails, "S1-subdir 같은 때 run-state → 미종료(② L2 쓰는 중)", t.state(proj, LAND_FEAT), 2,
+           f"② 작업 트리 {l2} 가 이 폴더를 자기 변경으로 가짐(쓰는 중)")
+    z: str = ".dddjango/20261113-0900-interrupted"
+    for sub in ("", "proj/"):
+        t = LandToy(td, f"subdir-unc{len(sub)}", sub=sub)
+        t.write(t.proj(t.main), {f"{z}/refactor-scope.md": _land_scope("20261113-0900", anchor="abc1234")})
+        expect(fails, f"S1-subdir {'하위 폴더' if sub else '뿌리(대조)'} 프로젝트 · 이 트리에만 있는 끊긴 실행(미커밋) → run-state 미종료(①)",
+               t.state(t.proj(t.main), z), 2, f"실행 상태 {z}: 미종료 · 까닭: ① main 에 실행 기록 파일이 없음")
+
+
+def s1_ghost_case(fails: "list[str]", td: Path) -> None:
+    """S1 폴더 없는 작업 트리(검토 I3 — `worktree list` 의 prunable) — status 를 읽지 않고 미착륙 커밋만 본다. 그 트리가 그 폴더를 바꾼
+    커밋이 없으면 유령 전과 같이 끝이고, 있으면 그 트리를 «폴더 없는 작업 트리» 로 밝힌 보수 쪽 미종료다(쓰는 중 아님)."""
+    stamped: str = ".dddjango/20261020-1000-stamped"
+    noline: str = ".dddjango/20261019-1000-g0stop"
+    t = LandToy(td, "ghost")
+    t.landed_lane({f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234"),
+                   f"{stamped}/refactor-scope.md": _land_scope("20261020-1000", anchor="abc1234", stamp="20261020-1800"),
+                   f"{noline}/refactor-scope.md": "# 스코프\n\n## G0 정지 20261019-1000\n"})
+    ctl: "tuple[int, str]" = t.state(t.main, LAND_FEAT, stamped, noline)
+    ghost: Path = t.lane("lg")
+    shutil.rmtree(ghost)
+    got: "tuple[int, str]" = t.state(t.main, LAND_FEAT, stamped, noline)
+    rows: "list[str]" = [ln for ln in got[1].splitlines() if ln.startswith("실행 상태")]
+    expect(fails, "S1-ghost 폴더 없는 작업 트리(prunable) 뒤 run-state → 셋 다 유령 전과 같은 끝",
+           (got[0] if rows == [ln for ln in ctl[1].splitlines() if ln.startswith("실행 상태")] else 9, got[1]), 0,
+           "요약: run-state 폴더 3 · 표식 1 · 착륙 1 · 실행 줄 없음 1 · 미종료 0(쓰는 중 0)")
+    expect(fails, "S1-ghost 같은 때 deps → 끝", t.deps(t.main), 0, f"{LAND_ENDED}{LAND_FEAT}")
+    lh: Path = t.lane("lh")
+    t.commit(lh, "lh: X 폴더 고침(미착륙)", {f"{LAND_FEAT}/design-spec.md": "# 잇기\n"})
+    shutil.rmtree(lh)
+    expect(fails, "S1-ghost 그 폴더를 바꾼 미착륙 커밋을 가진 폴더 없는 트리 → 미종료(폴더 없는 작업 트리 · 쓰는 중 아님)",
+           t.state(t.main, LAND_FEAT), 2, f"② 폴더 없는 작업 트리 {lh}(prunable — `git worktree prune` 전)의 미착륙 커밋이 이 폴더를 바꿈 — "
+           "보수 쪽 미종료", "미종료 1(쓰는 중 0)")
+
+
+def s1_failsafe_cases(fails: "list[str]", td: Path) -> None:
+    """S1 보수 쪽(fail-closed) 길(검토 I4) — 다른 트리 `git status` 실패 · 미착륙 커밋 그래프 실패 · 착륙 `git log` 실패 · HEAD 모르는 트리 ·
+    trunk 모름 · UTF-8 못 읽는 착륙 기록 · MH 판 링크 기록인데 사본 없음은 모두 끝이 아니고, `__pycache__` · `.DS_Store` 는 자기 변경이
+    아니다."""
+    feat: "dict[str, str]" = {f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234")}
+    t = LandToy(td, "fs-status")
+    t.landed_lane(feat)
+    l2: Path = t.lane("l2")
+    (t.main / ".git" / "worktrees" / "wt-l2" / "index").write_bytes(b"not an index")
+    expect(fails, "S1-failsafe 다른 트리 git status 실패 → 미종료(보수 · 쓰는 중 아님)", t.state(t.main, LAND_FEAT), 2,
+           f"② 작업 트리 {l2} 의 git status 를 못 읽음 — 보수 쪽 미종료", "미종료 1(쓰는 중 0)")
+
+    t = LandToy(td, "fs-graph")
+    t.landed_lane(feat)
+    l2 = t.lane("l2")
+    t.commit(l2, "l2: 첫 커밋", {"application/beta/domain_layer/x1.py": "X1: int = 1\n"})
+    lost: str = t.git(l2, "rev-parse", "HEAD^{tree}").strip()
+    t.commit(l2, "l2: 둘째 커밋", {"application/beta/domain_layer/x2.py": "X2: int = 2\n"})
+    (t.main / ".git" / "objects" / lost[:2] / lost[2:]).unlink()   # 미착륙 커밋 그래프(`log --name-only`)만 깨진다 — status 는 HEAD 트리로 돈다
+    expect(fails, "S1-failsafe 다른 트리 미착륙 커밋 그래프를 못 읽음 → 미종료(보수)", t.state(t.main, LAND_FEAT), 2,
+           f"② 작업 트리 {l2} 의 미착륙 커밋을 못 읽음 — 보수 쪽 미종료")
+
+    t = LandToy(td, "fs-log")
+    t.landed_lane(feat)
+    lost = t.git(t.main, "rev-parse", "HEAD^1^{tree}").strip()
+    (t.main / ".git" / "objects" / lost[:2] / lost[2:]).unlink()   # 착륙 `git log -- <기록>` 만 깨진다(첫 부모 트리)
+    expect(fails, "S1-failsafe 착륙 git log 실패 → 미종료(git 읽기 실패 · 착륙 아님)", t.state(t.main, LAND_FEAT), 2,
+           f"실행 상태 {LAND_FEAT}: 미종료 · 까닭: git 읽기 실패(CalledProcessError) — 보수 쪽 미종료")
+
+    t = LandToy(td, "fs-orphan")
+    t.landed_lane(feat)
+    orphan: Path = t.main.parent / "wt-orphan"
+    t.git(t.main, "worktree", "add", "-q", "--orphan", "-b", "orph", str(orphan))
+    expect(fails, "S1-failsafe R6 태어나지 않은 가지 작업 트리(커밋 없음 · 빈 디스크) → status 만 봄 · run-state 끝(착륙)",
+           t.state(t.main, LAND_FEAT), 0, f"실행 상태 {LAND_FEAT}: 끝(착륙 ")
+    t.write(orphan, {f"{LAND_FEAT}/design-spec.md": "# 태어나지 않은 가지에서 잇는 중\n"})
+    expect(fails, "S1-failsafe R6 그 트리가 그 폴더를 씀(추적 안 됨) → 미종료(쓰는 중)", t.state(t.main, LAND_FEAT), 2,
+           f"② 작업 트리 {orphan.resolve()} 가 이 폴더를 자기 변경으로 가짐(쓰는 중)")
+    t = LandToy(td, "fs-badhead")
+    t.landed_lane(feat)
+    lb: Path = t.lane("lb")
+    (t.main / ".git" / "worktrees" / "wt-lb" / "HEAD").write_text("garbage\n", encoding="utf-8")   # `worktree list` 는 0 으로 적는다
+    expect(fails, "S1-failsafe R6 HEAD 가 깨진 작업 트리(목록은 태어나지 않은 가지와 같은 0) → status 를 못 읽음(보수 · 끝 아님)",
+           t.state(t.main, LAND_FEAT), 2, f"② 작업 트리 {lb} 의 git status 를 못 읽음 — 보수 쪽 미종료")
+
+    t = LandToy(td, "fs-locked")
+    t.landed_lane(feat)
+    lk: Path = t.lane("lk")
+    t.write(lk, {f"{LAND_FEAT}/design-spec.md": "# 떼어 낸 디스크에서 잇는 중\n"})
+    t.git(t.main, "worktree", "lock", "--reason", "removable disk", str(lk))
+    away: Path = t.main.parent / "unmounted"
+    lk.rename(away)
+    expect(fails, "S1-failsafe R2 잠근 작업 트리의 폴더가 없음(떼어 낸 디스크) → 미종료(보수 · 폴더 없음으로 안 봄)", t.state(t.main, LAND_FEAT), 2,
+           f"② 작업 트리 {lk} 의 폴더가 없음(잠근 작업 트리 — 그 디스크를 못 읽음) — 보수 쪽 미종료", "미종료 1(쓰는 중 0)")
+    expect(fails, "S1-failsafe R2 같은 때 deps → 활성", t.deps(t.main), 2, f"{LAND_FEAT} — BC alpha")
+    away.rename(lk)
+
+    t = LandToy(td, "fs-denied")
+    t.landed_lane(feat)
+    deny: Path = t.main.parent / "deny"
+    deny.mkdir()
+    ld: Path = (deny / "wt-ld").resolve()
+    t.git(t.main, "worktree", "add", "-q", "-b", "ld", str(ld))
+    deny.chmod(0)                                          # 그 트리 폴더를 lstat 도 못 함(EACCES — macOS TCC EPERM 꼴)
+    try:
+        got = t.state(t.main, LAND_FEAT)
+    finally:
+        deny.chmod(0o755)
+    expect(fails, "S1-failsafe R2 폴더를 못 읽는 작업 트리(권한) → 미종료(보수 · 폴더 없음으로 안 봄)", got, 2,
+           f"② 작업 트리 {ld} 의 폴더를 못 읽음(PermissionError) — 보수 쪽 미종료")
+    lp: Path = t.lane("lp")
+    t.write(lp, {f"{LAND_FEAT}/design-spec.md": "# 잇는 중(미커밋)\n"})
+    lp.chmod(0)                                            # 폴더는 있으나 안을 못 읽음 — git status 실패(git 은 prunable 로 적는다)
+    try:
+        got = t.state(t.main, LAND_FEAT)
+        got_deps: "tuple[int, str]" = t.deps(t.main)
+    finally:
+        lp.chmod(0o755)
+    expect(fails, "S1-failsafe R2 안을 못 읽는 작업 트리(권한 000 · git 은 prunable) → 미종료(git status 를 못 읽음)", got, 2,
+           f"② 작업 트리 {lp} 의 git status 를 못 읽음 — 보수 쪽 미종료")
+    expect(fails, "S1-failsafe R2 같은 때 deps → 활성", got_deps, 2, f"{LAND_FEAT} — BC alpha")
+
+    t = LandToy(td, "fs-nogit")
+    t.landed_lane(feat)
+    t.git(t.main.parent, "init", "-q")                    # 작업 트리들을 감싼 바깥 저장소 — git 이 위로 찾아 올라가면 그 저장소를 읽는다
+    lx: Path = t.lane("lx")
+    t.write(lx, {f"{LAND_FEAT}/design-spec.md": "# 잇는 중(미커밋)\n"})
+    (lx / ".git").unlink()                                 # 작업 트리 `.git` 파일 없음(폴더는 있음 · prunable)
+    expect(fails, "S1-failsafe R2 `.git` 파일 없는 작업 트리(바깥 저장소 안) → 미종료(그 트리 status 를 못 읽음 — 바깥 저장소로 안 샘)",
+           t.state(t.main, LAND_FEAT), 2, f"② 작업 트리 {lx} 의 git status 를 못 읽음 — 보수 쪽 미종료")
+
+    t = LandToy(td, "fs-trunk")
+    t.landed_lane(feat)
+    t.git(t.main, "branch", "-m", "main", "trunk")
+    off: str = "착륙 판정 꺼짐 — trunk 가지를 모름(origin/HEAD · main · master 없음)"
+    expect(fails, "S1-failsafe trunk 를 모름(origin/HEAD · main · master 없음) → 착륙 판정 꺼짐 · 미종료", t.state(t.main, LAND_FEAT), 2,
+           f"{off} — 표식 없는 실행 줄은 미종료로 본다", f"실행 상태 {LAND_FEAT}: 미종료 · 까닭: {off}")
+
+    t = LandToy(td, "fs-utf8")
+    l1: Path = t.lane("l1")
+    (l1 / LAND_FEAT).mkdir(parents=True)
+    (l1 / LAND_FEAT / "refactor-scope.md").write_bytes(_land_scope("20261101-1000", anchor="abc1234").encode("utf-8") + b"\xff\xfe\n")
+    t.commit(l1, "l1 run(깨진 바이트)")
+    t.git(t.main, "merge", "-q", "--no-ff", "-m", "land l1", "l1")
+    t.git(t.main, "worktree", "remove", str(l1))
+    expect(fails, "S1-failsafe UTF-8 못 읽는 착륙 기록 → deps 보류 그대로(착륙으로 빼지 않음)", t.deps(t.main), 2,
+           f"{LAND_FEAT}/refactor-scope.md 를 UTF-8 로 못 읽는다", "착륙 · 표식 없음 0(끝으로 셈)")
+    expect(fails, "S1-failsafe 같은 기록 run-state → 미종료(못 읽음) · 미종료 수에 듦", t.state(t.main, LAND_FEAT), 2,
+           f"실행 상태 {LAND_FEAT}: 미종료 · 까닭: MH ", "refactor-scope.md 를 못 읽는다(UnicodeDecodeError — 끝인지 모름)",
+           "미종료 1(쓰는 중 0)")
+
+    t = LandToy(td, "fs-link")
+    link: Path = t.main / ".dddjango" / "20261103-1000-linked" / "refactor-scope.md"
+    link.parent.mkdir(parents=True)
+    os.symlink("../../nowhere/refactor-scope.md", link)
+    t.commit(t.main, "링크 기록(대상 없음)")
+    expect(fails, "S1-failsafe MH 판 기록이 링크인데 사본 없음 → 미종료(못 읽음 · 실행 줄 없음으로 끝내지 않음)",
+           t.state(t.main, ".dddjango/20261103-1000-linked"), 2,
+           "실행 상태 .dddjango/20261103-1000-linked: 미종료 · 까닭: 디스크 refactor-scope.md 를 못 읽는다(FileNotFoundError")
+
+    t = LandToy(td, "fs-cache")
+    t.landed_lane(feat)
+    l2 = t.lane("l2")
+    (l2 / LAND_FEAT / "__pycache__").mkdir(parents=True)
+    (l2 / LAND_FEAT / "__pycache__" / "m.cpython-315.pyc").write_bytes(b"\0")
+    (l2 / LAND_FEAT / ".DS_Store").write_bytes(b"\0")
+    expect(fails, "S1-failsafe 다른 트리의 `__pycache__` · `.DS_Store` 만 → 자기 변경 아님 · run-state 끝(착륙)", t.state(t.main, LAND_FEAT), 0,
+           f"실행 상태 {LAND_FEAT}: 끝(착륙 ")
+    expect(fails, "S1-failsafe 같은 때 deps → 끝", t.deps(t.main), 0, f"{LAND_ENDED}{LAND_FEAT}")
+
+
+def _snap(paths: "list[Path]") -> "dict[str, object]":
+    return {str(q): (q.stat().st_mtime_ns, hashlib.sha1(q.read_bytes()).hexdigest()) if q.exists() else None for q in paths}
+
+
+def s1_readonly_case(fails: "list[str]", td: Path) -> None:
+    """S1 읽기만(검토 I4) — run-state 는 다른 작업 트리에서도 index 를 쓰지 않고 fsmonitor 훅을 부르지 않는다. 시험 환경에서
+    `GIT_OPTIONAL_LOCKS` 를 빼고(도구가 스스로 거는지 본다) fsmonitor 훅(흔적 파일) · untrackedCache · stat 낡은 index(내용 같고 시각만
+    바뀜)를 둔다. 대조: 같은 저장소에서 잠금을 허용한 `git status` 는 index 를 고쳐 쓰고 훅을 부른다(시험이 이를 볼 수 있다)."""
+    env: "dict[str, str]" = {k: v for k, v in LAND_ENV.items() if k != "GIT_OPTIONAL_LOCKS"}
+    t = LandToy(td, "readonly", env)
+    l1: Path = t.landed_lane({f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234"),
+                              f"{LAND_FEAT}/design-spec.md": "# s\n"}, keep=True)
+    l2: Path = t.lane("l2")
+    log: Path = t.main.parent / "fsmonitor.log"
+    hook: Path = t.main.parent / "fsmonitor.sh"
+    hook.write_text(f"#!/bin/sh\necho \"$PWD\" >> '{log}'\nexit 1\n", encoding="utf-8")
+    hook.chmod(0o755)
+    t.git(t.main, "config", "core.fsmonitor", str(hook))
+    t.git(t.main, "config", "core.untrackedCache", "true")
+    time.sleep(1.1)
+    for tree in (t.main, l1, l2):
+        for f in (tree / LAND_FEAT).rglob("*"):
+            if f.is_file():
+                f.write_bytes(f.read_bytes())               # 내용 같음 · 시각만 바뀜 — 잠금을 허용하면 status 가 index 를 고쳐 쓴다
+    if log.exists():
+        log.unlink()
+    gd: Path = t.main / ".git"
+    files: "list[Path]" = [gd / "index", gd / "worktrees" / "wt-l1" / "index", gd / "worktrees" / "wt-l2" / "index"]
+    before: "dict[str, object]" = _snap(files)
+    got: "tuple[int, str]" = t.state(t.main, LAND_FEAT)
+    after: "dict[str, object]" = _snap(files)
+    traces: int = log.read_text(encoding="utf-8").count("\n") if log.exists() else 0
+    locks: "list[str]" = sorted(str(q.relative_to(gd)) for q in gd.rglob("*.lock"))
+    expect(fails, "S1-readonly run-state(환경에 GIT_OPTIONAL_LOCKS 없음) → index 셋 그대로 · 잠금 0 · fsmonitor 훅 흔적 0 · 끝(착륙)",
+           (got[0] if before == after and not locks and traces == 0 else 9,
+            f"{got[1]}\nindex 바뀜 {[k for k in before if before[k] != after[k]]} · 잠금 {locks} · 훅 {traces}"), 0,
+           f"실행 상태 {LAND_FEAT}: 끝(착륙 ")
+    subprocess.run(["git", "status", "--porcelain"], cwd=l2, env=env, capture_output=True)
+    seen: "dict[str, object]" = _snap(files)
+    expect(fails, "S1-readonly 대조 — 잠금 허용 git status 는 그 트리 index 를 고쳐 쓰고 훅을 부른다(시험이 볼 수 있음)",
+           (0 if seen[str(files[2])] != after[str(files[2])] and log.exists() else 9, str(seen)), 0)
+
+
+def s1_lane_cases(fails: "list[str]", td: Path) -> None:
+    """S1 다른 작업 트리 사례(설계 §1 재측정 표 f-audit · f-spec · f-specc · j · k · g · 재확인 kres · mid · own) — ② 다른 트리가 그
+    폴더를 자기 변경(미커밋 · 추적 안 됨 · 무시 · 미착륙 커밋)으로 가지면 착륙이어도 끝이 아니다. 표식 판정 캐시(seed · MH 판 지름길)는
+    표식만 쓰므로 그 트리 사본이 사라지지 않는다(겹침 줄에 두 트리가 다 실린다)."""
+    alpha: "dict[str, str]" = {f"{LAND_ALPHA}/refactor-scope.md": _land_scope("20261021-1254", anchor="abc1234", refactor=True),
+                               f"{LAND_ALPHA}/audit/20261021-1254/plan.md": "- BC: `alpha`\n"}
+    for variant in ("audit", "spec", "spec-committed"):
+        t = LandToy(td, f"f-{variant}")
+        t.landed_lane(alpha)
+        l2: Path = t.lane("l2")
+        if variant == "audit":                             # R2 재점검 — audit 새 plan 을 디스크에 씀(G0 승인 전)
+            t.write(l2, {f"{LAND_ALPHA}/audit/20261114-0900/plan.md": "- BC: `alpha`\n- HEAD: x\n"})
+        else:
+            t.write(l2, {f"{LAND_ALPHA}/design-spec.md": "# 명세 초안 — 잇기\n"})
+            if variant == "spec-committed":
+                t.commit(l2, "l2 spec")
+        expect(fails, f"S1-f-{variant} 다른 트리 L2 가 착륙 폴더를 고침 · main 에서 deps → 활성(두 트리 사본 다)", t.deps(t.main), 2,
+               f"겹침: 이 작업 트리 · 작업 트리 {l2} {LAND_ALPHA} — BC alpha")
+        expect(fails, f"S1-f-{variant} main 에서 run-state → 미종료(② 쓰는 중)", t.state(t.main, LAND_ALPHA), 2,
+               f"② 작업 트리 {l2} 가 이 폴더를 자기 변경으로 가짐(쓰는 중)")
+        if variant == "audit":
+            expect(fails, "S1-f-audit L2 자신에서 deps beta → 활성(두 트리 사본 다)", t.deps(l2, bc="beta"), 2,
+                   f"겹침: 작업 트리 {t.main} · 이 작업 트리 {LAND_ALPHA} — BC alpha")
+            expect(fails, "S1-f-audit L2 자신에서 run-state → 미종료(② · ③ 그 트리)", t.state(l2, LAND_ALPHA), 2,
+                   f"② · ③ 작업 트리 {l2} 가 이 폴더를 자기 변경으로 가짐")
+
+    feat: "dict[str, str]" = {f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234")}
+    t = LandToy(td, "j")
+    t.landed_lane(feat, keep=True)
+    l3: Path = t.lane("l3")
+    expect(fails, "S1-j 첫째 착륙한 레인 트리가 남음 · L3 에서 deps → 끝", t.deps(l3), 0, f"{LAND_ENDED}{LAND_FEAT}", "레인 겹침 없음")
+    expect(fails, "S1-j 첫째 옛 판(2.37.0) → 활성(exit 2)", t.deps(l3, tool=_land_old_tool(td)), 2, f"{LAND_FEAT} — BC alpha")
+    t.write(t.main, {f"{LAND_FEAT}/design-spec.md": "# 운영자가 main 에서 손봄(미커밋)\n"})
+    expect(fails, "S1-j 둘째 main 사본 표식 아닌 기록 미커밋 · L3 에서 deps → 활성", t.deps(l3), 2, f"{LAND_FEAT} — BC alpha")
+    expect(fails, "S1-j 둘째 L3 에서 run-state → 미종료(② 주 작업 트리 쓰는 중)", t.state(l3, LAND_FEAT), 2,
+           f"② 작업 트리 {t.main} 가 이 폴더를 자기 변경으로 가짐(쓰는 중)")
+
+    for how in ("stay", "remove", "reland"):
+        t = LandToy(td, f"k-{how}")
+        l1: Path = t.landed_lane(feat, keep=True)
+        t.commit(l1, "l1: 착륙 뒤 G2 답 파일", {f"{LAND_FEAT}/g2-approval.md": "G2 승인 20261102-0900 (대리 답)\n"})
+        if how == "stay":
+            expect(fails, "S1-k 착륙 뒤 레인이 그 폴더에 커밋(다시 착륙 안 함) → 활성(보수 · 한계)", t.deps(t.main), 2,
+                   f"{LAND_FEAT} — BC alpha")
+            expect(fails, "S1-k run-state → 미종료(② 레인 미착륙 커밋)", t.state(t.main, LAND_FEAT), 2,
+                   f"② 작업 트리 {l1} 가 이 폴더를 자기 변경으로 가짐(쓰는 중)")
+            continue
+        if how == "remove":
+            t.git(t.main, "worktree", "remove", str(l1))
+        else:
+            t.git(t.main, "merge", "-q", "--no-ff", "-m", "land l1 again", "l1")
+        expect(fails, f"S1-kres k 를 {'작업 트리 치우기' if how == 'remove' else '다시 착륙'}로 풂 → 끝", t.deps(t.main), 0,
+               f"{LAND_ENDED}{LAND_FEAT}")
+
+    t = LandToy(td, "g")
+    l2 = t.lane("l2")
+    t.commit(l2, "l2 work", {"application/beta/domain_layer/c.py": "Y: int = 2\n"})
+    t.landed_lane(feat)
+    t.git(l2, "merge", "-q", "--no-edit", "main")
+    expect(fails, "S1-g 첫째 승인 머지로 들어온 착륙 폴더 · L2 에서 deps → 끝", t.deps(l2), 0, f"{LAND_ENDED}{LAND_FEAT}")
+    t.commit(t.main, "main moves on", {"application/beta/domain_layer/d.py": "Z: int = 3\n"})
+    expect(fails, "S1-g 둘째 main 이 더 나아간 뒤 · L2 에서 deps → 끝", t.deps(l2), 0, f"{LAND_ENDED}{LAND_FEAT}")
+    expect(fails, "S1-g 둘째 L2 에서 run-state → 끝(착륙)", t.state(l2, LAND_FEAT), 0, f"실행 상태 {LAND_FEAT}: 끝(착륙 ")
+
+    t = LandToy(td, "mid")
+    l1 = t.landed_lane(feat, keep=True)
+    t.commit(l1, "l1: 코드만 커밋(폴더 그대로)", {"application/alpha/domain_layer/a.py":
+                                         "from application.beta.domain_layer.b import B\nX: int = 9\n"})
+    expect(fails, "S1-mid 실행 중간 착륙 뒤 코드만 커밋 → 거짓 끝(받아들인 한계 N4 — 바뀌면 알림)", t.deps(t.main), 0,
+           f"{LAND_ENDED}{LAND_FEAT}")
+    t.write(l1, {f"{LAND_FEAT}/behavior/20261101T0100Z/w3-open.json": "{}\n"})
+    expect(fails, "S1-mid 그 레인이 폴더에 창 기록(미커밋) → 활성", t.deps(t.main), 2, f"{LAND_FEAT} — BC alpha")
+
+    t = LandToy(td, "own")
+    t.landed_lane(alpha)
+    expect(fails, "S1-own 착륙 폴더를 이 실행 폴더로 골라 deps → 그 폴더는 deps 에 안 보임(그래서 run-state)",
+           t.deps(t.main, own=LAND_ALPHA.split("/")[1]), 0, "레인 겹침 없음", "착륙 · 표식 없음 0(끝으로 셈)")
+    expect(fails, "S1-own 뒤 다른 폴더로 deps → 남은 deps 산출물(git 무시)로 활성(보수 N5)", t.deps(t.main, own="20261114-0001-other"),
+           2, f"겹침: 이 작업 트리 {LAND_ALPHA} — BC alpha")
+    expect(fails, "S1-own 뒤 run-state → 미종료(② · ③ 주 작업 트리 — 무시 파일도 자기 변경)", t.state(t.main, LAND_ALPHA), 2,
+           f"② · ③ 작업 트리 {t.main} 가 이 폴더를 자기 변경으로 가짐")
+
+
+def s1_supplier_cases(fails: "list[str]", td: Path) -> None:
+    """S1 공급자 «정리»(설계 §1 재측정 i · 재확인 i2 · i3 · 셋째 확인 supplier 넷) — 착륙 · 표식 없는 공급 BC 리팩토링은 실행 줄
+    `build_anchor` + G1 확정 줄이 있고 마지막 G1 확정 뒤 정지 절 · 작업 중단이 없을 때만 `정리(재상정 n · 착륙 · 표식 없음)` 이다.
+    deps(내주는 쪽 상태)와 run-state(공급자 정리 줄)가 같은 판정을 쓴다."""
+    kinds: "list[tuple[str, str, str, str, bool]]" = [
+        ("i2", "G0 만 하고 접음(앵커 없음)", "", "", False),
+        ("i", "앵커만 · G1 확정 없음", "abc1234", "", False),
+        ("i3", "앵커 + G1 변경판 확정 줄(결정 절 없음)", "abc1234",
+         "\nG1 변경판 확정 20261021-1500 · digest 0123456789ab · 후보 0123456789ab\n", True),
+        ("sup3", "G1 확정 + 앵커 · 파견 뒤 접음(G2 없음)", "abc1234",
+         LAND_G1 + "\n## 파견 정지 20261021-1700\n\n- 작업 중단(사용자)\n", False),
+        ("sup3b", "G1 확정 + 앵커 · 결정 = 작업 중단 줄", "abc1234", LAND_G1 + "\n- M1 · 결정 = 작업 중단 · 출처 = 본인 직접(1700)\n", False),
+        ("sup4", "정상(G1 확정 + 앵커 · G2 는 다른 곳에만)", "abc1234", LAND_G1, True)]
+    for tag, label, anchor, extra, settled in kinds:
+        t = LandToy(td, f"sup-{tag}")
+        t.landed_lane({f"{LAND_BETA}/refactor-scope.md": _land_scope("20261021-1254", bc="beta", anchor=anchor, refactor=True) + extra,
+                       f"{LAND_BETA}/audit/20261021-1254/plan.md": "- BC: `beta`\n"})
+        want: str = "beta(정리(재상정 0 · 착륙 · 표식 없음))" if settled else "beta(미정리)"
+        expect(fails, f"S1-{tag} 공급 BC 리팩토링 착륙 · 표식 없음 — {label} → deps 끝 · 내주는 쪽 {want}", t.deps(t.main), 0,
+               f"내주는 쪽 {want} · 미정리 공급자 {0 if settled else 1}", f"{LAND_ENDED}{LAND_BETA}")
+        expect(fails, f"S1-{tag} run-state → 끝(착륙) · 공급자 정리 {'예(착륙)' if settled else '아니오'}", t.state(t.main, LAND_BETA), 0,
+               f"실행 상태 {LAND_BETA}: 끝(착륙 ", f"공급자 정리 {LAND_BETA}: {'예(착륙)' if settled else LAND_NOT_SETTLED}")
+        if tag == "i3":
+            expect(fails, "S1-i3 옛 판(2.37.0) → 공급자 미정리(도는 실행) · exit 2", t.deps(t.main, tool=_land_old_tool(td)), 2,
+                   f"beta(미정리(도는 실행 {LAND_BETA}))")
+    t = LandToy(td, "sup-stamped")
+    t.landed_lane({f"{LAND_BETA}/refactor-scope.md": _land_scope("20261021-1254", bc="beta", anchor="abc1234", stamp="20261021-1800",
+                                                                 refactor=True)})
+    expect(fails, "S1-sup 대조 — 표식 있는 공급 BC 리팩토링 → 정리(표식 · 착륙 꼬리 없음)", t.deps(t.main), 0,
+           "내주는 쪽 beta(정리(재상정 0)) · 미정리 공급자 0")
+    expect(fails, "S1-sup 대조 run-state → 끝(표식) · 공급자 정리 예(표식)", t.state(t.main, LAND_BETA), 0,
+           f"실행 상태 {LAND_BETA}: 끝(표식 · G2 승인 · MH ", f"공급자 정리 {LAND_BETA}: 예(표식)")
+
+
+def s1_run_state_cases(fails: "list[str]", td: Path) -> None:
+    """S1 `run-state <폴더>…`(설계 §1 재확인 rs · 셋째 확인 busy · behind · multi) — 읽기만 · 폴더 여럿을 한 프로세스로 · ② 다른 트리가
+    쓰는 중이면 표식 · 실행 줄 없음 길에서도 먼저 미종료 · 자기 변경 아닌 사본은 MH 판으로 읽음 · exit 0 끝 · 2 미종료 · 1 실행 불능."""
+    t = LandToy(td, "rs")
+    stamped: str = ".dddjango/20261023-1000-stamped"
+    main_run: str = ".dddjango/20261101-1000-main-run"
+    fresh: str = ".dddjango/20261114-0900-new"
+    t.landed_lane({f"{LAND_ALPHA}/refactor-scope.md": _land_scope("20261021-1254", anchor="abc1234", refactor=True),
+                   f"{LAND_BETA}/refactor-scope.md": _land_scope("20261022-1000", bc="beta", refactor=True),
+                   f"{stamped}/refactor-scope.md": _land_scope("20261023-1000", anchor="abc1234", stamp="20261023-1800")})
+    t.commit(t.main, "main-direct run", {f"{main_run}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234")})
+    (t.main / fresh).mkdir(parents=True)
+    rows: "list[tuple[str, int, tuple[str, ...]]]" = [
+        (LAND_ALPHA, 0, (f"실행 상태 {LAND_ALPHA}: 끝(착륙 ", f"공급자 정리 {LAND_ALPHA}: {LAND_NOT_SETTLED}")),
+        (LAND_BETA, 0, (f"실행 상태 {LAND_BETA}: 끝(착륙 ", f"공급자 정리 {LAND_BETA}: {LAND_NOT_SETTLED}")),
+        (stamped, 0, (f"실행 상태 {stamped}: 끝(표식 · G2 승인 · MH ",)),
+        (main_run, 2, (f"실행 상태 {main_run}: 미종료 · 까닭: {LAND_NOT_MERGE}",)),
+        (fresh, 0, (f"실행 상태 {fresh}: 끝(실행 줄 없음 — MH ", "판에 실행 줄 · 기록 없음)"))]
+    singles: "dict[str, list[str]]" = {}
+    for folder, code, needles in rows:
+        got: "tuple[int, str]" = t.state(t.main, folder)
+        singles[folder] = [ln for ln in got[1].splitlines() if ln.startswith(("실행 상태", "공급자 정리"))]
+        expect(fails, f"S1-rs run-state {folder.split('/')[1]} → exit {code}", got, code, *needles)
+    many: "tuple[int, str]" = t.state(t.main, *(f for f, _c, _n in rows))
+    lines: "list[str]" = [ln for ln in many[1].splitlines() if ln.startswith(("실행 상태", "공급자 정리"))]
+    same: bool = lines == [ln for f, _c, _n in rows for ln in singles[f]]
+    expect(fails, "S1-multi 폴더 다섯을 한 프로세스로 → 폴더마다 따로 부른 줄과 같음 · exit = 가장 나쁜 값(2) · 요약 갈래별 수",
+           (many[0] if same else 9, many[1]), 2, "요약: run-state 폴더 5 · 표식 1 · 착륙 2 · 실행 줄 없음 1 · 미종료 1(쓰는 중 0)")
+    l2: Path = t.lane("l2")
+    t.write(l2, {f"{LAND_ALPHA}/design-spec.md": "# 잇기 초안\n"})
+    expect(fails, "S1-rs L2 가 착륙 폴더를 고치는 중 · main 에서 → 미종료(② 쓰는 중)", t.state(t.main, LAND_ALPHA), 2,
+           f"실행 상태 {LAND_ALPHA}: 미종료 · 까닭: ② 작업 트리 {l2} 가 이 폴더를 자기 변경으로 가짐(쓰는 중)")
+    expect(fails, "S1-rs 같은 것 · L2 에서 → 미종료(② · ③ 그 트리)", t.state(l2, LAND_ALPHA), 2,
+           f"실행 상태 {LAND_ALPHA}: 미종료 · 까닭: ② · ③ 작업 트리 {l2} 가 이 폴더를 자기 변경으로 가짐")
+    expect(fails, "S1-rs 실행 폴더가 아닌 인자 → 실행 불능(exit 1)", t.state(t.main, "application/alpha"), 1, "실행 폴더가 아니다")
+    expect(fails, "S1-rs 없는 실행 폴더 → 실행 불능(exit 1)", t.state(t.main, ".dddjango/20990101-0000-none"), 1, "실행 폴더가 아니다")
+    expect(fails, "S1-rs 대소문자만 다른 폴더 이름(대소문자 무시 파일 시스템에서도) → 실행 불능(exit 1 — 거짓 끝 아님)",
+           t.state(t.main, main_run.upper().replace(".DDDJANGO", ".dddjango")), 1, "이름이 디스크와 글자까지 같아야 한다")
+    t.commit(t.main, "검사기 출력 추적", {".dddjango/violations/20260827T095430Z-d8f3539e.jsonl": "{}\n"})
+    t.write(l2, {".dddjango/violations/20261114T010000Z-aaaaaaaa.jsonl": "{}\n"})
+    got_v: "tuple[int, str]" = t.state(t.main, ".dddjango/violations", stamped)
+    expect(fails, "S1-rs 검사기 출력 `.dddjango/violations`(다른 레인이 새 출력) → 실행 폴더 아님 · 건너뜀 · 미종료 · exit 에 안 듦",
+           got_v, 0, "실행 상태 .dddjango/violations: 실행 폴더 아님(검사기 출력) — 건너뜀",
+           "요약: run-state 폴더 2 · 표식 1 · 착륙 0 · 실행 줄 없음 0 · 미종료 0(쓰는 중 0) · 실행 폴더 아님 1")
+
+    for tag, old in (("가", _land_scope("20261101-1000", anchor="abc1234", stamp="20261102-0900")),
+                     ("나", "# 스코프\n\n## G0 정지 20261101-1000\n\n- 정지\n")):
+        t = LandToy(td, f"busy-{tag}")
+        t.commit(t.main, "old run (landed earlier)", {f"{LAND_FEAT}/refactor-scope.md": old})
+        l2 = t.lane("l2")
+        t.write(l2, {f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261114-0900")})   # L2 가 같은 폴더에서 새 실행(미커밋)
+        expect(fails, f"S1-busy {tag} main 사본은 {'표식 있는 옛 실행' if tag == '가' else '실행 줄 없음'} · L2 가 같은 폴더에서 새 실행 → "
+               f"run-state 미종료(② 쓰는 중)", t.state(t.main, LAND_FEAT), 2,
+               f"실행 상태 {LAND_FEAT}: 미종료 · 까닭: ② 작업 트리 {l2} 가 이 폴더를 자기 변경으로 가짐(쓰는 중)")
+        expect(fails, f"S1-busy {tag} 같은 때 deps → 활성(그 트리 사본의 실행 줄)", t.deps(t.main), 2,
+               f"겹침: 작업 트리 {l2} {LAND_FEAT} — BC alpha")
+
+    t = LandToy(td, "behind")
+    t.landed_lane({f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234")})
+    l2 = t.lane("l2")
+    expect(fails, "S1-behind 손 표식 전 L2 에서 run-state → 끝(착륙)", t.state(l2, LAND_FEAT), 0, f"실행 상태 {LAND_FEAT}: 끝(착륙 ")
+    t.commit(t.main, "main: 착륙한 옛 실행의 G2 승인 표시 바로잡기(손 표식)",
+             {f"{LAND_FEAT}/refactor-scope.md": _land_scope("20261101-1000", anchor="abc1234", stamp="20261102-0900")})
+    expect(fails, "S1-behind 뒤처진 L2 에서 run-state → 끝(표식 · MH 판 — 자기 변경 아닌 사본은 MH 판으로 읽음)", t.state(l2, LAND_FEAT), 0,
+           f"실행 상태 {LAND_FEAT}: 끝(표식 · G2 승인 · MH ")
+    expect(fails, "S1-behind 뒤처진 L2 에서 deps → 끝", t.deps(l2), 0, "레인 겹침 없음")
+    expect(fails, "S1-behind main 에서 run-state → 끝(표식 · MH 판)", t.state(t.main, LAND_FEAT), 0,
+           f"실행 상태 {LAND_FEAT}: 끝(표식 · G2 승인 · MH ")
+
+
+def s1_many_case(fails: "list[str]", td: Path) -> None:
+    """S1 비용(설계 §1 재확인 many) — 작업 트리 41 · 착륙한 표식 없는 폴더 5(파일 31씩)에서 deps 시간이 옛 판(2.37.0)의 5 배 안이다
+    (같은 때 잰다 · 넘으면 한 번 더 재어 작은 값으로 본다 — 부하 흔들림)."""
+    t = LandToy(td, "many")
+    files: "dict[str, str]" = {}
+    for k in range(5):
+        base: str = f".dddjango/2026110{k}-1000-feat{k}"
+        files[f"{base}/refactor-scope.md"] = _land_scope(f"2026110{k}-1000", anchor="abc1234")
+        files.update({f"{base}/behavior/w{j}.json": "{}\n" * 200 for j in range(30)})
+    t.landed_lane(files)
+    for k in range(40):
+        t.lane(f"x{k}")
+    old_tool: Path = _land_old_tool(td)
+    best: "dict[str, float]" = {}
+    codes: "dict[str, int]" = {}
+    for _round in range(2):
+        for tag, tool in (("old", old_tool), ("new", TOOL)):
+            start: float = time.monotonic()
+            codes[tag] = t.deps(t.main, tool=tool)[0]
+            best[tag] = min(best.get(tag, float("inf")), time.monotonic() - start)
+        if best["new"] <= 5 * best["old"]:
+            break
+    expect(fails, f"S1-many 작업 트리 41 · deps 시간 새 판 {best['new']:.2f}s ≤ 옛 판 {best['old']:.2f}s × 5 · 새 판 끝 · 옛 판 활성",
+           (0 if codes == {"old": 2, "new": 0} and best["new"] <= 5 * best["old"] else 9, json.dumps(codes)), 0)
+
+
 def map_items_case(fails: "list[str]", td: Path) -> None:
     """설계 §7 `_map_items` — follow · change 창 대응표도 싣는다(test 창은 아니다) · 창 차례는 번호(w2 < w10)."""
     folder: Path = td / "mapf"
@@ -5791,40 +6709,213 @@ _MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...]], ...]" = (
 )
 
 
+# S1 착륙 변이(설계 §1 «시험» — v0 셋 · v1 넷 · v1.2 둘 · v1.3 넷 · 도구 검토 B1 · I1 ~ I4 · 사소 M1 · M4 · M5) — (이름, ((옛 글, 새 글), …),
+# 잡을 사례 함수들) · 모두 붉어야 한다.
+_LAND_MERGE_ONLY: str = 'len(hist.git("log", "--first-parent", "-1", "--format=%P", mh, "--", f"{rel}/{RUN_RECORDS[kind][0]}").split()) > 1'
+_S1_MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...], str], ...]" = (
+    ("S1 머지 여부 안 봄(c · d1 이 끝)", (("                    if len(got) < 3:", "                    if not got:"),), "s1_main_cases"),
+    ("S1 trunk 확인 지움(분리된 HEAD · 다른 trunk 에서 착륙이 끝)",
+     (("            if self.off_reason():\n                self.why[rel] = self.off_reason()",
+       "            if False:\n                self.why[rel] = self.off_reason()"),), "s1_trunk_cases,deps_tree_cases"),
+    ("S1 착륙 뒤 레인 미착륙 커밋 안 봄(k 가 끝)", (("            if rel in got:\n                return ((f\"폴더 없는",
+                                         "            if False:\n                return ((f\"폴더 없는"),), "s1_lane_cases"),
+    ("S1 주 작업 트리 디스크 = MH 대조 안 함(d0 · j 둘째가 끝)",
+     (('        dirty: "set[str] | str" = self._changed(root)',
+       '        dirty: "set[str] | str" = self._changed(root) if head != self.hist.mh else set()'),), "s1_main_cases"),
+    ("S1 자기 변경을 표식 파일만으로 봄(f-audit · f-spec · j 둘째가 끝)",
+     (('[f":(top){self.prefix}{rel}" for rel in sorted(self._scope)]',
+       '[f":(top){self.prefix}{rel}/{RUN_RECORDS[\'dddjango\'][0]}" for rel in sorted(self._scope)]'),), "s1_lane_cases"),
+    ("S1 착륙 판정을 표식 캐시(seed)에 넣음(다른 트리 사본이 샘)",
+     (("                            hist.seed(kind, sha, run is None)",
+       f"                            hist.seed(kind, sha, run is None or {_LAND_MERGE_ONLY})"),), "s1_lane_cases"),
+    ("S1 MH 판 지름길에 착륙을 씀(다른 트리 자기 변경 사본이 샘)",
+     (("                      and hist.ended(kind, sha, data)):",
+       "                      and (hist.ended(kind, sha, data) or " + _LAND_MERGE_ONLY.replace("RUN_RECORDS[kind][0]", "mark")
+       + ")):"),), "s1_lane_cases"),
+    ("S1 _supplier_state 를 표식만으로 봄(i3 · sup4 가 미정리)",
+     (('            settled: "tuple[str, str] | None" = _refactor_settled(text, rel, landing)\n        except _LandedRecordError',
+       '            settled: "tuple[str, str] | None" = _refactor_settled(text, rel, None)\n        except _LandedRecordError'),),
+     "s1_supplier_cases"),
+    ("S1 공급자 정리에 앵커 · G1 확정 요구 지움(i2 · i 가 정리)",
+     (('    return (line is not None and "모드 리팩토링" in line and "build_anchor" in line and bool(confirms)\n'
+       '            and not _STOP_AFTER_G1.search(current, confirms[-1].end()))',
+       '    return line is not None and "모드 리팩토링" in line'),), "s1_supplier_cases"),
+    ("S1 G1 확정 뒤 정지 절을 안 봄(sup3 · sup3b 가 정리)",
+     (('and bool(confirms)\n            and not _STOP_AFTER_G1.search(current, confirms[-1].end()))', 'and bool(confirms))'),),
+     "s1_supplier_cases"),
+    ("S1 run-state 가 착륙을 안 봄(rs 착륙 폴더가 미종료)",
+     (('        line: "str | None" = _run_line(text)\n        ended: "tuple[str, str] | None" = _run_ended(line, rel, landing)',
+       '        line: "str | None" = _run_line(text)\n        ended: "tuple[str, str] | None" = _run_ended(line, rel, None)'),),
+     "s1_run_state_cases"),
+    ("S1 run-state 가 표식 · 실행 줄 없음 길에서 ② 를 안 봄(busy 둘이 끝)",
+     (('{rel: landing.owner(rel, skip={me}) for rel in runs}', '{rel: None for rel in runs}'),), "s1_run_state_cases"),
+    ("S1 run-state 가 자기 변경 아닌 사본도 디스크로 읽음(behind L2 가 미종료)",
+     (("            if mine[rel] or record in linked:", "            if True:"),), "s1_run_state_cases"),
+    ("S1 무시 파일을 자기 변경에서 뺌(own 뒤 deps · run-state 가 끝)",
+     (('"--untracked-files=all", "--ignored=matching", "--no-renames"', '"--untracked-files=all", "--ignored=no", "--no-renames"'),),
+     "s1_lane_cases"),
+    # 도구 검토 B1 — 착륙 표식
+    ("B1 이 실행 줄 끝에서 착륙 표식을 뺌(`--at continue` 가 표식 붙은 실행을 이음)",
+     (('    return _line_marked(line) or bool(_LANDING_STAMP.search(line or ""))', '    return _line_marked(line)'),), "s1_marker_cases"),
+    ("B1 run-state 가 착륙 표식을 끝으로 안 봄(marker main · 레인 L3 가 미종료)",
+     (('        return ("표식", stamp.group(1)) if landing is not None and landing.stamp_end(rel, stamp.group(1)) else None',
+       '        return None'),), "s1_marker_cases"),
+    ("B1 같은 실행 줄의 다른 사본을 끝으로 안 봄(레인 표식 · 옛 사본 레인이 되살림)",
+     (('        marks: "dict[str, tuple[set[Path], set[str]]]" = stamped.get(f".dddjango/{name}", {}) if kind == "dddjango" else {}',
+       '        marks: "dict[str, tuple[set[Path], set[str]]]" = {}'),), "s1_marker_cases"),
+    ("B1 착륙 표식 공급자를 표식 판이 아닌 지금 글로 봄(표식 뒤 G0 정지가 미정리로 뒤집음)",
+     (('        landed: str = re.split(r"(?m)^#+\\s*앞 실행", landing.landed_record(stamped.group(1), rel))[0]',
+       '        landed: str = current'),), "s1_marker_cases"),
+    # 도구 검토 I1 ~ I3
+    ("I1 쌓인 레인을 안 봄(stacked 가 끝)",
+     (('stacked: "str | None" = self._stacked(rel, got[0], got[1], got[2:]) if owner is None else None',
+       'stacked: "str | None" = None'),), "s1_stacked_cases"),
+    ("I1 착륙 머지의 부모 자신도 쌓인 레인으로 봄(스스로 착륙한 레인이 활성)",
+     (('        inner: "set[str]" = brought - set(others)', '        inner: "set[str]" = brought'),), "s1_stacked_cases,s1_lane_cases"),
+    ("I2 하위 폴더 접두를 안 뗌(subdir 잇기 · 다른 트리 고침이 끝)",
+     (('            if not p.startswith(pre):\n                continue\n            parts: "list[str]" = p[len(pre):].split("/")',
+       '            parts: "list[str]" = p.split("/")'),), "s1_subdir_cases"),
+    ("I3 폴더 없는 작업 트리를 모름(ghost 가 미종료)", (("        return self._gone\n", "        return set()\n"),), "s1_ghost_case"),
+    # 도구 검토 I4(검토 mut.py M1 ~ M11 과 같은 자리)
+    ("I4-M1 착륙 고리가 UTF-8 못 읽은 사본도 착륙으로 뺌",
+     ((' or any(r.unreadable for _t, r, _o in copies[(kind, name)]):', ':'),), "s1_failsafe_cases"),
+    ("I4-M2 `__pycache__` · `.DS_Store` 거름 지움",
+     (('and "__pycache__" not in parts\n                    and parts[-1] != ".DS_Store"):', '):'),), "s1_failsafe_cases"),
+    ("I4-M3 status 의 core.fsmonitor=false 지움",
+     (('"-c", "core.fsmonitor=false", "-C", str(root), "status"', '"-C", str(root), "status"'),), "s1_readonly_case"),
+    ("I4-M4 status 의 GIT_OPTIONAL_LOCKS=0 지움",
+     (('{**os.environ, "GIT_OPTIONAL_LOCKS": "0", "GIT_CEILING_DIRECTORIES": str(root.parent)}',
+       '{**os.environ, "GIT_CEILING_DIRECTORIES": str(root.parent)}'),), "s1_readonly_case"),
+    ("I4-M6 status 실패를 변경 없음으로",
+     (("        except (subprocess.CalledProcessError, OSError):\n            return \"git status 를 못 읽음\"",
+       "        except (subprocess.CalledProcessError, OSError):\n            return set()"),), "s1_failsafe_cases"),
+    ("I4-M7 미착륙 커밋 읽기 실패를 변경 없음으로",
+     (("                    self._unlanded[head] = None", "                    self._unlanded[head] = set()"),), "s1_failsafe_cases"),
+    ("I4-M8 run-state UTF-8 못 읽음을 미종료 수에서 뺌",
+     (("            print(f\"실행 상태 {rel}: 미종료 · 까닭: {where} {scope_name} 를 못 읽는다({type(exc).__name__} — 끝인지 모름)\")\n"
+       "            open_count += 1",
+       "            print(f\"실행 상태 {rel}: 미종료 · 까닭: {where} {scope_name} 를 못 읽는다({type(exc).__name__} — 끝인지 모름)\")"),),
+     "s1_failsafe_cases"),
+    ("I4-M9 run-state 링크 기록인데 사본 없음 거름 지움",
+     (("            if record in linked and not (me_dir / record).exists():", "            if False:"),), "s1_failsafe_cases"),
+    ("I4-M10 git log 실패를 착륙으로",
+     (('                    self.why[rel] = f"git 읽기 실패({type(exc).__name__}) — 보수 쪽 미종료"',
+       '                    self.why[rel] = f"git 읽기 실패({type(exc).__name__}) — 보수 쪽 미종료"\n                    found = ["0" * 40] * 3'),),
+     "s1_failsafe_cases"),
+    ("I4-M11 trunk 를 모를 때도 착륙 켬",
+     (('            self._off = ("착륙 판정 꺼짐 — trunk 가지를 모름(origin/HEAD · main · master 없음)" if trunk is None else',
+       '            self._off = ("" if trunk is None else'),), "s1_failsafe_cases"),
+    # 사소 M1 · M4 · M5
+    ("M1 run-state 폴더 이름 글자 대조 지움(대소문자 다른 이름이 거짓 끝)",
+     ((" or path.name not in listed:", ":"),), "s1_run_state_cases"),
+    ("M4 검사기 출력 자리를 실행 폴더로 셈(violations 가 미종료)",
+     (('    runs: "list[str]" = [rel for rel in rels if rel.split("/", 1)[1] != CHECKER_OUTPUT_DIR]',
+       '    runs: "list[str]" = list(rels)'),), "s1_run_state_cases"),
+    ("M5 끊긴 origin/HEAD 를 믿음(stale origin 에서 꺼짐)",
+     (('                                   and self._ref(main_root, "rev-parse", "--verify", "-q", origin) else None)',
+       ' else None)'),), "s1_trunk_cases"),
+    # 도구 재확인 R1 · R2 · R3 · R4 · R6 · R9
+    ("R1 착륙 표식이 다른 트리의 자기 변경을 이김(T3 표식 · L1 쓰는 중이 끝)",
+     (('            if landing.held(f".dddjango/{name}", shas, carriers) is None:', '            if True:'),), "s1_marker_cases"),
+    ("R1 표식 든 트리도 자기 변경으로 셈(레인 표식 L3 · T3 만 가진 대조가 활성)",
+     (('landing.held(f".dddjango/{name}", shas, carriers)', 'landing.held(f".dddjango/{name}", shas, set())'),), "s1_marker_cases"),
+    ("R1 deps 표식 폴더에서 쌓인 레인을 안 봄(쌓인 레인 아래 표식이 끝)",
+     (('            stacked: "str | None" = self._stacked(rel, got[0], got[1], got[2:], skip) if got is not None else None',
+       '            stacked: "str | None" = None'),), "s1_marker_cases"),
+    ("R1 run-state 표식에서 쌓인 레인을 안 봄(쌓인 레인 아래 표식이 끝)",
+     (('        stacked: "str | None" = self._stacked(rel, got[0], got[1], got[2:], {self.me})', '        stacked: "str | None" = None'),),
+     "s1_marker_cases"),
+    ("R2 잠근 트리의 없는 폴더를 폴더 없음으로(fs-locked 가 끝)",
+     (('            self._gone = missing - self._locked if self._locked is not None else set()', '            self._gone = missing'),),
+     "s1_failsafe_cases"),
+    ("R2 lstat 권한 오류를 폴더 없음으로(fs-denied 가 끝)",
+     (("                except OSError:\n                    continue\n            if missing:",
+       "                except OSError:\n                    missing.add(r)\n            if missing:"),), "s1_failsafe_cases"),
+    ("R2 폴더를 못 읽음을 변경 없음으로(fs-denied 가 끝)",
+     (('            return f"폴더를 못 읽음({type(exc).__name__})"', '            return set()'),), "s1_failsafe_cases"),
+    ("R2 잠근 트리 폴더 없음을 변경 없음으로(fs-locked 가 끝)",
+     (('            return ("폴더가 없음(잠근 작업 트리 — 그 디스크를 못 읽음)" if root in (self._locked or set()) else\n'
+       '                    "폴더가 없음(잠금 여부를 못 읽음)")', '            return set()'),), "s1_failsafe_cases"),
+    ("R2 status 의 GIT_CEILING_DIRECTORIES 지움(`.git` 없는 트리가 바깥 저장소로 샘)",
+     ((', "GIT_CEILING_DIRECTORIES": str(root.parent)}', '}'),), "s1_failsafe_cases"),
+    ("R3 쌓인 레인을 HEAD 자신으로만 봄(5회차 — 코드만 한 커밋 뒤 끝)",
+     (('                touch: "set[str]" = self.hist.attach(head)', '                touch: "set[str]" = {head}'),
+      ('and os.fsdecode(self.hist.git("merge-base", head, merge)).strip() in inner)', 'and False)')), "s1_stacked_cases"),
+    ("R3 merge-base 갈래 지움(들인 커밋에서 갈라져 착륙한 가지 위 레인이 끝)",
+     (('and os.fsdecode(self.hist.git("merge-base", head, merge)).strip() in inner)', 'and False)'),), "s1_stacked_cases"),
+    ("R3 merge-base 만 봄(쌓인 레인이 main 을 받으면 끝)",
+     (('                if not touch & inner and not (touch - brought - self.hist.first_parents()\n'
+       '                                              and os.fsdecode(', '                if not (os.fsdecode('),), "s1_stacked_cases"),
+    ("R4 run-state 가 표식 sha 를 안 풂(머지 아닌 · 없는 sha 표식이 끝)",
+     (('        return ("표식", stamp.group(1)) if landing is not None and landing.stamp_end(rel, stamp.group(1)) else None',
+       '        return "표식", stamp.group(1)'),), "s1_marker_cases"),
+    ("R4 deps 가 표식 sha 를 안 풂(머지 아닌 sha 표식 사본이 끝)",
+     (("                    if self.stamp_merge(m.group(2)) is None:\n                        continue",
+       "                    if False:\n                        continue"),), "s1_marker_cases"),
+    ("R4 표식 sha 의 부모 수를 안 봄(머지 아닌 커밋이 표식)",
+     (("                if len(got) >= 3:\n                    found = got", "                if got:\n                    found = got"),),
+     "s1_marker_cases"),
+    ("R6 태어나지 않은 가지 트리를 보수 쪽으로(5회차 — 빈 orphan 이 모든 폴더를 막음)",
+     (('        unborn: bool = bool(_UNBORN.fullmatch(head))', '        unborn: bool = False'),), "s1_failsafe_cases"),
+    ("R6 태어나지 않은 가지 트리의 status 도 안 봄(orphan 이 쓰는 중 · 깨진 HEAD 가 끝)",
+     (('        unborn: bool = bool(_UNBORN.fullmatch(head))       # 태어나지 않은 가지 — 커밋이 없어 status 만 본다\n',
+       '        unborn: bool = bool(_UNBORN.fullmatch(head))\n        if unborn:\n            return None\n'),), "s1_failsafe_cases"),
+    ("R9 deps status 좁힘에서 표식 폴더를 뺌(넓혀 다시 읽기도 지움 — R1 L1 쓰는 중이 끝)",
+     (('    landing.narrow(set(stamped) | {rel', '    landing.narrow(set() | {rel'),
+      ('        if self._scope is not None and rel not in self._scope:   # 좁힌 status 밖 폴더 — 넓혀 다시 읽는다',
+       '        if False:')), "s1_marker_cases"),
+    ("R9 deps status 좁힘에서 착륙 후보를 뺌(넓혀 다시 읽기도 지움 — 주 트리 잇기가 끝)",
+     (('{rel for rel in readable if landing.first_merge(rel) is not None}', 'set()'),
+      ('        if self._scope is not None and rel not in self._scope:   # 좁힌 status 밖 폴더 — 넓혀 다시 읽는다',
+       '        if False:')), "s1_main_cases"),
+    ("R9 run-state status 좁힘에서 물은 폴더를 뺌(넓혀 다시 읽기도 지움)",
+     (('    landing.narrow(runs) ', '    landing.narrow([]) '),
+      ('        if self._scope is not None and rel not in self._scope:   # 좁힌 status 밖 폴더 — 넓혀 다시 읽는다',
+       '        if False:')), "s1_run_state_cases"),
+)
+MUTATION_WORKERS: int = min(8, os.cpu_count() or 2)
+
+
+def _mutant(name: str, edits: "tuple[tuple[str, str], ...]", args: "list[str]", red_mark: str, src: str) -> str:
+    """변이 하나를 설치본 사본에 넣고 고른 사례를 돈다 — 빈 글 = 붉음(잡힘) · 아니면 생존 · 러너 깨짐의 까닭."""
+    text: str = src
+    for old, new in edits:
+        if text.count(old) != 1:
+            return f"변이 지점이 정확히 한 곳이 아니다({text.count(old)}) — 변이 표를 코드에 맞춰라"
+        text = text.replace(old, new, 1)
+    with tempfile.TemporaryDirectory(prefix="ra-mutant-") as tmp:   # 설치본째(코퍼스 · 플랫폼 판별은 scripts 의 부모)
+        plugin: Path = Path(tmp) / TOOL.parent.parent.name
+        shutil.copytree(TOOL.parent.parent, plugin, symlinks=False, ignore=shutil.ignore_patterns("__pycache__"))
+        (plugin / "scripts" / TOOL.name).write_text(text, encoding="utf-8")
+        proc = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--scripts", str(plugin / "scripts"), *args],
+                              capture_output=True, text=True)
+    out: str = proc.stdout + proc.stderr
+    if proc.returncode == 0:
+        return "변이가 살아남음(시험이 못 잡는다)"
+    if red_mark not in out:
+        return f"변이가 러너를 깨뜨림(시험 실패가 아님) — {out.strip()[-300:]}"
+    return ""
+
+
 def _mutation_test() -> int:
-    """변이를 scripts 사본에 하나씩 넣고 묶음 사례(`--only-group`)를 돈다 — 모두 붉어야 green."""
+    """변이를 scripts 사본에 하나씩 넣고 묶음 사례(`--only-group`) · S1 사례(`--only <함수>`)를 돈다 — 모두 붉어야 green."""
     src: str = TOOL.read_text(encoding="utf-8")
+    jobs: "list[tuple[str, tuple[tuple[str, str], ...], list[str], str]]" = (
+        [(name, edits, ["--only-group"], "FAIL — refactor_audit 묶음 사례") for name, edits in _MUTATIONS]
+        + [(name, edits, ["--only", only], "FAIL — refactor_audit 고른 사례") for name, edits, only in _S1_MUTATIONS])
     survived: "list[str]" = []
-    for name, edits in _MUTATIONS:
-        text: str = src
-        bad: str = ""
-        for old, new in edits:
-            if text.count(old) != 1:
-                bad = f"변이 지점이 정확히 한 곳이 아니다({text.count(old)}) — 변이 표를 코드에 맞춰라"
-                break
-            text = text.replace(old, new, 1)
-        if not bad:
-            with tempfile.TemporaryDirectory(prefix="ra-mutant-") as tmp:   # 설치본째(코퍼스 · 플랫폼 판별은 scripts 의 부모)
-                plugin: Path = Path(tmp) / TOOL.parent.parent.name
-                shutil.copytree(TOOL.parent.parent, plugin, symlinks=False, ignore=shutil.ignore_patterns("__pycache__"))
-                (plugin / "scripts" / TOOL.name).write_text(text, encoding="utf-8")
-                proc = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--scripts", str(plugin / "scripts"),
-                                       "--only-group"], capture_output=True, text=True)
-            out: str = proc.stdout + proc.stderr
-            if proc.returncode == 0:
-                bad = "변이가 살아남음(시험이 못 잡는다)"
-            elif "FAIL — refactor_audit 묶음 사례" not in out:
-                bad = f"변이가 러너를 깨뜨림(시험 실패가 아님) — {out.strip()[-300:]}"
-        if bad:
-            survived.append(f"{name}: {bad}")
-        else:
-            print(f"  죽음 {name}")
+    with ThreadPoolExecutor(max_workers=MUTATION_WORKERS) as pool:
+        for (name, _e, _a, _m), bad in zip(jobs, pool.map(lambda j: _mutant(j[0], j[1], j[2], j[3], src), jobs)):
+            if bad:
+                survived.append(f"{name}: {bad}")
+            else:
+                print(f"  죽음 {name}")
     if survived:
         print(f"[mutation] 생존 변이 {len(survived)}건", file=sys.stderr)
         for line in survived:
             print(f"  {line}", file=sys.stderr)
         return 2
-    print(f"[mutation] refactor_audit 변이 {len(_MUTATIONS)}종 모두 red")
+    print(f"[mutation] refactor_audit 변이 {len(jobs)}종 모두 red")
     return 0
 
 
@@ -5895,6 +6986,18 @@ def main() -> int:
         deps_supplier_cases(fails, td)
         deps_doc_kwarg_cases(fails, td)
         deps_own_copy_cases(fails, td)
+        s1_main_cases(fails, td)
+        s1_trunk_cases(fails, td)
+        s1_lane_cases(fails, td)
+        s1_supplier_cases(fails, td)
+        s1_run_state_cases(fails, td)
+        s1_marker_cases(fails, td)
+        s1_stacked_cases(fails, td)
+        s1_subdir_cases(fails, td)
+        s1_ghost_case(fails, td)
+        s1_failsafe_cases(fails, td)
+        s1_readonly_case(fails, td)
+        s1_many_case(fails, td)
         map_items_case(fails, td)
     corpus_cases(fails, nov[0])
     self_test_negative_case(fails)

@@ -25,6 +25,12 @@
   #247 [ast]  UnitOfWork 는 `<Bc>[<역할>]UnitOfWork`, 구현은 접두(`Django<Bc>[<역할>]UnitOfWork`) — 축약 불허·전수 판정(판정 ①).
   #309 [path] `service/` 로 줄이지 않는다 — `domain_service/` 그대로.
   #339 [path·면제] 어드민은 규정 밖 구역(자리·이름만) — 진단 0.
+  어드민 자리(#340 ~ #348): 표준 자리 `driven_layer/django_<bc>/admin/` 과 옛 자리 `django_*/admin/` 둘 다 본다.
+              표준 자리에서 «트리에 없는 경로» 는 #490(check-layer-skeleton · 제1원칙 선행 게이트) 몫이라
+              같은 꼴의 경로 줄(#340 직계 파일 · #341 의 `feature/` 밖 · #344 파일 꼴 · #345 `feature.py` ·
+              #348 덮어쓰기 모델 마디 — 표준 트리는 `templates/admin/<bounded_context>/<page>.html` 뿐)은 옛 자리에서만
+              낸다 — 내용 규칙(#341 `feature/` 안 · #342 · #343 · #344 폼 클래스 자리 · #345 공개 정의 둘 · #348
+              셋째 마디)은 두 자리 모두(2026-11-14 F4-163).
   #340 [path] admin/ 은 모델 하나 = 폴더 하나 — 직계 파일 금지.
   #341 [path] admin/<entity>/ 파일에 `_admin` 접미 금지.
   #342 [ast]  ModelAdmin 은 `admin/<entity>/panel.py` 에 하나.
@@ -406,30 +412,36 @@ DJANGO_HOOKS = {"get_urls", "save_model", "delete_model", "get_queryset", "respo
                 "response_add", "formfield_for_foreignkey", "has_change_permission"}
 
 
-def _admin_dirs(bc: Path) -> list[Path]:
-    return [d / "admin" for d in sorted(bc.glob("django_*")) if (d / "admin").is_dir()]
+def _admin_dirs(bc: Path) -> list[tuple[Path, bool]]:
+    """(admin 폴더, 표준 자리인가) — 옛 자리 `django_*/admin` 들과 표준 자리 `driven_layer/django_<bc>/admin`."""
+    found: list[tuple[Path, bool]] = [(d / "admin", False) for d in sorted(bc.glob("django_*")) if (d / "admin").is_dir()]
+    standard: Path = bc / "driven_layer" / f"django_{bc.name}" / "admin"
+    return found + ([(standard, True)] if standard.is_dir() else [])
 
 
 def _check_admin(root: Path, bc: Path, f: Findings, cand: Candidates) -> None:
-    for admin in _admin_dirs(bc):
+    # 표준 자리에서 «트리에 없는 경로» 는 #490(제1원칙 선행 게이트 — check-layer-skeleton) 몫이다. 같은 파일을
+    # 같은 뜻으로 잡는 경로 줄(#340 · #341 · #344 · #345 파일 꼴)은 옛 자리에서만 낸다.
+    for admin, standard in _admin_dirs(bc):
         for p in sorted(admin.iterdir()):
-            if p.is_file() and p.suffix == ".py" and p.name != "__init__.py":
+            if not standard and p.is_file() and p.suffix == ".py" and p.name != "__init__.py":
                 f.add("#340", _rel(root, p),
                       "admin/ 직계 파일 — 모델 하나 = 폴더 하나(`admin/<entity>/`)다")
         for entity_dir in sorted(p for p in admin.iterdir() if p.is_dir() and p.name != "__pycache__"):
             for py in _py_files(entity_dir):
-                if py.stem.endswith("_admin"):
+                # 표준 자리에서 트리가 아무 이름이나 받는 파일 칸은 `feature/<feature>.py` 뿐이다 — 거기서만 #341 이 선다.
+                if py.stem.endswith("_admin") and not (standard and py.parent != entity_dir / "feature"):
                     f.add("#341", _rel(root, py),
                           "`_admin` 접미사 — 폴더가 «누구»를 말하니 파일은 «무엇»만 말한다")
-            if (entity_dir / "form.py").is_file():
+            if not standard and (entity_dir / "form.py").is_file():
                 f.add("#344", _rel(root, entity_dir / "form.py"),
                       "`form` 은 파일이 아니라 폴더다 — `form/<form>_form.py`")
             form_dir = entity_dir / "form"
-            if form_dir.is_dir():
+            if form_dir.is_dir() and not standard:
                 for py in form_dir.glob("*.py"):
                     if py.name != "__init__.py" and not py.name.endswith("_form.py"):
                         f.add("#344", _rel(root, py), "폼 파일은 `<form>_form.py` 다(폼 하나 = 파일 하나)")
-            if (entity_dir / "feature.py").is_file():
+            if not standard and (entity_dir / "feature.py").is_file():
                 f.add("#345", _rel(root, entity_dir / "feature.py"),
                       "`feature` 는 파일이 아니라 폴더다 — `feature/<feature>.py`(기능 하나 = 파일 하나)")
             feat_dir = entity_dir / "feature"
@@ -492,7 +504,8 @@ def _check_admin(root: Path, bc: Path, f: Findings, cand: Candidates) -> None:
                     f.add("#348", _rel(root, seg),
                           "templates/admin/ 셋째 마디가 폴더 이름(django_…)이다 — apps.py 의 "
                           "`label` 이어야 한다")
-                for model_seg in sorted(p for p in seg.iterdir() if p.is_dir()):
+                # 표준 자리 트리는 `templates/admin/<bounded_context>/<page>.html` 뿐 — 모델 마디 폴더는 #490 이 잡는다.
+                for model_seg in sorted(p for p in seg.iterdir() if p.is_dir() and not standard):
                     if "_" in model_seg.name:
                         f.add("#348", _rel(root, model_seg),
                               "덮어쓰기 경로의 모델 마디에 밑줄 — 모델 클래스명을 «전부 소문자로 "

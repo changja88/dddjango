@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""현장 F4/F7/F8 회귀: 골격·의미 후보·앵커 전체 수집의 반대 대조를 고정한다."""
+"""현장 F4/F7/F8 회귀: 골격·의미 후보·앵커 전체 수집의 반대 대조를 고정한다.
+
+사용: python3 workspace/tools/field_report_checker_smoke.py [시험 이름 …]
+      python3 workspace/tools/field_report_checker_smoke.py --scripts <검사기 폴더> [시험 이름 …]   (변이 사본으로)
+      python3 workspace/tools/field_report_checker_smoke.py --mutation-test
+`--mutation-test` 는 `_MUTATIONS` 의 고침을 하나씩 되돌리거나 무른 검사기 사본으로 그 변이가 붉혀야 할 시험 클래스를 돌려
+변이마다 시험이 실패하는지(죽는지) 본다 — exit 0 = 모두 죽음 · 2 = 생존 · 변이 지점 어긋남.
+"""
 from __future__ import annotations
 
 import ast
@@ -25,7 +32,21 @@ from ontology_census import parse_sections
 import api_error_backstop_matrix as backstop_matrix
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPTS = ROOT / "dddjango/scripts"
+
+
+def _scripts_from_argv(argv: list[str]) -> Path:
+    """`--scripts <폴더>`(변이 사본)를 argv 에서 떼어 그 폴더를 — 없으면 저장소 검사기 폴더."""
+    if "--scripts" not in argv:
+        return ROOT / "dddjango/scripts"
+    i: int = argv.index("--scripts")
+    if i + 1 >= len(argv) or not Path(argv[i + 1]).is_dir():
+        raise SystemExit("사용: --scripts <검사기 폴더>")
+    folder: Path = Path(argv[i + 1]).resolve()
+    del argv[i:i + 2]
+    return folder
+
+
+SCRIPTS = _scripts_from_argv(sys.argv) if __name__ == "__main__" else ROOT / "dddjango/scripts"
 FIXTURES = ROOT / "workspace/eval/fixtures"
 sys.path.insert(0, str(SCRIPTS))
 comp = _load_module(SCRIPTS / "check-composition-root.py", "field_composition")
@@ -5075,5 +5096,3706 @@ class JointCommitListRegression(unittest.TestCase):
         self.assertIn("BC 없음 — shipping (application/ 아래: billing, orders)", self.run_list(self.root, "shipping").stderr)
 
 
+# F4-167 #473 행렬 — (이름, 슬롯 try 줄 수, #473 줄 수, 사례). 사례 = {"slot": 슬롯 본문(머리 import 뒤에 붙음),
+# "files": {짝 ACL 폴더 기준 경로: 본문}, "outside": {저장소 기준 경로: 본문}} — 본문은 들여 쓴 채 두고 쓸 때 dedent 한다.
+# 앞 67 = 설계 검토 · 재확인 · 셋째 확인 장난감(배포판과 같은 붉음 — 대조 면제 둘만 0) · 그다음 26 = 운영자 사례(면제 다섯만 0) ·
+# 그다음 24 = 구현 검토 장난감(N1 ~ N9 · D1 · D2 · X 아홉 · T 둘 · 대조 둘 — 대조 둘 · D2 만 0) · 그다음 17 = 고침 사례(클론 꼴 대조 둘 ·
+# 실어 나르기 · 표 · 예약 칸 · 꼬리표 · 글자 타입 · 꼴 C 다른 파일 · 창구 이름 읽기 · 허용 밖 부르기 · 별칭 안 클래스 — 대조 셋만 0) ·
+# 그다음 9 = 구현 재확인 장난감(R1 ~ R7 · 시험 파일 대조 둘 — 대조 둘만 0) · 그다음 14 = 셋째 고침 사례(꼴 C 사설 이름 · 같은 BC
+# 프로덕션 import · 표 고쳐짐 · staticmethod — 대조 둘만 0) · 끝 5 = 셋째 확인 장난감(H1 ~ H4 · H6 — `__config__` 옮김 ·
+# `__globals__` · `__self__` · 파일을 건넌 클래스 메서드 꺼냄 — 모두 붉음).
+F4_167_CASES: tuple[tuple[str, int, int, dict], ...] = (
+    ('E1-a 순수 함수가 창구 생성기를 반복(기존 붉음 유지 «for 로 읽음» 을 감쌈)', 1, 1, {"slot": """\
+        def _collect(responses):
+            return [r for r in responses]
+
+        def read_all(order_id):
+            try:
+                responses = get_order_query(GetOrderRequest(order_id=order_id))
+            except OrderLookupPublishedError:
+                return []
+            try:
+                return _collect(responses)
+            except ValueError:
+                return []
+"""}),
+    ('E1-b 순수 함수가 list(매개변수)(기존 붉음 유지 «list() 로 다 읽음» 을 감쌈)', 1, 1, {"slot": """\
+        def _all(responses):
+            return list(responses)
+
+        def read_all(responses):
+            try:
+                return _all(responses)
+            except ValueError:
+                return []
+"""}),
+    ('E1-c 순수 함수가 sorted(key=넘겨받은 함수)', 1, 1, {"slot": """\
+        def _ordered(items, key):
+            return sorted(items, key=key)
+
+        def read_all(items):
+            lookup = get_order_query
+            try:
+                return _ordered(items, lookup)
+            except ValueError:
+                return []
+"""}),
+    ('E1-d 항등 순수 함수의 결과를 부름', 1, 1, {"slot": """\
+        def _same(value):
+            return value
+
+        def read(order_id):
+            lookup = get_order_query
+            try:
+                return _same(lookup)(GetOrderRequest(order_id=order_id))
+            except ValueError:
+                return None
+"""}),
+    ('E1-e 순수 함수가 모듈 별칭(창구)을 돌려줌', 1, 1, {"slot": """\
+        _LOOKUP = get_order_query
+
+        def _lookup():
+            return _LOOKUP
+
+        def read(order_id):
+            try:
+                return _lookup()(GetOrderRequest(order_id=order_id))
+            except ValueError:
+                return None
+"""}),
+    ('E1-f 순수 함수가 모듈 표(창구 담음)에서 꺼냄', 1, 1, {"slot": """\
+        _TABLE = {"get": get_order_query}
+
+        def _pick(key):
+            return _TABLE[key]
+
+        def read(order_id):
+            try:
+                return _pick("get")(GetOrderRequest(order_id=order_id))
+            except ValueError:
+                return None
+"""}),
+    ('E1-g 주석 Any 매개변수의 메서드', 1, 1, {"slot": """\
+        from typing import Any
+
+        def _fetch(gateway: Any, order_id: int):
+            return gateway.get(order_id)
+
+        class _Gateway:
+            def get(self, order_id):
+                return get_order_query(GetOrderRequest(order_id=order_id))
+
+        def read(order_id, gateway):
+            try:
+                return _fetch(gateway, order_id)
+            except ValueError:
+                return None
+"""}),
+    ('E1-h 주석 object 매개변수의 메서드', 1, 1, {"slot": """\
+        def _fetch(gateway: object, order_id: int):
+            return gateway.get(order_id)
+
+        def read(order_id, gateway):
+            try:
+                return _fetch(gateway, order_id)
+            except ValueError:
+                return None
+"""}),
+    ('E1-i 문자열 주석(창구 타입) 매개변수의 메서드', 1, 1, {"slot": """\
+        from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import OrderLookupService
+
+        def _fetch(service: "OrderLookupService", order_id: int):
+            return service.get(order_id)
+
+        def read(order_id, service):
+            try:
+                return _fetch(service, order_id)
+            except ValueError:
+                return None
+"""}),
+    ('E1-j 주석 Iterator 매개변수의 __next__(창구 생성기)', 1, 1, {"slot": """\
+        from collections.abc import Iterator
+
+        def _first(stream: Iterator[str]) -> str:
+            return stream.__next__()
+
+        def read(stream):
+            try:
+                return _first(stream)
+            except ValueError:
+                return None
+"""}),
+    ('E1-k 주석 매개변수 + 지역에 담은 모듈 별칭의 메서드', 1, 1, {"slot": """\
+        _LOOKUP = get_order_query
+
+        def _fetch(order_id: int):
+            lookup = _LOOKUP
+            return lookup.__call__(GetOrderRequest(order_id=order_id))
+
+        def read(order_id):
+            try:
+                return _fetch(order_id)
+            except ValueError:
+                return None
+"""}),
+    ('E1-l 주석 매개변수를 몸통에서 다시 묶음', 1, 1, {"slot": """\
+        _LOOKUP = get_order_query
+
+        def _fetch(order_id: int):
+            order_id = _LOOKUP
+            return order_id.__call__(GetOrderRequest(order_id=1))
+
+        def read(order_id):
+            try:
+                return _fetch(order_id)
+            except ValueError:
+                return None
+"""}),
+    ('E1-m 같은 이름을 뒤에서 창구 import 로 다시 묶음', 1, 1, {"slot": """\
+        def _parse(text):
+            return json.loads(text)
+
+        try:
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query as _parse
+        except ImportError:
+            pass
+
+        def read(text):
+            try:
+                return _parse(text)
+            except ValueError:
+                return None
+"""}),
+    ('E1-n singledispatch 로 등록한 갈래가 창구를 부름', 1, 1, {"slot": """\
+        from functools import singledispatch
+
+        @singledispatch
+        def _parse(raw):
+            return raw
+
+        @_parse.register
+        def _(raw: int):
+            return get_order_query(GetOrderRequest(order_id=raw))
+
+        def read(raw):
+            try:
+                return _parse(raw)
+            except ValueError:
+                return None
+"""}),
+    ('E1-o 데코레이터(순수 함수)가 창구 별칭으로 바꿔치움', 1, 1, {"slot": """\
+        _LOOKUP = get_order_query
+
+        def _swap(fn):
+            return _LOOKUP
+
+        @_swap
+        def _parse(raw):
+            return raw
+
+        def read(raw):
+            try:
+                return _parse(GetOrderRequest(order_id=raw))
+            except ValueError:
+                return None
+"""}),
+    ('E1-p 기본 인자 값이 창구 별칭(sorted key 로 부름)', 1, 1, {"slot": """\
+        _LOOKUP = get_order_query
+
+        def _ordered(items, key=_LOOKUP):
+            return sorted(items, key=key)
+
+        def read(items):
+            try:
+                return _ordered(items)
+            except ValueError:
+                return []
+"""}),
+    ('E1-q 모듈 수준 globals() 로 이름을 바꿔치움', 1, 1, {"slot": """\
+        def _parse(text):
+            return json.loads(text)
+
+        globals()["_parse"] = get_order_query
+
+        def read(text):
+            try:
+                return _parse(text)
+            except ValueError:
+                return None
+"""}),
+    ('E1-r functools.partial 별칭을 순수 함수가 돌려줌', 1, 1, {"slot": """\
+        import functools
+
+        _BOUND = functools.partial(get_order_query)
+
+        def _bound():
+            return _BOUND
+
+        def read(order_id):
+            try:
+                return _bound()(GetOrderRequest(order_id=order_id))
+            except ValueError:
+                return None
+"""}),
+    ('대조 E1 조건부 정의(if/else 로 두 번 묶음)', 1, 1, {"slot": """\
+        import os
+        if os.environ.get("X"):
+            def _parse(text):
+                return json.loads(text)
+        else:
+            _parse = get_order_query
+
+        def read(text):
+            try:
+                return _parse(text)
+            except ValueError:
+                return None
+"""}),
+    ('대조 E1 순수 함수 안 next(매개변수)', 1, 1, {"slot": """\
+        def _first(stream):
+            return next(stream)
+
+        def read(stream):
+            try:
+                return _first(stream)
+            except ValueError:
+                return None
+"""}),
+    ('E2-a `from . import wires` — 패키지 __init__ 만 보고 하위 모듈은 안 봄', 1, 2, {"slot": """\
+        from . import wires
+
+        def read(text):
+            try:
+                return wires.Wire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'__init__.py': "", 'wires.py': """\
+            from pydantic import BaseModel, model_validator
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+
+            class Wire(BaseModel):
+                id: int
+
+                @model_validator(mode="after")
+                def _check(self):
+                    get_order_query(self.id)
+                    return self
+"""}}),
+    ('E2-b `from .schema import part_wire` — 패키지의 하위 모듈 import', 1, 1, {"slot": """\
+        from .schema import part_wire
+
+        def read(text):
+            try:
+                return part_wire.PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel, model_validator
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+
+            class PartWire(BaseModel):
+                id: int
+
+                @model_validator(mode="after")
+                def _check(self):
+                    get_order_query(self.id)
+                    return self
+"""}}),
+    ('E2-c 상대 모듈이 `from application.orders.driving_layer import open_host_service`', 1, 1, {"slot": """\
+        from .schema import Wire
+
+        def read(text):
+            try:
+                return Wire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema.py': """\
+            from pydantic import BaseModel, model_validator
+            from application.orders.driving_layer import open_host_service
+
+            class Wire(BaseModel):
+                id: int
+
+                @model_validator(mode="after")
+                def _check(self):
+                    open_host_service.order_lookup.order_lookup_service.get_order_query(self.id)
+                    return self
+"""}}),
+    ('E2-d 상대 모듈이 DI 로 창구 함수를 받아 담음(창구 import 0)', 1, 1, {"slot": """\
+        from .providers import lookup
+
+        def read(order_id):
+            try:
+                return lookup(GetOrderRequest(order_id=order_id))
+            except ValueError:
+                return None
+""", "files": {'providers.py': """\
+            from framework.di import container
+
+            lookup = container.resolve("orders.order_lookup.get_order_query")
+"""}}),
+    ('E2-e 상대 모듈의 클래스 속성에 창구를 담은 등록부(다른 파일이 담음)', 1, 2, {"slot": """\
+        from .registry import Registry
+
+        def read(order_id):
+            try:
+                return Registry.lookup(GetOrderRequest(order_id=order_id))
+            except ValueError:
+                return None
+""", "files": {'registry.py': """\
+            class Registry:
+                lookup = None
+""", 'wiring.py': """\
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+            from .registry import Registry
+
+            Registry.lookup = get_order_query
+"""}}),
+    ('E2-f 상대 import 가 창구 패키지 안으로 올라감(상대 경로 창구)', 1, 1, {"slot": """\
+        from ......orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query as _get
+
+        def read(order_id):
+            try:
+                return _get(GetOrderRequest(order_id=order_id))
+            except ValueError:
+                return None
+""", "outside": {'application/orders/driving_layer/open_host_service/order_lookup/order_lookup_service.py': """\
+            def get_order_query(request):
+                raise RuntimeError
+"""}}),
+    ('E2-g 상대 모듈이 importlib 로 창구를 불러 씀', 1, 1, {"slot": """\
+        from .schema import Wire
+
+        def read(text):
+            try:
+                return Wire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema.py': """\
+            import importlib
+            from pydantic import BaseModel, model_validator
+
+            class Wire(BaseModel):
+                id: int
+
+                @model_validator(mode="after")
+                def _check(self):
+                    importlib.import_module("application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service").get_order_query(self.id)
+                    return self
+"""}}),
+    ('대조 E2 __init__ 재노출(창구 import 모듈)', 1, 1, {"slot": """\
+        from .schema import BadWire
+
+        def read(text):
+            try:
+                return BadWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': """\
+            from .bad import BadWire
+""", 'schema/bad.py': """\
+            from pydantic import BaseModel
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+
+            class BadWire(BaseModel):
+                id: int
+"""}}),
+    ('대조 E2 고리(a ↔ b · b 가 창구 import)', 1, 2, {"slot": """\
+        from .a import A
+
+        def read(text):
+            try:
+                return A.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'a.py': """\
+            from .b import B
+            class A:
+                pass
+""", 'b.py': """\
+            from .a import A
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+            class B:
+                pass
+"""}}),
+    ('대조 E2 지연 import(함수 안 창구 import)', 1, 2, {"slot": """\
+        from .schema import Wire
+
+        def read(text):
+            try:
+                return Wire.model_validate_json(text).lookup()
+            except ValidationError:
+                return None
+""", "files": {'schema.py': """\
+            from pydantic import BaseModel
+
+            class Wire(BaseModel):
+                id: int
+
+                def lookup(self):
+                    from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+                    return get_order_query(self.id)
+"""}}),
+    ('대조 E2 별 import(상대 모듈이 창구를 * 로)', 1, 2, {"slot": """\
+        from .schema import Wire
+
+        def read(text):
+            try:
+                return Wire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema.py': """\
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import *
+            class Wire:
+                pass
+"""}}),
+    ('E3-a type[Any] 매개변수', 1, 1, {"slot": """\
+        from typing import Any
+        from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import OrderLookupService
+
+        def _read(kind: type[Any], text: str):
+            try:
+                return kind.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text):
+            return _read(OrderLookupService, text)
+"""}),
+    ('E3-b type[object] 매개변수', 1, 1, {"slot": """\
+        from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import OrderLookupService
+
+        def _read(kind: type[object], text: str):
+            try:
+                return kind.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text):
+            return _read(OrderLookupService, text)
+"""}),
+    ('E3-c 바운드 없는 옛 TypeVar', 1, 1, {"slot": """\
+        from typing import TypeVar
+        from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import OrderLookupService
+
+        T = TypeVar("T")
+
+        def _read(kind: type[T], text: str):
+            try:
+                return kind.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text):
+            return _read(OrderLookupService, text)
+"""}),
+    ('E3-d type[BaseModel] 매개변수를 try 앞에서 창구 클래스로 다시 묶음', 1, 1, {"slot": """\
+        from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import OrderLookupService
+
+        def _read(kind: type[BaseModel], text: str):
+            kind = OrderLookupService
+            try:
+                return kind.model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('E3-e type[BaseModel] 기본값이 창구 모델(검증기가 창구를 부름)', 1, 1, {"slot": """\
+        from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import OrderView
+
+        def _read(text: str, kind: type[BaseModel] = OrderView):
+            try:
+                return kind.model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('E3-f type[<바깥 Protocol>] 에 창구 클래스를 넘김', 1, 1, {"slot": """\
+        from application.billing.application_layer.port.order_parser.order_parser_port import OrderParser
+        from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import OrderLookupService
+
+        def _read(kind: type[OrderParser], text: str):
+            try:
+                return kind.parse(text)
+            except ValueError:
+                return None
+
+        def read(text):
+            return _read(OrderLookupService, text)
+"""}),
+    ('대조 E3 type[창구 서비스]', 1, 1, {"slot": """\
+        from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import OrderLookupService
+
+        def _read(kind: type[OrderLookupService], text: str):
+            try:
+                return kind.model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('E1-s 주석 Generator 매개변수의 send(대화 창구 · 기존 붉음 유지 «next · send» 를 감쌈)', 1, 1, {"slot": """\
+        from collections.abc import Generator
+
+        def _reply(dialog: Generator[str, str, None], answer: str) -> str:
+            return dialog.send(answer)
+
+        def talk(dialog, answer):
+            try:
+                return _reply(dialog, answer)
+            except ValueError:
+                return None
+"""}),
+    ('E1-g2 주석 Any 매개변수의 메서드(같은 파일 클래스 없음)', 1, 1, {"slot": """\
+        from typing import Any
+
+        def _fetch(gateway: Any, order_id: int):
+            return gateway.get(order_id)
+
+        def read(order_id, gateway):
+            try:
+                return _fetch(gateway, order_id)
+            except ValueError:
+                return None
+"""}),
+    ('E1-t 주석 바깥 Protocol(포트) 매개변수의 메서드', 1, 1, {"slot": """\
+        from application.billing.application_layer.port.order_reader.order_reader_port import OrderReader
+
+        def _fetch(reader: OrderReader, order_id: int):
+            return reader.read(order_id)
+
+        def fetch_one(order_id, reader):
+            try:
+                return _fetch(reader, order_id)
+            except ValueError:
+                return None
+"""}),
+    ('E3-g type[T: BaseModel] 에 같은 파일 클래스(검증기가 창구를 부름)를 넘김 — 실제 꼴', 1, 1, {"slot": """\
+        from pydantic import model_validator
+
+        class _OrderWire(BaseModel):
+            id: int
+
+            @model_validator(mode="after")
+            def _exists(self):
+                get_order_query(GetOrderRequest(order_id=self.id))
+                return self
+
+        def _read[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text):
+            return _read(text, _OrderWire)
+"""}),
+    ('E3-h type[T: BaseModel] 에 창구를 import 한 상대 모듈 wire 를 넘김(E2 가 inside 로 보는 이름)', 1, 1, {"slot": """\
+        from .schema.bad_wire import BadWire
+
+        def _read[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text):
+            return _read(text, BadWire)
+""", "files": {'schema/__init__.py': "", 'schema/bad_wire.py': """\
+            from pydantic import BaseModel, model_validator
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+
+            class BadWire(BaseModel):
+                id: int
+
+                @model_validator(mode="after")
+                def _exists(self):
+                    get_order_query(self.id)
+                    return self
+"""}}),
+    ('대조 E3-h 같은 wire 를 try 안에서 직접', 1, 1, {"slot": """\
+        from .schema.bad_wire import BadWire
+
+        def read(text):
+            try:
+                return BadWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/bad_wire.py': """\
+            from pydantic import BaseModel
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+
+            class BadWire(BaseModel):
+                id: int
+"""}}),
+    ('기존(배포판) 변하는 모듈 상수 목록에 창구를 담아 부름', 0, 0, {"slot": """\
+        _HOOKS = []
+        _HOOKS.append(get_order_query)
+
+        def read(order_id):
+            try:
+                return _HOOKS[0](GetOrderRequest(order_id=order_id))
+            except ValueError:
+                return None
+"""}),
+    ('E1-u 주석이 ACL command/ 의 창구 callable Protocol(클론 꼴) · 메서드 꼴 호출', 1, 1, {"slot": """\
+        from .command.get_order_command import _GetOrderCommand
+
+        def _fetch(command: _GetOrderCommand, order_id: int) -> object:
+            return command.__call__(GetOrderRequest(order_id=order_id))
+
+        def fetch_one(order_id, command):
+            try:
+                return _fetch(command, order_id)
+            except ValueError:
+                return None
+""", "files": {'command/__init__.py': "", 'command/get_order_command.py': """\
+            from typing import Protocol
+            from application.orders.driving_layer.open_host_service.order_lookup.contract.request.get_order_request import GetOrderRequest
+
+            class _GetOrderCommand(Protocol):
+                def __call__(self, request: GetOrderRequest) -> object: ...
+"""}}),
+    ('R1 같은 파일 wire · `Annotated[int, AfterValidator(_check)]` · `_check` 가 창구를 부름', 1, 1, {"slot": """\
+        from typing import Annotated
+        from pydantic import AfterValidator
+
+        def _check(value: int) -> int:
+            get_order_query(GetOrderRequest(order_id=value))
+            return value
+
+        class _OrderWire(BaseModel):
+            id: Annotated[int, AfterValidator(_check)]
+
+        def read(text):
+            try:
+                return _OrderWire.model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('R2 같은 파일 wire · 칸 타입이 같은 파일 dataclass(`__post_init__` 이 창구를 부름)', 1, 1, {"slot": """\
+        from dataclasses import dataclass
+
+        @dataclass
+        class _Holder:
+            id: int
+
+            def __post_init__(self) -> None:
+                get_order_query(GetOrderRequest(order_id=self.id))
+
+        class _OrderWire(BaseModel):
+            holder: _Holder
+
+        def read(text):
+            try:
+                return _OrderWire.model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('R3 같은 파일 wire · `Annotated[int, Field(default_factory=_make)]` · `_make` 가 창구를 부름', 1, 1, {"slot": """\
+        from typing import Annotated
+        from pydantic import Field
+
+        def _make() -> int:
+            return get_order_query(GetOrderRequest(order_id=0))
+
+        class _OrderWire(BaseModel):
+            id: Annotated[int, Field(default_factory=_make)]
+
+        def read(text):
+            try:
+                return _OrderWire.model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('R4 같은 파일 wire · `AfterValidator(_LOOKUP)` · `_LOOKUP = get_order_query`(모듈 별칭)', 1, 1, {"slot": """\
+        from typing import Annotated
+        from pydantic import AfterValidator
+
+        _LOOKUP = get_order_query
+
+        class _OrderWire(BaseModel):
+            id: Annotated[int, AfterValidator(_LOOKUP)]
+
+        def read(text):
+            try:
+                return _OrderWire.model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('R5 꼴 ③ `_read[T: BaseModel](…, type[T])` 에 R1 꼴 같은 파일 wire 를 넘김', 1, 1, {"slot": """\
+        from typing import Annotated
+        from pydantic import AfterValidator
+
+        def _check(value: int) -> int:
+            get_order_query(GetOrderRequest(order_id=value))
+            return value
+
+        class _OrderWire(BaseModel):
+            id: Annotated[int, AfterValidator(_check)]
+
+        def _read[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text):
+            return _read(text, _OrderWire)
+"""}),
+    ('R6 짓기 함수 `create_model("Out", __base__=base)` · `base: type[BaseModel]` 매개변수 · 부르는 쪽이 검증기 있는 클래스', 1, 1, {"slot": """\
+        from pydantic import model_validator
+
+        class _Checked(BaseModel):
+            id: int
+
+            @model_validator(mode="after")
+            def _exists(self):
+                get_order_query(GetOrderRequest(order_id=self.id))
+                return self
+        from pydantic import create_model
+
+        def _output_type(base: type[BaseModel]) -> type[BaseModel]:
+            return create_model("Out", __base__=base)
+
+        def _read(text: str, base: type[BaseModel]):
+            try:
+                return _output_type(base).model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text):
+            return _read(text, _Checked)
+"""}),
+    ('R7 짓기 함수 `create_model(name, **fields)` · `fields: dict[str, _ModelField]`(별칭 안 `type[BaseModel]`) · 부르는 쪽이 검증기 있는 클래스', 1, 1, {"slot": """\
+        from pydantic import model_validator
+
+        class _Checked(BaseModel):
+            id: int
+
+            @model_validator(mode="after")
+            def _exists(self):
+                get_order_query(GetOrderRequest(order_id=self.id))
+                return self
+        from types import EllipsisType
+        from typing import TypeAlias
+        from pydantic import create_model
+
+        _ModelField: TypeAlias = tuple[type[BaseModel], EllipsisType]
+
+        def _model(name: str, fields: dict[str, _ModelField]) -> type[BaseModel]:
+            return create_model(name, **fields)
+
+        def _read(text: str, fields: dict[str, _ModelField]):
+            try:
+                return _model("Out", fields).model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text):
+            return _read(text, {"x": (_Checked, ...)})
+"""}),
+    ('R8 짓기 함수 매개변수가 domain_layer Protocol(끝말 목록 밖 이름) · 그 메서드를 부름', 1, 1, {"slot": """\
+        from pydantic import create_model
+        from application.billing.domain_layer.order.value_object.answer_reader import AnswerReader
+
+        def _output_type(reader: AnswerReader) -> type[BaseModel]:
+            names = reader.field_names()
+            return create_model("Out", **{n: (str, ...) for n in names})
+
+        def read(text: str, reader: AnswerReader):
+            try:
+                return _output_type(reader).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('R9 상대 wire 이름을 모듈 수준에서 다른 클래스로 다시 묶음(`PartWire = _Backed`)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        class _Backed:
+            @classmethod
+            def model_validate_json(cls, text):
+                return get_order_query(GetOrderRequest(order_id=int(text)))
+
+        PartWire = _Backed
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}}),
+    ('R10 상대 wire 이름을 매개변수가 가림', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text, PartWire):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}}),
+    ('R11 상대 wire 이름을 지역 대입이 가림', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text, gateway):
+            PartWire = gateway.wire()
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}}),
+    ('R12 상대 wire `model_validate({"items": 창구 생성기})`(list 칸이 생성기를 다 읽음)', 1, 1, {"slot": """\
+        from .schema.answers_wire import AnswersWire
+
+        def read_all(order_id):
+            try:
+                responses = get_order_query(GetOrderRequest(order_id=order_id))
+            except OrderLookupPublishedError:
+                return None
+            try:
+                return AnswersWire.model_validate({"items": responses})
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/answers_wire.py': """\
+            from pydantic import BaseModel
+
+            class AnswersWire(BaseModel):
+                items: list[str]
+"""}}),
+    ('R13 꼴 ① 짓기 함수 + `model_validate(창구 생성기를 담은 dict)`', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        def _output_type(names: frozenset[str]) -> type[BaseModel]:
+            return create_model("Out", **{n: (list[str], ...) for n in names})
+
+        def read_all(order_id, names: frozenset[str]):
+            try:
+                responses = get_order_query(GetOrderRequest(order_id=order_id))
+            except OrderLookupPublishedError:
+                return None
+            try:
+                return _output_type(names).model_validate({"items": responses})
+            except ValidationError:
+                return None
+"""}),
+    ('R14 자료 타입 매개변수의 기본값이 창구가 돌려준 생성기(주석은 tuple)', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        _PENDING = get_order_query(GetOrderRequest(order_id=0))
+
+        def _output_type(names: tuple[str, ...]) -> type[BaseModel]:
+            return create_model("Out", **{n: (str, ...) for n in names})
+
+        def read(text: str, names: tuple[str, ...] = _PENDING):
+            try:
+                return _output_type(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('대조 면제 — 같은 파일 wire(칸 주석만 · 검증기 0)', 0, 0, {"slot": """\
+        class _OrderWire(BaseModel):
+            id: int
+
+        def read(text):
+            try:
+                return _OrderWire.model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('R15 다른 파일(짝 폴더 wiring.py)이 wire 의 검증 메서드 자체를 창구로 바꿔 꽂음', 1, 2, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+""", 'wiring.py': """\
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+            from .schema.part_wire import PartWire
+
+            PartWire.model_validate_json = classmethod(lambda cls, text: get_order_query(text))
+"""}}),
+    ('R16 꼴 ③ 부르는 자리의 wire 이름을 부르는 쪽 매개변수가 가림', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _read[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text, PartWire):
+            return _read(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}}),
+    ('S1 별 import 가 상대 wire 이름을 다시 묶음(`from .shadow import *` — shadow 의 PartWire 가 창구를 부름)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+        from .shadow import *
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+""", 'shadow.py': """\
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+            from application.orders.driving_layer.open_host_service.order_lookup.contract.exception.order_lookup_published_error import OrderLookupPublishedError
+
+            class PartWire:
+                @classmethod
+                def model_validate_json(cls, text):
+                    return get_order_query(text)
+"""}}),
+    ('S2 짓기 함수 매개변수의 도메인 이름이 간접 ABC(`class AnswerReader(_ReaderBase)` · `_ReaderBase(ABC)`)', 1, 1, {"slot": """\
+        from pydantic import create_model
+        from application.billing.domain_layer.order.value_object.answer_reader import AnswerReader
+
+        def _output_type(reader: AnswerReader) -> type[BaseModel]:
+            names = reader.field_names()
+            return create_model("Out", **{n: (str, ...) for n in names})
+
+        def read(text: str, reader: AnswerReader):
+            try:
+                return _output_type(reader).model_validate_json(text)
+            except ValidationError:
+                return None
+""", "outside": {'application/billing/domain_layer/order/value_object/answer_reader.py': """\
+            from abc import ABC, abstractmethod
+
+
+            class _ReaderBase(ABC):
+                @abstractmethod
+                def field_names(self) -> tuple[str, ...]: ...
+
+
+            class AnswerReader(_ReaderBase):
+                pass
+"""}}),
+    ('S3 짝 폴더 다른 파일이 wire 칸 타입(계약 dataclass)에 `__post_init__` 을 꽂음', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+            from application.orders.driving_layer.open_host_service.order_lookup.contract.response.order_line_response import OrderLine
+
+            class PartWire(BaseModel):
+                line: OrderLine
+""", 'wiring.py': """\
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+            from application.orders.driving_layer.open_host_service.order_lookup.contract.exception.order_lookup_published_error import OrderLookupPublishedError
+            from application.orders.driving_layer.open_host_service.order_lookup.contract.response.order_line_response import OrderLine
+
+            OrderLine.__post_init__ = lambda self: get_order_query(self.id)
+"""}}),
+    ('대조 S1′ 별 import 없이 같은 꼴(면제 맞음)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}}),
+    ('면제 ①′ 짓기 함수 · 자료 매개변수(도메인 값 객체 — 모듈 파일 있음 · frozenset)', 0, 0, {"slot": """\
+        from types import EllipsisType
+        from typing import TypeAlias
+        from pydantic import create_model
+        from application.billing.domain_layer.order.value_object.line_kind import LineKind
+
+        _Field: TypeAlias = tuple[type[str], EllipsisType]
+
+        def _fields(kinds: tuple[LineKind, ...], names: frozenset[str]) -> dict[str, _Field]:
+            return {k.value: (str, ...) for k in kinds if k.value in names}
+
+        def _output_type(kinds: tuple[LineKind, ...], names: frozenset[str]) -> type[BaseModel]:
+            return create_model("Out", __base__=None, __module__=__name__, **_fields(kinds, names))
+
+        def read(text: str, kinds: tuple[LineKind, ...], names: frozenset[str]):
+            try:
+                return _output_type(kinds, names).model_validate_json(text)
+            except ValidationError:
+                return None
+""", "outside": {'application/billing/domain_layer/order/value_object/line_kind.py': """\
+            from enum import StrEnum
+
+
+            class LineKind(StrEnum):
+                A = 'a'
+"""}}),
+    ('면제 ② 짝 ACL 폴더 안 상대 wire 모듈(선언만 · 같은 폴더 wire 를 다시 import)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text: str):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from __future__ import annotations
+            from typing import ClassVar
+            from pydantic import BaseModel, ConfigDict
+            from .sub_wire import SubWire
+
+            class PartWire(BaseModel):
+                model_config: ClassVar[ConfigDict] = ConfigDict(strict=True, extra="forbid")
+                text: str
+                sub: SubWire | None = None
+""", 'schema/sub_wire.py': """\
+            from pydantic import BaseModel
+
+            class SubWire(BaseModel):
+                label: str
+"""}}),
+    ('면제 ③ type[T: BaseModel] · 부르는 자리마다 wire 클래스', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _read[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _read(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from __future__ import annotations
+            from typing import ClassVar
+            from pydantic import BaseModel, ConfigDict
+            from .sub_wire import SubWire
+
+            class PartWire(BaseModel):
+                model_config: ClassVar[ConfigDict] = ConfigDict(strict=True, extra="forbid")
+                text: str
+                sub: SubWire | None = None
+""", 'schema/sub_wire.py': """\
+            from pydantic import BaseModel
+
+            class SubWire(BaseModel):
+                label: str
+"""}}),
+    ('면제 ④ 같은 파일 wire 클래스', 0, 0, {"slot": """\
+        class _Wire(BaseModel):
+            text: str
+
+        def read(text: str):
+            try:
+                return _Wire.model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('한계 ⑤ 검증 + 같은 파일 변환 함수(today_fortune 꼴)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _answer_in(output: PartWire) -> str:
+            return output.text
+
+        def read(text: str):
+            try:
+                return _answer_in(PartWire.model_validate_json(text))
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from __future__ import annotations
+            from typing import ClassVar
+            from pydantic import BaseModel, ConfigDict
+            from .sub_wire import SubWire
+
+            class PartWire(BaseModel):
+                model_config: ClassVar[ConfigDict] = ConfigDict(strict=True, extra="forbid")
+                text: str
+                sub: SubWire | None = None
+""", 'schema/sub_wire.py': """\
+            from pydantic import BaseModel
+
+            class SubWire(BaseModel):
+                label: str
+"""}}),
+    ('대조 ⑥ 짓기 함수를 주석 없는 매개변수로 부름', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        def _output_type(names: frozenset[str]) -> type[BaseModel]:
+            return create_model("Out", **{n: (str, ...) for n in names})
+
+        def read(text, names):
+            try:
+                return _output_type(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('대조 ⑦ 검증기가 있는 상대 wire(창구 import 없음)', 1, 1, {"slot": """\
+        from .schema.v_wire import VWire
+
+        def read(text: str):
+            try:
+                return VWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/v_wire.py': """\
+            from pydantic import BaseModel, field_validator
+
+            class VWire(BaseModel):
+                text: str
+
+                @field_validator("text")
+                @classmethod
+                def _check(cls, v):
+                    return v
+"""}}),
+    ('대조 ⑧ wire 클래스의 검증 아닌 부르기(속성에 담긴 것)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text: str):
+            try:
+                return PartWire.model_construct(text=text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from __future__ import annotations
+            from typing import ClassVar
+            from pydantic import BaseModel, ConfigDict
+            from .sub_wire import SubWire
+
+            class PartWire(BaseModel):
+                model_config: ClassVar[ConfigDict] = ConfigDict(strict=True, extra="forbid")
+                text: str
+                sub: SubWire | None = None
+""", 'schema/sub_wire.py': """\
+            from pydantic import BaseModel
+
+            class SubWire(BaseModel):
+                label: str
+"""}}),
+    ('대조 ⑨ 짝 폴더 밖(창구 꾸러미 안) 선언만 모듈을 상대 import', 1, 1, {"slot": """\
+        from ......orders.driving_layer.open_host_service.order_lookup.wire_like import OWire
+
+        def read(text: str):
+            try:
+                return OWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "outside": {'application/orders/driving_layer/open_host_service/order_lookup/wire_like.py': """\
+            from pydantic import BaseModel
+
+            class OWire(BaseModel):
+                text: str
+"""}}),
+    ('대조 K1 짓기 함수가 창구 함수를 검증기로 넘김(읽기만 · 검증 때 돈다)', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        def _output_type(names: frozenset[str]) -> type[BaseModel]:
+            return create_model("Out", __validators__={"v": get_order_query}, **{n: (str, ...) for n in names})
+
+        def read(text: str, names: frozenset[str]):
+            try:
+                return _output_type(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('대조 K2 짓기 함수가 허용 밖 이름(framework 함수)을 부름', 1, 1, {"slot": """\
+        from pydantic import create_model
+        from framework.registry.lookup import resolve_fields
+
+        def _output_type(names: frozenset[str]) -> type[BaseModel]:
+            return create_model("Out", **resolve_fields(names))
+
+        def read(text: str, names: frozenset[str]):
+            try:
+                return _output_type(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('대조 K3 짓기 함수 몸통에 with', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        def _output_type(names: frozenset[str]) -> type[BaseModel]:
+            with names:
+                pass
+            return create_model("Out", **{n: (str, ...) for n in names})
+
+        def read(text: str, names: frozenset[str]):
+            try:
+                return _output_type(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('대조 K4 짓기 함수 이름을 뒤에서 창구 import 로 다시 묶음', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        def _output_type(names: frozenset[str]) -> type[BaseModel]:
+            return create_model("Out", **{n: (str, ...) for n in names})
+
+        try:
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query as _output_type
+        except ImportError:
+            pass
+
+        def read(text: str, names: frozenset[str]):
+            try:
+                return _output_type(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('대조 K5 짓기 함수 매개변수가 Iterator 주석', 1, 1, {"slot": """\
+        from collections.abc import Iterator
+        from pydantic import create_model
+
+        def _output_type(names: Iterator[str]) -> type[BaseModel]:
+            return create_model("Out", **{n: (str, ...) for n in names})
+
+        def read(text: str, names: frozenset[str]):
+            try:
+                return _output_type(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('대조 K6 같은 파일 wire 를 globals() 로 바꿔치움', 1, 1, {"slot": """\
+        class _Wire(BaseModel):
+            text: str
+
+        globals()["_Wire"] = get_order_query
+
+        def read(text: str):
+            try:
+                return _Wire.model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('면제 ⑩ 상대 wire — `ClassVar[ConfigDict]` · `Field(글자)`(클론 꼴)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from typing import ClassVar
+            from pydantic import BaseModel, ConfigDict, Field
+
+
+            class PartWire(BaseModel):
+                model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra='forbid')
+                text: str = Field(min_length=1)
+"""}}),
+    ('대조 V3-a 도메인 이름이 Protocol(모듈 파일 있음)', 1, 1, {"slot": """\
+        from pydantic import create_model
+        from application.billing.domain_layer.order.value_object.answer_reader import AnswerReader
+
+        def _output_type(reader: AnswerReader) -> type[BaseModel]:
+            return create_model("Out", **{n: (str, ...) for n in reader.field_names()})
+
+        def read(text: str, reader: AnswerReader):
+            try:
+                return _output_type(reader).model_validate_json(text)
+            except ValidationError:
+                return None
+""", "outside": {'application/billing/domain_layer/order/value_object/answer_reader.py': """\
+            from typing import Protocol
+
+
+            class AnswerReader(Protocol):
+                def field_names(self) -> tuple[str, ...]: ...
+"""}}),
+    ('대조 V3-b except as 가 상대 wire 이름을 가림', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                pass
+            except LookupError as PartWire:
+                pass
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from typing import ClassVar
+            from pydantic import BaseModel, ConfigDict, Field
+
+
+            class PartWire(BaseModel):
+                model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra='forbid')
+                text: str = Field(min_length=1)
+"""}}),
+    ('대조 V3-c match 갈래가 상대 wire 이름을 가림', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text, kind):
+            match kind:
+                case PartWire:
+                    pass
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from typing import ClassVar
+            from pydantic import BaseModel, ConfigDict, Field
+
+
+            class PartWire(BaseModel):
+                model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra='forbid')
+                text: str = Field(min_length=1)
+"""}}),
+    ('대조 V3-d 내장 이름을 다시 묶은 뒤 wire 칸 주석에 씀(`int = _Holder`)', 1, 1, {"slot": """\
+        from dataclasses import dataclass
+
+        @dataclass
+        class _Holder:
+            id: int
+
+            def __post_init__(self):
+                get_order_query(GetOrderRequest(order_id=self.id))
+
+        int = _Holder
+
+        class _OrderWire(BaseModel):
+            id: int
+
+        def read(text):
+            try:
+                return _OrderWire.model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('대조 V3-e 같은 파일 wire 칸 주석이 글자(앞 참조로 Annotated 검증기)', 1, 1, {"slot": """\
+        from typing import Annotated
+        from pydantic import AfterValidator
+
+        def _check(value):
+            get_order_query(GetOrderRequest(order_id=value))
+            return value
+
+        class _OrderWire(BaseModel):
+            id: "Annotated[int, AfterValidator(_check)]"
+
+        def read(text):
+            try:
+                return _OrderWire.model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('대조 V3-f 상대 wire 모듈 칸 주석에 Annotated 메타', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from typing import Annotated
+            from pydantic import BaseModel, Field
+
+
+            class PartWire(BaseModel):
+                text: Annotated[str, Field(min_length=1)]
+"""}}),
+    ('대조 V3-g 짓기 함수가 `__base__` 에 같은 파일 검증기 클래스를 글자로 넘김', 1, 1, {"slot": """\
+        from pydantic import create_model, model_validator
+
+        class _Checked(BaseModel):
+            id: int
+
+            @model_validator(mode="after")
+            def _exists(self):
+                get_order_query(GetOrderRequest(order_id=self.id))
+                return self
+
+        def _output_type() -> type[BaseModel]:
+            return create_model("Out", __base__=_Checked)
+
+        def read(text: str):
+            try:
+                return _output_type().model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('대조 V3-h 짝 폴더 다른 파일이 pydantic BaseModel 의 검증 메서드를 바꿔 꽂음', 1, 2, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from typing import ClassVar
+            from pydantic import BaseModel, ConfigDict, Field
+
+
+            class PartWire(BaseModel):
+                model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra='forbid')
+                text: str = Field(min_length=1)
+""", 'wiring.py': """\
+            from pydantic import BaseModel
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+
+            BaseModel.model_validate_json = classmethod(lambda cls, text: get_order_query(text))
+"""}}),
+    ('대조 V3-i 별칭의 별칭 안 `type[BaseModel]` 매개변수로 짓기 함수를 부름', 1, 1, {"slot": """\
+        from types import EllipsisType
+        from typing import TypeAlias
+        from pydantic import create_model
+
+        _Inner: TypeAlias = tuple[type[BaseModel], EllipsisType]
+        _Outer: TypeAlias = dict[str, _Inner]
+
+        def _model(name: str, fields: _Outer) -> type[BaseModel]:
+            return create_model(name, **fields)
+
+        def read(text: str, fields: _Outer):
+            try:
+                return _model("Out", fields).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('대조 K7 짓기 함수가 창구 함수를 `Field(default_factory=…)` 로 읽어 넘김(부르기 없이 읽기만)', 1, 1, {"slot": """\
+        from pydantic import Field, create_model
+
+        def _output_type() -> type[BaseModel]:
+            return create_model("Out", x=(int, Field(default_factory=get_order_query)))
+
+        def read(text: str):
+            try:
+                return _output_type().model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('N1 짓기 함수가 맨 `dict` 매개변수를 `**` 로 칸 정의에 그대로 넘김(부르는 쪽이 default_factory 로 창구를 실음)', 1, 1, {"slot": """\
+        from pydantic import Field, create_model
+
+        def _model(fields: dict) -> type[BaseModel]:
+            return create_model("Out", **fields)
+
+        def read(text: str, fields: dict):
+            try:
+                return _model(fields).model_validate_json(text)
+            except ValidationError:
+                return None
+
+        class OrdersOrderLookupAdapter:
+            def fetch(self, text: str):
+                return read(text, {"x": (int, Field(default_factory=lambda: get_order_query(1)))})
+"""}),
+    ('N2 짓기 함수가 맨 `tuple` 매개변수를 칸 정의 `x=spec` 로 그대로 넘김', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        def _model(spec: tuple) -> type[BaseModel]:
+            return create_model("Out", x=spec)
+
+        def read(text: str, spec: tuple):
+            try:
+                return _model(spec).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('N3 짓기 함수의 `str` 매개변수가 칸 타입 자리로(글자 타입 이름은 모듈 이름공간에서 eval)', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        def _model(kind: str) -> type[BaseModel]:
+            return create_model("Out", x=(kind, ...))
+
+        def read(text: str, kind: str):
+            try:
+                return _model(kind).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('N4 꼴 C 함수를 짝 폴더 다른 파일이 import 해 검증기 달린 모델로 부름', 1, 2, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def parse[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return parse(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+""", 'evil_reader.py': """\
+            from pydantic import BaseModel, field_validator
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+            from .order_lookup_adapter import parse
+
+            class Evil(BaseModel):
+                id: int
+
+                @field_validator("id")
+                @classmethod
+                def _check(cls, v):
+                    get_order_query(v)
+                    return v
+
+            def read_evil(text: str):
+                return parse(text, Evil)
+"""}}),
+    ('N5 짝 폴더 wiring.py 가 매개변수 이름 `cls` 인 함수로 wire 의 검증 메서드를 바꿔 꽂음(R15 의 우회)', 1, 2, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+""", 'wiring.py': """\
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+            from .schema.part_wire import PartWire
+
+            def _install(cls):
+                cls.model_validate_json = classmethod(lambda c, text: get_order_query(text))
+
+            _install(PartWire)
+"""}}),
+    ('N6 짓기 함수가 읽는 모듈 상수 dict 에 같은 파일이 창구 default_factory 를 첨자로 넣음', 1, 1, {"slot": """\
+        from pydantic import Field, create_model
+
+        _FIELDS: dict = {}
+        _FIELDS["x"] = (int, Field(default_factory=lambda: get_order_query(1)))
+
+        def _output_type() -> type[BaseModel]:
+            return create_model("Out", **_FIELDS)
+
+        def read(text: str):
+            try:
+                return _output_type().model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('N7 짝 폴더 wiring.py 가 `model_fields` 첨자 바꾸기 + model_rebuild 로 default_factory 를 꽂음', 1, 2, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+""", 'wiring.py': """\
+            from pydantic import Field
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+            from .schema.part_wire import PartWire
+
+            PartWire.model_fields["extra"] = Field(default_factory=lambda: get_order_query(1))
+            PartWire.model_rebuild(force=True)
+"""}}),
+    ('N8 짓기 함수가 맨 `list` 매개변수의 칸을 `__validators__` 로', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        def _model(hooks: dict) -> type[BaseModel]:
+            return create_model("Out", x=(int, ...), **hooks)
+
+        def read(text: str, hooks: dict):
+            try:
+                return _model(hooks).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('대조 짓기 함수가 고정 타입(str)으로만 칸을 지음(이름만 매개변수)', 0, 0, {"slot": """\
+        from pydantic import create_model
+
+        def _model(names: frozenset[str]) -> type[BaseModel]:
+            return create_model("Out", **{n: (str, ...) for n in names})
+
+        def read(text: str, names: frozenset[str]):
+            try:
+                return _model(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('대조 꼴 C · 파일 안 부르기만(N4 에서 evil_reader 뺌 · 이름은 사설 `_parse`)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _parse[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _parse(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}}),
+    ('N9 슬롯 파일 모듈 수준 locals() 로 상대 wire 이름을 검증기 달린 같은 파일 모델로 다시 묶음', 1, 1, {"slot": """\
+        from pydantic import field_validator
+        from .schema.part_wire import PartWire
+
+        class _Evil(BaseModel):
+            text: str
+
+            @field_validator("text")
+            @classmethod
+            def _v(cls, v):
+                return get_order_query(v)
+
+        locals()["PartWire"] = _Evil
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}}),
+    ('D1 같은 파일 enum 을 칸 타입으로 쓰는 같은 파일 wire(글: 바탕은 pydantic 모델 · enum · 다른 wire)', 1, 1, {"slot": """\
+        from enum import StrEnum
+
+        class _Kind(StrEnum):
+            A = "a"
+
+        class _Wire(BaseModel):
+            kind: _Kind
+
+        def read(text):
+            try:
+                return _Wire.model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('D2 같은 꼴을 상대 wire 모듈로', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from enum import StrEnum
+            from pydantic import BaseModel
+
+            class Kind(StrEnum):
+                A = "a"
+
+            class PartWire(BaseModel):
+                kind: Kind
+"""}}),
+    ('X13 검증 부르기 인자에서 창구를 부름(같은 파일 wire)', 1, 1, {"slot": """\
+        class _Wire(BaseModel):
+            text: str
+
+        def read(request: GetOrderRequest):
+            try:
+                return _Wire.model_validate_json(get_order_query(request).value_json)
+            except ValidationError:
+                return None
+"""}),
+    ('X1 짝 폴더 wiring.py 가 `type.__setattr__` 로 wire 검증 메서드를 바꿈', 1, 2, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+""", 'wiring.py': """\
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+            from .schema.part_wire import PartWire
+
+            type.__setattr__(PartWire, "model_validate_json", classmethod(lambda c, t: get_order_query(t)))
+"""}}),
+    ('X3 둘러싼 함수 `type[int]` 매개변수를 짓기 함수 칸 타입으로', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        def _model(kind: type[int]) -> type[BaseModel]:
+            return create_model("Out", x=(kind, ...))
+
+        def read(text: str, kind: type[int]):
+            try:
+                return _model(kind).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('X4 꼴 C 함수를 이름으로 넘겨 다른 모델로 부름', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _read[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _read(text, PartWire)
+
+        _HANDLER = _read
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}}),
+    ('X8 상대 wire 모듈 최상위 if 안에 창구 import · 검증기', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+
+            if True:
+                from pydantic import field_validator
+                from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+
+                class PartWire(BaseModel):
+                    text: str
+
+                    @field_validator("text")
+                    @classmethod
+                    def _v(cls, v):
+                        return get_order_query(v)
+"""}}),
+    ('X9 같은 파일 wire 에 데코레이터(클래스를 바꿔 끼움)', 1, 1, {"slot": """\
+        def _swap(cls):
+            return cls
+
+        @_swap
+        class _Wire(BaseModel):
+            text: str
+
+        def read(text):
+            try:
+                return _Wire.model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('X15 같은 파일 wire 에 metaclass 키워드', 1, 1, {"slot": """\
+        class _Meta(type(BaseModel)):
+            @property
+            def model_validate_json(cls):
+                return lambda text: get_order_query(text)
+
+        class _Wire(BaseModel, metaclass=_Meta):
+            text: str
+
+        def read(text):
+            try:
+                return _Wire.model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('X16 짝 폴더에 못 읽는 파일(문법 오류)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+""", 'broken.py': """\
+            def (:
+"""}}),
+    ('X6 짓기 함수 부르는 자리 `**opts`(맨 dict 매개변수)', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        def _model(names: frozenset[str]) -> type[BaseModel]:
+            return create_model("Out", **{n: (str, ...) for n in names})
+
+        def read(text: str, opts: dict):
+            try:
+                return _model(**opts).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('T1 같은 파일 TypedDict + 모듈 상수 TypeAdapter · validate_json', 1, 1, {"slot": """\
+        from typing import TypedDict
+
+        class _OrderJson(TypedDict):
+            id: int
+
+        _READER: TypeAdapter[_OrderJson] = TypeAdapter(_OrderJson)
+
+        def read(text: str):
+            try:
+                return _READER.validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('T2 같은 파일 wire(BaseModel) 를 TypeAdapter 로 · validate_json', 1, 1, {"slot": """\
+        class _Wire(BaseModel):
+            id: int
+
+        _READER: TypeAdapter[_Wire] = TypeAdapter(_Wire)
+
+        def read(text: str):
+            try:
+                return _READER.validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('대조 클론 꼴 ① — 짓기 함수끼리 지역 칸 묶음 · 고쳐지지 않는 표 첨자 · match 타입 함수', 0, 0, {"slot": """\
+        from types import EllipsisType
+        from typing import TypeAlias
+        from pydantic import ConfigDict, create_model
+        from application.billing.domain_layer.order.value_object.output_variable import OutputVariable
+        from application.billing.domain_layer.order.value_object.value_kind import ValueKind
+        from .schema.pair_wire import PairWire
+
+        _FieldAnnotation: TypeAlias = type[str] | type[float] | type[list[PairWire]] | type[BaseModel]
+        _ModelField: TypeAlias = tuple[_FieldAnnotation, EllipsisType]
+        _OUTPUT_CONFIG: ConfigDict = ConfigDict(strict=True, extra="forbid")
+        _TIMED: dict[ValueKind, _FieldAnnotation] = {ValueKind.PAIR_LIST: list[PairWire]}
+
+        def _output_type(variables: tuple[OutputVariable, ...], timed: frozenset[str]) -> type[BaseModel]:
+            root_fields: dict[str, _ModelField] = {"text": (str, ...)}
+            if variables:
+                variable_fields: dict[str, _ModelField] = {
+                    v.name: (_TIMED[v.value_kind] if _is_timed(v, timed) else _annotation_of(v.value_kind), ...)
+                    for v in variables
+                }
+                root_fields["variables"] = (_model("PartVariables", variable_fields), ...)
+            return _model("PartOutput", root_fields)
+
+        def _is_timed(variable: OutputVariable, timed: frozenset[str]) -> bool:
+            return variable.name in timed and variable.value_kind in _TIMED
+
+        def _annotation_of(kind: ValueKind) -> _FieldAnnotation:
+            match kind:
+                case ValueKind.NUMBER:
+                    return float
+                case ValueKind.TEXT:
+                    return str
+                case ValueKind.PAIR_LIST:
+                    return list[PairWire]
+
+        def _model(name: str, fields: dict[str, _ModelField]) -> type[BaseModel]:
+            return create_model(name, __config__=_OUTPUT_CONFIG, __base__=None, __module__=__name__,
+                                __validators__=None, **fields)
+
+        def read(text: str, variables: tuple[OutputVariable, ...], timed: frozenset[str]):
+            try:
+                return _output_type(variables, timed).model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/pair_wire.py': """\
+            from pydantic import BaseModel
+
+            class PairWire(BaseModel):
+                left: str
+                right: str
+"""}, "outside": {'application/billing/domain_layer/order/value_object/value_kind.py': """\
+            from enum import StrEnum
+
+
+            class ValueKind(StrEnum):
+                TEXT = 'text'
+                NUMBER = 'number'
+                PAIR_LIST = 'pair_list'
+""", 'application/billing/domain_layer/order/value_object/output_variable.py': """\
+            from dataclasses import dataclass
+
+            from application.billing.domain_layer.order.value_object.value_kind import ValueKind
+
+
+            @dataclass(frozen=True)
+            class OutputVariable:
+                name: str
+                value_kind: ValueKind
+"""}}),
+    ('대조 클론 꼴 ①′ — Field 꼬리표(alias · description) · for 첨자 대입 · __base__ wire', 0, 0, {"slot": """\
+        from pydantic import Field, create_model
+        from application.billing.domain_layer.order.value_object.output_variable import OutputVariable
+        from application.billing.domain_layer.order.value_object.value_kind import ValueKind
+        from .schema.part_wire import PartWire
+
+        def _output_type(variables: tuple[OutputVariable, ...], language: str) -> type[PartWire]:
+            definitions: dict[str, tuple[type[str], object]] = {"readable": (bool, Field(description=language))}
+            for order, variable in enumerate(variables):
+                definitions[f"field_{order}"] = (_wire_type(variable.value_kind), Field(alias=variable.name, description=language))
+            return create_model("Answer", __config__=None, __base__=PartWire, __module__=__name__, **definitions)
+
+        def _wire_type(kind: ValueKind) -> type[str]:
+            match kind:
+                case ValueKind.NUMBER:
+                    return float
+                case ValueKind.TEXT:
+                    return str
+
+        def read(text: str, variables: tuple[OutputVariable, ...], language: str):
+            try:
+                return _output_type(variables, language).model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}, "outside": {'application/billing/domain_layer/order/value_object/value_kind.py': """\
+            from enum import StrEnum
+
+
+            class ValueKind(StrEnum):
+                TEXT = 'text'
+                NUMBER = 'number'
+                PAIR_LIST = 'pair_list'
+""", 'application/billing/domain_layer/order/value_object/output_variable.py': """\
+            from dataclasses import dataclass
+
+            from application.billing.domain_layer.order.value_object.value_kind import ValueKind
+
+
+            @dataclass(frozen=True)
+            class OutputVariable:
+                name: str
+                value_kind: ValueKind
+"""}}),
+    ('F1 실어 나르기 짓기 함수가 넘겨받은 지역 칸 묶음을 바꿈(update)', 1, 1, {"slot": """\
+        from types import EllipsisType
+        from typing import TypeAlias
+        from pydantic import create_model
+
+        _Field: TypeAlias = tuple[type[str], EllipsisType]
+
+        def _model(name: str, fields: dict[str, _Field], extra: dict) -> type[BaseModel]:
+            fields.update(extra)
+            return create_model(name, **fields)
+
+        def _output_type(names: frozenset[str], extra: dict) -> type[BaseModel]:
+            fields: dict[str, _Field] = {n: (str, ...) for n in names}
+            return _model("Out", fields, extra)
+
+        def read(text: str, names: frozenset[str], extra: dict):
+            try:
+                return _output_type(names, extra).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('F2 모듈 상수 표를 같은 파일이 첨자로 바꾼 뒤 짓기 함수가 첨자로 꺼냄', 1, 1, {"slot": """\
+        from typing import Annotated
+        from pydantic import AfterValidator, create_model
+
+        _KINDS: dict[str, type[str]] = {"a": str}
+        _KINDS["b"] = Annotated[int, AfterValidator(get_order_query)]
+
+        def _output_type(names: frozenset[str]) -> type[BaseModel]:
+            return create_model("Out", **{n: (_KINDS[n], ...) for n in names})
+
+        def read(text: str, names: frozenset[str]):
+            try:
+                return _output_type(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('F3 짓기 함수 `__validators__` 예약 칸에 매개변수', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        def _model(hooks: dict) -> type[BaseModel]:
+            return create_model("Out", __validators__=hooks, x=(int, ...))
+
+        def read(text: str, hooks: dict):
+            try:
+                return _model(hooks).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('F4 칸 정의 Field 의 꼬리표 밖 키워드에 매개변수(gt=limit)', 1, 1, {"slot": """\
+        from pydantic import Field, create_model
+
+        def _model(limit: int) -> type[BaseModel]:
+            return create_model("Out", x=(int, Field(gt=limit)))
+
+        def read(text: str, limit: int):
+            try:
+                return _model(limit).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('F5 짓기 함수 칸 타입 자리에 글자 타입', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        def _model() -> type[BaseModel]:
+            return create_model("Out", x=("Annotated[int, AfterValidator(get_order_query)]", ...))
+
+        def read(text: str):
+            try:
+                return _model().model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('F6 실어 나르기 짓기 함수를 모듈 수준에서도 부름(짓기 함수 밖 부르는 자리)', 1, 1, {"slot": """\
+        from types import EllipsisType
+        from typing import TypeAlias
+        from pydantic import create_model
+
+        _Field: TypeAlias = tuple[type[str], EllipsisType]
+
+        def _model(name: str, fields: dict[str, _Field]) -> type[BaseModel]:
+            return create_model(name, **fields)
+
+        def _output_type(names: frozenset[str]) -> type[BaseModel]:
+            return _model("Out", {n: (str, ...) for n in names})
+
+        _PRESET = _model("Preset", {"x": (str, ...)})
+
+        def read(text: str, names: frozenset[str]):
+            try:
+                return _output_type(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('F7 클래스를 실어 나르는 매개변수(type[str])를 짓기 함수가 키로 반복', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        def _model(names: type[str]) -> type[BaseModel]:
+            return create_model("Out", **{n: (str, ...) for n in names})
+
+        def read(text: str, names: type[str]):
+            try:
+                return _model(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('C1 꼴 C 사설 함수를 짝 폴더 밖 같은 BC 프로덕션 파일(driven 층)이 import 해 검증기 달린 모델로 부름', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _parse[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _parse(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}, "outside": {'application/billing/driven_layer/adapter/order_sync/order_sync.py': """\
+            from pydantic import BaseModel, field_validator
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+            from application.billing.driven_layer.adapter.anticorruption_layer.orders.order_lookup_adapter import _parse
+
+            class Evil(BaseModel):
+                id: int
+
+                @field_validator("id")
+                @classmethod
+                def _check(cls, v):
+                    get_order_query(v)
+                    return v
+
+            def sync(text: str):
+                return _parse(text, Evil)
+"""}}),
+    ('C2 꼴 C 모듈을 짝 폴더 파일이 통째로 import 해 그 이름을 씀', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _parse[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _parse(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+""", 'other_reader.py': """\
+            from . import order_lookup_adapter
+
+            def read_other(text: str):
+                return order_lookup_adapter._parse(text, dict)
+"""}}),
+    ('C3 꼴 C 함수를 짝 폴더 파일이 다른 이름에 담음', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _parse[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _parse(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+""", 'other_reader.py': """\
+            from .order_lookup_adapter import _parse
+
+            _HANDLER = _parse
+"""}}),
+    ('C4 꼴 C 사설 함수를 짝 폴더 파일이 import 해 그 파일의 wire 로만 부름(같은 BC 프로덕션 import 는 짝 폴더도 받지 않는다)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _parse[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _parse(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+""", 'other_reader.py': """\
+            from .order_lookup_adapter import _parse
+            from .schema.part_wire import PartWire
+
+            def read_other(text: str):
+                return _parse(text, PartWire)
+"""}}),
+    ('대조 짝 폴더 메서드 첫 매개변수 self 칸 대입(면제 그대로)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+""", 'holder.py': """\
+            class Holder:
+                def __init__(self, text: str) -> None:
+                    self.text = text
+"""}}),
+    ('F8 짓기 함수가 창구 모듈 이름을 읽어 반복(키 자리)', 1, 1, {"slot": """\
+        from pydantic import create_model
+        from application.orders.driving_layer.open_host_service.order_lookup import order_lookup_service as _svc
+
+        def _model(names: frozenset[str]) -> type[BaseModel]:
+            return create_model("Out", **{n: (str, ...) for n in _svc.FIELD_NAMES})
+
+        def read(text: str, names: frozenset[str]):
+            try:
+                return _model(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('F9 짓기 함수가 허용 밖 이름(framework 함수)을 키 자리에서 부름', 1, 1, {"slot": """\
+        from pydantic import create_model
+        from framework.naming.field_name import field_name
+
+        def _model(names: frozenset[str]) -> type[BaseModel]:
+            return create_model("Out", **{field_name(n): (str, ...) for n in names})
+
+        def read(text: str, names: frozenset[str]):
+            try:
+                return _model(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('F10 별칭의 별칭 안 `type[str]` 매개변수를 짓기 함수가 키로 반복', 1, 1, {"slot": """\
+        from typing import TypeAlias
+        from pydantic import create_model
+
+        _Kinds: TypeAlias = type[str]
+        _Names: TypeAlias = _Kinds
+
+        def _model(names: _Names) -> type[BaseModel]:
+            return create_model("Out", **{n: (str, ...) for n in names})
+
+        def read(text: str, names: _Names):
+            try:
+                return _model(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('R1 짓기 함수가 매개변수를 모듈 상수 표(첨자로 창구 default_factory 를 채움)로 다시 묶음(X11 이 지키는 자리)', 1, 1, {"slot": """\
+        from types import EllipsisType
+        from pydantic import Field, create_model
+
+        _TABLE: dict = {}
+        _TABLE["x"] = (int, Field(default_factory=lambda: get_order_query(1)))
+
+        def _model(name: str, fields: dict[str, tuple[type[str], EllipsisType]]) -> type[BaseModel]:
+            fields = _TABLE
+            return create_model(name, **fields)
+
+        def _output_type(names: frozenset[str]) -> type[BaseModel]:
+            return _model("Out", {n: (str, ...) for n in names})
+
+        def read(text: str, names: frozenset[str]):
+            try:
+                return _output_type(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ("R2 고쳐지지 않는 표의 안쪽 dict 를 첨자 · 메서드로 바꿈(`_TABLE['a']['x'] = …`)", 1, 1, {"slot": """\
+        from types import EllipsisType
+        from pydantic import Field, create_model
+
+        _TABLE = {"a": {"x": (int, ...)}}
+        _TABLE["a"]["x"] = (int, Field(default_factory=lambda: get_order_query(1)))
+
+        def _output_type(kind: str) -> type[BaseModel]:
+            return create_model("Out", **_TABLE["a"])
+
+        def read(text: str, kind: str):
+            try:
+                return _output_type(kind).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('R3 `__config__` 모듈 상수 dict 를 첨자로 채움(alias_generator 가 창구를 부름 — 모델 짓는 때 try 안)', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        _CONFIG: dict = {}
+        _CONFIG["alias_generator"] = lambda name: get_order_query(name)
+
+        def _output_type(names: frozenset[str]) -> type[BaseModel]:
+            return create_model("Out", __config__=_CONFIG, **{n: (str, ...) for n in names})
+
+        def read(text: str, names: frozenset[str]):
+            try:
+                return _output_type(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('R4 꼴 C 함수를 짝 폴더 파일이 다시 내보내고(re-export) 짝 폴더 밖이 그 이름으로 검증기 모델을 넘김', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _read[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _read(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+""", 'reader.py': """\
+            from .order_lookup_adapter import _read
+"""}, "outside": {'application/billing/application_layer/use_case/evil.py': """\
+            from pydantic import BaseModel, field_validator
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+            from application.billing.driven_layer.adapter.anticorruption_layer.orders.reader import _read
+
+            class Evil(BaseModel):
+                id: int
+
+                @field_validator("id")
+                @classmethod
+                def _check(cls, v):
+                    get_order_query(v)
+                    return v
+
+            def run(text: str):
+                return _read(text, Evil)
+"""}}),
+    ('R5 짝 폴더 wiring.py 가 메서드 첫 매개변수 이름(self)으로 wire 를 바꿔 끼우고 클래스에서 그 함수를 부름', 1, 2, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+""", 'wiring.py': """\
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+            from .schema.part_wire import PartWire
+
+            class _Patch:
+                def install(self):
+                    self.model_validate_json = classmethod(lambda c, text: get_order_query(text))
+
+            _Patch.install(PartWire)
+"""}}),
+    ('R6 슬롯 파일이 `import sys as _s` 별칭으로 sys.modules 를 써 상대 wire 이름을 다시 묶음', 1, 1, {"slot": """\
+        import sys as _s
+        from pydantic import field_validator
+        from .schema.part_wire import PartWire
+
+        class _Evil(BaseModel):
+            text: str
+
+            @field_validator("text")
+            @classmethod
+            def _v(cls, v):
+                return get_order_query(v)
+
+        _s.modules[__name__].PartWire = _Evil
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}}),
+    ('대조 F1 시험 파일(짝 폴더 밖)이 사설 `_read` 를 import 해 wire 를 넘김(창구 안 돔 — 0 이 맞다)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _read[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _read(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}, "outside": {'application/billing/test/unit/test_order_lookup_read.py': """\
+            from application.billing.driven_layer.adapter.anticorruption_layer.orders.order_lookup_adapter import _read
+            from application.billing.driven_layer.adapter.anticorruption_layer.orders.schema.part_wire import PartWire
+
+            def test_read() -> None:
+                assert _read('{"text": "a"}', PartWire) is not None
+"""}}),
+    ('대조 F2 시험 파일(짝 폴더 밖)이 모듈 통째 import 해 창구 이름만 갈아 끼우고 주석에 `_read` 가 있음(0 이 맞다)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _read[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _read(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}, "outside": {'application/billing/test/unit/test_order_lookup_adapter.py': """\
+            from application.billing.driven_layer.adapter.anticorruption_layer.orders import order_lookup_adapter as adapter
+
+            # `_read` 는 공개 read 를 거쳐 본다.
+            def test_read(monkeypatch) -> None:
+                monkeypatch.setattr(adapter, "get_order_query", lambda request: None)
+                assert adapter.read('{"text": "a"}') is not None
+"""}}),
+    ('R7 슬롯 파일이 `builtins.globals()` 로 상대 wire 이름을 검증기 달린 같은 파일 모델로 다시 묶음', 1, 1, {"slot": """\
+        import builtins
+        from pydantic import field_validator
+        from .schema.part_wire import PartWire
+
+        class _Evil(BaseModel):
+            text: str
+
+            @field_validator("text")
+            @classmethod
+            def _v(cls, v):
+                return get_order_query(v)
+
+        builtins.globals()["PartWire"] = _Evil
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}}),
+    ('C5 꼴 C 함수 이름이 공개(`parse`) — 파일 안 부르기만이라도 받지 않는다', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def parse[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return parse(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}}),
+    ('C6 같은 BC 프로덕션 파일 하나를 못 파싱함(무엇을 import 하는지 모른다)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _parse[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _parse(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}, "outside": {'application/billing/domain_layer/order/broken.py': """\
+            def broken(:
+                pass
+"""}}),
+    ('C7 같은 BC 프로덕션 파일이 꼴 C 모듈을 별 import', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _parse[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _parse(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}, "outside": {'application/billing/driven_layer/adapter/order_sync/order_sync.py': """\
+            from application.billing.driven_layer.adapter.anticorruption_layer.orders.order_lookup_adapter import *
+"""}}),
+    ('C8 같은 BC 프로덕션 파일이 꼴 C 모듈을 `import … as` 로 통째 들임', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _parse[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _parse(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}, "outside": {'application/billing/driven_layer/adapter/order_sync/order_sync.py': """\
+            from pydantic import BaseModel, field_validator
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+
+            class Evil(BaseModel):
+                id: int
+
+                @field_validator("id")
+                @classmethod
+                def _check(cls, v):
+                    get_order_query(v)
+                    return v
+                import application.billing.driven_layer.adapter.anticorruption_layer.orders.order_lookup_adapter as adapter_module
+
+            def sync(text: str):
+                return adapter_module._parse(text, Evil)
+"""}}),
+    ('C9 같은 BC 프로덕션 파일의 별칭 없는 `import application.…`(꼭대기 이름이 묶여 그 아래 모두에 닿는다)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _parse[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _parse(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}, "outside": {'application/billing/driven_layer/adapter/order_sync/order_sync.py': """\
+            from pydantic import BaseModel, field_validator
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+
+            class Evil(BaseModel):
+                id: int
+
+                @field_validator("id")
+                @classmethod
+                def _check(cls, v):
+                    get_order_query(v)
+                    return v
+                import application.billing.domain_layer.order
+
+            def sync(text: str):
+                return application.billing.driven_layer.adapter.anticorruption_layer.orders.order_lookup_adapter._parse(text, Evil)
+"""}}),
+    ('C10 같은 BC 프로덕션 파일이 위 꾸러미에서 짝 폴더 꾸러미를 이름으로 들임(`from …anticorruption_layer import orders`)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _parse[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _parse(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}, "outside": {'application/billing/driven_layer/adapter/order_sync/order_sync.py': """\
+            from pydantic import BaseModel, field_validator
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+
+            class Evil(BaseModel):
+                id: int
+
+                @field_validator("id")
+                @classmethod
+                def _check(cls, v):
+                    get_order_query(v)
+                    return v
+                from application.billing.driven_layer.adapter.anticorruption_layer import orders
+
+            def sync(text: str):
+                return orders.order_lookup_adapter._parse(text, Evil)
+"""}}),
+    ('대조 C11 같은 BC 프로덕션 파일이 꼴 C 모듈에서 다른 이름만 import(클론 dependency_wiring 꼴)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _parse[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _parse(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}, "outside": {'application/billing/composition_root/dependency_wiring.py': """\
+            from application.billing.driven_layer.adapter.anticorruption_layer.orders.order_lookup_adapter import read
+
+            def wire() -> object:
+                return read
+"""}}),
+    ('대조 C12 다른 BC 파일이 꼴 C 사설 함수를 import(이 판정 범위 밖 — #186 이 따로 막는다)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _parse[T: BaseModel](text: str, output_type: type[T]) -> T | None:
+            try:
+                return output_type.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        def read(text: str):
+            return _parse(text, PartWire)
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}, "outside": {'application/shop/driven_layer/adapter/order_mirror/order_mirror.py': """\
+            from application.billing.driven_layer.adapter.anticorruption_layer.orders.order_lookup_adapter import _parse
+            from application.billing.driven_layer.adapter.anticorruption_layer.orders.schema.part_wire import PartWire
+
+            def mirror(text: str):
+                return _parse(text, PartWire)
+"""}}),
+    ("R2′ 고쳐지지 않는 표의 안쪽 dict 를 메서드로 바꿈(`_TABLE['a'].update(…)`)", 1, 1, {"slot": """\
+        from types import EllipsisType
+        from pydantic import Field, create_model
+
+        _TABLE = {"a": {"x": (int, ...)}}
+        _TABLE["a"].update({"x": (int, Field(default_factory=lambda: get_order_query(1)))})
+
+        def _output_type(kind: str) -> type[BaseModel]:
+            return create_model("Out", **_TABLE["a"])
+
+        def read(text: str, kind: str):
+            try:
+                return _output_type(kind).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ("R2″ 표의 안쪽 dict 를 다른 이름에 담아 첨자로 바꿈(`_INNER = _TABLE['a']` · `_INNER['x'] = …`)", 1, 1, {"slot": """\
+        from types import EllipsisType
+        from pydantic import Field, create_model
+
+        _TABLE = {"a": {"x": (int, ...)}}
+        _INNER = _TABLE["a"]
+        _INNER["x"] = (int, Field(default_factory=lambda: get_order_query(1)))
+
+        def _output_type(kind: str) -> type[BaseModel]:
+            return create_model("Out", **_TABLE["a"])
+
+        def read(text: str, kind: str):
+            try:
+                return _output_type(kind).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ("R2‴ 표를 그릇 글자에 통째로 담아 첨자로 바꿈(`_BOX = (_TABLE,)` · `_BOX[0]['x'] = …`)", 1, 1, {"slot": """\
+        from types import EllipsisType
+        from pydantic import Field, create_model
+
+        _TABLE = {"x": (int, ...)}
+        _BOX = (_TABLE,)
+        _BOX[0]["x"] = (int, Field(default_factory=lambda: get_order_query(1)))
+
+        def _output_type(kind: str) -> type[BaseModel]:
+            return create_model("Out", **{"x": _TABLE["x"]})
+
+        def read(text: str, kind: str):
+            try:
+                return _output_type(kind).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('R2⁗ 표의 안쪽 dict 를 같은 파일 보통 함수에 넘겨 거기서 바꿈', 1, 1, {"slot": """\
+        from types import EllipsisType
+        from pydantic import Field, create_model
+
+        _TABLE = {"a": {"x": (int, ...)}}
+
+        def _poison(fields: dict) -> None:
+            fields["x"] = (int, Field(default_factory=lambda: get_order_query(1)))
+
+        _poison(_TABLE["a"])
+
+        def _output_type(kind: str) -> type[BaseModel]:
+            return create_model("Out", **_TABLE["a"])
+
+        def read(text: str, kind: str):
+            try:
+                return _output_type(kind).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ("R2⁵ 표의 안쪽 칸에 튜플 풀기로 대입(`_TABLE['a']['x'], _ = …`)", 1, 1, {"slot": """\
+        from types import EllipsisType
+        from pydantic import Field, create_model
+
+        _TABLE = {"a": {"x": (int, ...)}}
+        _TABLE["a"]["x"], _ = (int, Field(default_factory=lambda: get_order_query(1))), None
+
+        def _output_type(kind: str) -> type[BaseModel]:
+            return create_model("Out", **_TABLE["a"])
+
+        def read(text: str, kind: str):
+            try:
+                return _output_type(kind).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('R5′ 짝 폴더 wiring.py 의 staticmethod 첫 매개변수 이름(self)으로 wire 를 바꿔 끼움', 1, 2, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+""", 'wiring.py': """\
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+            from .schema.part_wire import PartWire
+
+            class _Patch:
+                @staticmethod
+                def install(self):
+                    self.model_validate_json = classmethod(lambda c, text: get_order_query(text))
+
+            _Patch.install(PartWire)
+"""}}),
+    ('H1 `__config__` 상수를 리스트 글자에 담아 옮겨 첨자로 고침(깊이 0 — 표는 막는 꼴)', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        _CONFIG: dict = {}
+        _HOLD: list = [_CONFIG]
+        _HOLD[0]["alias_generator"] = lambda name: get_order_query(name)
+
+        def _output_type(names: frozenset[str]) -> type[BaseModel]:
+            return create_model("Out", __config__=_CONFIG, **{n: (str, ...) for n in names})
+
+        def read(text: str, names: frozenset[str]):
+            try:
+                return _output_type(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('H2 `__config__` 상수를 함수 기본값으로 넘겨 그 매개변수로 고침', 1, 1, {"slot": """\
+        from pydantic import create_model
+
+        _CONFIG: dict = {}
+
+        def _prime(cfg: dict = _CONFIG) -> None:
+            cfg["alias_generator"] = lambda name: get_order_query(name)
+
+        _prime()
+
+        def _output_type(names: frozenset[str]) -> type[BaseModel]:
+            return create_model("Out", __config__=_CONFIG, **{n: (str, ...) for n in names})
+
+        def read(text: str, names: frozenset[str]):
+            try:
+                return _output_type(names).model_validate_json(text)
+            except ValidationError:
+                return None
+"""}),
+    ('H3 슬롯 파일이 함수의 `__globals__` 로 상대 wire 이름을 검증기 모델로 다시 묶음', 1, 1, {"slot": """\
+        from pydantic import field_validator
+        from .schema.part_wire import PartWire
+
+        class _Evil(BaseModel):
+            text: str
+
+            @field_validator("text")
+            @classmethod
+            def _v(cls, v):
+                return get_order_query(v)
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+
+        read.__globals__["PartWire"] = _Evil
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}}),
+    ('H4 슬롯 파일이 `print.__self__.globals()` 로 다시 묶음(`x.<장치>` 맨 속성 빼기의 틈)', 1, 1, {"slot": """\
+        from pydantic import field_validator
+        from .schema.part_wire import PartWire
+
+        class _Evil(BaseModel):
+            text: str
+
+            @field_validator("text")
+            @classmethod
+            def _v(cls, v):
+                return get_order_query(v)
+
+        print.__self__.globals()["PartWire"] = _Evil
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}}),
+    ('H6 R5 를 두 파일로 가름 — patch.py 의 클래스 메서드(self)를 wiring.py 가 import 해 클래스에서 꺼내 부름', 1, 2, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text):
+            try:
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+""", 'patch.py': """\
+            from application.orders.driving_layer.open_host_service.order_lookup.order_lookup_service import get_order_query
+
+            class Patch:
+                def install(self):
+                    self.model_validate_json = classmethod(lambda c, text: get_order_query(text))
+""", 'wiring.py': """\
+            from .patch import Patch
+            from .schema.part_wire import PartWire
+
+            Patch.install(PartWire)
+"""}}),
+)
+
+
+class AclValidationTryRegression(unittest.TestCase):
+    """F4-167 — #473 은 받은 글 `model_validate_json` 검증의 받는 쪽이 허용 목록일 때만 그 try 를 «창구가 안 돈다» 로 본다.
+
+    허용 목록 = 선언만 있는 wire 클래스(같은 파일 · 짝 ACL 폴더 안 상대 import) · 값 자료만 받는 같은 파일 모델 짓기 함수 ·
+    같은 BC 프로덕션 파일이 import 하지 않는 사설 함수의 `type[T]`(T 의 바운드 = pydantic 모델) 매개변수. 행렬 162 = 설계 검토
+    장난감 67 + 운영자 사례 26 + 구현 검토 장난감 24 + 고침 사례 17 + 구현 재확인 장난감 9 + 셋째 고침 사례 14 + 셋째 확인
+    장난감 5(`F4_167_CASES` 머리 주석). 기대 수는 2.37.0 배포판으로 잰 (슬롯 try 줄 · #473 줄 전체) 글자 값이고, 면제 열일곱만 0 으로 바꿨다(배포판도 0 인
+    사례 하나 · 행 18). 검증 부르기의 인자 안 창구 부르기(X13)는 면제해도 붉다.
+    사례마다 새 임시 폴더에 짓는다(짝 폴더 판정이 폴더 전체를 읽는다).
+    """
+
+    HEAD: str = "\n".join([
+        "import asyncio", "import json", "from pydantic import TypeAdapter, BaseModel, ValidationError",
+        f"from {AclWindowTryRegression.OHS}.order_lookup_service import get_order_query",
+        f"from {AclWindowTryRegression.OHS}.contract.request.get_order_request import GetOrderRequest",
+        f"from {AclWindowTryRegression.OHS}.contract.exception.order_lookup_published_error import OrderLookupPublishedError",
+    ]) + "\n"
+
+    def lines(self, case: dict) -> list[str]:
+        acl: str = AclWindowTryRegression.ACL
+        files: dict[str, str] = {AclWindowTryRegression.SLOT: self.HEAD + textwrap.dedent(case["slot"])}
+        files.update({f"{acl}/{rel}": textwrap.dedent(text) for rel, text in case.get("files", {}).items()})
+        files.update({rel: textwrap.dedent(text) for rel, text in case.get("outside", {}).items()})
+        with tempfile.TemporaryDirectory(prefix="acl-validate-try-") as tmp:
+            root: Path = Path(tmp)
+            for rel, text in files.items():
+                path: Path = root / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(text, encoding="utf-8")
+            bc: Path = root / "application/billing"
+            out = isolation.Findings(defer=True)
+            isolation._check_acl(bc / "driven_layer/adapter/anticorruption_layer", bc, Path("application/billing"), out)
+            return [e.line for e in out.entries if e.rule == "#473"]
+
+    def test_matrix_keeps_release_red_except_allowlisted_receivers(self) -> None:
+        self.assertEqual(len(F4_167_CASES), 162)
+        for name, slot_lines, all_lines, case in F4_167_CASES:
+            with self.subTest(name):
+                got: list[str] = self.lines(case)
+                self.assertEqual((sum("order_lookup_adapter.py:" in line for line in got), len(got)), (slot_lines, all_lines),
+                                 got)
+
+
+class PydanticAdapterNameRegression(unittest.TestCase):
+    """F4-170 — #134 는 모듈 수준 `from pydantic import` 로만 한 번 묶인 이름(검증 도구 `TypeAdapter`)을 «어댑터 직접 생성» 으로
+    세지 않는다. 바깥 인프라 어댑터(`requests` · allauth · 루트 모듈 · 같은 파일 클래스) · 다시 묶인 이름(지역 import ·
+    `except … as` · `match` 갈래) · 이름을 실행 때 바꾸는 장치(`globals()` · `builtins` · `sys` 별칭 · 틀 `f_globals` ·
+    `__globals__` · `__self__` · `.__builtins__` …)를 쓰는 파일은 그대로 잡는다."""
+
+    CONTROLLER: str = "application/orders/driving_layer/api/order/order_controller.py"
+    USE_CASE: str = "application.orders.application_layer.order.place_order.place_order_use_case"
+    REFUND: str = "application.orders.driven_layer.adapter.refund.refund_adapter.adapter.django_refund_adapter"
+
+    def created(self, source: str, extra: "dict[str, str] | None" = None) -> list[tuple[int, str]]:
+        """#134 줄의 (줄 번호, 만든 이름) — 작은 순."""
+        files: dict[str, str] = {"application/__init__.py": "", "application/orders/__init__.py": "", "manage.py": "",
+                                 "application/orders/application_layer/__init__.py": "",  # 층 0건 가드(#74)를 지나게
+                                 self.CONTROLLER: textwrap.dedent(source), **(extra or {})}
+        with tempfile.TemporaryDirectory(prefix="pydantic-adapter-") as tmp:
+            root: Path = Path(tmp)
+            for rel, text in files.items():
+                path: Path = root / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(text, encoding="utf-8")
+            env: dict[str, str] = dict(os.environ, DJR_FINDINGS_JSON=str(root / "findings.jsonl"),
+                                       DJR_VIOLATIONS_DIR=str(root / "violations"), PYTHONDONTWRITEBYTECODE="1")
+            done = subprocess.run([sys.executable, "-B", str(SCRIPTS / "check-port-adapter-pairing.py"), str(root)],
+                                  capture_output=True, text=True, env=env)
+            stdout: str = done.stdout
+            for prefix in sorted({f"{root}/", f"{root.resolve()}/"}, key=len, reverse=True):
+                stdout = stdout.replace(prefix, "")
+        self.assertIn(done.returncode, (0, 2), done.stderr)
+        return sorted((int(m.group(1)), m.group(2)) for m in re.finditer(
+            r"\[#134\] application/orders/driving_layer/api/order/order_controller\.py:(\d+): 컨트롤러가 `(\w+)`", stdout))
+
+    def test_module_level_pydantic_name_is_not_an_adapter(self) -> None:
+        self.assertEqual(self.created(f"""\
+            from pydantic import TypeAdapter
+            from {self.USE_CASE} import PlaceOrderUseCase
+            from framework.http.http_adapter import HttpAdapter
+
+            _READER: TypeAdapter[int] = TypeAdapter(int)
+
+
+            class LocalAdapter:
+                pass
+
+
+            def place() -> None:
+                PlaceOrderUseCase()
+                HttpAdapter()
+                LocalAdapter()
+                _READER.validate_python(1)
+            """), [(13, "PlaceOrderUseCase"), (14, "HttpAdapter"), (15, "LocalAdapter")])
+
+    def test_outside_infrastructure_adapters_stay_caught(self) -> None:
+        # 대조 — pydantic 이름이 없는 파일이라 옛 판(2.37.0)에서도 같은 줄이다.
+        self.assertEqual(self.created(f"""\
+            from {self.USE_CASE} import PlaceOrderUseCase
+            from local_wiring import PaymentAdapter
+            from requests.adapters import HTTPAdapter
+            from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+            from shared_payments.stripe import StripeAdapter
+            from {self.REFUND} import RefundAdapter
+
+
+            def place(request) -> None:
+                PlaceOrderUseCase()
+                PaymentAdapter()
+                HTTPAdapter(max_retries=3)
+                DefaultSocialAccountAdapter(request)
+                StripeAdapter()
+                RefundAdapter()
+
+
+            def refund_fallback() -> None:
+                from vendor_sdk import RefundAdapter
+                RefundAdapter()
+            """, {"local_wiring.py": "class PaymentAdapter:\n    pass\n"}),
+            [(10, "PlaceOrderUseCase"), (11, "PaymentAdapter"), (12, "HTTPAdapter"), (13, "DefaultSocialAccountAdapter"),
+             (14, "StripeAdapter"), (15, "RefundAdapter"), (20, "RefundAdapter")])
+
+    def test_rebound_or_device_names_stay_caught(self) -> None:
+        self.assertEqual(self.created("""\
+            from pydantic import TypeAdapter
+            from pydantic import TypeAdapter as TA
+
+            _READER: TypeAdapter[int] = TypeAdapter(int)
+            _ALIAS: TA[int] = TA(int)
+
+
+            def shadowed() -> None:
+                from vendor_sdk import TypeAdapter
+                TypeAdapter()
+            """), [(4, "TypeAdapter"), (10, "TypeAdapter")])
+        self.assertEqual(self.created(f"""\
+            from pydantic import TypeAdapter
+            from {self.REFUND} import RefundAdapter as _Refund
+
+
+            def by_except() -> None:
+                try:
+                    raise LookupError
+                except LookupError as TypeAdapter:
+                    pass
+                TypeAdapter()
+
+
+            def by_match(kind: object) -> None:
+                match kind:
+                    case TypeAdapter:
+                        TypeAdapter()
+
+
+            globals()["TypeAdapter"] = _Refund
+
+
+            def by_globals() -> None:
+                TypeAdapter()
+            """), [(10, "TypeAdapter"), (16, "TypeAdapter"), (23, "TypeAdapter")])
+        for label, source, expected in (  # 한 파일에 한 길만 — 길마다 따로 면제를 거둬야 한다
+            ("except … as", """\
+                from pydantic import TypeAdapter
+
+
+                def by_except() -> None:
+                    try:
+                        raise LookupError
+                    except LookupError as TypeAdapter:
+                        pass
+                    TypeAdapter()
+                """, [(9, "TypeAdapter")]),
+            ("match 갈래", """\
+                from pydantic import TypeAdapter
+
+
+                def by_match(kind: object) -> None:
+                    match kind:
+                        case TypeAdapter:
+                            TypeAdapter()
+                """, [(7, "TypeAdapter")]),
+            ("globals()", f"""\
+                from pydantic import TypeAdapter
+                from {self.REFUND} import RefundAdapter as _Refund
+
+                globals()["TypeAdapter"] = _Refund
+
+
+                def by_globals() -> None:
+                    TypeAdapter()
+                """, [(8, "TypeAdapter")]),
+            ("locals()(모듈 수준은 globals 와 같다)", f"""\
+                from pydantic import TypeAdapter
+                from {self.REFUND} import RefundAdapter as _Refund
+
+                locals()["TypeAdapter"] = _Refund
+
+
+                def by_locals() -> None:
+                    TypeAdapter()
+                """, [(8, "TypeAdapter")]),
+            ("vars()", f"""\
+                from pydantic import TypeAdapter
+                from {self.REFUND} import RefundAdapter as _Refund
+
+                vars()["TypeAdapter"] = _Refund
+
+
+                def by_vars() -> None:
+                    TypeAdapter()
+                """, [(8, "TypeAdapter")]),
+            ("sys.modules[__name__] 속성", f"""\
+                import sys
+                from pydantic import TypeAdapter
+                from {self.REFUND} import RefundAdapter as _Refund
+
+                sys.modules[__name__].TypeAdapter = _Refund
+
+
+                def by_modules() -> None:
+                    TypeAdapter()
+                """, [(9, "TypeAdapter")]),
+            ("`import sys as _s` 별칭의 modules", f"""\
+                import sys as _s
+                from pydantic import TypeAdapter
+                from {self.REFUND} import RefundAdapter as _Refund
+
+                _s.modules[__name__].TypeAdapter = _Refund
+
+
+                def by_alias() -> None:
+                    TypeAdapter()
+                """, [(9, "TypeAdapter")]),
+            ("`builtins.globals()`", f"""\
+                import builtins
+                from pydantic import TypeAdapter
+                from {self.REFUND} import RefundAdapter as _Refund
+
+                builtins.globals()["TypeAdapter"] = _Refund
+
+
+                def by_builtins() -> None:
+                    TypeAdapter()
+                """, [(9, "TypeAdapter")]),
+            ("`from builtins import globals as g`", f"""\
+                from builtins import globals as g
+                from pydantic import TypeAdapter
+                from {self.REFUND} import RefundAdapter as _Refund
+
+                g()["TypeAdapter"] = _Refund
+
+
+                def by_builtins_name() -> None:
+                    TypeAdapter()
+                """, [(9, "TypeAdapter")]),
+            ("`__builtins__`", f"""\
+                from pydantic import TypeAdapter
+                from {self.REFUND} import RefundAdapter as _Refund
+
+                __builtins__["globals"]()["TypeAdapter"] = _Refund
+
+
+                def by_dunder() -> None:
+                    TypeAdapter()
+                """, [(8, "TypeAdapter")]),
+            ("틀의 `f_globals`", f"""\
+                import inspect
+                from pydantic import TypeAdapter
+                from {self.REFUND} import RefundAdapter as _Refund
+
+                inspect.currentframe().f_globals["TypeAdapter"] = _Refund
+
+
+                def by_frame() -> None:
+                    TypeAdapter()
+                """, [(9, "TypeAdapter")]),
+            ("내장 함수의 `__self__`(= builtins) · 맨 `vars`", f"""\
+                from pydantic import TypeAdapter
+                from {self.REFUND} import RefundAdapter as _Refund
+
+                print.__self__.vars()["TypeAdapter"] = _Refund
+
+
+                def by_self() -> None:
+                    TypeAdapter()
+                """, [(8, "TypeAdapter")]),
+            ("함수의 `__globals__`", f"""\
+                from pydantic import TypeAdapter
+                from {self.REFUND} import RefundAdapter as _Refund
+
+
+                def by_function_globals() -> None:
+                    TypeAdapter()
+
+
+                by_function_globals.__globals__["TypeAdapter"] = _Refund
+                """, [(6, "TypeAdapter")]),
+            ("모듈의 `.__builtins__`", f"""\
+                import os
+                from pydantic import TypeAdapter
+                from {self.REFUND} import RefundAdapter as _Refund
+
+                os.__builtins__["globals"]()["TypeAdapter"] = _Refund
+
+
+                def by_module_builtins() -> None:
+                    TypeAdapter()
+                """, [(9, "TypeAdapter")]),
+            ("pydantic import 뒤 별 import", """\
+                from pydantic import TypeAdapter
+                from vendor_sdk import *
+
+
+                def by_star() -> None:
+                    TypeAdapter()
+                """, [(6, "TypeAdapter")]),
+            ("함수 안 지역 `from pydantic import`(모듈 수준 아님)", """\
+                def local_import() -> None:
+                    from pydantic import TypeAdapter
+                    TypeAdapter(int)
+                """, [(3, "TypeAdapter")]),
+        ):
+            with self.subTest(label):
+                self.assertEqual(self.created(source), expected)
+
+
+class StandardAdminNamingRegression(unittest.TestCase):
+    """F4-163 — admin 이름 검사는 표준 자리 `driven_layer/django_<bc>/admin/` 도 본다(옛 자리 `django_*/admin/` 은 그대로).
+
+    표준 자리에서 «트리에 없는 경로» 는 #490(check-layer-skeleton · 제1원칙 선행 게이트) 몫이라 같은 파일을 같은 뜻으로 잡는
+    naming 경로 줄(직계 파일 · `feature/` 밖 `_admin` 접미 · `form.py` · `form/` 안 `_form.py` 아닌 파일 · `feature.py` ·
+    덮어쓰기 템플릿 모델 마디)은 내지 않는다 — 그 파일은 #490 이 잡는 것을 함께 단언한다. 내용 규칙(#341 `feature/` 안 · #342 ·
+    ⓓ#343 · #344 폼 클래스 자리 · #345 공개 정의 둘 · #348 셋째 마디)은 표준 자리에서도 선다. 표준 자리는 그 BC 이름의
+    `django_<bc>` 하나뿐이다(`django_shopx` 는 #490 몫이라 naming 이 보지 않는다).
+    """
+
+    SHOP: str = "application/shop/driven_layer/django_shop"
+    TOOL: str = "application/tool/driven_layer/django_tool"
+    FILES: dict[str, str] = {
+        "application/shop/domain_layer/__init__.py": "",
+        "application/shop/django_shop/admin/__init__.py": "",
+        "application/shop/django_shop/admin/legacy.py": "",
+        f"{SHOP}/apps.py": "",
+        f"{SHOP}/admin/__init__.py": "",
+        f"{SHOP}/admin/loose.py": "x = 1\n",
+        f"{SHOP}/admin/order/order_admin.py": "",
+        f"{SHOP}/admin/order/form/__init__.py": "",
+        f"{SHOP}/admin/order/form/helpers.py": "x = 1\n",
+        f"{SHOP}/admin/order/form/order_admin.py": "",
+        f"{SHOP}/admin/order/inline/line_admin.py": "",
+        f"{SHOP}/admin/order/panel.py": ("from django.contrib.admin import ModelAdmin\n\n\nclass OrderPanel(ModelAdmin):\n"
+                                         "    def get_queryset(self, request):\n        return Order.objects.all()\n"),
+        f"{SHOP}/admin/order/feature/__init__.py": "",
+        f"{SHOP}/admin/order/feature/order_writer.py": "def create():\n    pass\n\n\ndef delete():\n    pass\n",
+        f"{SHOP}/admin/order/feature/extra_panel.py": "from django.contrib.admin import ModelAdmin\nclass A(ModelAdmin):\n    pass\n",
+        f"{SHOP}/admin/order/feature/run_admin.py": "def run():\n    pass\n",
+        f"{SHOP}/admin/order/feature/bulk_edit.py": "from django import forms\n\n\nclass BulkForm(forms.Form):\n    pass\n",
+        f"{SHOP}/templates/admin/django_shop/x.html": "",
+        f"{SHOP}/templates/admin/shop/order_line/change_form.html": "",
+        "application/shop/driven_layer/django_shopx/admin/__init__.py": "",
+        "application/shop/driven_layer/django_shopx/admin/loose2.py": "",
+        "application/shop/driven_layer/django_shopx/admin/order/feature/writers.py": "def a():\n    pass\n\n\ndef b():\n    pass\n",
+        "application/tool/domain_layer/__init__.py": "",
+        f"{TOOL}/admin/__init__.py": "",
+        f"{TOOL}/admin/order/feature.py": "x = 1\n",
+        f"{TOOL}/admin/order/form.py": "x = 1\n",
+    }
+    ADMIN_RULES: frozenset[str] = frozenset({"#340", "#341", "#342", "#343", "#344", "#345", "#348"})
+
+    def run_checker(self, script: str) -> list[tuple[str, str]]:
+        """(규칙, 경로[:줄]) — 후보 줄의 ⓓ 는 떼어 규칙에 남기지 않는다."""
+        with tempfile.TemporaryDirectory(prefix="standard-admin-") as tmp:
+            root: Path = Path(tmp)
+            for rel, text in self.FILES.items():
+                path: Path = root / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(text, encoding="utf-8")
+            env: dict[str, str] = dict(os.environ, DJR_FINDINGS_JSON=str(root / "findings.jsonl"),
+                                       DJR_VIOLATIONS_DIR=str(root / "violations"), PYTHONDONTWRITEBYTECODE="1")
+            done = subprocess.run([sys.executable, "-B", str(SCRIPTS / script), str(root)], capture_output=True, text=True,
+                                  env=env)
+            prefixes: list[str] = sorted({f"{root}/", f"{root.resolve()}/"}, key=len, reverse=True)
+        self.assertIn(done.returncode, (0, 2), done.stderr)
+        out: list[tuple[str, str]] = []
+        for line in done.stdout.splitlines():
+            m = re.match(r"^\s*\[(?:ⓓ)?(#\d+)\] (\S+?): ", line)
+            if m:
+                where: str = m.group(2)
+                for prefix in prefixes:
+                    where = where.replace(prefix, "")
+                out.append((m.group(1), where))
+        return out
+
+    def test_naming_keeps_content_rules_and_leaves_path_rules_to_490(self) -> None:
+        got: list[tuple[str, str]] = sorted(r for r in self.run_checker("check-naming.py") if r[0] in self.ADMIN_RULES)
+        self.assertEqual(got, sorted([
+            ("#340", "application/shop/django_shop/admin/legacy.py"),
+            ("#341", f"{self.SHOP}/admin/order/feature/run_admin.py"),
+            ("#342", f"{self.SHOP}/admin/order/feature/extra_panel.py:2"),
+            ("#343", f"{self.SHOP}/admin/order/panel.py:6"),
+            ("#344", f"{self.SHOP}/admin/order/feature/bulk_edit.py:4"),
+            ("#345", f"{self.SHOP}/admin/order/feature/order_writer.py"),
+            ("#348", f"{self.SHOP}/templates/admin/django_shop"),
+        ]))
+
+    def test_skeleton_490_owns_the_paths_naming_leaves(self) -> None:
+        flagged: list[str] = [where for rule, where in self.run_checker("check-layer-skeleton.py") if rule == "#490"]
+        for rel in (f"{self.SHOP}/admin/loose.py", f"{self.SHOP}/admin/order/order_admin.py",
+                    f"{self.SHOP}/admin/order/form/order_admin.py", f"{self.SHOP}/admin/order/form/helpers.py",
+                    f"{self.SHOP}/admin/order/inline/line_admin.py", f"{self.TOOL}/admin/order/feature.py",
+                    f"{self.TOOL}/admin/order/form.py", f"{self.SHOP}/templates/admin/shop/order_line/change_form.html",
+                    "application/shop/driven_layer/django_shopx/admin/order/feature/writers.py"):
+            with self.subTest(rel):
+                self.assertTrue(any(rel == where or rel.startswith(f"{where}/") for where in flagged), flagged)
+        for rel in (f"{self.SHOP}/admin/order/feature/run_admin.py", f"{self.SHOP}/admin/order/feature/order_writer.py",
+                    f"{self.SHOP}/admin/order/panel.py", f"{self.SHOP}/admin/order/feature/bulk_edit.py",
+                    f"{self.SHOP}/templates/admin/django_shop/x.html"):
+            with self.subTest(f"#490 밖 — {rel}"):
+                self.assertFalse(any(rel == where or rel.startswith(f"{where}/") for where in flagged), flagged)
+
+
+class IndexOnlyPathRegression(unittest.TestCase):
+    """F4-164 — 지우고 스테이지하지 않은 경로(인덱스에만 있는 승격 폴더 `__init__.py`)는 #2 · #15 의 생산 목록에 들지 않는다.
+
+    #643 «부품 0개인 승격 폴더 — 파일 실현으로 되돌린다» 리팩터 뒤 삭제를 스테이지하지 않으면 실제 파일 `bc_error_schema.py` 와
+    인덱스에만 남은 `bc_error_schema/__init__.py` 가 같은 모듈 이름으로 함께 선다. 두 검사기 출력은 그 항목이 없을 때와 같아야 한다
+    (#2 는 2.34.0 · #15 는 2026-11-14 부터 `os.path.lexists` 로 거른다).
+    """
+
+    ARGS: tuple[str, ...] = (
+        "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py",
+        "--controller-module", "application/lesson/driving_layer/controller.py", "--scope-bc", "lesson", "--error-bc", "lesson")
+    MODULES: tuple[str, ...] = (
+        "--project-code-error-module", "framework/ninja/framework_error_schema.py",
+        "--project-code-error-module", "application/lesson/driving_layer/api/bc_error_schema.py")
+    INDEX_ONLY: str = "application/lesson/driving_layer/api/bc_error_schema/__init__.py"
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="index-only-path-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name) / "repo"
+        shutil.copytree(FIXTURES / "api_error_controller_code/good", self.root)
+        _git(self.root, "init", "-q")
+        _git(self.root, "add", "-A")
+        _git(self.root, "commit", "-qm", "fixture anchor")
+        self.env = dict(os.environ, DJR_FINDINGS_JSON=str(Path(self.tmp.name) / "findings.jsonl"),
+                        DJR_VIOLATIONS_DIR=str(Path(self.tmp.name) / "violations"), PYTHONDONTWRITEBYTECODE="1")
+
+    def run_checker(self, script: str, args: tuple[str, ...]) -> tuple[int, str]:
+        done = subprocess.run([sys.executable, "-B", str(SCRIPTS / script), str(self.root), *args], capture_output=True,
+                              text=True, env=self.env)
+        return done.returncode, done.stdout + done.stderr
+
+    def test_index_only_promotion_init_is_not_production_source(self) -> None:
+        runs: dict[str, tuple[str, ...]] = {"check-error-centralization.py": (*self.ARGS, *self.MODULES),
+                                            "check-api-error-controller-contract.py": self.ARGS}
+        base: dict[str, tuple[int, str]] = {script: self.run_checker(script, args) for script, args in runs.items()}
+        empty_blob: str = _git(self.root, "rev-parse", "HEAD:framework/ninja/__init__.py")
+        _git(self.root, "update-index", "--add", "--cacheinfo", f"100644,{empty_blob},{self.INDEX_ONLY}")
+        self.assertFalse((self.root / self.INDEX_ONLY).exists())
+        self.assertIn(self.INDEX_ONLY, _git(self.root, "ls-files", "--cached"))
+        for script, args in runs.items():
+            with self.subTest(script):
+                self.assertEqual(base[script][0], 0, base[script][1])
+                self.assertEqual(self.run_checker(script, args), base[script])
+
+
+# 변이 — (이름, 검사기 파일, ((옛 글, 새 글), …), 붉어야 할 시험 클래스). 옛 글은 그 파일에 정확히 한 번 있어야 한다.
+# 고침을 옛 코드로 되돌린 것 하나씩과, 설계 검토 · 구현 검토가 짚은 조건을 하나씩 무른 것.
+_CI_FILE: str = "check-context-isolation.py"
+_ACL_TRY: tuple[str, ...] = ("AclValidationTryRegression", "AclWindowTryRegression")
+_MUTATIONS: tuple[tuple[str, str, tuple[tuple[str, str], ...], tuple[str, ...]], ...] = (
+    ("F4-167 받은 글 검증 허용 목록 걷음", _CI_FILE, (
+        ("        self.allowlist: bool = partner is not None and not _uses_name_device(mod) and not _partner_altered(partner)",
+         "        self.allowlist: bool = False"),), _ACL_TRY),
+    ("F4-167 짓기 함수가 창구 쪽 이름 읽기를 안 봄", _CI_FILE, (
+        ("if n.id not in readable or (n.id in self.inside and n.id not in self.factories | self.wires):", "if False:"),),
+     _ACL_TRY),
+    ("F4-167 짓기 함수의 맨 이름 부르기 허용 목록 뺌", _CI_FILE, (
+        ('elif not (func.id in _FACTORY_BUILTINS or self.pydantic.get(func.id) == "Field"',
+         'elif False and not (func.id in _FACTORY_BUILTINS or self.pydantic.get(func.id) == "Field"'),), _ACL_TRY),
+    ("F4-167 짓기 함수의 with 금지 뺌", _CI_FILE, (
+        ("                                              ast.With, ast.AsyncWith, ast.AsyncFor)):",
+         "                                              ast.AsyncFor)):"),), _ACL_TRY),
+    ("F4-167 짓기 함수 한 번만 묶임 조건 뺌", _CI_FILE, (
+        ("\n            and binds.get(fn.name) == 1 and fn.name not in imported and not fn.decorator_list}", "}"),), _ACL_TRY),
+    ("F4-167 wire 클래스 조건 늘 참", _CI_FILE, (
+        ('    `ConfigDict(...)`."""\n    if cls.decorator_list or not cls.bases:',
+         '    `ConfigDict(...)`."""\n    return True\n    if cls.decorator_list or not cls.bases:'),), _ACL_TRY),
+    ("F4-167 wire 모듈 import 조건 뺌", _CI_FILE, (
+        ('if not (top in _WIRE_IMPORT_TOPS or _contract_import(stmt.module or "")):\n                        return False',
+         "if False:\n                        return False"),), _ACL_TRY),
+    ("F4-167 짓기 함수 부르는 자리 인자 조건 뺌", _CI_FILE, (
+        ("and all((isinstance(x, ast.Name) and x.id in data_params) or isinstance(x, ast.Constant)",
+         "and all(True or isinstance(x, ast.Constant)"),), _ACL_TRY),
+    ("F4-167 type[T] 부르는 자리 wire 조건 뺌", _CI_FILE, (
+        ("        return isinstance(got, ast.Name) and got.id in self.wires", "        return True"),), _ACL_TRY),
+    ("F4-167 짓기 함수 매개변수 자료 타입 조건 뺌", _CI_FILE, (
+        ("if a.vararg or a.kwarg or not all(self._data_annotation(x.annotation) for x in params):",
+         "if a.vararg or a.kwarg:"),), _ACL_TRY),
+    ("F4-167 이름 장치 거절 뺌", _CI_FILE, (
+        ('    쓰지 않는다."""\n    modules: dict[str, str]', '    쓰지 않는다."""\n    return False\n    modules: dict[str, str]'),),
+     _ACL_TRY),
+    ("F4-167 짝 폴더 안 조건 뺌(두 자리)", _CI_FILE, (
+        ("        return p is not None and p.resolve().is_relative_to(self.partner)", "        return p is not None"),
+        ("if not f.is_relative_to(self.partner) or len(seen) > 30:", "if len(seen) > 30:")), _ACL_TRY),
+    ("F4-167 검증 메서드 아닌 부르기도 받음", _CI_FILE, (
+        ("if not (isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr in _TEXT_VALIDATORS):",
+         "if not (isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)):"),), _ACL_TRY),
+    ("F4-167 wire 칸 주석 검사 뺌", _CI_FILE, (
+        ("if not _plain_field_annotation(item.annotation, leaf, typing_of):\n                return False",
+         "if False:\n                return False"),), _ACL_TRY),
+    ("F4-167 다시 묶인 내장 이름도 맨 타입(두 자리)", _CI_FILE, (
+        ("leaf: set[str] = {n for n in _PLAIN_TYPE_BUILTINS if n not in binds}  #",
+         "leaf: set[str] = set(_PLAIN_TYPE_BUILTINS)  #"),
+        ("base_leaf: set[str] = {n for n in _PLAIN_TYPE_BUILTINS if n not in binds} |",
+         "base_leaf: set[str] = set(_PLAIN_TYPE_BUILTINS) |")), _ACL_TRY),
+    ("F4-167 Literal 밖 글자 주석 받음", _CI_FILE, (
+        ("    if isinstance(ann, ast.Constant):\n        return ann.value is None or ann.value is Ellipsis\n"
+         "    if isinstance(ann, ast.Name):\n        return in_classvar",
+         "    if isinstance(ann, ast.Constant):\n        return True\n    if isinstance(ann, ast.Name):\n        return in_classvar"),),
+     _ACL_TRY),
+    ("F4-167 같은 파일 정의를 칸 타입으로 받음", _CI_FILE, (
+        ("_wire_class(stmt, pydantic_bases | self.wires, base_leaf | self.wires, typing_of)",
+         "_wire_class(stmt, pydantic_bases | self.wires, base_leaf | self.wires | self.defs, typing_of)"),), _ACL_TRY),
+    ("F4-167 부르는 자리 값 자료 조건 뺌(클래스 실음)", _CI_FILE, (
+        ("and not self._carries_class(x.annotation) and x.arg not in defaulted", "and x.arg not in defaulted"),), _ACL_TRY),
+    ("F4-167 별칭 안 클래스 실음 안 봄", _CI_FILE, (
+        ("                    if self._carries_class(self.alias_values.get(x.id), seen):", "                    if False:"),),
+     _ACL_TRY),
+    ("F4-167 묶기 셈에서 except as · match 뺌", _CI_FILE, (
+        ("        elif isinstance(n, ast.ExceptHandler):\n            add(n.name)\n", ""),
+        ('        elif kind in ("MatchAs", "MatchStar"):\n            add(n.name)\n', "")), _ACL_TRY),
+    ("F4-167 상대 wire 다시 묶기 조건 뺌", _CI_FILE, (
+        ("if (imported.get(name) == 1 and binds.get(name) == 1\n", "if (imported.get(name) == 1\n"),), _ACL_TRY),
+    ("F4-167 model_validate 다시 받음", _CI_FILE, (
+        ('_TEXT_VALIDATORS: frozenset[str] = frozenset({"model_validate_json"})',
+         '_TEXT_VALIDATORS: frozenset[str] = frozenset({"model_validate_json", "model_validate"})'),), _ACL_TRY),
+    ("F4-167 둘러싼 함수 매개변수 기본값 조건 뺌", _CI_FILE, (
+        ("and x.arg not in defaulted and x.arg not in rebound}", "and x.arg not in rebound}"),), _ACL_TRY),
+    ("F4-167 도메인 모듈 읽기 뺌", _CI_FILE, (
+        ("and not not_data and _domain_data_class(path, stmt.module, a.name)):", "and not not_data):"),), _ACL_TRY),
+    ("F4-167 짝 폴더 self · cls 밖 속성 바꾸기 안 봄", _CI_FILE, (
+        ("            if _uses_name_device(mod) or _foreign_attribute_write(mod, plain) or any(",
+         "            if _uses_name_device(mod) or any("),), _ACL_TRY),
+    ("F4-167 self · cls 를 메서드 첫 매개변수로 좁히지 않음", _CI_FILE, (
+        ('inner = (first[0].arg if isinstance(node, ast.ClassDef) and first and first[0].arg in ("self", "cls")\n'
+         "                         and not static(child) else None)", "inner = first[0].arg if first else None"),), _ACL_TRY),
+    ("F4-167 staticmethod 첫 매개변수도 self 로 받음", _CI_FILE, (
+        ("                         and not static(child) else None)", "                         else None)"),), _ACL_TRY),
+    ("F4-167 짝 폴더 클래스에서 보통 메서드 꺼냄 안 봄", _CI_FILE, (
+        ("            if n.attr in methods:\n                return True", "            if False:\n                return True"),), _ACL_TRY),
+    ("F4-167 짝 폴더 다른 파일 클래스 안 봄", _CI_FILE, (
+        ('                if a.name.split(".")[-1] in plain:', "                if False:"),), _ACL_TRY),
+    ("F4-167 함수 __globals__ 장치 안 봄", _CI_FILE, (
+        ('"__dict__", "f_globals", "f_locals", "__globals__", "__self__", "__builtins__"):',
+         '"__dict__", "f_globals", "f_locals", "__self__", "__builtins__"):'),), _ACL_TRY),
+    ("F4-167 내장 함수 __self__ 장치 안 봄", _CI_FILE, (
+        ('"__dict__", "f_globals", "f_locals", "__globals__", "__self__", "__builtins__"):',
+         '"__dict__", "f_globals", "f_locals", "__globals__", "__builtins__"):'),), _ACL_TRY),
+    ("F4-167 builtins 속성 장치 안 봄", _CI_FILE, (
+        ('                or (modules.get(n.value.id) == "builtins" and n.attr in _NAME_DEVICES)):', "                ):"),),
+     _ACL_TRY),
+    ("F4-167 짝 폴더 pydantic 칸 바꾸기 속성 안 봄", _CI_FILE, (
+        ("or n.attr in _MODEL_REBUILD_ATTRS\n                                                      or n.attr.startswith(\"__pydantic\"))",
+         ")"),), _ACL_TRY),
+    ("F4-167 짝 폴더 __setattr__ · __delattr__ 장치 안 봄", _CI_FILE, (
+        ('_NAME_DEVICE_ATTRS: frozenset[str] = frozenset({"__dict__", "__setattr__", "__delattr__"})',
+         '_NAME_DEVICE_ATTRS: frozenset[str] = frozenset({"__dict__"})'),), _ACL_TRY),
+    ("F4-167 짝 폴더 못 읽는 파일도 받음", _CI_FILE, (
+        ("                altered = True  # 못 읽는 파일 — 바꿔 끼우는지 모른다\n                break", "                continue"),),
+     _ACL_TRY),
+    ("F4-167 locals 장치 안 봄", _CI_FILE, (
+        ('    "globals", "locals", "vars", "setattr",', '    "globals", "vars", "setattr",'),), _ACL_TRY),
+    ("F4-167 받은 검증 부르기의 인자 안 봄", _CI_FILE, (
+        ("                    stack.extend([*n.args, *(k.value for k in n.keywords)])\n", ""),), _ACL_TRY),
+    ("F4-167 클래스 실음에서 type 이름 뺌", _CI_FILE, (
+        ('if x.id == "type" or x.id in self.pydantic:', "if x.id in self.pydantic:"),), _ACL_TRY),
+    ("F4-167 꼴 B 부르는 자리 ** 펼치기 받음", _CI_FILE, (
+        ("                  and all(k.arg is not None for k in receiver.keywords)):", "                  ):"),), _ACL_TRY),
+    ("F4-167 wire 모듈 최상위 그 밖 문장 받음", _CI_FILE, (
+        ("                    return False\n            else:\n                return False\n        return True\n\n\ndef _literal_call",
+         "                    return False\n            else:\n                pass\n        return True\n\n\ndef _literal_call"),),
+     _ACL_TRY),
+    ("F4-167 wire 클래스 데코레이터 받음", _CI_FILE, (
+        ("    if cls.decorator_list or not cls.bases:", "    if not cls.bases:"),), _ACL_TRY),
+    ("F4-167 wire 클래스 키워드 값 아무것", _CI_FILE, (
+        ("    if not all(isinstance(k.value, ast.Constant) for k in cls.keywords):\n        return False\n", ""),), _ACL_TRY),
+    ("F4-167 꼴 C 함수 이름 값으로 샘 안 봄", _CI_FILE, (
+        ('            if not name.startswith("_") or name in self._leaked or not calls[name]:',
+         '            if not name.startswith("_") or not calls[name]:'),), _ACL_TRY),
+    ("F4-167 꼴 C 공개 이름도 받음", _CI_FILE, (
+        ('            if not name.startswith("_") or name in self._leaked or not calls[name]:',
+         "            if name in self._leaked or not calls[name]:"),), _ACL_TRY),
+    ("F4-167 짓기 함수 매개변수 다시 묶기 받음", _CI_FILE, (
+        ("        if locals_ & param_names:\n            return False, False", "        if False:\n            return False, False"),),
+     _ACL_TRY),
+    ("F4-167 칸 정의 매개변수 흐름 안 봄", _CI_FILE, (
+        ("        todo: list[tuple[str, str, str]] = list(needs)\n", "        todo: list[tuple[str, str, str]] = []\n"),),
+     _ACL_TRY),
+    ("F4-167 모듈 상수 표 맨 이름 쓰임 안 봄", _CI_FILE, (
+        ("        return self._plain_reads(name) and self._unaltered(name)", "        return self._unaltered(name)"),), _ACL_TRY),
+    ("F4-167 __config__ 맨 이름 쓰임 안 봄", _CI_FILE, (
+        ("                            and self._plain_reads(v.id, config=True) and self._unaltered(v.id))",
+         "                            and self._unaltered(v.id))"),), _ACL_TRY),
+    ("F4-167 표 사슬 첨자 대입 안 봄", _CI_FILE, (
+        ("                        return False  # 사슬 첨자 대입 · 지움", "                        pass  # 사슬 첨자 대입 · 지움"),),
+     _ACL_TRY),
+    ("F4-167 표 사슬 끝 속성 · 묶기 안 봄", _CI_FILE, (
+        ("            if isinstance(parent, (ast.Attribute, ast.Assign, ast.AnnAssign, ast.AugAssign, ast.NamedExpr, ast.For,",
+         "            if False and isinstance(parent, (ast.Attribute, ast.Assign, ast.AnnAssign, ast.AugAssign, ast.NamedExpr, ast.For,"),),
+     _ACL_TRY),
+    ("F4-167 표 사슬 끝 부르기 인자 안 봄", _CI_FILE, (
+        ("            if isinstance(call, ast.Call) and (call.func is top or not (",
+         "            if False and isinstance(call, ast.Call) and (call.func is top or not ("),), _ACL_TRY),
+    ("F4-167 __config__ 상수 고쳐짐 안 봄", _CI_FILE, (
+        ("                            and self._plain_reads(v.id, config=True) and self._unaltered(v.id))",
+         "                            and self._plain_reads(v.id, config=True))"),), _ACL_TRY),
+    ("F4-167 지역 칸 묶음 쓰임 안 봄", _CI_FILE, (
+        ("                        ok = self._carried_load_ok(n, allow_store=True)", "                        ok = True"),), _ACL_TRY),
+    ("F4-167 실어 나르기 칸이 넘겨받은 묶음을 바꿔도 받음", _CI_FILE, (
+        ("            self._carrier_memo[key] = all(", "            self._carrier_memo[key] = True or all("),), _ACL_TRY),
+    ("F4-167 칸 타입 자리 글자 타입 받음", _CI_FILE, (
+        ("            return kind == _FIELD_TYPE and expr.value is None  # 글자 타입",
+         "            return kind == _FIELD_TYPE and (expr.value is None or isinstance(expr.value, str))  # 글자 타입"),),
+     _ACL_TRY),
+    ("F4-167 Field 꼬리표 밖 키워드도 아무 값", _CI_FILE, (
+        ("(k.arg in _FIELD_LABELS or isinstance(k.value, ast.Constant))", "(True or isinstance(k.value, ast.Constant))"),),
+     _ACL_TRY),
+    ("F4-167 create_model 예약 칸 아무 값", _CI_FILE, (
+        ("                if not (isinstance(v, ast.Constant)\n", "                if not (True or isinstance(v, ast.Constant)\n"),),
+     _ACL_TRY),
+    ("F4-167 꼴 C 같은 BC import 안 봄", _CI_FILE, (
+        ("                    and self._bc_imports.private(self._path, encl.name)):", "                    ):"),), _ACL_TRY),
+    ("F4-167 꼴 C 이름 import 안 셈", _CI_FILE, (
+        ("        return (module, name) not in self._named and not any(", "        return not any("),), _ACL_TRY),
+    ("F4-167 꼴 C 다른 이름 import 도 셈", _CI_FILE, (
+        ("        return (module, name) not in self._named and not any(",
+         "        return all(t != module for t, _ in self._named) and not any("),), _ACL_TRY),
+    ("F4-167 꼴 C 통째 import 안 셈", _CI_FILE, (
+        ("        return (module, name) not in self._named and not any(module[:len(w)] == w for w in self._whole)",
+         "        return (module, name) not in self._named"),), _ACL_TRY),
+    ("F4-167 꼴 C 별칭 없는 import 를 그 모듈로만", _CI_FILE, (
+        ("self._whole.append(target if a.asname else target[:1])", "self._whole.append(target)"),), _ACL_TRY),
+    ("F4-167 꼴 C 꾸러미에서 아래 모듈 들임 안 셈", _CI_FILE, (
+        ("                            self._whole.append(target + (a.name,))  # 아래 모듈",
+         "                            pass  # 아래 모듈"),), _ACL_TRY),
+    ("F4-167 꼴 C 별 import 안 셈", _CI_FILE, (
+        ('                        if a.name == "*":\n                            self._whole.append(target)',
+         '                        if a.name == "*":\n                            pass'),), _ACL_TRY),
+    ("F4-167 꼴 C 못 읽는 BC 파일 받음", _CI_FILE, (
+        ("                self._unknown = True  # 못 읽는 파일 — 무엇을 import 하는지 모른다\n                return",
+         "                continue"),), _ACL_TRY),
+    ("F4-167 꼴 C 시험 폴더도 셈", _CI_FILE, (
+        ('            if set(rp) & SKIP_DIRS or rp[0] == "test":\n                continue\n            try:\n'
+         "                mod: ast.Module = ast.parse(",
+         "            if set(rp) & SKIP_DIRS:\n                continue\n            try:\n"
+         "                mod: ast.Module = ast.parse("),), _ACL_TRY),
+    ("F4-167 별 import 거절 뺌", _CI_FILE, (
+        ('        if isinstance(n, ast.ImportFrom) and any(a.name == "*" for a in n.names):\n            return True\n', ""),),
+     _ACL_TRY),
+    ("F4-167 같은 모듈 바탕 따라가기 뺌", _CI_FILE, (
+        ("                        if not plain(b.id, seen):\n                            return False", "                        pass"),),
+     _ACL_TRY),
+    ("F4-167 다른 모듈 바탕도 받음", _CI_FILE, (
+        ('                    elif not (isinstance(b, ast.Name) and (b.id in enum_bases or b.id in ("str", "int", "object"))):\n'
+         "                        return False", "                    elif False:\n                        return False"),), _ACL_TRY),
+    ("F4-170 pydantic 이름 면제 걷음", "check-port-adapter-pairing.py", (
+        ("validators: set[str] = _pydantic_only_names(mod) if mod else set()", "validators: set[str] = set()"),),
+     ("PydanticAdapterNameRegression",)),
+    ("F4-170 면제 «한 번만 묶임» 뺌", "check-port-adapter-pairing.py", (
+        ("out |= {a.asname or a.name for a in stmt.names if binds.get(a.asname or a.name) == 1}",
+         "out |= {a.asname or a.name for a in stmt.names}"),), ("PydanticAdapterNameRegression",)),
+    ("F4-170 pydantic 모듈 대조 뺌", "check-port-adapter-pairing.py", (
+        ('stmt.module == "pydantic" or stmt.module.startswith("pydantic.")', "True"),), ("PydanticAdapterNameRegression",)),
+    ("F4-170 묶기 셈에서 except as · match 뺌", "check-port-adapter-pairing.py", (
+        ("        elif isinstance(n, ast.ExceptHandler):\n            add(n.name)\n", ""),
+        ('        elif kind in ("MatchAs", "MatchStar"):\n            add(n.name)\n', "")),
+     ("PydanticAdapterNameRegression",)),
+    ("F4-170 이름 장치 거절 뺌", "check-port-adapter-pairing.py", (
+        ("    if _uses_name_device(mod):\n        return set()\n", ""),), ("PydanticAdapterNameRegression",)),
+    ("F4-170 장치 목록을 globals 하나로", "check-port-adapter-pairing.py", (
+        ('    "globals", "locals", "vars", "setattr", "delattr", "__import__", "importlib", "exec", "eval"})', '    "globals"})'),),
+     ("PydanticAdapterNameRegression",)),
+    ("F4-170 별 import 를 장치로 안 셈", "check-port-adapter-pairing.py", (
+        ('        if isinstance(n, ast.ImportFrom) and any(a.name == "*" for a in n.names):\n            return True\n', ""),),
+     ("PydanticAdapterNameRegression",)),
+    ("F4-170 sys.modules 를 장치로 안 셈", "check-port-adapter-pairing.py", (
+        ('                (modules.get(n.value.id) == "sys" and n.attr in ("modules", "_getframe"))\n',
+         "                False\n"),), ("PydanticAdapterNameRegression",)),
+    ("F4-170 sys · builtins 별칭 안 셈", "check-port-adapter-pairing.py", (
+        ('            modules.update({a.asname: a.name for a in n.names if a.asname and a.name in ("sys", "builtins")})',
+         "            pass"),), ("PydanticAdapterNameRegression",)),
+    ("F4-170 builtins 속성 장치 안 봄", "check-port-adapter-pairing.py", (
+        ('                or (modules.get(n.value.id) == "builtins" and n.attr in _NAME_DEVICES)):', "                ):"),),
+     ("PydanticAdapterNameRegression",)),
+    ("F4-170 from builtins import 장치 안 봄", "check-port-adapter-pairing.py", (
+        ('                or (n.module == "builtins" and any(a.name in _NAME_DEVICES for a in n.names))):', "                ):"),),
+     ("PydanticAdapterNameRegression",)),
+    ("F4-170 __builtins__ 이름 안 봄", "check-port-adapter-pairing.py", (
+        ('(n.id in _NAME_DEVICES or n.id == "__builtins__")', "n.id in _NAME_DEVICES"),), ("PydanticAdapterNameRegression",)),
+    ("F4-170 틀 f_globals 안 봄", "check-port-adapter-pairing.py", (
+        ('"__dict__", "f_globals", "f_locals", "__globals__", "__self__", "__builtins__"):',
+         '"__dict__", "__globals__", "__self__", "__builtins__"):'),), ("PydanticAdapterNameRegression",)),
+    ("F4-170 함수 __globals__ 안 봄", "check-port-adapter-pairing.py", (
+        ('"__dict__", "f_globals", "f_locals", "__globals__", "__self__", "__builtins__"):',
+         '"__dict__", "f_globals", "f_locals", "__self__", "__builtins__"):'),), ("PydanticAdapterNameRegression",)),
+    ("F4-170 내장 함수 __self__ 안 봄", "check-port-adapter-pairing.py", (
+        ('"__dict__", "f_globals", "f_locals", "__globals__", "__self__", "__builtins__"):',
+         '"__dict__", "f_globals", "f_locals", "__globals__", "__builtins__"):'),), ("PydanticAdapterNameRegression",)),
+    ("F4-170 모듈 .__builtins__ 속성 안 봄", "check-port-adapter-pairing.py", (
+        ('"__dict__", "f_globals", "f_locals", "__globals__", "__self__", "__builtins__"):',
+         '"__dict__", "f_globals", "f_locals", "__globals__", "__self__"):'),), ("PydanticAdapterNameRegression",)),
+    ("F4-170 모듈 수준 import 만이 아니라 어디든", "check-port-adapter-pairing.py", (
+        ("    for stmt in mod.body:\n        if isinstance(stmt, ast.ImportFrom) and stmt.level == 0 and stmt.module and (",
+         "    for stmt in ast.walk(mod):\n        if isinstance(stmt, ast.ImportFrom) and stmt.level == 0 and stmt.module and ("),),
+     ("PydanticAdapterNameRegression",)),
+    ("F4-163 표준 자리 덧붙임 되돌림", "check-naming.py", (
+        ("    return found + ([(standard, True)] if standard.is_dir() else [])", "    return found"),),
+     ("StandardAdminNamingRegression",)),
+    ("F4-163 표준 자리 겹침 거르기 뺌", "check-naming.py", (
+        ("[(standard, True)] if standard.is_dir()", "[(standard, False)] if standard.is_dir()"),),
+     ("StandardAdminNamingRegression",)),
+    ("F4-163 #341 거르기를 «바로 아래만» 으로", "check-naming.py", (
+        ('not (standard and py.parent != entity_dir / "feature")', "not (standard and py.parent == entity_dir)"),),
+     ("StandardAdminNamingRegression",)),
+    ("F4-163 표준 자리 #348 모델 마디 거르기 뺌", "check-naming.py", (
+        ("p.is_dir() and not standard)", "p.is_dir())"),), ("StandardAdminNamingRegression",)),
+    ("F4-163 표준 자리 #344 폼 클래스 자리 끔", "check-naming.py", (
+        ('                    if bases & {"Form", "ModelForm"} and "form" not in py.relative_to(entity_dir).parts:',
+         '                    if not standard and bases & {"Form", "ModelForm"} and "form" not in py.relative_to(entity_dir).parts:'),),
+     ("StandardAdminNamingRegression",)),
+    ("F4-163 표준 자리를 driven_layer 아래 django_* 모두로", "check-naming.py", (
+        ('    standard: Path = bc / "driven_layer" / f"django_{bc.name}" / "admin"\n'
+         "    return found + ([(standard, True)] if standard.is_dir() else [])",
+         '    return found + [(d / "admin", True) for d in sorted((bc / "driven_layer").glob("django_*")) if (d / "admin").is_dir()]'),),
+     ("StandardAdminNamingRegression",)),
+    ("F4-164 #15 지운 경로 거르기 뺌", "check-api-error-controller-contract.py", (
+        ("        if not os.path.lexists(git_root / git_relative):\n            continue  # 스테이지하지 않은 삭제",
+         "        if False:\n            continue  # 스테이지하지 않은 삭제"),), ("IndexOnlyPathRegression",)),
+    ("F4-164 #2 지운 경로 거르기 뺌", "check-error-centralization.py", (
+        ("        if not os.path.lexists(git_root / git_relative):\n            continue  # 스테이지하지 않은 삭제",
+         "        if False:\n            continue  # 스테이지하지 않은 삭제"),), ("IndexOnlyPathRegression",)),
+)
+
+
+def _mutation_test() -> int:
+    """`_MUTATIONS` 를 검사기 사본에 하나씩 걸고 그 시험 클래스를 사본으로 돌린다 — 모두 실패(죽음)여야 exit 0."""
+
+    def one(item: tuple[str, str, tuple[tuple[str, str], ...], tuple[str, ...]]) -> tuple[str, str]:
+        name, file, edits, classes = item
+        source: str = (SCRIPTS / file).read_text(encoding="utf-8")
+        for old, new in edits:
+            if source.count(old) != 1:
+                return name, f"변이 지점이 정확히 한 곳이 아니다({source.count(old)}) — 변이 표를 코드에 맞춰라"
+            source = source.replace(old, new, 1)
+        with tempfile.TemporaryDirectory(prefix="field-smoke-mutant-") as tmp:
+            copy: Path = Path(tmp) / "scripts"
+            shutil.copytree(SCRIPTS, copy, symlinks=False, ignore=shutil.ignore_patterns("__pycache__"))
+            (copy / file).write_text(source, encoding="utf-8")
+            done = subprocess.run([sys.executable, "-B", str(Path(__file__).resolve()), "--scripts", str(copy), *classes],
+                                  capture_output=True, text=True, env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"))
+        if done.returncode == 0:
+            return name, "변이가 살아남음(시험이 못 잡는다)"
+        if "FAILED (failures=" not in done.stderr:
+            return name, f"변이가 시험을 깨뜨림(실패가 아니라 오류) — {done.stderr.strip()[-300:]}"
+        return name, ""
+
+    from concurrent.futures import ThreadPoolExecutor
+    survived: list[str] = []
+    with ThreadPoolExecutor(max_workers=min(8, os.cpu_count() or 2)) as pool:
+        for name, why in pool.map(one, _MUTATIONS):
+            if why:
+                survived.append(f"{name}: {why}")
+            else:
+                print(f"  죽음 {name}")
+    if survived:
+        print(f"[field_report_checker_smoke --mutation-test] 생존 변이 {len(survived)}건", file=sys.stderr)
+        for line in survived:
+            print(f"  {line}", file=sys.stderr)
+        return 2
+    print(f"[field_report_checker_smoke --mutation-test] 변이 {len(_MUTATIONS)}종 모두 죽음")
+    return 0
+
+
 if __name__ == "__main__":
+    if sys.argv[1:] == ["--mutation-test"]:
+        sys.exit(_mutation_test())
     unittest.main(verbosity=2)

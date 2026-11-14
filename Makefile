@@ -259,6 +259,7 @@ verify-mutation:
 	PYTHONUTF8=1 python3 workspace/tools/rulepack_smoke.py --mutation-test; \
 	PYTHONUTF8=1 python3 workspace/tools/folder_group_fixture_run.py --mutation-test; \
 	PYTHONUTF8=1 python3 workspace/tools/fixture_matrix.py --mutation; \
+	PYTHONUTF8=1 python3 workspace/tools/field_report_checker_smoke.py --mutation-test; \
 	PYTHONUTF8=1 python3 workspace/tools/registry_gate_smoke.py --mutation-test; \
 	PYTHONUTF8=1 python3 workspace/tools/pregate_fixture_run.py --mutation-test; \
 	PYTHONUTF8=1 python3 workspace/tools/behavior_guard_fixture_run.py --mutation-test; \
