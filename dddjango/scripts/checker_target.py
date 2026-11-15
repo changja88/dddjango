@@ -25,6 +25,10 @@ check-domain-model(#546 표지 판정)과 design_pregate(형식 red · G2 `--joi
 진입점 하나(G0 배너 재료 · 판정 없음): `python3 checker_target.py --joint-list <저장소 루트> [--bc <bc> …]` —
 BC 마다 `함께 커밋 주석 <bc> n건 — …: <파일:줄> «불변식» · 잠금 <…>` 1행. BC 폴더 · `application/` TARGET ·
 없는 `--bc` 는 사용 오류 exit 1(빈 목록을 0건으로 찍지 않는다). 제 폴더를 `sys.path` 앞에 두어 `-I` 로도 돈다.
+
+다시 내보내기 한 겹(2.39.0 F4-180)의 판정도 여기 산다 — admin(#668 · check-context-isolation)과 도메인 우회 읽기(#356 ·
+check-port-adapter-pairing)는 자기 `django_<bc>/` 모듈을 거쳐 금지 자리의 이름을 가져오거나 쓰는 길을 한 판정으로 본다:
+내보내는 쪽 `reexport_bindings`(금지 자리는 부르는 검사기가 정한다) · 쓰는 쪽 `reexport_uses` · 별표 씨앗 펴기 `star_names`.
 """
 from __future__ import annotations
 
@@ -724,6 +728,299 @@ def joint_commit_list(root: Path, bcs: "list[str] | None" = None) -> "dict[str, 
                     items.append(f"{rel}:{line} «{fields.inv}» · 잠금 {lock}")
         out[bc] = items
     return out
+
+
+# ── 다시 내보내기 한 겹 — #668(admin) · #356(도메인 우회 읽기)이 같이 쓴다(2.39.0 F4-180) ─────────────────
+
+_MODULE_LEVEL_BLOCKS: "tuple[type[ast.stmt], ...]" = (ast.If, ast.Try, ast.With) + (
+    (ast.TryStar,) if hasattr(ast, "TryStar") else ())
+
+
+def module_level(body: "list[ast.stmt]") -> "Iterator[ast.stmt]":
+    """모듈 수준 문장 — `if` · `try` · `with` 블록 안은 들어가고 함수 · 클래스 몸은 들어가지 않는다."""
+    for node in body:
+        yield node
+        if isinstance(node, _MODULE_LEVEL_BLOCKS):
+            for field in ("body", "orelse", "finalbody"):
+                yield from module_level(getattr(node, field, []))
+            for h in getattr(node, "handlers", []):
+                yield from module_level(h.body)
+
+
+def bc_import_target(file_parts: "tuple[str, ...]", level: int, module: "str | None", bc_name: str,
+                     ) -> "tuple[str, ...] | None":
+    """import 가 가리키는 자기 BC 안 마디(BC 상대) — 상대 import 는 파일 자리에서 푼다 · 자기 BC 밖 · BC 밖 탈출 ·
+    `application` 밖이면 None."""
+    if level > 0:
+        pkg: "tuple[str, ...]" = file_parts[:-1]
+        if level - 1 > len(pkg):
+            return None
+        return pkg[: len(pkg) - (level - 1)] + (tuple(module.split(".")) if module else ())
+    parts: "list[str]" = (module or "").split(".")
+    if "application" not in parts:
+        return None
+    i: int = parts.index("application")
+    return tuple(parts[i + 2:]) if i + 1 < len(parts) and parts[i + 1] == bc_name else None
+
+
+def bc_module_file(bc: Path, parts: "tuple[str, ...]") -> "Path | None":
+    """BC 상대 마디의 모듈 파일 — `<마디>.py` 또는 꾸러미 `<마디>/__init__.py` · 없으면 None."""
+    if not parts:
+        return None
+    p: Path = bc.joinpath(*parts)
+    for c in (p.with_suffix(".py"), p / "__init__.py"):
+        if c.is_file():
+            return c
+    return None
+
+
+def _django_parts(parts: "tuple[str, ...]") -> bool:
+    """자기 `driven_layer/django_<bc>/` 아래 마디인가."""
+    return len(parts) >= 2 and parts[0] == "driven_layer" and parts[1].startswith("django_")
+
+
+def _django_module(bc: Path, parts: "tuple[str, ...]") -> bool:
+    """자기 `driven_layer/django_<bc>/` 아래 있는 모듈 · 꾸러미(이름공간 폴더 포함)인가."""
+    return _django_parts(parts) and (bc_module_file(bc, parts) is not None or bc.joinpath(*parts).is_dir())
+
+
+def attr_chain(node: ast.Attribute) -> "list[str] | None":
+    """`a.b.c` → ['a', 'b', 'c'] · 이름에서 시작하지 않는 사슬은 None."""
+    chain: "list[str]" = []
+    cur: ast.expr = node
+    while isinstance(cur, ast.Attribute):
+        chain.append(cur.attr)
+        cur = cur.value
+    if not isinstance(cur, ast.Name):
+        return None
+    chain.append(cur.id)
+    return chain[::-1]
+
+
+_DERIVED_VALUE_TYPES: "frozenset[str]" = frozenset({"str", "int"})
+
+
+def _value_annotation(ann: ast.expr) -> bool:
+    """`.value` 를 받는 주석인가 — `str` · `int` · `Final[str]` · `Final[int]`(`typing.` · `t.` · `typing_extensions.` 꼴 ·
+    글 주석 `"Final[str]"` 포함 · 풀리지 않는 글 주석은 아님). `Final` 만은 아니다 — mypy 가 값 타입을 그대로 추론한다."""
+    if isinstance(ann, ast.Constant) and isinstance(ann.value, str):
+        try:
+            ann = ast.parse(ann.value, mode="eval").body
+        except (SyntaxError, ValueError):
+            return False
+    final: bool = isinstance(ann, ast.Subscript) and (
+        (isinstance(ann.value, ast.Name) and ann.value.id == "Final")
+        or (isinstance(ann.value, ast.Attribute) and ann.value.attr == "Final"))
+    inner: ast.expr = ann.slice if final else ann
+    return isinstance(inner, ast.Name) and inner.id in _DERIVED_VALUE_TYPES
+
+
+def _derived_value(stmt: "ast.Assign | ast.AnnAssign") -> bool:
+    """VO 멤버에서 묶은 글 · 수 값인가 — 오른쪽이 `.value` 로 끝나고 주석이 글 · 수 타입이다(`_value_annotation` ·
+    `STATUS_PENDING: Final[str] = OrderStatus.PENDING.value` — `implementation-django` §2.5 모델 쪽 파생 값). 주석이 값
+    타입을 못박으므로 값이 도메인 객체면 mypy strict 가 `[assignment]` 로 막는다."""
+    return (isinstance(stmt, ast.AnnAssign) and isinstance(stmt.value, ast.Attribute) and stmt.value.attr == "value"
+            and _value_annotation(stmt.annotation))
+
+
+def _module_ast(bc: Path, parts: "tuple[str, ...]") -> "ast.Module | None":
+    """BC 상대 마디의 모듈(`<마디>.py` · 꾸러미 `__init__.py`)을 읽어 파싱 — 못 찾거나 못 읽으면 None."""
+    f: "Path | None" = bc_module_file(bc, parts)
+    try:
+        return ast.parse(f.read_text(encoding="utf-8")) if f is not None else None
+    except (OSError, UnicodeDecodeError, SyntaxError):
+        return None
+
+
+def _declared_all(mod: "ast.Module | None") -> "set[str] | None":
+    """모듈 수준 `__all__` 의 글 목록 — 글 목록 대입이 없으면 None(그때 `import *` 는 `_` 로 시작하지 않는 이름을 다 들인다)."""
+    for node in module_level(mod.body if mod is not None else []):
+        targets: "list[ast.expr]" = (node.targets if isinstance(node, ast.Assign)
+                                     else [node.target] if isinstance(node, ast.AnnAssign) else [])
+        if any(isinstance(t, ast.Name) and t.id == "__all__" for t in targets) \
+                and isinstance(node.value, (ast.List, ast.Tuple)):
+            return {e.value for e in node.value.elts if isinstance(e, ast.Constant) and isinstance(e.value, str)}
+    return None
+
+
+def star_names(bc: Path, parts: "tuple[str, ...]") -> "set[str]":
+    """`from <마디> import *` 가 들여오는 이름 — 그 모듈의 `__all__`(글 목록) · 없으면 `_` 로 시작하지 않는 맨 위 이름.
+    모듈을 못 찾으면 빈 집합."""
+    mod: "ast.Module | None" = _module_ast(bc, parts)
+    declared: "set[str] | None" = _declared_all(mod)
+    if declared is not None:
+        return declared
+    names: "set[str]" = set()
+    for node in module_level(mod.body if mod is not None else []):
+        if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            names.add(node.name)
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            names.update((a.asname or a.name).split(".")[0] for a in node.names if a.name != "*")
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            targets: "list[ast.expr]" = node.targets if isinstance(node, ast.Assign) else [node.target]
+            names.update(t.id for t in targets if isinstance(t, ast.Name))
+    return {n for n in names if not n.startswith("_")}
+
+
+def plain_import_seed(name: str, marker: str) -> str:
+    """별칭 없는 `import a.b.c` 의 씨앗 — 그 import 가 든 금지 자리의 앞마디까지의 점 경로(`marker` 마디까지 ·
+    `application.<bc>.domain_layer`). 그 자리 아래 사슬(이웃 모듈 포함)은 모두 맞고(`_bound_to`) 자리 밖 사슬은 같은 뿌리여도
+    맞지 않는다. `marker` 는 `application.<bc>` 뒤에서 찾고, 없으면 점 경로 전체."""
+    parts: "list[str]" = name.split(".")
+    start: int = parts.index("application") + 2 if "application" in parts else 0
+    cut: int = parts.index(marker, start) + 1 if marker in parts[start:] else len(parts)
+    return ".".join(parts[:cut])
+
+
+def _bound_to(expr: ast.expr, names: "set[str]") -> bool:
+    """오른쪽 식이 묶은 이름에서 시작하는가 — 이름(`OrderStatus` · `OrderStatus.PENDING`)이거나, 별칭 없는 `import a.b.c`
+    씨앗이면 그 import 가 든 금지 자리의 앞마디(`application.<bc>.domain_layer` — `plain_import_seed`)로 시작하는 사슬(그
+    자리 아래 이웃 모듈 사슬 포함). 뿌리 이름(`application`)만으로는 맞추지 않는다."""
+    chain: "list[str] | None" = (attr_chain(expr) if isinstance(expr, ast.Attribute)
+                                 else [expr.id] if isinstance(expr, ast.Name) else None)
+    return chain is not None and any(".".join(chain[:k]) in names for k in range(1, len(chain) + 1))
+
+
+def reexport_bindings(mod: ast.Module, seed_of: "Callable[[ast.Import | ast.ImportFrom], set[str]]",
+                      ) -> "tuple[set[str], set[str]]":
+    """자기 `django_<bc>/` 모듈이 금지 자리에서 묶어 내보내는 이름 — (모듈 수준 이름, `클래스.속성`).
+
+    씨앗은 모듈 수준 import 가 금지 자리에서 묶은 이름(`seed_of` — 금지 자리는 부르는 검사기가 정한다)이다 — 별칭 없는
+    `import a.b.c` 는 그 import 가 든 금지 자리의 앞마디까지의 점 경로(`application.<bc>.domain_layer` —
+    `plain_import_seed`)를 씨앗으로 둔다(`_bound_to`). 모듈 수준 대입 별칭(`Kind = OrderKind` · 그 속성 ·
+    `Kind = application.<bc>.domain_layer.….OrderKind`)과 맨 위 클래스 몸의 대입(`Status = OrderStatus` — 모델 클래스 안
+    별칭)은 그 이름을 옮긴다. 주석이 글 · 수 타입(`str` · `int` · `Final[str]` · `Final[int]`)이고 `.value` 로 끝나는 대입
+    (`STATUS_PENDING: Final[str] = OrderStatus.PENDING.value`)은 VO 멤버에서 파생한 글 · 수 값이라 옮기지 않는다
+    (`implementation-django` §2.5 — 모델 쪽 파생 값) — 다른 주석(`Final[RefundRule]` · `Final` 만)이나 주석 없는 `.value`
+    는 값이 도메인 객체일 수 있어 옮긴다. 씨앗의 `import *` 는 부르는 검사기가 `star_names` 로 편다. 다른 `django_<bc>/`
+    모듈에서 가져온 이름은 따라가지 않는다(한 겹).
+    """
+    names: "set[str]" = set()
+    class_attrs: "set[str]" = set()
+    for node in module_level(mod.body):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            names |= seed_of(node)
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)) and node.value is not None:
+            if not _derived_value(node) and _bound_to(node.value, names):
+                targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                names.update(t.id for t in targets if isinstance(t, ast.Name))
+        elif isinstance(node, ast.ClassDef):
+            for stmt in node.body:
+                if isinstance(stmt, (ast.Assign, ast.AnnAssign)) and stmt.value is not None \
+                        and not _derived_value(stmt) and _bound_to(stmt.value, names):
+                    targets = stmt.targets if isinstance(stmt, ast.Assign) else [stmt.target]
+                    class_attrs.update(f"{node.name}.{t.id}" for t in targets if isinstance(t, ast.Name))
+    return names, class_attrs
+
+
+def reexport_uses(mod: ast.Module, bc: Path, file_parts: "tuple[str, ...]",
+                  bindings: "Callable[[tuple[str, ...]], tuple[set[str], set[str]]]",
+                  ) -> "list[tuple[int, tuple[str, ...], tuple[str, ...], bool]]":
+    """쓰는 쪽 — 이 파일이 자기 `django_<bc>/` 모듈을 거쳐 금지 이름을 가져오거나 쓰는 자리
+    (줄, 이름이 묶인 모듈의 BC 상대 마디, 이름(+ 속성), import 줄인가).
+
+    `bindings(마디)` 는 그 모듈이 금지 자리에서 묶은 (모듈 수준 이름, `클래스.속성`) 이다(`reexport_bindings` — 금지
+    자리는 부르는 검사기가 정한다). 길은 넷 — 이름을 가져옴(`from <모듈> import X` · `import *`) · 가져온 클래스의
+    속성(`Model.Status`) · 모듈째 가져와 속성 사슬(`m.X` · `m.Model.Status` · 하위 모듈을 따라 `mm.sub.Model.Status`).
+    꾸러미 `__init__.py` 가 자기 `django_<bc>/` 모듈에서 가져와 다시 내보낸 이름(`models/__init__.py` 의
+    `from .order_model import OrderModel` · `import *` 포함 — `star_names` 로 편다)은 그 모듈의 이름으로 한 단 푼다 —
+    이름 풀기라 한 겹 셈에 넣지 않는다. `django_<bc>/` 밖 모듈에서 다시 내보낸 이름은 풀지 않는다.
+    `import *` 는 들어오는 이름(그 모듈에 `__all__` 이 있으면 그 이름 — 점 경로 씨앗은 뿌리로 견준다) 가운데 금지 이름이
+    있으면 걸고, 들어온 클래스의 속성은 쓰는 자리에서 본다. 이름이 묶인 모듈로 적으므로 import 꼴(꾸러미 · 모듈 · 상대 ·
+    모듈째)이 달라도 같은 자리다.
+    """
+    reexported: "dict[tuple[str, ...], dict[str, tuple[tuple[str, ...], str]]]" = {}
+
+    def package_reexports(parts: "tuple[str, ...]") -> "dict[str, tuple[tuple[str, ...], str]]":
+        """꾸러미 `__init__.py` 가 모듈 수준에서 자기 `django_<bc>/` 모듈에서 가져온 이름 → (그 모듈, 원래 이름) ·
+        `import *` 는 그 모듈의 `star_names` 로 편다."""
+        if parts not in reexported:
+            reexported[parts] = {}
+            f: "Path | None" = bc_module_file(bc, parts)
+            if f is not None and f.name == "__init__.py":
+                try:
+                    init: "ast.Module | None" = ast.parse(f.read_text(encoding="utf-8"))
+                except (OSError, UnicodeDecodeError, SyntaxError):
+                    init = None
+                for node in module_level(init.body if init is not None else []):
+                    if isinstance(node, ast.ImportFrom):
+                        src = bc_import_target(f.relative_to(bc).parts, node.level, node.module, bc.name)
+                        if src is not None and _django_parts(src):
+                            for a in node.names:
+                                reexported[parts].update({n: (src, n) for n in star_names(bc, src)} if a.name == "*"
+                                                         else {a.asname or a.name: (src, a.name)})
+        return reexported[parts]
+
+    def resolve(parts: "tuple[str, ...]", name: str) -> "list[tuple[tuple[str, ...], str]]":
+        origin = package_reexports(parts).get(name)
+        return [(parts, name)] + ([origin] if origin is not None else [])
+
+    def name_hit(parts: "tuple[str, ...]", name: str) -> "tuple[tuple[str, ...], tuple[str, ...]] | None":
+        for where, n in resolve(parts, name):
+            if n in bindings(where)[0]:
+                return where, (n,)
+        return None
+
+    def class_hit(parts: "tuple[str, ...]", name: str, attr: str) -> "tuple[tuple[str, ...], tuple[str, ...]] | None":
+        for where, n in resolve(parts, name):
+            if f"{n}.{attr}" in bindings(where)[1]:
+                return where, (n, attr)
+        return None
+
+    out: "list[tuple[int, tuple[str, ...], tuple[str, ...], bool]]" = []
+    modules: "dict[str, tuple[str, ...]]" = {}  # 별칭(점 경로) → 자기 django_<bc>/ 모듈 · 꾸러미
+    classes: "dict[str, tuple[tuple[str, ...], str]]" = {}  # 별칭 → (자기 django_<bc>/ 모듈, 그 모듈의 이름)
+    for node in ast.walk(mod):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                t = bc_import_target(file_parts, 0, a.name, bc.name)
+                if t is not None and _django_module(bc, t):
+                    modules[a.asname or a.name] = t
+        elif isinstance(node, ast.ImportFrom):
+            base = bc_import_target(file_parts, node.level, node.module, bc.name)
+            if base is None or not _django_parts(base):
+                continue
+            names, class_attrs = bindings(base)
+            for a in node.names:
+                if a.name == "*":
+                    declared = _declared_all(_module_ast(bc, base))  # `__all__` 이 있으면 그 이름만 들어온다
+                    star = {n for n in names | set(package_reexports(base)) | {c.split(".")[0] for c in class_attrs}
+                            if declared is None or n.split(".")[0] in declared}
+                    if any(name_hit(base, n) for n in star):
+                        out.append((node.lineno, base, ("*",), True))
+                    classes.update({n: (base, n) for n in star})
+                    continue
+                hit = name_hit(base, a.name)
+                if hit is not None:
+                    out.append((node.lineno, *hit, True))
+                elif _django_module(bc, base + (a.name,)):
+                    modules[a.asname or a.name] = base + (a.name,)
+                else:
+                    classes[a.asname or a.name] = (base, a.name)
+    for node in ast.walk(mod):
+        chain = attr_chain(node) if isinstance(node, ast.Attribute) and (classes or modules) else None
+        if chain is None:
+            continue
+        if len(chain) == 2 and chain[0] in classes:
+            hit = class_hit(*classes[chain[0]], chain[1])
+            if hit is not None:
+                out.append((node.lineno, *hit, False))
+        for cut in range(len(chain) - 1, 0, -1):
+            alias = ".".join(chain[:cut])
+            if alias not in modules:
+                continue
+            cur = modules[alias]
+            rest = chain[cut:]
+            for k, attr in enumerate(rest):
+                hit = name_hit(cur, attr) or (class_hit(cur, attr, rest[k + 1]) if k + 1 < len(rest) else None)
+                if hit is not None:
+                    out.append((node.lineno, *hit, False))
+                    break
+                if not _django_module(bc, cur + (attr,)):
+                    break
+                cur = cur + (attr,)
+            break
+    return sorted(set(out))
 
 
 JOINT_LIST_MEANING: str = ("애그리거트 여럿을 한 트랜잭션에서 바꾸도록 허용한 코드 자리(`# joint-commit:` 주석) — 플러그인 밖에서 "

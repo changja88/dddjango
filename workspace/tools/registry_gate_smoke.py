@@ -1228,6 +1228,133 @@ class ApprovedInflowGateRegression(unittest.TestCase):
         code, out = _gate(r.root, other)
         self.assertEqual(code, 0, out); self.assertIn("조상이 아니다", out); self.assertNotIn("안내:", out)
 
+    # F4-162(+F4-56 ②) — 승인 머지가 들인 폴더 주어 · 없는 폴더 주어. good_bc 앵커 → 레인 커밋 → main 커밋 → 레인이 main 을
+    # 승인 머지로 들임(→ 레인 뒤 단계). 폴더 주어는 tree 로 F1′ · F2′ 를 재고, 레인이 그 폴더 안을 고쳤으면 귀속 유지다.
+    APP: str = "application/orders/application_layer"
+    API: str = "application/orders/driving_layer/api"
+    AREA_LINE: str = "check-usecase-dto-placement.py :: [#188] application/orders/application_layer/refund: "
+
+    def area(self, repo: Path) -> None:
+        _write(repo, f"{self.APP}/refund/__init__.py", "")
+        _write(repo, f"{self.APP}/refund/issue_refund/__init__.py", "")
+
+    def api_area(self, repo: Path) -> None:
+        _write(repo, f"{self.API}/refund/__init__.py", "")
+        _write(repo, f"{self.API}/refund/refund_controller.py", "")
+
+    def folder_lane(self, name: str, upstream: "Callable[[Path], None]", *,
+                    anchor_step: "Callable[[Path], None] | None" = None, lane_step: "Callable[[Path], None] | None" = None,
+                    after: "Callable[[Path], None] | None" = None) -> "tuple[Path, str, str, Path]":
+        repo: Path = self.td / name
+        shutil.copytree(BASE_FIXTURE, repo)
+        if anchor_step is not None:
+            anchor_step(repo)
+        _git(repo, "init", "-q", "-b", "main")
+        anchor: str = _commit_all(repo, "anchor")
+        _git(repo, "checkout", "-q", "-b", "lane")
+        (lane_step or (lambda r: _write(r, "lane_note.md", "lane\n")))(repo)
+        _commit_all(repo, "lane work")
+        _git(repo, "checkout", "-q", "main")
+        upstream(repo)
+        _commit_all(repo, "upstream")
+        _git(repo, "checkout", "-q", "lane")
+        self.assertEqual(_git(repo, "merge", "-q", "--no-ff", "-m", "approved merge", "main").returncode, 0)
+        merge: str = _head(repo)
+        if after is not None:
+            after(repo)
+            _commit_all(repo, "lane after merge")
+        approved: Path = self.td / f"{name}-approved.txt"
+        approved.write_text(merge + " approved\n", encoding="utf-8")
+        return repo, anchor, merge, approved
+
+    def follow(self, out: str, line: str) -> str:
+        """그 줄 바로 밑 `↳` 줄(유입 · 귀속 유지 사유)."""
+        lines: "list[str]" = out.splitlines()
+        at: int = next(i for i, text in enumerate(lines) if text.strip().startswith(line))
+        return lines[at + 1].strip()
+
+    def test_F4_162_folder_subjects_inflow_when_lane_left_them_alone(self) -> None:
+        """A 머지가 입구 없는 영역 refund/ 를 통째 들임 → `폴더 verbatim` · B 앵커의 refund 짝 가운데 api 쪽을 머지가 지움
+        (영역 폴더 무변) → `상호작용` · C 머지가 골격 덜 된 새 BC 를 들임(#488 고정 칸 부재) → `부재(상류에도 없던 폴더)` ·
+        G1 레인이 영역 안을 고쳤다가 되돌림(tree 가 머지 결과와 같아짐) → 파일 판처럼 유입."""
+        def new_bc(repo: Path) -> None:
+            _write(repo, "application/billing/__init__.py", "")
+            _write(repo, "application/billing/domain_layer/__init__.py", "")
+
+        def edit_and_revert(repo: Path) -> None:
+            _write(repo, f"{self.APP}/refund/issue_refund/draft.py", "X: int = 1\n")
+            _commit_all(repo, "lane edits the area")
+            (repo / f"{self.APP}/refund/issue_refund/draft.py").unlink()
+
+        cases: "dict[str, tuple[dict[str, object], str, str]]" = {
+            "A": ({"upstream": self.area}, self.AREA_LINE, "폴더 verbatim"),
+            "B": ({"upstream": lambda r: shutil.rmtree(r / f"{self.API}/refund"),
+                   "anchor_step": lambda r: (self.area(r), self.api_area(r))}, self.AREA_LINE, "상호작용"),
+            "C": ({"upstream": new_bc}, "check-layer-skeleton.py :: [#488] application/billing/driving_layer: ",
+                  "부재(상류에도 없던 폴더)"),
+            "G1": ({"upstream": self.area, "after": edit_and_revert}, self.AREA_LINE, "폴더 verbatim"),
+        }
+        for name, (steps, line, label) in cases.items():
+            with self.subTest(case=name):
+                repo, anchor, merge, approved = self.folder_lane("in-" + name, **steps)
+                code, out = _gate(repo, anchor, ["--approved-merge-file", str(approved)])
+                self.assertEqual(code, 0, out)
+                self.assertEqual(self.follow(out, line), f"↳ 유입: {merge[:12]}(L 증명) · {label}", out)
+                self.assertNotIn("비-blob 경로", out)
+                if name == "C":
+                    self.assertEqual(out.count("· 부재(상류에도 없던 폴더)"), 8, out)
+
+    def test_F4_162_folder_subjects_stay_attributed_when_lane_touched_them(self) -> None:
+        """D 머지 뒤 레인이 영역 안에 파일을 커밋 · E 레인이 머지 전에 스스로 api 짝을 지움(L 이 거름) · F 영역 안에 커밋 안 한
+        파일 · R7 영역 안 파일을 커밋 없이 `git mv` 로 영역 밖에 옮김(이름 바꿈의 옛 경로가 그 폴더 아래) — 모두 귀속 유지."""
+        cases: "dict[str, tuple[dict[str, object], Callable[[Path], None] | None, str]]" = {
+            "D": ({"upstream": self.area,
+                   "after": lambda r: _write(r, f"{self.APP}/refund/issue_refund/issue_refund_use_case.py", "")},
+                  None, "↳ 귀속 유지: 레인 커밋 수정 "),
+            "E": ({"upstream": lambda r: _write(r, "main_note.md", "main\n"),
+                   "anchor_step": lambda r: (self.area(r), self.api_area(r)),
+                   "lane_step": lambda r: shutil.rmtree(r / f"{self.API}/refund")}, None, "↳ 귀속 유지: 상호작용 미증명"),
+            "F": ({"upstream": self.area},
+                  lambda r: _write(r, f"{self.APP}/refund/issue_refund/draft_note.py", "X: int = 1\n"),
+                  "↳ 귀속 유지: worktree 수정 중"),
+            "R7": ({"upstream": lambda r: (self.area(r), _write(r, f"{self.APP}/refund/issue_refund/helper.py", "X: int = 1\n"))},
+                   lambda r: self.assertEqual(_git(r, "mv", f"{self.APP}/refund/issue_refund/helper.py",
+                                                   "moved_helper.py").returncode, 0),
+                   "↳ 귀속 유지: worktree 수정 중"),
+        }
+        for name, (steps, dirty, reason) in cases.items():
+            with self.subTest(case=name):
+                repo, anchor, merge, approved = self.folder_lane("kept-" + name, **steps)
+                if dirty is not None:
+                    dirty(repo)
+                code, out = _gate(repo, anchor, ["--approved-merge-file", str(approved)])
+                self.assertEqual(code, 2, out)
+                self.assertTrue(self.follow(out, self.AREA_LINE).startswith(reason), out)
+                self.assertIn(self.AREA_LINE, _section(out, "귀속(N∖L)"))
+
+    def test_F4_162_dotless_subject_guards(self) -> None:
+        """점 없는 이름 주어 — N1 없는 경로인데 부모가 HEAD 폴더가 아님 → `비-blob 경로` · N2 점 없는 «파일» 이 HEAD 에 있음 →
+        파일 판(폴더 표기 아님). 합성 줄로 `_provenance_split` 를 직접 부른다(주어 가드만 겨냥)."""
+        import anchor_diff
+        gate_module: ModuleType = __import__("registry_gate")
+        repo, anchor, merge, approved = self.folder_lane("dotless", self.area,
+                                                         anchor_step=lambda r: _write(r, "application/orders/NOTES", "notes\n"))
+        head: str = _head(repo)
+        merges, chain = anchor_diff.load_approved_merges(approved, repo, anchor, head)
+        facts = anchor_diff.PathFacts(repo, anchor, head, chain, list(merges))
+        for name, p, reason in (("N1", "application/zeta/application_layer", "비-blob 경로"),
+                                ("N2", "application/orders/NOTES", "상호작용 미증명")):
+            with self.subTest(case=name):
+                line: str = f"check-layer-skeleton.py :: [#488] {p}: 고정 칸 부재"
+                record: "dict[str, str]" = {"file": p, "rule": "#488", "checker": "check-layer-skeleton.py", "message": "고정 칸 부재"}
+                work: Path = self.td / ("split-" + name)
+                work.mkdir()
+                result = gate_module._provenance_split(repo, anchor, head, merges, chain, [line], [record], (), work)
+                self.assertEqual(result.inflow, [])
+                self.assertEqual(result.retained[line], reason)
+                self.assertEqual(result.folders, set())
+                self.assertFalse(facts.is_dir(p))
+
 
 _PREGATE_MINI: Path = ROOT / "workspace" / "eval" / "fixtures" / "pregate" / "mini_repo"
 _LINK_DIR: str = ".dddjango-web/20261012-0717-x/return1/browser-basetemp-2"
@@ -1405,7 +1532,39 @@ class ListShrinkRegression(unittest.TestCase):
                 code, out = _gate(repo, "HEAD")
                 self.assertEqual(code, 2, out)
                 self.assertIn("[#562] framework/pure/json_value.py", _section(out, "귀속(N∖L)"))
-                self.assertNotIn("목록만 줄어", out)
+                # 위반 줄만 고친 파일에서 짝을 짓지 않는다 — ⓓ 후보 줄은 고친 파일이어도 목록이 부분집합이면 legacy(F4-166)
+                self.assertNotIn("목록만 줄어 잔존으로 센 줄", out)
+
+    def test_F4_166_folder_subject_candidate_shrinks_to_legacy_and_edited_file_violation_stays(self) -> None:
+        """주어가 BC 폴더인 ⓓ#547 줄의 목록 칸만 줄면(레인이 응용 영역 하나를 지움) legacy 로 짝 짓는다 — 폴더는 앵커와 같을
+        수 없지만 ⓓ 는 exit 밖 감수자 입력이고 목록이 부분집합이면 신호가 좁아진 것이다(F4-166). 같은 레인이 고친 admin
+        파일에서 금지 import 를 일부만 걷은 #668 위반 줄은 귀속 그대로다(고친 파일에서 목록을 일부만 걷으면 새 줄)."""
+        repo: Path = self.td / "f166"
+        shutil.copytree(BASE_FIXTURE, repo)
+        panel: str = "application/orders/driven_layer/django_orders/admin/order/panel.py"
+        for area in ("audit", "billing", "refund"):
+            base: str = f"application/orders/application_layer/{area}"
+            _write(repo, f"{base}/__init__.py", "")
+            _write(repo, f"{base}/do_{area}/__init__.py", "")
+            _write(repo, f"{base}/do_{area}/do_{area}_use_case.py",
+                   "from application.orders.domain_layer.order.order_repository import OrderRepository\n\n"
+                   "_R: type = OrderRepository\n")
+        _write(repo, panel, "from application.orders.domain_layer.order.order import Order\n"
+                            "from application.orders.application_layer.order.place_order.place_order_use_case import X\n\n"
+                            "_A: type = Order\n_B: object = X\n")
+        _git(repo, "init", "-q")
+        anchor: str = _commit_all(repo, "anchor")
+        shutil.rmtree(repo / "application/orders/application_layer/audit")
+        _write(repo, panel, "from application.orders.domain_layer.order.order import Order\n\n_A: type = Order\n")
+        _commit_all(repo, "lane drops the audit area and one admin import")
+        code, out = _gate(repo, anchor)
+        self.assertEqual(code, 2, out)
+        self.assertIn(f"[#668] {panel}", _section(out, "귀속(N∖L)"))
+        self.assertNotIn("목록만 줄어 잔존으로 센 줄", out)
+        self.assertIn("== ⓓ 신규(N′∖L′) 0건", out)
+        self.assertIn("  목록만 줄어 legacy 로 센 ⓓ 줄 1건", out)
+        self.assertIn("↳ 앵커: check-domain-model.py :: [ⓓ#547] application/orders: `order_repository` 를 여러 <area>/ "
+                      "['audit', 'billing', 'refund']", out)
 
     def test_list_shrunk_pairs_one_to_one_only_for_file_level_string_lists(self) -> None:
         gate: ModuleType = _gate_module()
@@ -2272,14 +2431,88 @@ _MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...]], ...]" = (
 )
 
 
-def _mutation_test() -> int:
-    """변이를 scripts 사본에 하나씩 넣고 묶음 이동 시험(`--only-group`)을 돈다 — 모두 붉어야 green."""
-    from concurrent.futures import ThreadPoolExecutor
-    src: str = GATE.read_text(encoding="utf-8")
+_LADDER: str = "BaselineLadderHoldsRegression."
+_FOLDER_IN: str = "ApprovedInflowGateRegression.test_F4_162_folder_subjects_inflow_when_lane_left_them_alone"
+_FOLDER_KEPT: str = "ApprovedInflowGateRegression.test_F4_162_folder_subjects_stay_attributed_when_lane_touched_them"
+# 기준선 · 귀속 변이(F4-160 · F4-162 · F4-166) — (이름, scripts 파일, ((옛 글, 새 글) …), 시험 파일, 붉어야 할 시험 이름).
+# 옛 글은 그 파일에 정확히 한 번 있어야 한다. 고침을 옛 코드로 되돌린 것과 고침의 조건을 하나씩 무른 것.
+_BASELINE_MUTATIONS: "tuple[tuple[str, str, tuple[tuple[str, str], ...], str, tuple[str, ...]], ...]" = (
+    ("F4-160 ①′ 칸 걷음", "anchor_diff.py", (("    if only:\n        # ①′(F4-160)", "    if False:\n        # ①′(F4-160)"),),
+     "anchor_diff_smoke.py", (_LADDER + "test_160_P_lane_empties_error_module_keeps_existing",)),
+    ("F4-160 넣은 렌더만(교집합 걷음)", "anchor_diff.py", (("[line for line in ilines if line in emptied]", "ilines"),),
+     "anchor_diff_smoke.py", (_LADDER + "test_160_S2_emptied_module_duplicate_does_not_mask_lane_duplicate",)),
+    ("F4-160 비운 렌더만", "anchor_diff.py", (("[line for line in ilines if line in emptied]", "blines"),),
+     "anchor_diff_smoke.py", (_LADDER + "test_한계_160_T1_three_owners_one_emptied_leaves_one_new_line",)),
+    ("F4-160 사본 복원 걷음", "anchor_diff.py", (
+        ("                for rel, data in saved.items():\n                    (snap / rel).write_bytes(data)\n",
+         "                pass\n"),),
+     "anchor_diff_smoke.py", (_LADDER + "test_160_ladder_empty_render_fails_restores_copy_before_lower_rungs",)),
+    ("F4-160 #2 가드 걷음", "anchor_diff.py", (
+        ("_anchor_only_error_modules(snap, argv) if script.name in _ALIAS_CHECKERS else []",
+         "_anchor_only_error_modules(snap, argv) if True else []"),),
+     "anchor_diff_smoke.py", (_LADDER + "test_160_ladder_other_scope_checkers_never_take_the_prime_rung",)),
+    ("F4-160 넣은 렌더가 서지 않아도 비운 렌더", "anchor_diff.py", (
+        ("        if icode in (0, 2):   # 넣은 렌더가", "        if True:   # 넣은 렌더가"),),
+     "anchor_diff_smoke.py", (_LADDER + "test_160_ladder_add_render_fails_skips_empty_render_and_keeps_copy",)),
+    ("F4-160 정본 후보 이름 거름 걷음", "anchor_diff.py", (
+        ("if rel not in listed and _CANDIDATE_BC_RE.fullmatch(rel.split(\"/\")[1]) \\\n", "if rel not in listed \\\n"),),
+     "anchor_diff_smoke.py", (_LADDER + "test_160_ladder_only_candidate_production_modules_go_into_the_add_render",)),
+    ("F4-160 검사기 production 제외 이름 거름 걷음", "anchor_diff.py", (
+        ("                and not parts & _CHECKER_CODE_SKIP_DIRS and not parts & _CHECKER_TEST_DIR_NAMES and module.is_file()",
+         "                and module.is_file()"),),
+     "anchor_diff_smoke.py", (_LADDER + "test_160_ladder_only_candidate_production_modules_go_into_the_add_render",)),
+    ("F4-160 preserve 로 적힌 모듈도 앵커에만 있는 모듈로 셈", "anchor_diff.py", (
+        ("_INVENTORY_FLAGS: \"tuple[str, str]\" = (\"--project-code-error-module\", \"--project-preserve-error-module\")",
+         "_INVENTORY_FLAGS: \"tuple[str, ...]\" = (\"--project-code-error-module\",)"),),
+     "anchor_diff_smoke.py", (_LADDER + "test_160_preserve_inventory_module_is_not_added",)),
+    ("F4-160 비우기 전에 되돌림 목록에 넣음(못 비운 모듈도 되씀)", "anchor_diff.py", (
+        ("                    data: bytes = (snap / rel).read_bytes()\n"
+         "                    (snap / rel).write_bytes(b\"\")\n"
+         "                    saved[rel] = data\n",
+         "                    saved[rel] = (snap / rel).read_bytes()\n"
+         "                    (snap / rel).write_bytes(b\"\")\n"),),
+     "anchor_diff_smoke.py", (_LADDER + "test_160_ladder_read_only_module_falls_to_lower_rungs_untouched",)),
+    ("F4-160 사본 비우기 쓰기 오류를 아래 칸으로 받지 않음", "anchor_diff.py", (
+        ("            except OSError:\n                pass   # 사본의 그 모듈을", "            except ZeroDivisionError:\n                pass   # 사본의 그 모듈을"),),
+     "anchor_diff_smoke.py", (_LADDER + "test_160_ladder_copy_write_failure_falls_to_lower_rungs_and_restores",)),
+    ("F4-162 폴더 판 걷음(폴더 주어는 비-blob)", "anchor_diff.py", (
+        ("            return self._classify_dir(p)\n", "            return \"비-blob 경로\"\n"),),
+     "registry_gate_smoke.py", (_FOLDER_IN,)),
+    ("F4-162 폴더 아래 작업 트리 변경 확인 걷음", "anchor_diff.py", (
+        ("        if any(entry.startswith(p + \"/\") for entry in self.dirty):\n            return \"worktree 수정 중\"\n", ""),),
+     "registry_gate_smoke.py", (_FOLDER_KEPT,)),
+    ("F4-162 이름 바꿈 옛 경로를 깎아 읽음", "anchor_diff.py", (
+        ("        self.dirty: \"set[str]\" = _porcelain_paths(run_git(\n"
+         "            root, \"status\", \"--porcelain\", \"--untracked-files=all\", \"-z\").stdout)\n",
+         "        self.dirty: \"set[str]\" = {entry[3:] for entry in run_git(\n"
+         "            root, \"status\", \"--porcelain\", \"--untracked-files=all\", \"-z\").stdout.split(\"\\0\") if len(entry) > 3}\n"),),
+     "registry_gate_smoke.py", (_FOLDER_KEPT,)),
+    ("F4-56 ② 없는 폴더 주어를 받지 않음", "registry_gate.py", (
+        ("or not (parts[-1].endswith(\".py\") or \".\" not in parts[-1])", "or not parts[-1].endswith(\".py\")"),),
+     "registry_gate_smoke.py", (_FOLDER_IN,)),
+    ("F4-166 ⓓ 후보 짝에 파일 무변 조건 되살림", "registry_gate.py", (
+        ("cand_shrunk = _list_shrunk(sorted(n_cands - l_cands), sorted(l_cands - n_cands))",
+         "cand_shrunk = _list_shrunk([line for line in sorted(n_cands - l_cands) if untouched(line)],\n"
+         "                                       sorted(l_cands - n_cands))"),
+        ("subjects: \"dict[str, str | None]\" = _line_paths(attributed, n_records, cur_prefixes)",
+         "subjects: \"dict[str, str | None]\" = _line_paths(attributed + sorted(n_cands - l_cands), n_records, cur_prefixes)")),
+     "registry_gate_smoke.py",
+     ("ListShrinkRegression.test_F4_166_folder_subject_candidate_shrinks_to_legacy_and_edited_file_violation_stays",)),
+)
 
-    def one(item: "tuple[str, tuple[tuple[str, str], ...]]") -> "tuple[str, str]":
-        name, edits = item
-        text: str = src
+
+def _mutation_test() -> int:
+    """변이를 scripts 사본에 하나씩 넣고 그 변이가 붉혀야 할 시험을 돈다 — 게이트 채널 변이(`_MUTATIONS`)는 묶음 이동 시험
+    (`--only-group`), 기준선 · 귀속 변이(`_BASELINE_MUTATIONS`)는 이름 붙인 시험. 모두 붉어야 green."""
+    from concurrent.futures import ThreadPoolExecutor
+    here: Path = Path(__file__).resolve()
+    items: "list[tuple[str, str, tuple[tuple[str, str], ...], Path, tuple[str, ...]]]" = [
+        (name, GATE.name, edits, here, ("--only-group",)) for name, edits in _MUTATIONS] + [
+        (name, file, edits, here.parent / smoke, tests) for name, file, edits, smoke, tests in _BASELINE_MUTATIONS]
+
+    def one(item: "tuple[str, str, tuple[tuple[str, str], ...], Path, tuple[str, ...]]") -> "tuple[str, str]":
+        name, file, edits, smoke, tail = item
+        text: str = (GATE.parent / file).read_text(encoding="utf-8")
         for old, new in edits:
             if text.count(old) != 1:
                 return name, f"변이 지점이 정확히 한 곳이 아니다({text.count(old)}) — 변이 표를 코드에 맞춰라"
@@ -2287,9 +2520,9 @@ def _mutation_test() -> int:
         with tempfile.TemporaryDirectory(prefix="gate-mutant-") as tmp:
             copy: Path = Path(tmp) / "scripts"
             shutil.copytree(GATE.parent, copy, symlinks=False, ignore=shutil.ignore_patterns("__pycache__"))
-            (copy / GATE.name).write_text(text, encoding="utf-8")
-            proc = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--scripts", str(copy), "--only-group",
-                                   "--fail-fast"], capture_output=True, text=True, env=_scrubbed_env())
+            (copy / file).write_text(text, encoding="utf-8")
+            proc = subprocess.run([sys.executable, str(smoke), "--scripts", str(copy), *tail, "--fail-fast"],
+                                  capture_output=True, text=True, env=_scrubbed_env())
         if proc.returncode == 0:
             return name, "변이가 살아남음(시험이 못 잡는다)"
         if "FAILED (" not in proc.stderr:
@@ -2297,8 +2530,8 @@ def _mutation_test() -> int:
         return name, ""
 
     survived: "list[str]" = []
-    with ThreadPoolExecutor(max_workers=len(_MUTATIONS)) as pool:
-        for name, why in pool.map(one, _MUTATIONS):
+    with ThreadPoolExecutor(max_workers=min(len(items), max(len(_MUTATIONS), os.cpu_count() or 1))) as pool:
+        for name, why in pool.map(one, items):
             if why:
                 survived.append(f"{name}: {why}")
             else:
@@ -2308,7 +2541,7 @@ def _mutation_test() -> int:
         for line in survived:
             print(f"  {line}", file=sys.stderr)
         return 2
-    print(f"[mutation] registry_gate 변이 {len(_MUTATIONS)}종 모두 red")
+    print(f"[mutation] registry_gate 변이 {len(_MUTATIONS)}종 · 기준선 · 귀속 변이 {len(_BASELINE_MUTATIONS)}종 모두 red")
     return 0
 
 
@@ -2317,13 +2550,17 @@ def main(argv: "list[str] | None" = None) -> int:
     건드리거나 그 알림 줄이 옛 판 대조 출력에 섞이지 않게.
 
     `--scripts <dir>`: 그 폴더의 registry_gate.py · folder_group.py 로(변이 사본) · `--only-group`: 묶음 이동 시험만 ·
-    `--fail-fast` · `--mutation-test`: 계획 «단계 3 변이 회귀» 게이트 채널 변이 다섯(모두 red 여야 exit 0)."""
+    `--scripts <dir> <시험 이름…>`: 이름 붙인 시험(`클래스` · `클래스.메서드`)만 · `--fail-fast` · `--mutation-test`: 게이트 채널
+    변이(`_MUTATIONS`) · 기준선 · 귀속 변이(`_BASELINE_MUTATIONS`)를 하나씩(모두 red 여야 exit 0)."""
     global GATE
     args: "list[str]" = list(sys.argv[1:] if argv is None else argv)
     only_group: bool = "--only-group" in args
     fail_fast: bool = "--fail-fast" in args
+    names: "list[str]" = []
     if "--scripts" in args:
-        GATE = Path(args[args.index("--scripts") + 1]).resolve() / "registry_gate.py"
+        at: int = args.index("--scripts")
+        GATE = Path(args[at + 1]).resolve() / "registry_gate.py"
+        names = [a for a in args[:at] + args[at + 2:] if not a.startswith("--")]
     if "--mutation-test" in args:
         return _mutation_test()
     private: str = tempfile.mkdtemp(prefix="gate-smoke-tmp-")
@@ -2333,6 +2570,9 @@ def main(argv: "list[str] | None" = None) -> int:
     try:
         if only_group:
             suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case) for case in _GROUP_CASES)
+            return 0 if unittest.TextTestRunner(verbosity=2, failfast=fail_fast).run(suite).wasSuccessful() else 2
+        if names:
+            suite = unittest.defaultTestLoader.loadTestsFromNames(names, sys.modules[__name__])
             return 0 if unittest.TextTestRunner(verbosity=2, failfast=fail_fast).run(suite).wasSuccessful() else 2
         return _main()
     finally:

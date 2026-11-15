@@ -26,7 +26,13 @@
          비애그리거트 ORM «능력 포트» 구현은 capability 의 django 어댑터: #462 확장) · #349
          repository/ 는 django_<bc> 밖 · #350 read_model/ 금지 · #351 선언↔구현 1:1 ·
          #352 폴더 아님 · #354 Django<Aggregate>Repository · #356 thin read 는 domain 비
-         의존 · #359 Django<Capability>DomainBypassQuery · #365 acl 은 우리 BC 이름만 ·
+         의존(폴더 아래 .py 전부 · import 꼴 · 꾸러미 층 이름 · 자기 django_<bc>
+         모듈을 거친 한 겹 — 모듈 수준 이름 · 맨 위 클래스(모델 클래스 등) 안 별칭 · 꾸러미
+         __init__ 이 다시 내보낸 이름(import * 포함)은 그 모듈의 이름으로 풂(겹
+         아님) · VO 멤버의 `.value` 를 글 · 수 주석(Final[str] · str 등)으로 묶은
+         값(모델 클래스 속성 · 모델 모듈 수준 이름)은 거쳐 가져오기가 아님 · #668
+         과 같은 checker_target.reexport_uses · 2.39.0 F4-180) · #359
+         Django<Capability>DomainBypassQuery · #365 acl 은 우리 BC 이름만 ·
          #367 소켓 여는 import 는 external_system 어댑터 안뿐(목록은 데이터 — 닫지 않는다) ·
          #368[ast+] 값의 자리에 기계(후보) · #369 벤더=폴더 · #370 <System><Capability>
          Adapter · #371~#373 나머지 어댑터 자리·이름 · #464 command/query 분할 금지 ·
@@ -171,7 +177,7 @@ def _ann_names(node: ast.AST | None) -> set[str]:
 
 # ── port/<capability>/ — #212~#228 · #485 · #594 · #64 ─────────────────────
 
-def _check_port_tree(root: Path, bc: Path, bc_vocab_set: set, tech: set,
+def _check_port_tree(root: Path, bc: Path, bc_vocab_set: set,
                      f: Findings, cand: Candidates) -> None:
     app = bc / "application_layer"
     port = app / "port"
@@ -201,16 +207,16 @@ def _check_port_tree(root: Path, bc: Path, bc_vocab_set: set, tech: set,
     for cap in sorted(p for p in port.iterdir() if p.is_dir() and p.name != "__pycache__"):
         if cap.name in ("domain_bypass_query", "unit_of_work") or checker_target.cache_only_instance(cap):
             continue
-        _check_capability_folder(root, bc, cap, bc_vocab_set, tech, f, cand)
+        _check_capability_folder(root, bc, cap, bc_vocab_set, f, cand)
     bypass = port / "domain_bypass_query"
     if bypass.is_dir():
-        _check_bypass(root, bc, bypass, tech, f, cand)
+        _check_bypass(root, bc, bypass, f, cand)
     uow = port / "unit_of_work"
     if uow.is_dir():
         _check_uow_port(root, uow, f)
 
 
-def _check_capability_folder(root: Path, bc: Path, cap: Path, bc_vocab_set: set, tech: set,
+def _check_capability_folder(root: Path, bc: Path, cap: Path, bc_vocab_set: set,
                              f: Findings, cand: Candidates) -> None:
     # #594/#595 — 이름 판정.
     toks = set(cap.name.split("_"))
@@ -325,7 +331,7 @@ def _check_port_data(root: Path, py: Path, mod: ast.Module, f: Findings, cand: C
 
 # ── domain_bypass_query — #229~#239 · #465 ─────────────────────────────────
 
-def _check_bypass(root: Path, bc: Path, bypass: Path, tech: set, f: Findings, cand: Candidates) -> None:
+def _check_bypass(root: Path, bc: Path, bypass: Path, f: Findings, cand: Candidates) -> None:
     for p in sorted(bypass.iterdir()):
         if p.is_file() and p.suffix == ".py" and p.name != "__init__.py":
             f.add("#232", _rel(root, p), "domain_bypass_query/ 직계 파일 — 능력 하나 = 폴더 하나다")
@@ -633,6 +639,60 @@ def _save_event_guard_ok(save_fn: "ast.FunctionDef | ast.AsyncFunctionDef",
     return False
 
 
+def _is_domain_import(node: ast.Import | ast.ImportFrom) -> list[str]:
+    """domain_layer 를 가리키는 import 의 묶인 이름(별칭 없는 `import a.b` 는 `domain_layer` 마디까지의 점 경로 —
+    `checker_target.plain_import_seed`) — 아니면 [].
+
+    상대 import 는 적힌 마디만 본다 — 우회 읽기 · `django_<bc>/` 파일의 조상 폴더에는 `domain_layer` 가 없다.
+    """
+    if isinstance(node, ast.Import):
+        return [a.asname or checker_target.plain_import_seed(a.name, "domain_layer")
+                for a in node.names if "domain_layer" in a.name.split(".")]
+    if "domain_layer" in (node.module or "").split("."):
+        return [a.asname or a.name for a in node.names]
+    return [a.asname or a.name for a in node.names if a.name == "domain_layer"]
+
+
+def _bypass_domain_uses(bc: Path, py: Path, mod: ast.Module) -> list[tuple[int, str]]:
+    """#356 — Thin Read 가 domain_layer 를 쓰는 자리(줄, 꼴).
+
+    바로: `from …domain_layer… import` · `import …domain_layer…` · 꾸러미에서 층 이름(`from application.<bc> import
+    domain_layer`) · 상대 import · 함수 안 import. 한 겹: 자기 `django_<bc>/` 모듈이 domain_layer 에서 묶어 내보내는
+    이름(모듈 수준 이름 · 맨 위 클래스(모델 클래스 등) 안 별칭)을 가져오거나 씀 — 꾸러미 `__init__.py` 가 다시 내보낸 이름(`import *`
+    포함)은 그 모듈의 이름으로 풀고 · 모델 모듈의 `import *` 씨앗은 출처 모듈의 이름으로 펴고(`checker_target.star_names`)
+    · 별칭 없는 `import a.b.c` 씨앗은 `domain_layer` 마디까지의 점 경로로 맞추고 · VO 멤버의 `.value` 를 글 · 수 주석으로 묶은 값은
+    받는다(`checker_target.reexport_uses` · #668 과 같은 판정).
+    """
+    file_parts = py.relative_to(bc).parts
+    out: list[tuple[int, str]] = []
+    for node in ast.walk(mod):
+        if isinstance(node, (ast.Import, ast.ImportFrom)) and _is_domain_import(node):
+            out.append((node.lineno, "import 한다"))
+    cache: dict[tuple[str, ...], tuple[set[str], set[str]]] = {}
+
+    def bindings(parts: tuple[str, ...]) -> tuple[set[str], set[str]]:
+        if parts not in cache:
+            cache[parts] = (set(), set())
+            f = checker_target.bc_module_file(bc, parts)
+            m = _parse(f) if f is not None else None
+            if m is not None:
+                fp = f.relative_to(bc).parts
+
+                def seed_of(n: ast.Import | ast.ImportFrom) -> set[str]:
+                    seeds = set(_is_domain_import(n))
+                    target = checker_target.bc_import_target(fp, n.level, n.module, bc.name) \
+                        if "*" in seeds and isinstance(n, ast.ImportFrom) else None
+                    return seeds | (checker_target.star_names(bc, target) if target is not None else set())
+
+                cache[parts] = checker_target.reexport_bindings(m, seed_of)
+        return cache[parts]
+
+    for line, _where, names, imported in checker_target.reexport_uses(mod, bc, file_parts, bindings):
+        how = "가져온다" if imported else "쓴다"
+        out.append((line, f"자기 `django_<bc>/` 모듈을 거쳐 {how}(`{'.'.join(names)}`)"))
+    return sorted(set(out))
+
+
 def _check_driven(root: Path, bc: Path, agg_names: set, bc_vocab_set: set,
                   f: Findings, cand: Candidates) -> None:
     driven = _driven(bc)
@@ -734,14 +794,18 @@ def _check_driven(root: Path, bc: Path, agg_names: set, bc_vocab_set: set,
             mod = _parse(py)
             if mod is None:
                 continue
-            for node in ast.walk(mod):
-                if isinstance(node, ast.ImportFrom) and "domain_layer" in (node.module or ""):
-                    f.add("#356", _rel(root, py, node.lineno),
-                          "Thin Read 가 domain_layer 를 import 한다 — 이 길은 도메인을 «안» 거친다")
             want = f"Django{_camel(capname)}DomainBypassQuery"
             for cls in [n for n in mod.body if isinstance(n, ast.ClassDef) and not n.name.startswith("_")]:
                 if cls.name != want:
                     f.add("#359", _rel(root, py, cls.lineno), f"`{cls.name}` — 구현 이름은 `{want}` 다")
+        for py in _py_files(thin):  # #356 은 폴더 아래 `.py` 전부(승격 폴더 부품 · `__init__.py` 포함)
+            mod = _parse(py)
+            if mod is None:
+                continue
+            for line, how in _bypass_domain_uses(bc, py, mod):
+                f.add("#356", _rel(root, py, line), f"Thin Read 가 domain_layer 를 {how} — 이 길은 도메인을 «안» "
+                      "거친다(저장된 도메인 상태 칸은 모델이 VO 멤버의 `.value` 를 `Final[str]` 로 묶은 "
+                      "값 속성으로 거르고 견준다 — implementation-django §2.5)")
     # persistence/unit_of_work — #374 · #376 · #476 · #566.
     uow_impl = persistence / "unit_of_work"
     port_uow = bc / "application_layer" / "port" / "unit_of_work"
@@ -1568,7 +1632,6 @@ def main(argv: list[str]) -> int:
 
     findings = Findings(defer=True)
     cand = Candidates(defer=True)
-    tech = vocab.tech_names()
     bcs = [bc for bc in vocab.server_bc_dirs(root) if _has_adoption_signal(bc)]
 
     # 대상 0건 가드(#74) — touched 필터 없음이라 자리는 대상 집합 직후다(#75).
@@ -1586,7 +1649,7 @@ def main(argv: list[str]) -> int:
         agg_names = {d.name for d in domain.iterdir()
                      if d.is_dir() and d.name not in ("shared_value_object", "domain_service", "__pycache__")} \
             if domain.is_dir() else set()
-        _check_port_tree(root, bc, bc_vocab_set, tech, findings, cand)
+        _check_port_tree(root, bc, bc_vocab_set, findings, cand)
         _check_domain_side(root, bc, findings)
         _check_driven(root, bc, agg_names, bc_vocab_set, findings, cand)
         _check_fake(root, bc, findings)

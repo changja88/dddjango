@@ -305,7 +305,7 @@
 | 353 | path | scripts/check-port-adapter-pairing.py (신설) | — | 신설 |  |
 | 354 | ast | scripts/check-port-adapter-pairing.py (신설) | — | 신설 |  |
 | 355 | ast+ | scripts/check-transaction-boundary.py (신설) | agents/discipline-reviewer.md | 신설 |  |
-| 356 | ast | scripts/check-port-adapter-pairing.py (신설) | — | 신설 |  |
+| 356 | ast | scripts/check-port-adapter-pairing.py (신설) | — | 신설 | 11-15 F4-180 — 폴더 아래 .py 전부 · import 꼴 · 꾸러미 층 이름 · 자기 django_<bc> 모듈 다시 내보내기 한 겹(모듈 수준 이름 · 맨 위 클래스(모델 클래스 등) 안 별칭 · 꾸러미 다시 내보내기(`import *` 포함) 풀기 — #668 과 같은 판정 `checker_target.reexport_uses`) · `.value` 를 글 · 수 주석으로 묶은 값은 받음 · 처음 그래프(R-3763) |
 | 357 | path | workspace/tools/checker_lint.py (신설) | — | 신설 |  |
 | 358 | ast | scripts/check-public-surface-annotation.py | — | 재작성 |  |
 | 359 | ast | scripts/check-port-adapter-pairing.py (신설) | — | 신설 |  |
@@ -578,4 +578,4 @@
 | 665 | ast | scripts/check-context-isolation.py | — | 신설 | 11-14 BC 밖 합성 칸(F4-159) — `application/**` · `framework/**` · `<project>/` 의 `cross_context` import · `<project>/` 의 받는 꼴 밖 `cross_context.` 문자열 상수 |
 | 666 | ast | scripts/check-context-isolation.py | — | 신설 | 11-14 BC 밖 합성 칸(F4-159) — `cross_context/backoffice/urls.py` 의 `path` · `re_path` 둘째 인자가 `admin_view(…)` 호출 · 그 파일 밖 `path` · `re_path` · `Router` |
 | 667 | human | — | agents/discipline-reviewer.md | 신설 | 11-14 BC 밖 합성 칸(F4-159) — 업무 판정 0 · 창구 예외를 화면 알림으로 · 한 BC 화면은 BC admin |
-| 668 | ast | scripts/check-context-isolation.py | — | 신설 | 11-14 admin 은 ORM · 폼 · 화면만(F4-158) — admin 파일이 자기 BC 다섯 자리(도메인 · 응용 · 합성 루트 · 저장 어댑터 · ACL)를 import(다시 내보내기 한 겹) · 파일당 한 줄(정렬한 목록 칸 · 줄 번호 없음) |
+| 668 | ast | scripts/check-context-isolation.py | — | 신설 | 11-14 admin 은 ORM · 폼 · 화면만(F4-158) — admin 파일이 자기 BC 다섯 자리(도메인 · 응용 · 합성 루트 · 저장 어댑터 · ACL)를 import(다시 내보내기 한 겹) · 파일당 한 줄(정렬한 목록 칸 · 줄 번호 없음) · 11-15 F4-180 — 맨 위 클래스(모델 클래스 등) 안 별칭 · 꾸러미 `__init__` 다시 내보내기(`import *` 포함) 풀기 · 모듈째 사슬(#356 과 한 판정) · `.value` 글 · 수 주석 값은 받음 |

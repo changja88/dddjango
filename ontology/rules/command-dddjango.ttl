@@ -1714,7 +1714,7 @@ djr:R-0305 a djr:Obligation ;
 
 djr:R-0306 a djr:Obligation ;
     skos:prefLabel "게이트 증거 = 귀속 0 + legacy 잔존 별도 보고 · 승인 유입은 provenance 증명(주어 판정 ∧ R(M^2)∖R(M^1) ∧ 뒤 미승인 머지 없음 · 뒤 승인 머지 ^2 에도 있음 · 병합 결과부터 HEAD 까지 사슬마다 있음)된 것만 exit 제외"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0306@2026-10-13> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-0306@2026-11-15> .
 
 <https://numchida.com/ns/djr#R-0306@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0306 ;
@@ -1731,6 +1731,12 @@ djr:R-0306 a djr:Obligation ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-0306@2026-09-03> ;
     djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-0306@2026-11-15> a djr:Expression ;
+    prov:specializationOf djr:R-0306 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0306@2026-10-13> ;
+    djr:revision 4 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0307 a djr:Prohibition ;
     skos:prefLabel "귀속 0 ≠ 전체 clean — 좁힌 TARGET·즉석 selector 부분 green 은 게이트 증거 아님"@ko ;
@@ -3530,7 +3536,7 @@ djr:R-3440 a djr:Obligation ;
 
 djr:R-3441 a djr:Exception ;
     skos:prefLabel "승인 유입은 철회 대상 아님 · 상호작용 미증명·부재 미증명 귀속은 STOP_FOR_USER_APPROVAL(빚 등재·상류 해소·레인 설계 반송) · 유입 증명 실패(결과·사슬·뒤 ^2 에 없음)는 레인 설계 반송 또는 STOP · 뒤 미승인 머지는 STOP→목록 보완 · 측정 무효·측정 생략·기준선 오류 신규 줄은 철회할 레인 변경이 없으면 STOP(빚 등재 꼴 인용) — R-0310/R-3133 의 예외"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3441@2026-10-13> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-3441@2026-11-15> .
 
 <https://numchida.com/ns/djr#R-3441@2026-09-03> a djr:Expression ;
     prov:specializationOf djr:R-3441 ;
@@ -3541,6 +3547,12 @@ djr:R-3441 a djr:Exception ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-3441@2026-09-03> ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-3441@2026-11-15> a djr:Expression ;
+    prov:specializationOf djr:R-3441 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3441@2026-10-13> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3444 a djr:Obligation ;
     skos:prefLabel "G2 배너 pre-gate 최신성 1행 — --check-report 요약 행 기계 출처(기준선 행 대조 포함) · 불비면 G2 미제시(R-0411) · 앞 실행 예보 머리 · 구형 명세·변경 0 레인은 미실행 표기"@ko ;
@@ -5832,7 +5844,7 @@ djr:R-3747 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 13 ;
     djr:statesNorm djr:R-0301, djr:R-0302, djr:R-0303, djr:R-0304, djr:R-0305, djr:R-0306, djr:R-0307, djr:R-0308, djr:R-0309, djr:R-0310, djr:R-3705 ;
-    djr:text "6. **결정적 백스톱(27종)**: G2 배너 직전 타깃 프로젝트 루트(`manage.py check`와 같은 cwd)에서 아래 registry를 사용한다. **positional TARGET 도 그 «루트»다(`.`)** — BC 폴더나 `application/` 컨테이너를 TARGET 으로 주면 검사기가 사용 오류 exit 1 로 거절한다(«표준 미채택 clean» 조용 통과 사각은 2026-08-12 라운드 1 실측 후 닫혔다). **게이트 판정은 «판정 차분»이다**(2026-08-12 라운드 1′ — brownfield 에선 legacy 위반이 상존해 «전체 green»이 문자 그대로 성립하지 않고, 그 모순이 세션의 자체 귀속 발명을 낳았다): Phase 2 의 **첫 서브에이전트 파견 직전**(acceptance-tester 포함 어떤 역할이든 파견 전 — 실행자가 앵커를 고르지 못하게)에 `git rev-parse HEAD` 값을 산출물 폴더의 `build_anchor` 파일에 기록해 두고(전체 SHA — 기존 산출물의 축약 해시도 저장소 안에서 유일하면 소비자 rev-parse 검증이 수용한다 · 2026-08-15), 여기서 `${CLAUDE_PLUGIN_ROOT}/scripts/registry_gate.py . --anchor $(cat <산출물 폴더>/build_anchor)` 를 실행한다 — 게이트 증거는 **귀속(앵커 대비 신규 위반) 0 + legacy 잔존 별도 보고**다(`<산출물 폴더>/approved-merges.txt` 가 있으면 `--approved-merge-file` 로 동반한다 — 발주자 승인 머지 목록으로 provenance 증명(주어 판정 ∧ `R(M^2)∖R(M^1)` ∧ 증명 머지 뒤 조건 — 뒤 미승인 머지 없음 · 뒤 승인 머지의 `^2` 에도 있음 · 병합 결과부터 HEAD 까지 first-parent 사슬 커밋마다 있음)된 **승인 유입은 exit 제외·별도 보고(기록 의무·즉석 수리 금지)**이고, **상호작용 위반(파일 무변·미증명)은 귀속 유지·별도 표기(`↳ 귀속 유지: 상호작용 미증명`)**다 · 2026-09-03). **귀속 0 ≠ 전체 clean** 이며, 좁힌 TARGET·즉석 selector 부분 실행 green 은 여전히 게이트 증거가 아니다(registry 전체 실행은 차분의 재료로 그대로 수행된다 · **귀속 목록을 경로 필터(sed/grep)로 나눈 서술도 게이트 증거가 아니다** — 유입 분리는 provenance 채널뿐이다 · 2026-09-03). Phase 0의 빚 스캔과 별개로 여기서 **한 번 더** 실행한다 — 스캔은 이 실행의 «이동»이 아니다. **`build_anchor` 는 실행마다 한 번 쓴다**(실행 = Phase 0 «실행과 앵커» · 2026-09-26) — 최신 실행 줄에 앵커가 없을 때만 파일을 이 실행의 SHA 로 쓰고 그 줄에 `· build_anchor <SHA>` 를 덧붙이며(같은 때 `pregate-report.md` 에 `pre-gate 기준선` 행 — Phase 0 «실행과 앵커»), 실행 안(G1′ 반송·회전·STOP 재개·세션 재시작·머지 뒤 재개)에서는 재기록하지 않는다: 앵커는 이 실행의 어떤 작업 커밋보다 앞서야 하며, 작업 중간 커밋을 앵커로 삼는 것은 차분 세탁이다(2026-08-13). 새 앵커 이전의 승인 머지는 판정에 참여하지 않는다(승인 머지 목록과 양립). 실행 경계 밖 재앵커는 Phase 0 «실행과 앵커»의 폐기(새 실행) 경로뿐이다. 그리고 승인 스코프의 산출물 목록에 없는 파일에서 귀속이 나면 1차 처방은 **그 변경의 철회**다 — 수리·재설계로 귀속을 0으로 만드는 것이 아니다(라운드 2 — 귀속 138건 «closure» 재설계 소용돌이). **묶음 이동 채널**(2026-10-27): 이 registry_gate 실행에 `--group-moves <산출물 폴더> --introduced-json <산출물 폴더>/introduced.json` 을 붙인다(sidecar 는 리팩토링 모드 G2 의 `residual --gate-json` 이 읽는다 · 그 폴더의 `build_anchor` 는 `--anchor` 와 같은 커밋 · `approved-merges.txt` 는 `--approved-merge-file` 과 같은 목록이어야 한다 — 아니면 사용 오류다). 계산한 묶음 이동 쌍을 따라 옮긴 legacy 줄은 귀속에서 빠져 «이동 따라 옮긴 legacy» 절로 보고되고(exit 밖), 계산 밖 이동은 그 절에 따로 실리며 그 파일의 옛 위반은 귀속이다. 같은 때 `scripts/folder_group.py verify . --run <산출물 폴더>` 를 돌린다(이관 빚 목록이 있으면 `--legacy-debt-file <목록>`) — red(exit 2)면 G2 를 내지 않는다: `창 밖 이동` 은 그 이동을 되돌리고 끝 맞춤을 다시 · `red 묶음 창 w<n>`(판정 불가 창 포함)은 그 창을 철회하고 3번 «묶음 창»의 열기 앞 확인 뒤 다시 · `자리 다름` 은 끝 맞춤을 다시 돈다.\n\n"@ko .
+    djr:text "6. **결정적 백스톱(27종)**: G2 배너 직전 타깃 프로젝트 루트(`manage.py check`와 같은 cwd)에서 아래 registry를 사용한다. **positional TARGET 도 그 «루트»다(`.`)** — BC 폴더나 `application/` 컨테이너를 TARGET 으로 주면 검사기가 사용 오류 exit 1 로 거절한다(«표준 미채택 clean» 조용 통과 사각은 2026-08-12 라운드 1 실측 후 닫혔다). **게이트 판정은 «판정 차분»이다**(2026-08-12 라운드 1′ — brownfield 에선 legacy 위반이 상존해 «전체 green»이 문자 그대로 성립하지 않고, 그 모순이 세션의 자체 귀속 발명을 낳았다): Phase 2 의 **첫 서브에이전트 파견 직전**(acceptance-tester 포함 어떤 역할이든 파견 전 — 실행자가 앵커를 고르지 못하게)에 `git rev-parse HEAD` 값을 산출물 폴더의 `build_anchor` 파일에 기록해 두고(전체 SHA — 기존 산출물의 축약 해시도 저장소 안에서 유일하면 소비자 rev-parse 검증이 수용한다 · 2026-08-15), 여기서 `${CLAUDE_PLUGIN_ROOT}/scripts/registry_gate.py . --anchor $(cat <산출물 폴더>/build_anchor)` 를 실행한다 — 게이트 증거는 **귀속(앵커 대비 신규 위반) 0 + legacy 잔존 별도 보고**다(`<산출물 폴더>/approved-merges.txt` 가 있으면 `--approved-merge-file` 로 동반한다 — 발주자 승인 머지 목록으로 provenance 증명(주어 판정 ∧ `R(M^2)∖R(M^1)` ∧ 증명 머지 뒤 조건 — 뒤 미승인 머지 없음 · 뒤 승인 머지의 `^2` 에도 있음 · 병합 결과부터 HEAD 까지 first-parent 사슬 커밋마다 있음)된 **승인 유입은 exit 제외·별도 보고(기록 의무·즉석 수리 금지)**이고, **상호작용 위반(주어(파일 · 폴더) 무변·미증명)은 귀속 유지·별도 표기(`↳ 귀속 유지: 상호작용 미증명`)**다 · 2026-09-03). **귀속 0 ≠ 전체 clean** 이며, 좁힌 TARGET·즉석 selector 부분 실행 green 은 여전히 게이트 증거가 아니다(registry 전체 실행은 차분의 재료로 그대로 수행된다 · **귀속 목록을 경로 필터(sed/grep)로 나눈 서술도 게이트 증거가 아니다** — 유입 분리는 provenance 채널뿐이다 · 2026-09-03). Phase 0의 빚 스캔과 별개로 여기서 **한 번 더** 실행한다 — 스캔은 이 실행의 «이동»이 아니다. **`build_anchor` 는 실행마다 한 번 쓴다**(실행 = Phase 0 «실행과 앵커» · 2026-09-26) — 최신 실행 줄에 앵커가 없을 때만 파일을 이 실행의 SHA 로 쓰고 그 줄에 `· build_anchor <SHA>` 를 덧붙이며(같은 때 `pregate-report.md` 에 `pre-gate 기준선` 행 — Phase 0 «실행과 앵커»), 실행 안(G1′ 반송·회전·STOP 재개·세션 재시작·머지 뒤 재개)에서는 재기록하지 않는다: 앵커는 이 실행의 어떤 작업 커밋보다 앞서야 하며, 작업 중간 커밋을 앵커로 삼는 것은 차분 세탁이다(2026-08-13). 새 앵커 이전의 승인 머지는 판정에 참여하지 않는다(승인 머지 목록과 양립). 실행 경계 밖 재앵커는 Phase 0 «실행과 앵커»의 폐기(새 실행) 경로뿐이다. 그리고 승인 스코프의 산출물 목록에 없는 파일에서 귀속이 나면 1차 처방은 **그 변경의 철회**다 — 수리·재설계로 귀속을 0으로 만드는 것이 아니다(라운드 2 — 귀속 138건 «closure» 재설계 소용돌이). **묶음 이동 채널**(2026-10-27): 이 registry_gate 실행에 `--group-moves <산출물 폴더> --introduced-json <산출물 폴더>/introduced.json` 을 붙인다(sidecar 는 리팩토링 모드 G2 의 `residual --gate-json` 이 읽는다 · 그 폴더의 `build_anchor` 는 `--anchor` 와 같은 커밋 · `approved-merges.txt` 는 `--approved-merge-file` 과 같은 목록이어야 한다 — 아니면 사용 오류다). 계산한 묶음 이동 쌍을 따라 옮긴 legacy 줄은 귀속에서 빠져 «이동 따라 옮긴 legacy» 절로 보고되고(exit 밖), 계산 밖 이동은 그 절에 따로 실리며 그 파일의 옛 위반은 귀속이다. 같은 때 `scripts/folder_group.py verify . --run <산출물 폴더>` 를 돌린다(이관 빚 목록이 있으면 `--legacy-debt-file <목록>`) — red(exit 2)면 G2 를 내지 않는다: `창 밖 이동` 은 그 이동을 되돌리고 끝 맞춤을 다시 · `red 묶음 창 w<n>`(판정 불가 창 포함)은 그 창을 철회하고 3번 «묶음 창»의 열기 앞 확인 뒤 다시 · `자리 다름` 은 끝 맞춤을 다시 돈다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b13> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
@@ -6187,7 +6199,7 @@ djr:R-3747 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 60 ;
     djr:statesNorm djr:R-3440, djr:R-3441 ;
-    djr:text "**승인 머지 목록·provenance 차분 — 병렬 머지 유입의 분할**(2026-09-03): ① 코디네이터는 `<산출물 폴더>/approved-merges.txt` 가 있으면 6번의 registry_gate 실행과 `--anchor` 를 붙이는 scope 렌더 명령(registry #2·#5·#6·#15·#16)에 `--approved-merge-file` 로 반드시 동반한다(플래그를 줬으나 목록에 SHA 가 빠지면 게이트·검사기가 잔여 라인에 `미승인 머지 경유 <sha>` 로 표면화한다 · 플래그 자체를 안 주면 채널이 돌지 않으므로 증거 불비다). 이 파일은 쓰지 않는다(«산출물 위치» 절 — 발주자 소유). G2 배너에는 legacy 잔존과 별도로 «승인 유입 N건(검사기별 건수 · 머지 SHA 열거 — 게이트·검사기의 머지 표 `[M <sha12>] <subject> · ^1 · ^2(<ref>) · 파일 n · 상호작용 m[ · 부재 k]`)» 항목을 둔다. registry_gate 가 `안내:` 줄(`--approved-merge-file` 없이 돈 실행에서 앵커..HEAD first-parent 사슬에 2-부모 머지가 있을 때)을 찍으면 그 줄을 G2 배너(멈추면 STOP 문서)에 글자 그대로 옮긴다 — 코디네이터는 목록을 쓰지 않고, 그 줄의 «레인 곁가지 의심» 묶음의 SHA 를 등재 후보로 내밀지 않는다. scope 렌더 검사기가 `기준선 오류:` 줄을 찍으면 G2 배너의 그 검사기 신규분 옆에 그 줄을 그대로 인용한다(판정은 바뀌지 않는다). ② 승인 유입은 레인의 변경이 아니므로 «스코프 밖 귀속의 1차 처방 = 철회»(위 6번·houserules §1)의 대상이 아니다 — 본체는 그대로이고 이것은 그 예외다. 파일 무변 귀속(게이트 표기 `↳ 귀속 유지: 상호작용 미증명`)은 철회할 변경이 없다 — 1차 처방은 `STOP_FOR_USER_APPROVAL` 이며(닫힌 선택지: 빚 등재 · 상류 소유 레인 해소 · 레인 설계 반송(레인 원인)), STOP 문서에 게이트의 그 표기 행을 그대로 인용한다. 상호작용 미증명분을 exit 에서 빼는 것은 채택하지 않는다(이중 원인 배제 불가). 잔여 사유별 처방: `유입 증명 실패(이중 원인)` 은 레인 원인일 수 있으므로 레인 설계 반송 또는 STOP · `유입 증명 실패(… 결과에 없음 | … 뒤 사슬 … 에 없음 | … 뒤 승인 머지 … 의 ^2 에 없음)` 도 레인 원인일 수 있으므로 레인 설계 반송 또는 STOP · `미승인 머지 경유 <sha>` 와 `유입 증명 실패(… 뒤 미승인 머지 …)` 는 STOP → 발주자가 목록을 보완하면 재실행한다(코디네이터가 목록에 쓰지 않는다) · `부재 미증명` 은 `상호작용 미증명` 과 같은 STOP 이다(빠진 파일이 레인이 만들 파일이면 만든다) · `측정 무효(…)` 는 그 머지의 증명 기회만 잃은 것이라 다른 승인 머지가 증명하면 유입이고 전건 무효면 귀속 유지다(∃M) — `측정 생략(사슬 커밋 …)` 도 같다. 귀속 유지 사유가 `측정 무효(…)` · `측정 생략(…)` 이거나 그 검사기가 `기준선 오류:` 줄을 찍은 신규 줄은, 철회할 레인 변경이 확인되지 않았으면 `STOP_FOR_USER_APPROVAL` 이고 닫힌 선택지는 빚 등재 · 상류 소유 레인 해소 · 레인 설계 반송(레인 원인)이다 — 빚 등재 꼴은 «실행·종료 계약»의 이관 빚 목록 문장(번호 있는 줄 `#<규칙번호> <부분문자열>` · 번호 없는 줄 `= <검사기 파일> :: <신규분 줄 그대로>`)을 따르고, STOP 문서에 그 꼴로 인용한다. 코디네이터는 사슬 커밋을 합치거나 고쳐 측정을 세우지 않는다. 게이트의 «앵커가 HEAD 의 조상이 아니다»·«비머지 커밋이 첫 승인 머지보다 앞선다» 진단은 코디네이터의 재앵커 사유가 아니라 발주자 결정 사안이다 — `build_anchor` 는 재기록하지 않는다.\n\n"@ko .
+    djr:text "**승인 머지 목록·provenance 차분 — 병렬 머지 유입의 분할**(2026-09-03): ① 코디네이터는 `<산출물 폴더>/approved-merges.txt` 가 있으면 6번의 registry_gate 실행과 `--anchor` 를 붙이는 scope 렌더 명령(registry #2·#5·#6·#15·#16)에 `--approved-merge-file` 로 반드시 동반한다(플래그를 줬으나 목록에 SHA 가 빠지면 게이트·검사기가 잔여 라인에 `미승인 머지 경유 <sha>` 로 표면화한다 · 플래그 자체를 안 주면 채널이 돌지 않으므로 증거 불비다). 이 파일은 쓰지 않는다(«산출물 위치» 절 — 발주자 소유). G2 배너에는 legacy 잔존과 별도로 «승인 유입 N건(검사기별 건수 · 머지 SHA 열거 — 게이트·검사기의 머지 표 `[M <sha12>] <subject> · ^1 · ^2(<ref>) · 파일 n · 상호작용 m[ · 부재 k]`)» 항목을 둔다. registry_gate 가 `안내:` 줄(`--approved-merge-file` 없이 돈 실행에서 앵커..HEAD first-parent 사슬에 2-부모 머지가 있을 때)을 찍으면 그 줄을 G2 배너(멈추면 STOP 문서)에 글자 그대로 옮긴다 — 코디네이터는 목록을 쓰지 않고, 그 줄의 «레인 곁가지 의심» 묶음의 SHA 를 등재 후보로 내밀지 않는다. scope 렌더 검사기가 `기준선 오류:` 줄을 찍으면 G2 배너의 그 검사기 신규분 옆에 그 줄을 그대로 인용한다(판정은 바뀌지 않는다). ② 승인 유입은 레인의 변경이 아니므로 «스코프 밖 귀속의 1차 처방 = 철회»(위 6번·houserules §1)의 대상이 아니다 — 본체는 그대로이고 이것은 그 예외다. 주어(파일 · 폴더) 무변 귀속(게이트 표기 `↳ 귀속 유지: 상호작용 미증명`)은 철회할 변경이 없다 — 1차 처방은 `STOP_FOR_USER_APPROVAL` 이며(닫힌 선택지: 빚 등재 · 상류 소유 레인 해소 · 레인 설계 반송(레인 원인)), STOP 문서에 게이트의 그 표기 행을 그대로 인용한다. 상호작용 미증명분을 exit 에서 빼는 것은 채택하지 않는다(이중 원인 배제 불가). 잔여 사유별 처방: `유입 증명 실패(이중 원인)` 은 레인 원인일 수 있으므로 레인 설계 반송 또는 STOP · `유입 증명 실패(… 결과에 없음 | … 뒤 사슬 … 에 없음 | … 뒤 승인 머지 … 의 ^2 에 없음)` 도 레인 원인일 수 있으므로 레인 설계 반송 또는 STOP · `미승인 머지 경유 <sha>` 와 `유입 증명 실패(… 뒤 미승인 머지 …)` 는 STOP → 발주자가 목록을 보완하면 재실행한다(코디네이터가 목록에 쓰지 않는다) · `부재 미증명` 은 `상호작용 미증명` 과 같은 STOP 이다(빠진 파일이 레인이 만들 파일이면 만든다) · `측정 무효(…)` 는 그 머지의 증명 기회만 잃은 것이라 다른 승인 머지가 증명하면 유입이고 전건 무효면 귀속 유지다(∃M) — `측정 생략(사슬 커밋 …)` 도 같다. 귀속 유지 사유가 `측정 무효(…)` · `측정 생략(…)` 이거나 그 검사기가 `기준선 오류:` 줄을 찍은 신규 줄은, 철회할 레인 변경이 확인되지 않았으면 `STOP_FOR_USER_APPROVAL` 이고 닫힌 선택지는 빚 등재 · 상류 소유 레인 해소 · 레인 설계 반송(레인 원인)이다 — 빚 등재 꼴은 «실행·종료 계약»의 이관 빚 목록 문장(번호 있는 줄 `#<규칙번호> <부분문자열>` · 번호 없는 줄 `= <검사기 파일> :: <신규분 줄 그대로>`)을 따르고, STOP 문서에 그 꼴로 인용한다. 코디네이터는 사슬 커밋을 합치거나 고쳐 측정을 세우지 않는다. 게이트의 «앵커가 HEAD 의 조상이 아니다»·«비머지 커밋이 첫 승인 머지보다 앞선다» 진단은 코디네이터의 재앵커 사유가 아니라 발주자 결정 사안이다 — `build_anchor` 는 재기록하지 않는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b59> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;

@@ -7,7 +7,8 @@
 담당 규칙 (rule-owner-map · 총 61 — 기계 진단이 있는 것만 요약):
   구조   #393 BC 아래 framework/ 금지 · #35 루트 패키지 ∩ stdlib 금지 · #19 기술 이름
         1차 축은 framework/<technology>/ 뿐 · #395 framework 자식 다섯 · #396 4단 판정
-        (port 있으면 capability · 기술 이름이면 technology · 어긋나면 위반) · #398 능력
+        (port 있으면 capability · 기술 이름이거나 폴더 안 모듈이 그 이름의 라이브러리를 import 하면
+        technology — 재료는 저장소 안 글자뿐 · 어긋나면 위반) · #398 능력
         하나=폴더 하나 · #401 계약+구현 동거 · #423 뼈대 하나=파일 하나 · #620 test 자식
         셋 · #428 뼈대 테스트는 test/unit/ · #434 <project>/openapi_schema·response_policies 금지
   이름   #402 계약 파일명=폴더명 · #403 <Capability>Port · #407 구현 파일은 기술만 ·
@@ -23,7 +24,7 @@
         시그니처 변경 검출) · #606 반환 bool 반송·기본값 인자 · #607 [ast+] 업무 판정
         후보(Q2 — #553 술어 공유) · #618 [ast+] locale 값·채널 설정 금지(후보 물음은
         #590 소유) · #619 [ast+] 원시값 하나로 되는 자료 클래스 후보
-  test   #53 HTTP 로만 구동(모델·팩토리 import 0) · #425 [ast+] 재료의 뜻 물음(후보) ·
+  test   #53 HTTP 로만 구동(모델·팩토리 import 0 — 모델 아님이 드러난 이름만 비켜 준다) · #425 [ast+] 재료의 뜻 물음(후보) ·
         #621 framework 포트의 페이크는 framework/test/fake/ · #622 페이크는 선언 상속·
         같은 이름 · #623 선언과 1:1 · #624 페이크가 DB·HTTP·파일이면 위반
   pure   #560 pure 밖 import 0 · #561 부작용 0(datetime·random·os·io…) · #562
@@ -72,9 +73,12 @@ DATA_STEMS_RE = re.compile(r"(_in|_out)$")
 CONTRACT_KIND = {"exception"}  # + *_port·*_in·*_out
 PURE_IMPURE = {"datetime", "time", "random", "secrets", "uuid", "os", "io", "socket", "subprocess"}
 FRAMEWORK_TYPES = {"ninja", "django", "rest_framework", "pydantic"}
-# <technology>/ 폴더 이름 하나가 여러 배포 패키지를 뜻하는 경우 — `ninja/` 는 django-ninja 와
-# 그 위의 django-ninja-extra(NinjaExtraAPI·api_controller — §2.3 api.py 소유)를 한 기술로 본다.
-TECHNOLOGY_LIBRARIES = {"ninja": frozenset({"ninja", "ninja_extra"})}
+# 플러그인이 자리 · 코드를 정한 framework 파일(F4-179 · 2026-11-15) — 경로 앞 응답 정본(코드 = 플러그인 정본 ·
+# check-openapi-error-declaration #63 이 구문 나무로 맞춘다)과 프로젝트 표(자리 = 플러그인 · 칸은 #63 이 본다).
+# 표는 몸통 Schema 행이 없으면 ninja 를 import 할 까닭이 없어 클래스가 하나도 없을 때만 #415 에서 빼고(#63 은 표의 클래스
+# 몸을 보지 않는다 — 클래스가 있으면 지금처럼 ninja import 를 요구한다), 정본은 프로젝트 코드가 아니라 #607 물음에서 뺀다.
+PRE_ROUTE_CANONICAL_FILE = "framework/ninja/pre_route_responses.py"
+PRE_ROUTE_TABLE_FILE = "framework/ninja/pre_route_response_table.py"
 CHANNEL_CONFIG_WORDS = {"host", "port", "url", "endpoint", "api_key", "token", "timeout",
                         "region", "bucket", "template_id"}
 MEANS_WORDS = {"client", "cache", "sync", "cron", "queue", "http", "rest", "sdk", "api",
@@ -433,7 +437,7 @@ def _is_contract_file(py: Path) -> bool:
 
 # ── 구조 — #35 · #393 · #19 · #395 · #396 · #398 · #401 · #434 ─────────────
 
-def _check_structure(root: Path, fw: Path, tech: set, f: Findings, cand: Candidates) -> None:
+def _check_structure(root: Path, fw: Path, f: Findings, cand: Candidates) -> None:
     for p in sorted(fw.iterdir()):
         if p.name in ("__pycache__",):
             continue
@@ -444,7 +448,7 @@ def _check_structure(root: Path, fw: Path, tech: set, f: Findings, cand: Candida
         if not p.is_dir() or p.name in FIXED3:
             continue
         has_port = any(x.name.endswith("_port.py") for x in p.glob("*.py"))
-        is_tech = p.name in tech or p.name in CURATED_TECH
+        is_tech = p.name in CURATED_TECH or vocab.technology_folder(root, p)
         if has_port:
             _check_capability(root, fw, p, f, cand)
         elif is_tech:
@@ -524,12 +528,10 @@ def _check_technology(root: Path, techdir: Path, f: Findings) -> None:
         mod = _parse(py)
         if mod is None:
             continue
-        libraries = TECHNOLOGY_LIBRARIES.get(techdir.name, frozenset({techdir.name}))
-        imports_lib = any(
-            (isinstance(n, ast.Import) and any(a.name.split(".")[0] in libraries for a in n.names))
-            or (isinstance(n, ast.ImportFrom) and (n.module or "").split(".")[0] in libraries)
-            for n in ast.walk(mod))
-        if not imports_lib:
+        if _rel(root, py) == PRE_ROUTE_TABLE_FILE and not any(isinstance(n, ast.ClassDef) for n in ast.walk(mod)):
+            continue
+        libraries = vocab.folder_libraries(techdir)
+        if not vocab.imports_library(mod, libraries):
             shown = "`·`".join(sorted(libraries))
             f.add("#415", _rel(root, py),
                   f"`{shown}` 를 import 하지 않는다 — 여기는 «그 라이브러리의 타입 없이는 "
@@ -734,7 +736,8 @@ def _check_contract_evolution(root: Path, fw: Path, f: Findings, cand: Candidate
         print("notice — git 실행 실패로 #604 판정 불가")
     # #607 — 업무 판정 후보(Q2 · #553 술어 공유).
     for py in _py_files(fw):
-        if py.stem.endswith("_port") or "test" in py.relative_to(fw).parts:
+        if py.stem.endswith("_port") or "test" in py.relative_to(fw).parts \
+                or _rel(root, py) == PRE_ROUTE_CANONICAL_FILE:
             continue
         mod = _parse(py)
         if mod is None:
@@ -751,6 +754,205 @@ def _check_contract_evolution(root: Path, fw: Path, f: Findings, cand: Candidate
 
 
 # ── test — #53 · #620 · #621 · #622 · #623 · #624 · #428 · #423 ────────────
+
+# #53 «모델 import 금지» 의 모델 = `models.Model` 을 잇는 클래스(추상 · managed=False · 프록시 포함 · 출처 무관 —
+# Django 기본 User 도 모델이다 · 2026-11-15 F4-169). 후보는 모듈 이름에 `.models` 가 든 `from … import`, 점 마디에
+# `models` 가 있는 `import …`, 저장소 안 꾸러미에서 `models` 를 꺼내는 import 이고, 그 가운데 모델이 아님이 드러나는 이름만
+# 비켜 준다 — ORM 도구 모듈(`django.db.models` 아래 — Q · F · 필드 · 함수) · 바깥 패키지의 표 없는 이름(고정 목록) · 저장소
+# 안 모듈의 맨 위 클래스(모듈 수준에서 한 번만 묶인 이름) 가운데 판정이 «모델 아님»(기저가 없거나, 기저를 끝까지 풀어 모두
+# 모델 아님 — 바깥 기저는 아래 고정 목록만)인 것. 판정이 «모름»(목록 밖 바깥 기저 · 식 기저 · 못 찾음 · 순환 · 다시 묶인
+# 이름)이거나 모델인지 알 수 없는 이름(함수 · 재수출 · `import *` · `import <모듈>`)은 막는다.
+ORM_TOOL_MODULE = "django.db.models"
+NON_MODEL_NAMES = {"django.contrib.auth.models": frozenset({"AnonymousUser"})}
+DJANGO_MODEL_BASES = {"django.db.models.Model", "django.db.models.base.Model"}
+# 내장 기저 가운데 «모델 아님» — `object` · 내장 값 타입 · 내장 예외(파이썬 3.14 목록 · 고정 · 실행 파이썬에서 읽지 않는다).
+BUILTIN_NON_MODEL_BASES = frozenset({
+    "object",
+    "str", "int", "float", "complex", "bool", "bytes", "list", "tuple", "dict", "set", "frozenset",
+    "ArithmeticError", "AssertionError", "AttributeError", "BaseException", "BaseExceptionGroup",
+    "BlockingIOError", "BrokenPipeError", "BufferError", "BytesWarning", "ChildProcessError",
+    "ConnectionAbortedError", "ConnectionError", "ConnectionRefusedError", "ConnectionResetError",
+    "DeprecationWarning", "EOFError", "EncodingWarning", "EnvironmentError", "Exception", "ExceptionGroup",
+    "FileExistsError", "FileNotFoundError", "FloatingPointError", "FutureWarning", "GeneratorExit", "IOError",
+    "ImportError", "ImportWarning", "IndentationError", "IndexError", "InterruptedError", "IsADirectoryError",
+    "KeyError", "KeyboardInterrupt", "LookupError", "MemoryError", "ModuleNotFoundError", "NameError",
+    "NotADirectoryError", "NotImplementedError", "OSError", "OverflowError", "PendingDeprecationWarning",
+    "PermissionError", "ProcessLookupError", "PythonFinalizationError", "RecursionError", "ReferenceError",
+    "ResourceWarning", "RuntimeError", "RuntimeWarning", "StopAsyncIteration", "StopIteration", "SyntaxError",
+    "SyntaxWarning", "SystemError", "SystemExit", "TabError", "TimeoutError", "TypeError", "UnboundLocalError",
+    "UnicodeDecodeError", "UnicodeEncodeError", "UnicodeError", "UnicodeTranslateError", "UnicodeWarning",
+    "UserWarning", "ValueError", "Warning", "ZeroDivisionError",
+})
+# 바깥 기저 가운데 이것만 «모델 아님» 으로 끝난다(나머지 바깥 기저는 «모름» — 표준 라이브러리 전체 목록은 파이썬 판마다
+# 달라 쓰지 않는다).
+NON_MODEL_BASES = {
+    # `django.db.models` 의 모델 아닌 기저
+    "django.db.models.QuerySet", "django.db.models.query.QuerySet",
+    "django.db.models.Manager", "django.db.models.manager.Manager",
+    "django.db.models.Choices", "django.db.models.enums.Choices",
+    "django.db.models.TextChoices", "django.db.models.enums.TextChoices",
+    "django.db.models.IntegerChoices", "django.db.models.enums.IntegerChoices",
+    # 표준 라이브러리 enum · typing · abc
+    "enum.Enum", "enum.StrEnum", "enum.IntEnum", "enum.Flag", "enum.IntFlag",
+    "typing.NamedTuple", "typing.TypedDict", "typing.Protocol", "typing.Generic",
+    "abc.ABC",
+} | {f"builtins.{name}" for name in BUILTIN_NON_MODEL_BASES}
+MODEL_META_KEYS = {"db_table", "managed", "proxy"}
+MODEL, NOT_MODEL, UNKNOWN_MODEL = "모델", "모델 아님", "모름"
+
+
+def _models_module(m: str) -> bool:
+    return ".models" in m or m.endswith("models")
+
+
+def _orm_tool_module(m: str) -> bool:
+    return m == ORM_TOOL_MODULE or m.startswith(ORM_TOOL_MODULE + ".")
+
+
+def _repo_module_file(root: Path, dotted: str) -> Path | None:
+    """점 경로가 저장소 안(가상환경 · 캐시 폴더 밖) 모듈 · 꾸러미 파일이면 그 파일."""
+    found: Path | None = _module_file(root, dotted)
+    if found is None or set(found.relative_to(root).parts) & SKIP_DIRS:
+        return None
+    return found
+
+
+def _class_import_origins(root: Path, path: Path, mod: ast.Module) -> dict[str, str]:
+    """모듈 수준 import 가 묶은 이름 → 출처 점 경로(상대 import 는 저장소 뿌리 기준)."""
+    origins: dict[str, str] = {}
+    for node in mod.body:
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                origins[a.asname or a.name.split(".")[0]] = a.name if a.asname else a.name.split(".")[0]
+        elif isinstance(node, ast.ImportFrom):
+            src = _absolute_module(root, path, node)
+            for a in node.names:
+                if src and a.name != "*":
+                    origins[a.asname or a.name] = f"{src}.{a.name}"
+    return origins
+
+
+def _base_origin(expr: ast.expr, origins: dict[str, str], bound: dict[str, int]) -> str | None:
+    """기저 식의 출처 점 경로 — 뿌리 이름이 모듈 수준 import 로 한 번만 묶였을 때만(다시 묶이면 무엇인지 모른다)."""
+    chain: list[str] = []
+    while isinstance(expr, ast.Attribute):
+        chain.append(expr.attr)
+        expr = expr.value
+    if not isinstance(expr, ast.Name) or expr.id not in origins or bound.get(expr.id, 0) > 1:
+        return None
+    return ".".join([origins[expr.id], *reversed(chain)])
+
+
+def _module_bindings(mod: ast.Module) -> dict[str, int]:
+    """모듈 수준에서 이름마다 묶이는 횟수 — def · class · import · 대입(for · with · `:=` · del 포함) · except 이름.
+    함수 · 클래스 몸과 람다 · 컴프리헨션 안은 다른 범위라 보지 않는다."""
+    counts: dict[str, int] = {}
+    stack: list[ast.AST] = list(mod.body)
+    while stack:
+        node: ast.AST = stack.pop()
+        names: list[str] = []
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names = [node.name]
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            names = [a.asname or a.name.split(".")[0] for a in node.names if a.name != "*"]
+        elif isinstance(node, ast.Name) and not isinstance(node.ctx, ast.Load):
+            names = [node.id]
+        elif isinstance(node, ast.ExceptHandler) and node.name:
+            names = [node.name]
+        for name in names:
+            counts[name] = counts.get(name, 0) + 1
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda,
+                                 ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
+            stack.extend(ast.iter_child_nodes(node))
+    return counts
+
+
+def _top_classes(mod: ast.Module) -> dict[str, ast.ClassDef]:
+    """맨 위 클래스 가운데 모듈 수준에서 한 번만 묶인 이름 — 같은 이름을 다시 묶으면(대입 · import · def · 두 번째 class)
+    그 이름이 가리키는 것을 글자로 모른다."""
+    bound: dict[str, int] = _module_bindings(mod)
+    return {n.name: n for n in mod.body if isinstance(n, ast.ClassDef) and bound.get(n.name) == 1}
+
+
+def _model_verdict(root: Path, path: Path, mod: ast.Module, cls: ast.ClassDef,
+                   seen: frozenset[tuple[Path, str]]) -> str:
+    """`cls` 의 #53 판정 — MODEL(안 `Meta` 표 표지 · 기저 하나라도 모델) · NOT_MODEL(기저가 없거나 모든 기저가 모델 아님) ·
+    UNKNOWN_MODEL(그 밖). 저장소 안 기저는 끝까지 따라가고, 다시 만난 클래스(순환)는 «모름» 이다."""
+    if (path, cls.name) in seen:
+        return UNKNOWN_MODEL
+    seen = seen | {(path, cls.name)}
+    for inner in cls.body:
+        if isinstance(inner, ast.ClassDef) and inner.name == "Meta":
+            for st in inner.body:
+                targets = st.targets if isinstance(st, ast.Assign) else ([st.target] if isinstance(st, ast.AnnAssign) else [])
+                if any(isinstance(t, ast.Name) and t.id in MODEL_META_KEYS for t in targets):
+                    return MODEL
+    if cls.keywords:  # metaclass= 같은 키워드 — 무엇이 만들어지는지 글자로 모른다
+        return UNKNOWN_MODEL
+    origins: dict[str, str] = _class_import_origins(root, path, mod)
+    bound: dict[str, int] = _module_bindings(mod)
+    local: dict[str, ast.ClassDef] = _top_classes(mod)
+    # 내장 이름을 덮는 모듈 수준 묶음 — `*` import 가 있거나 모듈 수준에서 같은 이름을 묶으면 내장이 아니다
+    star: bool = any(isinstance(n, ast.ImportFrom) and any(a.name == "*" for a in n.names) for n in mod.body)
+    verdicts: set[str] = set()
+    for b in cls.bases:
+        if isinstance(b, ast.Subscript):  # `Generic[T]` · `models.Manager["Coupon"]` — 첨자 앞 클래스로 판정한다
+            b = b.value
+        if isinstance(b, ast.Name) and b.id in local:
+            verdicts.add(_model_verdict(root, path, mod, local[b.id], seen))
+        elif isinstance(b, ast.Name) and b.id in BUILTIN_NON_MODEL_BASES and not star and b.id not in bound:
+            verdicts.add(NOT_MODEL)
+        else:
+            verdicts.add(_dotted_base_verdict(root, _base_origin(b, origins, bound), seen))
+    if MODEL in verdicts:
+        return MODEL
+    return UNKNOWN_MODEL if UNKNOWN_MODEL in verdicts else NOT_MODEL
+
+
+def _dotted_base_verdict(root: Path, dotted: str | None, seen: frozenset[tuple[Path, str]]) -> str:
+    """점 경로 기저의 판정 — Django 모델 기저 · 고정 목록의 모델 아닌 기저 · 저장소 안 맨 위 클래스(끝까지)."""
+    if dotted is None:
+        return UNKNOWN_MODEL
+    if dotted in DJANGO_MODEL_BASES:
+        return MODEL
+    if dotted in NON_MODEL_BASES:
+        return NOT_MODEL
+    base_module, _, base_name = dotted.rpartition(".")
+    base_file: Path | None = _repo_module_file(root, base_module) if base_module else None
+    base_mod: ast.Module | None = _parse(base_file) if base_file is not None else None
+    base_cls: ast.ClassDef | None = _top_classes(base_mod).get(base_name) if base_mod is not None else None
+    if base_file is None or base_mod is None or base_cls is None:
+        return UNKNOWN_MODEL
+    return _model_verdict(root, base_file, base_mod, base_cls, seen)
+
+
+def _imports_db_model(root: Path, py: Path, node: ast.Import | ast.ImportFrom) -> bool:
+    """#53 — 이 import 가 모델을 들이거나 들일 수 있는가(위 머리 글의 자 — «모름» 은 막는다)."""
+    if isinstance(node, ast.Import):
+        return any("models" in a.name.split(".") and not _orm_tool_module(a.name) for a in node.names)
+    m: str = node.module or ""
+    src: str | None = _absolute_module(root, py, node)
+    if not _models_module(m):
+        # `from <저장소 안 꾸러미> import models` — 모델 모듈째 들인다(바깥 꾸러미 `django.db` 등은 보지 않는다).
+        return src is not None and any(a.name == "models" for a in node.names) and (
+            _repo_module_file(root, f"{src}.models") is not None or _repo_module_file(root, src) is not None)
+    if src is None:
+        return True
+    if _orm_tool_module(src):
+        return False
+    names: list[str] = [a.name for a in node.names]
+    if "*" in names:
+        return True
+    target: Path | None = _repo_module_file(root, src)
+    if target is None:
+        return not set(names) <= NON_MODEL_NAMES.get(src, frozenset())
+    target_mod: ast.Module | None = _parse(target)
+    if target_mod is None:
+        return True
+    classes: dict[str, ast.ClassDef] = _top_classes(target_mod)
+    return any(n not in classes or _model_verdict(root, target, target_mod, classes[n], frozenset()) != NOT_MODEL
+               for n in names)
+
 
 def _check_framework_test(root: Path, fw: Path, f: Findings) -> None:
     t = fw / "test"
@@ -771,11 +973,11 @@ def _check_framework_test(root: Path, fw: Path, f: Findings) -> None:
             if len(classes) > 1:
                 f.add("#423", _rel(root, py), f"공개 클래스 {len(classes)}개 — «공유 뼈대 하나 = 파일 하나»다")
         for node in ast.walk(mod):
+            if isinstance(node, (ast.Import, ast.ImportFrom)) and _imports_db_model(root, py, node):
+                f.add("#53", _rel(root, py, node.lineno),
+                      "framework/test 가 모델을 import 한다 — HTTP 로만 시스템을 구동한다")
             if isinstance(node, ast.ImportFrom):
                 m = node.module or ""
-                if ".models" in m or m.endswith("models"):
-                    f.add("#53", _rel(root, py, node.lineno),
-                          "framework/test 가 모델을 import 한다 — HTTP 로만 시스템을 구동한다")
                 if m.split(".")[0] == "factory" or "factories" in m:
                     f.add("#53", _rel(root, py, node.lineno),
                           "framework/test 에 팩토리 — 팩토리는 모델을 알아 여기 못 온다(#392·#620)")
@@ -912,7 +1114,6 @@ def main(argv: list[str]) -> int:
 
     findings = Findings(defer=True)
     cand = Candidates(defer=True)
-    tech = vocab.tech_names()
     union = vocab.all_vocab(root)
     bc_names = vocab.bc_names(root)
     agg_camels = set()
@@ -932,7 +1133,7 @@ def main(argv: list[str]) -> int:
     fws = _framework_dirs(root)
     py_defined = _PyDefined(root)
     for fw in fws:
-        _check_structure(root, fw, tech, findings, cand)
+        _check_structure(root, fw, findings, cand)
         _check_isolation(root, fw, union, bc_names, agg_camels, findings, cand, py_defined)
         _check_contract_evolution(root, fw, findings, cand)
         _check_framework_test(root, fw, findings)

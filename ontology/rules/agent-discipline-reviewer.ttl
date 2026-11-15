@@ -1165,12 +1165,18 @@ djr:R-0967 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0968 a djr:Obligation ;
-    skos:prefLabel "② 선언된 Enum/choices의 리터럴 소비 important — 백스톱 사각 4변종(변수 우회·간접 queryset·비교식·__in) 직독"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0968@2026-08-22> .
+    skos:prefLabel "② 선언된 Enum/choices의 리터럴 소비 important — 백스톱 사각 5변종(변수 우회·간접 queryset·비교식·__in·도메인 우회 읽기·admin 의 글 사본 상수) 직독"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0968@2026-11-15> .
 
 <https://numchida.com/ns/djr#R-0968@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0968 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0968@2026-11-15> a djr:Expression ;
+    prov:specializationOf djr:R-0968 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0968@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0969 a djr:Prohibition ;
     skos:prefLabel "심볼 치환의 판정 소유 위반 면책 금지(복합 판정은 빈혈 불릿 단일 분류)"@ko ;
@@ -1246,11 +1252,17 @@ djr:R-0977 a djr:Prohibition ;
 
 djr:R-0978 a djr:Exception ;
     skos:prefLabel "거짓지적 방지 목록(테스트 심볼 단언·사람 대상 서술·정의부 우변·.value 파생·Literal 잠금·외부 프로토콜 문자열·설정 키·마이그레이션 historical value·pass-through·한 파일 로컬·다른 지식 동일 값)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0978@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-0978@2026-11-15> .
 
 <https://numchida.com/ns/djr#R-0978@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0978 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0978@2026-11-15> a djr:Expression ;
+    prov:specializationOf djr:R-0978 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0978@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0979 a djr:Prohibition ;
     skos:prefLabel "엔진·연결 트랜잭션/락/격리 메커니즘의 설계 소유(명세 승인 없는 의미 변경 금지) · 함께 커밋 승인 구간이 승인한 애그리거트를 정말 한 트랜잭션에서 바꾸나(도움 메서드로 숨김 · 둘로 나눔 = blocker · ×n 이 크게 적힘 · 같은 유스케이스 안 옮김)"@ko ;
@@ -3293,7 +3305,7 @@ djr:R-3743 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 13 ;
     djr:statesNorm djr:R-0965, djr:R-0966, djr:R-0967, djr:R-0968, djr:R-0969, djr:R-0970, djr:R-0971, djr:R-0972, djr:R-0973, djr:R-0974, djr:R-0975, djr:R-0976, djr:R-0977, djr:R-0978 ;
-    djr:text "- **상수 승격·심볼 소비 규율(백스톱 사각 전담)**: **이번 작업이 touched한 코드만 본다 — untouched 기존 리터럴은 면제(grandfather)**. ① 닫힌 집합의 원소(도메인 상태·종류·wire enum성 문자열)를 우리 코드가 분기·판정하는데 집합 타입(domain `StrEnum`/`choices` 파생) 없이 원시 리터럴로 산재하면 **important**(1곳째부터 승격 — `discipline-cleancode` §2.14; 단 그 산재가 같은-지식 중복 정리 사안이면 위 클린코드 불릿의 DRY로만 분류, 이중 계상 금지). ② Enum/choices가 *선언돼 있는데* 소비처가 리터럴로 비교·`.filter()`·대입하면 **important** — 결정적 백스톱 `check-choices-literal-consumption`이 직접형(`default=` 리터럴·`<Model>.objects.filter(<field>=\"…\")`)을 잡으므로 네가 보는 건 그 사각이다: 변수 우회·간접 queryset(`qs.filter(...)`)·비교식(`x.status == \"…\"`)·`__in` 변종. **심볼 치환은 판정 소유 위반을 면책하지 않는다** — 그 사건이 복합 판정의 소유 문제면 위 '죽은 도메인 메서드·판정 인프라 누수' 불릿 하나로만 분류한다(이중 계상 금지). ③ 도메인 판정 값 집합이 `models.TextChoices`로 선언돼 domain이 ORM 타입을 역참조하면 **important**(계층 소유 — 단일 출처는 domain enum·ORM은 `.value` 평탄화 파생; `implementation-django` §2.5. 구조 이주 사안이면 아래 파일트리 불릿과 이중 계상 금지 — 값 집합 소유만 여기). ④ 테스트가 **외부 관찰 계약**(HTTP 응답·DB 저장값·이벤트)의 assert 기댓값에 프로덕션 Enum·상수를 역수입하면 **important**(자기참조 오라클 — `implementation-test` §15.4; 위 테스트 품질 불릿과는 별개 렌즈 — 오라클 자기참조만 여기). ⑤ 우리 BC가 **발행하는 이벤트 봉투의 discriminator**(태그드 유니온 태그 — `event_type` 류)가 domain `StrEnum` 파생(`Literal[EventType.X] = EventType.X`) 없이 맨 문자열 `Literal[\"…\"]`·원시 str로 선언되면 **important**(1종째부터 — birth-enum `architecture-ddd` §3.7; 대응 백스톱 없음 — 버전 태그와 AST 형태가 동일해 형태 판정은 FP 불가피, \"발행 봉투인가\"의 위치 판정은 전적으로 네 몫). union-enum 동기 후보는 별도 입장 행이 `add/update`이고 독자 failure를 승인한 경우에만 그 행의 mechanics를 감사한다. 입장 행이 없으면 동기 테스트를 즉석에서 요구하지 않고 candidate로 설계 반송한다. **⑤의 제외**: `payload_schema_version`류 버전 태그(리터럴 동결이 정답 — enum화가 오히려 위반 방향), 상류 이벤트를 중계만 하는 소비 측 스키마의 태그(published language 수용 — 소비 BC는 발행 enum을 import하지 않는다), 데이터소스 BC, OHS published contract(`open_host_service/*/contract/`)의 discriminator wire `Literal`(contract 무의존이 우선 — houserules `references/final.md` §1 트리 23~33행 — OHS 내부 구조; 동기 테스트는 승인 입장 행이 있을 때만 감사한다). ①과 배타: ①은 분기·판정 앵커의 미승격, ⑤는 발행 봉투 위치의 선언 형태(분기 존재 무관) — 한 사건은 하나로만 분류(이중 계상 금지). **거짓지적 방지(잡지 않는다)**: 도메인 내부 단위 테스트의 심볼 단언·테스트 arrange/act의 심볼 사용, 로그·예외 메시지 등 사람 대상 서술, Enum·상수 정의부 우변, `.value` 평탄화 파생(`default=OrderStatus.PENDING.value`), `Literal[...]`로 잠긴 인자 자리(단 발행 봉투 discriminator는 ⑤의 대상 — 맨 문자열 Literal이면 잡는다; 버전 태그는 여기 그대로 허용), 외부 프로토콜 소유 문자열(분기 조건인데 adapter 정규화 부재면 nit로만), 설정 키·환경변수명, 마이그레이션 historical value(살아있는 Enum 참조가 오히려 위반 — `implementation-django` §10.4), pass-through 저장·데이터소스 BC의 미승격, 한 파일 로컬 문자열, 우연히 같은 값·다른 지식의 미통합(합치면 오히려 위반). 근거 `discipline-cleancode` §2.14·`implementation-django` §2.5·§10.4·`architecture-ddd` §2.5·§3.2·§3.7·`implementation-test` §15.4·§15.5.\n"@ko .
+    djr:text "- **상수 승격·심볼 소비 규율(백스톱 사각 전담)**: **이번 작업이 touched한 코드만 본다 — untouched 기존 리터럴은 면제(grandfather)**. ① 닫힌 집합의 원소(도메인 상태·종류·wire enum성 문자열)를 우리 코드가 분기·판정하는데 집합 타입(domain `StrEnum`/`choices` 파생) 없이 원시 리터럴로 산재하면 **important**(1곳째부터 승격 — `discipline-cleancode` §2.14; 단 그 산재가 같은-지식 중복 정리 사안이면 위 클린코드 불릿의 DRY로만 분류, 이중 계상 금지). ② Enum/choices가 *선언돼 있는데* 소비처가 리터럴로 비교·`.filter()`·대입하면 **important** — 결정적 백스톱 `check-choices-literal-consumption`이 직접형(`default=` 리터럴·`<Model>.objects.filter(<field>=\"…\")`)을 잡으므로 네가 보는 건 그 사각이다: 변수 우회·간접 queryset(`qs.filter(...)`)·비교식(`x.status == \"…\"`)·`__in` 변종. 도메인 우회 읽기 · admin 이 모델 파생 값 속성 대신 값을 글로 다시 적은 상수(`_READY: Final[str] = \"ready\"`)로 거르거나 견주면 같은 ② **important** 다(검사기 사각 — `implementation-django` §2.5 «모델 쪽 파생 값»). **심볼 치환은 판정 소유 위반을 면책하지 않는다** — 그 사건이 복합 판정의 소유 문제면 위 '죽은 도메인 메서드·판정 인프라 누수' 불릿 하나로만 분류한다(이중 계상 금지). ③ 도메인 판정 값 집합이 `models.TextChoices`로 선언돼 domain이 ORM 타입을 역참조하면 **important**(계층 소유 — 단일 출처는 domain enum·ORM은 `.value` 평탄화 파생; `implementation-django` §2.5. 구조 이주 사안이면 아래 파일트리 불릿과 이중 계상 금지 — 값 집합 소유만 여기). ④ 테스트가 **외부 관찰 계약**(HTTP 응답·DB 저장값·이벤트)의 assert 기댓값에 프로덕션 Enum·상수를 역수입하면 **important**(자기참조 오라클 — `implementation-test` §15.4; 위 테스트 품질 불릿과는 별개 렌즈 — 오라클 자기참조만 여기). ⑤ 우리 BC가 **발행하는 이벤트 봉투의 discriminator**(태그드 유니온 태그 — `event_type` 류)가 domain `StrEnum` 파생(`Literal[EventType.X] = EventType.X`) 없이 맨 문자열 `Literal[\"…\"]`·원시 str로 선언되면 **important**(1종째부터 — birth-enum `architecture-ddd` §3.7; 대응 백스톱 없음 — 버전 태그와 AST 형태가 동일해 형태 판정은 FP 불가피, \"발행 봉투인가\"의 위치 판정은 전적으로 네 몫). union-enum 동기 후보는 별도 입장 행이 `add/update`이고 독자 failure를 승인한 경우에만 그 행의 mechanics를 감사한다. 입장 행이 없으면 동기 테스트를 즉석에서 요구하지 않고 candidate로 설계 반송한다. **⑤의 제외**: `payload_schema_version`류 버전 태그(리터럴 동결이 정답 — enum화가 오히려 위반 방향), 상류 이벤트를 중계만 하는 소비 측 스키마의 태그(published language 수용 — 소비 BC는 발행 enum을 import하지 않는다), 데이터소스 BC, OHS published contract(`open_host_service/*/contract/`)의 discriminator wire `Literal`(contract 무의존이 우선 — houserules `references/final.md` §1 트리 23~33행 — OHS 내부 구조; 동기 테스트는 승인 입장 행이 있을 때만 감사한다). ①과 배타: ①은 분기·판정 앵커의 미승격, ⑤는 발행 봉투 위치의 선언 형태(분기 존재 무관) — 한 사건은 하나로만 분류(이중 계상 금지). **거짓지적 방지(잡지 않는다)**: 도메인 내부 단위 테스트의 심볼 단언·테스트 arrange/act의 심볼 사용, 로그·예외 메시지 등 사람 대상 서술, Enum·상수 정의부 우변, `.value` 평탄화 파생(`default=OrderStatus.PENDING.value`) · 모델 파생 값 속성(`OrderModel.STATUS_PENDING`), `Literal[...]`로 잠긴 인자 자리(단 발행 봉투 discriminator는 ⑤의 대상 — 맨 문자열 Literal이면 잡는다; 버전 태그는 여기 그대로 허용), 외부 프로토콜 소유 문자열(분기 조건인데 adapter 정규화 부재면 nit로만), 설정 키·환경변수명, 마이그레이션 historical value(살아있는 Enum 참조가 오히려 위반 — `implementation-django` §10.4), pass-through 저장·데이터소스 BC의 미승격, 한 파일 로컬 문자열, 우연히 같은 값·다른 지식의 미통합(합치면 오히려 위반). 단 도메인 우회 읽기 · admin 이 이미 선언된 값 집합의 값을 글로 다시 적은 상수는 정의부 · 한 파일 로컬이 아니다(②). 근거 `discipline-cleancode` §2.14·`implementation-django` §2.5·§10.4·`architecture-ddd` §2.5·§3.2·§3.7·`implementation-test` §15.4·§15.5.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b14> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;

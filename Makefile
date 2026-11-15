@@ -195,6 +195,7 @@ verify-base-core:
 	PYTHONUTF8=1 python3 workspace/tools/ab_score.py --self-test; \
 	diff -rq dddjango/scripts codex-dddjango/skills/dddjango/scripts --exclude=__pycache__; \
 	for f in dddjango/commands/dddjango.md codex-dddjango/skills/dddjango/SKILL.md dddjango/agents/coder.md codex-dddjango/skills/dddjango-coder/SKILL.md; do grep -qF '**멈춘 시험 깨우기**' $$f && grep -qF 'test_watch.py stop <감시 폴더>' $$f && grep -qF '끈 뒤의 기록으로 시험을 다시 고르지 않는다' $$f || { echo "ERROR: $$f 에 멈춘 시험 깨우기(감시 도구 · stop · 멈춤 순간 목록)가 없다 — Claude · Codex 두 런타임에 둔다"; exit 1; }; done; \
+	for f in dddjango/agents/coder.md codex-dddjango/skills/dddjango-coder/SKILL.md; do grep -qF '기준선 대비 새 진단 0' $$f && grep -qF '줄 · 칸 번호를 빼고' $$f && grep -qF '그 파일에 포매터를 돌려 기존 줄을 다시 쓰지 않는다' $$f || { echo "ERROR: $$f 에 완료 조건 정적 검사의 기준선 대비 글(맞춤 열쇠 · 포매터 전파 금지)이 없다 — Claude · Codex 두 런타임에 둔다"; exit 1; }; done; \
 	cmp -s dddjango/scripts/test_watch.py dddjango-web/scripts/test_watch.py && cmp -s dddjango/scripts/watch_probe/test_watch_probe.py dddjango-web/scripts/watch_probe/test_watch_probe.py || { echo "ERROR: test_watch.py · watch_probe/test_watch_probe.py core ↔ web byte 불일치(또는 없음) — 두 플러그인에 같은 파일을 둔다"; exit 1; }; \
 	echo "[verify-base-core] 쓰기 울타리 임시 폴더 지우기 — Claude · Codex 조정자(index 사본 · 창을 닫은 뒤 · 허용 밖은 남김)"; \
 	for f in dddjango/commands/dddjango.md codex-dddjango/skills/dddjango/SKILL.md; do \

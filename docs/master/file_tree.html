@@ -2515,7 +2515,7 @@ cosmicpython 의 <code>events.pop(0)</code> · eShop 의 <code>RemoveDomainEvent
 기본 쓰기 경로를 프레임워크가 소유하며(<code>save_model→obj.save()</code> · <code>delete_model→obj.delete()</code>),
 <code>autodiscover</code> 는 <code>&lt;app&gt;.admin</code> 만 집고 <code>get_app_template_dirs</code> 가 템플릿을 앱 루트 밑 한 곳으로 고정한다.
 어드민은 장고가 모양을 강하게 정해 두어서 우리 규칙을 얹으면 싸움만 난다.</div>
-            <div class="rd-r"><span class="rd-k">규칙</span>운영 화면 — <b>«리프 규칙»만 면제한다</b>. 자리와 이름은 정하고, <b>리프 import 금지는 안 건다</b> — <em>장고가 등록과 쓰기 경로를 소유하는 축이라 그 규칙이 걸릴 자리가 없다</em>. <b>앎의 범위는 하나 건다 — 자기 BC 의 도메인 · 응용 · 합성 루트 · 저장 어댑터 · ACL 을 import 하지 않는다</b>(#668) <em>함수 안 · 상대 import 도, 모델 모듈이 그 다섯 자리에서 묶은 이름을 모델 모듈을 거쳐 가져와도 같다 — 단순 자료는 ORM 값(모델 필드 · 모델이 가진 속성 · 메서드)으로 읽고 쓰고, <b>DB 제약으로 걸 수 없는 업무 규칙이 있는 쓰기는 그 BC 창구(<code>driving_layer/open_host_service/</code>)를 부른다</b></em> · <b>다른 BC 금지 · 벤더 SDK 금지도 그대로 걸린다</b> <em>BC 둘 이상의 값을 보이는 화면은 <code>cross_context/backoffice/</code> 다</em> · <b><code>__init__.py</code> 가 등록 모듈을 «재수출»하지 않으면 위반</b> <em><code>models/</code> 와 같은 갈래 — 장고 <code>autodiscover</code> 가 <code>admin</code> «모듈»만 import 하므로 재수출이 없으면 <b>어드민 화면이 조용히 안 뜬다</b></em> · <b>비어 있으면 「운영 화면이 없다」</b></div>
+            <div class="rd-r"><span class="rd-k">규칙</span>운영 화면 — <b>«리프 규칙»만 면제한다</b>. 자리와 이름은 정하고, <b>리프 import 금지는 안 건다</b> — <em>장고가 등록과 쓰기 경로를 소유하는 축이라 그 규칙이 걸릴 자리가 없다</em>. <b>앎의 범위는 하나 건다 — 자기 BC 의 도메인 · 응용 · 합성 루트 · 저장 어댑터 · ACL 을 import 하지 않는다</b>(#668) <em>함수 안 · 상대 import 도, 모델 모듈 같은 자기 <code>django_&lt;bounded_context&gt;/</code> 모듈이 그 다섯 자리에서 묶은 이름(모듈 수준 이름 · 그 모듈 맨 위 클래스 안 별칭)을 그 모듈을 거쳐 가져오거나 써도 같다 — 단순 자료는 ORM 값(모델 필드 · 모델이 가진 속성 · 메서드)으로 읽고 쓰고, 도메인 값으로 거르거나 견줄 때는 모델 클래스의 <code>.value</code> 파생 값 속성(<code>STATUS_PENDING: Final[str]</code>)이고, <b>DB 제약으로 걸 수 없는 업무 규칙이 있는 쓰기는 그 BC 창구(<code>driving_layer/open_host_service/</code>)를 부른다</b></em> · <b>다른 BC 금지 · 벤더 SDK 금지도 그대로 걸린다</b> <em>BC 둘 이상의 값을 보이는 화면은 <code>cross_context/backoffice/</code> 다</em> · <b><code>__init__.py</code> 가 등록 모듈을 «재수출»하지 않으면 위반</b> <em><code>models/</code> 와 같은 갈래 — 장고 <code>autodiscover</code> 가 <code>admin</code> «모듈»만 import 하므로 재수출이 없으면 <b>어드민 화면이 조용히 안 뜬다</b></em> · <b>비어 있으면 「운영 화면이 없다」</b></div>
             <div class="rd-nm"><span class="rd-k">이름</span>장고가 정하는 고정 이름.</div>
           </li>
           <li class="rd" id="rd-84">
@@ -2599,7 +2599,7 @@ cosmicpython 의 <code>events.pop(0)</code> · eShop 의 <code>RemoveDomainEvent
             <div class="rd-w"><b>도메인을 «우회하는» 어댑터.</b> 옆 칸과 <b>앎이 정반대</b>다 — 저기는 도메인을 반드시 알고, 여기는 절대 몰라야 한다.
 <br>옛 트리에서는 둘이 <b>한 폴더에 살았고</b> 파일 이름(<code>&lt;aggregate&gt;</code>가 주어냐 <code>&lt;capability&gt;</code>가 주어냐)이 갈랐다.
 나누니 <b>검사가 폴더 단위로 선다</b> — 한 줄씩 정반대로.</div>
-            <div class="rd-r"><span class="rd-k">규칙</span><b>도메인을 «우회한다» — <code>domain_layer</code> 를 import 하면 위반</b> <em>AST 한 줄 · 옆 칸과 정확히 반대다</em> · <b>비어 있으면 짝 <code>port/domain_bypass_query/</code> 가 비었다는 뜻</b> <em>사실은 선언 쪽이 말한다</em></div>
+            <div class="rd-r"><span class="rd-k">규칙</span><b>도메인을 «우회한다» — <code>domain_layer</code> 를 import 하면 위반</b> <em>모델 모듈 같은 자기 <code>django_&lt;bounded_context&gt;/</code> 모듈(맨 위 클래스 안 별칭 포함)을 거쳐 도메인 이름을 가져오거나 써도 같다 — 도메인 값은 모델의 <code>.value</code> 파생 값 속성으로 거른다</em> <em>AST 한 줄 · 옆 칸과 정확히 반대다</em> · <b>비어 있으면 짝 <code>port/domain_bypass_query/</code> 가 비었다는 뜻</b> <em>사실은 선언 쪽이 말한다</em></div>
             <div class="rd-nm"><span class="rd-k">이름</span>선언 <code>application_layer/port/domain_bypass_query/</code> 와 <b>폴더 이름이 같다</b>.</div>
           </li>
           <li class="rd" id="rd-95">
@@ -2956,7 +2956,7 @@ cosmicpython 의 <code>events.pop(0)</code> · eShop 의 <code>RemoveDomainEvent
   <em>고정 갈래 <code>broker/</code>·<code>test/</code>·<code>pure/</code> 를 먼저 제외한 뒤 능력을 판정한다 — 폴더 안에 <code>*_port.py</code> 가 있으면 <code>&lt;capability&gt;/</code> 다.
   그래서 <code>&lt;technology&gt;/</code> 안에는 <code>*_port.py</code> 를 두지 않는다.</em>
   <b>사람이 「이건 계약인가 구현인가」를 잴 필요가 없다.</b></p>
-  <p><b><code>&lt;technology&gt;/&lt;module&gt;.py</code></b> — <b>그 라이브러리의 타입 없이는 문장 자체가 성립하지 않는 코드</b>.
+  <p><b><code>&lt;technology&gt;/&lt;module&gt;.py</code></b> — <b>그 라이브러리의 타입 없이는 문장 자체가 성립하지 않는 코드</b>(플러그인이 자리를 정한 <code>ninja/pre_route_response_table.py</code> 는 클래스가 없으면 이 문장 밖이다 — 몸통 Schema 행이 없으면 ninja 를 import 하지 않는다. 클래스를 두면 지금처럼 ninja 를 import 해야 한다).
   닌자가 이해하는 인증 클래스, 닌자가 이해하는 오류 응답 형식, 장고가 던진 예외가 재시도해도 되는 것인지 가려내는 판별 같은 것들이다.
   <b>어느 BC 에 놓아도 똑같이 동작하고, BC 를 다 지워도 그대로 남는다</b>는 점이 공통이다.
   예를 들면 Ninja 인증·framework 오류 봉투, Django 기술 오류 판별이 온다. 공통 오류 모듈과 shape 는 승인된 API profile 이 정한다.</p>
@@ -2968,7 +2968,7 @@ cosmicpython 의 <code>events.pop(0)</code> · eShop 의 <code>RemoveDomainEvent
   <b>업무 어휘 0</b> · <b><code>*_port.py</code>·<code>*_adapter.py</code> 금지</b>.
   <em>앞의 한 줄이 결정적이다 — BC 헬퍼도 설정 상수도 물리적으로 못 들어온다.</em></p>
   <p><b><code>test/</code></b> — 여러 BC 가 공유하는 테스트 뼈대.
-  규칙은 <b>HTTP 로만 시스템을 구동한다</b>는 것 하나다(모델 import 금지). 그래야 뼈대가 특정 BC 의 내부를 알지 않는다.
+  규칙은 <b>HTTP 로만 시스템을 구동한다</b>는 것 하나다(모델 import 금지 — 모델은 <code>models.Model</code> 을 잇는 클래스다(추상 · <code>managed = False</code> · 프록시 포함 · 별칭이나 프로젝트 기저를 거쳐도 · 출처 무관 — Django 기본 User 도). 모델인지 알 수 없는 이름(함수 · 재수출 · <code>*</code> · 목록 밖 바깥 기저를 이은 클래스)도 막고, 모델이 아님이 드러난 이름(<code>AnonymousUser</code> · <code>django.db.models</code> 의 <code>Q</code> 같은 ORM 도구 · 기저가 없거나 목록의 기저만 이은 클래스 — 목록은 <code>django.db.models</code> 의 <code>QuerySet</code> · <code>Manager</code> · <code>Choices</code>(<code>TextChoices</code> · <code>IntegerChoices</code>) 류 · <code>Enum</code> 류 · <code>NamedTuple</code> · <code>TypedDict</code> · <code>Protocol</code> · <code>Generic</code> · <code>ABC</code> · <code>object</code> · 예외)만 막지 않는다). 그래야 뼈대가 특정 BC 의 내부를 알지 않는다.
   뼈대 자신을 검사하는 테스트는 <code>framework/test/unit/</code> 에 따로 둔다.</p></dd>
           <dt class="no">안 들어오는 것</dt><dd><p><b>업무 어휘.</b> 판정은 파일을 열어 보면 끝난다 — <b>안에 BC 이름이 나오면 그건 규칙이 아니라 목록</b>이다.</p>
   <p>한 문장으로 세우면 이렇다 — <em>「BC 하나를 지웠을 때 이 파일이 바뀌나?」 바뀐다면 여기 있을 것이 아니다.</em></p></dd>
@@ -3196,7 +3196,7 @@ BC 하나짜리 저장소에서도 <b>처음부터</b> 여기 만든다.
             <div class="rd-w"><b>BC 것이 아닌 테스트 재료.</b> HTTP 로만 구동하게 묶어 두는 이유는 하나다 —
 <b>그래야 뼈대가 특정 BC 의 내부를 알지 않는다.</b>
 <br>자식 셋 — 뼈대(<code>&lt;module&gt;.py</code>) · 가짜(<code>fake/</code>) · framework 자신의 테스트(<code>unit/</code>).</div>
-            <div class="rd-r"><span class="rd-k">규칙</span><b>여러 BC 가 갖다 쓰는 뼈대 — 그리고 «공유 페이크»</b> — 규칙: <b>뼈대는 HTTP 로만 시스템을 구동한다</b>(모델 import 금지) · <b>페이크는 형제 <code>fake/</code> 가 받는다</b> <em>여기 <code>&lt;module&gt;.py</code> 는 «뼈대»뿐이다 <span class='dim'>08-10 · C2 — 옛 문면은 페이크를 이 칸에 두라 적어 놓고 <b>칸을 안 줬다</b> — 진짜 계약과 같은 평면에 살고 basename 이 겹쳤다.</span></em> · <b>올라오는 자는 형제들과 같다</b> <em>「이 낱말의 뜻을 밖이 정하나」 — <b>개수는 안 묻는다</b> <span class='dim'>08-09 · T47</span></em></div>
+            <div class="rd-r"><span class="rd-k">규칙</span><b>여러 BC 가 갖다 쓰는 뼈대 — 그리고 «공유 페이크»</b> — 규칙: <b>뼈대는 HTTP 로만 시스템을 구동한다</b>(모델 import 금지 — 모델인지 모르면 막는다) · <b>페이크는 형제 <code>fake/</code> 가 받는다</b> <em>여기 <code>&lt;module&gt;.py</code> 는 «뼈대»뿐이다 <span class='dim'>08-10 · C2 — 옛 문면은 페이크를 이 칸에 두라 적어 놓고 <b>칸을 안 줬다</b> — 진짜 계약과 같은 평면에 살고 basename 이 겹쳤다.</span></em> · <b>올라오는 자는 형제들과 같다</b> <em>「이 낱말의 뜻을 밖이 정하나」 — <b>개수는 안 묻는다</b> <span class='dim'>08-09 · T47</span></em></div>
           </li>
           <li class="rd" id="rd-162">
             <div class="rd-p" style="--d:2"><b class="rd-n">&lt;module&gt;.py</b><span class="tb-z z-own">고유</span><span class="chg fix">확정</span><button type="button" class="pin d" data-k="d24">D24</button></div>

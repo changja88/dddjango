@@ -196,15 +196,54 @@ STDLIB_FALLBACK = frozenset({
 
 
 def tech_names() -> set[str]:
-    """#19 기술 이름 집합 — stdlib 모듈명 ∪ 설치 배포판 최상위 모듈명(정확 일치용)."""
+    """#19 기술 이름 집합 — stdlib 모듈명 ∪ 흔한 기술 낱말(정확 일치용).
+
+    실행 파이썬에 깔린 배포판은 보지 않는다 — 같은 저장소 · 같은 커밋이면 어느 파이썬으로 돌려도 판정이 같다
+    (2026-11-15 F4-171). 저장소가 쓰는 라이브러리 이름의 `framework/<technology>/` 는 `technology_folder` 가
+    폴더 안 import 로 읽는다."""
     names: set[str] = set(getattr(sys, "stdlib_module_names", ())) | set(STDLIB_FALLBACK)
-    try:
-        from importlib.metadata import packages_distributions
-        names |= set(packages_distributions())
-    except Exception:  # 메타데이터가 없는 환경 — stdlib 만으로 진행
-        pass
-    # 파이썬 밖에서 오는 흔한 기술 낱말 — 배포판 이름에 안 잡히는 것(데이터 목록 · 닫지 않는다).
+    # 흔한 기술 낱말 — 데이터 목록 · 닫지 않는다.
     names |= {"smtp", "http", "grpc", "kafka", "redis", "rabbitmq", "celery", "postgres",
               "postgresql", "mysql", "sqlite", "s3", "sqs", "sns", "stripe", "django",
               "ninja", "drf", "rest"}
     return names
+
+
+# <technology>/ 폴더 이름 하나가 여러 배포 패키지를 뜻하는 경우 — `ninja/` 는 django-ninja 와
+# 그 위의 django-ninja-extra(NinjaExtraAPI·api_controller — §2.3 api.py 소유)를 한 기술로 본다.
+TECHNOLOGY_LIBRARIES = {"ninja": frozenset({"ninja", "ninja_extra"})}
+
+
+def folder_libraries(folder: Path) -> frozenset[str]:
+    """`framework/<technology>/` 폴더가 뜻하는 라이브러리 최상위 모듈 이름(기본 = 폴더 이름)."""
+    return TECHNOLOGY_LIBRARIES.get(folder.name, frozenset({folder.name}))
+
+
+def imports_library(mod: ast.Module, libraries: frozenset[str]) -> bool:
+    """모듈이 `libraries` 의 최상위 모듈을 절대 import 하는가(상대 import 는 저장소 안이라 세지 않는다)."""
+    return any(
+        (isinstance(n, ast.Import) and any(a.name.split(".")[0] in libraries for a in n.names))
+        or (isinstance(n, ast.ImportFrom) and not n.level and (n.module or "").split(".")[0] in libraries)
+        for n in ast.walk(mod))
+
+
+def technology_folder(root: Path, folder: Path) -> bool:
+    """`framework/<이름>/` 이 «알려진 <technology>/» 인가 — 이름이 기술 낱말(`tech_names`)이거나, 폴더 바로 아래
+    모듈 하나라도 그 이름의 라이브러리를 저장소 밖에서 import 한다(저장소 뿌리에 같은 이름 패키지(`__init__.py` 있는 폴더) ·
+    모듈이 있으면 그것은 저장소 안이다 — `__init__.py` 없는 폴더는 설치된 라이브러리가 먼저 잡혀 가리지 않는다).
+    재료는 저장소 안 글자뿐이다(F4-171)."""
+    if folder.name in tech_names():
+        return True
+    libraries: frozenset[str] = frozenset(
+        lib for lib in folder_libraries(folder)
+        if not ((root / lib / "__init__.py").is_file() or (root / f"{lib}.py").is_file()))
+    if not libraries:
+        return False
+    for py in sorted(folder.glob("*.py")):
+        try:
+            mod: ast.Module = ast.parse(py.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, SyntaxError):
+            continue
+        if imports_library(mod, libraries):
+            return True
+    return False

@@ -18,8 +18,11 @@ Kernel 없음)·#83(BC 삭제 내성)은 아래 각론 진단이 집행한다.
          #665 application · framework · <project> 는 cross_context 를 import 하지 않는다(<project> 의 `cross_context.` 문자열은
          `include("cross_context.backoffice.urls")` 와 설정 모듈의 앱 문자열만) · #666 주소는 `cross_context/backoffice/urls.py` 에만 · 모두 `admin_view`
   admin  #668 `django_<bc>/admin/**` 는 자기 BC 의 domain · application · composition_root · persistence · ACL 을 import 하지 않는다
-         (자기 `django_<bc>/` 모듈의 다시 내보내기 한 겹 포함 · 파일당 한 줄 · 걸린 import 는 푼 절대 경로를 정렬한 목록 칸 ·
-         2026-11-14 F4-158) · admin → 타 BC 는 다른 칸과 같은 타 BC 규칙(#12 · #13 · #98 · #102)
+         (자기 `django_<bc>/` 모듈의 다시 내보내기 한 겹 포함 — 모듈 수준 이름 · 맨 위 클래스(모델 클래스 등) 안 별칭 · 꾸러미 `__init__.py` 가
+         다시 내보낸 이름(`import *` 포함)은 그 모듈의 이름으로 풂(겹 아님) · VO 멤버의 `.value` 를 글 · 수 주석(`Final[str]` · `str` 등)으로
+         묶은 값(모델 클래스 속성 · 모델 모듈 수준 이름)은 거쳐 가져오기가 아님 · `checker_target.reexport_uses` 를 #356 과
+         같이 씀(2.39.0 F4-180) · 파일당 한 줄 · 걸린 import 는 푼 절대 경로를 정렬한 목록 칸 · 2026-11-14 F4-158) ·
+         admin → 타 BC 는 다른 칸과 같은 타 BC 규칙(#12 · #13 · #98 · #102)
   OHS    #146 published_service 금지 · #149/#113 라우팅·등록 함수 금지 · #150 평면 .py 금지
          #152/#154/#155 service·contract 구조 · #156/#157/#159/#160 계약 1타입=1파일
          (주 계약이 어노테이션으로 참조하는 보조 공개 dataclass 는 면제 — 2026-08-24 좁은 정합화 ·
@@ -337,7 +340,10 @@ def _import_target_names(target: Path) -> set[str]:
 # ── admin — #668(2026-11-14 F4-158) ─────────────────────────────────────────
 
 ADMIN_FORBIDDEN_SPOTS = DOMAIN_SPOTS | {"app", "app_port", "composition", "persistence", "acl"}
-_MODULE_LEVEL_BLOCKS = (ast.If, ast.Try, ast.With) + ((ast.TryStar,) if hasattr(ast, "TryStar") else ())
+# #668 금지 자리 → 그 자리의 앞마디(별칭 없는 `import a.b.c` 씨앗 — `checker_target.plain_import_seed`) · 도메인 자리는 `domain_layer`.
+_ADMIN_SPOT_ROOT: dict[str, str] = {"app": "application_layer", "app_port": "application_layer",
+                                    "composition": "composition_root", "persistence": "persistence",
+                                    "acl": "anticorruption_layer"}
 
 
 def _admin_area(file_parts: tuple[str, ...]) -> bool:
@@ -348,92 +354,49 @@ def _admin_area(file_parts: tuple[str, ...]) -> bool:
     return len(file_parts) > 2 and file_parts[0].startswith("django_") and file_parts[1] == "admin"
 
 
-def _own_target(file_parts: tuple[str, ...], level: int, module: str | None, bc_name: str) -> tuple[str, ...] | None:
-    """import 가 가리키는 자기 BC 안 마디(BC 상대) — 자기 BC 밖 · BC 밖 탈출 · `application` 밖이면 None."""
-    if level > 0:
-        return _resolve_relative(file_parts, level, module)
-    parts = (module or "").split(".")
-    if "application" not in parts:
-        return None
-    i = parts.index("application")
-    if i + 1 < len(parts) and parts[i + 1] == bc_name:
-        return tuple(parts[i + 2:])
-    return None
+_own_target = checker_target.bc_import_target
+_module_level = checker_target.module_level
 
 
-def _module_level(body: list[ast.stmt]):
-    """모듈 수준 문장 — `if` · `try` · `with` 블록 안은 들어가고 함수 · 클래스 몸은 들어가지 않는다."""
-    for node in body:
-        yield node
-        if isinstance(node, _MODULE_LEVEL_BLOCKS):
-            for field in ("body", "orelse", "finalbody"):
-                yield from _module_level(getattr(node, field, []))
-            for h in getattr(node, "handlers", []):
-                yield from _module_level(h.body)
+def _admin_reexports(bc: Path, parts: tuple[str, ...],
+                     cache: dict[tuple[str, ...], tuple[set[str], set[str]]]) -> tuple[set[str], set[str]]:
+    """#668 다시 내보내기 한 겹 — 자기 `django_<bc>/` 모듈이 금지 자리 다섯에서 묶은 (모듈 수준 이름, `클래스.속성`).
 
-
-def _name_root(expr: ast.expr) -> str | None:
-    while isinstance(expr, ast.Attribute):
-        expr = expr.value
-    return expr.id if isinstance(expr, ast.Name) else None
-
-
-def _bc_module_file(bc: Path, parts: tuple[str, ...]) -> Path | None:
-    if not parts:
-        return None
-    p = bc.joinpath(*parts)
-    for c in (p.with_suffix(".py"), p / "__init__.py"):
-        if c.is_file():
-            return c
-    return None
-
-
-def _admin_reexports(bc: Path, parts: tuple[str, ...], cache: dict[tuple[str, ...], set[str]]) -> set[str]:
-    """#668 다시 내보내기 한 겹 — 자기 `django_<bc>/` 모듈이 모듈 수준에서 금지 자리 다섯에서 묶은 이름.
-
-    `from … import X [as Y]` · 모듈째 `import … as m` · 상대 import · 모듈 수준 대입 별칭(`Kind = OrderKind` —
-    오른쪽이 묶은 이름이거나 그 속성). 그 모듈이 다른 `django_<bc>/` 모듈에서 가져온 이름은 따라가지 않는다(한 겹).
+    씨앗은 `from … import X [as Y]` · 모듈째 `import … as m`(별칭 없는 `import a.b.c` 는 그 금지 자리의 앞마디까지의 점
+    경로 — `checker_target.plain_import_seed`) · 상대 import 다(`import *` 는 출처 모듈의 이름으로 편다 —
+    `checker_target.star_names`). 별칭(모듈 수준 · 맨 위 클래스 몸)과 `.value` 파생 값(받음)의 판정은
+    `checker_target.reexport_bindings` 가 #356 과 같이 진다. 그 모듈이 다른 `django_<bc>/` 모듈에서 가져온 이름은
+    따라가지 않는다(한 겹).
     """
     if parts in cache:
         return cache[parts]
-    names: set[str] = set()
-    cache[parts] = names
-    f = _bc_module_file(bc, parts)
+    cache[parts] = (set(), set())
+    f = checker_target.bc_module_file(bc, parts)
     mod = _parse(f) if f is not None else None
     if mod is None:
-        return names
+        return cache[parts]
     file_parts = f.relative_to(bc).parts
-    for node in _module_level(mod.body):
+
+    def seed_of(node: ast.Import | ast.ImportFrom) -> set[str]:
+        seeds: set[str] = set()
         if isinstance(node, ast.ImportFrom):
             base = _own_target(file_parts, node.level, node.module, bc.name)
-            if base is None:
-                continue
-            for a in node.names:
-                if a.name != "*" and ADMIN_FORBIDDEN_SPOTS & {_spot(base), _spot(base + (a.name,))}:
-                    names.add(a.asname or a.name)
-        elif isinstance(node, ast.Import):
+            if base is not None:
+                for a in node.names:
+                    if ADMIN_FORBIDDEN_SPOTS & {_spot(base), _spot(base + (a.name,))}:
+                        seeds.add(a.asname or a.name)
+                        if a.name == "*":
+                            seeds |= checker_target.star_names(bc, base)
+        else:
             for a in node.names:
                 base = _own_target(file_parts, 0, a.name, bc.name)
-                if a.asname and base is not None and _spot(base) in ADMIN_FORBIDDEN_SPOTS:
-                    names.add(a.asname)
-        elif isinstance(node, (ast.Assign, ast.AnnAssign)) and node.value is not None:
-            if _name_root(node.value) in names:
-                targets = node.targets if isinstance(node, ast.Assign) else [node.target]
-                names.update(t.id for t in targets if isinstance(t, ast.Name))
-    return names
+                if base is not None and _spot(base) in ADMIN_FORBIDDEN_SPOTS:
+                    seeds.add(a.asname or checker_target.plain_import_seed(
+                        a.name, _ADMIN_SPOT_ROOT.get(_spot(base), "domain_layer")))
+        return seeds
 
-
-def _attr_chain(node: ast.Attribute) -> list[str] | None:
-    """`a.b.c` → ['a', 'b', 'c'] · 이름에서 시작하지 않는 사슬은 None."""
-    chain: list[str] = []
-    cur: ast.expr = node
-    while isinstance(cur, ast.Attribute):
-        chain.append(cur.attr)
-        cur = cur.value
-    if not isinstance(cur, ast.Name):
-        return None
-    chain.append(cur.id)
-    return chain[::-1]
+    cache[parts] = checker_target.reexport_bindings(mod, seed_of)
+    return cache[parts]
 
 
 def _scan_admin_imports(f: Path, file_parts: tuple[str, ...], bc: Path, bc_rel: Path, all_bcs: set[str],
@@ -441,8 +404,9 @@ def _scan_admin_imports(f: Path, file_parts: tuple[str, ...], bc: Path, bc_rel: 
     """#668 — admin 은 자기 BC 의 domain · application · composition_root · persistence · ACL 을 import 하지 않는다.
 
     함수 안 · 상대 import · 그 BC 꾸러미에서 층 이름을 가져오는 꼴 · 자기 `django_<bc>/` 모듈의 다시 내보내기 한 겹
-    (이름 · `import *` · 모듈째 가져와 별칭의 속성으로 씀) 포함. 줄은 파일당 하나 — 걸린 import 는 푼 절대 경로를
-    정렬한 목록 칸이다(줄 번호 없음 · 상대 ↔ 절대 · 차례만 바꾼 고침은 같은 줄). 자기 BC 의 `django_<bc>/` ·
+    (이름 · `import *` · 가져온 맨 위 클래스(모델 클래스 등) 안 별칭 · 모듈째 가져와 속성 사슬 · 꾸러미 `__init__.py` 가 다시 내보낸 이름 —
+    `checker_target.reexport_uses` 를 #356 과 같이 씀) 포함. 줄은 파일당 하나 — 걸린 import 는 푼 절대 경로를
+    정렬한 목록 칸이다(줄 번호 없음 · 상대 ↔ 절대 · 꾸러미 ↔ 모듈 · 차례만 바꾼 고침은 같은 줄). 자기 BC 의 `django_<bc>/` ·
     `open_host_service/`(창구) · `published_event/` 는 연다. 타 BC 는 다른 칸과 같은 타 BC 규칙(#12 · #13 · #98 · #102).
     """
     mod = _parse(f)
@@ -451,12 +415,7 @@ def _scan_admin_imports(f: Path, file_parts: tuple[str, ...], bc: Path, bc_rel: 
     rel = bc_rel / f.relative_to(bc)
     prefix: tuple[str, ...] = bc_rel.parts
     hits: dict[str, None] = {}
-    modules: dict[str, tuple[str, ...]] = {}  # 별칭(점 경로) → 자기 django_<bc>/ 모듈 · 꾸러미(BC 상대)
-    cache: dict[tuple[str, ...], set[str]] = {}
-
-    def is_django_module(parts: tuple[str, ...]) -> bool:
-        return _spot(parts) == "django" and (_bc_module_file(bc, parts) is not None or bc.joinpath(*parts).is_dir())
-
+    cache: dict[tuple[str, ...], tuple[set[str], set[str]]] = {}
     for node in ast.walk(mod):
         if isinstance(node, ast.Import):
             for a in node.names:
@@ -467,12 +426,8 @@ def _scan_admin_imports(f: Path, file_parts: tuple[str, ...], bc: Path, bc_rel: 
                         _apply_other_bc("django", _spot(tuple(parts[i + 2:])), parts[i + 1], rel, a.name, out)
                         continue
                 tgt = _own_target(file_parts, 0, a.name, bc.name)
-                if tgt is None:
-                    continue
-                if _spot(tgt) in ADMIN_FORBIDDEN_SPOTS:
+                if tgt is not None and _spot(tgt) in ADMIN_FORBIDDEN_SPOTS:
                     hits.setdefault(".".join(prefix + tgt))
-                elif is_django_module(tgt):
-                    modules[a.asname or a.name] = tgt
         elif isinstance(node, ast.ImportFrom):
             if node.level > 0:
                 base = _resolve_relative(file_parts, node.level, node.module or None)
@@ -496,37 +451,16 @@ def _scan_admin_imports(f: Path, file_parts: tuple[str, ...], bc: Path, bc_rel: 
             for a in node.names:
                 if _spot(base + (a.name,)) in ADMIN_FORBIDDEN_SPOTS:
                     hits.setdefault(".".join(prefix + base + (a.name,)))
-                elif _spot(base) == "django":
-                    bound = _admin_reexports(bc, base, cache)
-                    if (a.name == "*" and bound) or a.name in bound:
-                        hits.setdefault(".".join(prefix + base + (a.name,)))
-                    elif a.name != "*" and is_django_module(base + (a.name,)):
-                        modules[a.asname or a.name] = base + (a.name,)
-    if modules:
-        # 모듈째 가져온 자기 django_<bc>/ 모듈의 속성으로 묶은 이름을 씀(`m.OrderKind`) — 다시 내보내기 한 겹의 속성 길.
-        for node in ast.walk(mod):
-            chain = _attr_chain(node) if isinstance(node, ast.Attribute) else None
-            if chain is None:
-                continue
-            for cut in range(len(chain) - 1, 0, -1):
-                alias = ".".join(chain[:cut])
-                if alias not in modules:
-                    continue
-                cur = modules[alias]
-                for attr in chain[cut:]:
-                    if attr in _admin_reexports(bc, cur, cache):
-                        hits.setdefault(".".join(prefix + cur + (attr,)))
-                        break
-                    if not is_django_module(cur + (attr,)):
-                        break
-                    cur = cur + (attr,)
-                break
+    for _line, where, names, _imported in checker_target.reexport_uses(
+            mod, bc, file_parts, lambda parts: _admin_reexports(bc, parts, cache)):
+        hits.setdefault(".".join(prefix + where + names))
     if hits:
         out.add("#668", rel, "admin 은 자기 BC 의 `domain_layer/` · `application_layer/` · `composition_root/` · "
                 "`adapter/persistence/` · `adapter/anticorruption_layer/` 를 import 하지 않는다(자기 `django_<bc>/` 모듈을 "
-                "거쳐 다시 가져와도 같다) — 단순 자료는 ORM 값(모델 필드 · 모델의 속성 · 메서드)으로 읽고 쓰고, DB 로 걸 수 "
-                "없는 규칙이 있는 쓰기는 그 BC 창구(`driving_layer/open_host_service/`)를 부른다 · 두 BC 이상의 값을 보이는 "
-                f"화면은 `cross_context/backoffice/` 다 — {sorted(hits)}")
+                "거쳐 다시 가져와도 같다) — 단순 자료는 ORM 값(모델 필드 · 모델의 속성 · 메서드)으로 읽고 쓰고(도메인 값 "
+                "집합의 값으로 거르거나 견줄 때는 모델이 VO 멤버의 `.value` 를 `Final[str]` 로 묶은 값 속성 — "
+                "implementation-django §2.5), DB 로 걸 수 없는 규칙이 있는 쓰기는 그 BC 창구(`driving_layer/open_host_service/`)를 "
+                f"부른다 · 두 BC 이상의 값을 보이는 화면은 `cross_context/backoffice/` 다 — {sorted(hits)}")
 
 
 def _scan_imports(f: Path, bc: Path, bc_rel: Path, all_bcs: set[str], out: Findings) -> None:

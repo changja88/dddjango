@@ -846,11 +846,17 @@ djr:R-3756 a djr:Prohibition ;
 
 djr:R-3757 a djr:Prohibition ;
     skos:prefLabel "#668 admin(옛 자리 포함)은 자기 BC domain_layer·application_layer·composition_root·persistence·anticorruption_layer import 금지(함수 안·상대·꾸러미 꼴·자기 django_<bc> 모듈 다시 내보내기 한 겹 포함) · 단순 자료는 ORM 값 · DB 제약으로 못 거는 규칙이 있는 쓰기는 그 BC 창구 · 다른 BC import 금지(여러 BC 값 화면은 cross_context/backoffice/)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3757@2026-11-14> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-3757@2026-11-15> .
 
 <https://numchida.com/ns/djr#R-3757@2026-11-14> a djr:Expression ;
     prov:specializationOf djr:R-3757 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3757@2026-11-15> a djr:Expression ;
+    prov:specializationOf djr:R-3757 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3757@2026-11-14> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3758 a djr:Permission ;
     skos:prefLabel "BC test/fake/ 에 같은 선언의 둘째 대역 <declaration>_<variant>.py 허용(기본 페이크 옆 · 선언 클래스를 바로 상속 · 페이크 규칙 #575·#577~#581) · 기본 페이크 없는 변형·앞머리가 선언 이름 아닌 파일은 #576 위반(짝 = 앞머리가 맞는 가장 긴 선언)"@ko ;
@@ -866,6 +872,14 @@ djr:R-3759 a djr:Obligation ;
 
 <https://numchida.com/ns/djr#R-3759@2026-11-14> a djr:Expression ;
     prov:specializationOf djr:R-3759 ;
+    djr:revision 1 .
+
+djr:R-3763 a djr:Prohibition ;
+    skos:prefLabel "#356 도메인 우회 읽기 구현(domain_bypass_query/ 아래 .py 전부)은 domain_layer import 금지(함수 안·import 꼴·상대·꾸러미 층 이름·자기 django_<bc> 모듈 다시 내보내기 한 겹 포함 · .value 를 글·수 주석으로 묶은 값은 받음)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3763@2026-11-15> .
+
+<https://numchida.com/ns/djr#R-3763@2026-11-15> a djr:Expression ;
+    prov:specializationOf djr:R-3763 ;
     djr:revision 1 .
 
 <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/references/final.md> a djr:Document ;
@@ -1319,8 +1333,8 @@ djr:R-3759 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s018-5> ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
-    djr:statesNorm djr:R-3423, djr:R-3757 ;
-    djr:text "\n`django_<bounded_context>/` 와 ORM 모델을 import 할 수 있는 곳(driven 출구 허용면)은 셋뿐이다.\n\n- `adapter/persistence/` 아래 셋 — `repository/`·`domain_bypass_query/`·`unit_of_work/`.\n- `django_<bounded_context>/admin/` — admin 은 자기 앱의 모델을 안다. 자기 BC 의 안쪽 층은 모른다(#668) — admin(옛 자리 `django_*/admin/**` 포함)은 자기 BC 의 `domain_layer/` · `application_layer/` · `composition_root/` · `driven_layer/adapter/persistence/` · `driven_layer/adapter/anticorruption_layer/` 를 import 하지 않는다(함수 안 · 상대 import · 그 BC 꾸러미에서 층 이름을 가져오는 꼴 포함 · 자기 `django_<bounded_context>/` 모듈이 그 다섯 자리에서 묶은 이름을 그 모듈을 거쳐 가져와도 같다 — 한 겹). 단순 자료는 ORM 값(모델 필드 · 모델이 가진 속성 · 메서드)으로 읽고 쓰고, DB 제약으로 걸 수 없는 업무 규칙(값 객체 규칙 포함)이 있는 쓰기는 그 BC 의 `driving_layer/open_host_service/` 를 부른다. 다른 BC 는 import 하지 않는다 — BC 둘 이상의 값을 보이는 화면은 `cross_context/backoffice/` 다(§6).\n- `adapter/<capability>/django_adapter/adapter/<implementation>_adapter.py` — **비애그리거트 ORM 쓰기 능력**의 django 기술 구현. persistence 셋에는 이 능력의 칸이 없어(리포지토리=애그리거트 전용 · bypass=조회 전용) 그 능력 포트 구현이 여기 온다. 이 면제는 구현 역할 파일에만 적용되며, `anticorruption_layer/`·`external_system/` 은 제외다(2호 실증·사용자 A안 — 리비전 10호 채번 · 집행 #328 `check-context-isolation`·#462 `check-port-adapter-pairing` 공동).\n\n"@ko .
+    djr:statesNorm djr:R-3423, djr:R-3757, djr:R-3763 ;
+    djr:text "\n`django_<bounded_context>/` 와 ORM 모델을 import 할 수 있는 곳(driven 출구 허용면)은 셋뿐이다.\n\n- `adapter/persistence/` 아래 셋 — `repository/`·`domain_bypass_query/`·`unit_of_work/`. 그 가운데 `domain_bypass_query/` 아래 파일(승격 폴더 부품 포함)은 `domain_layer/` 를 import 하지 않는다(#356 — 이 길은 도메인을 «안» 거친다 · 함수 안 · `import` 꼴 · 상대 import · 꾸러미에서 층 이름을 가져오는 꼴 포함 · 자기 `django_<bounded_context>/` 모듈이 `domain_layer/` 에서 묶은 이름(모듈 수준 이름 · 그 모듈 맨 위 클래스(모델 클래스 등) 안 별칭)을 그 모듈을 거쳐 가져오거나 써도 같다 — 한 겹 · 자기 `django_<bc>/` 아래 꾸러미 `__init__.py`(`models/` 등)가 다시 내보낸 모델 클래스 · 이름(`import *` 포함)은 그 모듈의 것과 같다(이름 풀기 · 겹 아님) · VO 멤버의 `.value` 를 글 · 수 주석(`Final[str]` · `Final[int]` · `str` · `int`)으로 묶은 값(모델 클래스 속성 · 모델 모듈 수준 이름)은 거쳐 가져오기가 아니다). 도메인 값 집합의 값으로 거르거나 견줄 때는 모델 클래스의 그 값 속성을 쓴다(`implementation-django` §2.5).\n- `django_<bounded_context>/admin/` — admin 은 자기 앱의 모델을 안다. 자기 BC 의 안쪽 층은 모른다(#668) — admin(옛 자리 `django_*/admin/**` 포함)은 자기 BC 의 `domain_layer/` · `application_layer/` · `composition_root/` · `driven_layer/adapter/persistence/` · `driven_layer/adapter/anticorruption_layer/` 를 import 하지 않는다(함수 안 · 상대 import · 그 BC 꾸러미에서 층 이름을 가져오는 꼴 포함 · 자기 `django_<bounded_context>/` 모듈이 그 다섯 자리에서 묶은 이름(모듈 수준 이름 · 그 모듈 맨 위 클래스(모델 클래스 등) 안 별칭)을 그 모듈을 거쳐 가져오거나 써도 같다 — 한 겹 · 자기 `django_<bc>/` 아래 꾸러미 `__init__.py`(`models/` 등)가 다시 내보낸 모델 클래스 · 이름(`import *` 포함)은 그 모듈의 것과 같다(이름 풀기 · 겹 아님) · VO 멤버의 `.value` 를 글 · 수 주석(`Final[str]` · `Final[int]` · `str` · `int`)으로 묶은 값(모델 클래스 속성 · 모델 모듈 수준 이름)은 거쳐 가져오기가 아니다). 단순 자료는 ORM 값(모델 필드 · 모델이 가진 속성 · 메서드)으로 읽고 쓰고(도메인 값 집합의 값으로 거르거나 견줄 때는 모델 클래스의 그 값 속성 — `implementation-django` §2.5), DB 제약으로 걸 수 없는 업무 규칙(값 객체 규칙 포함)이 있는 쓰기는 그 BC 의 `driving_layer/open_host_service/` 를 부른다. 다른 BC 는 import 하지 않는다 — BC 둘 이상의 값을 보이는 화면은 `cross_context/backoffice/` 다(§6).\n- `adapter/<capability>/django_adapter/adapter/<implementation>_adapter.py` — **비애그리거트 ORM 쓰기 능력**의 django 기술 구현. persistence 셋에는 이 능력의 칸이 없어(리포지토리=애그리거트 전용 · bypass=조회 전용) 그 능력 포트 구현이 여기 온다. 이 면제는 구현 역할 파일에만 적용되며, `anticorruption_layer/`·`external_system/` 은 제외다(2호 실증·사용자 A안 — 리비전 10호 채번 · 집행 #328 `check-context-isolation`·#462 `check-port-adapter-pairing` 공동).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s019-6> a djr:Section ;
     djr:headingSnapshot "## §6 `cross_context/` — BC 밖 합성 칸"@ko ;

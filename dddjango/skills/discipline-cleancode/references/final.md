@@ -331,13 +331,13 @@ for team_index, team in enumerate(teams):
 **리터럴 허용 목록** (승격하지 않는다):
 
 - 사람 대상 서술 — 로그·예외 메시지·이메일 제목(열거가 아니라 문장, 비교 대상 아님)
-- Enum·상수 **정의부 자체**의 우변(리터럴의 유일한 서식지)
+- Enum·상수 **정의부 자체**의 우변(리터럴의 유일한 서식지 — 단 모델은 import 하나 도메인은 import 하지 못하는 두 자리(도메인 우회 읽기 · admin)가 이미 선언된 집합의 값을 글로 다시 적은 사본 상수는 정의부가 아니다)
 - `Literal[...]`로 타입이 잠긴 인자 자리(`open(path, "r")` — 타입 체커가 오타를 잡는다). 단 **발행 이벤트 봉투의 discriminator 자리는 이 항목의 예외** — 거기는 domain enum 파생(`Literal[EventType.X]`)이 규율이고 맨 문자열 `Literal["…"]`이면 위반(birth-enum — `architecture-ddd` §3.7). 버전 태그(`payload_schema_version`)는 같은 형태라도 리터럴 동결이 정답(짝 조항). **OHS published contract(`open_host_service/*/contract/`)의 discriminator 자리는 재예외** — contract 무의존(`discipline-houserules` §2 OHS 내부 구조)이 우선해 wire `Literal["…"]`을 유지하고 union-enum 동기 테스트(`implementation-test` §15.5)가 드리프트를 방어한다
 - 외부 프로토콜이 소유한 문자열(content type·vendor 코드·프로토콜 에러 코드) — 단 분기 조건이 되는 순간 경계(adapter)에서 내부 타입으로 정규화하고 원시 리터럴이 경계 밖으로 새지 않게 한다
 - 식별자형·구조 문자열(dict 키·kwargs·separator·설정 키·환경변수명)
 - 테스트에서 외부 관찰 계약을 검증하는 **assert 기댓값** — 오히려 리터럴을 강제한다(프로덕션 상수 역수입은 자기참조 오라클; `implementation-test` §15.4). 테스트의 arrange/act(픽스처·필터 준비)는 심볼 권장 — 두 규율은 위치로 갈린다.
 
-**짝 규칙(소비 규율)**: 집합 타입이 선언된 값의 비교·분기·필터·대입·기본값은 반드시 그 심볼로 참조한다 — 선언하고 리터럴로 소비하면 위반이다. 비교는 `==`로 한다(`is` 금지 — 문자열 Enum 값은 경계에서 plain str로 흐르므로 `is`는 수화 누락 시 오타 없이도 조용한 False를 만든다). 단 심볼 치환은 판정 소유 규율을 면책하지 않는다: 도메인 어휘로 진술되는 복합 상태 판정의 1차 시정은 애그리거트 술어·enum 프로퍼티다(`architecture-ddd` §3.2). 값에 검증·연산·불변식이 붙으면(집합의 폐쇄성과 무관하게) Enum이 아니라 값 객체 승격 대상이다(판정은 `architecture-ddd` §3.1 소관).
+**짝 규칙(소비 규율)**: 집합 타입이 선언된 값의 비교·분기·필터·대입·기본값은 반드시 그 심볼로 참조한다 — 선언하고 리터럴로 소비하면 위반이다. 모델은 import 하나 도메인은 import 하지 못하는 두 자리(도메인 우회 읽기 · admin — `discipline-houserules` §5)는 모델이 그 심볼에서 파생한 값 속성으로 참조한다(`implementation-django` §2.5 «모델 쪽 파생 값») — 글로 다시 적은 상수는 리터럴 소비와 같다. 비교는 `==`로 한다(`is` 금지 — 문자열 Enum 값은 경계에서 plain str로 흐르므로 `is`는 수화 누락 시 오타 없이도 조용한 False를 만든다). 단 심볼 치환은 판정 소유 규율을 면책하지 않는다: 도메인 어휘로 진술되는 복합 상태 판정의 1차 시정은 애그리거트 술어·enum 프로퍼티다(`architecture-ddd` §3.2). 값에 검증·연산·불변식이 붙으면(집합의 폐쇄성과 무관하게) Enum이 아니라 값 객체 승격 대상이다(판정은 `architecture-ddd` §3.1 소관).
 
 **숫자 부칙**: 비교·계산에 등장하는 의미 있는 숫자는 1회부터 명명 상수(ruff/pylint magic-value-comparison과 대상 동일·더 강한 수위). `0`·`±1`·루프 인덱스·수식의 본질적 구성 숫자(근의 공식의 2·4)는 면제.
 

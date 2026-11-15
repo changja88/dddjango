@@ -2386,6 +2386,14 @@ djr:R-3746 a djr:Obligation ;
     prov:specializationOf djr:R-3746 ;
     djr:revision 1 .
 
+djr:R-3764 a djr:Obligation ;
+    skos:prefLabel "채택한 도메인 우회 읽기·admin 이 도메인 값 집합의 값으로 거르거나 견주면 그 모델 파일을 file-plan update|add 행으로 · .value 파생 값 속성은 symbols 블록 그 모델 클래스 행 필드 칸에 적음"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3764@2026-11-15> .
+
+<https://numchida.com/ns/djr#R-3764@2026-11-15> a djr:Expression ;
+    prov:specializationOf djr:R-3764 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/design-architect.md> a djr:Document ;
     skos:prefLabel "agent-design-architect"@ko .
 
@@ -2622,8 +2630,8 @@ djr:R-3746 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 23 ;
-    djr:statesNorm djr:R-1706, djr:R-1707, djr:R-1708, djr:R-1709, djr:R-1710, djr:R-1711 ;
-    djr:text "- **응용 유스케이스 연산·자료 계약**: 유스케이스는 연산 객체로 명세한다 — 파일·이름·시그니처의 값은 final.md §1 트리 40~45행이 소유한다: `application_layer/<area>/<use_case>/` 아래 `<use_case>_use_case.py`(연산 — 공개 클래스 하나·`execute(<command|query>) → <result>` 규약 #635)·`<use_case>_command.py`/`<use_case>_query.py`(들어가는 자료)·`<use_case>_result.py`(나오는 자료 — 연산 모듈에 공개 자료 클래스를 인라인 명세하지 않는다). `dto` 낱말은 어디에도 쓰지 않는다(#567 — `schema`는 기술 실물, 경계 자료는 `_command`/`_query`/`_result`). presentation은 `schema_in`을 command/query로 변환만 하고 operation 본문에서 인프라 어댑터를 직접 생성하지 않는다 — DI 조립은 `composition_root/`(`dependency_wiring.py`의 `build_*` 팩토리 — 트리 2~4행·#85)가 소유하고 presentation은 매요청 호출만 한다(그 위치를 명세에 박는다). 도메인 우회 읽기(`domain_bypass_query`) 채택 여부는 명세 결정으로 남긴다.\n"@ko .
+    djr:statesNorm djr:R-1706, djr:R-1707, djr:R-1708, djr:R-1709, djr:R-1710, djr:R-1711, djr:R-3764 ;
+    djr:text "- **응용 유스케이스 연산·자료 계약**: 유스케이스는 연산 객체로 명세한다 — 파일·이름·시그니처의 값은 final.md §1 트리 40~45행이 소유한다: `application_layer/<area>/<use_case>/` 아래 `<use_case>_use_case.py`(연산 — 공개 클래스 하나·`execute(<command|query>) → <result>` 규약 #635)·`<use_case>_command.py`/`<use_case>_query.py`(들어가는 자료)·`<use_case>_result.py`(나오는 자료 — 연산 모듈에 공개 자료 클래스를 인라인 명세하지 않는다). `dto` 낱말은 어디에도 쓰지 않는다(#567 — `schema`는 기술 실물, 경계 자료는 `_command`/`_query`/`_result`). presentation은 `schema_in`을 command/query로 변환만 하고 operation 본문에서 인프라 어댑터를 직접 생성하지 않는다 — DI 조립은 `composition_root/`(`dependency_wiring.py`의 `build_*` 팩토리 — 트리 2~4행·#85)가 소유하고 presentation은 매요청 호출만 한다(그 위치를 명세에 박는다). 도메인 우회 읽기(`domain_bypass_query`) 채택 여부는 명세 결정으로 남긴다. 채택한 우회 읽기 · admin 이 도메인 값 집합의 값으로 거르거나 견주면 그 값을 내는 행의 모델 파일을 파일 계획 블록의 `update`(새 모델이면 `add`) 행으로 두고, 거기 둘 `.value` 파생 값 속성(`implementation-django` §2.5 «모델 쪽 파생 값»)은 공개 심볼 블록의 그 모델 클래스 행 필드 칸에 `STATUS_PENDING: Final[str] = OrderStatus.PENDING.value` 꼴로 적는다 — 두 자리는 `domain_layer` 를 import 하지 않는다(#356 · #668).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b23> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;

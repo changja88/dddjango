@@ -7,7 +7,7 @@ FROZEN 이므로 실측은 이 fixture 결정 레인만 쓴다.
 
 케이스: skeleton 9 + 기존 15종×2 + API-error 3종×2(--error-profile auto)
        + 신설 8종×2 + checker_lint 2 + 호출 계약 27 + 수정 사이클 레인 3×2 + 음성 · 양성 단독 레인
-       = exit 대조 127 + 줄 대조 43(GROUP_CASES — 아래) = 170(실행 표 끝 «케이스» 줄이 실측이다).
+       = exit 대조 127 + 줄 대조 44(GROUP_CASES — 아래) = 171(실행 표 끝 «케이스» 줄이 실측이다).
 
 의미 묶음 줄 대조(2.28.0 · #654~#656 · 설계 7.4): exit 만 보는 레인은 ⓓ 후보 줄(exit 불산입)과
 줄 글자(#656 주어)를 못 본다 — 이 레인은 거름 규칙의 줄 전부를 글자 그대로 기대와 대조한다.
@@ -272,8 +272,13 @@ _AO: str = "application/orders/driven_layer/django_orders/admin/order/feature/"
 _OM: str = "application.orders.driven_layer.django_orders.models."
 _M668: str = ("admin 은 자기 BC 의 `domain_layer/` · `application_layer/` · `composition_root/` · `adapter/persistence/` · "
               "`adapter/anticorruption_layer/` 를 import 하지 않는다(자기 `django_<bc>/` 모듈을 거쳐 다시 가져와도 같다) — "
-              "단순 자료는 ORM 값(모델 필드 · 모델의 속성 · 메서드)으로 읽고 쓰고, DB 로 걸 수 없는 규칙이 있는 쓰기는 그 BC "
-              "창구(`driving_layer/open_host_service/`)를 부른다 · 두 BC 이상의 값을 보이는 화면은 `cross_context/backoffice/` 다 — {l}")
+              "단순 자료는 ORM 값(모델 필드 · 모델의 속성 · 메서드)으로 읽고 쓰고(도메인 값 집합의 값으로 거르거나 견줄 때는 모델이 "
+              "VO 멤버의 `.value` 를 `Final[str]` 로 묶은 값 속성 — implementation-django §2.5), DB 로 걸 수 없는 규칙이 있는 쓰기는 "
+              "그 BC 창구(`driving_layer/open_host_service/`)를 부른다 · 두 BC 이상의 값을 보이는 화면은 `cross_context/backoffice/` 다 — {l}")
+# F4-180 — #356 도메인 우회 읽기(port_adapter_pairing/bypass_domain) 문면 조각(검사기 문면 그대로).
+_BQ: str = "application/orders/driven_layer/adapter/persistence/domain_bypass_query/"
+_M356: str = ("Thin Read 가 domain_layer 를 {h} — 이 길은 도메인을 «안» 거친다(저장된 도메인 상태 칸은 모델이 VO 멤버의 `.value` 를 "
+              "`Final[str]` 로 묶은 값 속성으로 거르고 견준다 — implementation-django §2.5)")
 _M101: str = "BC 안쪽과 composition_root 은 자기 BC 의 driving 층을 import 하지 않는다(rd-2 · 타 BC 는 open_host_service 만 — #13/#102)"
 GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
     # 19 · 20 — 묶음 · C2 · 묶음 안 승격 · 캐시만 남은 폴더(부모 · 묶음 안)는 0 줄.
@@ -869,6 +874,20 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
             ("reexport_name.py", [_OM + "order_model.Money"]),
             ("reexport_relative_model.py", [_OM + "note_model.Money"]),
             ("reexport_star.py", [_OM + "order_model.*"]),
+            # F4-180 — 모델 클래스 안 별칭(가져온 클래스 · 모듈째 · 꾸러미 · 꾸러미째 사슬) · 꾸러미 `__init__` 이 다시 내보낸
+            # 이름 · 값 객체 `.value`(`Final[RefundRule]`) · `Final` 만 · 모델 모듈 `import *` 씨앗을 편 이름.
+            ("reexport_class_alias.py", [_OM + "order_model.OrderModel.Status"]),
+            ("reexport_module_class_alias.py", [_OM + "order_model.OrderModel.Status"]),
+            ("reexport_package_class_alias.py", [_OM + "order_model.OrderModel.Status"]),
+            ("reexport_package_chain.py", [_OM + "order_model.OrderModel.Status"]),
+            ("reexport_package_module_class.py", [_OM + "order_model.OrderModel.Status"]),
+            ("reexport_package_name.py", [_OM + "order_model.Money"]),
+            ("policy_value.py", [_OM + "order_model.OrderModel.STANDARD_REFUND", _OM + "order_model.STANDARD_RULE"]),
+            ("bare_final.py", [_OM + "order_model.BARE_PENDING"]),
+            ("star_seed.py", [_OM + "star_seed_model.OrderStatus", _OM + "star_seed_model.StarSeedModel.Status"]),
+            # 꾸러미 `__init__` 의 `import *` 재수출은 출처 모듈의 이름으로 편다.
+            ("reexport_package_star.py", [_OM + "shipment_model.ShipmentModel.Status"]),
+            ("reexport_package_star_name.py", [_OM + "shipment_model.OrderStatus"]),
         )),
         "[#668] application/orders/django_orders/admin/legacy/feature/old_screen.py: "
         + _M668.format(l=str(["application.orders.domain_layer.order.order"])),
@@ -876,6 +895,34 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
         " — `application.billing.driven_layer.django_billing.models.ledger_model`",
         f"[#13] {_AO}other_window.py: 타 BC 의 `open_host_service/` 를 import 하는 것은 `anticorruption_layer/` 뿐이다"
         " — `application.billing.driving_layer.open_host_service.ledger.ledger_service`",
+    )),
+    # F4-180 — #356 도메인 우회 읽기는 `domain_bypass_query/` 아래 `.py` 전부(승격 폴더 부품 포함)에서 domain_layer 를 모른다:
+    # 바로 import(`import` 꼴 · 꾸러미 층 이름 · 함수 안 상대) · 자기 `django_<bc>/` 모듈을 거친 한 겹(모듈 수준 이름 · 대입 별칭 ·
+    # 모델 클래스 안 별칭 · 꾸러미 `__init__` 다시 내보내기(`import *` 포함) · 모듈째 · 꾸러미째 사슬 · 값 객체 `.value` ·
+    # `Final` 만 · 모델 모듈 `import *` 씨앗). 녹색: 글 · 수 주석(`Final[str]` · 글 주석 `"Final[str]"` · `str`) `.value` 파생
+    # 값 · 모델만 · 꾸러미 파생 값 · 승격 폴더 본체 — #668(admin_imports)과 같은 판정(`checker_target.reexport_uses`).
+    ("port_adapter_pairing/bypass_domain", "check-port-adapter-pairing.py", "port_adapter_pairing/bypass_domain", r"^\[#356\]", tuple(
+        f"[#356] {_BQ}{f}: " + _M356.format(h=h) for f, h in (
+            ("bare_final_query.py:1", "자기 `django_<bc>/` 모듈을 거쳐 가져온다(`BARE_PENDING`)"),
+            ("class_alias_query.py:6", "자기 `django_<bc>/` 모듈을 거쳐 쓴다(`OrderModel.Status`)"),
+            ("import_plain_query.py:1", "import 한다"),
+            ("local_relative_query.py:6", "import 한다"),
+            ("module_class_alias_query.py:6", "자기 `django_<bc>/` 모듈을 거쳐 쓴다(`OrderModel.Status`)"),
+            ("package_chain_query.py:6", "자기 `django_<bc>/` 모듈을 거쳐 쓴다(`OrderModel.Status`)"),
+            ("package_class_alias_query.py:6", "자기 `django_<bc>/` 모듈을 거쳐 쓴다(`OrderModel.Status`)"),
+            ("package_layer_query.py:1", "import 한다"),
+            ("package_module_class_query.py:6", "자기 `django_<bc>/` 모듈을 거쳐 쓴다(`OrderModel.Status`)"),
+            ("package_name_query.py:1", "자기 `django_<bc>/` 모듈을 거쳐 가져온다(`Kind`)"),
+            ("policy_value_query.py:1", "자기 `django_<bc>/` 모듈을 거쳐 가져온다(`STANDARD_RULE`)"),
+            ("policy_value_query.py:6", "자기 `django_<bc>/` 모듈을 거쳐 쓴다(`OrderModel.STANDARD_REFUND`)"),
+            ("promoted_part_query/open_statuses.py:1", "import 한다"),
+            ("reexport_module_query.py:6", "자기 `django_<bc>/` 모듈을 거쳐 쓴다(`Kind`)"),
+            ("reexport_name_query.py:1", "자기 `django_<bc>/` 모듈을 거쳐 가져온다(`Kind`)"),
+            ("star_seed_query.py:1", "자기 `django_<bc>/` 모듈을 거쳐 가져온다(`OrderStatus`)"),
+            ("star_seed_query.py:6", "자기 `django_<bc>/` 모듈을 거쳐 쓴다(`StarSeedModel.Status`)"),
+            ("package_star_query.py:6", "자기 `django_<bc>/` 모듈을 거쳐 쓴다(`ShipmentModel.Status`)"),
+            ("package_star_name_query.py:1", "자기 `django_<bc>/` 모듈을 거쳐 가져온다(`OrderStatus`)"),
+        )
     )),
     # 판 B C2 · F4-158 — 기존 위반 픽스처의 admin 기능 파일(도메인 import)이 #668 한 줄을 더 낸다.
     ("context_isolation/bad_rules #668", "check-context-isolation.py", "context_isolation/bad_rules", r"^\[#668\]", (
@@ -903,6 +950,7 @@ _PA: str = "check-port-adapter-pairing.py"
 _CR: str = "check-composition-root.py"
 _UC: str = "check-usecase-dto-placement.py"
 _CI: str = "check-context-isolation.py"
+_CT: str = "checker_target.py"
 MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
     ("19 묶음 허용 칸 하위 폴더를 recognize 로 가르지 않음", _SK,
      'if kan_row is not None and getattr(kan_row, "groupable", False):', "if kan_row is not None and False:", _SK),
@@ -1315,10 +1363,12 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
     ("F4-158 #668 persistence · ACL 허용", _CI,
      'ADMIN_FORBIDDEN_SPOTS = DOMAIN_SPOTS | {"app", "app_port", "composition", "persistence", "acl"}',
      'ADMIN_FORBIDDEN_SPOTS = DOMAIN_SPOTS | {"app", "app_port", "composition"}', _CI),
-    ("F4-158 #668 다시 내보내기 한 겹 끔", _CI, 'if (a.name == "*" and bound) or a.name in bound:', "if False:", _CI),
-    ("F4-158 #668 다시 내보내기 속성 길 끔(N8)", _CI, "    if modules:\n", "    if False:\n", _CI),
-    ("F4-158 #668 import * 끔(셋째 확인)", _CI, 'if (a.name == "*" and bound) or a.name in bound:',
-     "if a.name in bound:", _CI),
+    # 다시 내보내기 한 겹의 쓰는 쪽 판정은 2.39.0 F4-180 부터 `checker_target.reexport_uses`(#356 과 같이 씀) — 거기를 겨눈다.
+    ("F4-158 #668 다시 내보내기 한 겹 끔", _CT, "                hit = name_hit(base, a.name)\n", "                hit = None\n", _CI),
+    ("F4-158 #668 다시 내보내기 속성 길 끔(N8)", _CT, "        for cut in range(len(chain) - 1, 0, -1):",
+     "        for cut in ():", _CI),
+    ("F4-158 #668 import * 끔(셋째 확인)", _CT, "                    if any(name_hit(base, n) for n in star):",
+     "                    if False:", _CI),
     ("F4-158 #668 목록 칸 정렬 걷음(N9)", _CI, "{sorted(hits)}\")", "{list(hits)}\")", _CI),
     ("F4-158 #668 옛 자리 끔", _CI,
      '    return len(file_parts) > 2 and file_parts[0].startswith("django_") and file_parts[1] == "admin"',
@@ -1326,6 +1376,57 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
     # 판 B C7 · F4-158 — #101 부칙(composition_root/admin_window 레인이 잡는다).
     ("F4-158 #101 부칙을 driving 전체로 넓힘", "check-composition-root.py",
      "if admin_window and _admin_ohs_import(path_str):", "if admin_window:", "check-composition-root.py"),
+    # F4-180 — #356 도메인 우회 읽기(port_adapter_pairing/bypass_domain 레인) · 공용 다시 내보내기 판정(`checker_target` —
+    # #356 · #668 두 레인이 따로 잡는다).
+    ("F4-180 #356 import 꼴 끔", _PA,
+     '                for a in node.names if "domain_layer" in a.name.split(".")]\n',
+     "                for a in node.names if False]\n", _PA),
+    ("F4-180 #356 꾸러미 층 이름 끔", _PA, '    return [a.asname or a.name for a in node.names if a.name == "domain_layer"]\n',
+     "    return []\n", _PA),
+    ("F4-180 #356 폴더 전체 범위 걷음(본체만)", _PA, "        for py in _py_files(thin):  # #356",
+     '        for py in checker_target.slot_glob(thin, "*_query.py"):  # #356', _PA),
+    ("F4-180 #356 별표 씨앗 펴기 부름 걷음", _PA,
+     "    return seeds | (checker_target.star_names(bc, target) if target is not None else set())", "    return seeds", _PA),
+    ("F4-180 #668 별표 씨앗 펴기 부름 걷음", _CI, "                            seeds |= checker_target.star_names(bc, base)",
+     "                            pass", _CI),
+    ("F4-180 한 겹 이름 길 끔(#356)", _CT, "                hit = name_hit(base, a.name)\n", "                hit = None\n", _PA),
+    ("F4-180 클래스 속성 길 끔(#356)", _CT, "        if len(chain) == 2 and chain[0] in classes:", "        if False:", _PA),
+    ("F4-180 클래스 속성 길 끔(#668)", _CT, "        if len(chain) == 2 and chain[0] in classes:", "        if False:", _CI),
+    ("F4-180 모듈째 속성 길 끔(#356)", _CT, "        for cut in range(len(chain) - 1, 0, -1):", "        for cut in ():", _PA),
+    ("F4-180 모듈째 사슬 하위 모듈 따라가기 끔(#356)", _CT, "                cur = cur + (attr,)\n", "                break\n", _PA),
+    ("F4-180 모듈째 사슬 하위 모듈 따라가기 끔(#668)", _CT, "                cur = cur + (attr,)\n", "                break\n", _CI),
+    ("F4-180 꾸러미 __init__ 다시 내보내기 풀기 끔(#356)", _CT,
+     "        return [(parts, name)] + ([origin] if origin is not None else [])", "        return [(parts, name)]", _PA),
+    ("F4-180 꾸러미 __init__ 다시 내보내기 풀기 끔(#668)", _CT,
+     "        return [(parts, name)] + ([origin] if origin is not None else [])", "        return [(parts, name)]", _CI),
+    ("F4-180 .value 파생 받음 걷음(#356)", _CT, "    return (isinstance(stmt, ast.AnnAssign)",
+     "    return False and (isinstance(stmt, ast.AnnAssign)", _PA),
+    ("F4-180 .value 파생 받음 걷음(#668)", _CT, "    return (isinstance(stmt, ast.AnnAssign)",
+     "    return False and (isinstance(stmt, ast.AnnAssign)", _CI),
+    ("F4-180 글 · 수 주석 거름 걷음(#356)", _CT, "    return isinstance(inner, ast.Name) and inner.id in _DERIVED_VALUE_TYPES",
+     "    return True", _PA),
+    ("F4-180 글 · 수 주석 거름 걷음(#668)", _CT, "    return isinstance(inner, ast.Name) and inner.id in _DERIVED_VALUE_TYPES",
+     "    return True", _CI),
+    ("F4-180 글 주석 풀기 걷음(#356)", _CT, '            ann = ast.parse(ann.value, mode="eval").body', "            return False", _PA),
+    ("F4-180 글 주석 풀기 걷음(#668)", _CT, '            ann = ast.parse(ann.value, mode="eval").body', "            return False", _CI),
+    ("F4-180 Final 벗기기 걷음(#356)", _CT, "    inner: ast.expr = ann.slice if final else ann", "    inner: ast.expr = ann", _PA),
+    ("F4-180 Final 벗기기 걷음(#668)", _CT, "    inner: ast.expr = ann.slice if final else ann", "    inner: ast.expr = ann", _CI),
+    ("F4-180 맨 str · int 받음 걷음(#356)", _CT, "    inner: ast.expr = ann.slice if final else ann",
+     "    inner: ast.expr = ann.slice if final else ast.Constant(None)", _PA),
+    ("F4-180 맨 str · int 받음 걷음(#668)", _CT, "    inner: ast.expr = ann.slice if final else ann",
+     "    inner: ast.expr = ann.slice if final else ast.Constant(None)", _CI),
+    ("F4-180 별표 씨앗 펴기 끔(공용 · #356)", _CT,
+     '    mod: "ast.Module | None" = _module_ast(bc, parts)', "    mod = None", _PA),
+    ("F4-180 별표 씨앗 펴기 끔(공용 · #668)", _CT,
+     '    mod: "ast.Module | None" = _module_ast(bc, parts)', "    mod = None", _CI),
+    ("F4-180 클래스 몸 별칭 끔(#356)", _CT, "        elif isinstance(node, ast.ClassDef):\n", "        elif False:\n", _PA),
+    ("F4-180 클래스 몸 별칭 끔(#668)", _CT, "        elif isinstance(node, ast.ClassDef):\n", "        elif False:\n", _CI),
+    ("F4-180 꾸러미 `import *` 재수출 풀기 끔(#356)", _CT,
+     "reexported[parts].update({n: (src, n) for n in star_names(bc, src)} if a.name == \"*\"",
+     "reexported[parts].update({} if a.name == \"*\"", _PA),
+    ("F4-180 꾸러미 `import *` 재수출 풀기 끔(#668)", _CT,
+     "reexported[parts].update({n: (src, n) for n in star_names(bc, src)} if a.name == \"*\"",
+     "reexported[parts].update({} if a.name == \"*\"", _CI),
 ]
 
 

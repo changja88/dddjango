@@ -3137,7 +3137,7 @@ class FrameworkServerBcNameRegression(unittest.TestCase):
         self.assertEqual(self.lines("check-broker-contract.py", "518"), [])
 
     def test_capability_name_only_in_web_vocabulary_is_asked(self) -> None:
-        # 칸 이름은 배포판 이름일 수 없는 지은 낱말 — 기술 이름(설치 배포판)과 겹치면 ⓓ#36 이 서지 않는다.
+        # 칸 이름은 기술 낱말일 수 없는 지은 낱말 — 기술 폴더(기술 낱말이거나 안 모듈이 같은 이름 라이브러리를 import)면 ⓓ#36 이 서지 않는다.
         self.bc("application", "order")
         self.bc("web/application", "chart", extra="def spin_quokkadial():\n    pass\n")
         self.write("framework/quokkadial/__init__.py")
@@ -8678,10 +8678,848 @@ class FactoriesMaterialRegression(unittest.TestCase):
         ]))
 
 
+_DBV_VO: str = "application/orders/domain_layer/order/value_object"
+_DBV_DJ: str = "application/orders/driven_layer/django_orders"
+_DBV_Q: str = "application/orders/driven_layer/adapter/persistence/domain_bypass_query"
+_DBV_ADM: str = f"{_DBV_DJ}/admin/order"
+_DBV_OM: str = "from application.orders.driven_layer.django_orders.models.order_model import OrderModel\n"
+_DBV_SM: str = "application.orders.driven_layer.django_orders.models.star_model"
+_DBV_MP: str = "application.orders.driven_layer.django_orders.models"
+_DBV_VOM: str = "application.orders.domain_layer.order.value_object.order_status"
+_DBV_PO: str = "application.orders.application_layer.order.place_order"
+
+
+def _dbv_query(cls: str, body: str, head: str = _DBV_OM) -> str:
+    """도메인 우회 읽기 구현 한 파일 — `head`(import 줄) 뒤 빈 줄 둘 · 클래스 · `count()` 한 줄(`body`)."""
+    return f"{head}\n\nclass Django{cls}DomainBypassQuery:\n    def count(self) -> int:\n        return {body}\n"
+
+
+def _dbv_panel(body: str, head: str = _DBV_OM) -> str:
+    """admin 기능 파일 한 개 — `head`(import 줄) 뒤 빈 줄 둘 · 함수 한 개(`body` 를 돌려줌)."""
+    return f"{head}\n\ndef rows() -> object:\n    return {body}\n"
+
+
+class DomainBypassValueSourceRegression(unittest.TestCase):
+    """F4-180 — 도메인 우회 읽기(#356 · check-port-adapter-pairing)와 admin(#668 · check-context-isolation)은 domain_layer 를
+    모른다. 도메인 값으로 거르거나 견줄 때는 모델 클래스가 VO 멤버의 `.value` 를 글 · 수 주석으로 묶은 값 속성을 쓴다.
+
+    받음(0 줄): 모델 파생 값(`Final[str]` · `str` · `int` · `t.Final[str]` · `typing_extensions.Final[str]` · 글 주석
+    `"Final[str]"` · 모듈 수준 `Final[str]`) · 값을 글로 다시 적은 상수(검사기 밖 — 감수 몫) · 도메인 모듈 `__all__` 밖이라
+    `import *` 로 들어오지 않는 이름(모델 모듈이 스스로 지은 같은 이름) · 별칭 없는 `import a.b.c` 를 한 모델의 다른 점 경로
+    별칭(뿌리 이름만으로 맞추지 않는다) · 꾸러미가 `django_<bc>/` 밖 모듈에서 다시 내보낸 이름(두 겹 — 한계) · 모델 모듈
+    `__all__` 이 금지 이름을 빼면 그 모듈의 `import *`. 막음: 도메인
+    import(`from` · `import` 꼴 · 꾸러미 층 이름) · 모델을 거친 도메인 이름(모델 클래스 안 별칭을 모듈 경로 · 꾸러미 `__init__`
+    재수출(`import *` 포함) · 꾸러미째 · 이름공간 폴더째 사슬로) · 값 객체 `.value`(`Final[RefundRule]`) · `.value` 없는
+    멤버(`Final[str]` 이어도) · `Final` 만 · 주석 없는 `.value` · 모델 모듈 `import *` 씨앗(쓰는 쪽 `import *` · 이름째) ·
+    `__all__` 에 든 금지 이름의 `import *` · 별칭 없는 `import a.b.c` 씨앗(그 금지 자리 앞마디까지의 점 경로 — 같은 자리 이웃
+    모듈 사슬 포함 · ci 는 `application_layer` 같은 다른 금지 자리도) · `try` 블록 안 import 씨앗 · 승격 폴더 부품의 도메인 import. 두 검사기는 같은
+    판정(`checker_target.reexport_uses`)을 쓴다.
+    """
+
+    MODEL: str = (
+        "import typing as t\nfrom typing import Final\n\nimport typing_extensions\nfrom django.db import models\n\n"
+        "from application.orders.domain_layer.order.value_object.order_status import OrderStatus\n"
+        "from application.orders.domain_layer.order.value_object.priority import Priority\n"
+        "from application.orders.domain_layer.order.value_object.refund_plan import RefundPlan, RefundRule\n\n"
+        "PENDING_VALUE: Final[str] = OrderStatus.PENDING.value\n\n\n"
+        "class OrderModel(models.Model):\n"
+        "    STATUS_PENDING: Final[str] = OrderStatus.PENDING.value\n"
+        "    STATUS_SHIPPED: str = OrderStatus.SHIPPED.value\n"
+        "    PRIORITY_HIGH: int = Priority.HIGH.value\n"
+        "    STATUS_T: t.Final[str] = OrderStatus.PENDING.value\n"
+        "    STATUS_TE: typing_extensions.Final[str] = OrderStatus.SHIPPED.value\n"
+        "    STATUS_TEXT: \"Final[str]\" = OrderStatus.PENDING.value\n"
+        "    STANDARD_REFUND: Final[RefundRule] = RefundPlan.STANDARD.value\n"
+        "    BARE_PENDING: Final = OrderStatus.PENDING.value\n"
+        "    LOOSE_PENDING = OrderStatus.PENDING.value\n"
+        "    MEMBER_PENDING: Final[str] = OrderStatus.PENDING\n"
+        "    Status: type[OrderStatus] = OrderStatus\n\n"
+        "    status: models.CharField = models.CharField(max_length=20)\n")
+    DERIVED: str = ("OrderModel.objects.filter(status__in=[OrderModel.STATUS_PENDING, OrderModel.STATUS_SHIPPED, "
+                    "OrderModel.STATUS_T, OrderModel.STATUS_TE, OrderModel.STATUS_TEXT], priority=OrderModel.PRIORITY_HIGH)")
+    COPY_HEAD: str = "from typing import Final\n\n" + _DBV_OM + "\n_PENDING: Final[str] = \"pending\"\n"
+    PKG_HEAD: str = "from application.orders.driven_layer.django_orders.models import OrderModel\n"
+    CHAIN_HEAD: str = "from application.orders.driven_layer.django_orders import models as mm\n"
+    STAR_HEAD: str = f"from {_DBV_SM} import *  # noqa: F403\n"
+    STAR_NAME_HEAD: str = f"from {_DBV_SM} import OrderStatus, StarModel\n"
+    STAR_OWN_HEAD: str = f"from {_DBV_SM} import StarModel, is_open\n"
+    PLAIN_HEAD: str = f"from {_DBV_MP}.plain_model import PlainModel\n"
+    STATUS: str = "OrderModel.objects.filter(status=OrderModel.Status.PENDING)"
+    STAR: str = "StarModel.objects.filter(status__in=[StarModel.Status.PENDING])"
+    CASES: dict[str, tuple[str, str]] = {  # 파일 이름 → (import 줄, 돌려줄 식)
+        "copy": (COPY_HEAD, "OrderModel.objects.filter(status=_PENDING)"),
+        "domain": ("from application.orders.domain_layer.order.value_object.order_status import OrderStatus\n" + _DBV_OM,
+                   "OrderModel.objects.filter(status=OrderStatus.PENDING)"),
+        "derived": (PKG_HEAD, DERIVED),
+        "class_alias": (_DBV_OM, STATUS),
+        "package": (PKG_HEAD, STATUS),
+        "chain": (CHAIN_HEAD, "mm.order_model.OrderModel.objects.filter(status=mm.order_model.OrderModel.Status.PENDING)"),
+        "policy": (_DBV_OM, "OrderModel.objects.all() if OrderModel.STANDARD_REFUND.allows(3) else None"),
+        "bare": (_DBV_OM, "OrderModel.objects.filter(status=OrderModel.BARE_PENDING)"),
+        "loose": (_DBV_OM, "OrderModel.objects.filter(status=OrderModel.LOOSE_PENDING)"),
+        "member": (_DBV_OM, "OrderModel.objects.filter(status=OrderModel.MEMBER_PENDING)"),
+        "star": (STAR_HEAD, STAR),
+        "star_name": (STAR_NAME_HEAD, STAR + ".exclude(status=OrderStatus.SHIPPED)"),
+        "star_own": (STAR_OWN_HEAD, "StarModel.objects.filter(status=StarModel.STATUS_PENDING) if is_open() else None"),
+        "module_value": (f"from {_DBV_MP}.order_model import PENDING_VALUE, OrderModel\n",
+                         "OrderModel.objects.filter(status=PENDING_VALUE)"),
+        "domain_module": (f"import {_DBV_VOM}\n\n" + _DBV_OM, f"OrderModel.objects.filter(status={_DBV_VOM}.OrderStatus.PENDING)"),
+        "layer": ("from application.orders import domain_layer\n" + _DBV_OM,
+                  "OrderModel.objects.count() if domain_layer else None"),
+        "plain_seed": (PLAIN_HEAD, "PlainModel.objects.filter(status=PlainModel.Status.PENDING)"),
+        "plain_sibling": (PLAIN_HEAD, "PlainModel.Order.objects.count()"),
+        "plain_neighbor": (PLAIN_HEAD, "PlainModel.objects.count() if PlainModel.Rule(7).allows(3) else None"),
+        "plain_app_neighbor": (PLAIN_HEAD, "PlainModel.Command"),
+        "star_all": (f"from {_DBV_MP}.exported_model import *  # noqa: F403\n",
+                     "ExportedModel.objects.filter(status=ExportedModel.STATUS_PENDING)  # noqa: F405"),
+        "star_listed": (f"from {_DBV_MP}.listed_model import *  # noqa: F403\n",
+                        "ListedModel.objects.filter(status=OrderStatus.PENDING)  # noqa: F405"),
+        "guarded": (f"from {_DBV_MP}.guarded_model import GuardedModel\n",
+                    "GuardedModel.objects.filter(status=GuardedModel.Status.PENDING)"),
+        "pkg_star": (f"from {_DBV_MP} import ShipmentModel\n", "ShipmentModel.objects.filter(status=ShipmentModel.Status.PENDING)"),
+        "namespace": ("from application.orders.driven_layer.django_orders import archive as ar\n",
+                      "ar.archive_model.ArchiveModel.objects.filter(status=ar.archive_model.ArchiveModel.Status.PENDING)"),
+        "far": (f"from {_DBV_MP} import OPEN_STATUS, OrderModel\n", "OrderModel.objects.filter(status=OPEN_STATUS)"),
+    }
+
+    def files(self) -> dict[str, str]:
+        files: dict[str, str] = {rel: "" for rel in (
+            "application/__init__.py", "application/orders/__init__.py", "application/orders/domain_layer/__init__.py",
+            "application/orders/domain_layer/order/__init__.py", f"{_DBV_VO}/__init__.py",
+            "application/orders/driven_layer/__init__.py", "application/orders/driven_layer/adapter/__init__.py",
+            "application/orders/driven_layer/adapter/persistence/__init__.py", f"{_DBV_Q}/__init__.py",
+            f"{_DBV_Q}/promoted_query/__init__.py", f"{_DBV_DJ}/__init__.py")}
+        files.update({
+            f"{_DBV_VO}/order_status.py": ("from enum import StrEnum\n\n__all__ = [\"OrderStatus\"]\n\n\n"
+                                           "class OrderStatus(StrEnum):\n"
+                                           "    PENDING = \"pending\"\n    SHIPPED = \"shipped\"\n\n\n"
+                                           "def is_open(status: str) -> bool:\n    return status == OrderStatus.PENDING\n"),
+            f"{_DBV_VO}/priority.py": "from enum import IntEnum\n\n\nclass Priority(IntEnum):\n    HIGH = 1\n",
+            f"{_DBV_VO}/refund_plan.py": ("from dataclasses import dataclass\nfrom enum import Enum\n\n\n@dataclass(frozen=True)\n"
+                                          "class RefundRule:\n    days: int\n\n    def allows(self, elapsed: int) -> bool:\n"
+                                          "        return elapsed <= self.days\n\n\nclass RefundPlan(Enum):\n"
+                                          "    STANDARD = RefundRule(7)\n"),
+            f"{_DBV_DJ}/models/__init__.py": (
+                "from .order_model import OrderModel as OrderModel\nfrom .shipment_model import *  # noqa: F403\n"
+                "from application.orders.driven_layer.adapter.capability.status_label.status_label_adapter import (\n"
+                "    OPEN_STATUS as OPEN_STATUS,\n)\n"),
+            f"{_DBV_DJ}/models/shipment_model.py": (
+                f"from django.db import models\n\nfrom {_DBV_VOM} import OrderStatus\n\n\n"
+                "class ShipmentModel(models.Model):\n    Status: type[OrderStatus] = OrderStatus\n"),
+            f"{_DBV_DJ}/models/plain_model.py": (
+                f"import {_DBV_VOM}\nimport {_DBV_MP}.order_model\nimport {_DBV_PO}.place_order_use_case\n"
+                "from django.db import models\n\n\n"
+                f"class PlainModel(models.Model):\n    Status = {_DBV_VOM}.OrderStatus\n"
+                f"    Order = {_DBV_MP}.order_model.OrderModel\n"
+                "    Rule = application.orders.domain_layer.order.value_object.refund_plan.RefundRule\n"
+                f"    Command = {_DBV_PO}.place_order_command.PlaceOrderCommand\n"),
+            f"{_DBV_DJ}/models/exported_model.py": (
+                f"from typing import Final\n\nimport {_DBV_VOM}\nfrom django.db import models\n\n"
+                "__all__ = [\"ExportedModel\"]\n\n\nclass ExportedModel(models.Model):\n"
+                f"    STATUS_PENDING: Final[str] = {_DBV_VOM}.OrderStatus.PENDING.value\n"),
+            f"{_DBV_DJ}/models/listed_model.py": (
+                f"from django.db import models\n\nfrom {_DBV_VOM} import OrderStatus\n\n"
+                "__all__ = [\"ListedModel\", \"OrderStatus\"]\n\n\nclass ListedModel(models.Model):\n"
+                "    status: models.CharField = models.CharField(max_length=20)\n"),
+            f"{_DBV_DJ}/models/guarded_model.py": (
+                f"from django.db import models\n\ntry:\n    from {_DBV_VOM} import OrderStatus\n"
+                "except ImportError:  # pragma: no cover\n    raise\n\n\n"
+                "class GuardedModel(models.Model):\n    Status: type[OrderStatus] = OrderStatus\n"),
+            f"{_DBV_DJ}/archive/archive_model.py": (
+                f"from django.db import models\n\nfrom {_DBV_VOM} import OrderStatus\n\n\n"
+                "class ArchiveModel(models.Model):\n    Status: type[OrderStatus] = OrderStatus\n"),
+            "application/orders/driven_layer/adapter/capability/status_label/status_label_adapter.py": (
+                f"from {_DBV_VOM} import OrderStatus\n\nOPEN_STATUS: OrderStatus = OrderStatus.PENDING\n"),
+            f"{_DBV_DJ}/models/order_model.py": self.MODEL,
+            f"{_DBV_DJ}/models/star_model.py": (
+                "from typing import Final\n\nfrom django.db import models\n\n"
+                "from application.orders.domain_layer.order.value_object.order_status import *  # noqa: F403\n\n\n"
+                "class StarModel(models.Model):\n    Status = OrderStatus  # noqa: F405\n"
+                "    STATUS_PENDING: Final[str] = OrderStatus.PENDING.value  # noqa: F405\n\n\n"
+                "def is_open() -> bool:\n    return True\n"),
+            f"{_DBV_Q}/promoted_query/promoted_query.py": _dbv_query("Promoted", "OrderModel.objects.count()"),
+            f"{_DBV_Q}/promoted_query/open_statuses.py": (
+                "from application.orders.domain_layer.order.value_object.order_status import OrderStatus\n\n"
+                "OPEN: tuple[str, ...] = (OrderStatus.PENDING.value,)\n"),
+        })
+        for name, (head, body) in self.CASES.items():
+            files[f"{_DBV_Q}/{name}_query.py"] = _dbv_query("".join(w.capitalize() for w in name.split("_")), body, head)
+            files[f"{_DBV_ADM}/{name}_panel.py"] = _dbv_panel(body, head)
+        return files
+
+    def test_bypass_query_reads_domain_values_through_model_derived_values(self) -> None:
+        got: list[tuple[str, str]] = [
+            (where.removeprefix(f"{_DBV_Q}/"), text.split(" — 이 길은")[0].removeprefix("Thin Read 가 domain_layer 를 "))
+            for _rule, where, text in _toy_rule_lines(self.files(), "check-port-adapter-pairing.py", frozenset({"#356"}),
+                                                      "domain-bypass-value-")]
+        via: str = "자기 `django_<bc>/` 모듈을 거쳐 "
+        self.assertEqual(got, sorted([
+            ("domain_query.py:1", "import 한다"),
+            ("class_alias_query.py:6", via + "쓴다(`OrderModel.Status`)"),
+            ("package_query.py:6", via + "쓴다(`OrderModel.Status`)"),
+            ("chain_query.py:6", via + "쓴다(`OrderModel.Status`)"),
+            ("policy_query.py:6", via + "쓴다(`OrderModel.STANDARD_REFUND`)"),
+            ("bare_query.py:6", via + "쓴다(`OrderModel.BARE_PENDING`)"),
+            ("loose_query.py:6", via + "쓴다(`OrderModel.LOOSE_PENDING`)"),
+            ("member_query.py:6", via + "쓴다(`OrderModel.MEMBER_PENDING`)"),
+            ("star_query.py:1", via + "가져온다(`*`)"),
+            ("star_query.py:6", via + "쓴다(`StarModel.Status`)"),
+            ("star_name_query.py:1", via + "가져온다(`OrderStatus`)"),
+            ("star_name_query.py:6", via + "쓴다(`StarModel.Status`)"),
+            ("promoted_query/open_statuses.py:1", "import 한다"),
+            ("domain_module_query.py:1", "import 한다"),
+            ("layer_query.py:1", "import 한다"),
+            ("plain_seed_query.py:6", via + "쓴다(`PlainModel.Status`)"),
+            ("guarded_query.py:6", via + "쓴다(`GuardedModel.Status`)"),
+            ("pkg_star_query.py:6", via + "쓴다(`ShipmentModel.Status`)"),
+            ("namespace_query.py:6", via + "쓴다(`ArchiveModel.Status`)"),
+            ("plain_neighbor_query.py:6", via + "쓴다(`PlainModel.Rule`)"),
+            ("star_listed_query.py:1", via + "가져온다(`*`)"),
+        ]))
+
+    def test_admin_reads_domain_values_through_model_derived_values(self) -> None:
+        got: list[tuple[str, list[str]]] = [
+            (where.removeprefix(f"{_DBV_ADM}/"), ast.literal_eval(text.rsplit(" — ", 1)[1]))
+            for _rule, where, text in _toy_rule_lines(self.files(), "check-context-isolation.py", frozenset({"#668"}),
+                                                      "admin-value-")]
+        om: str = "application.orders.driven_layer.django_orders.models.order_model."
+        self.assertEqual(got, sorted([
+            ("domain_panel.py", ["application.orders.domain_layer.order.value_object.order_status"]),
+            ("class_alias_panel.py", [om + "OrderModel.Status"]),
+            ("package_panel.py", [om + "OrderModel.Status"]),
+            ("chain_panel.py", [om + "OrderModel.Status"]),
+            ("policy_panel.py", [om + "OrderModel.STANDARD_REFUND"]),
+            ("bare_panel.py", [om + "OrderModel.BARE_PENDING"]),
+            ("loose_panel.py", [om + "OrderModel.LOOSE_PENDING"]),
+            ("member_panel.py", [om + "OrderModel.MEMBER_PENDING"]),
+            ("star_panel.py", [f"{_DBV_SM}.*", f"{_DBV_SM}.StarModel.Status"]),
+            ("star_name_panel.py", [f"{_DBV_SM}.OrderStatus", f"{_DBV_SM}.StarModel.Status"]),
+            ("domain_module_panel.py", [_DBV_VOM]),
+            ("layer_panel.py", ["application.orders.domain_layer"]),
+            ("plain_seed_panel.py", [f"{_DBV_MP}.plain_model.PlainModel.Status"]),
+            ("guarded_panel.py", [f"{_DBV_MP}.guarded_model.GuardedModel.Status"]),
+            ("pkg_star_panel.py", [f"{_DBV_MP}.shipment_model.ShipmentModel.Status"]),
+            ("namespace_panel.py", ["application.orders.driven_layer.django_orders.archive.archive_model.ArchiveModel.Status"]),
+            ("plain_neighbor_panel.py", [f"{_DBV_MP}.plain_model.PlainModel.Rule"]),
+            ("plain_app_neighbor_panel.py", [f"{_DBV_MP}.plain_model.PlainModel.Command"]),
+            ("star_listed_panel.py", [f"{_DBV_MP}.listed_model.*"]),
+        ]))
+
+
+def _toy_rule_where(files: dict[str, str], script: str, prefix: str) -> list[tuple[str, str]]:
+    """장난감 저장소에서 검사기를 돌려 판정 줄 전부를 (규칙, 경로[:줄]) 로 — ⓓ 후보 줄은 규칙 칸이 `ⓓ#607` 꼴이다."""
+    with tempfile.TemporaryDirectory(prefix=prefix) as tmp:
+        root: Path = Path(tmp)
+        for rel, text in files.items():
+            path: Path = root / rel
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
+        env: dict[str, str] = dict(os.environ, DJR_FINDINGS_JSON=str(root / "findings.jsonl"),
+                                   DJR_VIOLATIONS_DIR=str(root / "violations"), PYTHONDONTWRITEBYTECODE="1")
+        done = subprocess.run([sys.executable, "-B", str(SCRIPTS / script), str(root)], capture_output=True, text=True,
+                              env=env)
+    if done.returncode not in (0, 2) or done.stderr:
+        raise AssertionError(f"{script}: exit {done.returncode} — {done.stderr[-300:]}")
+    return sorted((m.group(1), m.group(2)) for line in done.stdout.splitlines()
+                  if (m := re.match(r"^\s*\[(ⓓ?#\d+)\] (\S+?): ", line)))
+
+
+class CrossScopeControllerHelperRegression(unittest.TestCase):
+    """F4-168 — 선택 컨트롤러가 one-hop 으로 들인 같은 BC 의 선택 밖 컨트롤러 모듈(다른 scope 의 입구)의 라우트는 #126
+    helper 로 세지 않는다(그 라우트는 자기 scope 렌더의 몫). 모듈 수준 helper · 라우트 안 중첩 helper 는 그대로 #126 이고,
+    선택 컨트롤러가 그 라우트를 가리킬 수 있으면(라우트 이름 · 클래스 라우트는 클래스 이름이나 메서드 이름이 선택 컨트롤러
+    글자 — 맨 이름 · 속성 이름 · `from … import` 이름 — 에 있거나 그 모듈을 `*` 로 들임 · 라우트끼리 위임) helper 로 남는다.
+    라우터를 다른 모듈에서 가져와 데코레이트한 선택 밖 컨트롤러는 라우트로 못 읽어 #126 이 남고, 글자로 가리키지 않는
+    위임(다른 모듈을 거침)은 helper 로 안 센다(둘 다 한계 · 여기서 못 박지 않는다).
+    """
+
+    ARGS: tuple[str, ...] = (
+        "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py",
+        "--controller-module", CODE, "--scope-bc", "lesson", "--error-bc", "lesson")
+    OTHER: str = "application/lesson/driving_layer/other_controller.py"
+    HEAD: str = ("from ninja import Router, Status\n"
+                 "from application.lesson.application_layer.use_cases import LessonMissing, get_lesson\n"
+                 "from application.lesson.driving_layer.api.bc_error_schema import LessonNotFoundError\n\n"
+                 "other_router = Router()\n\n\n"
+                 "def principal_of(request):\n    return getattr(request, \"user\", None)\n\n\n")
+    ROUTE: str = HEAD + (
+        "@other_router.get(\"/other/{lesson_id}\", response={200: dict, 404: LessonNotFoundError})\n"
+        "def get_other(request, lesson_id: int):\n"
+        "    try:\n        lesson = get_lesson(lesson_id)\n    except LessonMissing:\n"
+        "        error = LessonNotFoundError()\n        return Status(error.status, error)\n    return lesson\n")
+    MODULE_HELPER: str = HEAD + "def not_found():\n    error = LessonNotFoundError()\n    return Status(error.status, error)\n"
+    NESTED_HELPER: str = HEAD + (
+        "@other_router.get(\"/other/{lesson_id}\", response={200: dict, 404: LessonNotFoundError})\n"
+        "def get_other(request, lesson_id: int):\n"
+        "    def not_found():\n        error = LessonNotFoundError()\n        return Status(error.status, error)\n"
+        "    try:\n        lesson = get_lesson(lesson_id)\n    except LessonMissing:\n        return not_found()\n"
+        "    return lesson\n")
+    CLASS_ROUTE: str = (
+        "from ninja import Status\nfrom ninja_extra import api_controller, route\n"
+        "from application.lesson.application_layer.use_cases import LessonMissing, get_lesson\n"
+        "from application.lesson.driving_layer.api.bc_error_schema import LessonNotFoundError\n\n\n"
+        "def principal_of(request):\n    return getattr(request, \"user\", None)\n\n\n"
+        "@api_controller(\"/other\")\nclass OtherController:\n"
+        "    @route.get(\"/{lesson_id}\", response={200: dict, 404: LessonNotFoundError})\n"
+        "    def get_other(self, request, lesson_id: int):\n"
+        "        try:\n            lesson = get_lesson(lesson_id)\n        except LessonMissing:\n"
+        "            error = LessonNotFoundError()\n            return Status(error.status, error)\n        return lesson\n")
+    DELEGATE: str = ("from ninja import Router\n"
+                     "from application.lesson.driving_layer.api.bc_error_schema import LessonNotFoundError\n"
+                     "{imp}\n\nrouter = Router()\n\n\n"
+                     "@router.get(\"/{{lesson_id}}\", response={{200: dict, 404: LessonNotFoundError}})\n"
+                     "def get_lesson_controller(request, lesson_id: int):\n{body}")
+    OTHER_MODULE: str = "application.lesson.driving_layer.other_controller"
+
+    def controller_with_helper_import(self) -> str:
+        source: str = (FIXTURES / "api_error_controller_code/good" / CODE).read_text(encoding="utf-8")
+        source = source.replace(
+            "import LessonNotFoundError\n",
+            "import LessonNotFoundError\nfrom application.lesson.driving_layer.other_controller import principal_of\n", 1)
+        return source.replace("    try:\n", "    principal_of(request)\n    try:\n", 1)
+
+    def helper_lines(self, other: str, controller: str) -> list[str]:
+        with tempfile.TemporaryDirectory(prefix="cross-scope-helper-") as tmp:
+            root: Path = Path(tmp) / "repo"
+            shutil.copytree(FIXTURES / "api_error_controller_code/good", root)
+            (root / self.OTHER).write_text(other, encoding="utf-8")
+            (root / CODE).write_text(controller, encoding="utf-8")
+            _git(root, "init", "-q")
+            _git(root, "add", "-A")
+            _git(root, "commit", "-qm", "fixture anchor")
+            env: dict[str, str] = dict(os.environ, DJR_FINDINGS_JSON=str(Path(tmp) / "findings.jsonl"),
+                                       DJR_VIOLATIONS_DIR=str(Path(tmp) / "violations"), PYTHONDONTWRITEBYTECODE="1")
+            done = subprocess.run([sys.executable, "-B", str(SCRIPTS / "check-api-error-controller-contract.py"), str(root),
+                                   *self.ARGS], capture_output=True, text=True, env=env)
+        self.assertIn(done.returncode, (0, 2), done.stdout + done.stderr)
+        return sorted({m.group(1) for line in done.stdout.splitlines()
+                       if (m := re.match(r"^\s*\[#126\] (\S+?): ", line))})
+
+    def delegate(self, imp: str, body: str) -> str:
+        return self.DELEGATE.format(imp=imp, body=body)
+
+    def test_one_hop_routes_are_not_helpers_unless_the_selected_controller_points_at_them(self) -> None:
+        def at(source: str, line: str) -> list[str]:
+            return [f"{self.OTHER}:{source.splitlines().index(line) + 1}"]
+
+        route: list[str] = at(self.ROUTE, "def get_other(request, lesson_id: int):")
+        class_route: list[str] = at(self.CLASS_ROUTE, "    def get_other(self, request, lesson_id: int):")
+        other: str = self.OTHER_MODULE
+        plain: str = '    return {"id": lesson_id}\n'
+        cases: dict[str, tuple[str, str, list[str]]] = {
+            "선택 밖 라우트 + 모듈 함수 import": (self.ROUTE, self.controller_with_helper_import(), []),
+            "모듈 수준 helper": (self.MODULE_HELPER, self.controller_with_helper_import(),
+                             at(self.MODULE_HELPER, "def not_found():")),
+            "라우트 안 중첩 helper": (self.NESTED_HELPER, self.controller_with_helper_import(),
+                               at(self.NESTED_HELPER, "    def not_found():")),
+            "이름 import 로 라우트 위임": (self.ROUTE, self.delegate(
+                f"from {other} import get_other", "    return get_other(request, lesson_id)\n"), route),
+            "별칭 import 로 라우트 위임": (self.ROUTE, self.delegate(
+                f"from {other} import get_other as delegate_to", "    return delegate_to(request, lesson_id)\n"), route),
+            "모듈 속성으로 라우트 위임": (self.ROUTE, self.delegate(
+                "from application.lesson.driving_layer import other_controller",
+                "    return other_controller.get_other(request, lesson_id)\n"), route),
+            "함수 안 import 로 모듈 속성 위임": (self.ROUTE, self.delegate(
+                "", "    from application.lesson.driving_layer import other_controller\n"
+                    "    return other_controller.get_other(request, lesson_id)\n"), route),
+            "`*` import 뒤 라우트 위임": (self.ROUTE, self.delegate(
+                f"from {other} import *", "    return get_other(request, lesson_id)\n"), route),
+            "`*` import 만": (self.ROUTE, self.delegate(f"from {other} import *", plain), route),
+            "클래스 라우트 위임": (self.CLASS_ROUTE, self.delegate(
+                f"from {other} import OtherController", "    return OtherController().get_other(request, lesson_id)\n"),
+                class_route),
+            "다른 모듈의 인스턴스로 클래스 라우트 위임": (self.CLASS_ROUTE + "\n\nother = OtherController()\n", self.delegate(
+                f"from {other} import other", "    return other.get_other(request, lesson_id)\n"), class_route),
+            "클래스 이름만 import": (self.CLASS_ROUTE, self.delegate(f"from {other} import OtherController", plain),
+                                class_route),
+            "클래스 라우트 모듈의 함수 import": (self.CLASS_ROUTE, self.controller_with_helper_import(), []),
+        }
+        for label, (other, controller, expected) in cases.items():
+            with self.subTest(case=label):
+                self.assertEqual(self.helper_lines(other, controller), expected)
+
+
+class FrameworkTestModelImportRegression(unittest.TestCase):
+    """F4-169 — #53 «framework/test 는 모델 import 금지» 의 판정 셋(모델 / 모델 아님 / 모름) · «모델 아님» 이 드러난 이름만
+    비켜 준다. 모델 = `models.Model` 을 잇는 클래스(추상 · managed=False · 프록시 · 출처 무관 — Django 기본 User 도).
+    모델 아님 = ORM 도구 모듈 · 바깥 고정 이름(AnonymousUser) · 기저가 없거나 끝까지 풀어 모두 모델 아닌 저장소 안 클래스(바깥
+    기저는 고정 목록 — QuerySet · Manager · Choices 류 · enum · NamedTuple · TypedDict · Protocol · Generic · ABC · 내장 object ·
+    예외). 그 밖(목록 밖 바깥 기저 · 식 기저 · 순환 · metaclass · 함수 · `*` · 덮인 내장 이름)은 «모름» 이라 막는다. 후보에
+    `import x.models`(점 마디 `models`) · `from <저장소 안 꾸러미> import models` 를 더한다. 맨 위 클래스 이름이나 기저의
+    뿌리 이름이 모듈 수준에서 다시 묶이면(대입 · import · def · 두 번째 class) «모름» 이다.
+    """
+
+    UNIT: str = "framework/test/unit"
+    LEGACY_MODELS: str = '''from enum import Enum
+
+from django.db import models
+from model_utils.models import TimeStampedModel
+
+from legacy_shop.base import Stamped
+from legacy_shop.cyc import Loop as LoopBase
+from legacy_shop.deep.mid import ShopBase
+from legacy_shop.kinds import Plain
+
+
+class Coupon(models.Model):
+    code = models.CharField(max_length=20)
+
+
+class Ticket(Stamped):
+    seat = models.CharField(max_length=4)
+
+
+class AbstractStamp(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        abstract = True
+
+
+class CouponCode:
+    pass
+
+
+def coupon_count() -> int:
+    return 0
+
+
+class Stamp(TimeStampedModel):
+    label = models.CharField(max_length=4)
+
+
+class Voucher(ShopBase):
+    amount = models.IntegerField()
+
+
+def _base():
+    return models.Model
+
+
+class Dyn(_base()):
+    note = models.CharField(max_length=4)
+
+
+class CouponQuerySet(models.QuerySet):
+    pass
+
+
+class CouponStatus(models.TextChoices):
+    READY = "ready"
+
+
+class Grade(models.IntegerChoices):
+    LOW = 1
+
+
+class CodeBase:
+    pass
+
+
+class CodeChild(CodeBase):
+    pass
+
+
+class PlainChild(Plain):
+    pass
+
+
+class Loop(LoopBase):
+    pass
+
+
+class Kind(Enum):
+    A = "a"
+
+
+class Meta2(type):
+    pass
+
+
+class WithMeta(metaclass=Meta2):
+    pass
+
+
+class Proxy(Coupon):
+    class Meta:
+        proxy = True
+
+
+class Unmanaged:
+    class Meta:
+        managed = False
+'''
+    SHOP_MODELS: str = '''from __future__ import annotations
+
+import enum
+from abc import ABC
+from dataclasses import dataclass
+from enum import Enum, StrEnum
+from typing import Generic, NamedTuple, Protocol, TypedDict, TypeVar
+
+from django.db import models
+
+T = TypeVar("T")
+
+
+class Coupon(models.Model):
+    code = models.CharField(max_length=20)
+
+
+class Plain:
+    pass
+
+
+@dataclass(frozen=True)
+class CodeValue:
+    raw: str
+
+
+class Color(Enum):
+    RED = "red"
+
+
+class Grade(StrEnum):
+    GOLD = "gold"
+
+
+class Kind(enum.Enum):
+    A = "a"
+
+
+class Pair(NamedTuple):
+    a: int
+
+
+class Payload(TypedDict):
+    a: int
+
+
+class Reader(Protocol):
+    def read(self) -> str: ...
+
+
+class Base(ABC):
+    pass
+
+
+class ObjBase(object):
+    pass
+
+
+class ShopError(Exception):
+    pass
+
+
+class CouponQuerySet(models.QuerySet):
+    pass
+
+
+class Size(models.TextChoices):
+    S = "s"
+
+
+class GenericCoupon(Generic[T], models.Model):
+    code = models.CharField(max_length=20)
+
+
+class ErrorCoupon(Exception, Coupon):
+    pass
+
+
+class CouponManager(models.Manager["Coupon"]):
+    pass
+
+
+class GenericReader(Protocol[T]):
+    def read(self) -> T: ...
+
+
+class Box(Generic[T]):
+    pass
+
+
+class Oops(ValueError):
+    pass
+
+
+class StrStatus(str, Enum):
+    A = "a"
+
+
+class IntKind(int, Enum):
+    ONE = 1
+
+
+class PayloadDict(dict):
+    pass
+'''
+    REBOUND: str = '''from enum import Enum
+
+from django.db import models
+
+from shop.models import Coupon
+
+
+class ReboundBase:
+    pass
+
+
+ReboundBase = models.Model
+
+
+class Ticket(ReboundBase):
+    code = models.CharField(max_length=10)
+
+
+class Later:
+    pass
+
+
+Later = Coupon
+
+Enum = models.Model
+
+
+class FakeChoice(Enum):
+    pass
+'''
+    PROJECT: dict[str, str] = {
+        "application/__init__.py": "",
+        "application/orders/__init__.py": "",
+        "application/orders/domain_layer/__init__.py": "",
+        "application/orders/domain_layer/order/__init__.py": "",
+        "framework/__init__.py": "",
+        "framework/test/__init__.py": "",
+        f"{UNIT}/__init__.py": "",
+        "accounts/__init__.py": "",
+        "accounts/models.py": ("from django.contrib.auth.models import AbstractUser\n\n\n"
+                               "class Member(AbstractUser):\n    nickname = None\n"),
+        "legacy_shop/__init__.py": "",
+        "legacy_shop/base.py": ("from django.db import models\n\n\nclass Stamped(models.Model):\n"
+                                "    created_at = models.DateTimeField(auto_now_add=True)\n\n"
+                                "    class Meta:\n        abstract = True\n"),
+        "legacy_shop/kinds.py": "class Plain:\n    pass\n",
+        "legacy_shop/cyc.py": "from legacy_shop.models import Loop as Base\n\n\nclass Loop(Base):\n    pass\n",
+        "legacy_shop/models.py": LEGACY_MODELS,
+        "legacy_shop/deep/__init__.py": "",
+        "legacy_shop/deep/mid.py": ("from legacy_shop.base import Stamped\n\n\nclass ShopBase(Stamped):\n"
+                                    "    class Meta:\n        abstract = True\n"),
+        "legacy_shop/deep/models.py": "from legacy_shop.deep.mid import ShopBase\n\n\nclass Gift(ShopBase):\n    pass\n",
+        "shop/__init__.py": "",
+        "shop/models.py": SHOP_MODELS,
+        "shop/models_shadowed.py": ("from django.db import models\n\nException = models.Model\n\n\n"
+                                    "class Shadowed(Exception):\n    pass\n"),
+        "shop/models_starred.py": "from shop.models import *\n\n\nclass Starred(ValueError):\n    pass\n",
+        "shop/models_rebound.py": REBOUND,
+        "shop/models_util.py": "def helper() -> int:\n    return 1\n",
+    }
+    # 사례 — (import 줄, 막는가)
+    CASES: dict[str, tuple[str, bool]] = {
+        "a_anonymous_user": ("from django.contrib.auth.models import AnonymousUser", False),
+        "b_orm_q": ("from django.db.models import Q", False),
+        "c_contrib_user": ("from django.contrib.auth.models import User", True),
+        "d_project_model": ("from legacy_shop.models import Coupon", True),
+        "e_orm_module": ("from django.db import models", False),
+        "f_module_import_project": ("import legacy_shop.models", True),
+        "g_bc_module": ("from application.orders.driven_layer import models_like", False),
+        "h_plain_class": ("from legacy_shop.models import CouponCode", False),
+        "i_mixed_names": ("from django.contrib.auth.models import AnonymousUser, User", True),
+        "j_orm_functions": ("from django.db.models.functions import Lower", False),
+        "k_model_via_base": ("from legacy_shop.models import Ticket", True),
+        "l_module_import_contrib": ("import django.contrib.auth.models", True),
+        "m1_outside_base": ("from accounts.models import Member", True),
+        "m2_outside_abstract": ("from legacy_shop.models import Stamp", True),
+        "m3_two_level_base": ("from legacy_shop.models import Voucher", True),
+        "m4_expression_base": ("from legacy_shop.models import Dyn", True),
+        "m5_other_module_base": ("from legacy_shop.deep.models import Gift", True),
+        "n1_pkg_models_alias": ("from legacy_shop import models as shop_models", True),
+        "n2_pkg_models": ("from legacy_shop import models", True),
+        "p1_queryset": ("from legacy_shop.models import CouponQuerySet", False),
+        "p2_textchoices": ("from legacy_shop.models import CouponStatus", False),
+        "p3_integerchoices": ("from legacy_shop.models import Grade", False),
+        "p4_local_chain": ("from legacy_shop.models import CodeChild", False),
+        "p5_other_module_chain": ("from legacy_shop.models import PlainChild", False),
+        "p7_outside_pkg_models": ("from django.contrib.auth import models", False),
+        "q1_cycle": ("from legacy_shop.models import Loop", True),
+        "q2_enum": ("from legacy_shop.models import Kind", False),
+        "q3_metaclass": ("from legacy_shop.models import WithMeta", True),
+        "q4_proxy": ("from legacy_shop.models import Proxy", True),
+        "q5_unmanaged_meta": ("from legacy_shop.models import Unmanaged", True),
+        "q6_relative_pkg_models": ("from ... import models", True),
+        "q7_star": ("from legacy_shop.models import *", True),
+        "s_model": ("from shop.models import Coupon", True),
+        "s_plain": ("from shop.models import Plain", False),
+        "s_dataclass": ("from shop.models import CodeValue", False),
+        "s_enum": ("from shop.models import Color", False),
+        "s_strenum": ("from shop.models import Grade", False),
+        "s_enum_module": ("from shop.models import Kind", False),
+        "s_namedtuple": ("from shop.models import Pair", False),
+        "s_typeddict": ("from shop.models import Payload", False),
+        "s_protocol": ("from shop.models import Reader", False),
+        "s_abc": ("from shop.models import Base", False),
+        "s_object": ("from shop.models import ObjBase", False),
+        "s_exception": ("from shop.models import ShopError", False),
+        "s_queryset": ("from shop.models import CouponQuerySet", False),
+        "s_textchoices": ("from shop.models import Size", False),
+        "r1_generic_and_model": ("from shop.models import GenericCoupon", True),
+        "r2_exception_and_model": ("from shop.models import ErrorCoupon", True),
+        "r3_manager_subscript": ("from shop.models import CouponManager", False),
+        "r4_protocol_subscript": ("from shop.models import GenericReader", False),
+        "r5_generic_subscript": ("from shop.models import Box", False),
+        "r6_valueerror": ("from shop.models import Oops", False),
+        "r7_shadowed_builtin": ("from shop.models_shadowed import Shadowed", True),
+        "r8_star_builtin": ("from shop.models_starred import Starred", True),
+        "w1_abstract_model": ("from legacy_shop.models import AbstractStamp", True),
+        "w2_function": ("from legacy_shop.models import coupon_count", True),
+        "x1_rebound_class": ("from shop.models_rebound import Later", True),
+        "x2_rebound_base": ("from shop.models_rebound import Ticket", True),
+        "x3_rebound_imported_base": ("from shop.models_rebound import FakeChoice", True),
+        "y1_import_models_util": ("import shop.models_util", False),
+        "y2_import_orm_module": ("import django.db.models", False),
+        "y3_import_models_alias": ("import shop.models as shop_models", True),
+        "z1_str_enum": ("from shop.models import StrStatus", False),
+        "z2_int_enum": ("from shop.models import IntKind", False),
+        "z3_dict_base": ("from shop.models import PayloadDict", False),
+    }
+
+    def test_only_names_shown_not_to_be_models_pass(self) -> None:
+        files: dict[str, str] = dict(self.PROJECT)
+        for case, (line, _) in self.CASES.items():
+            files[f"{self.UNIT}/test_{case}.py"] = f"{line}\n\n\ndef test_x() -> None:\n    assert True\n"
+        got: list[tuple[str, str]] = _toy_rule_where(files, "check-business-vocabulary.py", "model-import-")
+        blocked: set[str] = {where for rule, where in got if rule == "#53"}
+        for case, (line, block) in self.CASES.items():
+            with self.subTest(case=case, line=line):
+                self.assertEqual(f"{self.UNIT}/test_{case}.py:1" in blocked, block)
+        self.assertEqual(blocked, {f"{self.UNIT}/test_{case}.py:1" for case, (_, block) in self.CASES.items() if block})
+
+
+class TechnologyFolderEnvRegression(unittest.TestCase):
+    """F4-171 — `framework/<이름>/` 이 기술 폴더인가는 저장소 안 글자로만 정한다(실행 파이썬에 깔린 배포판은 보지 않는다):
+    이름이 기술 낱말이거나, 폴더 바로 아래 모듈 하나라도 그 이름의 라이브러리를 저장소 밖에서(절대 import) 들인다. 저장소
+    뿌리의 같은 이름 꾸러미(`__init__.py`) · 모듈(`<이름>.py`)은 그 import 를 저장소 안으로 만든다 — `__init__.py` 없는 폴더는
+    설치 라이브러리가 먼저 잡혀 가리지 않는다. 라이브러리 이름은 어느 환경에도 없을 지은 낱말이라 판정이 환경과 무관하다.
+    """
+
+    BASE: dict[str, str] = {
+        "application/__init__.py": "",
+        "application/orders/__init__.py": "",
+        "application/orders/domain_layer/__init__.py": "",
+        "application/orders/domain_layer/order/__init__.py": "",
+        "framework/__init__.py": "",
+        "framework/zz_toylib/__init__.py": "",
+        "framework/zz_toylib/toy_codec.py": "import zz_toylib\n\n\ndef encode(raw: str) -> str:\n    return zz_toylib.encode(raw)\n",
+        "framework/zz_netlib/__init__.py": "",
+        "framework/zz_netlib/net_client.py": "from zz_netlib.client import Client\n\n\ndef make_client() -> Client:\n    return Client()\n",
+        "framework/zz_netlib/timeouts.py": "def timeout_seconds() -> int:\n    return 5\n",
+        "framework/zz_netlib/net_glue.py": "from ..zz_netlib import net_client\n",
+        "framework/zz_codeclib/__init__.py": "",
+        "framework/zz_codeclib/zz_codeclib.py": "import zz_codeclib\n",
+        "framework/money/__init__.py": "",
+        "framework/money/rounding.py": "def round_won(amount: int) -> int:\n    return amount - amount % 10\n",
+    }
+    STRUCTURE: frozenset[str] = frozenset({"#396", "#412", "#415"})
+
+    def lines(self, extra: dict[str, str]) -> list[tuple[str, str]]:
+        got: list[tuple[str, str]] = _toy_rule_where({**self.BASE, **extra}, "check-business-vocabulary.py", "tech-folder-")
+        return [(rule, where) for rule, where in got if rule in self.STRUCTURE]
+
+    def test_library_import_makes_technology_folder_and_root_package_or_module_shadows_it(self) -> None:
+        common: list[tuple[str, str]] = [("#396", "framework/money"),
+                                         ("#412", "framework/zz_codeclib/zz_codeclib.py"),
+                                         ("#415", "framework/zz_netlib/net_glue.py"),
+                                         ("#415", "framework/zz_netlib/timeouts.py")]
+        cases: dict[str, tuple[dict[str, str], list[tuple[str, str]]]] = {
+            "설치 여부와 무관한 기술 판정": ({}, common),
+            "뿌리 꾸러미가 가림": ({"zz_toylib/__init__.py": ""}, sorted([*common, ("#396", "framework/zz_toylib")])),
+            "뿌리 모듈이 가림": ({"zz_toylib.py": ""}, sorted([*common, ("#396", "framework/zz_toylib")])),
+            "뿌리 이름공간 폴더는 가리지 않음": ({"zz_toylib/README.md": "설정 폴더\n"}, common),
+        }
+        for label, (extra, expected) in cases.items():
+            with self.subTest(case=label):
+                self.assertEqual(self.lines(extra), expected)
+
+    def test_bc_folder_named_after_an_imported_library_is_not_asked(self) -> None:
+        """check-naming ⓓ#36 의 BC 칸도 같은 기술 폴더 판정 — 칸 안 모듈이 같은 이름 라이브러리를 import 하면 묻지 않는다."""
+        files: dict[str, str] = {
+            **self.BASE,
+            "application/orders/driving_layer/__init__.py": "",
+            "application/orders/driving_layer/quokkalib/__init__.py": "",
+            "application/orders/driving_layer/quokkalib/token_reader.py": "import quokkalib\n",
+            "application/orders/driving_layer/quokkadial/__init__.py": "",
+            "application/orders/driving_layer/quokkadial/dial.py": "def dial() -> int:\n    return 1\n",
+        }
+        got: list[tuple[str, str]] = _toy_rule_where(files, "check-naming.py", "tech-folder-naming-")
+        self.assertEqual([(rule, where) for rule, where in got if rule == "ⓓ#36" and where.startswith("application/")],
+                         [("ⓓ#36", "application/orders/driving_layer/quokkadial")])
+
+
+class PreRouteFixedFileRegression(unittest.TestCase):
+    """F4-179 — 플러그인이 자리 · 코드를 정한 framework 파일 둘. 경로 앞 응답 정본 `framework/ninja/pre_route_responses.py` 는
+    ⓓ#607(숫자 임계값 비교) 후보에서 빠진다(내용은 #63 이 정본 자산과 구문 나무로 맞춘다). 프로젝트 표
+    `framework/ninja/pre_route_response_table.py` 는 클래스가 하나도 없을 때만 #415(라이브러리 import)에서 빠진다 — 몸통 Schema
+    행이 없으면 ninja 를 import 할 까닭이 없고, 클래스를 두면 지금처럼 ninja import 를 요구한다(숨긴 업무 클래스 대조).
+    """
+
+    CANONICAL: str = "framework/ninja/pre_route_responses.py"
+    TABLE: str = "framework/ninja/pre_route_response_table.py"
+    BARE_TABLE: str = (
+        'PRE_ROUTE_RESPONSES: tuple[dict[str, object], ...] = (\n'
+        '    {"status": 400, "when": "all", "description": "받지 않는 호스트", "media_type": "text/html"},\n)\n\n'
+        'NOT_API_MIDDLEWARE: tuple[str, ...] = ()\n\n'
+        'BAD_REQUEST_RESPONSE: dict[str, object] = {"media_type": "text/html"}\n')
+    HIDDEN_CLASS: str = "\n\nclass RefundWindow:\n    @staticmethod\n    def allows(days: int) -> bool:\n        return days <= 7\n"
+    SCHEMA_TABLE: str = (
+        "from ninja import Schema\n\n\nclass HostRejectedBody(Schema):\n    detail: str\n\n\n"
+        'PRE_ROUTE_RESPONSES: tuple[dict[str, object], ...] = (\n'
+        '    {"status": 400, "when": "all", "description": "받지 않는 호스트", "schema": "HostRejectedBody"},\n)\n\n'
+        'NOT_API_MIDDLEWARE: tuple[str, ...] = ()\n\n'
+        'BAD_REQUEST_RESPONSE: dict[str, object] = {"media_type": "text/html"}\n')
+    PROJECT: dict[str, str] = {
+        "application/__init__.py": "",
+        "application/orders/__init__.py": "",
+        "application/orders/domain_layer/__init__.py": "",
+        "application/orders/domain_layer/order/__init__.py": "",
+        "framework/__init__.py": "",
+        "framework/ninja/__init__.py": "",
+    }
+    RULES: frozenset[str] = frozenset({"#415", "ⓓ#607"})
+
+    def lines(self, canonical: str, table: str, extra: dict[str, str] | None = None) -> list[tuple[str, str]]:
+        files: dict[str, str] = {**self.PROJECT, self.CANONICAL: (SCRIPTS / canonical).read_text(encoding="utf-8"),
+                                 self.TABLE: table, **(extra or {})}
+        got: list[tuple[str, str]] = _toy_rule_where(files, "check-business-vocabulary.py", "pre-route-fixed-")
+        return [(rule, where) for rule, where in got if rule in self.RULES]
+
+    def test_canonical_and_bodyless_table_are_out_of_library_rules(self) -> None:
+        page_limit: dict[str, str] = {"framework/ninja/page_limit.py": (
+            "def clamp_page_size(size: int) -> int:\n    if size > 100:\n        return 100\n    return size\n")}
+        hidden_line: int = (self.BARE_TABLE + self.HIDDEN_CLASS).splitlines().index("        return days <= 7") + 1
+        cases: dict[str, tuple[str, str, dict[str, str], list[tuple[str, str]]]] = {
+            "정본 + 몸통 없는 표 + 대조 page_limit": (
+                "pre_route_responses_canonical.py", self.BARE_TABLE, page_limit,
+                [("#415", "framework/ninja/page_limit.py"), ("ⓓ#607", "framework/ninja/page_limit.py:2")]),
+            "2.37.0 정본 + 몸통 없는 표": ("pre_route_responses_canonical_2_37_0.py", self.BARE_TABLE, {}, []),
+            "표에 숨긴 클래스": ("pre_route_responses_canonical.py", self.BARE_TABLE + self.HIDDEN_CLASS, {},
+                           [("#415", self.TABLE), ("ⓓ#607", f"{self.TABLE}:{hidden_line}")]),
+            "몸통 Schema 표": ("pre_route_responses_canonical.py", self.SCHEMA_TABLE, {}, []),
+        }
+        for label, (canonical, table, extra, expected) in cases.items():
+            with self.subTest(case=label):
+                self.assertEqual(self.lines(canonical, table, extra), expected)
+
+
 # 변이 — (이름, 검사기 파일, ((옛 글, 새 글), …), 붉어야 할 시험 클래스). 옛 글은 그 파일에 정확히 한 번 있어야 한다.
 # 고침을 옛 코드로 되돌린 것 하나씩과, 설계 검토 · 구현 검토가 짚은 조건을 하나씩 무른 것.
 _CI_FILE: str = "check-context-isolation.py"
 _ACL_TRY: tuple[str, ...] = ("AclValidationTryRegression", "AclWindowTryRegression")
+_CC_FILE: str = "check-api-error-controller-contract.py"
+_BV_FILE: str = "check-business-vocabulary.py"
+_CC_CLASS: tuple[str, ...] = ("CrossScopeControllerHelperRegression",)
+_MI_CLASS: tuple[str, ...] = ("FrameworkTestModelImportRegression",)
+_TF_CLASS: tuple[str, ...] = ("TechnologyFolderEnvRegression",)
+_PR_CLASS: tuple[str, ...] = ("PreRouteFixedFileRegression",)
 _MUTATIONS: tuple[tuple[str, str, tuple[tuple[str, str], ...], tuple[str, ...]], ...] = (
     ("F4-167 받은 글 검증 허용 목록 걷음", _CI_FILE, (
         ("        self.allowlist: bool = partner is not None and not _uses_name_device(mod) and not _partner_altered(partner)",
@@ -8982,12 +9820,150 @@ _MUTATIONS: tuple[tuple[str, str, tuple[tuple[str, str], ...], tuple[str, ...]],
          'else:\n                misfits.append(f"`{node.name}` 는 팩토리가'),), ("FactoriesMaterialRegression",)),
     ("F4-175 #392 제네릭 기저 풀기 지움", "check-test-config.py", (
         ("    if isinstance(node, ast.Subscript):\n        node = node.value\n", ""),), ("FactoriesMaterialRegression",)),
+    ("F4-168 선택 밖 라우트 찾기 걷음", _CC_FILE, (
+        ("                for operation in _discover_operations(source, owner, analysis)\n                if not starred",
+         "                for operation in []\n                if not starred"),), _CC_CLASS),
+    ("F4-168 가리킨 라우트 남김 걷음", _CC_FILE, (
+        ("                if not starred\n                and operation.node.name not in active_names\n"
+         "                and route_class.get(id(operation.node)) not in active_names\n", ""),), _CC_CLASS),
+    ("F4-168 속성 이름 걷음", _CC_FILE, (
+        ("            elif isinstance(node, ast.Attribute):\n                active_names.add(node.attr)\n", ""),), _CC_CLASS),
+    ("F4-168 import 로 들인 이름 걷음", _CC_FILE, (
+        ("                        active_names.add(alias.name)\n", "                        pass\n"),), _CC_CLASS),
+    ("F4-168 클래스 라우트의 클래스 이름 걷음", _CC_FILE, (
+        ("                and route_class.get(id(operation.node)) not in active_names\n", ""),), _CC_CLASS),
+    ("F4-168 `*` 로 들인 모듈 걷음", _CC_FILE, (
+        ("                if not starred\n", "                if True\n"),), _CC_CLASS),
+    ("F4-168 선택 컨트롤러 맨 위 문장만 읽음", _CC_FILE, (
+        ("        for node in ast.walk(active_source.tree):\n            if isinstance(node, ast.Name):",
+         "        for node in active_source.tree.body:\n            if isinstance(node, ast.Name):"),), _CC_CLASS),
+    ("F4-169 #53 모름을 받음", _BV_FILE, (
+        ("_model_verdict(root, target, target_mod, classes[n], frozenset()) != NOT_MODEL",
+         "_model_verdict(root, target, target_mod, classes[n], frozenset()) == MODEL"),), _MI_CLASS),
+    ("F4-169 #53 저장소 안 기저 따라가기 끔", _BV_FILE, (
+        ("    return _model_verdict(root, base_file, base_mod, base_cls, seen)\n", "    return UNKNOWN_MODEL\n"),),
+     _MI_CLASS),
+    ("F4-169 #53 순환 가드 걷음", _BV_FILE, (
+        ("    if (path, cls.name) in seen:\n        return UNKNOWN_MODEL\n", ""),), _MI_CLASS),
+    ("F4-169 #53 QuerySet 기저 목록 줄 걷음", _BV_FILE, (
+        ('    "django.db.models.QuerySet", "django.db.models.query.QuerySet",\n', ""),), _MI_CLASS),
+    ("F4-169 #53 enum 기저 목록 줄 걷음", _BV_FILE, (
+        ('    "enum.Enum", "enum.StrEnum", "enum.IntEnum", "enum.Flag", "enum.IntFlag",\n', ""),), _MI_CLASS),
+    ("F4-169 #53 내장 맨 이름 기저 갈래 걷음", _BV_FILE, (
+        ("        elif isinstance(b, ast.Name) and b.id in BUILTIN_NON_MODEL_BASES and not star and b.id not in bound:",
+         "        elif False:"),), _MI_CLASS),
+    ("F4-169 #53 내장 값 타입 줄 걷음", _BV_FILE, (
+        ('    "str", "int", "float", "complex", "bool", "bytes", "list", "tuple", "dict", "set", "frozenset",\n', ""),),
+     _MI_CLASS),
+    ("F4-169 #53 다시 묶인 맨 위 클래스 가드 걷음", _BV_FILE, (
+        ("isinstance(n, ast.ClassDef) and bound.get(n.name) == 1}", "isinstance(n, ast.ClassDef)}"),), _MI_CLASS),
+    ("F4-169 #53 다시 묶인 기저 뿌리 가드 걷음", _BV_FILE, (
+        ("or expr.id not in origins or bound.get(expr.id, 0) > 1:", "or expr.id not in origins:"),), _MI_CLASS),
+    ("F4-169 #53 첨자 기저 벗김 걷음", _BV_FILE, (
+        ("        if isinstance(b, ast.Subscript):  # `Generic[T]`", "        if False:  # `Generic[T]`"),), _MI_CLASS),
+    ("F4-169 #53 모듈 수준에서 덮인 내장 가드 걷음", _BV_FILE, (
+        ("BUILTIN_NON_MODEL_BASES and not star and b.id not in bound:", "BUILTIN_NON_MODEL_BASES and not star:"),),
+     _MI_CLASS),
+    ("F4-169 #53 저장소 안 꾸러미의 models 꺼내기 갈래 걷음", _BV_FILE, (
+        ('        return src is not None and any(a.name == "models" for a in node.names) and (', "        return False and ("),),
+     _MI_CLASS),
+    ("F4-169 #53 기저 밖 키워드(metaclass) 가드 걷음", _BV_FILE, (
+        ("    if cls.keywords:  # metaclass=", "    if False:  # metaclass="),), _MI_CLASS),
+    ("F4-169 #53 바깥 모델 아닌 이름 목록 비움", _BV_FILE, (
+        ('NON_MODEL_NAMES = {"django.contrib.auth.models": frozenset({"AnonymousUser"})}', "NON_MODEL_NAMES = {}"),),
+     _MI_CLASS),
+    ("F4-169 #53 ORM 도구 모듈 받기 걷음", _BV_FILE, (
+        ('    return m == ORM_TOOL_MODULE or m.startswith(ORM_TOOL_MODULE + ".")', "    return False"),), _MI_CLASS),
+    ("F4-169 #53 import 모듈 꼴 후보 걷음", _BV_FILE, (
+        ('        return any("models" in a.name.split(".") and not _orm_tool_module(a.name) for a in node.names)',
+         "        return False"),), _MI_CLASS),
+    ("F4-169 #53 import 갈래 ORM 도구 가드 걷음", _BV_FILE, (
+        ('"models" in a.name.split(".") and not _orm_tool_module(a.name) for a in node.names',
+         '"models" in a.name.split(".") for a in node.names'),), _MI_CLASS),
+    ("F4-169 #53 import 갈래 마디 일치를 글자 포함으로", _BV_FILE, (
+        ('"models" in a.name.split(".") and not _orm_tool_module(a.name) for a in node.names',
+         "_models_module(a.name) and not _orm_tool_module(a.name) for a in node.names"),), _MI_CLASS),
+    ("F4-171 기술 폴더를 이름만으로 판정", _BV_FILE, (
+        ("is_tech = p.name in CURATED_TECH or vocab.technology_folder(root, p)",
+         "is_tech = p.name in CURATED_TECH or p.name in vocab.tech_names()"),), _TF_CLASS),
+    ("F4-171 저장소 뿌리 가림 걷음", "business_vocab.py", (
+        ('        if not ((root / lib / "__init__.py").is_file() or (root / f"{lib}.py").is_file()))', "        if True)"),),
+     _TF_CLASS),
+    ("F4-171 상대 import 를 라이브러리 import 로", "business_vocab.py", (
+        ("(isinstance(n, ast.ImportFrom) and not n.level and", "(isinstance(n, ast.ImportFrom) and"),), _TF_CLASS),
+    ("F4-171 check-naming BC 칸 기술 폴더 판정 걷음", "check-naming.py", (
+        ("              and not vocab.technology_folder(root, d)):", "              ):"),), _TF_CLASS),
+    ("F4-171 뿌리 가림을 폴더 있음으로", "business_vocab.py", (
+        ('        if not ((root / lib / "__init__.py").is_file() or (root / f"{lib}.py").is_file()))',
+         '        if not ((root / lib).is_dir() or (root / f"{lib}.py").is_file()))'),), _TF_CLASS),
+    ("F4-179 표 #415 빼기 걷음", _BV_FILE, (
+        ("        if _rel(root, py) == PRE_ROUTE_TABLE_FILE and not any(isinstance(n, ast.ClassDef) for n in ast.walk(mod)):",
+         "        if False:"),), _PR_CLASS),
+    ("F4-179 표 클래스 가드 걷음", _BV_FILE, (
+        ("        if _rel(root, py) == PRE_ROUTE_TABLE_FILE and not any(isinstance(n, ast.ClassDef) for n in ast.walk(mod)):",
+         "        if _rel(root, py) == PRE_ROUTE_TABLE_FILE:"),), _PR_CLASS),
+    ("F4-179 정본 #607 빼기 걷음", _BV_FILE, (
+        ("                or _rel(root, py) == PRE_ROUTE_CANONICAL_FILE:", "                or False:"),), _PR_CLASS),
     ("#604 경로 글롭 대신 빈 경로 목록(= 저장소 전체 diff)", "check-business-vocabulary.py", (
         ('"diff", "HEAD", "--", f":(glob){fw.relative_to(root).as_posix()}/**/*_port.py"]', '"diff", "HEAD", "--"]'),),
      ("ContractEvolutionPathspecRegression",)),
     ("#604 경로 글롭 대신 디스크 계약 목록(지운 계약 파일이 빠짐)", "check-business-vocabulary.py", (
         ('f":(glob){fw.relative_to(root).as_posix()}/**/*_port.py"]', '*([str(p.relative_to(root)) for p in port_files] or ["framework/__none__"])]'),),
      ("ContractEvolutionPathspecRegression",)),
+    ("F4-180 `<모듈>.Final[str]` 꼴 받음 걷음", "checker_target.py", (
+        ('        or (isinstance(ann.value, ast.Attribute) and ann.value.attr == "Final"))', "        or False)"),),
+     ("DomainBypassValueSourceRegression",)),
+    ("F4-180 `int` 주석 받음 걷음", "checker_target.py", (
+        ('_DERIVED_VALUE_TYPES: "frozenset[str]" = frozenset({"str", "int"})',
+         '_DERIVED_VALUE_TYPES: "frozenset[str]" = frozenset({"str"})'),), ("DomainBypassValueSourceRegression",)),
+    ("F4-180 파생 값의 `.value` 요구 걷음(멤버 그대로도 받음)", "checker_target.py", (
+        ('    return (isinstance(stmt, ast.AnnAssign) and isinstance(stmt.value, ast.Attribute) and stmt.value.attr == "value"',
+         "    return (isinstance(stmt, ast.AnnAssign) and isinstance(stmt.value, ast.Attribute)"),),
+     ("DomainBypassValueSourceRegression",)),
+    ("F4-180 `import *` 뒤 들어온 클래스 속성 길 끔", "checker_target.py", (
+        ("                    classes.update({n: (base, n) for n in star})\n", "                    pass\n"),),
+     ("DomainBypassValueSourceRegression",)),
+    ("F4-180 별표 씨앗 `__all__` 갈래 끔(맨 위 공개 이름으로만 폄)", "checker_target.py", (
+        ('        if any(isinstance(t, ast.Name) and t.id == "__all__" for t in targets) \\\n', "        if False \\\n"),),
+     ("DomainBypassValueSourceRegression",)),    ("F4-180 별칭 없는 import 씨앗을 뿌리 이름으로만 맞춤", "checker_target.py", (
+        ('    return chain is not None and any(".".join(chain[:k]) in names for k in range(1, len(chain) + 1))',
+         "    return chain is not None and chain[0] in names"),), ("DomainBypassValueSourceRegression",)),
+    ("F4-180 #668 별칭 없는 import 씨앗 걷음(옛 코드)", _CI_FILE, (
+        ("                if base is not None and _spot(base) in ADMIN_FORBIDDEN_SPOTS:\n                    seeds.add(a.asname or ",
+         "                if a.asname and base is not None and _spot(base) in ADMIN_FORBIDDEN_SPOTS:\n"
+         "                    seeds.add(a.asname or "),), ("DomainBypassValueSourceRegression",)),
+    ("F4-180 #356 별칭 없는 import 씨앗을 뿌리 이름으로", "check-port-adapter-pairing.py", (
+        ('        return [a.asname or checker_target.plain_import_seed(a.name, "domain_layer")',
+         '        return [a.asname or a.name.split(".")[0]'),),
+     ("DomainBypassValueSourceRegression",)),
+    ("F4-180 #356 import 꼴 끔", "check-port-adapter-pairing.py", (
+        ('                for a in node.names if "domain_layer" in a.name.split(".")]', "                for a in node.names if False]"),),
+     ("DomainBypassValueSourceRegression",)),
+    ("F4-180 #356 꾸러미 층 이름 끔", "check-port-adapter-pairing.py", (
+        ('    return [a.asname or a.name for a in node.names if a.name == "domain_layer"]', "    return []"),),
+     ("DomainBypassValueSourceRegression",)),
+    ("F4-180 모듈 수준 파생 값 받음 걷음", "checker_target.py", (
+        ("            if not _derived_value(node) and _bound_to(node.value, names):",
+         "            if _bound_to(node.value, names):"),), ("DomainBypassValueSourceRegression",)),
+    ("F4-180 모듈 수준 블록(`try` · `if` · `with`) 안 씨앗 안 봄", "checker_target.py", (
+        ("        if isinstance(node, _MODULE_LEVEL_BLOCKS):\n", "        if False:\n"),), ("DomainBypassValueSourceRegression",)),
+    ("F4-180 이름공간 폴더를 모듈째 꾸러미로 안 봄", "checker_target.py", (
+        (" or bc.joinpath(*parts).is_dir())", ")"),), ("DomainBypassValueSourceRegression",)),
+    ("F4-180 꾸러미 재수출 출처를 `django_<bc>/` 로 거르지 않음(두 겹)", "checker_target.py", (
+        ("                        if src is not None and _django_parts(src):", "                        if src is not None:"),),
+     ("DomainBypassValueSourceRegression",)),
+    ("F4-180 별칭 없는 import 씨앗을 금지 자리 앞마디로 자르지 않음(점 경로 전체)", "checker_target.py", (
+        ("    cut: int = parts.index(marker, start) + 1 if marker in parts[start:] else len(parts)", "    cut: int = len(parts)"),),
+     ("DomainBypassValueSourceRegression",)),
+    ("F4-180 #668 별칭 없는 import 씨앗의 앞마디를 늘 domain_layer 로", _CI_FILE, (
+        ('a.name, _ADMIN_SPOT_ROOT.get(_spot(base), "domain_layer")))', 'a.name, "domain_layer"))'),),
+     ("DomainBypassValueSourceRegression",)),
+    ("F4-180 `import *` 를 모듈 `__all__` 로 거르지 않음", "checker_target.py", (
+        ('                            if declared is None or n.split(".")[0] in declared}', "                            }"),),
+     ("DomainBypassValueSourceRegression",)),
+    ("F4-180 `__all__` 이 있으면 `import *` 로 들어오는 이름을 다 버림", "checker_target.py", (
+        ('                            if declared is None or n.split(".")[0] in declared}',
+         "                            if declared is None}"),), ("DomainBypassValueSourceRegression",)),
 )
 
 

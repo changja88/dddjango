@@ -15,6 +15,8 @@ legacy 위반이 상존해 「루트 registry 전체 green」이 문자 그대�
 - **목록만 줄어든 줄**(F4-99): 줄 번호 없는 줄이 앵커 줄과 문자열 목록 칸(`['a', 'b']`)만 다르고 칸마다 부분집합이며
   그 주어 파일(레코드 경로)이 앵커 · 현재 사본에서 바이트까지 같으면 잔존(L∩N)으로 센다 — 다른 파일(합집합)이
   바뀌어 목록이 준 것이지 늘린 위반이 아니다. 짝은 1:1 이고 legacy 잔존 절에 앵커 줄과 함께 찍는다.
+  ⓓ 후보 줄은 주어가 바뀌었어도(폴더 주어 포함) 목록만 줄었으면 legacy 로 센다(F4-166 — exit 밖 감수자 입력이고 목록이
+  부분집합이면 신호가 좁아진 것이다). 위반 줄은 위 조건 그대로다(고친 파일에서 목록을 일부만 걷으면 새 줄).
 - **사본 속 링크**(F4-97 · F4-98): 앵커 · 승인 유입 측정 사본에서 사본 밖을 가리키는 링크가 모두 숨김 경로
   (문서 입력 `.dddjango/<폴더>/{scope,design-spec}.md` 와 그 조상은 빼고)에 있으면 그 링크를 걷고 잰다. 하나라도
   그 밖이면 지금처럼 그 사본을 증거로 쓰지 않는다(fail-closed · 판정 줄에 «잴 수 없어 남긴» 수를 따로 적는다).
@@ -50,13 +52,14 @@ legacy 위반이 상존해 「루트 registry 전체 green」이 문자 그대�
     F1 ∃M∈𝓜: blob(M^1:p) ≠ blob(M:p) ∧ blob(M:p) = blob(M^2:p) = blob(HEAD:p)
        — 승인 머지의 incoming 측에서 verbatim 전달·레인 미수정(충돌 해소분은 M≠M^2 라 탈락)
     F2 blob(HEAD:p) = blob(anchor:p) — 파일 무변 = «상호작용 서명»(검사기 환경만 바뀜)
-    G  깨끗한 상대 .py 경로 · HEAD와 작업 트리에 없음 · 부모는 HEAD의 tree(부재 주어)
+       주어가 폴더면 F1 · F2 를 blob 대신 그 폴더의 tree 로 잰다(F1′ · F2′ · F4-162) — 레인이 그 폴더 안을 고쳤으면 귀속 유지
+    G  깨끗한 상대 .py 경로 또는 점 없는 이름(없는 폴더 · F4-56 ②) · HEAD와 작업 트리에 없음 · 부모는 HEAD의 tree(부재 주어)
     L  ℓ ∈ R_c(M^2) ∖ R_c(M^1) — 검사기 c 를 M^2(incoming)·M^1(레인 측 직전)
        스냅숏에서 재실행해 «incoming 측에는 있고 레인 측 직전에는 없던» 진단임을 증명
     P  M 뒤 미승인 머지 없음 · 뒤 승인 머지의 ^2에도 있음 · 병합 결과부터 HEAD까지 사슬마다 있음
        사슬은 앞 커밋과 다른 트리 64개까지 잰다. 측정 불능·한도 초과는 귀속을 유지한다.
 
-  판정 불능(레코드 없음·비-blob 경로·worktree 수정·측정 무효·스냅숏 실패)은 전부 귀속 유지(fail-closed)다.
+  판정 불능(레코드 없음·비-blob 경로(파일도 폴더도 아님)·worktree 수정·측정 무효·스냅숏 실패)은 전부 귀속 유지(fail-closed)다.
   L 은 **∃M 의미론**이다 — 승인 머지 하나에서라도 증명되면 유입이고, 전 승인 머지가 무효(측정 무효·
   스냅숏 실패)이거나 미증명이면 귀속 유지다(사유는 첫 무효 머지 기준 — 무효는 그 머지의 증명 기회를 잃을 뿐
   다른 머지의 증명을 막지 않는다). 스냅숏 실패(`git archive` 불능 등)는 traceback 이 아니라 그 머지의
@@ -878,6 +881,7 @@ class _ProvenanceResult:
     checker_runs: int = 0
     pruned_snapshots: "list[str]" = field(default_factory=list)          # 숨김 경로 사본 밖 링크를 뺀 스냅숏의 첫 경로
     moved_from: "dict[str, str]" = field(default_factory=dict)           # 묶음 이동 따라 증명한 유입 줄 → T₀′ 경로(검토 B1)
+    folders: "set[str]" = field(default_factory=set)                     # 주어가 폴더인 유입 줄(있는 폴더 · 없는 폴더 — F4-162 · F4-56 ② · 표기만)
 
     @property
     def inflow_lines(self) -> "set[str]":
@@ -894,6 +898,7 @@ class _ProvenanceResult:
         self.checker_runs += other.checker_runs
         self.pruned_snapshots.extend(other.pruned_snapshots)
         self.moved_from.update(other.moved_from)
+        self.folders.update(other.folders)
 
     def per_merge(self, sha: str) -> "tuple[int, int]":
         files: int = sum(1 for _l, m, k in self.inflow if m == sha and k == "파일")
@@ -1038,11 +1043,12 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
             path_cache[sha] = _tree_entries(root, sha)
         return path_cache[sha]
 
-    def absent_file(p: str) -> bool:
-        """G(p) — «없는 파일» 주어인가: 깨끗한 상대 경로 · .py · HEAD 에 어떤 항목도 없음 · 작업 트리에도 없음 · 부모는 HEAD 의 폴더."""
+    def absent_path(p: str) -> bool:
+        """G(p) — «없는» 주어인가: 깨끗한 상대 경로 · .py 이거나 점 없는 이름(폴더 — F4-56 ②) · HEAD 에 어떤 항목도 없음 ·
+        작업 트리에도 없음 · 부모는 HEAD 의 폴더. 점 없는 이름은 없는 파일일 수도 있다 — 판정은 같고 유입 표기만 «폴더» 다."""
         parts: "list[str]" = p.split("/")
         if len(parts) < 2 or p.startswith("/") or any(seg in ("", ".", "..") for seg in parts) \
-                or not parts[-1].endswith(".py") or re.search(r"[\s,;|<>\\\[\]:]", p):
+                or not (parts[-1].endswith(".py") or "." not in parts[-1]) or re.search(r"[\s,;|<>\\\[\]:]", p):
             return False
         if p in paths_of(head_sha) or os.path.lexists(root / p):
             return False
@@ -1050,6 +1056,7 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
 
     # (i)(ii) 후보 선별 — candidates: (line, path, checker, kind, 전달 머지)
     candidates: "list[tuple[str, str, str, str, anchor_diff.ApprovedMerge | None]]" = []
+    subject_dirs: "set[str]" = set()   # 주어가 폴더인 줄(있는 폴더 · 없는 폴더) — 유입 표기만 가른다
     for line in attributed:
         checker: str = line.split(" :: ", 1)[0]
         p: "str | None" = paths.get(line)
@@ -1066,13 +1073,17 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
             res.moved_from[line] = unmove.origin[p]
             candidates.append((line, unmove.origin[p], checker, moved[0], moved[1]))
             continue
-        if p not in facts.head and absent_file(p):
+        if p not in facts.head and absent_path(p):
             candidates.append((line, p, checker, "부재", None))
+            if not p.endswith(".py"):
+                subject_dirs.add(line)
             continue
         judged: "tuple[str, anchor_diff.ApprovedMerge | None] | str" = facts.classify(p)
         if isinstance(judged, str):
             res.retained[line] = judged
             continue
+        if facts.is_dir(p):
+            subject_dirs.add(line)
         candidates.append((line, p, checker, judged[0], judged[1]))
     if not candidates:
         return res
@@ -1231,6 +1242,8 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
                 after = after or reason
         if proven is not None:
             res.inflow.append((line, proven, kind))
+            if line in subject_dirs:
+                res.folders.add(line)
         elif after is not None:
             res.retained[line] = after
         elif invalid:
@@ -1530,14 +1543,14 @@ def main(argv: "list[str]") -> int:
         shrunk: "dict[str, str]" = {}
         cand_shrunk: "dict[str, str]" = {}
         if pair_root is not None:
-            # 목록 칸만 줄어든 줄은 그 파일이 앵커와 바이트까지 같을 때만 잔존으로 센다(F4-99 — 고치지 않은 파일).
-            subjects: "dict[str, str | None]" = _line_paths(attributed + sorted(n_cands - l_cands), n_records, cur_prefixes)
+            # 목록 칸만 줄어든 위반 줄은 그 파일이 앵커와 바이트까지 같을 때만 잔존으로 센다(F4-99 — 고치지 않은 파일).
+            # ⓓ 후보 줄은 주어가 바뀌어도(폴더 주어 포함) 목록이 부분집합이면 legacy 다(F4-166 — exit 밖 감수자 입력).
+            subjects: "dict[str, str | None]" = _line_paths(attributed, n_records, cur_prefixes)
 
             def untouched(line: str, _anchor: Path = pair_root) -> bool:
                 return _same_file(_anchor, cur, subjects.get(line))
             shrunk = _list_shrunk([line for line in attributed if untouched(line)], resolved)
-            cand_shrunk = _list_shrunk([line for line in sorted(n_cands - l_cands) if untouched(line)],
-                                       sorted(l_cands - n_cands))
+            cand_shrunk = _list_shrunk(sorted(n_cands - l_cands), sorted(l_cands - n_cands))
         attributed = [line for line in attributed if line not in shrunk]
         resolved = [line for line in resolved if line not in set(shrunk.values())]
         residual = sorted(set(residual) | set(shrunk))
@@ -1724,8 +1737,10 @@ def _print_inflow(prov: _ProvenanceResult) -> None:
     for line, m, kind in prov.inflow:
         print(f"  {line}")
         moved: str = f" · 묶음 이동 따라 {prov.moved_from[line]}" if line in prov.moved_from else ""
-        print(f"    ↳ 유입: {m[:12]}(L 증명) · "
-              + {"파일": "파일 verbatim", "부재": "부재(상류에도 없던 파일)"}.get(kind, "상호작용") + moved)
+        # «상류에도 없던» = 승인 머지의 상류 쪽(^2)에도 없던 — 앵커에 있었는지는 묻지 않는다(main 이 지운 칸도 같은 글자).
+        labels: "dict[str, str]" = ({"파일": "폴더 verbatim", "부재": "부재(상류에도 없던 폴더)"} if line in prov.folders
+                                     else {"파일": "파일 verbatim", "부재": "부재(상류에도 없던 파일)"})
+        print(f"    ↳ 유입: {m[:12]}(L 증명) · " + labels.get(kind, "상호작용") + moved)
 
 
 def _print_provenance_diag(prov: _ProvenanceResult, anchor_sha: str) -> None:

@@ -252,11 +252,17 @@ djr:R-1398 a djr:Permission ;
 
 djr:R-1399 a djr:Permission ;
     skos:prefLabel "Enum·상수 정의부 우변 리터럴 허용"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1399@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-1399@2026-11-15> .
 
 <https://numchida.com/ns/djr#R-1399@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1399 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1399@2026-11-15> a djr:Expression ;
+    prov:specializationOf djr:R-1399 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1399@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-1400 a djr:Permission ;
     skos:prefLabel "Literal[...] 잠긴 인자 자리 리터럴 허용"@ko ;
@@ -332,11 +338,17 @@ djr:R-1408 a djr:Permission ;
 
 djr:R-1409 a djr:Obligation ;
     skos:prefLabel "선언된 집합 타입 값의 심볼 소비"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1409@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-1409@2026-11-15> .
 
 <https://numchida.com/ns/djr#R-1409@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1409 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1409@2026-11-15> a djr:Expression ;
+    prov:specializationOf djr:R-1409 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1409@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-1410 a djr:Prohibition ;
     skos:prefLabel "Enum 값 비교의 == 사용·is 금지"@ko ;
@@ -1880,7 +1892,7 @@ djr:R-1555 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 13 ;
     djr:statesNorm djr:R-1409, djr:R-1410, djr:R-1411, djr:R-1412 ;
-    djr:text "\n**짝 규칙(소비 규율)**: 집합 타입이 선언된 값의 비교·분기·필터·대입·기본값은 반드시 그 심볼로 참조한다 — 선언하고 리터럴로 소비하면 위반이다. 비교는 `==`로 한다(`is` 금지 — 문자열 Enum 값은 경계에서 plain str로 흐르므로 `is`는 수화 누락 시 오타 없이도 조용한 False를 만든다). 단 심볼 치환은 판정 소유 규율을 면책하지 않는다: 도메인 어휘로 진술되는 복합 상태 판정의 1차 시정은 애그리거트 술어·enum 프로퍼티다(`architecture-ddd` §3.2). 값에 검증·연산·불변식이 붙으면(집합의 폐쇄성과 무관하게) Enum이 아니라 값 객체 승격 대상이다(판정은 `architecture-ddd` §3.1 소관).\n"@ko .
+    djr:text "\n**짝 규칙(소비 규율)**: 집합 타입이 선언된 값의 비교·분기·필터·대입·기본값은 반드시 그 심볼로 참조한다 — 선언하고 리터럴로 소비하면 위반이다. 모델은 import 하나 도메인은 import 하지 못하는 두 자리(도메인 우회 읽기 · admin — `discipline-houserules` §5)는 모델이 그 심볼에서 파생한 값 속성으로 참조한다(`implementation-django` §2.5 «모델 쪽 파생 값») — 글로 다시 적은 상수는 리터럴 소비와 같다. 비교는 `==`로 한다(`is` 금지 — 문자열 Enum 값은 경계에서 plain str로 흐르므로 `is`는 수화 누락 시 오타 없이도 조용한 False를 만든다). 단 심볼 치환은 판정 소유 규율을 면책하지 않는다: 도메인 어휘로 진술되는 복합 상태 판정의 1차 시정은 애그리거트 술어·enum 프로퍼티다(`architecture-ddd` §3.2). 값에 검증·연산·불변식이 붙으면(집합의 폐쇄성과 무관하게) Enum이 아니라 값 객체 승격 대상이다(판정은 `architecture-ddd` §3.1 소관).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s026-2.14/b14> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s026-2.14> ;
@@ -1940,7 +1952,7 @@ djr:R-1555 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 8 ;
     djr:statesNorm djr:R-1399 ;
-    djr:text "- Enum·상수 **정의부 자체**의 우변(리터럴의 유일한 서식지)\n"@ko .
+    djr:text "- Enum·상수 **정의부 자체**의 우변(리터럴의 유일한 서식지 — 단 모델은 import 하나 도메인은 import 하지 못하는 두 자리(도메인 우회 읽기 · admin)가 이미 선언된 집합의 값을 글로 다시 적은 사본 상수는 정의부가 아니다)\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s026-2.14/b9> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s026-2.14> ;

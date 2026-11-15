@@ -153,7 +153,7 @@ def _walk_dirs(base: Path) -> list[Path]:
 
 # ── #28 · #148 · #309 · #41 · #36 · #481 — 폴더·경로 낱말 ───────────────────
 
-def _check_path_words(root: Path, bc: Path, bc_vocab_set: set, tech: set,
+def _check_path_words(root: Path, bc: Path, bc_vocab_set: set,
                       f: Findings, cand: Candidates) -> None:
     for d in _walk_dirs(bc):
         name = d.name
@@ -180,10 +180,11 @@ def _check_path_words(root: Path, bc: Path, bc_vocab_set: set, tech: set,
             # domain/app 1차의 종류·정도 낱말은 #17/#18(domain-model) 소유 — 중복 진단 금지.
             f.add("#36", rel, f"정도 낱말 `{name}` — 칸 이름은 「판정이 되는 물음」을 가져야 "
                               "하고 「공통이냐」처럼 정도로 재는 이름은 쓰지 않는다")
-        elif ("_" not in name and name not in _TREE_DIR_NAMES and name not in tech
+        elif ("_" not in name and name not in _TREE_DIR_NAMES
               and not vocab.tokens(name) & bc_vocab_set and len(name) >= 3
               and not name.startswith("django")
-              and d.parent.name in ("framework", "driving_layer")):
+              and d.parent.name in ("framework", "driving_layer")
+              and not vocab.technology_folder(root, d)):
             cand.add("#36", rel, f"칸 `{name}` 이 트리·기술·업무 어휘 어디에도 없다",
                      "이 이름에 예/아니오로 답하는 물음이 붙나")
         # #481 — 부모 낱말 반복(폴더만).
@@ -587,7 +588,6 @@ def main(argv: list[str]) -> int:
 
     findings = Findings(defer=True)
     cand = Candidates(defer=True)
-    tech = vocab.tech_names()
     bcs = [bc for bc in vocab.server_bc_dirs(root) if _has_adoption_signal(bc)]
 
     # 대상 0건 가드(#74) — touched 필터 없음이라 자리는 대상 집합 직후다(#75).
@@ -600,7 +600,7 @@ def main(argv: list[str]) -> int:
 
     for bc in bcs:
         bc_vocab_set = vocab.bc_vocab(bc)
-        _check_path_words(root, bc, bc_vocab_set, tech, findings, cand)
+        _check_path_words(root, bc, bc_vocab_set, findings, cand)
         _check_prefix_suffix(root, bc, findings)
         _check_name_pairs(root, bc, findings)
         _check_wiring_imports(root, bc, findings)
@@ -618,7 +618,7 @@ def main(argv: list[str]) -> int:
                     findings.add("#36", _rel(root, d),
                                  f"정도 낱말 `{d.name}` — 칸 이름은 「판정이 되는 물음」을 가져야 한다")
                 elif "_" not in d.name and d.name not in _TREE_DIR_NAMES \
-                        and d.name not in tech and not vocab.tokens(d.name) & union:
+                        and not vocab.technology_folder(root, d) and not vocab.tokens(d.name) & union:
                     cand.add("#36", _rel(root, d), f"framework 칸 `{d.name}` 이 트리·기술·업무 어휘 어디에도 없다",
                              "이 이름에 예/아니오로 답하는 물음이 붙나")
 

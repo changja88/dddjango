@@ -70,6 +70,11 @@ djr:alias-rule-314 a djr:AliasEntry ;
     djr:aliasText "rule#314" ;
     djr:aliasType djr:alias-unique .
 
+djr:alias-rule-356 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3763 ;
+    djr:aliasText "rule#356" ;
+    djr:aliasType djr:alias-unique .
+
 djr:alias-rule-430 a djr:AliasEntry ;
     djr:aliasFor djr:R-3218 ;
     djr:aliasText "rule#430" ;

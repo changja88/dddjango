@@ -8310,6 +8310,24 @@ def _semantic_findings(
                 "FrameworkErrorSchema/model config mutation in controller forbidden",
             )
 
+    # 선택 컨트롤러가 글자로 쓰는 이름(맨 이름 · 속성 이름 · `from … import` 로 들인 이름)과 `*` 로 들이는 모듈.
+    active_names: set[str] = set()
+    active_star_modules: set[str] = set()
+    for path in active_controllers:
+        active_source = parsed.get(path)
+        if active_source is None:
+            continue
+        for node in ast.walk(active_source.tree):
+            if isinstance(node, ast.Name):
+                active_names.add(node.id)
+            elif isinstance(node, ast.Attribute):
+                active_names.add(node.attr)
+            elif isinstance(node, ast.ImportFrom):
+                for alias in node.names:
+                    if alias.name != "*":
+                        active_names.add(alias.name)
+                    elif (star_module := _absolute_from_module(path, node)) is not None:
+                        active_star_modules.add(star_module)
     for path in sorted(managed_paths, key=Path.as_posix):
         source = parsed.get(path)
         if source is None:
@@ -8318,9 +8336,31 @@ def _semantic_findings(
         if owner is None:
             parts = path.parts
             owner = parts[1] if len(parts) > 2 and parts[0] == "application" else ""
-        operation_ids = {
-            id(operation.node) for operation in operations_by_path.get(path, [])
-        }
+        operations = operations_by_path.get(path, [])
+        if path not in active_controllers:
+            # 2026-11-15 F4-168 — one-hop 으로 들어온 같은 BC 의 선택 밖 컨트롤러 모듈(다른 scope 의 입구 등):
+            # 그 라우트는 자기 scope 렌더의 몫이라 helper 로 세지 않는다 — 모듈 수준 helper 는 그대로 본다.
+            # 선택 컨트롤러가 그 라우트를 가리킬 수 있으면(라우트 이름 · 클래스 라우트는 클래스 이름이나 메서드 이름이
+            # 선택 컨트롤러 글자에 있거나, 그 모듈을 `*` 로 들임 — 라우트끼리 위임) 이 렌더의 길이라 helper 로 남긴다.
+            module = _module_name(path)
+            starred = any(
+                module == star or module.startswith(f"{star}.")
+                for star in active_star_modules
+            )
+            route_class = {
+                id(member): statement.name
+                for statement in source.tree.body
+                if isinstance(statement, ast.ClassDef)
+                for member in statement.body
+            }
+            operations = [
+                operation
+                for operation in _discover_operations(source, owner, analysis)
+                if not starred
+                and operation.node.name not in active_names
+                and route_class.get(id(operation.node)) not in active_names
+            ]
+        operation_ids = {id(operation.node) for operation in operations}
         _helper_findings(
             source,
             owner,

@@ -27,7 +27,13 @@ G2 를 통과할 수 없었다(같은 게이트를 다른 레인은 «해석»�
   분석은 계속한다. 앵커에 없는 정규화 진단문은
   신규로 남는다. 이 모드는 비-git 스냅숏 전용이다(git 저장소 TARGET 에선 사용
   오류 — 실전 렌더 계약 완화로의 오용 차단).
-- 앵커 재실행이 사용/분석 오류(exit 1)면 빈 골격 --error-bc 를 걷고 그 영역 아래 줄을 제외하여
+- 앵커 재실행이 사용/분석 오류(exit 1)이고 registry #2 의 앵커 사본에 지금 inventory 에 없는(이 실행이나 승인 머지가
+  비우거나 지운) BC 오류 모듈(검사기의 정본 후보 이름 꼴이고 검사기가 production 에서 빼는 폴더 밖인 BC 만)이 내용과 함께
+  있으면, 그 모듈을 inventory 에 넣은 렌더와 그 모듈을 비운 렌더를 차례로 돌려 두 렌더 모두에 있는 줄만 기준선으로 쓴다
+  (F4-160 — 그 모듈이 만든 앵커 줄이 같은 글자의 새 줄을 가리지 않게). 넣은 렌더가 서지 않거나 사본의 그 모듈을 비우지
+  못하면(쓰기 오류) 비운 렌더는 돌지 않고, 비운 렌더는 끝나면 사본의 그 모듈을 원래 바이트로 되돌린다(아래 칸이 같은
+  사본을 쓴다).
+- 그래도 서지 않으면 빈 골격 --error-bc 를 걷고 그 영역 아래 줄을 제외하여
   재실행한다. 그래도 서지 않으면 로스터 positional 기준선(`checker_registry.
   checker_argv` — registry_gate 가 내부 실행하는 그 호출)으로 한 번 강등하고,
   그마저 오류면 fail-closed(전량 신규 취급 = blocker 유지)한다. 기준선 오류는 별도 줄로 보고한다.
@@ -818,6 +824,47 @@ def _skeleton_error_bcs(snapshot: Path, argv: "list[str]") -> "list[str]":
     return out
 
 
+_INVENTORY_FLAGS: "tuple[str, str]" = ("--project-code-error-module", "--project-preserve-error-module")
+# registry #2 의 정본 후보 BC 이름(check-error-centralization `BC_NAME_RE` · `_candidate_bc` 와 같은 꼴) — 그 밖 이름의 폴더는
+# 검사기가 후보로 세지 않으므로 ①′ 이 inventory 에 넣지 않는다(넣으면 noncanonical 분석 오류로 ①′ 전체가 무너진다).
+_CANDIDATE_BC_RE: "re.Pattern[str]" = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
+# registry #2 의 production 경로 제외(check-error-centralization `CODE_SKIP_DIRS` · `TEST_DIR_NAMES` 와 같은 글) — 이 이름이
+# 경로에 든 모듈은 검사기 inventory 후보가 아니므로 ①′ 이 넣지 않는다(넣으면 «production candidate에 없음» 분석 오류로
+# ①′ 전체가 무너진다).
+_CHECKER_CODE_SKIP_DIRS: "frozenset[str]" = frozenset({
+    ".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".cache", ".mypy_cache", ".pytest_cache",
+    ".ruff_cache", "migrations", "generated"})
+_CHECKER_TEST_DIR_NAMES: "frozenset[str]" = frozenset({"test", "tests"})
+
+
+def _anchor_only_error_modules(snapshot: Path, argv: "list[str]") -> "list[str]":
+    """스냅숏에는 내용이 있는데 argv 의 project inventory 에 없는 BC 오류 모듈(정렬 · F4-160).
+
+    렌더는 지금 트리 기준이라(빈 골격은 inventory 밖) 이 실행이나 승인 머지가 비우거나 지운 BC 오류 모듈이 여기 든다.
+    BC 이름이 검사기의 정본 후보 꼴(`_CANDIDATE_BC_RE`)이고 경로가 검사기의 production 제외 이름
+    (`_CHECKER_CODE_SKIP_DIRS` · `_CHECKER_TEST_DIR_NAMES`)을 안 지난 것만 든다."""
+    listed: "set[str]" = set()
+    i: int = 0
+    while i < len(argv):
+        name, eq, inline = argv[i].partition("=")
+        if name in _INVENTORY_FLAGS:
+            value: "str | None" = inline if eq else (argv[i + 1] if i + 1 < len(argv) else None)
+            if value is not None:
+                listed.add(value)
+            i += 1 if eq else 2
+            continue
+        i += 1
+    out: "list[str]" = []
+    for module in sorted(snapshot.glob(_ERROR_MODULE.format(bc="*"))):
+        rel: str = module.relative_to(snapshot).as_posix()
+        parts: "set[str]" = set(rel.split("/"))
+        if rel not in listed and _CANDIDATE_BC_RE.fullmatch(rel.split("/")[1]) \
+                and not parts & _CHECKER_CODE_SKIP_DIRS and not parts & _CHECKER_TEST_DIR_NAMES and module.is_file() \
+                and not module.is_symlink() and not checker_target.skeleton_placeholder(module):
+            out.append(rel)
+    return out
+
+
 def _subject_file(normalized_line: str) -> "str | None":
     """정규화 진단 줄의 주어 경로(끝 `:N` 제거 · 깨끗한 상대 경로만). 아니면 None."""
     subject: "str | None" = subject_path(normalized_line)
@@ -879,11 +926,12 @@ class _Baseline:
 
 def _baseline_lines(script: Path, snap: Path, argv: "list[str]", path_flags: "frozenset[str]",
                     alias: "dict[str, str] | None" = None) -> _Baseline:
-    """한 스냅숏의 기준선 사다리 — ① selector 렌더 ② (서지 않을 때만) 빈 골격 --error-bc 를 걷은 selector 렌더
-    ∪ positional ③ positional ④ 불능. ①이 서면 2.21.1 과 같은 실행·같은 문구다.
+    """한 스냅숏의 기준선 사다리 — ① selector 렌더 ①′ (서지 않을 때 · registry #2 만) 앵커에만 있는 BC 오류 모듈을 넣은
+    렌더 ∩ 비운 렌더 ② (서지 않을 때만) 빈 골격 --error-bc 를 걷은 selector 렌더 ∪ positional ③ positional ④ 불능. ①이 서면 2.21.1 과 같은 실행·같은 문구다.
     alias(지금 BC 이름 → 사본 BC 이름)가 있어도 alias 없는 사다리를 먼저 탄다. 그것이 ①로 서면 그대로 쓴다(2.22.2 와
     같은 실행 · 같은 결과). 서지 않을 때만 selector 를 사본의 이름으로 바꾼 argv(`_alias_argv`)로 같은 사다리를 타고,
-    그쪽이 더 높은 칸(① 또는, alias 없는 쪽이 selector 렌더가 아닐 때의 ②)일 때만 쓴다."""
+    그쪽이 더 높은 칸(① 또는, alias 없는 쪽이 selector 렌더가 아닐 때의 ①′ · ②)일 때만 쓴다. 이 고르기에서 ①′ 은 ② 와
+    같은 칸이다(① 아래 · positional 위) — alias 없는 쪽이 ①′ 이나 ② 로 서면 사본 이름 쪽이 ① 일 때만 그쪽을 쓴다."""
     code: int
     lines: "list[str]"
     if alias:
@@ -901,6 +949,41 @@ def _baseline_lines(script: Path, snap: Path, argv: "list[str]", path_flags: "fr
     if code in (0, 2):
         return _Baseline(code, lines, "selector 렌더 재실행", unread=unread)
     error: "str | None" = next((l.strip() for l in reversed(lines) if l.strip()), None)
+    only: "list[str]" = _anchor_only_error_modules(snap, argv) if script.name in _ALIAS_CHECKERS else []
+    if only:
+        # ①′(F4-160) — 앵커에만 내용이 있는 BC 오류 모듈: 그 모듈을 inventory 에 넣은 렌더 ∩ 그 모듈을 비운 렌더.
+        # 넣은 렌더만 쓰면 그 모듈이 만든 앵커 줄(값 중복 등)이 같은 글자의 새 줄을 가린다 — 둘 다에 있는 줄만 기준선이다.
+        added: "list[str]" = list(argv)
+        for rel in only:
+            added += ["--project-code-error-module", rel]
+        icode: int
+        ilines: "list[str]"
+        icode, ilines = _run_lines(_baseline_argv(script, snap, added, path_flags))
+        bcode: int = 1
+        blines: "list[str]" = []
+        if icode in (0, 2):   # 넣은 렌더가 서지 않으면 ①′ 은 서지 못한다 — 비운 렌더를 헛돌리지 않는다
+            saved: "dict[str, bytes]" = {}   # 비우기 쓰기가 성공한 모듈만 — 되돌림은 이것만 쓴다
+            try:
+                for rel in only:
+                    data: bytes = (snap / rel).read_bytes()
+                    (snap / rel).write_bytes(b"")
+                    saved[rel] = data
+            except OSError:
+                pass   # 사본의 그 모듈을 비우지 못하면 ①′ 은 서지 못한다(bcode 1) — 아래 칸으로 내려간다
+            else:
+                bcode, blines = _run_lines(_baseline_argv(script, snap, argv, path_flags))
+            finally:
+                # ①′ 이 서지 못하면 아래 칸(② · positional)이 같은 사본을 잰다 — 비운 모듈을 원래 바이트로 되돌린다.
+                for rel, data in saved.items():
+                    (snap / rel).write_bytes(data)
+        if icode in (0, 2) and bcode in (0, 2):
+            ilines, iunread = _split_baseline_unread(ilines)
+            blines, bunread = _split_baseline_unread(blines)
+            emptied: "set[str]" = set(blines)
+            names: str = ", ".join(rel.split("/")[1] for rel in only)
+            return _Baseline(max(icode, bcode), [line for line in ilines if line in emptied],
+                             f"selector 렌더 재실행(앵커에만 있는 오류 모듈 {names}: 넣은 렌더 ∩ 비운 렌더)",
+                             unread=max(iunread, bunread))
     auto: bool = dict(REGISTRY).get(script.name, False)
     pcode: int
     plines: "list[str]"
@@ -972,6 +1055,7 @@ def _fixed_bc_paths(token: str) -> "frozenset[str]":
 
 _BC_TOKEN: str = "<bc>"
 # 사본 대응을 넘기는 검사기 — 옛 BC 의 오류 모듈이 inventory 밖이라 지금 이름 렌더가 사용 오류로 서지 못하는 registry #2 뿐.
+# 사다리 ①′(앵커에만 있는 오류 모듈 · F4-160)도 같은 까닭이라 이 검사기에만 탄다.
 # 나머지 넷(registry #5 · #6 · #15 · #16)은 대응을 받지 않는다(출력이 2.22.2 와 같음을 구조로 지킨다).
 _ALIAS_CHECKERS: "frozenset[str]" = frozenset({"check-error-centralization.py"})
 _RENAME_MIN_SHARE: float = 0.5   # 닮음(Jaccard) 문턱
@@ -1130,6 +1214,23 @@ def tree_blobs(root: Path, sha: str) -> "dict[str, str]":
         parts: "list[str]" = meta.split()
         if len(parts) == 3 and parts[1] == "blob" and parts[0] != "120000":
             out[path] = parts[2]  # 일반 파일만 — 심링크(120000)는 주어로 받지 않는다(내용이 다른 경로에 있다)
+    return out
+
+
+def tree_dirs(root: Path, sha: str) -> "dict[str, str]":
+    """커밋 트리의 폴더 경로→tree SHA(`git ls-tree -r -t -z` 1회) — 폴더 주어 판정(F4-162)이 쓴다."""
+    proc: "subprocess.CompletedProcess[str]" = run_git(root, "ls-tree", "-r", "-t", "-z", sha)
+    out: "dict[str, str]" = {}
+    if proc.returncode != 0:
+        return out
+    for entry in proc.stdout.split("\0"):
+        meta: str
+        separator: str
+        path: str
+        meta, separator, path = entry.partition("\t")
+        parts: "list[str]" = meta.split()
+        if separator and len(parts) == 3 and parts[1] == "tree":
+            out[path] = parts[2]
     return out
 
 
@@ -1521,14 +1622,35 @@ def after_merge_check(*, key: str, m: "ApprovedMerge", active: "list[ApprovedMer
     return None
 
 
+def _porcelain_paths(out: str) -> "set[str]":
+    """`git status --porcelain -z` 출력의 경로 — 이름 바꿈 · 복사 항목(`XY 새\\0옛\\0`)은 다음 항목이 옛 경로라 두 쪽 모두 넣는다."""
+    paths: "set[str]" = set()
+    entries: "list[str]" = out.split("\0")
+    i: int = 0
+    while i < len(entries):
+        entry: str = entries[i]
+        i += 1
+        if len(entry) <= 3:
+            continue
+        paths.add(entry[3:])
+        if entry[0] in "RC" or entry[1] in "RC":
+            if i < len(entries) and entries[i]:
+                paths.add(entries[i])   # 옛 경로 — 상태 칸이 없다
+            i += 1
+    return paths
+
 
 class PathFacts:
-    """한 실행의 git 사실로 주어 파일 p 를 가른다 — registry_gate `_provenance_split` 의 (i)(ii) 와 같은 판정·같은 사유 글자.
+    """한 실행의 git 사실로 주어 p(파일 · 폴더)를 가른다 — registry_gate `_provenance_split` 의 (i)(ii) 와 같은 판정·같은 사유 글자.
 
     classify(p) = ("파일", 전달 머지) | ("상호작용", None) | 귀속 유지 사유(str)
-      비-blob 경로 — HEAD 의 일반 파일(blob · 심링크 아님)이 아니다
-      worktree 수정 중 — 작업 트리의 p 가 HEAD 와 다르다(미추적·수정·삭제)
-      파일 = F1 · 상호작용 = F2 · 그 밖 = last_toucher 사유(충돌 해소분 · 미승인 머지 경유 · 레인 커밋 수정 · 비머지 커밋 경유)"""
+      비-blob 경로 — HEAD 의 일반 파일(blob · 심링크 아님)도 폴더(tree)도 아니다
+      worktree 수정 중 — `git status` 가 p(폴더면 그 아래 경로)를 HEAD 와 다르다고 적는다(미추적·수정·삭제 · 이름 바꿈은
+        두 쪽 모두). 빈 폴더 · 무시(ignored) 파일은 git status 에 나오지 않아 여기서 못 본다 — 그 차이로 줄이 달라지면
+        L ∧ P(커밋 사본으로 잰다)가 귀속 유지하고, 줄이 같으면 손대지 않은 폴더처럼 판정한다
+      파일 = F1 · 상호작용 = F2 · 그 밖 = last_toucher 사유(충돌 해소분 · 미승인 머지 경유 · 레인 커밋 수정 · 비머지 커밋 경유)
+    폴더 주어(F4-162)는 같은 F1 · F2 를 blob 대신 폴더 tree 로 잰다 — F1′ 승인 머지가 그 폴더를 통째 verbatim 으로 들였고
+    레인이 그 뒤 손대지 않음 · F2′ 앵커 뒤 폴더 무변. 레인이 그 폴더 안을 고쳤으면 파일 판과 같은 사유로 귀속 유지다."""
 
     def __init__(self, root: Path, anchor_sha: str, head_sha: str,
                  chain: "list[ChainCommit]", active: "list[ApprovedMerge]") -> None:
@@ -1536,10 +1658,13 @@ class PathFacts:
         self.chain: "list[ChainCommit]" = chain
         self.active: "list[ApprovedMerge]" = active
         self._cache: "dict[str, dict[str, str]]" = {}
+        self._dir_cache: "dict[str, dict[str, str]]" = {}
+        self.head_sha: str = head_sha
+        self.anchor_sha: str = anchor_sha
         self.head: "dict[str, str]" = self.blobs(head_sha)
         self.anchor: "dict[str, str]" = self.blobs(anchor_sha)
-        self.dirty: "set[str]" = {entry[3:] for entry in run_git(
-            root, "status", "--porcelain", "--untracked-files=all", "-z").stdout.split("\0") if len(entry) > 3}
+        self.dirty: "set[str]" = _porcelain_paths(run_git(
+            root, "status", "--porcelain", "--untracked-files=all", "-z").stdout)
         self.position: "dict[str, int]" = {c.sha: i for i, c in enumerate(chain)}
 
     def blobs(self, sha: str) -> "dict[str, str]":
@@ -1547,9 +1672,18 @@ class PathFacts:
             self._cache[sha] = tree_blobs(self.root, sha)
         return self._cache[sha]
 
+    def dirs(self, sha: str) -> "dict[str, str]":
+        if sha not in self._dir_cache:
+            self._dir_cache[sha] = tree_dirs(self.root, sha)
+        return self._dir_cache[sha]
+
+    def is_dir(self, p: str) -> bool:
+        """HEAD 에서 p 가 폴더인가(파일 주어와 갈라 적는 데 쓴다)."""
+        return p not in self.head and p in self.dirs(self.head_sha)
+
     def classify(self, p: str) -> "tuple[str, ApprovedMerge | None] | str":
         if p not in self.head:
-            return "비-blob 경로"
+            return self._classify_dir(p)
         if p in self.dirty:
             return "worktree 수정 중"
         deliver: "ApprovedMerge | None" = next(
@@ -1561,10 +1695,27 @@ class PathFacts:
             return ("상호작용", None)
         return self.retained_reason(p)
 
-    def retained_reason(self, p: str) -> str:
+    def _classify_dir(self, p: str) -> "tuple[str, ApprovedMerge | None] | str":
+        """폴더 주어의 F1′ · F2′(F4-162) — 사유 글자는 파일 판과 같다."""
+        head: "str | None" = self.dirs(self.head_sha).get(p)
+        if head is None:
+            return "비-blob 경로"
+        if any(entry.startswith(p + "/") for entry in self.dirty):
+            return "worktree 수정 중"
+        deliver: "ApprovedMerge | None" = next(
+            (m for m in self.active if self.dirs(m.parent1).get(p) != self.dirs(m.sha).get(p)
+             and self.dirs(m.sha).get(p) == self.dirs(m.parent2).get(p) == head), None)
+        if deliver is not None:
+            return ("파일", deliver)
+        if head == self.dirs(self.anchor_sha).get(p):
+            return ("상호작용", None)
+        return self.retained_reason(p, self.dirs)
+
+    def retained_reason(self, p: str, entries: "Callable[[str], dict[str, str]] | None" = None) -> str:
+        of: "Callable[[str], dict[str, str]]" = entries or self.blobs
         last: "ChainCommit | None" = next(
             (c for c in reversed(self.chain)
-             if self.blobs(c.sha).get(p) != (self.blobs(c.parents[0]).get(p) if c.parents else None)), None)
+             if of(c.sha).get(p) != (of(c.parents[0]).get(p) if c.parents else None)), None)
         if last is None:
             return "유입 증명 실패(경로 추적 불능)"
         approved: "set[str]" = {m.sha for m in self.active}
@@ -1574,7 +1725,7 @@ class PathFacts:
             return f"미승인 머지 경유 {last.sha[:12]}"
         before: "ApprovedMerge | None" = next(
             (m for m in self.active if self.position.get(m.sha, 1 << 30) < self.position[last.sha]
-             and self.blobs(m.sha).get(p) != self.blobs(m.parent1).get(p)), None)
+             and of(m.sha).get(p) != of(m.parent1).get(p)), None)
         if before is not None:
             return f"레인 커밋 수정 {last.sha[:12]}(승인 머지 {before.sha[:12]} 이후)"
         return f"비머지 커밋 경유 {last.sha[:12]}"
@@ -1590,6 +1741,7 @@ class _InflowSplit:
     pruned: int = 0                                                         # 숨김 경로 사본 밖 링크를 뺀 사본 수
     failures: "dict[str, str]" = field(default_factory=dict)                # 커밋 sha → 왜 못 쓰는가
     renders: int = 0                                                        # 서로 다른 트리를 잰 수
+    folders: "set[str]" = field(default_factory=set)                        # 주어가 폴더인 유입 줄(F4-162 · 표기만)
 
 
 def _approved_inflow_split(
@@ -1698,7 +1850,7 @@ def _approved_inflow_split(
             if key not in incoming.lines:
                 continue
             note: "str | None" = None
-            if kind == "파일" and not exists_at(m.parent1, p):
+            if kind == "파일" and p in facts.head and not exists_at(m.parent1, p):
                 note = "^1 에 주어 파일 없음"   # 주어 파일이 레인 쪽 직전 트리에 없었다 — 그 파일 주어의 같은 줄은 거기서 날 수 없다
             else:
                 lane: Sample
@@ -1718,6 +1870,8 @@ def _approved_inflow_split(
             after = after or reason
         if proven is not None:
             out.inflow.append((line, proven[0], kind, proven[1]))
+            if facts.is_dir(p):
+                out.folders.add(line)
         elif after is not None:
             out.retained[line] = after
         elif invalid is not None:
@@ -1863,7 +2017,7 @@ def partition_exit(
         for line, m_sha, kind, note in split.inflow:
             print(f"  {line.strip()}")
             print(f"    ↳ 유입: {m_sha[:12]}(L 증명{' · ' + note if note else ''}) · "
-                  f"{'파일 verbatim' if kind == '파일' else '상호작용'}")
+                  f"{('폴더 verbatim' if line in split.folders else '파일 verbatim') if kind == '파일' else '상호작용'}")
     if sister:
         print(f"  == {SISTER_TITLE} {len(sister)}건 ==")
         for line in sister:

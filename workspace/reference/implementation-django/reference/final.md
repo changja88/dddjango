@@ -248,6 +248,8 @@ class OrderModel(models.Model):
 
 **`.value` 평탄화**: `default=` 등 마이그레이션이 직렬화하는 자리에 순수 StrEnum **멤버를 직접 두면** Django `EnumSerializer`가 마이그레이션 파일에 **살아있는 enum 참조**(`OrderStatus["PENDING"]` + domain import)를 박는다 — 값 동결 직렬화(`ChoicesSerializer`)는 `models.Choices` 전용이다. domain Enum 파생 시에는 `.value`로 평탄화한다(단일 출처에서의 파생이므로 심볼 소비로 인정). `CheckConstraint`(`check=`)·부분 인덱스의 `Q()` 조건 값도 같은 파생으로 쓴다.
 
+**모델 쪽 파생 값**: `domain_layer` 를 import 하지 않는 두 driven 자리 — 도메인 우회 읽기 구현(`adapter/persistence/domain_bypass_query/`)과 admin(`django_<bounded_context>/admin/`) — 이 도메인 값 집합의 값으로 거르거나 견줄 때(저장 칸 거르기 · 견주기 · 내보내는 판별 값)는 그 값을 담은 행의 모델 클래스가 VO 멤버의 `.value` 를 `Final[str]` 로 묶은 값 속성을 쓴다 — `STATUS_PENDING: Final[str] = OrderStatus.PENDING.value` · 쓰는 쪽 `.filter(status=OrderModel.STATUS_PENDING)`(모델 모듈 수준 이름 · `Final[int]` · `str` · `int` 주석으로 묶은 값도 #356 · #668 위반은 아니다 — 쓰는 꼴은 클래스 속성 `Final[str]` 하나). 위 `.value` 평탄화와 같은 단일 출처 파생이고 쓰는 값만 둔다. 저장 칸이 아닌 판별 값(조회 결과의 종류 표지 등)도 그 값을 내는 행의 모델이 든다. 함수형 `TextChoices("…", [...])` 파생은 mypy 가 멤버를 보지 못해 쓰지 않는다. 도메인 이름 자체(VO 클래스 · 멤버 — 모델 모듈 수준 이름이든 모델 클래스 안 별칭이든)를 모델을 거쳐 가져오거나 쓰면 그 자리의 import 금지(#356 · #668) 위반이고, 값을 글로 다시 적은 상수(`_PENDING: Final[str] = "pending"`)는 출처가 둘이 되는 위반이다.
+
 **소비 규율**: `choices`/Enum이 선언된 필드 값의 비교·분기·`.filter()`·대입·`default`는 반드시 심볼로 참조한다 — `.filter(status="pending")` 금지 → `.filter(status=OrderStatus.PENDING)`. 비교는 `==`(`is` 금지 — 필드 값은 plain str로 흐른다). 복합 상태 판정의 1차 시정은 애그리거트 술어·enum 프로퍼티다(`architecture-ddd` §3.2) — 심볼 치환이 판정 소유를 면책하지 않는다. 승격 판정·리터럴 허용 목록은 `discipline-cleancode` §2.14.
 
 ### 2.6 템플릿 코딩 스타일 [DCS]

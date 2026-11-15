@@ -46,6 +46,7 @@ import io
 import re
 import json
 import errno
+import stat
 import importlib.util
 from types import ModuleType
 from unittest.mock import patch
@@ -386,8 +387,11 @@ class BaselineBcArgvRegression(unittest.TestCase):
 
 class EmptyScopeBcRegression(unittest.TestCase):
     """세 검사기 × 두 explicit profile의 parser 계약과 실행 흐름을 고정한다."""
-    scripts = (CENT, OPENAPI, CONTRACT)
     profiles = ("dddjango-code-json", "preserve-established")
+
+    @property
+    def scripts(self) -> "tuple[Path, ...]":
+        return (CENT, OPENAPI, CONTRACT)   # 부를 때 전역을 읽는다(`--scripts` 모드)
 
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="empty-scope-bc-")
@@ -504,7 +508,7 @@ class BcSelectorPartitionRegression(unittest.TestCase):
     def assert_partition(self, extra, new, existing=None):
         code, out = _run(CENT, self.repo, [*_T_ARGS, *extra, "--anchor", self.anchor])
         self.assertEqual(code, 2 if new else 0, out)
-        self.assertIn("기준선=selector 렌더 재실행", out)
+        self.assertIn("기준선=selector 렌더 재실행):", out)   # ① 칸 — ①′(앵커에만 있는 오류 모듈) 표기는 통과하지 않는다
         self.assertNotIn("positional 기준선", out)
         self.assertNotIn("사용 오류", out)
         normalize = lambda lines: {re.sub(r":\d+(?=:|\b)", ":N", line) for line in lines}
@@ -790,7 +794,8 @@ class UnnumberedDebtRegression(unittest.TestCase):
         path.write_text("".join(line + "\n" for line in lines), encoding="utf-8")
         return path
 
-    def partition(self, findings: list[str], debt: Path, script: Path = CENT) -> tuple[int, str]:
+    def partition(self, findings: list[str], debt: Path, script: Path | None = None) -> tuple[int, str]:
+        script = CENT if script is None else script   # 부를 때 전역을 읽는다(`--scripts` 모드)
         out: io.StringIO = io.StringIO()
         with patch.object(self.diff, "_run_lines", side_effect=((0, []),)), contextlib.redirect_stdout(out):
             code: int = self.diff.partition_exit(script=script, label=f"[{script.stem}]", target=self.repo,
@@ -1554,7 +1559,8 @@ class ApprovedInflowPartitionRegression(unittest.TestCase):
         return ApprovedInflowRepo(self.td, name)
 
     def run_scope(self, r: ApprovedInflowRepo, anchor: str, merges: tuple[str, ...],
-                  script: Path = CTX, argv: list[str] | None = None) -> tuple[int, str]:
+                  script: Path | None = None, argv: list[str] | None = None) -> tuple[int, str]:
+        script = CTX if script is None else script   # 부를 때 전역을 읽는다(`--scripts` 모드)
         return _run(script, r.root, [*(argv if argv is not None else ["--scope-bc", "accounts"]),
                      "--anchor", anchor, "--approved-merge-file", str(r.approved(*merges))])
 
@@ -1976,7 +1982,29 @@ class ApprovedInflowPartitionRegression(unittest.TestCase):
         r.checkout("main"); r.write(acl.format(bc="orders") + "/accounts/__init__.py"); r.commit("U")
         r.checkout("lane"); r.merge(pending=True); r.rm(acl.format(bc="orders") + "/accounts"); merge: str = r.commit("merge drops reverse ACL")
         (r.root / (acl.format(bc="orders") + "/accounts")).mkdir()
-        self.verdict(self.run_scope(r, anchor, (merge,), CTX, ["--scope-bc", "accounts", "--scope-bc", "orders"]), 2, "비-blob 경로")
+        # 폴더 주어(F4-162)로 재도 머지 결과에 그 줄이 없다 — 작업 트리의 빈 폴더는 git status 에 안 나오고 P 가 막는다
+        out: str = self.verdict(self.run_scope(r, anchor, (merge,), CTX, ["--scope-bc", "accounts", "--scope-bc", "orders"]), 2,
+                                f"↳ 귀속 유지: 유입 증명 실패(승인 머지 {merge[:12]} 결과에 없음)")
+        self.assertEqual(out.count(f"↳ 귀속 유지: 유입 증명 실패(승인 머지 {merge[:12]} 결과에 없음)"), 2, out)
+        self.assertNotIn("비-blob 경로", out)
+
+    def test_F4_162_Y_upstream_reverse_acl_folder_subjects_are_inflow(self) -> None:
+        """승인 머지가 상류의 역방향 ACL 을 그대로 받음 — #450 두 줄의 BC 폴더 주어가 폴더 tree 로 유입 증명된다(F4-162):
+        레인이 손대지 않은 accounts 는 «상호작용»(앵커 뒤 폴더 무변) · 머지가 들인 orders 는 «폴더 verbatim»."""
+        r: ApprovedInflowRepo = self.repo("reverse-acl")
+        r.project("accounts", "orders")
+        acl: str = "application/{bc}/driven_layer/adapter/anticorruption_layer"
+        r.write(acl.format(bc="accounts") + "/orders/__init__.py")
+        anchor: str = r.commit("A")
+        r.checkout(anchor, "lane"); r.write("lane.txt", "l"); r.commit("L")
+        r.checkout("main"); r.write(acl.format(bc="orders") + "/accounts/__init__.py"); r.commit("U")
+        r.checkout("lane"); merge: str = r.merge()
+        out: str = self.verdict(self.run_scope(r, anchor, (merge,), CTX, ["--scope-bc", "accounts", "--scope-bc", "orders"]), 0,
+                                "승인 유입 2건")
+        inflow: list[str] = out.split("== 승인 유입", 1)[1].splitlines()
+        for subject, label in (("application/accounts:", "상호작용"), ("application/orders:", "폴더 verbatim")):
+            at: int = next(i for i, line in enumerate(inflow) if line.startswith("  [#450] " + subject))
+            self.assertEqual(inflow[at + 1].strip(), f"↳ 유입: {merge[:12]}(L 증명) · {label}", out)
 
     def test_Q17_reg16_M2(self) -> None:
         r: ApprovedInflowRepo = self.repo("reg16")
@@ -1991,7 +2019,10 @@ class ApprovedInflowPartitionRegression(unittest.TestCase):
                           "--registrar-module", "application/service_policy/driving_layer/api/api_router.py"]
         self.verdict(self.run_scope(r, anchor, (merge,), COMP, argv), 2, "측정 무효(M^2)")
 
-    def test_Q19_removed_preserve_inventory_not_supplemented(self) -> None:
+    def test_Q19_removed_inventory_supplemented_intersection_keeps_lane_duplicate_new(self) -> None:
+        """상류가 지운 zulu 오류 모듈을 앵커 사본의 넣은 렌더가 보충하지만 비운 렌더와의 교집합이 zulu 가 만든 값 중복 줄을 빼
+        레인이 orders 에 만든 같은 값 중복은 신규로 남는다(F4-160)."""
+        dup: str = "- application/accounts/driving_layer/api/bc_error_schema.py:N: duplicate project code wire value: wire_x"
         for mode in ("dup", "import"):
             with self.subTest(mode=mode):
                 r: ApprovedInflowRepo = self.repo(mode)
@@ -2009,7 +2040,16 @@ class ApprovedInflowPartitionRegression(unittest.TestCase):
                 if mode == "import":
                     r.write(extra, (r.root / extra).read_text().replace("application.zulu.", "application.orders.").replace("ZuluErrorSchema", "OrdersErrorSchema"))
                 r.commit("lane fills orders")
-                self.verdict(self.run_scope(r, anchor, (merge,), CENT, r.selectors(("accounts", "orders"), inventory=True)), 2, "기준선 오류:")
+                out: str = self.verdict(self.run_scope(r, anchor, (merge,), CENT, r.selectors(("accounts", "orders"), inventory=True)),
+                                        2, "앵커에만 있는 오류 모듈 zulu: 넣은 렌더 ∩ 비운 렌더")
+                self.assertNotIn("기준선 오류:", out)
+                new: list[str] = [re.sub(r":\d+:", ":N:", line) for line in out.split("== 신규분", 1)[1].split("  == ", 1)[0].splitlines()]
+                self.assertEqual(sum(1 for line in new if line.startswith("  - ")), 1 if mode == "dup" else 2, out)
+                at: int = next(i for i, line in enumerate(new) if line.startswith("  " + dup))
+                self.assertEqual(new[at + 1].split(" — ")[0], "    ↳ 귀속 유지: 측정 무효(M^2)", out)
+                if mode == "import":
+                    self.assertTrue(any("place/extra.py:N: concrete FrameworkErrorSchema outside canonical module" in line
+                                        for line in new), out)
 
     def test_Q20_escape(self) -> None:
         r: ApprovedInflowRepo
@@ -2517,9 +2557,32 @@ class RenamedBcBaselineRegression(unittest.TestCase):
         return out
 
     def run_both(self, r: ApprovedInflowRepo, anchor: str, merges: tuple[str, ...], argv: list[str],
-                 script: Path = CENT) -> tuple[tuple[int, str], tuple[int, str]]:
+                 script: Path | None = None) -> tuple[tuple[int, str], tuple[int, str]]:
+        script = CENT if script is None else script   # 부를 때 전역을 읽는다(`--scripts` 모드)
         extra: list[str] = ["--anchor", anchor] + (["--approved-merge-file", str(r.approved(*merges))] if merges else [])
         return _run(script, r.root, argv + extra), _reworded(_run(self.released() / script.name, r.root, argv + extra))
+
+    def prime(self, old: tuple[int, str], bcs: str, k: str | None) -> tuple[int, str]:
+        """옛 판 #2 출력에서 기준선 글 두 자리만 ①′(앵커에만 있는 오류 모듈 · F4-160)로 옮긴다 — ⓐ 앵커 머리 줄의 positional
+        강등 표기와 그 밑 «기준선 오류:» 한 줄 ⓑ (k 가 있으면) 머지 표 `↳ ^k 기준선:` 줄. 그 밖 글자 · exit 는 그대로다.
+        옮길 자리는 정확히 한 번씩 있어야 한다(대응이 틀리면 시험이 먼저 깨진다)."""
+        code, out = old
+        positional: str = "positional 기준선(selector 렌더 불능 강등 — selector-lane 진단은 전량 신규 취급)"
+        prime: str = f"selector 렌더 재실행(앵커에만 있는 오류 모듈 {bcs}: 넣은 렌더 ∩ 비운 렌더)"
+        lines: list[str] = out.split("\n")
+        head: list[int] = [i for i, line in enumerate(lines)
+                           if line.startswith("[check-error-centralization] 앵커 차분(") and f"기준선={positional})" in line]
+        self.assertEqual(len(head), 1, out)
+        lines[head[0]] = lines[head[0]].replace(f"기준선={positional})", f"기준선={prime})")
+        error: list[int] = [i for i, line in enumerate(lines) if line.startswith(
+            "  기준선 오류: [check-error-centralization] 사용 오류: canonical candidate가 project inventory union에 없음: ")]
+        self.assertEqual(len(error), 1, out)
+        del lines[error[0]]
+        if k is not None:
+            table: list[int] = [i for i, line in enumerate(lines) if line.startswith(f"    ↳ {k} 기준선: {positional} — 오류: ")]
+            self.assertEqual(len(table), 1, out)
+            lines[table[0]] = f"    ↳ {k} 기준선: {prime}"
+        return code, "\n".join(lines)
 
     def assert_kept_with_pre_route_lines(self, new: tuple[int, str], old: tuple[int, str]) -> None:
         """F4-173 — #5 는 옛 판에 없는 c 줄(경로 앞 응답 꼴이 없는 저장소의 operation 마다 «경로 앞 오류가 문서에 없다»)을
@@ -2832,7 +2895,7 @@ class RenamedBcBaselineRegression(unittest.TestCase):
         r.commit("lane removes the kept folder and duplicates the accounts value")
         new, old = self.run_both(r, anchor, (merge,), self.argv("accounts", "fortune_saju", "service_policy"))
         self.assertEqual(old[0], 2, old[1])
-        self.assertEqual(new, old)
+        self.assertEqual(new, self.prime(old, "lucky_charm", None))   # 상류가 지운 lucky_charm 오류 모듈 — 앵커 기준선 ①′
         # a2 — 상류: 모양이 같은 두 영역을 한 병합에서 개명(동률). 레인: 옛 이름 하나를 남기고 새 이름 하나를 미리 만든다.
         r = ApprovedInflowRepo(self.td, "crossed")
         r.project("accounts", "decisive_fortune", "lucky_charm", "service_policy")
@@ -2853,11 +2916,12 @@ class RenamedBcBaselineRegression(unittest.TestCase):
         r.rm("application/lucky_charm"); r.rm("application/fortune_saju/lane_pre.py"); self.urls(r); r.commit("lane follow-up")
         new, old = self.run_both(r, anchor, (merge,), self.argv("accounts", "fortune_charm", "fortune_saju", "service_policy"))
         self.assertEqual(old[0], 2, old[1])
-        self.assertEqual(new, old)
+        self.assertEqual(new, self.prime(old, "decisive_fortune", "^1"))   # 짝이 서지 않은 옛 이름 오류 모듈 — 앵커 · ^1 기준선 ①′
 
     def test_G1_no_one_to_one_pair_or_outside_is_byte_identical_to_released(self) -> None:
         """짝이 서지 않거나 상황 밖이면 2.22.2 와 글자 같음 — 동률 · 상관없는 BC 지우고 만들기 · 같은 이름 파일 하나뿐인 작은 영역 ·
-        레인 자기 이름 바꾸기(그대로 · 자기 곁가지 병합을 승인 목록에 올림) · 옛 이름 되살림 · 승인 목록 없음."""
+        레인 자기 이름 바꾸기(그대로 · 자기 곁가지 병합을 승인 목록에 올림) · 옛 이름 되살림 · 승인 목록 없음 — #2 는 앵커에만 있는
+        오류 모듈이 있으면 기준선 글 두 자리만 ①′ 로(F4-160 · 사례마다 `primed` 에 적는다)."""
         cases: dict[str, tuple[ApprovedInflowRepo, str, tuple[str, ...], tuple[str, ...]]] = {}
         r, anchor = self.anchor("tie", charm="place")
         merge = self.upstream(r, ("decisive_fortune", "fortune_saju"), ("lucky_charm", "fortune_charm"), full=True)
@@ -2900,11 +2964,19 @@ class RenamedBcBaselineRegression(unittest.TestCase):
         r.git("branch", "-q", "-D", "side")
         r.schema("fortune_saju", "unknown_place_code", extra=True); r.commit("lane makes the duplicate in the renamed BC")
         cases["own-side-merge"] = (r, anchor, (merge,), ("accounts", "fortune_saju", "service_policy"))
+        # #2 에서 기준선이 ①′ 로 서는 사례 — (앵커에만 있는 오류 모듈, 머지 표에서 ①′ 로 서는 칸)
+        primed: dict[str, tuple[str, str | None]] = {
+            "tie": ("decisive_fortune, lucky_charm", "^1"), "delete-add": ("decisive_fortune", "^1"),
+            "lane-rename": ("decisive_fortune", "^2"), "anchor-only": ("decisive_fortune", None),
+            "tiny-mirror": ("lucky_charm", None), "own-side-merge": ("decisive_fortune", None)}
         for name, (r, anchor, merges, bcs) in cases.items():
             for script in (CENT, CTX):
                 with self.subTest(case=name, script=script.name):
                     new, old = self.run_both(r, anchor, merges, self.argv(*bcs, inventory=script is CENT), script)
-                    self.assertEqual(new, old)
+                    if script is CENT and name in primed:
+                        self.assertEqual(new, self.prime(old, *primed[name]))
+                    else:
+                        self.assertEqual(new, old)
                     self.assertNotIn("영역 이름 대응", new[1])
 
     def test_G2_lane_made_duplicates_stay_new(self) -> None:
@@ -2930,7 +3002,7 @@ class RenamedBcBaselineRegression(unittest.TestCase):
         r.commit("lane moves the duplicate")
         merge = self.note_merge(r, "mv")
         new, old = self.run_both(r, anchor, (merge,), self.argv("accounts", "service_policy"))
-        self.assertEqual(new, old)
+        self.assertEqual(new, self.prime(old, "decisive_fortune", "^2"))   # 레인이 지운 오류 모듈 — 앵커 · ^2 기준선 ①′
         self.assertEqual(new[0], 2, new[1])
 
     def test_한계_same_text_third_owner_mirrored_delete_add_and_subject_flip(self) -> None:
@@ -2972,7 +3044,9 @@ class AnchorSnapshotEscapeRegression(unittest.TestCase):
     읽어 레인 위반이 «원래 있던 것» 으로 빠지던 길. 저장소 안 상대 심링크는 2.22.2 와 글자 같음."""
 
     ctx: list[str] = ["--error-profile", "dddjango-code-json", "--scope", "sym", "--api-module", "config/api.py", "--scope-bc", "accounts"]
-    gate: Path = S / "registry_gate.py"
+    @property
+    def gate(self) -> Path:
+        return S / "registry_gate.py"   # 부를 때 전역을 읽는다(`--scripts` 모드)
 
     def setUp(self) -> None:
         self.temp: tempfile.TemporaryDirectory[str] = tempfile.TemporaryDirectory(prefix="anchor-escape-")
@@ -3432,14 +3506,33 @@ class HiddenSnapshotRegression(unittest.TestCase):
         self.assertIn(".dddjango-web/r/log.txt", self.tree(dest))
 
 
-def main() -> int:
+def main(argv: "list[str] | None" = None) -> int:
     """스모크 전체를 이 실행 전용 임시 폴더(TMPDIR)에서 돈다 — 게이트 · 검사기의 임시 사본 뿌리가 실제 임시 폴더의
-    다른 실행 사본과 섞이지 않게."""
+    다른 실행 사본과 섞이지 않게.
+
+    `--scripts <dir> <시험 이름…>` [`--fail-fast`]: 그 폴더의 scripts(변이 사본)로 이름 붙인 시험(`클래스` · `클래스.메서드`)만
+    돈다 — registry_gate_smoke `--mutation-test` 가 기준선 사다리 변이를 이 시험으로 죽인다. 경로 전역(S · CTX · COMP · CENT ·
+    OPENAPI · CONTRACT)을 바꿔 끼우고 그 폴더를 import 경로 맨 앞에 둔다 — 시험 helper 는 경로를 부를 때 전역에서 읽고
+    (기본 인자에 묶지 않는다), 함수 안 `import anchor_diff` 도 그 폴더의 것을 연다. 옛 배포판 대조(`released()` 등)는 그대로다."""
+    global S, CTX, COMP, CENT, OPENAPI, CONTRACT
+    args: "list[str]" = list(sys.argv[1:] if argv is None else argv)
+    names: "list[str]" = []
+    if "--scripts" in args:
+        at: int = args.index("--scripts")
+        S = Path(args[at + 1]).resolve()
+        CTX, COMP, CENT = S / "check-context-isolation.py", S / "check-composition-root.py", S / "check-error-centralization.py"
+        OPENAPI, CONTRACT = S / "check-openapi-error-declaration.py", S / "check-api-error-controller-contract.py"
+        sys.path.insert(0, str(S))
+        names = [a for a in args[:at] + args[at + 2:] if not a.startswith("--")]
     private: str = tempfile.mkdtemp(prefix="anchor-smoke-tmp-")
     saved: "str | None" = os.environ.get("TMPDIR")
     os.environ["TMPDIR"] = private
     tempfile.tempdir = private
     try:
+        if names:
+            suite = unittest.defaultTestLoader.loadTestsFromNames(names, sys.modules[__name__])
+            runner = unittest.TextTestRunner(verbosity=2, failfast="--fail-fast" in args)
+            return 0 if runner.run(suite).wasSuccessful() else 2
         return _main()
     finally:
         tempfile.tempdir = None
@@ -3558,6 +3651,287 @@ class BaselineLadderHoldsRegression(unittest.TestCase):
         self.assertIn("빈 골격 --error-bc 걷음: relay", out)
         self.assertIn("신규분(앵커 이후) 0건", out)
         self.assertIn("앵커 기존분(잔존) ", out)
+
+    # F4-160 — 앵커에는 내용이 있던 BC 오류 모듈을 지금 트리가 비우거나 지움 → #2 기준선 ①′(넣은 렌더 ∩ 비운 렌더).
+    # 재료: 공용 + lesson(옛 위반 하나 · base 기본값) + 오류 모듈 BC 하나 이상. 렌더는 지금 트리 기준(빈 골격은 inventory 밖).
+    CATALOG: str = _LESSON_STATIC_SRC.replace("lesson", "catalog").replace("Lesson", "Catalog")
+    LEGACY_LINE: str = ("[#572] application/lesson/driving_layer/api/bc_error_schema.py:N: BC base must preserve common "
+                        "required/default semantics: code: LessonErrorCode = LessonErrorCode.NOT_FOUND")
+    PRIME_HEAD: str = "기준선=selector 렌더 재실행(앵커에만 있는 오류 모듈 {}: 넣은 렌더 ∩ 비운 렌더))"
+
+    @staticmethod
+    def schema_rel(bc: str) -> str:
+        return f"application/{bc}/driving_layer/api/bc_error_schema.py"
+
+    def owner(self, bc: str, value: str | None = None) -> "dict[str, str]":
+        """오류 모듈 하나를 가진 BC — value 는 wire 값(없으면 `<bc>_not_found`)."""
+        source: str = self.CATALOG.replace("catalog", bc).replace("Catalog", bc.title())
+        if value is not None:
+            source = source.replace(f'"{bc}_not_found"', f'"{value}"')
+        return {f"application/{bc}/__init__.py": "", f"application/{bc}/driving_layer/__init__.py": "",
+                f"application/{bc}/driving_layer/api/__init__.py": "", self.schema_rel(bc): source,
+                f"application/{bc}/driving_layer/controller.py": f"def get_{bc}(request): return {{'id': 1}}\n"}
+
+    def prime_files(self, **owners: "dict[str, str]") -> "dict[str, str]":
+        files: "dict[str, str]" = {"framework/__init__.py": "", "framework/ninja/__init__.py": "",
+                                   "framework/ninja/framework_error_schema.py": _COMMON_SRC, "application/__init__.py": "",
+                                   "config/__init__.py": "",
+                                   "config/api.py": "from ninja_extra import NinjaExtraAPI\n\napi = NinjaExtraAPI()\n"}
+        files.update(self.owner("lesson"))
+        files[_LESSON_SCHEMA_REL] = _LESSON_BASE_DEFAULT_SRC
+        for extra in owners.values():
+            files.update(extra)
+        return files
+
+    @classmethod
+    def prime_argv(cls, *bcs: str) -> "list[str]":
+        out: "list[str]" = ["--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py",
+                            "--project-code-error-module", "framework/ninja/framework_error_schema.py"]
+        for bc in bcs:
+            out += ["--controller-module", f"application/{bc}/driving_layer/controller.py", "--scope-bc", bc,
+                    "--error-bc", bc, "--project-code-error-module", cls.schema_rel(bc)]
+        return out
+
+    def prime_lane(self, name: str, files: "dict[str, str]", lane: "Callable[[Path], None]", *bcs: str,
+                   upstream: "Callable[[Path], None] | None" = None) -> "tuple[int, str]":
+        """앵커 = files · 레인 단계를 커밋(upstream 이 있으면 main 단계를 승인 머지로 들임) → 지금 렌더 bcs 로 #2 --anchor."""
+        repo: Path = self.td / name
+        for rel, src in files.items():
+            _write(repo, rel, src)
+        self.assertEqual(_git(repo, "init", "-q", "-b", "main").returncode, 0)
+        anchor: str = _commit_all(repo, "anchor")
+        extra: "list[str]" = []
+        if upstream is None:
+            lane(repo)
+            _commit_all(repo, "lane")
+        else:
+            self.assertEqual(_git(repo, "checkout", "-q", "-b", "lane").returncode, 0)
+            lane(repo)
+            _commit_all(repo, "lane")
+            self.assertEqual(_git(repo, "checkout", "-q", "main").returncode, 0)
+            upstream(repo)
+            _commit_all(repo, "upstream")
+            self.assertEqual(_git(repo, "checkout", "-q", "lane").returncode, 0)
+            self.assertEqual(_git(repo, "merge", "-q", "--no-ff", "-m", "approved merge", "main").returncode, 0)
+            approved: Path = self.td / f"{name}-approved.txt"
+            approved.write_text(_git(repo, "rev-parse", "HEAD").stdout.strip() + " approved\n", encoding="utf-8")
+            extra = ["--approved-merge-file", str(approved)]
+        return _run(CENT, repo, [*self.prime_argv(*bcs), "--anchor", anchor, *extra])
+
+    def empty(self, bc: str) -> "Callable[[Path], None]":
+        return lambda repo: _write(repo, self.schema_rel(bc), "")
+
+    def partition(self, out: str) -> "tuple[set[str], set[str]]":
+        normalize = lambda lines: {re.sub(r":\d+:", ":N:", line) for line in lines if line.startswith(("[#", "- "))}
+        return normalize(_section(out, "신규분")), normalize(_section(out, "앵커 기존분"))
+
+    def test_160_P_lane_empties_error_module_keeps_existing(self) -> None:
+        code, out = self.prime_lane("p", self.prime_files(catalog=self.owner("catalog")), self.empty("catalog"), "lesson")
+        self.assertEqual(code, 0, out)
+        self.assertIn(self.PRIME_HEAD.format("catalog"), out)
+        self.assertNotIn("기준선 오류:", out)
+        self.assertEqual(self.partition(out), (set(), {self.LEGACY_LINE}), out)
+
+    def test_160_Q_lane_deletes_bc_keeps_existing(self) -> None:
+        code, out = self.prime_lane("q", self.prime_files(catalog=self.owner("catalog")),
+                                    lambda repo: shutil.rmtree(repo / "application/catalog"), "lesson")
+        self.assertEqual(code, 0, out)
+        self.assertIn(self.PRIME_HEAD.format("catalog"), out)
+        self.assertEqual(self.partition(out), (set(), {self.LEGACY_LINE}), out)
+
+    def test_160_U_upstream_empties_error_module_through_approved_merge(self) -> None:
+        """main 이 비운 오류 모듈을 승인 머지로 들임 — 앵커 · 머지 사본 기준선이 ①′ 로 서 옛 줄은 기존분(main 이 다른 #2 줄을
+        함께 들이지 않을 때)."""
+        code, out = self.prime_lane("u", self.prime_files(catalog=self.owner("catalog")),
+                                    lambda repo: _write(repo, "lane_note.md", "lane\n"), "lesson", upstream=self.empty("catalog"))
+        self.assertEqual(code, 0, out)
+        self.assertIn(self.PRIME_HEAD.format("catalog"), out)
+        self.assertEqual(self.partition(out), (set(), {self.LEGACY_LINE}), out)
+
+    def test_160_R_lane_new_violation_beside_emptied_module_stays_new(self) -> None:
+        def lane(repo: Path) -> None:
+            _write(repo, self.schema_rel("catalog"), "")
+            _write(repo, _LESSON_SCHEMA_REL, _LESSON_BASE_DEFAULT_SRC + _LESSON_RAW_CONCRETE_SRC)
+        code, out = self.prime_lane("r", self.prime_files(catalog=self.owner("catalog")), lane, "lesson")
+        self.assertEqual(code, 2, out)
+        self.assertIn(self.PRIME_HEAD.format("catalog"), out)
+        new, existing = self.partition(out)
+        self.assertEqual(existing, {self.LEGACY_LINE}, out)
+        self.assertEqual(new, {
+            '- application/lesson/driving_layer/api/bc_error_schema.py:N: concrete discriminator default must use own ErrorCode '
+            'member: code: LessonErrorCode = "lesson_expired"',
+            '- application/lesson/driving_layer/api/bc_error_schema.py:N: raw string FrameworkErrorSchema discriminator: '
+            'code: LessonErrorCode = "lesson_expired"'}, out)
+
+    def test_160_S2_emptied_module_duplicate_does_not_mask_lane_duplicate(self) -> None:
+        """앵커의 zcatalog 가 lesson 과 같은 wire 값(중복 줄은 값마다 첫 주인 lesson 에 선다) · 레인이 zcatalog 를 비우고 같은 값의
+        새 BC report 를 더함 — 넣은 렌더만 쓰면 앵커의 같은 글자 줄이 레인이 만든 중복을 가린다(교집합이 막는다)."""
+        def lane(repo: Path) -> None:
+            _write(repo, self.schema_rel("zcatalog"), "")
+            for rel, src in self.owner("report", "lesson_not_found").items():
+                _write(repo, rel, src)
+        code, out = self.prime_lane("s2", self.prime_files(zcatalog=self.owner("zcatalog", "lesson_not_found")),
+                                    lane, "lesson", "report")
+        self.assertEqual(code, 2, out)
+        self.assertIn(self.PRIME_HEAD.format("zcatalog"), out)
+        new, existing = self.partition(out)
+        self.assertEqual(existing, {self.LEGACY_LINE}, out)
+        self.assertEqual(new, {"- application/lesson/driving_layer/api/bc_error_schema.py:N: duplicate project code wire value: "
+                               "lesson_not_found: from enum import StrEnum"}, out)
+
+    def test_한계_160_T1_three_owners_one_emptied_leaves_one_new_line(self) -> None:
+        """앵커에 같은 값 주인 셋(lesson · catalog · music) · 레인이 첫 주인 catalog 를 비움 — 남은 둘의 옛 중복이 대표 주어만
+        옮겨(catalog → lesson) 교집합에서 빠져 신규 한 줄로 남는다(fail-closed · 2.38.0 의 신규 둘보다 덜 붉음). 비운 렌더만
+        쓰면 이 줄이 기존분이 된다(그 꼴이면 레인이 만든 같은 글자 중복도 가린다)."""
+        code, out = self.prime_lane("t1", self.prime_files(catalog=self.owner("catalog", "lesson_not_found"),
+                                                           music=self.owner("music", "lesson_not_found")),
+                                    self.empty("catalog"), "lesson", "music")
+        self.assertEqual(code, 2, out)
+        self.assertIn(self.PRIME_HEAD.format("catalog"), out)
+        new, existing = self.partition(out)
+        self.assertEqual(existing, {self.LEGACY_LINE}, out)
+        self.assertEqual(new, {"- application/lesson/driving_layer/api/bc_error_schema.py:N: duplicate project code wire value: "
+                               "lesson_not_found: from enum import StrEnum"}, out)
+
+    def test_160_T3_T7_T8_only_candidate_production_modules_are_added(self) -> None:
+        """앵커에 검사기 후보가 아닌 자리의 오류 모듈이 함께 있음 — 정본 후보 밖 이름(`catalog_`) · production 에서 빠지는 폴더
+        이름(`generated` · `tests`). ①′ 은 그 모듈을 넣지 않아야 선다(넣으면 넣은 렌더가 분석 오류로 무너진다)."""
+        for odd in ("catalog_", "generated", "tests"):
+            with self.subTest(odd=odd):
+                files: "dict[str, str]" = self.prime_files(catalog=self.owner("catalog"))
+                files[self.schema_rel(odd)] = self.CATALOG.replace("Catalog", "Odd").replace("catalog", "odd")
+                code, out = self.prime_lane("odd-" + odd, files, self.empty("catalog"), "lesson")
+                self.assertEqual(code, 0, out)
+                self.assertIn(self.PRIME_HEAD.format("catalog"), out)
+                new, existing = self.partition(out)
+                self.assertEqual(new, set(), out)
+                self.assertIn(self.LEGACY_LINE, existing, out)
+
+    # ①′ 칸의 차례 · 사본 복원 · #2 가드 · 거름 — `_run_lines` 대역(부른 칸 · argv · 그때 catalog 모듈 바이트를 적는다).
+    LADDER_ARGV: "list[str]" = ["--error-profile", "dddjango-code-json", "--scope", "public-v1",
+                                "--project-code-error-module", "framework/ninja/framework_error_schema.py",
+                                "--scope-bc", "lesson", "--error-bc", "lesson", "--project-code-error-module", _LESSON_SCHEMA_REL]
+    LADDER_FLAGS: "frozenset[str]" = frozenset({"--api-module", "--controller-module", "--project-code-error-module",
+                                                "--project-preserve-error-module"})
+    LADDER_SRC: bytes = b"from enum import StrEnum\n\n\nclass CatalogErrorCode(StrEnum):\n    NOT_FOUND = 'catalog_not_found'\n"
+
+    def ladder(self, script: Path, codes: "list[int]", *, extra: "tuple[str, ...]" = (),
+               write: "Callable[[Path, bytes], int] | None" = None,
+               readonly: "tuple[str, ...]" = ()) -> "tuple[list[tuple[str, list[str], bytes]], object]":
+        """codes = 부른 차례마다 돌려줄 exit(남으면 0). extra = 스냅숏에 더 둘 오류 모듈 BC 이름 · readonly = 읽기 전용으로 둘
+        오류 모듈 BC 이름(쓰기 막기가 듣지 않는 환경이면 시험을 건너뛴다)."""
+        ad: ModuleType = _checker_module(S / "anchor_diff.py")
+        snap: Path = self.td / "ladder"
+        catalog: Path = snap / self.schema_rel("catalog")
+        for rel, data in ((self.schema_rel("catalog"), self.LADDER_SRC), (_LESSON_SCHEMA_REL, b"X: int = 1\n"),
+                          ("framework/ninja/framework_error_schema.py", b"X: int = 1\n"),
+                          *((self.schema_rel(bc), self.LADDER_SRC) for bc in extra)):
+            (snap / rel).parent.mkdir(parents=True, exist_ok=True)
+            (snap / rel).write_bytes(data)
+        for bc in readonly:
+            module: Path = snap / self.schema_rel(bc)
+            module.chmod(stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+            self.addCleanup(lambda m=module: m.exists() and m.chmod(stat.S_IRUSR | stat.S_IWUSR))
+            if os.access(module, os.W_OK):
+                self.skipTest("읽기 전용 파일에 쓸 수 있는 환경 — 쓰기 거절을 지을 수 없다")
+        calls: "list[tuple[str, list[str], bytes]]" = []
+
+        def fake(argv: "list[str]") -> "tuple[int, list[str]]":
+            kind: str = "positional" if ad.BASELINE_FLAG not in argv else (
+                "넣은" if self.schema_rel("catalog") in argv else "selector")
+            calls.append((kind, list(argv), catalog.read_bytes()))
+            return (codes[len(calls) - 1] if len(calls) <= len(codes) else 0), [f"[#572] {_LESSON_SCHEMA_REL}:1: 줄"]
+
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(patch.object(ad, "_run_lines", side_effect=fake))
+            if write is not None:
+                stack.enter_context(patch.object(Path, "write_bytes", write))
+            base = ad._baseline_lines(script, snap, list(self.LADDER_ARGV), self.LADDER_FLAGS)
+        return calls, base
+
+    def test_160_ladder_add_render_fails_skips_empty_render_and_keeps_copy(self) -> None:
+        calls, base = self.ladder(CENT, [1, 1, 0])   # ① 1 → 넣은 렌더 1 → (비운 렌더 없음) → positional 0
+        self.assertEqual([kind for kind, _argv, _data in calls], ["selector", "넣은", "positional"])
+        self.assertTrue(all(data == self.LADDER_SRC for _kind, _argv, data in calls))
+        self.assertTrue(base.used.startswith("positional 기준선"), base.used)
+
+    def test_160_ladder_empty_render_fails_restores_copy_before_lower_rungs(self) -> None:
+        # ① 1 → 넣은 렌더 0 → 비운 렌더 1 → positional 0 — 비운 렌더 때만 0 바이트 · positional 은 원래 바이트를 잰다
+        calls, base = self.ladder(CENT, [1, 0, 1, 0])
+        self.assertEqual([kind for kind, _argv, _data in calls], ["selector", "넣은", "selector", "positional"])
+        self.assertEqual([data for _kind, _argv, data in calls], [self.LADDER_SRC, self.LADDER_SRC, b"", self.LADDER_SRC])
+        self.assertEqual((self.td / "ladder" / self.schema_rel("catalog")).read_bytes(), self.LADDER_SRC)
+        self.assertTrue(base.used.startswith("positional 기준선"), base.used)
+
+    def test_160_ladder_only_candidate_production_modules_go_into_the_add_render(self) -> None:
+        skipped: "tuple[str, ...]" = ("catalog_", "generated", "tests", "migrations", "venv")
+        calls, base = self.ladder(CENT, [1, 0, 0], extra=skipped)
+        added: "list[str]" = calls[1][1]
+        self.assertIn(self.schema_rel("catalog"), added)
+        for bc in skipped:
+            self.assertNotIn(self.schema_rel(bc), added)
+        self.assertIn("앵커에만 있는 오류 모듈 catalog: 넣은 렌더 ∩ 비운 렌더", base.used)
+
+    def test_160_ladder_other_scope_checkers_never_take_the_prime_rung(self) -> None:
+        calls, base = self.ladder(OPENAPI, [1, 0])
+        self.assertEqual([kind for kind, _argv, _data in calls], ["selector", "positional"])
+        self.assertTrue(all(self.schema_rel("catalog") not in argv for _kind, argv, _data in calls))
+
+    def test_160_ladder_copy_write_failure_falls_to_lower_rungs_and_restores(self) -> None:
+        """사본의 둘째 모듈을 비우다 쓰기 오류(OSError) — 예외가 사다리 밖으로 나가지 않고 ①′ 은 서지 못한 채 아래 칸으로
+        내려가며, 먼저 비운 모듈은 원래 바이트로 되돌린다."""
+        real = Path.write_bytes
+        second: str = self.schema_rel("zeta")
+
+        def flaky(path: Path, data: bytes) -> int:
+            if data == b"" and path.as_posix().endswith(second):
+                raise OSError(errno.ENOSPC, "No space left on device")
+            return real(path, data)
+
+        calls, base = self.ladder(CENT, [1, 0, 0], extra=("zeta",), write=flaky)
+        self.assertEqual([kind for kind, _argv, _data in calls], ["selector", "넣은", "positional"])
+        self.assertTrue(base.used.startswith("positional 기준선"), base.used)
+        for bc in ("catalog", "zeta"):
+            self.assertEqual((self.td / "ladder" / self.schema_rel(bc)).read_bytes(), self.LADDER_SRC)
+
+    def test_160_ladder_read_only_module_falls_to_lower_rungs_untouched(self) -> None:
+        """사본의 오류 모듈이 읽기 전용이라 비우기 쓰기가 거절됨(EACCES) — 그 모듈은 손대지 않았으니 되쓰지 않고(되쓰기도
+        거절된다) ①′ 은 서지 못한 채 아래 칸으로 내려간다. 먼저 비운 다른 모듈은 원래 바이트로 되돌린다."""
+        for blocked, extra in (("catalog", ()), ("zeta", ("zeta",))):
+            with self.subTest(blocked=blocked):
+                if (self.td / "ladder").exists():
+                    shutil.rmtree(self.td / "ladder")   # 앞 사례의 사본(읽기 전용 파일도 폴더가 쓰기 되면 지워진다)
+                calls, base = self.ladder(CENT, [1, 0, 0], extra=extra, readonly=(blocked,))
+                self.assertEqual([kind for kind, _argv, _data in calls], ["selector", "넣은", "positional"])
+                self.assertTrue(base.used.startswith("positional 기준선"), base.used)
+                for bc in ("catalog", *extra):
+                    self.assertEqual((self.td / "ladder" / self.schema_rel(bc)).read_bytes(), self.LADDER_SRC)
+
+    def test_160_preserve_inventory_module_is_not_added(self) -> None:
+        """앵커의 catalog 오류 모듈이 지금 argv 에 preserve inventory 로 적혀 있고 레인이 다른 BC(music)의 오류 모듈을 비움 —
+        ①′ 은 inventory 에 없는 music 만 넣어 선다(preserve 로 적힌 모듈을 code 로 또 넣으면 넣은 렌더가 무너진다)."""
+        files: "dict[str, str]" = self.prime_files(catalog=self.owner("catalog"), music=self.owner("music"))
+        repo: Path = self.td / "preserve"
+        for rel, src in files.items():
+            _write(repo, rel, src)
+        self.assertEqual(_git(repo, "init", "-q", "-b", "main").returncode, 0)
+        anchor: str = _commit_all(repo, "anchor")
+        _write(repo, self.schema_rel("music"), "")
+        _commit_all(repo, "lane empties music")
+        argv: "list[str]" = [*self.prime_argv("lesson"), "--controller-module", "application/catalog/driving_layer/controller.py",
+                             "--scope-bc", "catalog", "--project-preserve-error-module", self.schema_rel("catalog")]
+        code, out = _run(CENT, repo, [*argv, "--anchor", anchor])
+        self.assertEqual(code, 0, out)
+        self.assertIn(self.PRIME_HEAD.format("music"), out)
+        self.assertEqual(self.partition(out), (set(), {self.LEGACY_LINE}), out)
+
+    def test_160_candidate_filter_matches_checker_text(self) -> None:
+        """①′ 의 거름은 검사기의 정본 후보 이름 꼴 · production 제외 이름과 같은 글이다(한쪽만 바뀌면 여기서 깨진다)."""
+        ad: ModuleType = _checker_module(S / "anchor_diff.py")
+        cent: ModuleType = _checker_module(CENT)
+        self.assertEqual("^" + ad._CANDIDATE_BC_RE.pattern + "$", cent.BC_NAME_RE.pattern)
+        self.assertEqual(ad._CHECKER_CODE_SKIP_DIRS, frozenset(cent.CODE_SKIP_DIRS))
+        self.assertEqual(ad._CHECKER_TEST_DIR_NAMES, frozenset(cent.TEST_DIR_NAMES))
 
 
 def _main() -> int:
