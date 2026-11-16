@@ -1731,6 +1731,13 @@ djr:R-1555 a djr:Obligation ;
     djr:statesNorm djr:R-1380 ;
     djr:text "\n```python\n# 클래스: 명사 또는 명사구\nclass Customer: ...\nclass AddressParser: ...\n\n# 메서드: 동사 또는 동사구\ndef post_payment(self): ...\ndef delete_page(self): ...\n```\n\n" .
 
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s018-2.6/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s018-2.6> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s011-3/b4> ;
+    djr:text "포트 계약 메서드는 조회(부른 뒤 아무것도 바뀌지 않고 값만 돌려준다)면 명사구 · 묻는 꼴도 된다 — 조회가 아니면 동사구다(`discipline-houserules` §3 «포트 메서드 이름»).\n\n"@ko .
+
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s019-2.7> a djr:Section ;
     djr:headingSnapshot "### 2.7 의도 제시형 이름 [IP]"@ko ;
     djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-cleancode/references/final.md> ;

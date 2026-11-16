@@ -1260,6 +1260,7 @@ def _run_lines(cmd: "list[str]") -> "tuple[int, list[str]]":
     # «출력 없는 유령 레코드»가 된다(T2-1 적대 검증 레인 P 6번·R 2번 — 기존분-only 에서 정확히 2배).
     env: "dict[str, str]" = dict(os.environ)
     env.pop("DJR_FINDINGS_JSON", None)
+    env.pop("DJR_VIOLATIONS_DIR", None)  # 디렉터리 sink 도 같다 — 앵커 재실행 레코드가 호출자 폴더에 새지 않게
     proc: "subprocess.CompletedProcess[str]" = subprocess.run(cmd, capture_output=True, text=True, env=env)
     return proc.returncode, (proc.stdout + "\n" + proc.stderr).splitlines()
 
@@ -1665,6 +1666,11 @@ class PathFacts:
         self.anchor: "dict[str, str]" = self.blobs(anchor_sha)
         self.dirty: "set[str]" = _porcelain_paths(run_git(
             root, "status", "--porcelain", "--untracked-files=all", "-z").stdout)
+        # porcelain 은 git 뿌리 기준이고 ls-tree(위 blobs · dirs)는 대상 기준이다 — 저장소 하위 폴더가 대상이면 접두를 걷어
+        # 맞추고 대상 밖 경로는 버린다(안 맞추면 작업 트리 수정이 «worktree 수정 중» 으로 잡히지 않는다).
+        prefix: str = run_git(root, "rev-parse", "--show-prefix").stdout.strip()
+        if prefix:
+            self.dirty = {path[len(prefix):] for path in self.dirty if path.startswith(prefix)}
         self.position: "dict[str, int]" = {c.sha: i for i, c in enumerate(chain)}
 
     def blobs(self, sha: str) -> "dict[str, str]":

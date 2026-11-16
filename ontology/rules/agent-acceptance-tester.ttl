@@ -765,16 +765,22 @@ djr:R-3612 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3613 a djr:Obligation ;
-    skos:prefLabel "arrange 점검 입력 — 판정 대상 명세 · Coordinator 측정 sha256 · 슬라이스 계획의 인수 행(판정 대상) · 슬라이스 계획(계획 절 · file-plan 행 끝 표기) · 기존 test anchor · 부속 기록 경로·기록 토큰"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3613@2026-10-01> .
+    skos:prefLabel "arrange 점검 입력 — 판정 대상 명세 · Coordinator 측정 sha256 · 슬라이스 계획의 인수 행(판정 대상) · 슬라이스 계획(계획 절 · file-plan 행 끝 표기) · 기존 test anchor · Phase 2 진입 뒤면 기준선 판·유입 판 · 부속 기록 경로·기록 토큰"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3613@2026-11-16> .
 
 <https://numchida.com/ns/djr#R-3613@2026-10-01> a djr:Expression ;
     prov:specializationOf djr:R-3613 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3613@2026-11-16> a djr:Expression ;
+    prov:specializationOf djr:R-3613 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3613@2026-10-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3614 a djr:Prohibition ;
-    skos:prefLabel "arrange 점검 읽기 범위 닫힘 — 명세·시험 쪽 파일·제품 경로 실존만 · 제품 본문 열람·제품 폴더 내용 검색·심볼 조회 0(R-3242 그대로) · 명세에 없는 사실 = 명세 없음 막힘"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3614@2026-10-21> .
+    skos:prefLabel "arrange 점검 읽기 범위 닫힘 — 명세·시험 쪽 파일(pytest 설정 절 포함)·제품 경로 실존만 · 제품 본문 열람·제품 폴더 내용 검색·심볼 조회 0(R-3242 그대로) · 기준선 판이 오면 기준선 출처는 그 판(유입 경로는 유입 판 · (지움)·그 판에 없음은 기준선에 없음)만 · 작업 트리 시험 파일·제품 경로 실존은 기준선 근거 아님 · 명세에 없는 사실 = 명세 없음 막힘"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3614@2026-11-16> .
 
 <https://numchida.com/ns/djr#R-3614@2026-10-01> a djr:Expression ;
     prov:specializationOf djr:R-3614 ;
@@ -786,9 +792,15 @@ djr:R-3614 a djr:Prohibition ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-clarification .
 
+<https://numchida.com/ns/djr#R-3614@2026-11-16> a djr:Expression ;
+    prov:specializationOf djr:R-3614 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3614@2026-10-21> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3615 a djr:Prohibition ;
-    skos:prefLabel "arrange 점검 도구 — Read·Grep·Glob 없으면 Bash 읽기 명령 닫힌 목록만(find 는 찾기 조건만 · 읽기 필터 cut·sort·uniq·awk·head·tail·tr 표준 출력만 · 제품 경로는 test -e · ls -d 와 그 조건·반복 · echo·printf 는 명령 치환·리다이렉트 없이 · cd 는 산출물 폴더로만) · 쓰기는 기록 한 파일(Write·Edit) · python·python3·git·해시·시험·설치·리다이렉트 쓰기 0 · 계산 0(sha 는 입력값 · 없으면 «입력 없음»)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3615@2026-11-09> .
+    skos:prefLabel "arrange 점검 도구 — Read·Grep·Glob 없으면 Bash 읽기 명령 닫힌 목록만(find 는 찾기 조건만 · 읽기 필터 cut·sort·uniq·awk·head·tail·tr 표준 출력만 · 제품 경로는 test -e · ls -d 와 그 조건·반복 · echo·printf 는 명령 치환·리다이렉트 없이 · cd 는 산출물 폴더로만) · 기준선 판이 오면 도구 유무와 상관없이 그 판·유입 판의 시험 쪽 파일은 git show·ls-tree·grep 세 꼴로만(받은 SHA · 저장소 뿌리 기준 시험 쪽 경로 · 글롭마다 :(top,glob)) · 쓰기는 기록 한 파일(Write·Edit) · python·python3·세 꼴 밖 git(커밋 보기·log 포함)·해시·시험·설치·리다이렉트 쓰기 0 · 계산 0(sha 는 입력값 · 없으면 «입력 없음»)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3615@2026-11-16> .
 
 <https://numchida.com/ns/djr#R-3615@2026-10-01> a djr:Expression ;
     prov:specializationOf djr:R-3615 ;
@@ -798,6 +810,12 @@ djr:R-3615 a djr:Prohibition ;
     prov:specializationOf djr:R-3615 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-3615@2026-10-01> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-3615@2026-11-16> a djr:Expression ;
+    prov:specializationOf djr:R-3615 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3615@2026-11-09> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3616 a djr:Obligation ;
@@ -1124,21 +1142,21 @@ djr:R-3734 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
     djr:statesNorm djr:R-3613 ;
-    djr:text "**입력**: 판정 대상 명세 경로와 Coordinator 가 잰 그 명세의 sha256 · 명세 `## 슬라이스 계획` 절의 **인수 행**(판정 대상은 이 행뿐이다 — 내부 행은 보지 않는다) · file-plan 행 끝 `# S<n>` · `# S<처음>→S<끝>` · 관련 기존 test anchor · 부속 기록 경로 `<산출물 폴더>/g1-arrange-acceptance-<n>.md` 와 그 기록 토큰.\n\n"@ko .
+    djr:text "**입력**: 판정 대상 명세 경로와 Coordinator 가 잰 그 명세의 sha256 · 명세 `## 슬라이스 계획` 절의 **인수 행**(판정 대상은 이 행뿐이다 — 내부 행은 보지 않는다) · file-plan 행 끝 `# S<n>` · `# S<처음>→S<끝>` · 관련 기존 test anchor · 부속 기록 경로 `<산출물 폴더>/g1-arrange-acceptance-<n>.md` 와 그 기록 토큰. Phase 2 진입 뒤에 부르면 `기준선 판 <SHA>` 와 `유입 판 <머지 SHA>: <경로>` 줄(지운 경로는 끝에 `(지움)` · 유입 판 줄은 없을 수 있다)이 함께 온다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
     djr:statesNorm djr:R-3614 ;
-    djr:text "**읽기 범위(닫힘)**: 명세 · 시험 쪽 파일(경로 조각 `test`·`tests`·`factories`·`fake`·`fakes`·`fixtures` 아래이거나 이름이 `test_*.py`·`*_test.py`·`conftest.py` 인 파일) · 제품 경로의 **실존만**이다. 제품 파일 본문 열람 · 제품 폴더 안 내용 검색 · 심볼 조회는 0 이다 — 입력 절의 «프로덕션 구현 코드를 보지 않는다» 그대로다. 명세에 없는 사실이 필요하면 그것 자체가 «명세 없음» 막힘이다.\n\n"@ko .
+    djr:text "**읽기 범위(닫힘)**: 명세 · 시험 쪽 파일(경로 조각 `test`·`tests`·`factories`·`fake`·`fakes`·`fixtures` 아래이거나 이름이 `test_*.py`·`*_test.py`·`conftest.py` 인 파일 · pytest 설정 절 — pytest 가 설정을 읽는 절(`pyproject.toml` 의 `[tool.pytest.ini_options]` · `pytest.ini` · `setup.cfg` 의 `[tool:pytest]` 등)만) · 제품 경로의 **실존만**이다. 제품 파일 본문 열람 · 제품 폴더 안 내용 검색 · 심볼 조회는 0 이다 — 입력 절의 «프로덕션 구현 코드를 보지 않는다» 그대로다. 명세에 없는 사실이 필요하면 그것 자체가 «명세 없음» 막힘이다. 입력에 `기준선 판` 이 있으면 출처 `기준선` 은 그 판의 시험 쪽 파일로만 판단한다 — `유입 판` 에 적힌 경로는 그 머지 판의 파일로 보고(새로 들어온 파일 포함), `(지움)` 이 붙었거나 그 판에 없는 경로는 기준선에 없다. 작업 트리의 시험 쪽 파일은 찾을 후보를 고르는 데만 쓰고, 제품 경로 실존 확인은 판이 와도 작업 트리에서 하되 둘 다 `기준선` 근거로 쓰지 않는다. `기준선 판` 이 없으면 작업 트리가 기준선이다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
     djr:statesNorm djr:R-3615 ;
-    djr:text "**도구·쓰기**: 읽기는 Read·Grep·Glob 가 있으면 그것으로 하고, 없으면 Bash 의 읽기 명령만 쓴다 — 허용 목록은 닫혀 있다: 명세·시험 쪽 파일에 `cat` · `sed -n` · `head` · `tail` · `wc` · `grep`·`rg`(재귀 검색은 시험 쪽 폴더에만) · `ls` · `find`(시험 쪽 폴더에만 · 조건은 `-name`·`-path`·`-type`·`-maxdepth`·`-size` 와 그 `!`·`-o` 묶음만 — `-exec`·`-delete` 같은 동작은 쓰지 않는다) 과 그 출력에 파이프로 거는 읽기 전용 필터 `cut` · `sort` · `uniq` · `awk` · `head` · `tail` · `tr`(표준 출력만 — 리다이렉트·`system()`·파일 쓰기 금지), 제품 경로에 `test -e` · `ls -d`(실존 확인만 — 이것을 쓰는 셸 조건·반복 `if`·`for` 포함), 출력을 가르는 `echo` · `printf`(글자만 — 명령 치환 `$(…)`·백틱·리다이렉트 없이), 부속 기록이 있는 `<산출물 폴더>` 로만 가는 `cd`(제품 폴더로 들어가 상대 경로로 읽거나 검색하지 않는다). 그 밖의 명령(`python`·`python3` · `git` · 해시 명령 · 시험 실행 · 설치 · 리다이렉트 쓰기 포함)은 쓰지 않는다. 쓰기는 받은 부속 기록 경로 한 파일만 Write·Edit 로 한다(처음은 새 파일 — 이미 있으면 쓰지 않고 보고한다). 이 모드에서 너는 아무것도 계산하지 않는다 — 기록의 `판정 명세 sha256` 은 입력의 값을 그대로 옮긴다. 입력에 그 값이 없으면 재지 말고 `판정 명세 sha256 입력 없음` 으로 적고 응답에 알린다.\n\n"@ko .
+    djr:text "**도구·쓰기**: 읽기는 Read·Grep·Glob 가 있으면 그것으로 하고, 없으면 Bash 의 읽기 명령만 쓴다 — 허용 목록은 닫혀 있다: 명세·시험 쪽 파일에 `cat` · `sed -n` · `head` · `tail` · `wc` · `grep`·`rg`(재귀 검색은 시험 쪽 폴더에만) · `ls` · `find`(시험 쪽 폴더에만 · 조건은 `-name`·`-path`·`-type`·`-maxdepth`·`-size` 와 그 `!`·`-o` 묶음만 — `-exec`·`-delete` 같은 동작은 쓰지 않는다) 과 그 출력에 파이프로 거는 읽기 전용 필터 `cut` · `sort` · `uniq` · `awk` · `head` · `tail` · `tr`(표준 출력만 — 리다이렉트·`system()`·파일 쓰기 금지), 제품 경로에 `test -e` · `ls -d`(실존 확인만 — 이것을 쓰는 셸 조건·반복 `if`·`for` 포함), 출력을 가르는 `echo` · `printf`(글자만 — 명령 치환 `$(…)`·백틱·리다이렉트 없이), 부속 기록이 있는 `<산출물 폴더>` 로만 가는 `cd`(제품 폴더로 들어가 상대 경로로 읽거나 검색하지 않는다). 입력에 `기준선 판` 이 있으면 Read·Grep·Glob 유무와 상관없이 그 판과 `유입 판` 의 시험 쪽 파일은 Bash 의 다음 세 꼴로만 읽는다 — `git show <SHA>:<시험 쪽 파일>` · `git ls-tree --full-tree -r --name-only <SHA> -- <시험 쪽 폴더>`(폴더 글자 그대로) · `git grep --full-name -n -e <글자> <SHA> -- <시험 쪽 글롭>`(세 꼴 모두 위 읽기 전용 필터를 파이프로 걸 수 있다). 세 꼴의 경로는 모두 저장소 뿌리 기준이라 `<산출물 폴더>` 에서 돌려도 같다. `<SHA>` 에는 입력의 `기준선 판` · `유입 판` 값만, 경로 자리에는 시험 쪽만 넣는다. 시험 쪽 글롭은 위 읽기 범위의 시험 쪽을 글롭마다 `:(top,glob)` 을 붙여 적은 것이다 — `':(top,glob)**/test/**'` · `':(top,glob)**/tests/**'` · `':(top,glob)**/factories/**'` · `':(top,glob)**/fake/**'` · `':(top,glob)**/fakes/**'` · `':(top,glob)**/fixtures/**'` · `':(top,glob)**/test_*.py'` · `':(top,glob)**/*_test.py'` · `':(top,glob)**/conftest.py'` 와, pytest 설정 절이 든 파일의 글롭(`':(top,glob)pyproject.toml'` · `':(top,glob)pytest.ini'` · `':(top,glob)setup.cfg'` 등 — 그 파일은 그 절만 본다). 그 밖의 명령(`python`·`python3` · 위 세 꼴 밖의 `git`(`git show <SHA>` 커밋 보기 · `git diff` · `git log` 포함) · 해시 명령 · 시험 실행 · 설치 · 리다이렉트 쓰기 포함)은 쓰지 않는다. 쓰기는 받은 부속 기록 경로 한 파일만 Write·Edit 로 한다(처음은 새 파일 — 이미 있으면 쓰지 않고 보고한다). 이 모드에서 너는 아무것도 계산하지 않는다 — 기록의 `판정 명세 sha256` 은 입력의 값을 그대로 옮긴다. 입력에 그 값이 없으면 재지 말고 `판정 명세 sha256 입력 없음` 으로 적고 응답에 알린다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006> ;

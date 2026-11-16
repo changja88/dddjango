@@ -3172,7 +3172,8 @@ class CandidateWordRegression(unittest.TestCase):
     """F4-113 · F4-114 — 후보 물음의 낱말 판정.
 
     #311: 도메인 서비스 파일 이름의 낱말(`_` 경계) 하나가 애그리거트 낱말의 규칙 복수형이어도 어휘가 있다.
-    #485: 포트 메서드 첫 토큰이 아는 동사 목록에 있으면 묻지 않는다 — 목록 밖 낱말은 그대로 묻는다.
+    #485: 포트 메서드 첫 토큰이 아는 동사 목록에 있으면 묻지 않는다 — 목록 밖 낱말은 원시 값 · Enum 반환을 선언하지 않았으면
+    그대로 묻는다.
     """
 
     def setUp(self) -> None:
@@ -3245,7 +3246,7 @@ class CandidateWordRegression(unittest.TestCase):
     def test_485_unlisted_first_tokens_stay_questions(self) -> None:
         self.port("timeout_seconds", "transmit_payload", "run_searches", "_normalize")
         path: str = "application/house/application_layer/port/signup_bonus_grant/signup_bonus_grant_port.py"
-        question: str = " — 물음: 이 이름이 무엇을 시키는지 말하나"
+        question: str = " — 물음: 이 이름이 의도를 말하나 — 조회면 명사구도 되고, 그 밖은 명령이라 동사구다"
         self.assertEqual(self.lines("check-port-adapter-pairing.py", "485"), [
             *(f"[ⓓ#485] {path}:{line}: 포트 메서드 `{name}` 의 첫 토큰 `{first}` 이 아는 동사 목록에도 묻는 꼴에도 없다{question}"
               for line, name, first in ((6, "timeout_seconds", "timeout"), (9, "transmit_payload", "transmit"),
@@ -3253,6 +3254,352 @@ class CandidateWordRegression(unittest.TestCase):
             f"[ⓓ#485] {path}:15: 포트 메서드 `_normalize` 이 `_` 로 시작해 첫 토큰이 없다 — 아는 동사로도 묻는 꼴로도 읽히지 않는다"
             f"{question}",
         ])
+
+
+_Q257: str = " — 물음: Q4 — 이 메서드 뒤에도 불변식이 참인가"
+_Q191: str = " — 동사로 짓는다 — 물음: Q1(이 이름이 «판정이 되는 물음»인가)"
+_Q485: str = " — 물음: 이 이름이 의도를 말하나 — 조회면 명사구도 되고, 그 밖은 명령이라 동사구다"
+
+
+class _CheckerToyCase(unittest.TestCase):
+    """장난감 저장소 하나를 짓고 검사기 하나를 돌려 한 규칙의 줄을 받는다."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="field-checker-toy-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name) / "project"
+        self.env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+                        DJR_FINDINGS_JSON=str(Path(self.tmp.name) / "records.jsonl"),
+                        DJR_VIOLATIONS_DIR=str(Path(self.tmp.name) / "violations"))
+
+    def write(self, relative: str, text: str = "") -> None:
+        path: Path = self.root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(textwrap.dedent(text), encoding="utf-8")
+
+    def lines(self, script: str, rule: str) -> "list[str]":
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / script), str(self.root)],
+                                capture_output=True, text=True, env=self.env)
+        self.assertEqual(result.stderr, "")
+        return [line.strip() for line in result.stdout.splitlines() if f"#{rule}]" in line]
+
+
+class InvariantTailRegression(_CheckerToyCase):
+    """F4-26 — #257 은 «확인 호출 + 값만 돌려주는 return» 을 확인으로 끝난 메서드로 읽는다. 단 self 에 쓴 뒤 확인 없이
+    빠져나가는 다른 return 이 있거나 · 건너뛴 return 앞이 `_` 낱말로 확인이 아니거나 · return 식이 self 나 self 에서 묶은
+    이름을 쓰면 그대로 묻는다."""
+
+    ROOT: str = "application/orders/domain_layer/order/order.py"
+    HEAD: str = """\
+        class Order:
+            def __init__(self) -> None:
+                self._version: int = 0
+                self._note: "str | None" = None
+                self._lines: "list[str]" = []
+                self._closed: bool = False
+        """
+    TAIL: str = """\
+
+            def _fold(self) -> int:
+                self._closed = True
+                return 0
+
+            def _invalidate_cache(self) -> None:
+                self._lines = []
+
+            def _checkpoint(self) -> None:
+                self._version = self._version + 1
+
+            def _assert_invariants(self) -> None:
+                return None
+
+
+        class FinishResult:
+            def __init__(self, closed: bool) -> None:
+                self.closed: bool = closed
+
+
+        def publish_order(order: Order) -> bool:
+            return True
+
+
+        def drain(lines: "list[str]") -> int:
+            lines.clear()
+            return 0
+        """
+
+    def root_class(self, methods: str) -> None:
+        self.write("application/orders/domain_layer/order/order_repository.py", "class OrderRepository:\n    pass\n")
+        body: str = textwrap.indent(textwrap.dedent(methods), "    ")
+        self.write(self.ROOT, textwrap.dedent(self.HEAD) + body + textwrap.dedent(self.TAIL))
+
+    def test_check_then_value_only_return_ends_with_check(self) -> None:
+        self.root_class("""
+            def cancel_order(self, ends_note: bool) -> bool:
+                if self._closed:
+                    return False
+                self._fold()
+                if ends_note:
+                    self._note = None
+                self._version += 1
+                self._assert_invariants()
+                return True
+
+            def mark_closed(self) -> int:
+                self._closed = True
+                self._assert_invariants()
+                return self._version
+
+            def finish(self) -> "FinishResult":
+                self._closed = True
+                self._assert_invariants()
+                return FinishResult(closed=True)
+
+            def park_or_close(self, park: bool) -> bool:
+                if park:
+                    self._note = "parked"
+                    self._assert_invariants()
+                    return False
+                self._closed = True
+                self._assert_invariants()
+                return True
+
+            def close_into(self, result: "FinishResult", quick: bool) -> bool:
+                if quick:
+                    result.notes.append("quick")
+                    return False
+                self._closed = True
+                self._assert_invariants()
+                return True
+
+            def add_checked(self, line: str, free: bool) -> bool:
+                if free:
+                    self._lines.append(line)
+                    self._assert_invariants()
+                    return False
+                self._closed = True
+                self._assert_invariants()
+                return True
+            """)
+        self.assertEqual(self.lines("check-domain-model.py", "257"), [])
+
+    def test_no_check_at_the_end_stays_a_question(self) -> None:
+        self.root_class("""
+            def drop_note(self) -> bool:
+                self._note = None
+                return True
+
+            def reopen(self) -> bool:
+                self._assert_invariants()
+                self._note = "reopened"
+                return True
+
+            def close_and_fold(self) -> int:
+                self._note = None
+                self._assert_invariants()
+                return self._fold()
+
+            def clear_note(self) -> bool:
+                self._closed = False
+                if self._note is not None:
+                    self._note = None
+                return True
+
+            def finish_with_self(self) -> "FinishResult":
+                self._closed = True
+                self._assert_invariants()
+                return FinishResult(closed=publish_order(self))
+
+            def close_or_park(self, park: bool) -> bool:
+                if park:
+                    self._note = "parked"
+                    return False
+                self._closed = True
+                self._assert_invariants()
+                return True
+
+            def close_and_invalidate(self) -> bool:
+                self._closed = True
+                self._invalidate_cache()
+                return True
+
+            def close_with_checkpoint(self) -> int:
+                self._closed = True
+                self._checkpoint()
+                return self._version
+
+            def close_and_drain(self) -> int:
+                lines = self._lines
+                self._closed = True
+                self._assert_invariants()
+                return drain(lines)
+            """)
+        self.assertEqual(self.lines("check-domain-model.py", "257"), [
+            f"[ⓓ#257] {self.ROOT}:{line}: 상태 변경 메서드 `{name}` 끝에 불변식 확인이 없다{_Q257}"
+            for line, name in ((8, "drop_note"), (12, "reopen"), (17, "close_and_fold"), (22, "clear_note"),
+                               (28, "finish_with_self"), (33, "close_or_park"), (41, "close_and_invalidate"),
+                               (46, "close_with_checkpoint"), (51, "close_and_drain"))
+        ])
+
+    def test_early_exit_after_container_change_stays_a_question(self) -> None:
+        """앞 갈래가 self 컨테이너를 바꾸고(속성 메서드 호출 · 첨자 대입 · `del` · 바꾸는 return 식) 확인 없이 빠져나가면 묻는다."""
+        self.root_class("""
+            def add_line(self, line: str, free: bool) -> bool:
+                if free:
+                    self._lines.append(line)
+                    return True
+                self._closed = True
+                self._assert_invariants()
+                return True
+
+            def put_line(self, line: str, quick: bool) -> bool:
+                if quick:
+                    self._lines[0] = line
+                    return True
+                self._closed = True
+                self._assert_invariants()
+                return True
+
+            def drop_first(self, quick: bool) -> bool:
+                if quick:
+                    del self._lines[0]
+                    return True
+                self._closed = True
+                self._assert_invariants()
+                return True
+
+            def take_line(self, quick: bool) -> "str | None":
+                if quick:
+                    return self._lines.pop()
+                self._closed = True
+                self._assert_invariants()
+                return None
+            """)
+        self.assertEqual(self.lines("check-domain-model.py", "257"), [
+            f"[ⓓ#257] {self.ROOT}:{line}: 상태 변경 메서드 `{name}` 끝에 불변식 확인이 없다{_Q257}"
+            for line, name in ((8, "add_line"), (16, "put_line"), (24, "drop_first"), (32, "take_line"))
+        ])
+
+
+class UseCaseQueryHeadRegression(_CheckerToyCase):
+    """F4-32 — #191 명사 접미 후보는 묻는 동사 머리(get · find · list · count)로 시작하는 이름을 묻지 않는다. 바꾸는 동사 머리 ·
+    명사로도 읽히는 머리 · 그 밖 동사 머리는 그대로 묻는다(받아들인 한계)."""
+
+    AREA: str = "application/library/application_layer/book"
+
+    def use_cases(self, *names: str) -> None:
+        self.write("application/library/domain_layer/book/book.py", "class Book:\n    pass\n")
+        for name in names:
+            camel: str = "".join(part.title() for part in name.split("_"))
+            base: str = f"{self.AREA}/{name}/{name}"
+            self.write(f"{base}_query.py",
+                       f"from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass {camel}Query:\n    book_id: int\n")
+            self.write(f"{base}_use_case.py",
+                       f"from application.library.application_layer.book.{name}.{name}_query import {camel}Query\n\n\n"
+                       f"class {camel}UseCase:\n    def execute(self, query: {camel}Query) -> None:\n        return None\n")
+            self.write(f"{base}_command.py")
+            self.write(f"{base}_result.py")
+
+    def test_query_verb_heads_pass(self) -> None:
+        self.use_cases("get_book_detail", "list_book_status", "find_loan_info", "count_loan_list")
+        self.assertEqual(self.lines("check-usecase-dto-placement.py", "191"), [])
+
+    def test_noun_phrases_and_other_heads_stay_questions(self) -> None:
+        names = ("book_detail", "loan_list", "refund_status", "review_list", "record_detail", "schedule_info",
+                 "fetch_loan_status", "show_book_detail", "update_book_status", "change_loan_status", "set_book_info")
+        self.use_cases(*names, "book")
+        self.assertEqual(self.lines("check-usecase-dto-placement.py", "191"), [
+            f"[ⓓ#191] {self.AREA}/book: 폴더 이름 `book` 이 애그리거트 이름이다{_Q191}",
+            *(f"[ⓓ#191] {self.AREA}/{name}: 폴더 이름 `{name}` 이 명사 접미로 끝난다{_Q191}" for name in sorted(names)),
+        ])
+
+
+class PortQueryReturnRegression(_CheckerToyCase):
+    """F4-95 — #485 는 원시 값(글 · 수 · 참거짓 · 바이트 · 날짜 · 시각 · Decimal · UUID)이나 Enum(`enum` · `django` 기저를 둔
+    저장소 클래스 · 기저 별칭은 원래 이름으로 푼다)과 그 목록 · 선택을 돌려준다고 선언한 메서드를 조회로 읽어 묻지 않는다 —
+    모호 동사 머리는 반환과 상관없이, 사전 · 흐름(`dict` · `Iterable`) · 같은 이름의 업무 클래스(`Flag`)를 기저로 둔 반환은
+    묻는다(사용자 결정 2026-11-16)."""
+
+    BASE: str = "application/house/application_layer/port/photo_storage"
+    VO: str = "application/house/domain_layer/order/value_object"
+
+    def port(self, *methods: "tuple[str, str]") -> None:
+        self.write(f"{self.VO}/order_status.py",
+                   "from enum import Enum as E\nfrom enum import StrEnum\n\n\n"
+                   "class OrderStatus(StrEnum):\n    OPEN = 'open'\n\n\nclass OrderKind(E):\n    PICKUP = 'pickup'\n")
+        self.write(f"{self.VO}/order_code.py",
+                   "from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass OrderCode:\n    value: str\n")
+        self.write("application/house/domain_layer/shared_value_object/__init__.py", "from .tier import Grade, Tier\n")
+        self.write("application/house/domain_layer/shared_value_object/tier.py",
+                   "import enum\nimport enum as en\n\n\nclass Tier(enum.IntEnum):\n    BASIC = 1\n\n\n"
+                   "class Grade(en.IntEnum):\n    GOLD = 1\n")
+        self.write("application/house/driven_layer/django_house/models/choices.py",
+                   "from django.db import models\n\n\nclass Visibility(models.TextChoices):\n    PUBLIC = 'public'\n")
+        self.write("application/house/domain_layer/feature/flag.py",
+                   "from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Flag:\n    name: str\n")
+        self.write("application/house/domain_layer/feature/feature_state.py",
+                   "from dataclasses import dataclass\n\nfrom application.house.domain_layer.feature.flag import Flag\n\n\n"
+                   "@dataclass(frozen=True)\nclass FeatureState(Flag):\n    rollout: int\n")
+        self.write(f"{self.BASE}/exception.py", "class PhotoStorageRejected(Exception):\n    pass\n")
+        self.write(f"{self.BASE}/charge_out.py", "class ChargeOut:\n    pass\n")
+        body: str = "".join(f"\n    @abstractmethod\n    def {name}(self) -> {ret}: ...\n" for name, ret in methods)
+        self.write(f"{self.BASE}/photo_storage_port.py",
+                   "from abc import ABC, abstractmethod\n\n"
+                   f"from {self.BASE.replace('/', '.')}.charge_out import ChargeOut\n"
+                   "from application.house.domain_layer.feature.feature_state import FeatureState\n"
+                   f"from {self.VO.replace('/', '.')}.order_code import OrderCode\n"
+                   f"from {self.VO.replace('/', '.')}.order_status import OrderKind, OrderStatus\n"
+                   "from application.house.domain_layer.shared_value_object import Grade, Tier\n"
+                   "from application.house.driven_layer.django_house.models.choices import Visibility\n"
+                   "from vendor_sdk.types import Mode\n\n\n"
+                   "class PhotoStoragePort(ABC):" + body)
+
+    def test_plain_value_answers_read_as_asking(self) -> None:
+        self.port(("url", "str"), ("timeout_seconds", "int"), ("signed_url", '"str | None"'),
+                  ("stored_keys", '"tuple[str, ...]"'), ("holds_coupon", "bool"), ("created_on", "datetime.date"),
+                  ("issued_id", "uuid.UUID"), ("amount", "decimal.Decimal"), ("label", "typing.Optional[str]"),
+                  ("tags", "List[str]"), ("pair", "typing.Tuple[str, int]"), ("note", 'Annotated[str, "label"]'))
+        self.assertEqual(self.lines("check-port-adapter-pairing.py", "485"), [])
+
+    def test_enum_answers_read_as_asking(self) -> None:
+        self.port(("status", "OrderStatus"), ("statuses", "list[OrderStatus]"), ("maybe_status", '"OrderStatus | None"'),
+                  ("tier", "Tier"), ("visibility", "Visibility"))
+        self.assertEqual(self.lines("check-port-adapter-pairing.py", "485"), [])
+
+    def test_aliased_enum_base_reads_as_enum(self) -> None:
+        """Enum 기저를 별칭으로 들여와도(`from enum import Enum as E` · `import enum as en`) 원래 이름으로 풀어 Enum 으로 읽는다."""
+        self.port(("kind", "OrderKind"), ("grade", "Grade"))
+        self.assertEqual(self.lines("check-port-adapter-pairing.py", "485"), [])
+
+    def test_object_none_vague_and_unknown_returns_stay_questions(self) -> None:
+        self.port(("payment_result", "ChargeOut"), ("eviction", "None"), ("run_export", "int"),
+                  ("process_refund", "int"), ("_normalized_key", "str"), ("invoke", "dict[str, str]"),
+                  ("perform", "bool"), ("apply_change", "int"), ("invoke_lookup", "OrderStatus"),
+                  ("code", "OrderCode"), ("mode", "Mode"), ("lines", "Iterator[str]"), ("elapsed", "timedelta"),
+                  ("labels", "list"), ("meta", "dict[str, str]"), ("keys", "Iterable[str]"),
+                  ("feature_state", "FeatureState"))
+        path: str = f"{self.BASE}/photo_storage_port.py"
+        words = (("payment_result", "payment"), ("eviction", "eviction"), ("run_export", "run"),
+                 ("process_refund", "process"), (None, None), ("invoke", "invoke"), ("perform", "perform"),
+                 ("apply_change", "apply"), ("invoke_lookup", "invoke"), ("code", "code"), ("mode", "mode"),
+                 ("lines", "lines"), ("elapsed", "elapsed"), ("labels", "labels"), ("meta", "meta"), ("keys", "keys"),
+                 ("feature_state", "feature"))
+        expected: "list[str]" = []
+        for index, (name, first) in enumerate(words):
+            line: int = 14 + 3 * index
+            if name is None:
+                expected.append(f"[ⓓ#485] {path}:{line}: 포트 메서드 `_normalized_key` 이 `_` 로 시작해 첫 토큰이 없다 — "
+                                f"아는 동사로도 묻는 꼴로도 읽히지 않는다{_Q485}")
+            else:
+                expected.append(f"[ⓓ#485] {path}:{line}: 포트 메서드 `{name}` 의 첫 토큰 `{first}` 이 아는 동사 목록에도 "
+                                f"묻는 꼴에도 없다{_Q485}")
+        self.assertEqual(self.lines("check-port-adapter-pairing.py", "485"), expected)
+
+    def test_accepted_miss_noun_named_command_with_plain_or_enum_return(self) -> None:
+        """사용자 결정(2026-11-16)이 받아들인 놓침 — 원시 값 · Enum 을 돌려주는 명사 이름 명령은 묻지 않는다(감수 몫).
+        이 시험이 붉어지면 놓침을 줄인 것이다 — 결정 기록을 먼저 고친다."""
+        self.port(("payment", "str"), ("reservation", "OrderStatus"))
+        self.assertEqual(self.lines("check-port-adapter-pairing.py", "485"), [])
 
 
 class AclWindowTryRegression(unittest.TestCase):
@@ -9520,6 +9867,15 @@ _CC_CLASS: tuple[str, ...] = ("CrossScopeControllerHelperRegression",)
 _MI_CLASS: tuple[str, ...] = ("FrameworkTestModelImportRegression",)
 _TF_CLASS: tuple[str, ...] = ("TechnologyFolderEnvRegression",)
 _PR_CLASS: tuple[str, ...] = ("PreRouteFixedFileRegression",)
+_DM_FILE: str = "check-domain-model.py"
+_PA_FILE: str = "check-port-adapter-pairing.py"
+_IT_CLASS: tuple[str, ...] = ("InvariantTailRegression",)
+_UQ_CLASS: tuple[str, ...] = ("UseCaseQueryHeadRegression",)
+_PQ_CLASS: tuple[str, ...] = ("PortQueryReturnRegression",)
+_PQ_LIST: str = '"List", "Tuple", "Set", "FrozenSet", "Optional", "Union"}'
+_PQ_VALUES: str = 'PLAIN_RETURN_VALUES = {"str", "int", "float", "bool", "bytes", "Decimal", "UUID", "date", "datetime", "time"}'
+_PQ_VALUE_TEST: str = "        if chain[-1] in PLAIN_RETURN_VALUES or _enum_class(root, py, mod, chain, 0):"
+_IT_TAIL: str = "ends_with_check = _is_check_word_call(m.body[-2]) and not _unchecked_exit(m.body, last)"
 _MUTATIONS: tuple[tuple[str, str, tuple[tuple[str, str], ...], tuple[str, ...]], ...] = (
     ("F4-167 받은 글 검증 허용 목록 걷음", _CI_FILE, (
         ("        self.allowlist: bool = partner is not None and not _uses_name_device(mod) and not _partner_altered(partner)",
@@ -9964,6 +10320,73 @@ _MUTATIONS: tuple[tuple[str, str, tuple[tuple[str, str], ...], tuple[str, ...]],
     ("F4-180 `__all__` 이 있으면 `import *` 로 들어오는 이름을 다 버림", "checker_target.py", (
         ('                            if declared is None or n.split(".")[0] in declared}',
          "                            if declared is None}"),), ("DomainBypassValueSourceRegression",)),
+    ("F4-26 #257 확인 호출 뒤 return 건너뛰기 걷음", _DM_FILE, (
+        ("                if isinstance(last, ast.Return) and len(m.body) > 1 \\\n",
+         "                if False and isinstance(last, ast.Return) and len(m.body) > 1 \\\n"),), _IT_CLASS),
+    ("F4-26 #257 return 식의 self 조건 뺌", _DM_FILE, (
+        ('isinstance(n, ast.Name) and (n.id == "self" or n.id in self_bound) for n in ast.walk(ret.value))',
+         "isinstance(n, ast.Name) and n.id in self_bound for n in ast.walk(ret.value))"),), _IT_CLASS),
+    ("F4-26 #257 self 속성을 묶은 이름 뺌", _DM_FILE, (
+        ('isinstance(n, ast.Name) and (n.id == "self" or n.id in self_bound) for n in ast.walk(ret.value))',
+         'isinstance(n, ast.Name) and n.id == "self" for n in ast.walk(ret.value))'),), _IT_CLASS),
+    ("F4-26 #257 건너뛴 return 앞 `if` 도 확인", _DM_FILE, (
+        (_IT_TAIL, "ends_with_check = (isinstance(m.body[-2], ast.If) or _is_check_word_call(m.body[-2]))"
+                   " and not _unchecked_exit(m.body, last)"),), _IT_CLASS),
+    ("F4-26 #257 호출 return 도 건너뜀(값만 돌려주는 return 조건 뺌)", _DM_FILE, (
+        ("                        and _returns_value_only(last, _self_bound_names(m)):", "                        :"),),
+     _IT_CLASS),
+    ("F4-26 #257 길 읽기 뺌(앞 갈래가 확인 없이 빠져나감)", _DM_FILE, (
+        (_IT_TAIL, "ends_with_check = _is_check_word_call(m.body[-2])"),), _IT_CLASS),
+    ("F4-26 #257 확인 낱말 `_` 경계 뺌(부분 글)", _DM_FILE, (
+        ('    return bool(set(_called_method(st).split("_")) & _CHECK_TOKENS)', "    return _is_check_call(st)"),),
+     _IT_CLASS),
+    ("F4-26 #257 길 읽기가 self 속성의 메서드 호출을 씀으로 안 셈", _DM_FILE, (
+        ("    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):\n", "    if False:\n"),), _IT_CLASS),
+    ("F4-26 #257 길 읽기가 self 첨자 대입 · del 을 씀으로 안 셈", _DM_FILE, (
+        ("    if isinstance(node, (ast.Attribute, ast.Subscript)) and isinstance(node.ctx, (ast.Store, ast.Del)):",
+         "    if isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Store):"),), _IT_CLASS),
+    ("F4-26 #257 길 읽기가 바꾸는 return 식을 안 봄", _DM_FILE, (
+        ("found[0] = found[0] or dirty or _writes_self([st])", "found[0] = found[0] or dirty"),), _IT_CLASS),
+    ("F4-26 #257 길 읽기가 self 밖 객체 바꿈도 씀으로 셈", _DM_FILE, (
+        ('    """`self.<a>` · `self.<a>.<b>` · `self.<a>[k]` — self 에서 속성 · 첨자로 닿는 식."""\n',
+         '    """`self.<a>` · `self.<a>.<b>` · `self.<a>[k]` — self 에서 속성 · 첨자로 닿는 식."""\n    return True\n'),),
+     _IT_CLASS),
+    ("F4-32 #191 묻는 동사 머리 뺌", "check-usecase-dto-placement.py", (
+        ("    elif first not in QUERY_VERB_HEADS and any(", "    elif any("),), _UQ_CLASS),
+    ("F4-32 #191 묻는 동사 머리 넓힘(바꾸는 · 그 밖 동사 머리)", "check-usecase-dto-placement.py", (
+        ('QUERY_VERB_HEADS = frozenset({"get", "find", "list", "count"})',
+         'QUERY_VERB_HEADS = frozenset({"get", "find", "list", "count", "fetch", "update"})'),), _UQ_CLASS),
+    ("F4-95 #485 원시 값 · Enum 반환 건너뛰기 걷음", _PA_FILE, (
+        ("                    and not (first and first not in INTENT_DENY | VAGUE_HEADS\n",
+         "                    and not (False and first not in INTENT_DENY | VAGUE_HEADS\n"),), _PQ_CLASS),
+    ("F4-95 #485 첫 토큰 없음 조건 뺌", _PA_FILE, (
+        ("and not (first and first not in INTENT_DENY | VAGUE_HEADS", "and not (first not in INTENT_DENY | VAGUE_HEADS"),),
+     _PQ_CLASS),
+    ("F4-95 #485 INTENT_DENY 머리 조건 뺌", _PA_FILE, (
+        ("first not in INTENT_DENY | VAGUE_HEADS", "first not in VAGUE_HEADS"),), _PQ_CLASS),
+    ("F4-95 #485 모호 동사 머리 뺌", _PA_FILE, (
+        ("first not in INTENT_DENY | VAGUE_HEADS", "first not in INTENT_DENY"),), _PQ_CLASS),
+    ("F4-95 #485 객체 반환도 조회", _PA_FILE, ((_PQ_VALUE_TEST, "        if True:"),), _PQ_CLASS),
+    ("F4-95 #485 Enum 판정 뺌", _PA_FILE, ((_PQ_VALUE_TEST, "        if chain[-1] in PLAIN_RETURN_VALUES:"),), _PQ_CLASS),
+    ("F4-95 #485 점 붙은 이름을 앞 이름으로 읽음", _PA_FILE, (
+        (_PQ_VALUE_TEST, "        if chain[0] in PLAIN_RETURN_VALUES or _enum_class(root, py, mod, chain, 0):"),), _PQ_CLASS),
+    ("F4-95 #485 Enum 기저 들여온 곳 확인 뺌", _PA_FILE, (
+        ("    if _imported_names(mod, chain[0], ENUM_BASE_ORIGINS) & ENUM_BASES:", "    if chain[0][-1] in ENUM_BASES:"),),
+     _PQ_CLASS),
+    ("F4-95 #485 Enum 기저 별칭 풀기 걷음", _PA_FILE, (
+        ("            names |= {chain[-1] if len(chain) > 1 else alias.name\n", "            names |= {chain[-1]\n"),),
+     _PQ_CLASS),
+    ("F4-95 #485 Iterator · Iterable 도 묶음", _PA_FILE, (
+        (_PQ_LIST, '"List", "Tuple", "Set", "FrozenSet", "Optional", "Union", "Iterator", "Iterable"}'),), _PQ_CLASS),
+    ("F4-95 #485 dict 도 묶음", _PA_FILE, ((_PQ_LIST, '"List", "Tuple", "Set", "FrozenSet", "Optional", "Union", "dict"}'),),
+     _PQ_CLASS),
+    ("F4-95 #485 typing 대문자 묶음 뺌", _PA_FILE, ((_PQ_LIST, '"Optional", "Union"}'),), _PQ_CLASS),
+    ("F4-95 #485 Annotated 첫 인자 읽기 뺌", _PA_FILE, (
+        ('            elif head == "Annotated":\n', "            elif False:\n"),), _PQ_CLASS),
+    ("F4-95 #485 timedelta 도 원시 값", _PA_FILE, ((_PQ_VALUES, _PQ_VALUES[:-1] + ', "timedelta"}'),), _PQ_CLASS),
+    ("F4-95 #485 물음 글 옛 글로", _PA_FILE, (
+        ('"이 이름이 의도를 말하나 — 조회면 명사구도 되고, 그 밖은 명령이라 동사구다")', '"이 이름이 무엇을 시키는지 말하나")'),),
+     (*_PQ_CLASS, "CandidateWordRegression")),
 )
 
 

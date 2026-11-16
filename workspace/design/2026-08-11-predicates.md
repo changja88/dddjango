@@ -126,7 +126,7 @@ human 158  →  path 11 · ast 63 · ast+ 57 · human 27
 | 178 | ast | **독립 위반 주체 0** — #179 ∧ #509 ∧ #490 의 합. 검사기를 새로 만들지 않는다(D30) |
 | 179 | ast | task 함수 본문 = `build_<use_case>()` 1회 + 유스케이스 1회 호출 + (선택)command 생성. 그 밖 문장이 있으면 위반. 파일당 task 하나 |
 | 181 | ast+ | 확정: `cron_job/**` 에 「이미 했나」 판정(조회 후 조기 반환·`get_or_create`·중복 키·락) / 후보: **바깥이 부르는 입구 전부**(`cron_job/`·`webhook/**/*_controller.py`·`event_subscription/`) → 도달 유스케이스 중 리포지토리 읽기 0 + `save()` 만 있는 것 / 물음: 「두 번 와도 결과가 같나」 ← **멱등 물음의 소유자**(08-11 · C8 에 #513 에서 이관) |
-| 191 | ast+ | 자동 통과: 첫 토큰이 애그리거트 루트 공개 메서드 이름과 같은 것 / 후보: 이름 전체가 애그리거트 이름이거나 `_list`·`_info`·`_detail`·`_status` 로 끝나는 것 / 물음: **Q1** |
+| 191 | ast+ | 후보: 이름 전체가 애그리거트 이름이거나, 묻는 동사 머리(`get`·`find`·`list`·`count`)로 시작하지 않으면서 `_list`·`_info`·`_detail`·`_status` 로 끝나는 것(루트 공개 메서드 첫 토큰 자동 통과는 두지 않는다 — 수집 비용) / 물음: **Q1** |
 | 194 | ast+ | 후보: `<use_case>_use_case.py` 의 `If`/`Match`/`Assert` 중 피연산자가 도메인 타입 속성 접근·값 객체 비교인 것 (제외: `Is None` 존재 확인 · 포트 실패 필드 확인) / 물음: **Q2** |
 | 195 | ast | `repository.save/remove` 인자가 «같은 함수 안에서 루트 메서드 호출을 받은» 객체가 아니면 위반 — 같은 BC `domain_layer/domain_service/**` 에 한 번 넘겨 그 몸 안에서 파라미터가 `p.m(…)` 루트 메서드 호출을 받고 파라미터 너머 바꿈 · 다시 묶임 · 다른 호출로 다시 넘김(읽기 전용 내장 여덟 밖)이 없으면 «받은» 것으로 본다(유스케이스 안에서 그 인자가 같은 꼴의 바꿈을 받았으면 가리지 않는다 · 한 홉만). `unit_of_work` 를 받았는데 루트 메서드 호출 0이어도 위반. 면제 셋(조회 전용·순수 위임·외부 조회)이 전부 기계로 보인다 |
 | 196 | ast | `application_layer/**` 에 ①`port/` 밖 `ABC`/`Protocol` 상속 ②이름 `*Presenter`·`*InputBoundary`·`*OutputBoundary` ③진입 함수 반환이 `None` 인데 결과를 다른 객체에 넘김 |
@@ -141,7 +141,7 @@ human 158  →  path 11 · ast 63 · ast+ 57 · human 27
 | 233 | ast+ | 확정: 폴더 이름 토큰 ∩ ({기술 이름}∪{BC 이름}∪{모델 표 이름}) ≠ ∅ / 후보: 이름이 명사 하나뿐 / 물음: **Q1** |
 | 241 | ast | `<capability>_port.py` 클래스가 `__enter__`/`__exit__`/`commit`/`rollback`/`after_commit` 을 가지면 위반. 거꾸로 `*_unit_of_work.py` 가 셋(#245) 밖 메서드를 가지면 위반 |
 | 254 | **human** | **Q4** — 기계는 «너무 갈린 쪽»(#546)만 보고 «너무 묶인 쪽»에 신호가 0이다 |
-| 257 | ast+ | 확정: 응용·입구에서 리포지토리 객체에 «속성 접근 후 메서드 호출»(`order.line.change(...)`) / 후보: 루트 공개 메서드 중 자기 속성에 대입하면서 마지막 문장이 검증 호출/`raise` 조건이 아닌 것 / 물음: **Q4** |
+| 257 | ast+ | 확정: 응용·입구에서 리포지토리 객체에 «속성 접근 후 메서드 호출»(`order.line.change(...)`) / 후보: 루트 공개 메서드 중 자기 속성에 대입하면서 마지막 문장이 검증 호출·`raise`·`if` 가 아닌 것 — 마지막이 값만 돌려주는 return 이고 그 앞이 `_` 낱말로 확인 호출(assert·check·ensure·valid·validate·verify)이며 self 에 쓴(속성 · 첨자 대입 · `del` · self 속성의 메서드 호출 · 그런 return 식) 뒤 확인 없이 빠져나가는 다른 return 이 없으면 확인으로 끝난 것 / 물음: **Q4** |
 | 259 | ast+ | 확정: `entity/` 클래스에 식별자 필드 0(#260) / 후보: ①`value_object/` 인데 `id`·`*_id` 를 가진 것 ②`entity/` 인데 `__eq__` 를 «전 필드»로 정의 / 물음: **Q4** |
 | 268 | ast+ | 허용: 출처가 확인된 닫힌 표준 Enum/StrEnum/IntEnum의 생성 검증 / 후보: 일반 값 객체의 생성자 raise 부재 또는 custom/open Enum(raise 유무와 별개; 동적 멤버·추가 base/metaclass·생성 hook·변경된 출처는 닫힌 증명이 아님) / 물음: **Q2**(이 타입 조합만으로 잘못된 값이 «불가능»한가) |
 | 269 | ast | `domain_layer/<A>/event/<E>.py` 클래스가 같은 BC 안에서 한 번도 참조되지 않으면 위반 |
@@ -194,7 +194,7 @@ human 158  →  path 11 · ast 63 · ast+ 57 · human 27
 | 475 | ast+ | 후보: 유스케이스 안에서 `*DomainBypassQuery` 결과에 바인딩된 이름이 비교·불리언 피연산자로 흐르는 자리(지역 taint) / 물음: **Q2** |
 | 480 | ast | 그 칸의 파일·클래스 이름에 `dto`·`Dto`·`DTO` 가 있거나 `_command`·`_result` 로 끝나면 위반 |
 | 484 | ast | `contract/request/` 는 `Request`, `contract/response/` 는 `Response` 로 끝나고 `Result` 면 위반 |
-| 485 | ast+ | 확정: 이름이 `notify`·`handle`·`execute`·`process`·`run`·`do` 이거나 `_command`·`_query` 접미사를 단 포트 메서드 / 후보: deny-list 밖인데 첫 `_`-토큰이 아는 동사 목록(데이터 — 닫지 않는다 · 모호 동사 `run` 등은 넣지 않는다)에 없고 묻는 꼴(`has_`·`is_`·`can_`·`current_`)도 아닌 메서드 / 물음: 「이 이름이 무엇을 시키는지 말하나」 |
+| 485 | ast+ | 확정: 이름이 `notify`·`handle`·`execute`·`process`·`run`·`do` 이거나 `_command`·`_query` 접미사를 단 포트 메서드 / 후보: deny-list 밖인데 첫 `_`-토큰이 아는 동사 목록(데이터 — 닫지 않는다 · 모호 동사는 넣지 않는다)에 없고 묻는 꼴 접두(`has_`·`is_`·`can_`·`current_`·`get_`·`find_`·`list_`·`count_`·`exists_`)도 아니며, 원시 값(글·수·참거짓·바이트·날짜·시각·Decimal·UUID)·Enum(`enum`·`django` 기저를 둔 저장소 클래스)과 그 목록·선택을 돌려준다고 선언하지 않았거나 첫 토큰이 모호 동사(`invoke`·`apply`·`call`·`perform`·`trigger`·`dispatch`·`request`·`exec`·`operate`·`manage`)인 메서드 / 물음: 「이 이름이 의도를 말하나 — 조회면 명사구도 되고, 그 밖은 명령이라 동사구다」 |
 | 492 | ast+ | 후보: 정본 트리 칸 설명에 조건 표현(있을 수도·필요하면·커지면·권장·해도 된다)이 든 행 / 물음: 「«있어야 하나»인가 «어떻게 쓰나»인가」 (주어가 코드가 아니라 정본 문서 — #491 이 같은 주어로 이미 `path`) |
 | 494 | **human** | **Q0** — 주어가 «규칙을 쓰는 사람». 코드 쪽 강제는 #493·#495·#496 |
 | 346 | human | **면제라 대상 밖** |

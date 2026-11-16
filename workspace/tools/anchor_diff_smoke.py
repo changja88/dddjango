@@ -3103,7 +3103,8 @@ class AnchorSnapshotEscapeRegression(unittest.TestCase):
         record: dict = {"checker": "check-context-isolation.py", "rule": "#95", "file": "web/a.py", "message": "위반",
                         "kind": "violation", "severity": "error"}
 
-        def fake(target, sink=None, git_root=None, only=None, unclassifiable=None):
+        def fake(target, sink=None, git_root=None, only=None, unclassifiable=None,
+                 committed=False, git_base=None, git_tip=None):
             current: bool = Path(target).name == "current"                         # web 줄은 현재 쪽에만(= 귀속 후보)
             return {"check-context-isolation.py": 2 if current else 0}, ({line} if current else set()), ([record] if current else []), set()
         for kind, want_code, sister in (("plain", 0, True), ("escape", 2, False)):
@@ -3934,12 +3935,77 @@ class BaselineLadderHoldsRegression(unittest.TestCase):
         self.assertEqual(ad._CHECKER_TEST_DIR_NAMES, frozenset(cent.TEST_DIR_NAMES))
 
 
+class ViolationSinkRegression(unittest.TestCase):
+    """검사기 레코드 채널의 기본 자리(F4-27 · F4-136) — 설치 표식(`.dddjango/`)이 있어도 실런(`DJR_EXPERIMENT_RUN_ID`)이 아니면
+    작업 트리에 아무것도 남기지 않는다. scope 렌더 `--anchor` 의 앵커 재실행과 게이트의 사본 실행은 호출자의 디렉터리 sink
+    (`DJR_VIOLATIONS_DIR`)에 쓰지 않는다 — 앵커 몫 레코드가 지금 실행분과 섞이지 않게."""
+
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory(prefix="violation-sink-")
+        self.addCleanup(self.temp.cleanup)
+        self.td = Path(self.temp.name)
+
+    def marked(self, name: str, anchor: "dict[str, str]", lane: "dict[str, str]") -> "tuple[Path, str]":
+        """설치 표식(`.dddjango/<실행>/scope.md`)이 있는 저장소 — 앵커 커밋 위에 레인 변경(미커밋)."""
+        repo: Path = self.td / name
+        for rel, src in {".dddjango/20261116-0000-orders/scope.md": "# 범위\n", "application/__init__.py": "",
+                         "application/orders/__init__.py": "", **anchor}.items():
+            _write(repo, rel, src)
+        self.assertEqual(_git(repo, "init", "-q").returncode, 0)
+        base: str = _commit_all(repo, "anchor")
+        for rel, src in lane.items():
+            _write(repo, rel, src)
+        return repo, base
+
+    @staticmethod
+    def exit_of(script: Path, repo: Path, args: "list[str]", **env: str) -> int:
+        clean: "dict[str, str]" = _scrubbed_env()
+        for name in ("DJR_VIOLATIONS_DIR", "DJR_EXPERIMENT_RUN_ID"):
+            clean.pop(name, None)
+        return subprocess.run([sys.executable, str(script), str(repo), *args], capture_output=True, text=True,
+                              env={**clean, **env}).returncode
+
+    @staticmethod
+    def jsonl(folder: Path) -> "list[Path]":
+        return sorted(folder.glob("*.jsonl")) if folder.is_dir() else []
+
+    def test_direct_run_leaves_records_in_the_worktree_only_in_an_experiment(self) -> None:
+        repo, _base = self.marked("sink", {}, {"application/orders/domain_layer/helper.py": "x = 1\n"})
+        skeleton: Path = S / "check-layer-skeleton.py"
+        self.assertEqual(self.exit_of(skeleton, repo, []), 2)
+        self.assertEqual(self.jsonl(repo / ".dddjango" / "violations"), [])
+        self.assertEqual(self.exit_of(skeleton, repo, [], DJR_EXPERIMENT_RUN_ID="t2ab-R01"), 2)
+        self.assertEqual(len(self.jsonl(repo / ".dddjango" / "violations")), 1)
+
+    def test_scope_render_anchor_rerun_does_not_write_into_the_callers_folder(self) -> None:
+        """앵커 · 지금 모두에 같은 legacy 위반 하나 — 호출자 폴더에는 지금 실행분 한 벌(레코드의 run_id 하나)만."""
+        order: str = "application/orders/domain_layer/order"
+        repo, base = self.marked("ghost", {
+            "application/orders/domain_layer/__init__.py": "", f"{order}/__init__.py": "",
+            f"{order}/order.py": "import requests\n\n\nclass Order:\n    pass\n"}, {f"{order}/__init__.py": "# 손댐\n"})
+        folder: Path = self.td / "caller-violations"
+        self.assertEqual(self.exit_of(CTX, repo, ["--scope-bc", "orders", "--anchor", base],
+                                  DJR_VIOLATIONS_DIR=str(folder)), 0)
+        files: "list[Path]" = self.jsonl(folder)
+        self.assertEqual(len(files), 1)
+        runs: "set[str]" = {json.loads(line)["run_id"] for line in files[0].read_text(encoding="utf-8").splitlines() if line}
+        self.assertEqual(len(runs), 1)
+
+    def test_gate_writes_records_neither_into_the_worktree_nor_the_callers_folder(self) -> None:
+        repo, base = self.marked("gate-sink", {}, {"application/orders/domain_layer/helper.py": "x = 1\n"})
+        folder: Path = self.td / "gate-violations"
+        self.assertEqual(self.exit_of(S / "registry_gate.py", repo, ["--anchor", base], DJR_VIOLATIONS_DIR=str(folder)), 2)
+        self.assertEqual(self.jsonl(repo / ".dddjango" / "violations"), [])
+        self.assertEqual(self.jsonl(folder), [])
+
+
 def _main() -> int:
     suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case) for case in (
         BaselineBcArgvRegression, EmptyScopeBcRegression, BcSelectorPartitionRegression, SisterAnchorRegression,
         UnnumberedDebtRegression, BaselineSliceRegression, ApprovedInflowPartitionRegression,
         BcRenamePairingRegression, RenamedBcBaselineRegression, AnchorSnapshotEscapeRegression,
-        SnapshotLinkHelperRegression, HiddenSnapshotRegression, BaselineLadderHoldsRegression))
+        SnapshotLinkHelperRegression, HiddenSnapshotRegression, BaselineLadderHoldsRegression,
+        ViolationSinkRegression))
     result = unittest.TextTestRunner(verbosity=2).run(
         suite)
     if not result.wasSuccessful():

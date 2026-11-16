@@ -55,7 +55,8 @@ main 위반 커밋 → lane 에서 `git merge --no-ff main`(M) → 판정». 고
   (게이트에는 검사기별 timeout 이 없다 — 옛·새 같다. «느린 검사기»는 R2 지연 주입이 덮는다.)
   유지 규칙: 게이트 출력 판형(절·진단 행)을 바꾸는 개정은 같은 변경을 직렬 판형 사본(`_SERIAL_GATE_COMMIT` 게이트 +
   그 변경)에도 적용해 이 대조를 유지하거나, R 을 `DJR_REGISTRY_WORKERS=1` 대조로 낮추는 결정을 커밋 메시지에 적는다
-  (기준을 병렬 이후 커밋으로 올리면 «직렬 대조»라는 뜻이 사라진다).
+  (기준을 병렬 이후 커밋으로 올리면 «직렬 대조»라는 뜻이 사라진다). 계약 줄 차분(2.40.0)은 이 규칙대로 직렬 사본에
+  덧댄다(`_SERIAL_CONTRACT_PATCH` — 자리 셋 · 자리마다 옛 글이 정확히 한 번 바뀌어야 한다).
 
 사용: python3 registry_gate_smoke.py
 exit 0 = 전 케이스 일치 / exit 2 = 불일치 / exit 1 = 재료 결손.
@@ -295,6 +296,61 @@ _MANY_BADS: "tuple[str, ...]" = (
 )
 
 
+# 계약 줄 차분(2.40.0 N1 — 계약 문법 검사기를 줄마다 견줌)을 옛 직렬 게이트의 같은 자리 셋에 덧댄다 — 그 설계된 출력 변화로 직렬
+# 대조가 어긋나지 않게(머리 «유지 규칙»). ① 검사기 줄: `[#N]` 줄 없이 exit 2 면 계약 줄 ② 앵커 · 지금 두 벌 뒤: 한쪽만 합성 줄이면
+# 둘 다 합성 줄 ③ 집합 차분 뒤: 흔들리는 칸만 다른 계약 줄 짝은 잔존. 줄 짓기 · 맞추기 · 짝 함수는 대조할 새 게이트의 것을 부르되,
+# 레코드는 직렬 sink 를 검사기 이름으로 걸러 얻는다(새 게이트의 검사기별 조각과 다른 길 — 조각 대응 결함이 두 쪽에 같이 숨지
+# 않게). 앵커 사본의 커밋 트리 표지 · 지금 사본의 앵커 커밋(2.40.0 F4-28)은 덧대지 않는다 — R 재료(`_MANY_BADS`)에는 평면 앱 ·
+# 멱등 파일이 없어 그 갈래를 타지 않는다(재료에 넣으면 여기에도 덧댄다).
+_SERIAL_CONTRACT_PATCH: "tuple[tuple[str, str], ...]" = (
+    ("import findings  # noqa: E402  — sink 환경변수 이름·라인 재구성 문법의 단일 출처\n",
+     "import findings  # noqa: E402  — sink 환경변수 이름·라인 재구성 문법의 단일 출처\n"
+     "import importlib.util as _contract_util  # noqa: E402\n"
+     "_contract_spec = _contract_util.spec_from_file_location(\"serial_contract_gate\", {gate!r})\n"
+     "_contract = _contract_util.module_from_spec(_contract_spec)\n"
+     "_contract_spec.loader.exec_module(_contract)\n"),
+    ("        if proc.returncode != 0 and parsed == 0:\n"
+     "            lines.add(f\"{script} :: [진단 미파싱 · exit {proc.returncode}] fail-closed 귀속\")\n",
+     "        if proc.returncode != 0 and parsed == 0:\n"
+     "            raw_out: str = proc.stdout + \"\\n\" + proc.stderr\n"
+     "            mine: \"list[dict] | None\" = ([rec for rec in _contract._read_records(sink) if rec.get(\"checker\") == script]\n"
+     "                                       if sink is not None and sink.is_file() else None)\n"
+     "            contract: \"set[str] | None\" = (\n"
+     "                _contract._contract_lines(script, mine, raw_out, prefixes)\n"
+     "                if proc.returncode == 2 and \"구조화 레코드 채널 비활성\" not in raw_out and \"[분석]\" not in raw_out else None)\n"
+     "            if contract:\n"
+     "                lines |= contract\n"
+     "            else:\n"
+     "                lines.add(f\"{script} :: [진단 미파싱 · exit {proc.returncode}] fail-closed 귀속\")\n"),
+    ("            exits_n, n_set, n_records, n_cands = _run_registry(cur, sink_n, git_root=root)\n"
+     "            n_set |= _parse_fail_findings(cur)\n",
+     "            exits_n, n_set, n_records, n_cands = _run_registry(cur, sink_n, git_root=root)\n"
+     "            n_set |= _parse_fail_findings(cur)\n"
+     "            _contract._harmonize_contract(l_set, n_set, exits_l, exits_n)\n"),
+    ("        residual: \"list[str]\" = sorted(l_set & n_set)\n",
+     "        residual: \"list[str]\" = sorted(l_set & n_set)\n"
+     "        contract_pairs: \"dict[str, str]\" = _contract._contract_pairs(attributed, resolved)\n"
+     "        attributed = [line for line in attributed if line not in contract_pairs]\n"
+     "        resolved = [line for line in resolved if line not in set(contract_pairs.values())]\n"
+     "        residual = sorted(set(residual) | set(contract_pairs))\n"),
+)
+
+
+def _serial_gate_copy(td: Path, name: str) -> "Path | None":
+    """옛 직렬 게이트(`_SERIAL_GATE_COMMIT`) 사본 + 계약 줄 덧대기(`_SERIAL_CONTRACT_PATCH`). 덧댈 자리마다 옛 글이 정확히 한 번
+    바뀌어야 한다 — 못 바뀌면 시험 오류(덧대기가 조용히 빠져 대조가 뜻을 잃지 않게)."""
+    gate: "Path | None" = _gate_copy(td, name, _SERIAL_GATE_COMMIT)
+    if gate is None:
+        return None
+    text: str = gate.read_text(encoding="utf-8")
+    for old, new in _SERIAL_CONTRACT_PATCH:
+        if text.count(old) != 1:
+            raise RuntimeError(f"직렬 게이트 덧대기 자리가 정확히 한 곳이 아니다({text.count(old)}) — {old.strip()[:60]}")
+        text = text.replace(old, new.replace("{gate!r}", repr(str(GATE))), 1)
+    gate.write_text(text, encoding="utf-8")
+    return gate
+
+
 def _add_bad_rules(repo: Path, bad: str) -> None:
     """재료 하나를 `fx_<재료>/` 에 두고 그 BC 는 뿌리 `application/<재료>_<bc>` 로 옮긴다 — BC 마다 도는 검사기는 뿌리
     `application/` 만 BC 로 고른다(저장소 전체를 훑는 검사기 몫은 `fx_<재료>/` 그대로)."""
@@ -376,7 +432,7 @@ def _last_line(text: object) -> str:
 def _parallel_rows(td: Path) -> "list[tuple[str, int, int, bool, str]]":
     """R1~R6 — 병렬 게이트가 옛 직렬 게이트와 byte 같은가(정상·완료 순서 뒤집힘·결함 주입 셋·워커 값 오류)."""
     rows: "list[tuple[str, int, int, bool, str]]" = []
-    serial: "Path | None" = _gate_copy(td, "serial-gate", _SERIAL_GATE_COMMIT)
+    serial: "Path | None" = _serial_gate_copy(td, "serial-gate")
     if serial is None:
         raise RuntimeError(f"직렬 게이트 사본({_SERIAL_GATE_COMMIT}) 추출 실패")
 
@@ -415,7 +471,7 @@ def _parallel_rows(td: Path) -> "list[tuple[str, int, int, bool, str]]":
     ]
     for name, checker, body, want, on_many, note in injections:
         tag: str = name.split()[0].lower()
-        old_gate: "Path | None" = _gate_copy(td, f"{tag}-old", _SERIAL_GATE_COMMIT)
+        old_gate: "Path | None" = _serial_gate_copy(td, f"{tag}-old")
         new_gate: "Path | None" = _gate_copy(td, f"{tag}-new")
         assert old_gate is not None and new_gate is not None
         _inject(old_gate, checker, body)
@@ -634,7 +690,8 @@ class SisterGateRegression(unittest.TestCase):
                 synthetic=False, no_records=False, retained=None, extra=None):
         # 검사기 실행 경계만 대역. 실제 archive·주어 매칭·분할·출력·sidecar를 실행한다.
         records = []
-        def run(target, sink=None, git_root=None, only=None, unclassifiable=None):
+        def run(target, sink=None, git_root=None, only=None, unclassifiable=None,
+                committed=False, git_base=None, git_tip=None):
             current = target.name == "current"
             lines = set()
             recs = []
@@ -1582,6 +1639,683 @@ class ListShrinkRegression(unittest.TestCase):
 _RELEASED_2242_COMMIT: str = "2119e502"
 
 
+# ── 앵커부터의 «건드림» · 계약 줄 · 승인 머지가 들인 도메인 파일 · ⓓ 수 칸(2.40.0 — F4-28 · F4-46) ─────────────────────────
+# 장난감은 작은 git 저장소다: 뿌리 `application/` (표준 채택) · 설정 패키지 · legacy 평면 앱 `catalog`(앵커에 있음).
+
+_APP_CK: str = "check-app-container.py"
+_IDEM_CK: str = "check-idempotency-scope-creep.py"
+_CHOICES_CK: str = "check-choices-literal-consumption.py"
+_COMMON_CK: str = "check-common-container.py"
+_TRANSIENT_CK: str = "check-transient-overmapping.py"
+_RESPONSE_CK: str = "check-response-schema-bypass.py"
+_TOY_MIGRATION: str = ("from django.db import migrations\n\n\nclass Migration(migrations.Migration):\n"
+                       "    dependencies = []\n    operations = []\n")
+_TOY_BASE: "dict[str, str]" = {"application/__init__.py": "", "application/orders/__init__.py": "",
+                               "config/__init__.py": "", "config/settings.py": 'SECRET = "x"\n'}
+_TOY_CATALOG: "dict[str, str]" = {
+    "catalog/__init__.py": "", "catalog/migrations/__init__.py": "",
+    "catalog/models.py": ("from django.db import models\n\n\nclass ItemModel(models.Model):\n"
+                          "    name = models.CharField(max_length=10)\n"),
+    "catalog/migrations/0001_initial.py": _TOY_MIGRATION}
+_TOY_CATALOG_APPS: str = 'from django.apps import AppConfig\n\n\nclass CatalogConfig(AppConfig):\n    name = "catalog"\n'
+_TOY_PAYMENTS: "dict[str, str]" = {
+    "payments/__init__.py": "", "payments/migrations/__init__.py": "",
+    "payments/apps.py": 'from django.apps import AppConfig\n\n\nclass PaymentsConfig(AppConfig):\n    name = "payments"\n',
+    "payments/models.py": ("from django.db import models\n\n\nclass PayModel(models.Model):\n"
+                           "    amount = models.IntegerField()\n"),
+    "payments/migrations/0001_initial.py": _TOY_MIGRATION}
+_TOY_BACKOFFICE: "dict[str, str]" = {"cross_context/__init__.py": "", "cross_context/backoffice/__init__.py": "",
+                                     "cross_context/backoffice/admin.py": "x = 1\n"}
+_TOY_SCOPE: "dict[str, str]" = {
+    ".dddjango/20261116-0000-orders/scope.md": "# 범위\n- 멱등성은 이번 요청에 명시되지 않았다.\n"}
+_TOY_IDEM: "dict[str, str]" = {"application/orders/driven_layer/__init__.py": "",
+                               "application/orders/driven_layer/idempotency_record.py":
+                                   "class IdempotencyRecordStore:\n    pass\n"}
+_TOY_HELPER: "dict[str, str]" = {"application/orders/helper.py": "x = 1\n"}
+
+
+def _apply(repo: Path, files: "dict[str, str | None]") -> None:
+    """파일을 쓰거나(`None` 이면) 지운다."""
+    for rel, text in files.items():
+        if text is None:
+            (repo / rel).unlink()
+        else:
+            _write(repo, rel, text)
+
+
+def _toy(td: Path, name: str, anchor: "dict[str, str]", lane: "dict[str, str | None]",
+         commit: bool = False, sub: str = "") -> "tuple[Path, str]":
+    """앵커 커밋(`_TOY_BASE` + anchor) 위에 레인 변경(미커밋 · `commit` 이면 커밋)을 얹은 장난감 — (대상, 앵커 SHA). `sub` 면
+    git 뿌리(README 하나) 아래 그 하위 폴더가 대상인 프로젝트다(파일은 모두 대상 아래)."""
+    repo: Path = td / name
+    target: Path = repo / sub if sub else repo
+    target.mkdir(parents=True)
+    _git(repo, "init", "-q", "-b", "main")
+    if sub:
+        _write(repo, "README.md", "# repo\n")
+    _apply(target, {**_TOY_BASE, **anchor})
+    base: str = _commit_all(repo, "anchor")
+    _apply(target, lane)
+    if commit:
+        _commit_all(repo, "lane")
+    return target, base
+
+
+def _merge_toy(td: Path, name: str, anchor: "dict[str, str]",
+               steps: "list[tuple[str, dict[str, str | None]]]", sub: str = "") -> "tuple[Path, str, Path]":
+    """앵커(main) 위 레인 가지에서 차례로 — ("merge", 파일): main 이 그 파일을 커밋하고 레인이 `--no-ff` 로 받음(승인 목록에 적음)
+    · ("lane", 파일): 레인 커밋 · ("wt", 파일): 레인 작업 트리(미커밋). (대상, 앵커 SHA, 승인 목록) 을 돌려준다(`sub` 는 `_toy`)."""
+    repo, base = _toy(td, name, anchor, {}, sub=sub)
+    _git(repo, "checkout", "-q", "-b", "lane")
+    merges: "list[str]" = []
+    for kind, files in steps:
+        if kind == "merge":
+            _git(repo, "checkout", "-q", "main")
+            _apply(repo, files)
+            _commit_all(repo, "main: upstream")
+            _git(repo, "checkout", "-q", "lane")
+            proc: "subprocess.CompletedProcess[str]" = _git(repo, "merge", "-q", "--no-ff", "-m", "merge main", "main")
+            if proc.returncode != 0:
+                raise RuntimeError(f"git merge 실패: {proc.stderr.strip()}")
+            merges.append(_head(repo))
+        else:
+            _apply(repo, files)
+            if kind == "lane":
+                _commit_all(repo, "lane: work")
+    return repo, base, _approved(td, name, *merges)
+
+
+def _gates(jobs: "list[tuple[Path, str, list[str]]]") -> "list[tuple[int, str]]":
+    """게이트 여러 번을 나란히(장난감끼리 독립) — (exit, 출력) 을 jobs 차례로."""
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        return list(pool.map(lambda job: _gate(job[0], job[1], job[2]), jobs))
+
+
+def _checker_lines(out: str, title: str, checker: str) -> "list[str]":
+    return sorted(line for line in _lines_of(out, title) if line.startswith(f"{checker} :: "))
+
+
+def _subjects(lines: "list[str]") -> "list[str]":
+    """계약 줄(`<검사기> :: - <where>: <msg>`)의 주어 칸."""
+    return [line.split(" :: - ", 1)[1].split(": ", 1)[0] for line in lines]
+
+
+def _kept_reason(out: str, line: str) -> str:
+    """귀속 절에서 그 줄 아래 «↳ 귀속 유지: …» 사유(없으면 빈 글자)."""
+    body: "list[str]" = _section(out, "귀속").splitlines()
+    for at, raw in enumerate(body):
+        if raw.strip() == line and at + 1 < len(body) and "↳ 귀속 유지: " in body[at + 1]:
+            return body[at + 1].split("↳ 귀속 유지: ", 1)[1].strip()
+    return ""
+
+
+def _table_row(out: str, checker: str) -> str:
+    m: "re.Match[str] | None" = re.search(rf"^\| `{re.escape(checker)}` \| (\S+) \| (\S+) \|$", out, re.M)
+    return f"{m.group(1)}|{m.group(2)}" if m else ""
+
+
+def _direct(checker: str, repo: Path, env: "dict[str, str] | None" = None) -> "tuple[int, str]":
+    """검사기 직접 실행(게이트 git 문맥 변수는 `env` 로만)."""
+    base: "dict[str, str]" = _scrubbed_env()
+    for name in ("DJR_VIOLATIONS_DIR", "DJR_EXPERIMENT_RUN_ID", "DJR_SOURCE_GIT_ROOT", "DJR_COMMITTED_SNAPSHOT",
+                 "DJR_SOURCE_GIT_BASE", "DJR_SOURCE_GIT_TIP"):
+        base.pop(name, None)
+    proc: "subprocess.CompletedProcess[str]" = subprocess.run(
+        [sys.executable, str(GATE.parent / checker), str(repo)], capture_output=True, text=True,
+        env={**base, **(env or {})})
+    return proc.returncode, proc.stdout + proc.stderr
+
+
+class AnchorTouchGateRegression(unittest.TestCase):
+    """게이트는 «건드림» 을 앵커부터의 변경으로 잰다(F4-28) — 앵커 사본은 커밋 트리 표지로 «건드린 것 없음», 지금 사본은 앵커
+    대비 바뀐 경로 ∪ 미추적(변경을 커밋한 실행도 같은 판정). 직접 실행은 HEAD 대비 그대로."""
+
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory(prefix="anchor-touch-")
+        self.addCleanup(self.temp.cleanup)
+        self.td = Path(self.temp.name)
+
+    def legacy(self, name: str, lane: "dict[str, str | None]", commit: bool = False,
+               extra: "dict[str, str] | None" = None) -> "tuple[Path, str, list[str]]":
+        repo, base = _toy(self.td, name, {**_TOY_CATALOG, "catalog/apps.py": _TOY_CATALOG_APPS, **(extra or {})},
+                          lane, commit)
+        return repo, base, []
+
+    def test_unrelated_change_leaves_no_false_resolution(self) -> None:
+        """a · ac — legacy 평면 앱이 있어도 앵커 줄이 fail-closed 로 서지 않는다(표 `0|0` · 해소 0)."""
+        jobs = [self.legacy("app-a", _TOY_HELPER), self.legacy("app-ac", _TOY_HELPER, commit=True)]
+        for (code, out), (repo, _b, _x) in zip(_gates(jobs), jobs):
+            with self.subTest(toy=repo.name):
+                self.assertEqual(_table_row(out, _APP_CK), "0|0", out)
+                self.assertIn("해소(L∖N) 0건", out)
+                self.assertEqual(_checker_lines(out, "귀속", _APP_CK), [], out)
+
+    def test_editing_a_legacy_app_without_new_domain_files_is_not_touched(self) -> None:
+        """app-edit · app-editc — legacy 평면 앱의 `models.py` 를 고치기만 함(새 마이그레이션 · `apps.py` · `models.py` 없음) →
+        건드린 앱이 아니다(표 `0|0` · 귀속 0 · 직접 실행 0)."""
+        method: "dict[str, str | None]" = {"catalog/models.py": _TOY_CATALOG["catalog/models.py"]
+                                           + "\n    def label(self) -> str:\n        return self.name\n"}
+        jobs = [self.legacy("app-edit", method), self.legacy("app-editc", method, commit=True)]
+        for (code, out), (repo, _b, _x) in zip(_gates(jobs), jobs):
+            with self.subTest(toy=repo.name):
+                self.assertEqual(_table_row(out, _APP_CK), "0|0", out)
+                self.assertEqual(_checker_lines(out, "귀속", _APP_CK), [], out)
+        self.assertEqual(_direct(_APP_CK, jobs[0][0])[0], 0)
+
+    def test_lane_migration_and_new_flat_app_are_attributed_committed_or_not(self) -> None:
+        """b · bc(legacy 평면 앱에 새 마이그레이션) · f · fc(`models/` 꾸러미만 있는 새 평면 앱) — 앵커 대비 건드림이라 귀속."""
+        mig: "dict[str, str | None]" = {"catalog/migrations/0002_more.py": _TOY_MIGRATION}
+        pkg: "dict[str, str | None]" = {"payments/__init__.py": "", "payments/models/__init__.py": "",
+                                         "payments/models/payment.py": "class PaymentModel:\n    pass\n"}
+        jobs = [self.legacy("app-b", mig), self.legacy("app-bc", mig, commit=True),
+                self.legacy("app-f", pkg), self.legacy("app-fc", pkg, commit=True)]
+        for (code, out), (repo, _b, _x) in zip(_gates(jobs), jobs):
+            app: str = "catalog" if repo.name.startswith("app-b") else "payments"
+            with self.subTest(toy=repo.name):
+                self.assertEqual(code, 2, out)
+                self.assertEqual(_subjects(_checker_lines(out, "귀속", _APP_CK)),
+                                 [app], out)
+
+    def test_idempotency_touch_is_measured_from_the_anchor(self) -> None:
+        """k · kc(앵커에도 scope «미요청» · legacy 멱등 파일을 레인이 고침) 귀속 · i(scope 가 작업 트리에만 · legacy 멱등 그대로)
+        거짓 귀속 0."""
+        edit: "dict[str, str | None]" = {"application/orders/driven_layer/idempotency_record.py":
+                                         "class IdempotencyRecordStore:\n    def keep(self) -> None:\n        pass\n"}
+        jobs = [self.legacy("app-k", edit, extra={**_TOY_IDEM, **_TOY_SCOPE}),
+                self.legacy("app-kc", edit, commit=True, extra={**_TOY_IDEM, **_TOY_SCOPE}),
+                self.legacy("app-i", {**_TOY_SCOPE, **_TOY_HELPER}, extra=_TOY_IDEM)]
+        (k, kout), (kc, kcout), (_i, iout) = _gates(jobs)
+        for code, out in ((k, kout), (kc, kcout)):
+            self.assertEqual(code, 2, out)
+            self.assertEqual(len(_checker_lines(out, "귀속", _IDEM_CK)), 1, out)
+        self.assertEqual(_checker_lines(iout, "귀속", _IDEM_CK), [], iout)
+        self.assertEqual(_table_row(iout, _IDEM_CK), "0|0", iout)
+
+    def test_fail_closed_contract_checker_new_line_elsewhere_is_attributed(self) -> None:
+        """ch-reg — 앵커에 choices 리터럴 legacy · 레인이 `kind` 에 choices 를 더해 건드리지 않은 파일의 리터럴이 새 위반 → 귀속."""
+        models: str = ("from django.db import models\n\n\nclass Status(models.TextChoices):\n    PAID = \"paid\"\n\n\n"
+                       "class Kind(models.TextChoices):\n    X = \"x\"\n\n\nclass Order(models.Model):\n"
+                       "    status = models.CharField(max_length=5, choices=Status.choices)\n"
+                       "    kind = models.CharField(max_length=5{choices})\n")
+        repo, base = _toy(self.td, "ch-reg", {
+            "shop/__init__.py": "", "shop/models.py": models.format(choices=""),
+            "shop/legacy_q.py": "from shop.models import Order\n\n\ndef paid():\n    return Order.objects.filter(status=\"paid\")\n",
+            "shop/report.py": "from shop.models import Order\n\n\ndef xs():\n    return Order.objects.filter(kind=\"x\")\n"},
+            {"shop/models.py": models.format(choices=", choices=Kind.choices")})
+        code, out = _gate(repo, base)
+        self.assertEqual(code, 2, out)
+        self.assertEqual(_subjects(_checker_lines(out, "귀속", _CHOICES_CK)),
+                         ["shop/report.py:N"], out)
+
+    def test_direct_run_sees_a_first_migrations_folder(self) -> None:
+        """e — 앵커의 legacy 평면 앱에 `migrations/` 가 없고 레인이 처음 더함 → 직접 실행 2(접힌 미추적 폴더 안을 셈) · 대조
+        `__init__.py` 만 → 0 · f(`models/` 꾸러미만 있는 새 앱) → 2."""
+        anchor: "dict[str, str]" = {k: v for k, v in _TOY_CATALOG.items() if "/migrations/" not in k}
+        first, _b = _toy(self.td, "app-e", anchor, {"catalog/migrations/__init__.py": "",
+                                                     "catalog/migrations/0001_initial.py": _TOY_MIGRATION})
+        empty, _b = _toy(self.td, "app-e0", anchor, {"catalog/migrations/__init__.py": ""})
+        pkg, _b = _toy(self.td, "app-f", _TOY_CATALOG, {"payments/__init__.py": "", "payments/models/__init__.py": "",
+                                                         "payments/models/payment.py": "class PaymentModel:\n    pass\n"})
+        self.assertEqual(_direct(_APP_CK, first)[0], 2)
+        self.assertEqual(_direct(_APP_CK, empty)[0], 0)
+        self.assertEqual(_direct(_APP_CK, pkg)[0], 2)
+
+    def test_tip_mark_is_only_trusted_in_a_gate_copy(self) -> None:
+        """git 작업 트리 직접 실행에 `DJR_SOURCE_GIT_BASE=TIP=HEAD` 를 주어도 미추적 새 파일이 «건드림» 에서 빠지지 않는다
+        (app-b · idem-new → 2) — 끝 커밋은 게이트 사본(비-git)에서만 믿는다."""
+        app, _b = _toy(self.td, "app-b", _TOY_CATALOG, {"catalog/migrations/0002_more.py": _TOY_MIGRATION})
+        idem, _b = _toy(self.td, "idem-new", {**_TOY_SCOPE, "application/orders/driven_layer/__init__.py": ""},
+                        {"application/orders/driven_layer/idempotency_key_ledger.py": "class IdempotencyKeyLedger:\n    pass\n"})
+        for checker, repo in ((_APP_CK, app), (_IDEM_CK, idem)):
+            with self.subTest(checker=checker):
+                head: str = _head(repo)
+                code, out = _direct(checker, repo, {"DJR_SOURCE_GIT_BASE": head, "DJR_SOURCE_GIT_TIP": head})
+                self.assertEqual(code, 2, out)
+
+    def test_worktree_rename_is_read_as_one_path(self) -> None:
+        """작업 트리 칸 이름 바꿈(`git add -N` 뒤 옮김 — porcelain ` R 새\\0옛\\0`)은 새 경로 하나로 읽는다(옛 경로 토큰을 새 항목으로
+        읽지 않는다)."""
+        repo, base = _toy(self.td, "rn", {"a.py": "x = 1\n"}, {})
+        (repo / "a.py").rename(repo / "b.py")
+        self.assertEqual(_git(repo, "add", "-N", "b.py").returncode, 0)
+        changes = _gate_module().checker_target.anchor_changes(repo, base=base)
+        self.assertIsNotNone(changes)
+        self.assertEqual(changes.touched, frozenset({"b.py"}))
+
+    def test_committed_snapshot_mark_must_name_the_target(self) -> None:
+        """비-git 대상 직접 실행: 커밋 트리 표지 값이 대상 경로가 아니면(`1`) fail-closed 그대로 2 · 대상 경로면 0."""
+        repo: Path = self.td / "nongit"
+        _apply(repo, {**_TOY_BASE, **_TOY_CATALOG})
+        self.assertEqual(_direct(_APP_CK, repo, {"DJR_COMMITTED_SNAPSHOT": "1"})[0], 2)
+        self.assertEqual(_direct(_APP_CK, repo, {"DJR_COMMITTED_SNAPSHOT": str(repo.resolve())})[0], 0)
+
+
+class ContractLineGateRegression(unittest.TestCase):
+    """계약 문법 검사기(`[#N]` 줄 없이 exit 2)는 계약 레코드마다 줄로 가른다 — legacy 가 있어도 새 위반이 가려지지 않고, 같은
+    위반의 흔들리는 칸(`@<줄>` · 버킷 `(내용: …)`)만 다른 줄은 잔존으로 짝 짓는다."""
+
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory(prefix="contract-line-")
+        self.addCleanup(self.temp.cleanup)
+        self.td = Path(self.temp.name)
+
+    def test_second_violation_under_the_same_key_is_attributed(self) -> None:
+        """to-dup — 앵커 과잉매핑 핸들러 하나 · 레인이 같은 파일에 둘째 → 순번 줄 귀속(다중 집합)."""
+        handler: str = ("from django.db import OperationalError\n\n\ndef handle_a(request, exc: OperationalError):\n"
+                        "    return api.create_response(request, {}, status=503)\n")
+        repo, base = _toy(self.td, "to-dup", {"api/__init__.py": "", "api/handlers.py": handler},
+                          {"api/handlers.py": handler + "\n\ndef handle_b(request, exc: OperationalError):\n"
+                                                        "    return api.create_response(request, {}, status=409)\n"})
+        code, out = _gate(repo, base)
+        self.assertEqual(code, 2, out)
+        lines: "list[str]" = _checker_lines(out, "귀속", _TRANSIENT_CK)
+        self.assertEqual(len(lines), 1, out)
+        self.assertTrue(lines[0].endswith("(같은 열쇠 2번째)"), out)
+
+    def choices_swap(self, name: str, commit: bool) -> "tuple[Path, str, list[str]]":
+        models: str = ("from django.db import models\n\n\nclass Status(models.TextChoices):\n    PAID = \"paid\"\n\n\n"
+                       "class Kind(models.TextChoices):\n    X = \"x\"\n\n\nclass Order(models.Model):\n"
+                       "    status = models.CharField(max_length=5, choices=Status.choices)\n\n\n"
+                       "class Invoice(models.Model):\n    kind = models.CharField(max_length=5, choices=Kind.choices)\n")
+        repo, base = _toy(self.td, name, {
+            "shop/__init__.py": "", "shop/models.py": models,
+            "shop/views.py": ("from shop.models import Invoice, Order\n\n\ndef paid():\n"
+                              "    return Order.objects.filter(status=\"paid\")\n")},
+            {"shop/views.py": ("from shop.models import Invoice, Order, Status\n\n\ndef paid():\n"
+                               "    return Order.objects.filter(status=Status.PAID)\n\n\ndef xs():\n"
+                               "    return Invoice.objects.filter(kind=\"x\")\n")}, commit)
+        return repo, base, []
+
+    def test_fix_one_and_add_another_under_the_same_subject_is_attributed(self) -> None:
+        """ch-swap · ch-swapc — 같은 파일 legacy 리터럴을 고치고 다른 모델 리터럴을 새로 씀 → 글이 달라 짝 없이 귀속."""
+        jobs = [self.choices_swap("ch-swap", False), self.choices_swap("ch-swapc", True)]
+        for (code, out), (repo, _b, _x) in zip(_gates(jobs), jobs):
+            with self.subTest(toy=repo.name):
+                self.assertEqual(code, 2, out)
+                lines: "list[str]" = _checker_lines(out, "귀속", _CHOICES_CK)
+                self.assertEqual(len(lines), 1, out)
+                self.assertIn("Invoice", lines[0])
+
+    def response_toy(self, name: str, kind: str) -> "tuple[Path, str]":
+        """앵커 = response_schema_bypass bad_rules(`get_order` 원시 응답 legacy) · 레인이 같은 파일을 다시 씀."""
+        rel: str = "application/orders/driving_layer/api/order/order_controller.py"
+        repo: Path = self.td / name
+        shutil.copytree(_FIXTURES / "response_schema_bypass" / "bad_rules", repo)
+        _git(repo, "init", "-q", "-b", "main")
+        base: str = _commit_all(repo, "anchor")
+        head: str = ("from django.http import JsonResponse\nfrom ninja import Router, Schema\n\n# 주문 API\n# 읽기 · 취소\n"
+                     "# (레인이 넣은 주석 넷)\n# -\n\nrouter = Router()\n\n\nclass OrderOut(Schema):\n    order_id: str\n")
+        get_bad: str = ("\n\n@router.get(\"/orders/{order_id}\", response={200: OrderOut})\n"
+                        "def get_order(request, order_id: str):\n    return JsonResponse({\"order_id\": order_id})\n")
+        get_ok: str = ("\n\n@router.get(\"/orders/{order_id}\", response={200: OrderOut})\n"
+                       "def get_order(request, order_id: str):\n    return {\"order_id\": order_id}\n")
+        cancel_bad: str = ("\n\n@router.post(\"/orders/{order_id}/cancel\", response={200: OrderOut})\n"
+                           "def cancel_order(request, order_id: str):\n    return JsonResponse({\"order_id\": order_id})\n")
+        body: str = {"move": head + get_bad + cancel_bad, "moveonly": head + get_bad,
+                     "swap": head + get_ok + cancel_bad}[kind]
+        _write(repo, rel, body)
+        return repo, base
+
+    def test_response_operations_pair_by_name_not_by_line(self) -> None:
+        """rs-swap(legacy 고치고 새 연산) 귀속 `cancel_order` · rs-move(줄이 밀리고 새 연산) 귀속 줄이 새 연산 · 밀린 legacy 는
+        짝 · rs-moveonly(줄만 밀림) 귀속 0."""
+        toys = [self.response_toy("rs-swap", "swap"), self.response_toy("rs-move", "move"),
+                self.response_toy("rs-moveonly", "moveonly")]
+        (sc, sout), (mc, mout), (oc, oout) = _gates([(repo, base, []) for repo, base in toys])
+        for code, out in ((sc, sout), (mc, mout)):
+            lines: "list[str]" = _checker_lines(out, "귀속", _RESPONSE_CK)
+            self.assertEqual(code, 2, out)
+            self.assertEqual(len(lines), 1, out)
+            self.assertIn("cancel_order@", lines[0])
+        self.assertIn("같은 위반의 계약 줄이라 잔존으로 센 줄 1건", mout)
+        self.assertEqual(_checker_lines(oout, "귀속", _RESPONSE_CK), [], oout)
+        self.assertIn("같은 위반의 계약 줄이라 잔존으로 센 줄 1건", oout)
+
+    def test_bucket_content_changes_stay_residual(self) -> None:
+        """cc-ign(무시 파일이 버킷 내용 칸을 바꿈) · cc-part(버킷 일부를 옮김) · cc-add(legacy 버킷에 새 파일) → 잔존(짝)."""
+        bucket: "dict[str, str]" = {"application/common/__init__.py": "", "application/common/a.py": "A = 1\n",
+                                    "application/common/b.py": "B = 1\n"}
+        ign, ign_base = _toy(self.td, "cc-ign", {**bucket, ".gitignore": "application/common/generated.py\n"},
+                             {"application/common/generated.py": "G = 1\n", **_TOY_HELPER})
+        part, part_base = _toy(self.td, "cc-part", bucket, {"framework/__init__.py": "", "framework/b.py": "B = 1\n",
+                                                            "application/common/b.py": None})
+        add, add_base = _toy(self.td, "cc-add", bucket, {"application/common/new_helper.py": "NEW = 1\n"})
+        results = _gates([(ign, ign_base, []), (part, part_base, []), (add, add_base, [])])
+        for (code, out), repo in zip(results, (ign, part, add)):
+            with self.subTest(toy=repo.name):
+                self.assertEqual(_checker_lines(out, "귀속", _COMMON_CK), [], out)
+                self.assertIn(f"  {_COMMON_CK}: 1\n", _section(out, "legacy 잔존"), out)
+
+
+class ContractLineUnitRegression(unittest.TestCase):
+    """계약 줄 함수 단위 — 줄 짓기 · 옛 꼴 호환 · 두 벌 맞추기 · 짝 · 지움만 · 레코드 채널 끊김."""
+
+    C: str = _APP_CK
+
+    def setUp(self) -> None:
+        self.gate: ModuleType = _gate_module()
+
+    def rec(self, where: str, **kw: object) -> dict:
+        return dict({"checker": self.C, "rule": None, "sentinel": None, "contract_ref": "선행", "file": where,
+                     "message": "앱이 밖에 있다", "severity": "violation"}, **kw)
+
+    def test_contract_lines_need_complete_records_printed_as_is(self) -> None:
+        out: str = "BLOCKER\n  - catalog: 앱이 밖에 있다\n  - payments: 앱이 밖에 있다\n"
+        f = self.gate._contract_lines
+        self.assertIsNone(f(self.C, None, out, ()))
+        self.assertEqual(f(self.C, [self.rec("catalog"), self.rec("payments")], out, ()),
+                         {f"{self.C} :: - catalog: 앱이 밖에 있다", f"{self.C} :: - payments: 앱이 밖에 있다"})
+        self.assertIsNone(f(self.C, [self.rec("catalog"), self.rec("(target)", sentinel="대상0")], out, ()))
+        self.assertIsNone(f(self.C, [self.rec("orders")], out, ()))
+        self.assertIsNone(f(self.C, [dict(self.rec("catalog"), checker="x.py")], out, ()))
+
+    def test_same_key_twice_gets_an_ordinal(self) -> None:
+        t: str = _TRANSIENT_CK
+        dup: "list[dict]" = [dict(self.rec("api/handlers.py:4"), checker=t, message="과잉매핑"),
+                             dict(self.rec("api/handlers.py:8"), checker=t, message="과잉매핑")]
+        got = self.gate._contract_lines(t, dup, "  - api/handlers.py:4: 과잉매핑\n  - api/handlers.py:8: 과잉매핑\n", ())
+        self.assertEqual(got, {f"{t} :: - api/handlers.py:N: 과잉매핑", f"{t} :: - api/handlers.py:N: 과잉매핑 (같은 열쇠 2번째)"})
+
+    def test_one_side_synthetic_makes_both_synthetic(self) -> None:
+        synthetic: str = f"{self.C} :: [진단 미파싱 · exit 2] fail-closed 귀속"
+        contract: str = f"{self.C} :: - catalog: 앱이 밖에 있다"
+        for l_set, n_set in (({synthetic}, {contract}), ({contract}, {synthetic})):
+            l, n = set(l_set), set(n_set)
+            self.gate._harmonize_contract(l, n, {self.C: 2}, {self.C: 2})
+            self.assertEqual((l, n), ({synthetic}, {synthetic}))
+        l, n = {contract}, {contract, f"{self.C} :: - payments: 앱이 밖에 있다"}
+        self.gate._harmonize_contract(l, n, {self.C: 2}, {self.C: 2})
+        self.assertEqual(n - l, {f"{self.C} :: - payments: 앱이 밖에 있다"})
+
+    def test_pairs_only_where_the_unstable_fields_differ(self) -> None:
+        cc, ch, rs = _COMMON_CK, _CHOICES_CK, _RESPONSE_CK
+        pairs = self.gate._contract_pairs
+        new: "list[str]" = [f"{cc} :: - application/common: 버킷 (내용: a.py)", f"{self.C} :: - payments: 앱이 밖에 있다"]
+        gone: "list[str]" = [f"{cc} :: - application/common: 버킷 (내용: a.py, b.py)"]
+        self.assertEqual(pairs(new, gone), {new[0]: gone[0]})
+        self.assertEqual(pairs([f"{_TRANSIENT_CK} :: - api/handlers.py:N: 과잉매핑 (같은 열쇠 2번째)"], []), {})
+        self.assertEqual(pairs([f"{ch} :: - shop/views.py:N: Invoice.objects.filter/exclude(kind=리터럴) — 선언된 심볼 미사용"],
+                               [f"{ch} :: - shop/views.py:N: Order.objects.filter/exclude(status=리터럴) — 선언된 심볼 미사용"]), {})
+        moved, fresh, old = (f"{rs} :: - api/orders.py:N: operation 'get_order@16' — m",
+                             f"{rs} :: - api/orders.py:N: operation 'cancel_order@21' — m",
+                             f"{rs} :: - api/orders.py:N: operation 'get_order@11' — m")
+        self.assertEqual(pairs(sorted([moved, fresh]), [old]), {moved: old})
+        self.assertEqual(pairs([fresh], [old]), {})
+
+    def test_deletions_only_and_folder_condition(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            a, b = Path(tmp) / "a", Path(tmp) / "b"
+            for root in (a, b):
+                (root / "pkg").mkdir(parents=True)
+            (a / "pkg" / "x.py").write_text("l1\nl2\nl3\n")
+            (b / "pkg" / "x.py").write_text("l1\nl3\n")
+            self.assertTrue(self.gate._deletions_only(a, b, "pkg/x.py"))
+            (b / "pkg" / "x.py").write_text("l1\nNEW\n")
+            self.assertFalse(self.gate._deletions_only(a, b, "pkg/x.py"))
+            (b / "pkg" / "x.py").write_text("l1\n")
+            (b / "pkg" / "y.py").write_text("y\n")
+            self.assertFalse(self.gate._deletions_only(a, b, "pkg/x.py", folder=True))
+            self.assertTrue(self.gate._deletions_only(a, b, "pkg/x.py"))
+
+    def test_debt_line_matches_every_same_text_contract_line(self) -> None:
+        """번호 없는 빚 줄(`=` · 글자 전체 일치)은 같은 글의 계약 줄 모두에 맞는다 — 순번 꼬리는 걷고 맞춘다(scope 렌더와 같게)."""
+        line: str = "check-composition-root.py :: - config/api.py:N: 합성 루트 밖에서 조립한다"
+        rules: "list[tuple[str, str]]" = [("=", line)]
+        self.assertTrue(self.gate._debt_hit(line, rules))
+        self.assertTrue(self.gate._debt_hit(line + " (같은 열쇠 2번째)", rules))
+        self.assertFalse(self.gate._debt_hit(line.replace("config/api.py", "config/urls.py"), rules))
+
+    def run_fake(self, warn: bool, keep: int) -> "set[str]":
+        out: str = "BLOCKER\n  - catalog: 앱이 밖에 있다\n  - payments: 앱이 밖에 있다\n"
+
+        def fake(script: str, target: Path, auto: bool, env: "dict[str, str]") -> "subprocess.CompletedProcess[str]":
+            part: Path = Path(env[self.gate.findings.ENV_VAR])
+            two: "list[dict]" = [self.rec("catalog"), self.rec("payments")]
+            part.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in two[:keep]), encoding="utf-8")
+            err: str = "주의: 구조화 레코드 채널 비활성 — DJR_FINDINGS_JSON 경로에 쓸 수 없다(x)\n" if warn else ""
+            return subprocess.CompletedProcess([script], 2, out, err)
+        with patch.object(self.gate, "_run_checker", side_effect=fake), tempfile.TemporaryDirectory() as tmp:
+            _e, lines, _r, _c = self.gate._run_registry(Path(tmp), sink=Path(tmp) / "s.jsonl", only=frozenset({self.C}),
+                                                         unclassifiable=set())
+        return lines
+
+    def test_broken_record_channel_falls_back_to_the_synthetic_line(self) -> None:
+        self.assertEqual(self.run_fake(True, 1), {f"{self.C} :: [진단 미파싱 · exit 2] fail-closed 귀속"})
+        self.assertEqual(self.run_fake(False, 2), {f"{self.C} :: - catalog: 앱이 밖에 있다",
+                                                   f"{self.C} :: - payments: 앱이 밖에 있다"})
+
+
+class ApprovedDomainFileRegression(unittest.TestCase):
+    """평면 앱 줄의 승인 머지 출처 — T(그 줄을 «건드림» 으로 만든, 앵커에 없던 `migrations/*.py` · `apps.py` · `models.py`) 에서
+    참여 승인 머지 가운데 어느 ^2 에라도 있는 경로를 뺀 S 가 비면 승인 유입, 있으면 귀속. 승인 머지가 들인 파일을 레인이 고친 것 ·
+    같은 폴더의 다른 파일을 고친 것은 레인 몫이 아니다. backoffice 자리 줄은 폴더 tree 로 가른다."""
+
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory(prefix="approved-domain-")
+        self.addCleanup(self.temp.cleanup)
+        self.td = Path(self.temp.name)
+
+    def run_toys(self, toys: "list[tuple[str, list[tuple[str, dict[str, str | None]]], dict[str, str]]]",
+                 approved: bool = True) -> "dict[str, tuple[int, str]]":
+        jobs: "list[tuple[Path, str, list[str]]]" = []
+        for name, steps, anchor in toys:
+            repo, base, listed = _merge_toy(self.td, name, anchor, steps)
+            jobs.append((repo, base, ["--approved-merge-file", str(listed)] if approved else []))
+        return {repo.name: result for (repo, _b, _x), result in zip(jobs, _gates(jobs))}
+
+    def assert_inflow(self, results: "dict[str, tuple[int, str]]", app: str) -> None:
+        for name, (code, out) in results.items():
+            with self.subTest(toy=name):
+                self.assertEqual(_checker_lines(out, "귀속", _APP_CK), [], out)
+                self.assertEqual(_subjects(_checker_lines(out, "승인 유입", _APP_CK)),
+                                 [app], out)
+
+    def assert_kept(self, results: "dict[str, tuple[int, str]]", app: str, reason_tail: str) -> None:
+        for name, (code, out) in results.items():
+            with self.subTest(toy=name):
+                self.assertEqual(code, 2, out)
+                lines: "list[str]" = _checker_lines(out, "귀속", _APP_CK)
+                self.assertEqual(_subjects(lines), [app], out)
+                self.assertTrue(_kept_reason(out, lines[0]).endswith(reason_tail), out)
+
+    def test_upstream_migration_stays_inflow_when_the_lane_edits_other_files(self) -> None:
+        """mm-wt(머지 뒤 `catalog/models.py` 에 메서드 · 미커밋) · mm-two(승인 머지 둘이 0002 · 0003) → 귀속 0 · 승인 유입."""
+        method: "dict[str, str | None]" = {"catalog/models.py": _TOY_CATALOG["catalog/models.py"]
+                                           + "\n    def label(self) -> str:\n        return self.name\n"}
+        results = self.run_toys([
+            ("mm-wt", [("merge", {"catalog/migrations/0002_upstream.py": _TOY_MIGRATION}), ("wt", method)], _TOY_CATALOG),
+            ("mm-two", [("merge", {"catalog/migrations/0002_upstream.py": _TOY_MIGRATION}),
+                        ("lane", {"application/orders/note.md": "lane\n"}),
+                        ("merge", {"catalog/migrations/0003_upstream.py": _TOY_MIGRATION})], _TOY_CATALOG)])
+        self.assertEqual(results["mm-wt"][0], 0, results["mm-wt"][1])
+        self.assert_inflow(results, "catalog")
+
+    def test_upstream_files_edited_by_the_lane_stay_inflow(self) -> None:
+        """na-edit · na-migedit(main 이 새 평면 앱을 들이고 레인이 그 `models.py` · 마이그레이션을 고침) · mm-migedit(legacy 앱에
+        들어온 0002 를 고침) — 미커밋 · 커밋 모두 귀속 0 · 승인 유입."""
+        method: str = "\n    def doubled(self) -> int:\n        return self.amount * 2\n"
+        tweak: str = "# lane tweak\n"
+        toys = []
+        for kind, edit in (("wt", "wt"), ("lane", "c")):
+            suffix: str = "" if edit == "wt" else "c"
+            toys += [
+                (f"na-edit{suffix}", [("merge", _TOY_PAYMENTS),
+                                      (kind, {"payments/models.py": _TOY_PAYMENTS["payments/models.py"] + method})], _TOY_CATALOG),
+                (f"na-migedit{suffix}", [("merge", _TOY_PAYMENTS),
+                                         (kind, {"payments/migrations/0001_initial.py": _TOY_MIGRATION + tweak})], _TOY_CATALOG)]
+        results = self.run_toys(toys)
+        self.assert_inflow(results, "payments")
+        mm = self.run_toys([(f"mm-migedit{s}", [("merge", {"catalog/migrations/0002_upstream.py": _TOY_MIGRATION}),
+                                                 (k, {"catalog/migrations/0002_upstream.py": _TOY_MIGRATION + tweak})],
+                             _TOY_CATALOG) for s, k in (("", "wt"), ("c", "lane"))])
+        self.assert_inflow(mm, "catalog")
+
+    def test_lane_added_domain_files_stay_attributed(self) -> None:
+        """mm-lanemig-pre(승인 머지 앞에 레인 자기 마이그레이션) · mm-apps · mm-appsc(레인이 `catalog/apps.py` 를 새로) — 레인이
+        더한 파일이 그 경로의 사유로 귀속."""
+        pre = self.run_toys([("mm-lanemig-pre", [("lane", {"catalog/migrations/0002_lane.py": _TOY_MIGRATION}),
+                                                 ("merge", {"catalog/migrations/0003_upstream.py": _TOY_MIGRATION})],
+                              _TOY_CATALOG)])
+        self.assert_kept(pre, "catalog", "— catalog/migrations/0002_lane.py")
+        apps = self.run_toys([(f"mm-apps{s}", [("merge", {"catalog/migrations/0002_upstream.py": _TOY_MIGRATION}),
+                                               (k, {"catalog/apps.py": _TOY_CATALOG_APPS})], _TOY_CATALOG)
+                              for s, k in (("", "wt"), ("c", "lane"))])
+        self.assert_kept(apps, "catalog", "— catalog/apps.py")
+
+    def test_backoffice_line_is_judged_by_the_folder_tree(self) -> None:
+        """bo-hide · bo-hidec — main 이 backoffice `models.py` 를 들이고 레인이 `models/` 꾸러미를 더함 → 폴더 tree 가 달라 귀속."""
+        lane_pkg: "dict[str, str | None]" = {
+            "cross_context/backoffice/models/__init__.py": "",
+            "cross_context/backoffice/models/lane.py": "from django.db import models\n\n\nclass LaneModel(models.Model):\n    pass\n"}
+        results = self.run_toys([
+            (f"bo-hide{s}", [("merge", {"cross_context/backoffice/models.py": "from django.db import models\n"}), (k, lane_pkg)],
+             {**_TOY_CATALOG, **_TOY_BACKOFFICE}) for s, k in (("", "wt"), ("c", "lane"))])
+        for name, (code, out) in results.items():
+            with self.subTest(toy=name):
+                self.assertEqual(code, 2, out)
+                self.assertEqual(_subjects(_checker_lines(out, "귀속", _APP_CK)),
+                                 ["cross_context/backoffice"], out)
+
+    def test_upstream_migration_is_inflow_only_with_the_approval_list(self) -> None:
+        """merge-mig — main 이 legacy 평면 앱에 0002 · 레인은 그 앱을 안 건드림: 승인 목록이면 유입 · 없으면 «미승인 머지 = 레인
+        편집» 으로 귀속."""
+        toy = [("merge-mig", [("merge", {"catalog/migrations/0002_upstream.py": _TOY_MIGRATION}), ("wt", _TOY_HELPER)],
+                _TOY_CATALOG)]
+        self.assert_inflow(self.run_toys(toy), "catalog")
+        (code, out), = self.run_toys([("merge-mig-unlisted",) + toy[0][1:]], approved=False).values()
+        self.assertEqual(_subjects(_checker_lines(out, "귀속", _APP_CK)),
+                         ["catalog"], out)
+
+
+class SubfolderProjectRegression(unittest.TestCase):
+    """대상이 저장소 하위 폴더(git 뿌리 아래 `api/`)인 프로젝트 — 게이트는 원본 루트를 git 작업 트리 안이면 믿고, git 이 내는 뿌리
+    기준 경로를 대상 기준으로 맞춘다(앵커 사본의 «건드린 것 없음» 과 지금 사본이 같은 뜻으로 잰다)."""
+
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory(prefix="subfolder-")
+        self.addCleanup(self.temp.cleanup)
+        self.td = Path(self.temp.name)
+
+    def legacy(self, name: str, lane: "dict[str, str | None]", commit: bool = False,
+               extra: "dict[str, str] | None" = None) -> "tuple[Path, str, list[str]]":
+        target, base = _toy(self.td, name, {**_TOY_CATALOG, "catalog/apps.py": _TOY_CATALOG_APPS, **(extra or {})},
+                            lane, commit, sub="api")
+        return target, base, []
+
+    def test_unrelated_change_leaves_the_legacy_app_alone(self) -> None:
+        """sub-a · sub-ac — 손대지 않은 legacy 평면 앱은 두 벌 모두 건드리지 않은 앱(표 `0|0` · 귀속 0)."""
+        jobs = [self.legacy("sub-a", _TOY_HELPER), self.legacy("sub-ac", _TOY_HELPER, commit=True)]
+        for (code, out), (target, _b, _x) in zip(_gates(jobs), jobs):
+            with self.subTest(toy=target.parent.name):
+                self.assertEqual(_table_row(out, _APP_CK), "0|0", out)
+                self.assertEqual(_checker_lines(out, "귀속", _APP_CK), [], out)
+
+    def test_lane_migration_is_attributed_even_with_relative_diff_config(self) -> None:
+        """sub-b · sub-bc · sub-bcr(sub-bc + 저장소 설정 `diff.relative=true`) — 레인의 새 마이그레이션은 귀속."""
+        mig: "dict[str, str | None]" = {"catalog/migrations/0002_more.py": _TOY_MIGRATION}
+        jobs = [self.legacy("sub-b", mig), self.legacy("sub-bc", mig, commit=True),
+                self.legacy("sub-bcr", mig, commit=True)]
+        self.assertEqual(_git(jobs[2][0], "config", "diff.relative", "true").returncode, 0)
+        for (code, out), (target, _b, _x) in zip(_gates(jobs), jobs):
+            with self.subTest(toy=target.parent.name):
+                self.assertEqual(code, 2, out)
+                self.assertEqual(_subjects(_checker_lines(out, "귀속", _APP_CK)), ["catalog"], out)
+
+    def test_untouched_legacy_idempotency_file_is_not_attributed(self) -> None:
+        """sub-l — 앵커에도 scope «미요청» · legacy 멱등 파일 그대로 · 무관 변경 → 귀속 0 · 표 `0|0`."""
+        target, base, _x = self.legacy("sub-l", _TOY_HELPER, extra={**_TOY_IDEM, **_TOY_SCOPE})
+        code, out = _gate(target, base)
+        self.assertEqual(_table_row(out, _IDEM_CK), "0|0", out)
+        self.assertEqual(_checker_lines(out, "귀속", _IDEM_CK), [], out)
+
+    def test_approved_merge_in_a_subfolder_project(self) -> None:
+        """sub-mm(승인 머지가 0002 · 레인은 `catalog/models.py` 만 고침 미커밋) → 유입 · sub-m2(승인 머지가 들인 backoffice
+        `models.py` 를 레인이 고침 미커밋) → «worktree 수정 중» 귀속(작업 트리 경로를 대상 기준으로 맞춤)."""
+        method: "dict[str, str | None]" = {"catalog/models.py": _TOY_CATALOG["catalog/models.py"]
+                                           + "\n    def label(self) -> str:\n        return self.name\n"}
+        models: str = "from django.db import models\n"
+        toys = [("sub-mm", [("merge", {"catalog/migrations/0002_upstream.py": _TOY_MIGRATION}), ("wt", method)],
+                 _TOY_CATALOG),
+                ("sub-m2", [("merge", {"cross_context/__init__.py": "", "cross_context/backoffice/__init__.py": "",
+                                       "cross_context/backoffice/models.py": models}),
+                            ("wt", {"cross_context/backoffice/models.py": models + "\n\nclass LaneModel(models.Model):\n"
+                                                                                 "    pass\n"})], {})]
+        jobs: "list[tuple[Path, str, list[str]]]" = []
+        for name, steps, anchor in toys:
+            target, base, listed = _merge_toy(self.td, name, anchor, steps, sub="api")
+            jobs.append((target, base, ["--approved-merge-file", str(listed)]))
+        (mm_code, mm_out), (m2_code, m2_out) = _gates(jobs)
+        self.assertEqual(_checker_lines(mm_out, "귀속", _APP_CK), [], mm_out)
+        self.assertEqual(_subjects(_checker_lines(mm_out, "승인 유입", _APP_CK)), ["catalog"], mm_out)
+        lines: "list[str]" = _checker_lines(m2_out, "귀속", _APP_CK)
+        self.assertEqual(_subjects(lines), ["cross_context/backoffice"], m2_out)
+        self.assertEqual(_kept_reason(m2_out, lines[0]), "worktree 수정 중", m2_out)
+
+    def test_gate_root_only_context_aligns_porcelain_paths(self) -> None:
+        """원본 루트(`DJR_SOURCE_GIT_ROOT`)만 준 비-git 사본 직접 실행 — porcelain 의 뿌리 기준 경로를 대상 기준으로 읽는다(sub-b ·
+        sub-c(새 평면 앱 — 접힌 미추적 폴더 `?? api/payments/`) 사본 2 · sub-a 사본 0)."""
+        new_app: "dict[str, str | None]" = {"payments/__init__.py": "", "payments/models.py": "from django.db import models\n"}
+        for name, lane, want in (("sub-b", {"catalog/migrations/0002_more.py": _TOY_MIGRATION}, 2), ("sub-c", new_app, 2),
+                                 ("sub-a", _TOY_HELPER, 0)):
+            with self.subTest(toy=name):
+                target, _base, _x = self.legacy(name, lane)
+                copy: Path = self.td / f"{name}-copy"
+                shutil.copytree(target, copy)
+                self.assertEqual(_direct(_APP_CK, copy, {"DJR_SOURCE_GIT_ROOT": str(target)})[0], want)
+
+
+class CountShrinkRegression(unittest.TestCase):
+    """ⓓ 줄의 수 칸(`223행` · `엔티티 3개`)이 줄기만 했으면 legacy — 그 주어가 앵커 대비 «지움만» 일 때만(F4-46 · #547 ⑶ 은 그
+    폴더에 새 파일도 없어야 함)."""
+
+    _REPO: str = "application/orders/driven_layer/adapter/persistence/repository"
+    _ENTITY: str = "application/orders/domain_layer/order/entity"
+
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory(prefix="count-shrink-")
+        self.addCleanup(self.temp.cleanup)
+        self.td = Path(self.temp.name)
+
+    @staticmethod
+    def body(lines: int, prefix: str = "m", name: str = "OrderRepository") -> str:
+        out: "list[str]" = [f"class {name}:"]
+        i: int = 0
+        while len(out) < lines:
+            out += [f"    def {prefix}{i}(self) -> int:", f"        return {i}"]
+            i += 1
+        return "\n".join(out[:lines]) + "\n"
+
+    def skeleton(self, name: str, lane: "dict[str, str | None]") -> "tuple[Path, str, list[str]]":
+        anchor: "dict[str, str]" = {f"{d}/__init__.py": "" for d in (
+            "application/orders/driven_layer", "application/orders/driven_layer/adapter",
+            "application/orders/driven_layer/adapter/persistence", self._REPO, "application/orders/domain_layer",
+            "application/orders/domain_layer/order", self._ENTITY, "application/orders/application_layer")}
+        anchor[f"{self._REPO}/order_repository.py"] = self.body(230)
+        anchor["application/orders/domain_layer/order/order.py"] = (
+            "from dataclasses import dataclass, field\n\n\n@dataclass\nclass Order:\n"
+            "    lines: list[int] = field(default_factory=list)\n")
+        for entity in ("order_line", "shipment", "refund", "coupon"):
+            anchor[f"{self._ENTITY}/{entity}.py"] = f"class {entity}:\n    pass\n"
+        repo, base = _toy(self.td, name, anchor, lane)
+        return repo, base, []
+
+    def test_deletion_only_shrink_is_legacy_and_mixed_changes_stay_new(self) -> None:
+        """s1(저장소 파일 230 → 223행 지움만) · skel-cas(같은 지움 + 같은 폴더 새 부품 파일) → ⓓ 신규 0 · m2(엔티티 둘 지우고
+        새 엔티티 하나 4 → 3) → ⓓ 신규 1."""
+        jobs = [
+            self.skeleton("skel-s1", {f"{self._REPO}/order_repository.py": self.body(223)}),
+            self.skeleton("skel-cas", {f"{self._REPO}/order_repository.py": self.body(223),
+                                       f"{self._REPO}/order_query.py": "def order_count(rows: list[int]) -> int:\n"
+                                                                       "    return len(rows)\n"}),
+            self.skeleton("skel-m2", {f"{self._ENTITY}/coupon.py": None, f"{self._ENTITY}/refund.py": None,
+                                      f"{self._ENTITY}/gift.py": "class Gift:\n    pass\n"})]
+        results = _gates(jobs)
+        for (code, out), (repo, _b, _x), want in zip(results, jobs, (0, 0, 1)):
+            with self.subTest(toy=repo.name):
+                self.assertRegex(out, rf"ⓓ 신규\(N′∖L′\) {want}건", out)
+
+
 def _released_gate(td: Path, commit: str) -> Path:
     """배포 커밋의 scripts 트리 사본의 registry_gate.py — 게이트와 공용 모듈(anchor_diff) 모두 그 판이다."""
     dest: Path = td / f"released-{commit}"
@@ -2434,7 +3168,18 @@ _MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...]], ...]" = (
 _LADDER: str = "BaselineLadderHoldsRegression."
 _FOLDER_IN: str = "ApprovedInflowGateRegression.test_F4_162_folder_subjects_inflow_when_lane_left_them_alone"
 _FOLDER_KEPT: str = "ApprovedInflowGateRegression.test_F4_162_folder_subjects_stay_attributed_when_lane_touched_them"
-# 기준선 · 귀속 변이(F4-160 · F4-162 · F4-166) — (이름, scripts 파일, ((옛 글, 새 글) …), 시험 파일, 붉어야 할 시험 이름).
+_TOUCH: str = "AnchorTouchGateRegression."
+_LINE: str = "ContractLineGateRegression."
+_UNIT: str = "ContractLineUnitRegression."
+_DOMAIN: str = "ApprovedDomainFileRegression."
+_COUNT: str = "CountShrinkRegression.test_deletion_only_shrink_is_legacy_and_mixed_changes_stay_new"
+_SINK: str = "ViolationSinkRegression."
+_SUB: str = "SubfolderProjectRegression."
+_CONTRACT_STABLE: str = 'return _CONTENT_RE.sub("(내용: …)", _AT_LINE_RE.sub("@N", _CONTRACT_NTH_RE.sub("", line)))'
+_LANE_FILES: str = 'lane: "list[str]" = sorted(q for q in added if not any(q in facts.blobs(m.parent2) for m in active))'
+_COUNT_FOLDER: str = "folder=any(rule in line for rule in _FOLDER_COUNT_RULES)))"
+# 기준선 · 귀속 변이(F4-160 · F4-162 · F4-166 · 2.40.0 F4-27 · F4-28 · F4-46) — (이름, scripts 파일, ((옛 글, 새 글) …), 시험
+# 파일, 붉어야 할 시험 이름).
 # 옛 글은 그 파일에 정확히 한 번 있어야 한다. 고침을 옛 코드로 되돌린 것과 고침의 조건을 하나씩 무른 것.
 _BASELINE_MUTATIONS: "tuple[tuple[str, str, tuple[tuple[str, str], ...], str, tuple[str, ...]], ...]" = (
     ("F4-160 ①′ 칸 걷음", "anchor_diff.py", (("    if only:\n        # ①′(F4-160)", "    if False:\n        # ①′(F4-160)"),),
@@ -2491,13 +3236,112 @@ _BASELINE_MUTATIONS: "tuple[tuple[str, str, tuple[tuple[str, str], ...], str, tu
         ("or not (parts[-1].endswith(\".py\") or \".\" not in parts[-1])", "or not parts[-1].endswith(\".py\")"),),
      "registry_gate_smoke.py", (_FOLDER_IN,)),
     ("F4-166 ⓓ 후보 짝에 파일 무변 조건 되살림", "registry_gate.py", (
-        ("cand_shrunk = _list_shrunk(sorted(n_cands - l_cands), sorted(l_cands - n_cands))",
+        ("cand_shrunk = _list_shrunk(sorted(n_cands - l_cands), sorted(l_cands - n_cands), counts=True,",
          "cand_shrunk = _list_shrunk([line for line in sorted(n_cands - l_cands) if untouched(line)],\n"
-         "                                       sorted(l_cands - n_cands))"),
+         "                                       sorted(l_cands - n_cands), counts=True,"),
         ("subjects: \"dict[str, str | None]\" = _line_paths(attributed, n_records, cur_prefixes)",
          "subjects: \"dict[str, str | None]\" = _line_paths(attributed + sorted(n_cands - l_cands), n_records, cur_prefixes)")),
      "registry_gate_smoke.py",
      ("ListShrinkRegression.test_F4_166_folder_subject_candidate_shrinks_to_legacy_and_edited_file_violation_stays",)),
+    ("F4-27 기본 자리 실런 조건 걷기", "findings.py", (
+        ('    if _target_root is None or not os.environ.get(ENV_EXPERIMENT, "").strip():', "    if _target_root is None:"),),
+     "anchor_diff_smoke.py", (_SINK + "test_direct_run_leaves_records_in_the_worktree_only_in_an_experiment",)),
+    ("F4-27 앵커 재실행의 디렉터리 sink 걷기", "anchor_diff.py", (
+        ('    env.pop("DJR_VIOLATIONS_DIR", None)  # 디렉터리 sink 도 같다', "    pass  # 디렉터리 sink 도 같다"),),
+     "anchor_diff_smoke.py", (_SINK + "test_scope_render_anchor_rerun_does_not_write_into_the_callers_folder",)),
+    ("F4-28 앵커 커밋 트리 표지 걷기", "registry_gate.py", (
+        ("unclassifiable=unclassifiable_l, committed=True)", "unclassifiable=unclassifiable_l)"),),
+     "registry_gate_smoke.py", (_TOUCH + "test_unrelated_change_leaves_no_false_resolution",)),
+    ("F4-28 지금 사본의 앵커 대비 건드림 걷기", "registry_gate.py", (("                        git_base=anchor_sha)", "                        )"),),
+     "registry_gate_smoke.py", (_TOUCH + "test_lane_migration_and_new_flat_app_are_attributed_committed_or_not",
+                                _TOUCH + "test_idempotency_touch_is_measured_from_the_anchor")),
+    ("F4-28 커밋 트리 표지의 경로 대조 걷기", "checker_target.py", (
+        ("        return Path(mark).resolve() == Path(root).resolve()", "        return True"),),
+     "registry_gate_smoke.py", (_TOUCH + "test_committed_snapshot_mark_must_name_the_target",)),
+    ("F4-28 끝 커밋을 git 작업 트리에서도 믿음", "checker_target.py", (('    if (Path(root) / ".git").exists():\n        return ""\n', ""),),
+     "registry_gate_smoke.py", (_TOUCH + "test_tip_mark_is_only_trusted_in_a_gate_copy",)),
+    ("직접 실행의 첫 migrations 폴더 판정 걷기", "check-app-container.py", (
+        ('if flag.startswith("??") and path.rstrip("/") == f"{rel}/migrations" and any(', "if False and any("),),
+     "registry_gate_smoke.py", (_TOUCH + "test_direct_run_sees_a_first_migrations_folder",)),
+    ("계약 줄 걷기(늘 합성 줄)", "registry_gate.py", (("    if not records:\n        return None\n", "    return None\n"),),
+     "registry_gate_smoke.py", (_LINE + "test_second_violation_under_the_same_key_is_attributed",)),
+    ("계약 줄 순번 걷기", "registry_gate.py", (
+        ('out.add(key if seen[key] == 1 else f"{key}{_CONTRACT_NTH.format(seen[key])}")', "out.add(key)"),),
+     "registry_gate_smoke.py", (_LINE + "test_second_violation_under_the_same_key_is_attributed",)),
+    ("계약 줄 짝을 같은 주어 칸으로 넓힘", "registry_gate.py", (
+        (_CONTRACT_STABLE, 'return _CONTRACT_NTH_RE.sub("", line).split(": ", 1)[0]'),),
+     "registry_gate_smoke.py", (_LINE + "test_fix_one_and_add_another_under_the_same_subject_is_attributed",)),
+    ("계약 줄 버킷 내용 칸 정규화 걷기", "registry_gate.py", (
+        (_CONTRACT_STABLE, 'return _AT_LINE_RE.sub("@N", _CONTRACT_NTH_RE.sub("", line))'),),
+     "registry_gate_smoke.py", (_LINE + "test_bucket_content_changes_stay_residual",)),
+    ("계약 줄 연산 `@<줄>` 정규화 걷기", "registry_gate.py", (
+        (_CONTRACT_STABLE, 'return _CONTENT_RE.sub("(내용: …)", _CONTRACT_NTH_RE.sub("", line))'),),
+     "registry_gate_smoke.py", (_LINE + "test_response_operations_pair_by_name_not_by_line",)),
+    ("계약 줄 짝 걷기", "registry_gate.py", (
+        ('contract_pairs: "dict[str, str]" = _contract_pairs(attributed, resolved) if pair_root is not None else {}',
+         'contract_pairs: "dict[str, str]" = {}'),),
+     "registry_gate_smoke.py", (_LINE + "test_bucket_content_changes_stay_residual",)),
+    ("한쪽 합성 줄 맞추기 걷기", "registry_gate.py", (
+        ("    for side, other, exits in ((l_set, n_set, exits_l), (n_set, l_set, exits_n)):",
+         "    for side, other, exits in ():"),),
+     "registry_gate_smoke.py", (_UNIT + "test_one_side_synthetic_makes_both_synthetic",)),
+    ("레코드 채널 끊김에도 계약 줄", "registry_gate.py", (
+        ("if proc.returncode == 2 and not broken else None)", "if proc.returncode == 2 else None)"),),
+     "registry_gate_smoke.py", (_UNIT + "test_broken_record_channel_falls_back_to_the_synthetic_line",)),
+    ("F4-46 ⓓ 수 칸 짝 걷기", "registry_gate.py", (
+        ("sorted(l_cands - n_cands), counts=True,", "sorted(l_cands - n_cands), counts=False,"),),
+     "registry_gate_smoke.py", (_COUNT,)),
+    ("F4-46 ⓓ 수 칸 짝의 지움만 조건 걷기", "registry_gate.py", (
+        ("narrowed=lambda line, _anchor=pair_root: _deletions_only(",
+         "narrowed=lambda line, _anchor=pair_root: True or _deletions_only("),),
+     "registry_gate_smoke.py", (_COUNT,)),
+    ("F4-46 ⓓ 폴더 조건 늘 켬", "registry_gate.py", ((_COUNT_FOLDER, "folder=True))"),), "registry_gate_smoke.py", (_COUNT,)),
+    ("F4-46 ⓓ 폴더 조건 늘 끔", "registry_gate.py", ((_COUNT_FOLDER, "folder=False))"),), "registry_gate_smoke.py", (_COUNT,)),
+    ("승인 머지 출처 재실행의 끝 커밋 걷기", "registry_gate.py", (
+        ("git_root=root, git_base=anchor_sha, git_tip=sha)", "git_root=root, git_base=anchor_sha)"),),
+     "registry_gate_smoke.py", (_DOMAIN + "test_upstream_migration_is_inflow_only_with_the_approval_list",)),
+    ("승인 머지 출처 재실행의 sink 걷기", "registry_gate.py", (
+        ('snap, sink=td / f"prov-{t[:12]}-{checker}.jsonl", only=frozenset({checker}),', "snap, only=frozenset({checker}),"),),
+     "registry_gate_smoke.py", (_DOMAIN + "test_upstream_migration_is_inflow_only_with_the_approval_list",)),
+    ("평면 앱 줄 출처를 폴더 tree 로 되돌림", "registry_gate.py", (
+        ('added: "frozenset[str]" = domain_additions(checker, p)', 'added: "frozenset[str]" = frozenset()'),),
+     "registry_gate_smoke.py", (_DOMAIN + "test_upstream_migration_stays_inflow_when_the_lane_edits_other_files",)),
+    ("승인 머지 ^2 를 첫 머지 하나만 봄", "registry_gate.py", (
+        (_LANE_FILES, _LANE_FILES.replace("for m in active))", "for m in active[:1]))")),),
+     "registry_gate_smoke.py", (_DOMAIN + "test_upstream_migration_stays_inflow_when_the_lane_edits_other_files",)),
+    ("승인 머지가 들인 파일을 레인이 고치면 레인 몫으로", "registry_gate.py", (
+        (_LANE_FILES, _LANE_FILES.replace("if not any(", "if q in facts.dirty or not any(")),),
+     "registry_gate_smoke.py", (_DOMAIN + "test_upstream_files_edited_by_the_lane_stay_inflow",)),
+    ("레인이 더한 도메인 파일도 유입으로", "registry_gate.py", (("        if lane:\n", "        if False:\n"),),
+     "registry_gate_smoke.py", (_DOMAIN + "test_lane_added_domain_files_stay_attributed",)),
+    ("도메인 파일을 앵커에 있던 것까지", "checker_target.py", (
+        ("    return frozenset(p for p in changes.added\n", "    return frozenset(p for p in changes.touched\n"),),
+     "registry_gate_smoke.py", (_TOUCH + "test_editing_a_legacy_app_without_new_domain_files_is_not_touched",)),
+    ("backoffice 줄도 도메인 파일로 가름", "registry_gate.py", (
+        ("if checker != _APP_CONTAINER or p == backoffice:", "if checker != _APP_CONTAINER:"),),
+     "registry_gate_smoke.py", (_DOMAIN + "test_backoffice_line_is_judged_by_the_folder_tree",)),
+    ("하위 폴더 원본 루트를 .git 있을 때만 믿음", "checker_target.py", (
+        ('    if src and Path(src).is_dir() and _git_line(Path(src), "rev-parse", "--is-inside-work-tree") == "true":',
+         '    if src and (Path(src) / ".git").exists():'),),
+     "registry_gate_smoke.py", (_SUB + "test_unrelated_change_leaves_the_legacy_app_alone",)),
+    ("앵커 대비 변경의 접두 걷기 없앰", "checker_target.py", (('        prefix: str = prefix_out or ""\n', '        prefix: str = ""\n'),),
+     "registry_gate_smoke.py", (_SUB + "test_unrelated_change_leaves_the_legacy_app_alone",)),
+    ("앵커 대비 변경 diff 의 --no-relative 걷기", "checker_target.py", (
+        ('"diff", "--no-relative", "--name-status"', '"diff", "--name-status"'),),
+     "registry_gate_smoke.py", (_SUB + "test_lane_migration_is_attributed_even_with_relative_diff_config",)),
+    ("작업 트리 칸 이름 바꿈을 새 항목으로 읽음", "checker_target.py", (
+        ('i += 2 if ("R" in xy or "C" in xy) else 1', 'i += 2 if xy[0] in "RC" else 1'),),
+     "registry_gate_smoke.py", (_TOUCH + "test_worktree_rename_is_read_as_one_path",)),
+    ("직접 실행 porcelain 접두 걷기 없앰", "check-app-container.py", (
+        ("        if not path.startswith(prefix):\n            continue  # porcelain 은 git 뿌리 기준 — 대상 밖 경로\n"
+         "        path = path[len(prefix):]\n", ""),),
+     "registry_gate_smoke.py", (_SUB + "test_gate_root_only_context_aligns_porcelain_paths",)),
+    ("승인 유입 작업 트리 경로의 접두 맞춤 걷기", "anchor_diff.py", (
+        ("        if prefix:\n            self.dirty = {path[len(prefix):] for path in self.dirty if path.startswith(prefix)}\n", ""),),
+     "registry_gate_smoke.py", (_SUB + "test_approved_merge_in_a_subfolder_project",)),
+    ("빚 대조에서 계약 줄 순번 꼬리를 걷지 않음", "registry_gate.py", (
+        ('anchor_diff.debt_match(_CONTRACT_NTH_RE.sub("", line), debt_rules)', "anchor_diff.debt_match(line, debt_rules)"),),
+     "registry_gate_smoke.py", (_UNIT + "test_debt_line_matches_every_same_text_contract_line",)),
 )
 
 
@@ -2588,7 +3432,10 @@ def _main() -> int:
     suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case)
                                for case in (CacheSnapshotRegression, IdempotencySnapshotRegression, SisterGateRegression,
                                             ApprovedInflowGateRegression, SnapshotLinkRegression, ListShrinkRegression,
-                                            HiddenAnchorGateRegression, TempRootRegression) + _GROUP_CASES)
+                                            HiddenAnchorGateRegression, TempRootRegression, AnchorTouchGateRegression,
+                                            ContractLineGateRegression, ContractLineUnitRegression,
+                                            ApprovedDomainFileRegression, CountShrinkRegression,
+                                            SubfolderProjectRegression) + _GROUP_CASES)
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     if not result.wasSuccessful():
         return 2

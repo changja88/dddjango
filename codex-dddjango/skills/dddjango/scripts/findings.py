@@ -7,9 +7,10 @@
 레코드 sink 우선순위(T2-2 — t2-plan §T2-2 L-7):
   ① DJR_FINDINGS_JSON=<파일>   지정 파일에 append(하네스·스모크 계약 — 최우선·무변)
   ② DJR_VIOLATIONS_DIR=<폴더>  `<UTC ISO>-<세션 8자>.jsonl` 로 원자 게시
-  ③ 설치본 기본                `<TARGET>/.dddjango/violations/` — **표식(.dddjango/)이
-                              이미 있을 때만** 켜진다(임의 프로젝트에 디렉터리를 새로
-                              만들지 않는다·hermetic 사본에는 표식이 없어 무영향).
+  ③ 설치본 기본                `<TARGET>/.dddjango/violations/` — **실런(DJR_EXPERIMENT_RUN_ID)이고
+                              표식(.dddjango/)이 이미 있을 때만** 켜진다(임의 프로젝트에 디렉터리를
+                              새로 만들지 않는다·hermetic 사본에는 표식이 없어 무영향 · 실런 밖
+                              직접 실행은 작업 트리에 아무것도 남기지 않는다 — F4-27 · F4-136).
                               TARGET 등록은 checker_target 한 곳이 한다(27종 봉인점).
 ②③ 은 **지연 개방**(첫 레코드에서만 임시 파일 개방 — 빈 파일 미생성)이고 프로세스
 종료 시 임시→최종 `os.replace` 로 원자 게시한다. 기록 실패는 sink 만 끄고 검사기의
@@ -76,8 +77,17 @@ ENV_EXPERIMENT: str = "DJR_EXPERIMENT_RUN_ID"
 # 게이트가 비-git 스냅숏 사본에서 검사기를 돌릴 때 «원본 git 루트»를 넘기는 채널(BK1 수리
 # 2026-08-21). 스냅숏은 .git 을 잃어 touched 판정이 fail-closed 로 붕괴하고, 그 오귀속이
 # BK1 세 런의 G2 를 전부 red 로 만들었다. git 을 봐야 하는 검사기는 자신이 비-git 일 때만
-# 이 루트로 질의한다 — 앵커 스냅숏 실행에는 게이트가 이 변수를 비워 기존 동작을 유지한다.
+# 이 루트로 질의한다 — 앵커 스냅숏 실행에는 이 변수 대신 커밋 트리 표지(아래)를 준다.
 ENV_GIT_ROOT: str = "DJR_SOURCE_GIT_ROOT"
+# 게이트가 앵커(커밋 트리) 사본에서 검사기를 돌릴 때 켜는 표지(F4-28) — 값은 그 사본의 절대 경로이고, 검사기는 자기
+# 뿌리와 같을 때만 믿는다(게이트 밖에서 켜져도 fail-closed 가 꺼지지 않게). 커밋 트리에는 이번 변경이 없다 → «건드린 것 없음».
+ENV_COMMITTED_SNAPSHOT: str = "DJR_COMMITTED_SNAPSHOT"
+# 게이트가 지금 사본 실행에 넘기는 앵커 커밋 — «건드림» 을 HEAD 가 아니라 앵커 대비로 잰다(변경을 커밋한 실행도 같은 판정).
+# 게이트 밖에서 주면 대상이 git 이어도 그 커밋 대비로 잰다(git 이 답하지 못하는 커밋이면 fail-closed).
+ENV_GIT_BASE: str = "DJR_SOURCE_GIT_BASE"
+# 게이트가 승인 머지 출처 재실행(커밋 트리 사본)에 넘기는 그 커밋 — 있으면 «건드림» 은 작업 트리가 아니라 앵커..그 커밋
+# 차이다. 대상이 git 이 아닐 때(게이트 사본)만 믿는다 — git 작업 트리 직접 실행에서는 읽지 않는다.
+ENV_GIT_TIP: str = "DJR_SOURCE_GIT_TIP"
 INSTALL_MARKER: str = ".dddjango"   # 설치 표식(도구 영역 — F-C 관례)
 VIOLATIONS_SUBDIR: str = "violations"
 SCHEMA: str = "findings/0"
@@ -124,8 +134,10 @@ def set_target(root: "str | Path") -> None:
 
 def _default_dir() -> "Path | None":
     """설치 표식이 «이미 있을 때만» 기본 sink 를 켠다 — 임의 프로젝트에 디렉터리를
-    새로 만들지 않는다(놀람 최소화·하네스 hermetic 사본에도 표식이 없어 무영향)."""
-    if _target_root is None:
+    새로 만들지 않는다(놀람 최소화·하네스 hermetic 사본에도 표식이 없어 무영향).
+    실런(`DJR_EXPERIMENT_RUN_ID`)이 아니면 켜지 않는다 — 수집(`collect_violations --run`)이
+    실런 레코드만 거두므로, 실런 밖 기본 기록은 작업 트리에 남는 추적 안 된 파일일 뿐이다(F4-27 · F4-136)."""
+    if _target_root is None or not os.environ.get(ENV_EXPERIMENT, "").strip():
         return None
     marker: Path = _target_root / INSTALL_MARKER
     return (marker / VIOLATIONS_SUBDIR) if marker.is_dir() else None

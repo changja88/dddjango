@@ -168,7 +168,7 @@ md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금
 5. **final.md 소스 미러** — `corpus_mirror_sync` 는 LEDGER 기준선 해시로 소스 절을 찾는다. graph 절을 개정했으면 `workspace/reference/<skill>/reference/final.md` 의 옛 절을 새 절로 손으로 바꾼 뒤 `--write` → `--check`.
 6. **Codex 의미 미러** — 스킬 `SKILL.md` · 조정자 · 에이전트(Codex 에서는 `codex-dddjango/skills/dddjango-<역할>/SKILL.md`)를 같은 뜻으로 손으로 고친다. `corpus_mirror_sync` 는 final.md 만 보므로 이 어긋남은 어떤 검사도 잡지 못한다. Codex 파일의 스킬 참조 이름은 접두(`dddjango-<스킬>`)가 붙어 바꿀 글자가 배포본과 다를 수 있다.
 7. **검사기 규칙 번호를 새로 내면** — 트리 개정 명세(`workspace/design/2026-08-08-tree-revision-spec.md`) 행 · 집계표 · 규칙 소유 지도(`workspace/plan/2026-08-11-rule-owner-map.md`) 행 · 귀속 매핑표 행(`spec_lint.py` 가 잡는다).
-8. **검사기를 고치면** — Codex byte 미러 → 골든 · EXPECTED 갱신(`findings_count_matrix` · `checker_baseline_matrix` · `checker_cross_matrix --emit-expected` · `construct_drift_report --emit-expected` · `gen_pregate_symbol_kinds`) → 봉인(§4 · §6) → `make verify`. 구현을 맡기면 이 목록을 지시문에 그대로 넣는다.
+8. **검사기를 고치면** — Codex byte 미러 → 골든 · EXPECTED 갱신(`findings_count_matrix` · `checker_baseline_matrix` · `checker_cross_matrix --emit-expected` · `construct_drift_report --emit-expected` · `gen_pregate_symbol_kinds`) → 봉인(§4 · §6) → `make verify`. 계약 문법 검사기(`[#N]` 줄 없이 `- <경로>: …` 계약 줄만 내는 검사기)의 진단 글에 줄 번호 · 내용 목록처럼 흔들리는 칸을 더하면 `registry_gate` 계약 줄 짝의 정규화(`_contract_stable`)에도 더한다 — 아니면 legacy 가 귀속으로 뜬다. 구현을 맡기면 이 목록을 지시문에 그대로 넣는다.
 
 어휘(djr) 자체의 개정·블록 경계 규약·IRI 인코딩·롤백 등 깊은 규약은 전부 [`workspace/tools/ontology-authoring.md`](../workspace/tools/ontology-authoring.md)가 정본이다(§2 게이트, §5 채번, §7 어휘 개정, §13 블록 경계, §14 IRI·alias 공간, §17 롤백).
 

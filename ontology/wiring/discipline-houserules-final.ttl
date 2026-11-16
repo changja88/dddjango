@@ -194,3 +194,9 @@ djr:R-3758 djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pair
 djr:R-3759 djr:enforcedBy <https://numchida.com/ns/djr#c/check-test-config.py> .
 
 djr:R-3763 djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .
+
+djr:R-3765 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .
+
+djr:R-3766 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .

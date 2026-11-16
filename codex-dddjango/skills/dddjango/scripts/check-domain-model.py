@@ -13,7 +13,8 @@
   #253 [ast]  <A>/** 는 <B>/ 의 «루트 모듈»만 import — B 의 entity·value_object 직행 금지.
   #256 [ast]  애그리거트 폴더엔 폴더와 같은 이름의 <aggregate>.py + 루트 클래스.
   #257 [ast+] 상태 변경은 루트를 지난다 — 확정: 응용·입구의 «속성 접근 후 메서드 호출»
-              (order.line.change(...)) / 후보: 끝에 불변식 확인 없는 루트 메서드(Q4).
+              (order.line.change(...)) / 후보: 끝에 불변식 확인 없는 루트 메서드(Q4) — 확인 호출 뒤
+              값만 돌려주는 return 은 self 에 쓴 뒤 확인 없이 빠져나가는 다른 return 이 없으면 확인으로 끝난 것이다.
               응용 쪽 #257 확정 · #546 · #550 은 유스케이스 본체와 그 칸 승격 폴더(트리 42행)의
               부품 파일을 함께 본다(파일 집합 = `checker_target.joint_use_case` — 표준 밖 자리
               유스케이스 포함 · G2 함께 커밋 대조와 한 출처).
@@ -448,6 +449,142 @@ def _journal_pending_stores(cls: ast.ClassDef) -> "set[str]":
     return private_fields & queried & cleared
 
 
+_CHECK_WORDS: "tuple[str, ...]" = ("valid", "check", "ensure", "assert")
+# #257 — return 을 건너뛰고 그 앞을 끝으로 볼 때의 확인 호출은 메서드 이름을 `_` 로 가른 낱말로 본다(`_invalidate_cache` ·
+# `_checkpoint` 는 확인이 아니다).
+_CHECK_TOKENS: "frozenset[str]" = frozenset({"assert", "check", "ensure", "valid", "validate", "verify"})
+
+
+def _called_method(st: ast.stmt) -> str:
+    """메서드 호출 한 줄(`self._x()` · `obj.y()`)이면 그 메서드 이름, 아니면 빈 글."""
+    if isinstance(st, ast.Expr) and isinstance(st.value, ast.Call) and isinstance(st.value.func, ast.Attribute):
+        return st.value.func.attr
+    return ""
+
+
+def _is_check_call(st: ast.stmt) -> bool:
+    """#257 끝 문장 — 메서드 이름에 확인 낱말(부분 글)이 든 메서드 호출."""
+    name: str = _called_method(st)
+    return bool(name) and any(word in name for word in _CHECK_WORDS)
+
+
+def _is_check_word_call(st: ast.stmt) -> bool:
+    """#257 return 건너뛰기 · 길 읽기 — 메서드 이름의 `_` 낱말에 확인 낱말이 있는 메서드 호출."""
+    return bool(set(_called_method(st).split("_")) & _CHECK_TOKENS)
+
+
+def _self_based(node: ast.expr) -> bool:
+    """`self.<a>` · `self.<a>.<b>` · `self.<a>[k]` — self 에서 속성 · 첨자로 닿는 식."""
+    while isinstance(node, (ast.Attribute, ast.Subscript)):
+        node = node.value
+    return isinstance(node, ast.Name) and node.id == "self"
+
+
+def _self_store(node: ast.AST) -> bool:
+    """self 상태를 바꾸는(바꿀 수 있는) 자리 — self 에서 닿는 속성 · 첨자에 대입(주석 · 더하기 대입 포함)하거나 `del` 하는 것,
+    self 속성의 메서드를 부르는 것(`self._lines.append(…)`). 메서드 이름으로 가리지 않는다 — 바꾸는지 모르면 쓴 것으로 본다.
+    self 의 메서드를 바로 부르는 것(`self._fold()`)은 세지 않는다."""
+    if isinstance(node, (ast.Attribute, ast.Subscript)) and isinstance(node.ctx, (ast.Store, ast.Del)):
+        return _self_based(node)
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+        return isinstance(node.func.value, (ast.Attribute, ast.Subscript)) and _self_based(node.func.value)
+    return False
+
+
+def _writes_self(block: "list[ast.stmt]") -> bool:
+    return any(_self_store(n) for st in block for n in ast.walk(st))
+
+
+def _unchecked_exit(body: "list[ast.stmt]", final: ast.Return) -> bool:
+    """#257 — 끝 return 말고, self 에 쓴 뒤 확인 호출 없이 닿는 return(그 return 식이 self 를 바꾸는 것 포함)이 있나
+    (문장 차례대로 길을 따라 읽는다)."""
+    found: "list[bool]" = [False]
+
+    def run(block: "list[ast.stmt]", dirty: bool) -> "bool | None":
+        """블록을 지난 뒤의 «확인 없이 쓴 상태» — 모든 길이 return · raise 로 끝나면 None."""
+        for st in block:
+            if st is final:
+                return dirty
+            if _is_check_word_call(st):
+                dirty = False
+            elif isinstance(st, ast.Return):
+                found[0] = found[0] or dirty or _writes_self([st])
+                return None
+            elif isinstance(st, ast.Raise):
+                return None
+            elif isinstance(st, ast.If):
+                ends = [x for x in (run(st.body, dirty), run(st.orelse, dirty)) if x is not None]
+                if not ends:
+                    return None
+                dirty = any(ends)
+            elif isinstance(st, ast.Match):
+                ends = [x for x in (run(case.body, dirty) for case in st.cases) if x is not None]
+                dirty = dirty or any(ends)
+            elif isinstance(st, (ast.For, ast.AsyncFor, ast.While)):
+                inner = run(st.body, dirty)
+                run(st.orelse, dirty or bool(inner))
+                dirty = dirty or bool(inner)
+            elif isinstance(st, (ast.With, ast.AsyncWith)):
+                inner = run(st.body, dirty)
+                if inner is None:
+                    return None
+                dirty = inner
+            elif isinstance(st, TRY_NODES):
+                inner = run(st.body, dirty)
+                touched: bool = dirty or _writes_self(st.body)
+                for handler in st.handlers:
+                    run(handler.body, touched)
+                run(st.orelse, bool(inner))
+                run(st.finalbody, touched)
+                dirty = touched
+            elif _writes_self([st]):
+                dirty = True
+        return dirty
+
+    run(body, False)
+    return found[0]
+
+
+def _self_attr_chain(node: ast.expr) -> bool:
+    """`self.<a>` · `self.<a>.<b>` — 호출 없이 self 속성을 그대로 가리키는 식."""
+    if not isinstance(node, ast.Attribute):
+        return False
+    while isinstance(node, ast.Attribute):
+        node = node.value
+    return isinstance(node, ast.Name) and node.id == "self"
+
+
+def _self_bound_names(m: "ast.FunctionDef | ast.AsyncFunctionDef") -> "set[str]":
+    """메서드 안에서 self 속성을 그대로 묶은 지역 이름(`lines = self._lines` · `for line in self._lines`) — 그 이름으로
+    self 상태를 바꿀 수 있다. self 메서드를 부른 결과(`snapshot = self._snapshot()`)는 새 값이라 넣지 않는다."""
+    bound: "set[str]" = set()
+    for node in ast.walk(m):
+        if isinstance(node, ast.Assign):
+            value, targets = node.value, list(node.targets)
+        elif isinstance(node, (ast.AnnAssign, ast.NamedExpr)) and node.value is not None:
+            value, targets = node.value, [node.target]
+        elif isinstance(node, (ast.For, ast.AsyncFor, ast.comprehension)):
+            value, targets = node.iter, [node.target]
+        else:
+            continue
+        values: "list[ast.expr]" = list(value.elts) if isinstance(value, (ast.Tuple, ast.List)) else [value]
+        if any(_self_attr_chain(v) for v in values):
+            bound |= {n.id for t in targets for n in ast.walk(t) if isinstance(n, ast.Name)}
+    return bound
+
+
+def _returns_value_only(ret: ast.Return, self_bound: "set[str]") -> bool:
+    """#257 — 값만 돌려주는 return: 값이 없거나 · 호출 없는 식(상수 · 이름 · 속성 읽기 · 그 묶음)이거나 ·
+    호출이 모두 맨 이름 호출(결과 값 만들기 `Result(...)`)이고 식 어디에도 `self` 도 self 속성을 묶은 지역 이름도 없다."""
+    if ret.value is None:
+        return True
+    calls = [n for n in ast.walk(ret.value) if isinstance(n, ast.Call)]
+    if not calls:
+        return True
+    return all(isinstance(c.func, ast.Name) for c in calls) and not any(
+        isinstance(n, ast.Name) and (n.id == "self" or n.id in self_bound) for n in ast.walk(ret.value))
+
+
 def _check_root_class(root: Path, py: Path, cls: ast.ClassDef, f: Findings, cand: Candidates) -> None:
     has_events_attr = False
     has_pull = False
@@ -496,11 +633,12 @@ def _check_root_class(root: Path, py: Path, cls: ast.ClassDef, f: Findings, cand
                 for n in ast.walk(m))
             if assigns_self and m.body:
                 last = m.body[-1]
-                ends_with_check = isinstance(last, (ast.Raise, ast.If)) or (
-                    isinstance(last, ast.Expr) and isinstance(last.value, ast.Call)
-                    and isinstance(last.value.func, ast.Attribute)
-                    and ("valid" in last.value.func.attr or "check" in last.value.func.attr
-                         or "ensure" in last.value.func.attr or "assert" in last.value.func.attr))
+                ends_with_check = isinstance(last, (ast.Raise, ast.If)) or _is_check_call(last)
+                # 끝이 «확인 호출 + 값만 돌려주는 return» 이고 self 에 쓴 뒤 확인 없이 빠져나가는 다른 return 이 없으면
+                # 확인으로 끝난 것이다. 건너뛴 return 앞 `if` 는 확인으로 치지 않는다.
+                if isinstance(last, ast.Return) and len(m.body) > 1 \
+                        and _returns_value_only(last, _self_bound_names(m)):
+                    ends_with_check = _is_check_word_call(m.body[-2]) and not _unchecked_exit(m.body, last)
                 if not ends_with_check:
                     cand.add("#257", _rel(root, py, m.lineno),
                              f"상태 변경 메서드 `{m.name}` 끝에 불변식 확인이 없다",

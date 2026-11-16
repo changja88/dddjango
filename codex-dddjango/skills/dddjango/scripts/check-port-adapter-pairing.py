@@ -8,7 +8,8 @@
          #64 포트 예외는 도메인 예외 비상속 · #214 애그리거트 리포지토리 선언은 여기 금지 ·
          #227[ast+] 자료는 원시값으로 안 될 때만(후보) · #228 <data>_in/_out 에 도메인·
          유스케이스 DTO 금지(토큰 검사 ✗ — predicates ⓐ) · #573 방향(_in/_out) 이름 교차 ·
-         #485[ast+] 메서드는 의도(확정: notify·handle·execute… / 후보: 아는 동사 목록 밖) ·
+         #485[ast+] 메서드는 의도(확정: notify·handle·execute… / 후보: 아는 동사 · 묻는 꼴 밖이고
+         원시 값 · Enum 반환 선언이 아니거나 모호 동사 머리) ·
          #594[ast+] 폴더 이름에 누가·언제·어떻게 금지(#595 확정: 기술 이름 정확 일치) ·
          #313 domain_layer/<agg>/port/ 금지
   bypass #229 계약은 port/domain_bypass_query/ · #231 domain_layer 에 조회 계약 금지 ·
@@ -102,7 +103,8 @@ INTENT_DENY = {"notify", "handle", "execute", "process", "run", "do"}
 ASKING_PREFIX = ("has_", "is_", "can_", "current_", "get_", "find_", "list_", "count_", "exists_")
 # #485 후보 — 아는 동사(원형) 목록. 데이터라 닫지 않는다(#367 방식): 현장 포트 메서드에서 동사로 쓰인 낱말만 넣는다.
 # 명사로도 쓰는 낱말(wait · review · link …)이 섞여 있어 그 낱말이 머리인 명사구 이름(`wait_seconds`)은 묻지 않고 지나간다
-# — 같은 꼴 `timeout_seconds` 는 묻는다(받아들인 한계). INTENT_DENY 의 모호 동사는 넣지 않는다(`run_x` 도 `process_x` 처럼 묻는다).
+# — 같은 꼴 `timeout_seconds` 는 원시 값 · Enum 반환을 선언하지 않으면 묻는다(받아들인 한계). INTENT_DENY · VAGUE_HEADS 의
+# 모호 동사는 넣지 않는다(`run_x` · `invoke_x` 도 `process_x` 처럼 묻는다).
 VERB_HINTS = {"send", "issue", "revoke", "generate", "publish", "acquire", "release", "charge",
               "refund", "create", "delete", "save", "remove", "fetch", "resolve", "render",
               "sign", "verify", "upload", "download", "enqueue", "schedule", "cancel", "mark",
@@ -113,6 +115,17 @@ VERB_HINTS = {"send", "issue", "revoke", "generate", "publish", "acquire", "rele
               "search", "validate", "wait", "choose", "compose", "consume", "decide", "hash",
               "inspect", "link", "locate", "parse", "phrase", "pull", "quote", "redact",
               "require", "rewind", "store", "summarize", "classify", "proceed", "rank"}
+# #485 — 무엇을 시키는지 말하지 않는 모호 동사 머리(INTENT_DENY 밖). 이 머리는 원시 값 · Enum 을 돌려줘도 묻는다.
+VAGUE_HEADS = {"invoke", "apply", "call", "perform", "trigger", "dispatch", "request", "exec", "operate", "manage"}
+# #485 — 반환 애너테이션이 원시 값(글 · 수 · 참거짓 · 바이트 · 날짜 · 시각 · Decimal · UUID)이나 Enum 과 그 목록 · 선택뿐이면
+# 조회로 읽고 묻지 않는다. 점 붙은 이름은 끝 이름으로 읽는다(`datetime.date` = `date`). 사전 · 흐름(`dict` · `Mapping` ·
+# `Iterable` · `Iterator`)은 목록이 아니라 묻는다.
+PLAIN_RETURN_VALUES = {"str", "int", "float", "bool", "bytes", "Decimal", "UUID", "date", "datetime", "time"}
+PLAIN_RETURN_WRAPPERS = {"list", "tuple", "set", "frozenset", "Sequence", "Collection",
+                         "List", "Tuple", "Set", "FrozenSet", "Optional", "Union"}
+# #485 — Enum 기저 이름. `enum` · `django` 에서 들여온 이름일 때만 Enum 기저로 읽는다(같은 이름의 저장소 클래스는 풀어 본다).
+ENUM_BASES = {"Enum", "StrEnum", "IntEnum", "Flag", "IntFlag", "ReprEnum", "TextChoices", "IntegerChoices", "Choices"}
+ENUM_BASE_ORIGINS = {"enum", "django"}
 MEANS_WORDS = {"client", "cache", "sync", "cron", "queue", "http", "rest", "sdk",
                "nightly", "daily", "hourly", "weekly", "realtime", "driver", "gateway"}
 TECH_EXACT = {"smtp", "redis", "celery", "kafka", "django", "ninja", "stripe", "s3", "grpc"}
@@ -294,11 +307,155 @@ def _check_port_contract(root: Path, cap: Path, py: Path, mod: ast.Module,
                 f.add("#485", _rel(root, py, m.lineno),
                       f"`{m.name}` — 무엇을 시키는지 말하지 않는 이름이다(시키면 명령형 동사구, "
                       "물으면 묻는 꼴 — revoke_for_child()·has_shipped())")
-            elif not m.name.startswith(ASKING_PREFIX) and first not in VERB_HINTS:
+            elif not m.name.startswith(ASKING_PREFIX) and first not in VERB_HINTS \
+                    and not (first and first not in INTENT_DENY | VAGUE_HEADS
+                             and _answers_plain_value(root, py, mod, m)):
                 cand.add("#485", _rel(root, py, m.lineno),
                          f"포트 메서드 `{m.name}` 의 첫 토큰 `{first}` 이 아는 동사 목록에도 묻는 꼴에도 없다" if first
                          else f"포트 메서드 `{m.name}` 이 `_` 로 시작해 첫 토큰이 없다 — 아는 동사로도 묻는 꼴로도 읽히지 않는다",
-                         "이 이름이 무엇을 시키는지 말하나")
+                         "이 이름이 의도를 말하나 — 조회면 명사구도 되고, 그 밖은 명령이라 동사구다")
+
+
+def _return_names(node: "ast.expr | None") -> "list[tuple[str, ...]] | None":
+    """#485 반환 애너테이션의 이름 사슬들(`datetime.date` → ("datetime", "date")) — `None` · `...` 은 빼고, `Literal[...]` 은
+    글 · 수 값이라 ("str",) 로, `Annotated[X, …]` 은 X 로 읽는다. 읽을 수 없는 꼴(호출 · 빈 애너테이션 등)이면 None."""
+    if node is None:
+        return None
+    out: "list[tuple[str, ...]]" = []
+    stack: "list[ast.expr]" = [node]
+    while stack:
+        n: ast.expr = stack.pop()
+        if isinstance(n, ast.Constant):
+            if n.value is None or n.value is Ellipsis:
+                continue
+            if not isinstance(n.value, str):
+                return None
+            try:
+                stack.append(ast.parse(n.value, mode="eval").body)
+            except SyntaxError:
+                return None
+        elif isinstance(n, (ast.Name, ast.Attribute)):
+            chain: "list[str]" = []
+            while isinstance(n, ast.Attribute):
+                chain.append(n.attr)
+                n = n.value
+            if not isinstance(n, ast.Name):
+                return None
+            out.append((n.id, *reversed(chain)))
+        elif isinstance(n, ast.Subscript):
+            head: str = n.value.id if isinstance(n.value, ast.Name) else n.value.attr \
+                if isinstance(n.value, ast.Attribute) else ""
+            if head == "Literal":
+                out.append(("str",))
+            elif head == "Annotated":
+                stack.append(n.slice.elts[0] if isinstance(n.slice, ast.Tuple) and n.slice.elts else n.slice)
+            else:
+                stack += [n.value, n.slice]
+        elif isinstance(n, ast.BinOp) and isinstance(n.op, ast.BitOr):
+            stack += [n.left, n.right]
+        elif isinstance(n, (ast.Tuple, ast.List)):
+            stack += list(n.elts)
+        else:
+            return None
+    return out
+
+
+def _answers_plain_value(root: Path, py: Path, mod: ast.Module, m: "ast.FunctionDef | ast.AsyncFunctionDef") -> bool:
+    """#485 — 원시 값이나 Enum(과 그 목록 · 선택)을 돌려준다고 선언한 메서드(`url(key) -> str` · `status() -> OrderStatus`).
+    반환 선언이 없거나 · 객체 · 모르는 이름을 돌려주거나 · Enum 인지 정적으로 못 풀면 아니다."""
+    chains = _return_names(m.returns)
+    if not chains:
+        return False
+    values: int = 0
+    for chain in chains:
+        if chain[-1] in PLAIN_RETURN_WRAPPERS:
+            continue
+        if chain[-1] in PLAIN_RETURN_VALUES or _enum_class(root, py, mod, chain, 0):
+            values += 1
+            continue
+        return False
+    return values > 0
+
+
+_PARSED: "dict[Path, ast.Module | None]" = {}
+
+
+def _parsed(path: Path) -> "ast.Module | None":
+    if path not in _PARSED:
+        _PARSED[path] = _parse(path)
+    return _PARSED[path]
+
+
+def _module_file(root: Path, py: Path, module: str, level: int) -> "Path | None":
+    """import 의 모듈 → 저장소 안 파일(상대 import 는 그 파일 자리 기준 · 가상환경 · 캐시 폴더 밖)."""
+    base: Path = root
+    if level:
+        base = py.parent
+        for _ in range(level - 1):
+            base = base.parent
+    rel: Path = base.joinpath(*module.split(".")) if module else base
+    for cand in (rel.with_suffix(".py"), rel / "__init__.py"):
+        if cand.is_file() and root in cand.parents and not set(cand.relative_to(root).parts) & SKIP_DIRS:
+            return cand
+    return None
+
+
+def _enum_class(root: Path, py: Path, mod: ast.Module, chain: "tuple[str, ...]", depth: int) -> bool:
+    """#485 — 이름 사슬이 저장소 안에서 Enum 기저(`enum` · `django` 에서 들여온 `Enum` · `StrEnum` · `IntEnum` · `TextChoices` …)를
+    둔 클래스로 풀리나. 같은 모듈의 클래스 · `from … import` 이름 · `import … as` 모듈의 속성을 네 겹까지 따라간다. 못 풀면 아니다."""
+    if depth > 4:
+        return False
+    head, rest = chain[0], chain[1:]
+    if not rest:
+        for node in ast.walk(mod):
+            if isinstance(node, ast.ClassDef) and node.name == head:
+                return any(_enum_base(root, py, mod, base, depth) for base in node.bases)
+    for node in ast.walk(mod):
+        if isinstance(node, ast.ImportFrom) and len(rest) <= 1:
+            for alias in node.names:
+                if (alias.asname or alias.name) != head:
+                    continue
+                if rest:  # `from pkg import status_module` 뒤 `status_module.OrderStatus`
+                    sub = _module_file(root, py, f"{node.module}.{alias.name}" if node.module else alias.name, node.level)
+                    parsed = _parsed(sub) if sub is not None else None
+                    return parsed is not None and _enum_class(root, sub, parsed, rest, depth + 1)
+                target = _module_file(root, py, node.module or "", node.level)
+                parsed = _parsed(target) if target is not None else None
+                return parsed is not None and _enum_class(root, target, parsed, (alias.name,), depth + 1)
+        elif isinstance(node, ast.Import) and len(rest) == 1:
+            for alias in node.names:
+                if (alias.asname or alias.name) == head:
+                    target = _module_file(root, py, alias.name, 0)
+                    parsed = _parsed(target) if target is not None else None
+                    return parsed is not None and _enum_class(root, target, parsed, rest, depth + 1)
+    return False
+
+
+def _enum_base(root: Path, py: Path, mod: ast.Module, base: ast.expr, depth: int) -> bool:
+    """#485 — 클래스 기저 하나가 Enum 기저인가: `enum` · `django` 에서 들여온 Enum 기저 이름이거나, 저장소 안에서 Enum 기저를
+    둔 클래스로 풀린다."""
+    chain = _return_names(base)
+    if not chain or len(chain) != 1:
+        return False
+    if _imported_names(mod, chain[0], ENUM_BASE_ORIGINS) & ENUM_BASES:
+        return True
+    return _enum_class(root, py, mod, chain[0], depth + 1)
+
+
+def _imported_names(mod: ast.Module, chain: "tuple[str, ...]", origins: "set[str]") -> "set[str]":
+    """이름 사슬(`E` · `enum.Enum` · `models.TextChoices`)의 머리를 `origins` 꾸러미(`enum` · `django` …)에서 들여왔으면 그 사슬이
+    가리키는 원래 이름들 — 별칭은 들여온 이름으로 푼다(`from enum import Enum as E` 의 `E` = `Enum` · `import enum as en` 의
+    `en.Enum` = `Enum`). 그 꾸러미에서 들여오지 않았으면 빈 집합."""
+    head: str = chain[0]
+    names: "set[str]" = set()
+    for node in ast.walk(mod):
+        if isinstance(node, ast.ImportFrom) and node.level == 0 and (node.module or "").split(".")[0] in origins:
+            names |= {chain[-1] if len(chain) > 1 else alias.name
+                      for alias in node.names if (alias.asname or alias.name) == head}
+        elif isinstance(node, ast.Import):
+            names |= {chain[-1] for alias in node.names
+                      if (alias.asname or alias.name.split(".")[0]) == head and alias.name.split(".")[0] in origins}
+    return names
 
 
 def _check_port_data(root: Path, py: Path, mod: ast.Module, f: Findings, cand: Candidates) -> None:

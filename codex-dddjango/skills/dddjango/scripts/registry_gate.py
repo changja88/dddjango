@@ -17,6 +17,8 @@ legacy 위반이 상존해 「루트 registry 전체 green」이 문자 그대�
   바뀌어 목록이 준 것이지 늘린 위반이 아니다. 짝은 1:1 이고 legacy 잔존 절에 앵커 줄과 함께 찍는다.
   ⓓ 후보 줄은 주어가 바뀌었어도(폴더 주어 포함) 목록만 줄었으면 legacy 로 센다(F4-166 — exit 밖 감수자 입력이고 목록이
   부분집합이면 신호가 좁아진 것이다). 위반 줄은 위 조건 그대로다(고친 파일에서 목록을 일부만 걷으면 새 줄).
+  ⓓ 줄의 수 칸(`223행` · `엔티티 3개`)이 줄기만 했어도 legacy 로 센다 — 단 그 주어가 앵커 대비 «지움만»(그 파일에 더하거나
+  바꾼 줄 0 · 수 칸이 폴더 구성원 수인 #547 ⑶ 은 그 폴더에 새 파일도 0)일 때만(F4-46).
 - **사본 속 링크**(F4-97 · F4-98): 앵커 · 승인 유입 측정 사본에서 사본 밖을 가리키는 링크가 모두 숨김 경로
   (문서 입력 `.dddjango/<폴더>/{scope,design-spec}.md` 와 그 조상은 빼고)에 있으면 그 링크를 걷고 잰다. 하나라도
   그 밖이면 지금처럼 그 사본을 증거로 쓰지 않는다(fail-closed · 판정 줄에 «잴 수 없어 남긴» 수를 따로 적는다).
@@ -40,9 +42,13 @@ legacy 위반이 상존해 「루트 registry 전체 green」이 문자 그대�
 - **이관 빚 채널**: `--legacy-debt-file` 의 사용자 승인 목록(줄 형식: `#<규칙> <부분문자열>`)
   에 맞는 귀속은 exit 에서 빼되 «빚» 절로 반드시 보고한다 — 빚은 기록 근거이지 legacy
   모양을 «추가로» 복사할 근거가 아니다. 번호 없는 줄 `= <검사기 파일> :: <줄>`은
-  scope 렌더 전용 — 이 게이트의 차분 집합엔 맞을 줄이 없다.
+  scope 렌더 다섯의 계약 줄 — 이 게이트에서는 그 검사기가 `[#N]` 줄 없이 계약 줄만 낸 실행에서만 맞는다.
 - 비-git TARGET 은 fail-closed: 차분 불능이므로 현재 위반 전부를 귀속으로 본다.
-- 검사기가 red 인데 위반 라인을 못 파싱하면 그 검사기 몫을 합성 귀속으로 남긴다(fail-closed).
+- 검사기가 red 인데 위반 라인을 못 파싱하면 그 검사기 몫을 합성 귀속으로 남긴다(fail-closed). 단 `[#N]` 줄 없이 exit 2 인
+  계약 문법 검사기는 계약 레코드(`rule=null` · `contract_ref`)가 원 출력과 맞으면 레코드마다 `- <where>: <msg>` 줄로 가르고
+  (같은 열쇠는 순번 — 다중 집합), 같은 위반의 글자만 흔들린 귀속 · 해소 줄(흔들리는 칸 `@<줄>` · 버킷 `(내용: …)` 을 걷은
+  글이 같음)은 1:1 로 잔존에 짝 짓는다 — 글이 다르면 같은 주어 칸이어도 귀속이다. 한쪽이 `[진단 미파싱 …]` 합성 줄이면
+  (exit ≠ 0 인데 계약 레코드가 성하지 않거나 레코드 채널이 끊겼으면) 그 검사기는 두 쪽 모두 합성 줄(exit 차분)이다.
 - **승인 유입 채널(provenance 차분 · 2026-09-03)**: `--approved-merge-file` 의 발주자 승인
   «main→레인 머지» 목록(줄 형식: `<SHA> [메모]`)이 주어지면, 빚 매칭 뒤 남은 귀속 라인 ℓ
   (파일 p · 검사기 c)마다 다음을 결정적으로 증명한 것만 exit 에서 빼고 «승인 유입» 절로 보고한다:
@@ -53,6 +59,13 @@ legacy 위반이 상존해 「루트 registry 전체 green」이 문자 그대�
        — 승인 머지의 incoming 측에서 verbatim 전달·레인 미수정(충돌 해소분은 M≠M^2 라 탈락)
     F2 blob(HEAD:p) = blob(anchor:p) — 파일 무변 = «상호작용 서명»(검사기 환경만 바뀜)
        주어가 폴더면 F1 · F2 를 blob 대신 그 폴더의 tree 로 잰다(F1′ · F2′ · F4-162) — 레인이 그 폴더 안을 고쳤으면 귀속 유지
+       평면 앱 계약 줄(check-app-container · backoffice 자리 밖)은 W · F1 · F2 대신 두 집합으로 가른다 — T = 그 줄을
+       «건드림» 으로 만든, 앵커에 없던 `migrations/*.py`(`__init__.py` 밖) · `apps.py` · `models.py`(`checker_target.
+       app_domain_additions`) · S = T 에서 first-parent 사슬의 참여 승인 머지 가운데 어느 ^2 에라도 있는 경로를 뺀 것
+       (레인이 더한 파일). T 가 있고 S 가 비면 F 통과(승인 머지가 들인 파일을 레인이 고쳤어도 레인이 더한 파일이 아니다 ·
+       같은 폴더의 다른 파일을 레인이 고친 것도 들지 않는다) · S 가 있으면 그 경로의 사유로 귀속 유지 · T 가 비면 폴더 tree
+       (F1′ · F2′). backoffice 자리 줄은 모델 표지만으로 서므로 폴더 tree 다. 출처 재실행은 사본에 원본 루트 · 앵커 · 그
+       커밋을 넘겨 «건드림» 을 `앵커..M^k` 로 잰다(F4-28 — L 을 지금 사본과 같은 뜻으로).
     G  깨끗한 상대 .py 경로 또는 점 없는 이름(없는 폴더 · F4-56 ②) · HEAD와 작업 트리에 없음 · 부모는 HEAD의 tree(부재 주어)
     L  ℓ ∈ R_c(M^2) ∖ R_c(M^1) — 검사기 c 를 M^2(incoming)·M^1(레인 측 직전)
        스냅숏에서 재실행해 «incoming 측에는 있고 레인 측 직전에는 없던» 진단임을 증명
@@ -111,6 +124,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import difflib
 import hashlib
 import json
 import os
@@ -258,32 +272,86 @@ def _normalize(line: str, prefixes: "tuple[str, ...]") -> str:
 _STR_LIST_RE: "re.Pattern[str]" = re.compile(r"\[(?:'[^'\\\n]*'(?:, '[^'\\\n]*')*)?\]")
 
 
-def _list_shrunk(new: "list[str]", gone: "list[str]") -> "dict[str, str]":
-    """N∖L 줄 → 짝 L∖N 줄 — 두 줄이 문자열 목록 칸(`['a', 'b']`)만 다르고 칸마다 N 쪽이 L 쪽의 부분집합일 때(1:1)."""
-    def split(line: str) -> "tuple[str, list[set[str]]]":
-        found: "list[set[str]]" = [set(ast.literal_eval(m.group(0))) for m in _STR_LIST_RE.finditer(line)]
-        return _STR_LIST_RE.sub("[…]", line), found
+_COUNT_RE: "re.Pattern[str]" = re.compile(r"(?<![A-Za-z0-9_`.])\d+(?![A-Za-z0-9_.])")  # 낱말 · 코드 이름 안 숫자는 빼고
+
+
+def _list_shrunk(new: "list[str]", gone: "list[str]", counts: bool = False,
+                 narrowed: "Callable[[str], bool] | None" = None) -> "dict[str, str]":
+    """N∖L 줄 → 짝 L∖N 줄 — 두 줄이 문자열 목록 칸(`['a', 'b']`)만 다르고 칸마다 N 쪽이 L 쪽의 부분집합일 때(1:1).
+
+    `counts` 면(ⓓ 후보 줄만 — F4-46) 진단 글의 수 칸(`319행` · `엔티티 4개`)도 칸으로 보고 칸마다 N 쪽이 L 쪽 이하일 때
+    짝 짓는다 — 수가 준 신호는 좁아진 것이다(늘면 짝 안 섬). 수 칸은 주어 뒤 진단 글에서만 센다(경로 · 규칙 번호 밖).
+    수 칸이 다른 짝은 `narrowed(줄)` 이 참일 때만 선다 — 주어가 앵커 대비 «지움만» 이어야 순감 안에 새 내용이 섞이지 않는다."""
     file_level: "re.Pattern[str]" = re.compile(r"^\S+ :: \[(?:ⓓ)?#\d+\] [^:\s]+: ")
-    pool: "dict[str, list[tuple[str, list[set[str]]]]]" = {}
+
+    def split(line: str) -> "tuple[str, list[set[str]], list[int]]":
+        found: "list[set[str]]" = [set(ast.literal_eval(m.group(0))) for m in _STR_LIST_RE.finditer(line)]
+        key: str = _STR_LIST_RE.sub("[…]", line)
+        if not counts:
+            return key, found, []
+        head: "re.Match[str] | None" = file_level.match(key)
+        body: str = key[head.end():] if head is not None else ""
+        numbers: "list[int]" = [int(m.group(0)) for m in _COUNT_RE.finditer(body)]
+        return key[:len(key) - len(body)] + _COUNT_RE.sub("<n>", body), found, numbers
+    pool: "dict[str, list[tuple[str, list[set[str]], list[int]]]]" = {}
     for line in gone:
         if not file_level.match(line):
             continue
-        key, found = split(line)
-        if found:
-            pool.setdefault(key, []).append((line, found))
+        key, found, numbers = split(line)
+        if found or numbers:
+            pool.setdefault(key, []).append((line, found, numbers))
     pairs: "dict[str, str]" = {}
     for line in new:
         if not file_level.match(line):
             continue
-        key, found = split(line)
-        if not found:
+        key, found, numbers = split(line)
+        if not found and not numbers:
             continue
-        for index, (old, old_found) in enumerate(pool.get(key, [])):
-            if len(old_found) == len(found) and all(a <= b for a, b in zip(found, old_found)):
+        for index, (old, old_found, old_numbers) in enumerate(pool.get(key, [])):
+            if len(old_found) == len(found) and all(a <= b for a, b in zip(found, old_found)) \
+                    and len(old_numbers) == len(numbers) and all(a <= b for a, b in zip(numbers, old_numbers)) \
+                    and (numbers == old_numbers or narrowed is None or narrowed(line)):
                 pairs[line] = old
                 del pool[key][index]
                 break
     return pairs
+
+
+_CAND_SUBJECT_RE: "re.Pattern[str]" = re.compile(r"^\S+ :: \[ⓓ#\d+\] ([^:\s]+): ")
+
+
+def _cand_subject(line: str) -> "str | None":
+    """파일 단위 ⓓ 줄의 주어(대상 상대 경로)."""
+    m: "re.Match[str] | None" = _CAND_SUBJECT_RE.match(line)
+    return m.group(1) if m else None
+
+
+# 수 칸이 주어 폴더의 구성원 수인 ⓓ 규칙 — #547 ⑶ «엔티티 N개»(엔티티 폴더). #644 의 행수는 그 파일만 센다.
+_FOLDER_COUNT_RULES: "tuple[str, ...]" = ("[ⓓ#547]",)
+
+
+def _deletions_only(anchor: Path, current: Path, rel: "str | None", folder: bool = False) -> bool:
+    """주어 `rel` 이 앵커 대비 «지움만» 인가 — 그 파일에 더하거나 바꾼 줄이 없다(줄 차분이 같음 · 지움뿐). `folder` 면 그 파일이
+    든 폴더(아래 모두)에 앵커에 없던 파일도 없어야 한다(구성원 수를 세는 규칙). 모르면 거짓(짝 안 지음 · F4-46)."""
+    if not rel:
+        return False
+    a: Path = anchor / rel
+    b: Path = current / rel
+    try:
+        if not (a.is_file() and b.is_file()) or a.is_symlink() or b.is_symlink():
+            return False
+        before: "list[str]" = a.read_text(encoding="utf-8", errors="replace").splitlines()
+        after: "list[str]" = b.read_text(encoding="utf-8", errors="replace").splitlines()
+        if any(tag in ("insert", "replace")
+               for tag, *_ in difflib.SequenceMatcher(None, before, after, autojunk=False).get_opcodes()):
+            return False
+
+        def files(top: Path) -> "set[str]":
+            return {p.relative_to(top).as_posix() for p in top.rglob("*")
+                    if p.is_file() and "__pycache__" not in p.parts}
+        return not folder or files(b.parent) <= files(a.parent)
+    except OSError:
+        return False
 
 
 def _same_file(anchor: Path, current: Path, rel: "str | None") -> bool:
@@ -377,6 +445,104 @@ def _run_checker(script: str, target: Path, auto: bool,
     )
 
 
+def _read_records(path: Path) -> "list[dict]":
+    """sink 조각의 레코드(깨진 줄 · 객체 아닌 줄은 건너뜀 — 뒤 읽기와 같은 너그러움)."""
+    out: "list[dict]" = []
+    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        try:
+            rec: object = json.loads(raw) if raw.strip() else None
+        except json.JSONDecodeError:
+            continue
+        if isinstance(rec, dict):
+            out.append(rec)
+    return out
+
+
+def _contract_lines(script: str, records: "list[dict] | None", raw_output: str,
+                    prefixes: "tuple[str, ...]") -> "set[str] | None":
+    """exit 2 · `[#N]` 0 줄인 검사기의 계약 레코드(`rule=null` · `contract_ref`)를 차분 줄로.
+
+    줄 = `<검사기> :: - <where>: <msg>`(같은 정규화 — `_contract_key` 와 같은 열쇠). 레코드가 없거나 · 센티널(대상-0 가드
+    등)이 섞였거나 · 레코드 줄이 원 출력에 그대로 없으면 None — 호출측은 지금처럼 합성 줄 하나로 둔다(옛 꼴 호환)."""
+    if not records:
+        return None
+    mine: "list[dict]" = [rec for rec in records if rec.get("checker") == script and rec.get("rule") is None]
+    if not mine or any(rec.get("sentinel") is not None or not rec.get("contract_ref") for rec in mine):
+        return None
+    printed: "set[str]" = {raw.strip() for raw in raw_output.splitlines()}
+    if any(findings.line_of_record(rec).strip() not in printed for rec in mine):
+        return None
+    out: "set[str]" = set()
+    seen: "dict[str, int]" = {}
+    for rec in mine:  # 같은 열쇠의 둘째 레코드부터 순번을 붙인다 — 열쇠마다 레코드 수로 견준다(다중 집합)
+        key: str = _contract_key(rec, prefixes)
+        seen[key] = seen.get(key, 0) + 1
+        out.add(key if seen[key] == 1 else f"{key}{_CONTRACT_NTH.format(seen[key])}")
+    return out
+
+
+_CONTRACT_NTH: str = " (같은 열쇠 {}번째)"
+_CONTRACT_NTH_RE: "re.Pattern[str]" = re.compile(r" \(같은 열쇠 \d+번째\)$")
+
+
+def _contract_form(line: str) -> bool:
+    """계약 줄인가(`<검사기> :: - <where>: <msg>`)."""
+    return line.split(" :: ", 1)[-1].startswith("- ")
+
+
+# 계약 줄에서 같은 위반인데 실행마다 흔들리는 칸 — 연산 이름의 `@<줄>`(줄 이동) · 횡단 버킷의 `(내용: …)`(무시 파일 · 부분
+# 정리 · 더함). 이 칸을 걷은 글이 같으면 같은 위반으로 짝 짓고, 같은 글이 여럿이면 순번 꼬리로 수를 견준다(다중 집합). 계약
+# 문법 검사기의 진단 글에 흔들리는 칸을 더하면 여기에도 더한다(아니면 legacy 가 귀속으로 뜬다).
+_AT_LINE_RE: "re.Pattern[str]" = re.compile(r"@\d+")
+# 건드림에 기대는 평면 앱 계약 줄을 내는 검사기 — 출처 판정은 그 줄을 «건드림» 으로 만든 파일로 가른다.
+_APP_CONTAINER: str = "check-app-container.py"
+_CONTENT_RE: "re.Pattern[str]" = re.compile(r"\(내용: [^)]*\)")
+
+
+def _contract_stable(line: str) -> str:
+    """순번 꼬리와 흔들리는 칸을 걷은 계약 줄 글자 — 같은 위반이면 같다."""
+    return _CONTENT_RE.sub("(내용: …)", _AT_LINE_RE.sub("@N", _CONTRACT_NTH_RE.sub("", line)))
+
+
+def _debt_hit(line: str, debt_rules: "list[tuple[str, str]]") -> bool:
+    """이관 빚 대조 — 계약 줄의 순번 꼬리는 걷고 맞춘다. 번호 없는 빚 줄(`=` · 글자 전체 일치)은 같은 글의 계약 줄 모두에
+    맞는다(scope 렌더가 같은 글 줄을 모두 빚으로 빼는 것과 같다)."""
+    return anchor_diff.debt_match(_CONTRACT_NTH_RE.sub("", line), debt_rules)
+
+
+def _contract_pairs(new: "list[str]", gone: "list[str]") -> "dict[str, str]":
+    """N∖L 계약 줄 → 짝 L∖N 계약 줄 — `_contract_stable` 이 같은 줄끼리 1:1.
+
+    같은 위반의 글자만 흔들린 줄(줄 이동한 연산 · 버킷 내용 칸)만 잔존으로 짝 짓는다. 글이 다르면 같은 주어 칸이어도 짝
+    없음 — 한 주어에 위반이 여럿 나는 검사기에서 «하나 고치고 다른 하나 더함» 이 잔존으로 숨지 않는다. 같은 글끼리라
+    남는 귀속 줄이 새 위반을 가리킨다. 같은 글이 늘면 순번 줄이 짝 없이 남아 귀속이다(다중 집합)."""
+    pool: "dict[str, list[str]]" = {}
+    for line in gone:
+        if _contract_form(line):
+            pool.setdefault(_contract_stable(line), []).append(line)
+    pairs: "dict[str, str]" = {}
+    for line in new:
+        olds: "list[str]" = pool.get(_contract_stable(line), []) if _contract_form(line) else []
+        if olds:
+            pairs[line] = olds.pop(0)
+    return pairs
+
+
+def _harmonize_contract(l_set: "set[str]", n_set: "set[str]",
+                        exits_l: "dict[str, int]", exits_n: "dict[str, int]") -> None:
+    """한쪽이 합성 줄이고 다른 쪽이 계약 줄인 검사기는 계약 줄을 그쪽 exit 의 합성 줄로 되돌린다(제자리 수정).
+
+    두 벌이 같은 단위로 재야 차분이 선다 — 한쪽 레코드가 없으면 그 검사기는 exit 차분(합성 줄 하나)으로 잰다."""
+    def synthetic(side: "set[str]") -> "set[str]":
+        return {line.split(" :: ", 1)[0] for line in side if _SYNTHETIC_MARK in line}
+    for side, other, exits in ((l_set, n_set, exits_l), (n_set, l_set, exits_n)):
+        for script in synthetic(other):
+            mine: "set[str]" = {line for line in side if line.split(" :: ", 1)[0] == script and _contract_form(line)}
+            if mine:
+                side -= mine
+                side.add(f"{script} :: [진단 미파싱 · exit {exits.get(script)}] fail-closed 귀속")
+
+
 def _merge_sink_parts(sink: Path, parts: "list[Path]") -> None:
     """작업별 sink 조각을 주어진(REGISTRY) 순서로 sink 에 이어 붙인다 — 직렬 append 와 같은 바이트.
 
@@ -396,6 +562,9 @@ def _run_registry(target: Path,
                   git_root: "Path | None" = None,
                   only: "frozenset[str] | None" = None,
                   unclassifiable: "set[str] | None" = None,
+                  committed: bool = False,
+                  git_base: "str | None" = None,
+                  git_tip: "str | None" = None,
                   ) -> "tuple[dict[str, int], set[str], list[dict], set[str]]":
     """로스터 전체(또는 `only` 의 검사기만)를 돌려 (검사기별 exit, 정규화 위반 라인 집합, 구조화 레코드)를 낸다.
 
@@ -410,9 +579,11 @@ def _run_registry(target: Path,
 
     **git 루트 전달(BK1 수리 2026-08-21)**: 스냅숏 사본은 .git 을 잃으므로 touched 판정이
     필요한 검사기(check-app-container)가 fail-closed 로 붕괴해 무관 legacy 를 귀속시켰다
-    (세 런 공통 G2 red 의 근원). «현재» 스냅숏 실행에만 원본 루트를 넘긴다 — 스냅숏은
-    working tree 의 사본이라 원본 porcelain 이 그대로 참이다. 앵커 스냅숏은 커밋된
-    기준선이므로 넘기지 않는다(anchor 측 fail-closed 는 L 에만 실려 귀속을 만들지 않는다).
+    (세 런 공통 G2 red 의 근원). «현재» 스냅숏 실행에는 원본 루트와 앵커 커밋(`git_base`)을 넘긴다 —
+    스냅숏은 working tree 의 사본이라 원본의 앵커 대비 변경이 그대로 참이다(변경을 커밋한 실행도 같은 판정).
+    앵커 스냅숏은 커밋된 기준선이므로 루트 대신 `committed` 표지(`DJR_COMMITTED_SNAPSHOT`)를 준다 — 커밋 트리에는
+    이번 변경이 없다(F4-28: fail-closed 앵커 줄이 L 에 실려 건드린 legacy 를 가리고 거짓 «해소» 를 셌다). 승인 머지 출처
+    재실행(커밋 트리 사본)에는 원본 루트 · 앵커와 그 커밋(`git_tip`)을 넘겨 «건드림» 을 앵커..그 커밋으로 잰다.
 
     **병렬 실행(속도 개선 C1⑵ · 2026-10-01)**: 작업을 공용 풀(`_checker_pool`)에 모두 올리고
     **전부 끝난 뒤** REGISTRY 순서로 거둔다 — 작업 예외는 REGISTRY 순서 첫 예외로 올라오고(직렬의
@@ -428,8 +599,17 @@ def _run_registry(target: Path,
     env.pop(findings.ENV_VAR, None)
     env.pop(findings.ENV_DIR, None)
     env.pop(findings.ENV_GIT_ROOT, None)
+    env.pop(findings.ENV_COMMITTED_SNAPSHOT, None)
+    env.pop(findings.ENV_GIT_BASE, None)
+    env.pop(findings.ENV_GIT_TIP, None)
     if git_root is not None:
         env[findings.ENV_GIT_ROOT] = str(git_root)
+        if git_base is not None:  # «건드림» 은 앵커부터 — 변경을 커밋한 실행도 같은 판정
+            env[findings.ENV_GIT_BASE] = git_base
+            if git_tip is not None:  # 커밋 트리 사본(출처 재실행) — 앵커..그 커밋
+                env[findings.ENV_GIT_TIP] = git_tip
+    if committed:  # 앵커 = 커밋 트리 — 값은 그 사본 경로(검사기는 자기 뿌리와 같을 때만 믿는다 · F4-28)
+        env[findings.ENV_COMMITTED_SNAPSHOT] = str(Path(target).resolve())
     jobs: "list[tuple[str, bool, Path | None]]" = [
         (script, auto, sink.with_name(f"{sink.name}.{index:02d}.part") if sink is not None else None)
         for index, (script, auto) in enumerate(REGISTRY)
@@ -466,6 +646,8 @@ def _run_registry(target: Path,
                                                   for raw in raw_output.splitlines())
             if failed:
                 unclassifiable.add(script)
+    part_records: "dict[str, list[dict]]" = {
+        script: _read_records(part) for script, _auto, part in jobs if part is not None and part.is_file()}
     if sink is not None:
         _merge_sink_parts(sink, [part for _script, _auto, part in jobs if part is not None])
     for (script, _auto, _part), proc in zip(jobs, procs):
@@ -481,7 +663,16 @@ def _run_registry(target: Path,
             lines.add(f"{script} :: {_normalize(m.group(1), prefixes)}")
             parsed += 1
         if proc.returncode != 0 and parsed == 0:
-            lines.add(f"{script} :: [진단 미파싱 · exit {proc.returncode}] fail-closed 귀속")
+            raw_out: str = proc.stdout + "\n" + proc.stderr
+            broken: bool = ("구조화 레코드 채널 비활성" in raw_out or "[분석]" in raw_out
+                            or (unclassifiable is not None and script in unclassifiable))  # 레코드가 일부만 남았을 수 있다
+            contract: "set[str] | None" = (
+                _contract_lines(script, part_records.get(script), raw_out, prefixes)
+                if proc.returncode == 2 and not broken else None)
+            if contract:
+                lines |= contract  # 계약 문법 검사기 — 레코드로 줄마다 가른다(합성 줄 하나의 exit 차분 대신)
+            else:
+                lines.add(f"{script} :: [진단 미파싱 · exit {proc.returncode}] fail-closed 귀속")
     records: "list[dict]" = []
     if sink is not None and sink.is_file():
         for raw in sink.read_text(encoding="utf-8", errors="replace").splitlines():
@@ -1054,6 +1245,28 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
             return False
         return paths_of(head_sha).get("/".join(parts[:-1])) == "tree"
 
+    changes: "list[checker_target.AnchorChanges | None]" = []  # 지금 작업 트리의 앵커 대비 변경(처음 쓸 때 한 번)
+    backoffice: str = "/".join(checker_target.BACKOFFICE_APP)
+
+    def domain_additions(checker: str, p: str) -> "frozenset[str]":
+        """T — 평면 앱 줄을 «건드림» 으로 만든, 앵커에 없던 도메인 파일. 그 밖의 줄 · backoffice 자리 줄(모델 표지만으로
+        선다)은 빈 집합 — 주어 p 를 그대로(폴더 tree) 가른다."""
+        if checker != _APP_CONTAINER or p == backoffice:
+            return frozenset()
+        if not changes:
+            changes.append(checker_target.anchor_changes(root, base=anchor_sha))
+        return checker_target.app_domain_additions(changes[0], p) if changes[0] is not None else frozenset()
+
+    def classify_additions(added: "frozenset[str]") -> "tuple[str, anchor_diff.ApprovedMerge | None] | str":
+        """S = T 에서 참여 승인 머지 가운데 어느 ^2 에라도 있는 경로를 뺀 것(레인이 더한 파일). S 가 있으면 그 첫 경로의
+        사유로 귀속 유지, 비면 F 통과 — 전달 머지는 T 의 경로를 ^2 에 가진 첫 참여 머지(L 탐색이 먼저 잰다)."""
+        lane: "list[str]" = sorted(q for q in added if not any(q in facts.blobs(m.parent2) for m in active))
+        if lane:
+            judged: "tuple[str, anchor_diff.ApprovedMerge | None] | str" = (
+                "worktree 수정 중" if lane[0] in facts.dirty else facts.classify(lane[0]))
+            return f"{judged if isinstance(judged, str) else '레인이 더한 파일'} — {lane[0]}"
+        return ("파일", next((m for m in active if any(q in facts.blobs(m.parent2) for q in added)), None))
+
     # (i)(ii) 후보 선별 — candidates: (line, path, checker, kind, 전달 머지)
     candidates: "list[tuple[str, str, str, str, anchor_diff.ApprovedMerge | None]]" = []
     subject_dirs: "set[str]" = set()   # 주어가 폴더인 줄(있는 폴더 · 없는 폴더) — 유입 표기만 가른다
@@ -1078,11 +1291,13 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
             if not p.endswith(".py"):
                 subject_dirs.add(line)
             continue
-        judged: "tuple[str, anchor_diff.ApprovedMerge | None] | str" = facts.classify(p)
+        added: "frozenset[str]" = domain_additions(checker, p)
+        judged: "tuple[str, anchor_diff.ApprovedMerge | None] | str" = (
+            classify_additions(added) if added else facts.classify(p))
         if isinstance(judged, str):
             res.retained[line] = judged
             continue
-        if facts.is_dir(p):
+        if facts.is_dir(p) and not added:
             subject_dirs.add(line)
         candidates.append((line, p, checker, judged[0], judged[1]))
     if not candidates:
@@ -1158,7 +1373,9 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
                     lines: "set[str]"
                     _recs: "list[dict]"
                     _cands: "set[str]"
-                    exits, lines, _recs, _cands = _run_registry(snap, only=frozenset({checker}))
+                    exits, lines, _recs, _cands = _run_registry(
+                        snap, sink=td / f"prov-{t[:12]}-{checker}.jsonl", only=frozenset({checker}),
+                        git_root=root, git_base=anchor_sha, git_tip=sha)  # 건드림 = 앵커..그 커밋(L 을 지금 사본과 같은 뜻으로)
                     valid: bool = exits.get(checker) in (0, 2) and not any(_SYNTHETIC_MARK in l for l in lines)
                     result = (valid, {line_map(l) for l in lines})
                     with snapshot_lock:
@@ -1516,7 +1733,7 @@ def main(argv: "list[str]") -> int:
                       "기준선 불능이라 fail-closed(현재 위반 전량 귀속)")
                 has_sister = False  # 기준선 불능이면 자매로 가르지 않는다(«측정 실패가 먼저다»)
                 exits_n, n_set, n_records, n_cands = _run_registry(
-                    cur, sink_n, git_root=root, unclassifiable=unclassifiable_n)
+                    cur, sink_n, git_root=root, unclassifiable=unclassifiable_n, git_base=anchor_sha)
                 exits_l = {}
                 l_set = set()
                 l_cands = set()
@@ -1527,12 +1744,14 @@ def main(argv: "list[str]") -> int:
                 # `with` 를 나갈 때 두 벌이 모두 끝나 있으므로 한쪽 예외도 임시 폴더 정리와 겹치지 않는다.
                 with ThreadPoolExecutor(max_workers=2, thread_name_prefix="registry-side") as sides:
                     anchor_run: "Future[tuple[dict[str, int], set[str], list[dict], set[str]]]" = sides.submit(
-                        _run_registry, anc, sink_l, unclassifiable=unclassifiable_l)
+                        _run_registry, anc, sink_l, unclassifiable=unclassifiable_l, committed=True)
                     current_run: "Future[tuple[dict[str, int], set[str], list[dict], set[str]]]" = sides.submit(
-                        _run_registry, cur, sink_n, git_root=root, unclassifiable=unclassifiable_n)
+                        _run_registry, cur, sink_n, git_root=root, unclassifiable=unclassifiable_n,
+                        git_base=anchor_sha)
                     exits_l, l_set, _l_records, l_cands = anchor_run.result()
                     exits_n, n_set, n_records, n_cands = current_run.result()
                 l_records = _l_records
+                _harmonize_contract(l_set, n_set, exits_l, exits_n)
                 anc_prefixes = (str(anc) + "/", str(anc))
                 l_set |= _parse_fail_findings(anc)
                 n_set |= _parse_fail_findings(cur)
@@ -1550,10 +1769,17 @@ def main(argv: "list[str]") -> int:
             def untouched(line: str, _anchor: Path = pair_root) -> bool:
                 return _same_file(_anchor, cur, subjects.get(line))
             shrunk = _list_shrunk([line for line in attributed if untouched(line)], resolved)
-            cand_shrunk = _list_shrunk(sorted(n_cands - l_cands), sorted(l_cands - n_cands))
+            cand_shrunk = _list_shrunk(sorted(n_cands - l_cands), sorted(l_cands - n_cands), counts=True,
+                                       narrowed=lambda line, _anchor=pair_root: _deletions_only(
+                                           _anchor, cur, _cand_subject(line),
+                                           folder=any(rule in line for rule in _FOLDER_COUNT_RULES)))
         attributed = [line for line in attributed if line not in shrunk]
         resolved = [line for line in resolved if line not in set(shrunk.values())]
         residual = sorted(set(residual) | set(shrunk))
+        contract_pairs: "dict[str, str]" = _contract_pairs(attributed, resolved) if pair_root is not None else {}
+        attributed = [line for line in attributed if line not in contract_pairs]
+        resolved = [line for line in resolved if line not in set(contract_pairs.values())]
+        residual = sorted(set(residual) | set(contract_pairs))
         cand_new: "list[str]" = sorted((n_cands - l_cands) - set(cand_shrunk))      # ⓓ 신규(N′∖L′) — 감수자 입력
         cand_legacy: int = len(n_cands & l_cands) + len(cand_shrunk)               # ⓓ legacy — 보고만
         cand_resolved: int = len(l_cands - n_cands) - len(cand_shrunk)
@@ -1561,8 +1787,8 @@ def main(argv: "list[str]") -> int:
         debt: "list[str]" = []
         if debt_rules:
             rest: "list[str]" = []
-            for line in attributed:  # 라인은 이미 정규화돼 있다 — debt_match 코퍼스 그대로.
-                hit: bool = anchor_diff.debt_match(line, debt_rules)
+            for line in attributed:  # 라인은 이미 정규화돼 있다 — debt_match 코퍼스 그대로(계약 줄 순번 꼬리만 걷음).
+                hit: bool = _debt_hit(line, debt_rules)
                 (debt if hit else rest).append(line)
             attributed = rest
 
@@ -1611,7 +1837,8 @@ def main(argv: "list[str]") -> int:
                     provenance is not None and anchor_diff.unmeasured(provenance.retained.get(line, ""))))
                 (sister if normal and anchor_diff.sister_path(path) else rest).append(line)
             attributed = rest
-            # 계약은 숫자 차분 집합에 넣지 않는다. 신규 계약 레코드의 주어를 따로 가르고 보고한다.
+            # 계약 레코드는 계약 줄로 차분 집합에 들고(위 줄 단위 가름이 자매 주어를 가른다), 여기서는 그 검사기를 합성 줄로 잰
+            # 실행에서도 신규 계약 레코드의 자매 주어를 레코드로 모아 자매 절에 싣는다.
             legacy_contract: "set[str]" = {_contract_key(rec, anc_prefixes)
                                             for rec in l_records if rec.get("rule") is None}
             sister_contract: "set[str]" = {_contract_key(rec, cur_prefixes) for rec in n_records
@@ -1655,6 +1882,11 @@ def main(argv: "list[str]") -> int:
         for line, anchor_line in sorted(shrunk.items()):
             print(f"    {line}")
             print(f"      ↳ 앵커: {anchor_line}")
+    if contract_pairs:
+        print(f"  같은 위반의 계약 줄이라 잔존으로 센 줄 {len(contract_pairs)}건(줄 이동한 `@<줄>` · 버킷 내용 칸만 다름):")
+        for line, anchor_line in sorted(contract_pairs.items()):
+            print(f"    {line}")
+            print(f"      ↳ 앵커: {anchor_line}")
     if group_pairs is not None:
         _print_group_moves(moved, group_pairs, group_dropped)
     if n_cands or l_cands:
@@ -1667,7 +1899,7 @@ def main(argv: "list[str]") -> int:
         for script in sorted(legacy_by):
             print(f"  legacy {script}: {legacy_by[script]}")
         if cand_shrunk:
-            print(f"  목록만 줄어 legacy 로 센 ⓓ 줄 {len(cand_shrunk)}건(진단 글의 낱말 목록이 앵커 줄의 부분집합):")
+            print(f"  목록만 줄어 legacy 로 센 ⓓ 줄 {len(cand_shrunk)}건(진단 글의 낱말 목록이 앵커 줄의 부분집합 · 수 칸은 앵커 이하):")
             for line, anchor_line in sorted(cand_shrunk.items()):
                 print(f"    {line}")
                 print(f"      ↳ 앵커: {anchor_line}")

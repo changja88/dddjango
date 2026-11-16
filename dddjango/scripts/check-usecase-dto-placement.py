@@ -42,7 +42,8 @@
 
 ast+ 후보 채널 (㉰ — 기계가 후보를 좁히고 사람이 물음으로 마무리):
   #68(검증 raise 의 자리) · #103(입구의 값 객체 사용 폭) · #140(제약 0 스키마)
-  #191(use_case 이름은 동사) · #194(유스케이스 안 업무 규칙 — 본체 `execute` 와 ②′ 흐름 부품의
+  #191(use_case 이름은 동사 — 명사 접미 후보에서 get · find · list · count 머리는 뺀다) ·
+  #194(유스케이스 안 업무 규칙 — 본체 `execute` 와 ②′ 흐름 부품의
   공개 메서드) · #571(실패 이름의 의미) — «ⓓ 후보» 로 출력하되
   exit 에 산입하지 않는다(판정 마무리는 agents/discipline-reviewer.md 몫).
   #68·#103 후보 스캔은 application_layer·driving_layer 로 한정한다(주 발생지).
@@ -99,6 +100,9 @@ KIND_FOLDER_NAMES = {
 ITERATOR_NAMES = {"Iterator", "AsyncIterator", "Generator", "AsyncGenerator", "Iterable"}
 BOUNDARY_TOKENS = ("InputBoundary", "OutputBoundary", "Presenter")
 IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+# #191 — 동사로만 읽히는 묻는 머리 넷. 이 머리로 시작하는 이름(`get_book_detail`)은 동사구라 명사 접미(`_detail` …)로 끝나도
+# 묻지 않는다. 바꾸는 동사 머리(`update_book_status` 등)와 명사로도 읽히는 머리(`read_status` · `load_status`)는 그대로 묻는다.
+QUERY_VERB_HEADS = frozenset({"get", "find", "list", "count"})
 
 
 def _entries(d: Path) -> tuple[list[Path], list[Path]]:
@@ -501,11 +505,12 @@ def _check_use_case(uc: Path, uc_rel: Path, agg_names: set[str], out: Findings, 
         out.add("#193", uc_rel / entry_name, f"진입점 파일 이름은 `{name}_use_case.py` 다 — 부재")
 
     # #191 후보 — 이름은 동사(자동 통과: 첫 토큰이 애그리거트 공개 메서드와 일치하는 경우는
-    # 수집 비용 대비 이득이 낮아 후보에 포함하되, 애그리거트 «이름 그대로»와 명사 접미만 좁힌다)
+    # 수집 비용 대비 이득이 낮아 후보에 포함하되, 애그리거트 «이름 그대로»와 명사 접미만 좁힌다 — 명사 접미는
+    # 묻는 동사 머리 넷으로 시작하는 이름을 뺀다)
     first = name.split("_")[0]
     if name in agg_names or first in agg_names and len(name.split("_")) == 1:
         cand.add("#191", uc_rel, f"폴더 이름 `{name}` 이 애그리거트 이름이다 — 동사로 짓는다", "Q1(이 이름이 «판정이 되는 물음»인가)")
-    elif any(name.endswith(sfx) for sfx in ("_list", "_info", "_detail", "_status")):
+    elif first not in QUERY_VERB_HEADS and any(name.endswith(sfx) for sfx in ("_list", "_info", "_detail", "_status")):
         cand.add("#191", uc_rel, f"폴더 이름 `{name}` 이 명사 접미로 끝난다 — 동사로 짓는다", "Q1(이 이름이 «판정이 되는 물음»인가)")
 
     cmd_f, qry_f, res_f = (uc / f"{name}_{k}.py" for k in ("command", "query", "result"))

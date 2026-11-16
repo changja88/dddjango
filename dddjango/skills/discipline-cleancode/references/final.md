@@ -205,6 +205,8 @@ def post_payment(self): ...
 def delete_page(self): ...
 ```
 
+포트 계약 메서드는 조회(부른 뒤 아무것도 바뀌지 않고 값만 돌려준다)면 명사구 · 묻는 꼴도 된다 — 조회가 아니면 동사구다(`discipline-houserules` §3 «포트 메서드 이름»).
+
 ### 2.7 의도 제시형 이름 [IP]
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 

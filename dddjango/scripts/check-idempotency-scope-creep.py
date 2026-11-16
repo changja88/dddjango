@@ -17,7 +17,8 @@ Claude 처럼 멱등성 코드를 아예 안 지으면 (2) 에서 자명 통과�
   1) 프로젝트가 표준 레이아웃(`application/`)을 쓴다. 없으면 §1.1 존중 → exit 0.
   2) `application/<bc>/` 프로덕션(test 제외) 코드에 멱등성 *산출물* — 파일명/클래스/`db_table`
      에 `idempotency`, 또는 `Idempotency-Key` 처리 — 이 있고, (git 레포면) 이번 변경에서
-     새로 추가/수정됨(기존 확립된 멱등 계약은 존중 — §13).
+     새로 추가/수정됨(기존 확립된 멱등 계약은 존중 — §13). 직접 실행은 HEAD 대비이고, 게이트 사본은
+     게이트가 넘긴 git 문맥으로 앵커 대비(변경을 커밋한 실행도 같은 판정 · 앵커 사본은 건드린 것 없음 — F4-28).
   3) `.dddjango/*/scope.md` 가 멱등성을 *미요청으로 단정* 한다(안정 템플릿 "멱등성 … 이번
      요청에 명시되지 않았다 / 이번 요청 아님 / 미요청 / 범위 밖").
   4) scope·design-spec 에 G1 사용자-승인 *채택* 배너("G1 … (사용자 승인) … 멱등성 도입/채택")
@@ -134,21 +135,31 @@ def _prod_py_under_application(root: Path) -> list[Path]:
 
 
 def _is_new_or_modified(root: Path, file_path: Path) -> bool:
-    """git 레포면 이번 변경(추가/수정)인지. git 아니면 True(가드 통과 — 기존-존중 가드는 git 일 때만)."""
-    if not (root / ".git").exists():
-        return True
+    """git 레포면 이번 변경(추가/수정)인지. git 아니면 True(가드 통과 — 기존-존중 가드는 git 일 때만).
+
+    게이트 사본(비-git)에서는 `checker_target` 의 게이트 git 문맥으로 묻는다 — 앵커(커밋 트리) 사본은 «건드린 것 없음»,
+    지금 사본은 앵커 대비 바뀐 경로 ∪ 미추적(변경을 커밋한 실행도 같은 판정). 문맥이 없으면 HEAD 대비(직접 실행)."""
+    qroot: "Path | None" = checker_target.gate_git_root(root)
+    if qroot is None:
+        return not checker_target.committed_snapshot(root)
+    if checker_target.gate_base():
+        changes = checker_target.anchor_changes(qroot, root)
+        try:
+            return changes is None or file_path.relative_to(root).as_posix() in changes.touched
+        except ValueError:
+            return True
     try:
         rel = file_path.relative_to(root)
     except ValueError:
         return True
     try:
         tracked = subprocess.run(
-            ["git", "-C", str(root), "ls-files", "--error-unmatch", str(rel)],
+            ["git", "-C", str(qroot), "ls-files", "--error-unmatch", str(rel)],
             capture_output=True,
         )
         if tracked.returncode != 0:
             return True  # 신규(untracked) 파일.
-        changed = subprocess.run(["git", "-C", str(root), "diff", "--quiet", "HEAD", "--", str(rel)])
+        changed = subprocess.run(["git", "-C", str(qroot), "diff", "--quiet", "HEAD", "--", str(rel)])
         return changed.returncode != 0
     except (OSError, subprocess.SubprocessError):
         return True  # git 판단 불가 → 안전하게 가드 통과(나머지 AND 가 좁힌다).

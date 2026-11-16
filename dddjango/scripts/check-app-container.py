@@ -23,9 +23,12 @@
       - 프로젝트 설정 패키지 아님 (`settings.py`, 또는 `urls.py`+(`wsgi.py`|`asgi.py`) 보유 → 제외)
   차단하려면 후보 D 가 추가로 *모두* 만족:
     G2) *이번 변경* 이 D 에 새 도메인 작업을 더했다 = D 가 신규(untracked) 디렉터리이거나,
-        `D/migrations/` 아래 신규(untracked/added) 마이그레이션 파일이 있다. git 이 아니고
-        원본 루트(`DJR_SOURCE_GIT_ROOT` — 게이트 스냅숏용, BK1 수리 2026-08-21)도 없으면
-        **fail-closed(전 후보 검사)** — 무관 레거시의 단순 수정은 새 마이그레이션이 없어 스킵.
+        `D/migrations/` 아래 신규(untracked/added) 마이그레이션 파일(처음 생긴 `migrations/` 폴더 안
+        포함) 또는 신규 `apps.py` · `models.py` 가 있다. 직접 실행은 HEAD 대비(porcelain)다. 게이트 사본에서는
+        게이트가 넘긴 git 문맥으로 묻는다 — 지금 사본은 원본 루트(`DJR_SOURCE_GIT_ROOT` — BK1 수리
+        2026-08-21)와 앵커 커밋으로 **앵커 대비**(변경을 커밋한 실행도 같은 판정), 앵커(커밋 트리) 사본은
+        «건드린 앱 없음»(F4-28). git 이 아니고 그 문맥도 없으면 **fail-closed(전 후보 검사)** — 무관
+        레거시의 단순 수정은 새 마이그레이션이 없어 스킵. 앵커 대비 판정은 `checker_target.app_touched` 한 곳.
     G3) `application/` 하위에 D 의 *실질 이주 대응 앱이 없다* — 디렉터리 `application/<D>/`
         존재만으론 면제 안 됨(빈 껍데기 `__init__.py` 토큰 회피 차단). `application/**/
         django_<D>/` 또는 `application/<D>/` 가 *실제 모델/마이그레이션 내용* 을 보유해야 면제.
@@ -49,12 +52,11 @@ record 순서 = stdout 위반 라인 순서다(T2-1 출력 계약 v2).
 """
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
 
 import checker_target
-from findings import ENV_GIT_ROOT, ContractFindings, emit_all
+from findings import ContractFindings, emit_all
 from pathlib import Path
 
 # rule-owner-map 규칙 0건 — 선행 규약 소유(reverse_coverage PRIOR_CONTRACT_SCRIPTS 등재).
@@ -67,7 +69,7 @@ SKIP_DIRS = {
 
 APP_MARKER_FILES = ("apps.py", "models.py")
 APP_MARKER_DIRS = ("models", "migrations")
-BACKOFFICE_APP = ("cross_context", "backoffice")  # 트리 173행 — 모델 없는 운영자 화면 합성 앱의 단 하나의 자리
+BACKOFFICE_APP = checker_target.BACKOFFICE_APP  # 트리 173행 — 모델 없는 운영자 화면 합성 앱의 단 하나의 자리
 MODEL_MARKERS = ("models.py", "models", "migrations")
 
 
@@ -129,15 +131,8 @@ def _git_query_root(root: Path) -> Path | None:
     2026-08-21). 그때 touched 판정이 fail-closed 로 붕괴해 무관한 기존 앱(catalog)을
     귀속시켰다 — 사본과 내용이 같은 **원본** 루트(`DJR_SOURCE_GIT_ROOT`)가 있으면 그쪽
     porcelain 이 그대로 참이므로 그리로 묻는다. 변수가 없거나 git 이 아니면 기존
-    fail-closed 그대로다(단독 실행·비-git 원본의 동작 무변)."""
-    if _git_available(root):
-        return root
-    src = os.environ.get(ENV_GIT_ROOT, "").strip()
-    if src:
-        cand = Path(src)
-        if cand.is_dir() and _git_available(cand):
-            return cand
-    return None
+    fail-closed 그대로다(단독 실행·비-git 원본의 동작 무변). 판정은 `checker_target.gate_git_root` 한 곳."""
+    return checker_target.gate_git_root(root)
 
 
 def _porcelain(root: Path, relpath: str) -> str | None:
@@ -159,20 +154,32 @@ def _touched_with_new_domain(root: Path, d: Path) -> bool:
 
     git 이 없거나 판정이 불가하면 True — «전부 이번 작업으로 간주»한다(fail-closed ·
     명세 조각 ⓐ). 비-git 스킵은 검사가 꺼진 것이지 깨끗한 것이 아니다.
-    게이트 스냅숏(비-git 사본)에서는 원본 루트(`DJR_SOURCE_GIT_ROOT`)로 묻는다 —
-    상대 경로는 사본과 원본에서 동일하다."""
+    게이트 스냅숏(비-git 사본)에서는 게이트가 넘긴 git 문맥으로 묻는다 — 앵커(커밋 트리) 사본은
+    «건드린 것 없음», 지금 사본은 원본 루트(`DJR_SOURCE_GIT_ROOT`)의 앵커 대비 변경(`checker_target.
+    app_touched` — 변경을 커밋한 실행도 같은 판정). 상대 경로는 사본과 원본에서 동일하다. 문맥이
+    없으면 HEAD 대비 porcelain(직접 실행)이고, git 뿌리 기준 경로는 대상 기준으로 맞춘다."""
     qroot = _git_query_root(root)
     if qroot is None:
-        return True
+        return not checker_target.committed_snapshot(root)  # 게이트 앵커(커밋 트리) 사본 = 건드린 것 없음 · 그 밖은 fail-closed
     rel = d.relative_to(root).as_posix()
+    if checker_target.gate_base():
+        # 게이트 지금 사본 — «이번 변경» 은 앵커부터다(변경을 커밋한 실행도 같은 판정).
+        changes = checker_target.anchor_changes(qroot, root)
+        if changes is None:
+            return True
+        return checker_target.app_touched(changes, rel)
     out = _porcelain(qroot, rel)
-    if out is None:
+    prefix = checker_target.git_prefix(qroot)
+    if out is None or prefix is None:
         return True
     for line in out.splitlines():
         if len(line) < 4:
             continue
         flag = line[:2]
         path = line[3:].strip().strip('"')
+        if not path.startswith(prefix):
+            continue  # porcelain 은 git 뿌리 기준 — 대상 밖 경로
+        path = path[len(prefix):]
         is_new = flag.startswith("??") or flag.strip().startswith("A")
         if not is_new:
             continue
@@ -182,6 +189,11 @@ def _touched_with_new_domain(root: Path, d: Path) -> bool:
         base = path.rsplit("/", 1)[-1]
         # 신규 마이그레이션 파일(= 새 스키마/도메인 작업 신호).
         if f"{rel}/migrations/" in (path + "/") and base.endswith(".py") and base != "__init__.py":
+            return True
+        # 처음 생긴 `migrations/` 폴더 — porcelain 은 미추적 폴더를 한 줄로 접는다. 그 안의 파일은 모두 새것이라
+        # 디스크에서 마이그레이션 파일을 센다.
+        if flag.startswith("??") and path.rstrip("/") == f"{rel}/migrations" and any(
+                p.suffix == ".py" and p.name != "__init__.py" for p in (d / "migrations").rglob("*.py")):
             return True
         # 신규 앱 골격 파일(apps.py/models.py 가 untracked = 새로 만든 앱).
         if path in (f"{rel}/apps.py", f"{rel}/models.py"):
@@ -239,10 +251,13 @@ def main(argv: list[str]) -> int:
     if app_container is None:
         return 0  # 표준 레이아웃(`application/`) 미적용 → §1.1 존중, 해당 없음.
 
-    if _git_query_root(root) is None:
+    if _git_query_root(root) is None and checker_target.committed_snapshot(root):
+        print("주의: 커밋 트리 사본 — 이번 변경이 없어 건드린 앱이 없다고 본다(게이트 앵커 측)")
+    elif _git_query_root(root) is None:
         print("주의: git 저장소가 아니다 — touched 식별이 불가해 «전 후보»를 검사한다(fail-closed)")
     elif not _git_available(root):
-        print("주의: 비-git 사본 — touched 판정은 게이트가 넘긴 원본 git 루트로 한다")
+        print("주의: 비-git 사본 — touched 판정은 게이트가 넘긴 원본 git 루트로 한다"
+              + (" · 앵커 대비" if checker_target.gate_base() else ""))
 
     # 라인 = 레코드 필드의 순수 함수(계약 문법 `- {where}: {msg}`) — emit_all 이
     # 인쇄와 레코드 방출을 같은 순서로 수행한다(출력 계약 v2).

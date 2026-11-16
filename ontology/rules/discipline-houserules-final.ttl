@@ -882,6 +882,22 @@ djr:R-3763 a djr:Prohibition ;
     prov:specializationOf djr:R-3763 ;
     djr:revision 1 .
 
+djr:R-3765 a djr:Obligation ;
+    skos:prefLabel "포트 메서드 이름은 의도를 말한다 — 조회(부른 뒤 바뀜 없이 값만)는 명사구 · 묻는 꼴도 · 그 밖은 명령이라 동사구 · 확신이 없으면 명령 · 로그·캐시는 바뀜 아님 · 판단은 이름 짓는 쪽의 의도로"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3765@2026-11-16> .
+
+<https://numchida.com/ns/djr#R-3765@2026-11-16> a djr:Expression ;
+    prov:specializationOf djr:R-3765 ;
+    djr:revision 1 .
+
+djr:R-3766 a djr:Prohibition ;
+    skos:prefLabel "무엇을 시키는지 말하지 않는 포트 메서드 이름 금지(notify · handle · execute · invoke 류)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3766@2026-11-16> .
+
+<https://numchida.com/ns/djr#R-3766@2026-11-16> a djr:Expression ;
+    prov:specializationOf djr:R-3766 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/references/final.md> a djr:Document ;
     skos:prefLabel "discipline-houserules-final"@ko .
 
@@ -1262,7 +1278,14 @@ djr:R-3763 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
     djr:statesNorm djr:R-3500, djr:R-3501 ;
-    djr:text "- **포트 자료의 방향**(2026-09-27): 방향의 기준점은 우리 안쪽이다 — 들어오면 `<data>_in`, 나가면 `<data>_out`. 포트·조회 계약(`port/<capability>/` · `port/domain_bypass_query/<capability>/` · `framework/<capability>/`) 메서드의 **인자**(우리가 내보내는 자료)를 `<data>_in` 으로 두지 않는다 — `_in` 은 어댑터만 만든다(#574). 같은 BC(framework 포트는 framework)의 다른 계약이 돌려준 `_in`(그 필드 포함)을 그대로 넘기는 것은 만드는 것이 아니다. 기계 판정은 G1 pre-gate 예보(선언 확정 #574)와 G2 #574(유스케이스의 생성 호출)다. 메서드가 이름 붙인 자료를 **돌려주면**(바깥의 답이 들어온다) 그 자료는 `<data>_in` 이다(원시 값·`None` 은 이 규칙 밖) — 기계 검사기가 없어 discipline-reviewer 가 설계 경량 점검과 구현 감사에서 본다. 이 규칙 이전의 `_out` 반환 자료와 실물 메서드에 이미 있는 `_in` 인자는 의미 빚이다 — 새로 만드는 자료는 이 규칙을 따르고, 기존 `_out` 자료를 새 메서드가 그대로 돌려주는 것은 허용한다(중복 `_in` 을 만들지 않는다 — 개명은 의미 빚 정리에서 한다). 파일 접미와 클래스 접미의 교차(`_out.py` 안의 `…In` 등)는 #573(`port/<capability>/` 만)이다.\n\n"@ko .
+    djr:text "- **포트 자료의 방향**(2026-09-27): 방향의 기준점은 우리 안쪽이다 — 들어오면 `<data>_in`, 나가면 `<data>_out`. 포트·조회 계약(`port/<capability>/` · `port/domain_bypass_query/<capability>/` · `framework/<capability>/`) 메서드의 **인자**(우리가 내보내는 자료)를 `<data>_in` 으로 두지 않는다 — `_in` 은 어댑터만 만든다(#574). 같은 BC(framework 포트는 framework)의 다른 계약이 돌려준 `_in`(그 필드 포함)을 그대로 넘기는 것은 만드는 것이 아니다. 기계 판정은 G1 pre-gate 예보(선언 확정 #574)와 G2 #574(유스케이스의 생성 호출)다. 메서드가 이름 붙인 자료를 **돌려주면**(바깥의 답이 들어온다) 그 자료는 `<data>_in` 이다(원시 값·`None` 은 이 규칙 밖) — 기계 검사기가 없어 discipline-reviewer 가 설계 경량 점검과 구현 감사에서 본다. 이 규칙 이전의 `_out` 반환 자료와 실물 메서드에 이미 있는 `_in` 인자는 의미 빚이다 — 새로 만드는 자료는 이 규칙을 따르고, 기존 `_out` 자료를 새 메서드가 그대로 돌려주는 것은 허용한다(중복 `_in` 을 만들지 않는다 — 개명은 의미 빚 정리에서 한다). 파일 접미와 클래스 접미의 교차(`_out.py` 안의 `…In` 등)는 #573(`port/<capability>/` 만)이다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s011-3/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s011-3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-3765, djr:R-3766 ;
+    djr:text "- **포트 메서드 이름**(2026-11-16): `port/<capability>/` 계약 메서드의 이름은 의도를 말한다. 조회(부른 뒤 아무것도 바뀌지 않고 값만 돌려준다)는 명사구 · 묻는 꼴도 된다(`url()` · `current_status()` · `created_at()` · `has_shipped()`). 조회가 아니면 모두 명령이고 동사구로 짓는다(`save_photo()` · `charge_order()` · `revoke_for_child()`) — 값을 돌려줘도 무엇이 바뀌면 명령이고, 조회인지 확신이 없으면 명령으로 본다. 로그 · 캐시처럼 결과에 영향이 없는 것은 바뀜이 아니다. `notify()` · `handle()` · `execute()` · `invoke()` 처럼 무엇을 시키는지 말하지 않는 이름은 위반이다. 판단은 이름을 짓는 쪽이 그 메서드의 의도로 한다(구현을 따라가 저장 · 파일 쓰기를 찾지 않는다). 기계 판정은 #485 다 — 이름이 `notify` · `handle` · `execute` · `process` · `run` · `do` 이거나 `_command` · `_query` 로 끝나면 확정이다. 첫 낱말이 아는 동사도 묻는 꼴도 아닌 이름은 discipline-reviewer 물음 후보다. 단 원시 값(글 · 수 · 참거짓 · 바이트 · 날짜 · 시각 · Decimal · UUID) · Enum, 그리고 그 목록 · 선택을 돌려준다고 선언했고 첫 낱말이 위 확정 낱말(`notify` · `handle` · `execute` · `process` · `run` · `do`)도 모호 동사(`invoke` · `apply` · `call` · `perform` · `trigger` · `dispatch` · `request` …)도 아니면 묻지 않는다 — 그런 명사 이름 명령은 설계 경량 점검과 구현 감사가 이 규칙으로 본다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s013> a djr:Section ;
     djr:headingSnapshot "### 이관 종료 (2026-08-12)"@ko ;

@@ -29,12 +29,19 @@ BC 마다 `함께 커밋 주석 <bc> n건 — …: <파일:줄> «불변식» ·
 다시 내보내기 한 겹(2.39.0 F4-180)의 판정도 여기 산다 — admin(#668 · check-context-isolation)과 도메인 우회 읽기(#356 ·
 check-port-adapter-pairing)는 자기 `django_<bc>/` 모듈을 거쳐 금지 자리의 이름을 가져오거나 쓰는 길을 한 판정으로 본다:
 내보내는 쪽 `reexport_bindings`(금지 자리는 부르는 검사기가 정한다) · 쓰는 쪽 `reexport_uses` · 별표 씨앗 펴기 `star_names`.
+
+게이트 사본의 git 문맥(2.40.0 F4-28)도 여기 산다 — registry_gate 가 비-git 사본에 넘기는 원본 루트 · 앵커 · 커밋 트리 표지 ·
+끝 커밋을 읽고(`gate_git_root` · `gate_base` · `committed_snapshot` · `gate_tip`), 앵커 대비 변경(`anchor_changes`)과 앱 폴더를
+«건드림» 으로 만든 파일(`app_domain_additions` · `app_touched`)을 한 정의로 낸다. check-app-container · idempotency-scope-creep 의
+판정과 게이트의 승인 머지 출처 판정이 같이 쓴다.
 """
 from __future__ import annotations
 
 import ast
+import os
 import re
 import stat
+import subprocess
 import sys
 import fnmatch
 from pathlib import Path
@@ -42,6 +49,182 @@ from types import MappingProxyType
 from typing import Callable, Iterator, Mapping, NamedTuple, Optional
 
 _BC_LAYER_DIRS: "tuple[str, ...]" = ("domain_layer", "application_layer", "driving_layer", "driven_layer")
+
+
+# ── 게이트 사본의 git 문맥(F4-28) ─────────────────────────────────────────────────────────────────────
+# 게이트는 작업 트리 · 앵커를 비-git 사본으로 떠 검사기를 돌린다. 지금 사본에는 원본 git 루트(`DJR_SOURCE_GIT_ROOT`)와 앵커 커밋
+# (`DJR_SOURCE_GIT_BASE`)을, 앵커(커밋 트리) 사본에는 그 사본의 경로(`DJR_COMMITTED_SNAPSHOT`)를, 승인 머지 출처 재실행 사본에는
+# 원본 루트 · 앵커와 그 커밋(`DJR_SOURCE_GIT_TIP`)을 넘긴다(이름은 findings 의 `ENV_*` 한 곳). «건드림» 을 묻는 검사기
+# (app-container · idempotency-scope-creep)는 이 문맥을 여기 한 곳에서 읽는다 — 변수가 없으면(사용자 · 역할의 직접 실행) 각
+# 검사기의 원래 판정(HEAD 대비 porcelain · `diff HEAD`) 그대로다. 앵커 대비 «건드림» 은 dddjango-web 백스톱 `--diff-base` 와
+# 같은 꼴(`git diff --name-status <앵커>` 의 지우지 않은 경로 ∪ `status --untracked-files=all` 의 미추적)이라 변경을 커밋한
+# 실행도 같은 판정이다.
+
+# 모델 없는 운영자 화면 합성 앱의 단 하나의 자리(트리 173행) — check-app-container 는 이 자리를 모델 표지 한 줄로만 판정하고,
+# 게이트는 이 줄의 승인 머지 출처를 폴더 tree 로 가른다(건드림에 기대지 않는 줄이다).
+BACKOFFICE_APP: "tuple[str, ...]" = ("cross_context", "backoffice")
+
+
+def gate_git_root(root: Path) -> "Path | None":
+    """git 을 물을 루트 — 대상 자신이 git 뿌리면 그것, 아니면 게이트가 넘긴 원본 루트(사본과 상대 경로가 같다).
+
+    원본 루트는 git 작업 트리 안이면 믿는다 — 저장소의 하위 폴더가 대상인 프로젝트도 같다(git 이 내는 뿌리 기준 경로는
+    `git_prefix` 로 대상 기준에 맞춘다). 앵커 사본은 커밋 트리 표지로 «건드린 것 없음» 이라, 지금 사본이 여기서 원본을 못
+    믿으면 두 벌이 비대칭이 된다."""
+    import findings
+
+    if (root / ".git").exists():
+        return root
+    src: str = os.environ.get(findings.ENV_GIT_ROOT, "").strip()
+    if src and Path(src).is_dir() and _git_line(Path(src), "rev-parse", "--is-inside-work-tree") == "true":
+        return Path(src)
+    return None
+
+
+_GIT_PREFIX: "dict[str, str | None]" = {}
+
+
+def _git_line(qroot: Path, *args: str) -> "str | None":
+    """git 한 줄 답(앞뒤 공백 걷음) — 답하지 못하면 None."""
+    try:
+        res = subprocess.run(["git", "-C", str(qroot), *args], capture_output=True, text=True)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return res.stdout.strip() if res.returncode == 0 else None
+
+
+def git_prefix(qroot: Path) -> "str | None":
+    """git 뿌리에서 `qroot` 까지의 접두(`api/` · 뿌리면 빈 글자) — 뿌리 기준 경로(porcelain · `--full-tree`)를 대상 기준으로
+    맞출 때 쓴다(접두를 걷고, 접두 밖 경로는 대상 밖이라 버린다). 답하지 못하면 None(호출측 fail-closed)."""
+    key: str = str(qroot)
+    if key not in _GIT_PREFIX:
+        _GIT_PREFIX[key] = _git_line(qroot, "rev-parse", "--show-prefix")
+    return _GIT_PREFIX[key]
+
+
+def committed_snapshot(root: Path) -> bool:
+    """게이트의 앵커(커밋 트리) 사본인가 — 표지 값이 이 뿌리와 같은 경로일 때만 믿는다."""
+    import findings
+
+    mark: str = os.environ.get(findings.ENV_COMMITTED_SNAPSHOT, "").strip()
+    if not mark:
+        return False
+    try:
+        return Path(mark).resolve() == Path(root).resolve()
+    except OSError:
+        return False
+
+
+def gate_base() -> str:
+    """게이트가 넘긴 앵커 커밋(없으면 빈 글자).
+
+    게이트 밖에서 이 변수를 주면 대상이 git 이어도 그 커밋 대비로 잰다(git 이 답하지 못하는 커밋이면 fail-closed).
+    한계: 무시(gitignore)된 미추적 파일은 `status` 에 나오지 않아 «건드림» 에 들지 않는다(직접 실행의 `ls-files` 판정과 다름)."""
+    import findings
+
+    return os.environ.get(findings.ENV_GIT_BASE, "").strip()
+
+
+def gate_tip(root: Path) -> str:
+    """게이트가 커밋 트리 사본(승인 머지 출처 재실행)에 넘긴 그 커밋(없으면 빈 글자 = 작업 트리).
+
+    대상이 git 이 아닐 때(게이트 사본)만 믿는다 — git 작업 트리 직접 실행에 이 변수를 주어도 미커밋 · 미추적이 «건드림» 에서
+    빠지지 않는다."""
+    import findings
+
+    if (Path(root) / ".git").exists():
+        return ""
+    return os.environ.get(findings.ENV_GIT_TIP, "").strip()
+
+
+class AnchorChanges(NamedTuple):
+    touched: "frozenset[str]"     # 앵커 대비 바뀐(지우지 않은) 경로 ∪ 미추적 — 커밋 · 미커밋 모두
+    added: "frozenset[str]"       # 앵커 트리에 없던 경로
+    base_files: "frozenset[str]"  # 앵커 트리의 파일
+
+
+_ANCHOR_CHANGES: "dict[tuple[str, str], AnchorChanges | None]" = {}
+
+
+def _git_z(qroot: Path, *args: str) -> "list[str] | None":
+    try:
+        res = subprocess.run(["git", "-C", str(qroot), *args], capture_output=True, text=True)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return res.stdout.split("\0") if res.returncode == 0 else None
+
+
+def anchor_changes(qroot: Path, target: "Path | None" = None, base: "str | None" = None) -> "AnchorChanges | None":
+    """앵커(`base` · 없으면 `gate_base()`) 대비 변경 — 대상 상대 경로. 검사기 대상 `target` 이 게이트 사본이고 끝 커밋
+    (`gate_tip(target)`)이 있으면 앵커..그 커밋(커밋 트리 사본 · 미추적 없음), 아니면 작업 트리(미커밋 · 미추적 포함).
+    git 이 답하지 못하면 None(호출측 fail-closed). 프로세스 안에서 (루트, 구간)마다 한 번 묻는다."""
+    base = gate_base() if base is None else base
+    tip: str = gate_tip(target) if target is not None else ""
+    key: "tuple[str, str]" = (str(qroot), base + ".." + tip)
+    if key in _ANCHOR_CHANGES:
+        return _ANCHOR_CHANGES[key]
+    prefix_out: "str | None" = git_prefix(qroot)
+    # `--no-relative` — 사용자 설정 `diff.relative=true` 여도 뿌리 기준 경로로 받아 다른 질의와 같은 기준으로 맞춘다.
+    diff: "list[str] | None" = _git_z(qroot, "diff", "--no-relative", "--name-status", "-z", base,
+                                      *([tip] if tip else []), "--")
+    status: "list[str] | None" = [] if tip else _git_z(qroot, "status", "--porcelain", "-z", "--untracked-files=all")
+    tree: "list[str] | None" = _git_z(qroot, "ls-tree", "--full-tree", "-r", "--name-only", "-z", base)
+    result: "AnchorChanges | None" = None
+    if None not in (prefix_out, diff, status, tree):
+        prefix: str = prefix_out or ""
+
+        def rel(path: str) -> "str | None":
+            return path[len(prefix):] if path.startswith(prefix) else None
+        touched: "set[str]" = set()
+        tok: "list[str]" = diff or []
+        i: int = 0
+        while i < len(tok) - 1:
+            st: str = tok[i]
+            if not st:
+                i += 1
+                continue
+            if st[0] in "RC":  # 이름 바꿈 · 복사 — 새 경로만(옛 경로는 지움과 같다)
+                new: "str | None" = rel(tok[i + 2]) if i + 2 < len(tok) else None
+                if new:
+                    touched.add(new)
+                i += 3
+                continue
+            path: "str | None" = rel(tok[i + 1])
+            if path and st[0] != "D":
+                touched.add(path)
+            i += 2
+        pt: "list[str]" = status or []
+        i = 0
+        while i < len(pt):
+            entry: str = pt[i]
+            if len(entry) < 4:
+                i += 1
+                continue
+            xy: str = entry[:2]
+            path = rel(entry[3:])
+            if path and "D" not in xy:
+                touched.add(path)
+            i += 2 if ("R" in xy or "C" in xy) else 1  # 이름 바꿈 · 복사(색인 · 작업 트리 칸 어느 쪽이든)는 옛 경로가 다음 토큰
+        files: "frozenset[str]" = frozenset(p for p in (rel(x) for x in (tree or []) if x) if p)
+        result = AnchorChanges(frozenset(touched), frozenset(p for p in touched if p not in files), files)
+    _ANCHOR_CHANGES[key] = result
+    return result
+
+
+def app_domain_additions(changes: AnchorChanges, app: str) -> "frozenset[str]":
+    """앱 폴더 `app` 아래 앵커에 없던 `migrations/*.py`(`__init__.py` 밖) · `apps.py` · `models.py` — check-app-container 가
+    «이번 변경이 이 앱에 새 도메인 작업을 더했다» 고 보는 파일이다. 게이트는 평면 앱 줄의 승인 머지 출처를 이 경로로 가른다
+    (승인 머지가 들인 파일을 레인이 고쳐도 레인이 더한 파일이 아니다)."""
+    pre: str = app.rstrip("/") + "/"
+    return frozenset(p for p in changes.added
+                     if (p.startswith(pre + "migrations/") and p.endswith(".py") and not p.endswith("/__init__.py"))
+                     or p in (pre + "apps.py", pre + "models.py"))
+
+
+def app_touched(changes: AnchorChanges, app: str) -> bool:
+    """check-app-container G2 의 앵커 대비 판정 — 앵커에 없던 앱(새 앱)이거나 `app_domain_additions` 가 있으면 참."""
+    pre: str = app.rstrip("/") + "/"
+    return not any(f.startswith(pre) for f in changes.base_files) or bool(app_domain_additions(changes, app))
 
 
 def cache_only_instance(path: Path) -> bool:
