@@ -2474,6 +2474,13 @@ class BcRenamePairingRegression(unittest.TestCase):
         self.assertEqual(ladder(positional, "기준선 불능(fail-closed — 전량 신규 취급)"), (["- plain"], (), [False, True]))
 
 
+def _api_basis_masked(run: "tuple[int, str]") -> "tuple[int, str]":
+    """#16 code 레인 BLOCKER 꼬리의 «API 근거» 안내 줄(등록 함수 이름 · 절 번호를 말하는 글)만 자리표로 바꾼다 — 판정 · 진단
+    줄은 그대로 byte 대조하고, 안내 줄의 개수와 자리도 그대로 남는다(F4-150 에서 그 글만 고쳤다)."""
+    code, out = run
+    return code, "\n".join("  API 근거: <안내>" if line.startswith("  API 근거:") else line for line in out.split("\n"))
+
+
 class RenamedBcBaselineRegression(unittest.TestCase):
     """승인 머지가 상류의 BC 이름 바꾸기를 가져왔고 지금 이름의 selector 렌더가 서지 않을 때, 앵커 · 병합 전 사본의 기준선을
     그 사본의 옛 이름으로 렌더한다(F4-89 남은 몫 — 실제로는 #2 만 해당한다).
@@ -2757,6 +2764,8 @@ class RenamedBcBaselineRegression(unittest.TestCase):
                 new, old = self.run_both(r, anchor, (merge,), argv, script)
                 if script is OPENAPI:
                     self.assert_kept_with_pre_route_lines(new, old)  # F4-173 c 줄은 옛 판에 없는 새 판정
+                elif script is COMP:
+                    self.assertEqual(_api_basis_masked(new), _api_basis_masked(old))  # F4-150 — 안내 글 한 줄만 고침
                 else:
                     self.assertEqual(new, old)
                 self.assertNotIn("영역 이름 대응", new[1])
