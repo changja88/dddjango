@@ -69,7 +69,7 @@ docs/                     ← 공식 문서 — 이 개발 문서와 master/ 폴
                            · master.html — 통합 진입점(좌측 인덱스로 아래 다섯 문서 전환)
                            · work_flow.html — dddjango 동작 흐름(재생성 스펙 work_flow.spec.json)
                            · work_flow_web_guide.html — dddjango-web 동작 흐름(work_flow_web.html · 스펙을 싣는다)
-                           · file_tree.html — dddjango 표준 트리 · 트리 182행의 정본(생성기 mkrev2.py)
+                           · file_tree.html — dddjango 표준 트리 · 트리 183행의 정본(생성기 mkrev2.py)
                            · file_tree_web.html — dddjango-web 표준 트리
                            · work_list.html — 남은 현장 보고 작업 리스트(판마다 끝난 항목을 지운다)
 ```
@@ -171,6 +171,18 @@ md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금
 8. **검사기를 고치면** — Codex byte 미러 → 골든 · EXPECTED 갱신(`findings_count_matrix` · `checker_baseline_matrix` · `checker_cross_matrix --emit-expected` · `construct_drift_report --emit-expected` · `gen_pregate_symbol_kinds`) → 봉인(§4 · §6) → `make verify`. 계약 문법 검사기(`[#N]` 줄 없이 `- <경로>: …` 계약 줄만 내는 검사기)의 진단 글에 줄 번호 · 내용 목록처럼 흔들리는 칸을 더하면 `registry_gate` 계약 줄 짝의 정규화(`_contract_stable`)에도 더한다 — 아니면 legacy 가 귀속으로 뜬다. 구현을 맡기면 이 목록을 지시문에 그대로 넣는다.
 
 어휘(djr) 자체의 개정·블록 경계 규약·IRI 인코딩·롤백 등 깊은 규약은 전부 [`workspace/tools/ontology-authoring.md`](../workspace/tools/ontology-authoring.md)가 정본이다(§2 게이트, §5 채번, §7 어휘 개정, §13 블록 경계, §14 IRI·alias 공간, §17 롤백).
+
+### 트리 개정 순서 — 표준 트리에 행을 끼우거나 뺄 때
+
+뒤 행 번호가 모두 밀리므로 아래 차례로 한 번에 옮긴다.
+
+1. **생성기** `docs/master/mkrev2.py` — `ROWS` 에 행을 끼우고 `WHAT`(새 칸 글 포함) · `NAMES` · `_NMR` 의 뒤 행 번호 키와 `assert len(WHAT) == N` 을 옮긴다. 2장 흐름의 `_st(…)` · `fbox(r=…)` 번호는 옛 축이라(100 · 103 · 105 뒤에 +10 씩 더해 진짜 행이 된다) 밀린 행을 가리키면 옛 축 값을 +1 한다. 새 칸이 리프 이름 수를 바꾸면 D8 툴팁 수치도(빌드 assert 가 대조한다).
+2. `tree_mirror_check.py` 의 `TREE_ROW_COUNT` · docstring(새로 쓸 `standard_tree.py` 머리 포함) → `mkrev2.py` 실행 → 바뀐 `workspace/design/2026-08-07-decision-record.md` 되돌림.
+3. **그래프** — houserules §1 머리(`headingSnapshot`) · TREE code 블록(글 = `tree_mirror_check.render_block(extract_canonical(…))`) · 행 번호 · 행 수를 인용하는 블록과 이름표(이번 판에 리비전되지 않은 규범이면 새 Expression clarification) → 위 체크리스트 2 ~ 6.
+4. `tree_mirror_check.py --write` — `standard_tree.py` 를 다시 쓰고, final.md TREE 블록이 렌더와 같은 byte 인지 본다 → Codex byte 미러 `standard_tree.py`.
+5. **손목록** — 검사기 docstring · 주석 · 메시지(Codex byte · 메시지가 바뀌면 골든은 체크리스트 8, `fixture_matrix.py` 줄만 손으로) · `spec_lint.py` `TREE_ROW_MAX` · 트리 개정 명세의 머리 행 수와 «자리» 칸(새 행을 가리키는 규칙 행이 있어야 ③ green) · `section-path-map.tsv` 행 · `reverse_coverage.py` · 이 문서와 README 의 행 수. «트리 N행» 꼴이 아닌 전체 행 수 인용도 함께 옮긴다 — architect «표준 N행 템플릿» · 조정자 «`standard_tree` N행 골격» 과 그 이름표(그래프)와 Codex 짝, mkrev2 의 «현행 표준 … N행» 안내 줄. «BC 골격 171행» 은 BC 골격의 뜻이라 `<project>/` · `cross_context/` 처럼 BC 밖 칸에 행을 끼울 때는 바꾸지 않는다(바꾸면 BC 밖 행까지 BC 가 가진다는 글이 된다).
+6. **일회 대조** — 살아 있는 «트리 N행»(새 행 번호 이상 · 플러그인 · Codex 미러 · `workspace/tools` · scripts 주석)을 새 `standard_tree` 칸 이름과 대 보고, 같은 범위의 «N행» 행 수 인용(«트리» 없이 쓴 것 포함)이 새 전체 행 수인지 본다(«BC 골격 171행» 은 위 5 대로 제외). 역사 기록(`workspace/plan/**` · decision-record · LEDGER 기존 행 · 지난 판의 결정 카드)은 고치지 않는다.
+7. 검사 — `tree_mirror_check` · `spec_lint` · `reverse_coverage` · `derive_path_globs --check`(쓰기 모드로 덮지 않는다) · 그래프 검사.
 
 ## 4. 검사기(백스톱)·도구 수정
 
@@ -294,6 +306,7 @@ make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 �
 - 맡은 파일과 맡지 않은 파일 목록. 지시문에 «이 폴더 아래 아무것도 만들지 말라» 와 «답은 이 폴더의 파일에» 를 함께 쓸 때는 «답 파일 하나만 예외» 로 적는다. «문서만 고침» 일이면 실행 0 을 적는다.
 - 임시 사본에 플러그인 폴더를 심볼릭 링크로 걸지 않는다(픽스처의 변이 시험이 원본을 덮어쓴다). 고치기 전 붉음은 사본 밖에 잠깐 복사해 잰다. 받은 뒤 운영자는 시작 시각 뒤 바뀐 파일 목록을 예상 목록과 대조한다.
 - 옛 판 대조는 배포 커밋 SHA 상수로(`HEAD` 금지). 구현 검토 질문에 «커밋 뒤에도 같은 결과인가» 를 넣는다.
+- 앵커 차분(`--anchor` · `anchor_diff_smoke`)을 시험할 때 `TMPDIR` 을 저장소 안으로 바꾸지 않는다 — 임시 사본이 부모 저장소의 작업 트리 안에 놓이면 검사기가 부모 `.git` 을 보고 앵커 기준선을 못 세워 조용히 positional 로 떨어지고, 시험이 거짓 녹색이 된다.
 - 검사기를 고치는 일이면 §3 체크리스트 8 을 그대로 넣는다.
 - 대상 저장소는 읽기만 — 그 폴더에서 `cd` · `git -C` · 명령 금지, 절대 경로로만 읽는다. env 파일 · 비밀 키 · 도구 설정 파일 · 대화 기록 폴더는 열지 않는다.
 - Codex 는 미러 글만 — Codex 로 띄우는 시험은 하지 않는다. 사용자가 청한 분석 더블 체크로 Codex 를 띄우면 그 지시문에 읽기만 · env 열지 않음 · `/tmp` 금지를 직접 적는다(Codex 는 이 저장소의 `CLAUDE.md` 를 읽지 않는다).

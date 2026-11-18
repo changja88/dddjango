@@ -277,12 +277,18 @@ djr:R-0032 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0033 a djr:Obligation ;
-    skos:prefLabel "다른 계약 scope의 G1 개별 승인"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0033@2026-08-19> .
+    skos:prefLabel "표준 내부 scope 는 같은 profile 이면 공개 scope 와 같은 공통·BC 오류 모듈 · 그 밖의 다른 계약 scope는 G1 개별 승인"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0033@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-0033@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0033 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0033@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-0033 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0033@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0034 a djr:Override ;
     skos:prefLabel "기존 공용 경로의 승인 동등 계약 우선 재사용"@ko ;
@@ -1037,12 +1043,18 @@ djr:R-0660 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0661 a djr:Obligation ;
-    skos:prefLabel "기존 API namespace·versioning 관례 준수"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0661@2026-08-22> .
+    skos:prefLabel "기존 API namespace·versioning 관례 준수(새 내부 창구의 자리는 §2.3 이 먼저)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0661@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-0661@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0661 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0661@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-0661 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0661@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0662 a djr:Obligation ;
     skos:prefLabel "신규 도입 시 글로벌 임의 설치 금지·매니페스트 버전 핀 추가"@ko ;
@@ -1465,8 +1477,8 @@ djr:R-0706 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0707 a djr:Obligation ;
-    skos:prefLabel "프로젝트 api.py의 NinjaExtraAPI 인스턴스 1개 소유 · 루트 API 는 경로 앞 응답의 정해진 클래스로"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0707@2026-11-13> .
+    skos:prefLabel "프로젝트 api.py의 공개 API 인스턴스(NinjaExtraAPI) 1개 소유 · 객체 이름은 프로젝트가 고름 · 루트 API 는 경로 앞 응답의 정해진 클래스로"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0707@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-0707@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0707 ;
@@ -1478,21 +1490,39 @@ djr:R-0707 a djr:Obligation ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-clarification .
 
+<https://numchida.com/ns/djr#R-0707@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-0707 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0707@2026-11-13> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-clarification .
+
 djr:R-0708 a djr:Obligation ;
-    skos:prefLabel "BC의 side-effect-free register_<bc>_api(api)만 노출"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0708@2026-08-22> .
+    skos:prefLabel "BC의 side-effect-free registrar만 노출 — 공개 창구 register_<bc>_api(api) · 내부 창구 register_<bc>_internal_api(api)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0708@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-0708@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0708 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-0708@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-0708 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0708@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-0709 a djr:Obligation ;
-    skos:prefLabel "urls.py의 registrar 명시 1회 호출 후 mount"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0709@2026-08-22> .
+    skos:prefLabel "urls.py의 registrar 명시 1회 호출(그 이름의 scope 에 맞는 API 객체를 넘김) 후 mount"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0709@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-0709@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0709 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0709@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-0709 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0709@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0710 a djr:Prohibition ;
     skos:prefLabel "BC 모듈 import만으로 registration 발생 금지"@ko ;
@@ -1504,11 +1534,17 @@ djr:R-0710 a djr:Prohibition ;
 
 djr:R-0711 a djr:Obligation ;
     skos:prefLabel "명시 registrar 합성 controller의 auto_import=False"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0711@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-0711@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-0711@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0711 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0711@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-0711 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0711@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0712 a djr:Obligation ;
     skos:prefLabel "registrar의 자기 BC controller 한정 import·함수 밖 등록 금지"@ko ;
@@ -1519,12 +1555,18 @@ djr:R-0712 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0713 a djr:Prohibition ;
-    skos:prefLabel "registrar의 config.api import·top-level register_controllers 호출 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0713@2026-08-22> .
+    skos:prefLabel "registrar의 project API 모듈(api.py · internal_api.py) import·top-level register_controllers 호출 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0713@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-0713@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0713 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0713@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-0713 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0713@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0714 a djr:Prohibition ;
     skos:prefLabel "urls.py 밖 registrar 호출·직접 controller 등록 금지"@ko ;
@@ -1535,28 +1577,46 @@ djr:R-0714 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0715 a djr:Permission ;
-    skos:prefLabel "소비자 의존 확립 API 인스턴스의 승인 별도 scope 보존 허용"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0715@2026-08-22> .
+    skos:prefLabel "표준 API 객체 둘 밖의 소비자 의존 확립 API 인스턴스(public/internal · version)의 승인 별도 scope 보존 허용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0715@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-0715@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0715 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-0715@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-0715 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0715@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-0716 a djr:Prohibition ;
-    skos:prefLabel "보존 근거의 «소비자 의존» 한정(«먼저 작성돼 있음» 불인정)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0716@2026-08-22> .
+    skos:prefLabel "표준 둘 밖 보존 scope 의 근거는 «소비자 의존» 한정(«먼저 작성돼 있음» 불인정)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0716@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-0716@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0716 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-0716@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-0716 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0716@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
+
 djr:R-0717 a djr:Prohibition ;
-    skos:prefLabel "신규 BC마다 API 인스턴스 생성 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0717@2026-08-22> .
+    skos:prefLabel "표준 API 객체는 공개 API 객체(api.py)와 internal_api 둘뿐 — 신규 BC·기능마다 API 인스턴스 생성 금지(scope 분리 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0717@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-0717@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0717 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0717@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-0717 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0717@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0718 a djr:Prohibition ;
     skos:prefLabel "operation 본문의 Repository·Adapter 직접 생성 금지(Q-7)"@ko ;
@@ -2287,12 +2347,18 @@ djr:R-0805 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0806 a djr:Exception ;
-    skos:prefLabel "add/update 항목의 mounted API 생성 문서 검증 한정"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0806@2026-08-22> .
+    skos:prefLabel "add/update 항목의 mounted API 생성 문서 검증 한정(내부 창구는 /internal/ 의 internal_api 문서)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0806@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-0806@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0806 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0806@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-0806 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0806@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0807 a djr:Prohibition ;
     skos:prefLabel "isolated Schema·미등록 Router/controller 문서의 공개 OpenAPI 증거 부정"@ko ;
@@ -2343,12 +2409,18 @@ djr:R-0812 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0813 a djr:Obligation ;
-    skos:prefLabel "공개 HTTP 계약의 실제 URLconf mount Django client 호출"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0813@2026-08-22> .
+    skos:prefLabel "공개 HTTP 계약의 실제 URLconf mount Django client 호출(내부 창구는 /internal/… mount)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0813@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-0813@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0813 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0813@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-0813 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0813@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0814 a djr:Prohibition ;
     skos:prefLabel "ninja/ninja_extra TestClient 직접 감싼 결과의 공개 HTTP 영구 증거 부정"@ko ;
@@ -2593,8 +2665,8 @@ djr:R-3735 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-3749 a djr:Obligation ;
-    skos:prefLabel "경로 앞 응답 꼴 — 파일 셋(정본 pre_route_responses.py 코드 그대로(서식·주석·import 차례·모듈 docstring 은 프로젝트 도구 몫 · 린트는 # noqa · 옛 판 2.37.0 정본도 받음) · 프로젝트 표 pre_route_response_table.py · api.py 의 정해진 루트 API 클래스 — 서명·몸통 코드 그대로) · Ninja 기본 행(정본 · 뺄 수 없음 · 날 수 있다 쪽) · 그 밖 문서 재정의·후처리 금지 · 받는 판 Ninja 1.6 · Python 3.12 · pydantic 2.5 이상(낮으면 G1 판 올림) · 기본 몸통을 바꾸는 프레임워크 오류 핸들러면 G1 STOP · 붙는 행마다 시험"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3749@2026-11-14> .
+    skos:prefLabel "경로 앞 응답 꼴 — 파일 넷(정본 pre_route_responses.py 코드 그대로(서식·주석·import 차례·모듈 docstring 은 프로젝트 도구 몫 · 린트는 # noqa · 옛 판 2.37.0 정본도 받음) · 프로젝트 표 pre_route_response_table.py · api.py 의 정해진 루트 API 클래스 — 서명·몸통 코드 그대로 · internal_api.py 는 그 클래스를 들여 지음) · Ninja 기본 행(정본 · 뺄 수 없음 · 날 수 있다 쪽) · 그 밖 문서 재정의·후처리 금지 · 받는 판 Ninja 1.6 · Python 3.12 · pydantic 2.5 이상(낮으면 G1 판 올림) · 기본 몸통을 바꾸는 프레임워크 오류 핸들러(api.py · internal_api.py)면 G1 STOP · 붙는 행마다 시험"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3749@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-3749@2026-11-13> a djr:Expression ;
     prov:specializationOf djr:R-3749 ;
@@ -2606,13 +2678,25 @@ djr:R-3749 a djr:Obligation ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-amendment .
 
+<https://numchida.com/ns/djr#R-3749@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-3749 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3749@2026-11-14> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3750 a djr:Obligation ;
-    skos:prefLabel "경로 앞 응답 프로젝트 행(미들웨어 — 서드파티 포함 — 와 앞단) — 칸(status 400–599 · when · description · body|media_type · headers(캐시 지시 머리 셋은 빼도 됨) · methods · namespaces · exempt · operations) · 빈 좁히는 칸 금지 · 행마다 G1 근거(미들웨어 코드 줄 · 설정 · 앞단) · NOT_API_MIDDLEWARE 근거 = API 경로를 빼는 코드 줄 · 표 검증(문서 생성 때 엄격 · 뒤 열쇠가 이김) · operations 는 경로 객체로 못 가르는 답(406·415·인증 안 HttpError·preserve 경로 코드의 HttpError) · 적는 것의 경계(의도된 답만) · 검사기는 프로젝트 미들웨어만 대조(좁힌 행 — all 밖 when 포함 — 뿐이거나 못 읽으면 ⓓ 후보 · G1 근거는 api 리뷰어 · G2 ⓓ 줄은 감수자 · 서드파티·앞단은 리뷰어)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3750@2026-11-13> .
+    skos:prefLabel "경로 앞 응답 프로젝트 행(미들웨어 — 서드파티 포함 — 와 앞단) — 칸(status 400–599 · when · description · body|media_type · headers(캐시 지시 머리 셋은 빼도 됨) · methods · namespaces(내부 창구는 internal_api) · exempt · operations) · 빈 좁히는 칸 금지 · 행마다 G1 근거(미들웨어 코드 줄 · 설정 · 앞단) · NOT_API_MIDDLEWARE 근거 = API 경로(공개 주소와 /internal/ 둘 다)를 빼는 코드 줄 · 표 검증(문서 생성 때 엄격 · 뒤 열쇠가 이김) · operations 는 경로 객체로 못 가르는 답(406·415·인증 안 HttpError·preserve 경로 코드의 HttpError) · 적는 것의 경계(의도된 답만) · 검사기는 프로젝트 미들웨어만 대조(좁힌 행 — all 밖 when 포함 — 뿐이거나 못 읽으면 ⓓ 후보 · G1 근거는 api 리뷰어 · G2 ⓓ 줄은 감수자 · 서드파티·앞단은 리뷰어)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3750@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-3750@2026-11-13> a djr:Expression ;
     prov:specializationOf djr:R-3750 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3750@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-3750 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3750@2026-11-13> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3751 a djr:Obligation ;
     skos:prefLabel "머리 보충 — BC 오류 머리는 그 경로 openapi_extra 의 response= 선언 status 정수 키 headers 로 · 오류 status 는 headers 만 · 숫자 문자열·변수 키·** 는 성공·오류 모두 위반 · openapi_extra 값은 글자 Dict 또는 같은 모듈 맨 위 글자 Dict 상수(import 상수·도움 함수는 막힘) · headers 값도 같은 꼴(그 밖은 ⓓ) · 주입 응답 머리 이름은 그 뒤 반환 오류 status 의 머리 보충에(캐시 지시 머리 Cache-Control·Pragma·Expires 는 오류 문서에 적지 않아도 되고 검사기도 대조 안 함) · 머리 description 에 머리 계약"@ko ;
@@ -2620,6 +2704,86 @@ djr:R-3751 a djr:Obligation ;
 
 <https://numchida.com/ns/djr#R-3751@2026-11-13> a djr:Expression ;
     prov:specializationOf djr:R-3751 ;
+    djr:revision 1 .
+
+djr:R-3767 a djr:Obligation ;
+    skos:prefLabel "앞단이 인터넷에 열지 않는 HTTP 창구는 표준 API 객체 internal_api(<project>/internal_api.py · urls_namespace=\"internal_api\")에 등록 · urls.py 의 urlpatterns 에 path(\"internal/\", internal_api.urls)를 그대로 넣어 단다(include 안 · .urls 를 담은 변수 경유 없이)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3767@2026-11-18> .
+
+<https://numchida.com/ns/djr#R-3767@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-3767 ;
+    djr:revision 1 .
+
+djr:R-3768 a djr:Prohibition ;
+    skos:prefLabel "새 내부 창구를 공개 API 아래 경로(/api/internal/…)에 두기 금지 — §2.1 namespace 관례보다 먼저"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3768@2026-11-18> .
+
+<https://numchida.com/ns/djr#R-3768@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-3768 ;
+    djr:revision 1 .
+
+djr:R-3769 a djr:Permission ;
+    skos:prefLabel "이미 /api/internal/… 로 배포된 내부 창구는 소비자 계약이라 그대로 둠(옮기면 계약 변경)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3769@2026-11-18> .
+
+<https://numchida.com/ns/djr#R-3769@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-3769 ;
+    djr:revision 1 .
+
+djr:R-3770 a djr:Obligation ;
+    skos:prefLabel "internal_api 는 <project>/api.py 의 루트 API 클래스를 들여 짓는다 — internal_api.py 에는 import·생성 문장 하나·그 객체의 프레임워크 오류 핸들러만(클래스 정의 없음)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3770@2026-11-18> .
+
+<https://numchida.com/ns/djr#R-3770@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-3770 ;
+    djr:revision 1 .
+
+djr:R-3771 a djr:Exception ;
+    skos:prefLabel "내부 창구가 없는 프로젝트도 internal_api.py 를 빈 채로 둔다 · 내용 없는 internal_api.py 는 API surface 아님"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3771@2026-11-18> .
+
+<https://numchida.com/ns/djr#R-3771@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-3771 ;
+    djr:revision 1 .
+
+djr:R-3772 a djr:Obligation ;
+    skos:prefLabel "내부 창구 컨트롤러는 register_<bc>_internal_api(api: NinjaExtraAPI)로 등록 — 공개 registrar 와 같은 api_router.py · 내부 창구만 가진 BC 는 이 함수만 · 컨트롤러 칸은 공개 창구와 같은 기준(어느 객체에 다는지는 등록 함수 이름이 정함)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3772@2026-11-18> .
+
+<https://numchida.com/ns/djr#R-3772@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-3772 ;
+    djr:revision 1 .
+
+djr:R-3773 a djr:Obligation ;
+    skos:prefLabel "내부 창구도 밖(다른 서버)과의 계약 — 오류 프로필·경로 앞 응답·OpenAPI·시험은 scope 마다 공개 창구와 같은 규칙"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3773@2026-11-18> .
+
+<https://numchida.com/ns/djr#R-3773@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-3773 ;
+    djr:revision 1 .
+
+djr:R-3774 a djr:Permission ;
+    skos:prefLabel "내부 창구(/internal/…)는 앞단 안쪽 사설망에서 부르면 http 허용 — 부르는 서버·사설망·앞단 차단 근거는 G1 slot 2 · HTTPS 강제 넘김을 켰으면 SECURE_REDIRECT_EXEMPT 에 ^internal/"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3774@2026-11-18> .
+
+<https://numchida.com/ns/djr#R-3774@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-3774 ;
+    djr:revision 1 .
+
+djr:R-3781 a djr:Prohibition ;
+    skos:prefLabel "프로젝트 api.py 는 공개 API 객체를 생성 문장 하나로만 지음 — 그 객체·생성자의 별칭 대입·튜플 대입 속 생성·type(…)(…)·copy 복사 금지(둘째 표준 API 객체는 internal_api.py 에)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3781@2026-11-19> .
+
+<https://numchida.com/ns/djr#R-3781@2026-11-19> a djr:Expression ;
+    prov:specializationOf djr:R-3781 ;
+    djr:revision 1 .
+
+djr:R-3782 a djr:Prohibition ;
+    skos:prefLabel "internal/ 주소는 internal_api 만의 자리 — 공개 API 객체의 .urls 를 internal/ 아래에 달기 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3782@2026-11-19> .
+
+<https://numchida.com/ns/djr#R-3782@2026-11-19> a djr:Expression ;
+    prov:specializationOf djr:R-3782 ;
     djr:revision 1 .
 
 <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> a djr:Document ;
@@ -2745,7 +2909,7 @@ djr:R-3751 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:statesNorm djr:R-0660, djr:R-0661 ;
-    djr:text "\nDjango Ninja는 `NinjaAPI`와 `Router`를 통해 path operation을 등록한다.\n프로젝트의 API namespace와 versioning 방식이 이미 있으면 그 방식을 따른다.\n\n"@ko .
+    djr:text "\nDjango Ninja는 `NinjaAPI`와 `Router`를 통해 path operation을 등록한다.\n프로젝트의 API namespace와 versioning 방식이 이미 있으면 그 방식을 따른다(새 내부 창구의 자리는\n§2.3 «내부 창구»가 이보다 먼저다).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s008-2.1/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s008-2.1> ;
@@ -2945,48 +3109,48 @@ djr:R-3751 a djr:Obligation ;
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b13> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-prose ;
-    djr:order 13 ;
+    djr:order 15 ;
     djr:text "요점:\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b14> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
-    djr:order 14 ;
+    djr:order 16 ;
     djr:statesNorm djr:R-0712, djr:R-3402 ;
     djr:text "- registrar는 자기 BC controller만 import하며, 전달받은 `api`에 등록하는 함수 밖에서는\n  아무 등록도 하지 않는다. `api` 인자의 타입은 `NinjaExtraAPI` 축자다 — 그 형상을 본뜬\n  Protocol·별칭 타입으로 대체하지 않는다(어댑터 층은 프레임워크 타입을 숨기지 않는다 — 2026-08-25).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b15> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
-    djr:order 15 ;
+    djr:order 17 ;
     djr:statesNorm djr:R-0713 ;
-    djr:text "- registrar가 `config.api`를 import하거나 모듈 top-level에서 `register_controllers`를\n  호출하지 않는다.\n"@ko .
+    djr:text "- registrar가 project API 모듈(`config.api` · `config.internal_api`)을 import하거나 모듈 top-level에서\n  `register_controllers`를 호출하지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b16> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
-    djr:order 16 ;
+    djr:order 18 ;
     djr:statesNorm djr:R-0714 ;
     djr:text "- 프로젝트 `urls.py` 밖에서 registrar를 몰래 호출하거나 직접 controller를 등록하지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b17> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
-    djr:order 17 ;
+    djr:order 19 ;
     djr:statesNorm djr:R-0715, djr:R-0716, djr:R-0717 ;
-    djr:text "- public/internal 또는 version별 API 인스턴스가 이미 독립 계약 surface로 확립돼 **소비자가\n  의존하는** 경우는 승인된 별도 scope로 보존할 수 있다 — 보존의 근거는 «소비자 의존»이지\n  «먼저 작성돼 있음»이 아니다. 신규 BC마다 API 인스턴스를 만드는 것은 scope 분리가 아니다.\n\n"@ko .
+    djr:text "- 표준 API 객체는 공개 API 객체(`<project>/api.py` — 이름은 프로젝트가 고른다)와 `internal_api` 둘뿐이다. 그 밖의\n  public/internal 또는 version별 API 인스턴스가 이미 독립 계약 surface로 확립돼 **소비자가\n  의존하는** 경우는 승인된 별도 scope로 보존할 수 있다 — 보존의 근거는 «소비자 의존»이지\n  «먼저 작성돼 있음»이 아니다. 신규 BC마다 · 기능마다 API 인스턴스를 만드는 것은 scope 분리가 아니다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b18> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
-    djr:order 18 ;
+    djr:order 20 ;
     djr:statesNorm djr:R-0718, djr:R-0719, djr:R-0720, djr:R-0721 ;
     djr:text "**컴포지션 루트(배선) — `composition_root/`.** operation/메서드 본문에서 `Django…Repository()`·`…Adapter()`를 직접 생성하면 presentation→infra 직접 결합(Q-7)이다. DI 조립은 BC 루트 `application/<bounded_context>/composition_root/`에 모은다 — 결선은 `dependency_wiring.py`가 소유하고 use-case마다 `build_<use_case>()` 팩토리를 두며, presentation은 컨트롤러 메서드에서 그 팩토리를 **호출만** 한다(매요청 조립). `build_<use_case>()` 가 어댑터 생성자에 꽂는 callable(함수·메서드·`partial`)은 **꽂히는 자리가 선언한 Protocol·`Callable` 시그니처와 같아야 한다** — 실물 함수가 더 많은 인자(경로·모델·설정)를 요구하면 그 인자는 팩토리 **본문 안에서** `functools.partial`/클로저로 묶어 넘기고 어댑터·use case 는 모른다(모듈 최상단 대입은 #85 위반 · 시그니처가 다른 함수를 그대로 꽂는 것은 «꽂기» 가 아니라 미완성 배선이다). 이벤트 구독 결선은 `event_wiring.py`가 따로 진다. use-case 없는 순수 데이터소스 BC는 둘 게 없으니 생략한다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b19> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-code ;
-    djr:order 19 ;
+    djr:order 21 ;
     djr:text "```python\n# application/order/composition_root/dependency_wiring.py — BC 루트의 DI 결선. 구체 infra를 use-case에 주입.\nfrom application.order.application_layer.order.place_order.place_order_use_case import PlaceOrderUseCase\nfrom application.order.driven_layer.adapter.anticorruption_layer.catalog.product_stock_adapter import DjangoProductStockAdapter\nfrom application.order.driven_layer.adapter.persistence.repository.order_repository import DjangoOrderRepository\n\n\ndef build_place_order() -> PlaceOrderUseCase:\n    # 구체 infra를 고르는 유일한 곳 — 안쪽 계층은 domain repository/port 추상에만 의존(DIP).\n    return PlaceOrderUseCase(\n        order_repository=DjangoOrderRepository(),\n        product_stock_port=DjangoProductStockAdapter(),\n    )\n```\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b2> a djr:Block ;
@@ -2999,28 +3163,28 @@ djr:R-3751 a djr:Obligation ;
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b20> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
-    djr:order 20 ;
+    djr:order 22 ;
     djr:statesNorm djr:R-0722, djr:R-0723 ;
     djr:text "- **단일 파일·BC당 1개**: 컴포지션 루트는 \"구체를 아는 유일한 곳\"이라 한 파일에 모은다 — feature별 `composition/` 폴더로 쪼개면 루트가 분열돼 패턴 위반이다. `config/api.py`나 `api_router.py`(HTTP 등록)에 섞지도 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b21> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
-    djr:order 21 ;
+    djr:order 23 ;
     djr:statesNorm djr:R-0724, djr:R-0725, djr:R-3618, djr:R-3619 ;
     djr:text "- **매요청 호출**: 컨트롤러 메서드에서 `use_case = build_place_order()` 후 `use_case.execute(command)`. 모듈 레벨 전역 인스턴스로 import 시점에 만들지 않는다(import 부작용·테스트 오버라이드 회피).\n- 여러 `build_<use_case>()` 가 같은 **결선 재료** — 교체 대상이 아닌 공유 생성 지식(설정 값 읽기, 설정 값으로 자기 BC 값 객체 만들기) — 를 쓰면 그 지식은 같은 BC 의 `composition_root/wiring_material.py` 의 재료 함수 하나에 둔다. 재료 파일에는 docstring · import · 재료 함수만 두고, import 는 별칭 없이 한 줄에 이름 하나씩 `from __future__ import annotations` · `from django.conf import settings` 와 자기 BC `domain_layer` 의 값 객체 칸(`<애그리거트>/value_object/` · `shared_value_object/`)의 모듈 파일에서 그 클래스를 들이는 것뿐이다. 여기서 리터럴은 `str` · `int` · `float` · `bool` · `None` 상수 하나다(음수 · bytes 는 아니다). 그 값 객체 모듈은 docstring · import · 클래스 앞의 `_` 상수(리터럴, 또는 `re.compile(<str 리터럴>[, re.<대문자 플래그> | …])` — 이때는 `import re` 를 별칭 없이 둔다) · `@dataclass(frozen=True …)` 클래스 하나로만 되고, `from __future__ import annotations` 와 `from dataclasses import dataclass`(별칭 없음)를 둔다. 그 클래스는 기반 클래스 없이 데코레이터 `dataclass(…)` 하나만 달고(키워드는 `frozen=True` 와 `slots` · `kw_only` 의 `True`/`False` 뿐), 몸체는 docstring · 필드 선언(기본값은 리터럴) · 메서드(`async` 아님 · 데코레이터는 `create` 의 `@classmethod` 하나만 · dunder 는 `__post_init__` 하나만 · 매개변수 기본값은 리터럴)뿐이다(그 모듈 안에서 클래스 · `dataclass` · `classmethod` · `create` 이름은 정해진 한 자리에서만 묶인다). 재료 함수는 `async` 가 아니고 매개변수와 데코레이터가 없으며, 이름이 `_`·`build_` 로 시작하지 않고 `settings` · `str` · `int` · `bool` · `float` 와 다르다. 재료 파일에서 `settings` · import 한 클래스 이름 · 재료 함수 이름은 각각 한 번만 묶인다. 반환 주석은 import 한 값 객체 클래스 이름 하나 또는 `str` · `int` · `bool` · `float` 하나다 — `str | None` 같은 합 타입이나 문자열 주석은 쓰지 않고, 없을 수 있는 설정 값은 빈 문자열 같은 빈 값으로 둔다. 본문은 docstring(둘 수 있다)과 `return` 한 문장이다. 돌려주는 식은 셋 중 하나다 — `settings.<대문자 이름>`, 그 값과 리터럴을 인자로 값 객체를 만든 것, 같은 인자로 값 객체의 `create` 를 부른 것(`*` · `**` 펼침 없음). 설정 값 변환(`int(…)` 등)과 그 밖의 식은 쓰지 않는다 — 변환은 `build_` 본문이나 값 객체 안에서 한다. `dependency_wiring.py` 는 재료 파일을 모듈째(`from application.<bc>.composition_root import wiring_material`) 들여 `wiring_material.<재료>()` 로 부르고, 그 밖의 파일(시험 포함)은 재료 파일을 import 하거나 언급하지 않는다. 어느 구현을 어느 포트에 꽂는지와 유스케이스 생성은 `dependency_wiring.py` 의 `build_` 에만 둔다 — use case 마다 선택이 반복되는 것은 중복이 아니다(교체 지점은 `build_` 마다 보인다). 여러 `build_` 가 같은 하위 유스케이스 조립을 쓰면 그 하위 유스케이스의 `build_<use_case>()` 를 두고 부른다. 시험은 `build_` 를 부른다(설정은 `override_settings`).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b22> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
-    djr:order 22 ;
+    djr:order 24 ;
     djr:statesNorm djr:R-0726, djr:R-0727 ;
     djr:text "- **BC 격리**: order의 루트는 *자기 BC*의 infra/ACL만 import한다(`DjangoProductStockAdapter`는 order `driven_layer/adapter/anticorruption_layer/`; catalog는 직접 import 안 하고 OHS/ACL 경유). `composition_root/`(`dependency_wiring.py`)는 use-case DI만 소유하며 API instance·controller registration을 소유하지 않는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b23> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
-    djr:order 23 ;
+    djr:order 25 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s008-2.1/b3> ;
     djr:statesNorm djr:R-0728 ;
     djr:text "**설치.** ninja-extra는 별도 앱이다 — `INSTALLED_APPS += ['ninja_extra']`가 필요하다(의존성\n매니페스트 핀은 §2.1과 동일하다).\n\n"@ko .
@@ -3028,42 +3192,42 @@ djr:R-3751 a djr:Obligation ;
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b24> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
-    djr:order 24 ;
+    djr:order 26 ;
     djr:statesNorm djr:R-0729 ;
     djr:text "**탐색 → 포함/생성 규칙 (새 operation 추가 시).** 새 operation을 둘 곳은 다음 순서로 정한다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b25> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
-    djr:order 25 ;
+    djr:order 27 ;
     djr:statesNorm djr:R-0730 ;
     djr:text "1. 해당 앱 `driving_layer/api/`에서 `@api_controller` 데코 클래스를 grep한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b26> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
-    djr:order 26 ;
+    djr:order 28 ;
     djr:statesNorm djr:R-0731 ;
     djr:text "2. 단일 컨트롤러가 있으면 → 그 컨트롤러의 메서드로 포함한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b27> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
-    djr:order 27 ;
+    djr:order 29 ;
     djr:statesNorm djr:R-0732 ;
     djr:text "3. 분할되어 여럿이면 → 리소스(URL prefix)가 일치하는 컨트롤러에 포함하고, 없으면 새 리소스\n   컨트롤러를 만든다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b28> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
-    djr:order 28 ;
+    djr:order 30 ;
     djr:statesNorm djr:R-0733 ;
     djr:text "4. 컨트롤러가 없으면 → 새 `<Aggregate>Controller`를 생성한다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b29> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-prose ;
-    djr:order 29 ;
+    djr:order 31 ;
     djr:text "---\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b3> a djr:Block ;
@@ -3071,6 +3235,19 @@ djr:R-3751 a djr:Obligation ;
     djr:kind djr:kind-prose ;
     djr:order 3 ;
     djr:text "요점:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b30> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 13 ;
+    djr:statesNorm djr:R-3767, djr:R-3768, djr:R-3769, djr:R-3770, djr:R-3771, djr:R-3772, djr:R-3773, djr:R-3782 ;
+    djr:text "**내부 창구 — 표준 API 객체 `internal_api`.** 앞단(리버스 프록시)이 인터넷에 열지 않는 HTTP 창구(예: 같은\n시스템의 SSE 서버 · 워커가 부르는 창구)는 공개 API 객체와 다른 표준 API 객체 `internal_api` 에 등록한다 —\n`<project>/internal_api.py` 가 `internal_api` 를 `urls_namespace=\"internal_api\"` 로 짓고 `<project>/urls.py` 의\n`urlpatterns` 에 `path(\"internal/\", internal_api.urls)` 를 그대로 넣어 단다(다른 `include` 안이나 `.urls` 를 담은\n변수를 거치지 않는다). `internal/` 주소는 `internal_api` 만의 자리라 공개 API 객체의 `.urls` 를\n그 아래에 달지 않는다. 새 내부 창구를 공개 API 아래 경로(`/api/internal/…`)에 두지\n않는다 — 기존 API namespace 관례를 따르라는 §2.1 보다 이 문장이 먼저다. 이미 `/api/internal/…` 로 배포된 창구는\n소비자 계약이라 그대로 둔다(옮기면 계약 변경이다). `internal_api` 는 `<project>/api.py` 의 루트 API 클래스를\n들여 짓는다(§6.2) — `internal_api.py` 에는 import 들 · 생성 문장 하나 · 그 객체의 프레임워크 오류 핸들러만 두고\n클래스를 새로 정의하지 않는다. 내부 창구가 없는 프로젝트도 이 파일을 빈 채로 두며(`discipline-houserules` #429),\n내용 없는 `internal_api.py` 는 API surface 가 아니다. BC 는 내부 창구 컨트롤러를\n`register_<bc>_internal_api(api: NinjaExtraAPI)` 로 등록한다 — 공개 창구의 `register_<bc>_api` 와 같은\n`api_router.py` 에 두고, 내부 창구만 가진 BC 는 이 함수만 둔다. 컨트롤러 칸은 공개 창구와 같은 기준으로 고른다\n(`api/<area>/` · 남이 정한 계약이면 `api/webhook/<provider>/`) — 어느 객체에 다는지는 등록 함수 이름이 정한다.\n내부 창구도 밖(다른 서버)과의 계약이라 오류 프로필 · 경로 앞 응답 · OpenAPI · 시험은 scope 마다 공개 창구와 같은\n규칙을 따른다(§6.2 · §8 · §9).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b31> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-code ;
+    djr:order 14 ;
+    djr:text "```python\n# application/order/driving_layer/api/api_router.py — 공개 창구와 내부 창구를 함께 가진 BC.\nfrom ninja_extra import NinjaExtraAPI\n\nfrom .order.order_controller import OrderController\nfrom .order_sync.order_sync_controller import OrderSyncController\n\n\ndef register_order_api(api: NinjaExtraAPI) -> None:\n    api.register_controllers(OrderController)\n\n\ndef register_order_internal_api(api: NinjaExtraAPI) -> None:\n    api.register_controllers(OrderSyncController)\n\n\n# config/internal_api.py — 내부 창구 API 객체(내부 창구가 없는 프로젝트는 빈 파일).\nfrom config.api import DocumentedAPI\n\ninternal_api: DocumentedAPI = DocumentedAPI(urls_namespace=\"internal_api\")\n\n\n# config/urls.py — registrar 마다 그 이름의 scope 에 맞는 객체를 넘기고 두 객체를 단다.\nfrom django.urls import path\n\nfrom application.order.driving_layer.api.api_router import register_order_api, register_order_internal_api\nfrom config.api import api\nfrom config.internal_api import internal_api\n\nregister_order_api(api)\nregister_order_internal_api(internal_api)\n\nurlpatterns = [\n    path(\"api/\", api.urls),\n    path(\"internal/\", internal_api.urls),\n]\n```\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
@@ -3104,15 +3281,15 @@ djr:R-3751 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
     djr:order 8 ;
-    djr:statesNorm djr:R-0707, djr:R-0708, djr:R-0709, djr:R-0710 ;
-    djr:text "**등록 — 프로젝트 소유 API, BC 소유 registrar, URLconf 소유 합성.** contract scope 안에서\n프로젝트 `api.py`가 `NinjaExtraAPI` 인스턴스 하나를 소유한다(루트 API 는 경로 앞 응답을 문서에 붙이는\n정해진 클래스로 짓는다 — §6.2 «경로 앞 응답»). 각 BC는 project API를 import하지\n않는 side-effect-free `register_<bc>_api(api)`만 노출한다. 프로젝트 `urls.py`가 API와 registrar를\nimport하고, 각 registrar를 명시적으로 한 번 호출한 뒤 API를 mount한다. BC 모듈 import만으로\nregistration이 일어나면 안 된다.\n\n"@ko .
+    djr:statesNorm djr:R-0707, djr:R-0708, djr:R-0709, djr:R-0710, djr:R-3781 ;
+    djr:text "**등록 — 프로젝트 소유 API, BC 소유 registrar, URLconf 소유 합성.** contract scope 안에서\n프로젝트 `api.py`가 공개 API 인스턴스(`NinjaExtraAPI`) 하나를 소유한다(객체 이름은 프로젝트가 고른다 ·\n루트 API 는 경로 앞 응답을 문서에 붙이는 정해진 클래스로 짓는다 — §6.2 «경로 앞 응답»). `api.py` 는 그 객체를\n생성 문장 하나로만 짓고, 그 객체나 생성자를 다른 이름에 별칭으로 대입하거나 튜플 대입 안에서 짓거나 `type(…)(…)` ·\n`copy` 로 복사하지 않는다(둘째 표준 API 객체는 아래 «내부 창구» 의 `internal_api.py` 에 둔다). 각 BC는 project API를\nimport하지 않는 side-effect-free registrar만 노출한다 — 공개 창구는 `register_<bc>_api(api)`, 내부 창구는\n`register_<bc>_internal_api(api)`(아래 «내부 창구»)다. 프로젝트 `urls.py`가 API와 registrar를\nimport하고, 각 registrar를 그 이름의 scope 에 맞는 API 객체로 명시적으로 한 번 호출한 뒤 API를 mount한다. BC 모듈 import만으로\nregistration이 일어나면 안 된다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b9> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
     djr:order 9 ;
     djr:statesNorm djr:R-0711 ;
-    djr:text "명시 registrar 합성을 선택한 controller는 `@api_controller(..., auto_import=False)`로\nNinja Extra auto-import를 끈다. 그래야 controller import가 global registry를 채우는\nside effect를 만들지 않고, 등록 집합과 시점은 `register_<bc>_api(api)`와 프로젝트\n`urls.py` 호출만으로 결정된다.\n\n"@ko .
+    djr:text "명시 registrar 합성을 선택한 controller는 `@api_controller(..., auto_import=False)`로\nNinja Extra auto-import를 끈다. 그래야 controller import가 global registry를 채우는\nside effect를 만들지 않고, 등록 집합과 시점은 BC registrar(`register_<bc>_api(api)` ·\n`register_<bc>_internal_api(api)`)와 프로젝트 `urls.py` 호출만으로 결정된다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1> a djr:Section ;
     djr:headingSnapshot "### 3.1 Request/response schema 분리"@ko ;
@@ -3287,8 +3464,8 @@ djr:R-3751 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1> ;
     djr:kind djr:kind-norm ;
     djr:order 8 ;
-    djr:statesNorm djr:R-0762 ;
-    djr:text "- local development를 제외한 API traffic은 HTTPS를 전제로 한다.\n\n"@ko .
+    djr:statesNorm djr:R-0762, djr:R-3774 ;
+    djr:text "- local development를 제외한 API traffic은 HTTPS를 전제로 한다.\n- 내부 창구(`/internal/…` — §2.3)는 앞단 안쪽 사설망에서 부르면 http 로 받아도 된다 — 부르는 서버 · 사설망 ·\n  앞단 차단의 근거를 G1 명세(slot 2)에 적는다. 사설망에서 http 로 부르는 프로젝트가 앱의 HTTPS 강제\n  넘김(`SECURE_SSL_REDIRECT`)을 켰으면 `SECURE_REDIRECT_EXEMPT` 에 `^internal/` 을 둔다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2> a djr:Section ;
     djr:headingSnapshot "### 4.2 Authorization"@ko ;
@@ -3801,7 +3978,7 @@ djr:R-3751 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 35 ;
     djr:statesNorm djr:R-3749 ;
-    djr:text "**경로 앞 응답.** 경로 코드보다 먼저 답하는 쪽 — Ninja 인증 401 · CSRF 403 · 권한 403 · throttle 429 ·\n몸통 400 · 입력 422, Django 몸통 · 쿼리 칸 수 상한 400, 응답을 직접 만드는 미들웨어(서드파티 포함), 앞단(nginx 등) —\n이 보내는 의도된 오류도 그 경로의 생성 문서에 적는다(`architecture-api` §5.2). 경로마다 손으로 적지 않고\n정해진 꼴 하나가 경로의 Ninja 경로 객체와 생성 문서 칸을 읽어 그 답이 실제로 나는 경로에만 붙인다.\n프로젝트에 한 번 두는 파일은 셋이다.\n\n- `framework/ninja/pre_route_responses.py` — 플러그인 정본. 아래 정본 코드 블록을 옮기고 **코드는 고치지 않는다** —\n  검사기가 코드(구문 나무)를 정본과 맞춘다. 코드가 아닌 것은 프로젝트 포매터 · 린터에 맞춰도 되고 검사기도 보지\n  않는다: 서식(줄 나눔 · 괄호 · 끝 쉼표 · 빈 줄 · 따옴표 꼴), import 의 차례 · 묶음 · 줄 나눔,\n  `from __future__ import annotations`, 주석(`# noqa: …` · `# type: ignore[…]`), 맨 위 모듈 docstring. 정의 · 문장 ·\n  값 · 이름 · 차례와 함수 · 클래스 안 docstring 은 코드다. 린트가 정본 코드를 짚으면 코드를 고치지 않고 그 줄\n  `# noqa: <규칙>` 이나 파일 단위 무시로 둔다(코드를 바꾸는 자동 고침은 검사기가 막는다). 옛 판(2.37.0) 정본도\n  받는다 — 동작이 같아 바꾸지 않아도 된다. 붙이는 함수 `add_pre_route_responses(api, schema)` 와 Ninja 기본 행\n  `NINJA_RESPONSES` · 그 몸통 Schema 가 여기 있다.\n- `framework/ninja/pre_route_response_table.py` — 프로젝트 표(설계 G1 승인). 프로젝트 행 `PRE_ROUTE_RESPONSES` 와\n  그 몸통 Schema, `BAD_REQUEST_RESPONSE`(Django 상한 400 의 꼴 — 기본 `{\"media_type\": \"text/html\"}` · 루트 URLconf 가\n  `handler400` 을 두면 그 답의 꼴), `NOT_API_MIDDLEWARE`(API 경로에 답하지 않는 프로젝트 미들웨어의 점 경로 글자\n  튜플)를 둔다. 기본 행은 여기 두지 않는다(빼서 401 · 422 를 끌 수 없다).\n- `<project>/api.py` — 루트 API 객체를 아래 꼴의 클래스 하나로 짓는다(루트 API 가 둘 이상이면 모두 이 클래스로).\n  클래스 이름과 기저(`NinjaAPI` · `NinjaExtraAPI`)는 프로젝트가 고르고, `get_openapi_schema` 의 서명 · 몸통은 코드\n  그대로다(서식 · 주석은 위 정본과 같이 프로젝트 도구 몫). 이 꼴 말고의 문서 재정의 · monkeypatch · 후처리는\n  금지다(위 «응답 선언과 OpenAPI»). 받는 판은 Ninja\n  1.6 · Python 3.12(정본이 `type` 별칭을 쓴다) · pydantic 2.5(`JsonValue`) 이상이다 — 낮으면 architect 가 G1 에서 판\n  올림을 먼저 적는다. 프레임워크 오류 핸들러(`api.py` 의 exception handler)가 Ninja 기본 401 · 422 등의 몸통을 바꾸는\n  scope 는 아래 기본 행 몸통과 맞지 않아 행 시험이 붉으므로 G1 에서 멈춘다(`STOP_FOR_USER_APPROVAL`).\n\n"@ko .
+    djr:text "**경로 앞 응답.** 경로 코드보다 먼저 답하는 쪽 — Ninja 인증 401 · CSRF 403 · 권한 403 · throttle 429 ·\n몸통 400 · 입력 422, Django 몸통 · 쿼리 칸 수 상한 400, 응답을 직접 만드는 미들웨어(서드파티 포함), 앞단(nginx 등) —\n이 보내는 의도된 오류도 그 경로의 생성 문서에 적는다(`architecture-api` §5.2). 경로마다 손으로 적지 않고\n정해진 꼴 하나가 경로의 Ninja 경로 객체와 생성 문서 칸을 읽어 그 답이 실제로 나는 경로에만 붙인다.\n프로젝트에 한 번 두는 파일은 넷이다.\n\n- `framework/ninja/pre_route_responses.py` — 플러그인 정본. 아래 정본 코드 블록을 옮기고 **코드는 고치지 않는다** —\n  검사기가 코드(구문 나무)를 정본과 맞춘다. 코드가 아닌 것은 프로젝트 포매터 · 린터에 맞춰도 되고 검사기도 보지\n  않는다: 서식(줄 나눔 · 괄호 · 끝 쉼표 · 빈 줄 · 따옴표 꼴), import 의 차례 · 묶음 · 줄 나눔,\n  `from __future__ import annotations`, 주석(`# noqa: …` · `# type: ignore[…]`), 맨 위 모듈 docstring. 정의 · 문장 ·\n  값 · 이름 · 차례와 함수 · 클래스 안 docstring 은 코드다. 린트가 정본 코드를 짚으면 코드를 고치지 않고 그 줄\n  `# noqa: <규칙>` 이나 파일 단위 무시로 둔다(코드를 바꾸는 자동 고침은 검사기가 막는다). 옛 판(2.37.0) 정본도\n  받는다 — 동작이 같아 바꾸지 않아도 된다. 붙이는 함수 `add_pre_route_responses(api, schema)` 와 Ninja 기본 행\n  `NINJA_RESPONSES` · 그 몸통 Schema 가 여기 있다.\n- `framework/ninja/pre_route_response_table.py` — 프로젝트 표(설계 G1 승인). 프로젝트 행 `PRE_ROUTE_RESPONSES` 와\n  그 몸통 Schema, `BAD_REQUEST_RESPONSE`(Django 상한 400 의 꼴 — 기본 `{\"media_type\": \"text/html\"}` · 루트 URLconf 가\n  `handler400` 을 두면 그 답의 꼴), `NOT_API_MIDDLEWARE`(API 경로에 답하지 않는 프로젝트 미들웨어의 점 경로 글자\n  튜플)를 둔다. 기본 행은 여기 두지 않는다(빼서 401 · 422 를 끌 수 없다).\n- `<project>/api.py` — 루트 API 객체를 아래 꼴의 클래스 하나로 짓는다(`internal_api` · 보존 scope 의 것 등 프로젝트의 루트 API 는 모두 이 클래스로).\n  클래스 이름과 기저(`NinjaAPI` · `NinjaExtraAPI`)는 프로젝트가 고르고, `get_openapi_schema` 의 서명 · 몸통은 코드\n  그대로다(서식 · 주석은 위 정본과 같이 프로젝트 도구 몫). 이 꼴 말고의 문서 재정의 · monkeypatch · 후처리는\n  금지다(위 «응답 선언과 OpenAPI»). 받는 판은 Ninja\n  1.6 · Python 3.12(정본이 `type` 별칭을 쓴다) · pydantic 2.5(`JsonValue`) 이상이다 — 낮으면 architect 가 G1 에서 판\n  올림을 먼저 적는다. 프레임워크 오류 핸들러(`api.py` · `internal_api.py` 의 exception handler)가 Ninja 기본 401 ·\n  422 등의 몸통을 바꾸는 scope 는 아래 기본 행 몸통과 맞지 않아 행 시험이 붉으므로 G1 에서 멈춘다(`STOP_FOR_USER_APPROVAL`).\n- `<project>/internal_api.py` — 내부 창구 API 객체 `internal_api`(§2.3 «내부 창구»)를 위 `api.py` 의 그 클래스를\n  들여와 짓는다(제 클래스를 따로 정의하지 않는다). 내부 창구가 없으면 내용 없는 파일로 둔다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b38> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
@@ -3827,7 +4004,7 @@ djr:R-3751 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 38 ;
     djr:statesNorm djr:R-3750 ;
-    djr:text "**프로젝트 행.** 응답을 직접 만드는 미들웨어(서드파티 포함)와 앞단의 답을 행 하나에 하나씩 적는다. 칸은 `status`(400–599) ·\n`when`(`all` · `auth` · `body` · `input`) · `description` · 몸통 `body`(같은 파일의 Schema) 또는 `media_type` ·\n선택 `headers`(그 답이 싣는 머리 — 캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)는 적지 않아도 되고 검사기도 대조하지 않는다)와 좁히는 칸 `methods`(대문자 HTTP 메서드) · `namespaces`(루트 API\n`urls_namespace=` 이름) · `exempt`(`(메서드 | None, \"<settings 이름>\")` — 그 설정 목록의 경로는 뺀다 · 목록은 base\nsettings 에 둔다) · `operations`(`\"GET /api/orders/{order_id}\"` 꼴 — 메서드 + 생성 문서 경로 · `namespaces` 하나와\n함께 · 승인 endpoint 의 406 · 415 · 인증 안 `HttpError(403)` · 확립 표면(`preserve-established`)의 경로 코드가\n직접 raise 하는 `HttpError` 처럼 경로 객체로 못 가르는 답만)다. 좁히는 칸은 빈 튜플로 두지 않는다. 행마다 G1\n근거를 단다 — 그 답을 내는 미들웨어 코드 줄 · 설정 · 앞단 설정.\n`NOT_API_MIDDLEWARE` 줄은 그 미들웨어가 API 경로를 빼는 코드 줄을 근거로 단다 — 빼는 줄이 없는 미들웨어(서버렌더\ntransient 미들웨어 등)는 API 경로에도 답하므로 이 목록에 넣지 않고 행으로 적는다. 검사기는 프로젝트 미들웨어의\n정해진 꼴 답만 표와 대조한다 — 그 답의 행이 좁힌 행(`methods` · `namespaces` · `exempt` · `operations` · `all` 이\n아닌 `when`)뿐이거나 그 답을 글자로 못 읽으면 위반이 아니라 ⓓ 후보 줄을 내고(G1 에서는 api 리뷰어가 그 행의\n근거가 그 미들웨어 줄인지 코드로 보고, G2 의 ⓓ 줄은 감수자가 닫는다), 서드파티 미들웨어 · 앞단 행은 대조하지\n않는다(api 리뷰어 몫).\n\n**표 검증.** 정본은 문서를 만들 때 표를 `TypeAdapter`(엄격 검증)로 본다 — 모르는 칸 · `status` 범위 · 소문자\n메서드 · 빈 좁히는 칸 · `operations` 꼴과 이름공간 하나 · 그 이름공간 문서에 없는 대상 · 잇지 못한 경로 객체 ·\n꼴이 다른 같은 이름 component 는 문서 생성 실패다(import 때는 보지 않는다 — `manage.py check` · 시험 수집을\n죽이지 않는다). 같은 (메서드, 문서 경로)가 둘이면 Ninja 문서처럼 뒤의 것이 이긴다. 칸 · 값 · 이름공간 ·\n`handler400` 대조 같은 정적 몫은 검사기가 G2 전에 잡는다. 표의 `dict[str, object]` 주석은 그대로 둔다 — 정본이\n문서를 만들 때 검증하는 즉시 검증 자리다(ⓓ#647 후보 줄의 답).\n\n**적는 것의 경계.** 코드 · 설정 · 앞단 설정에 그 status 가 적힌 의도된 답만 적는다. 미식별 500 · 앞단 502/504 는\n결함이라 약속이 아니고 꼴도 정해지지 않아 적지 않는다. 없는 경로 404 · 다른 메서드 405 는 그 operation 의 답이\n아니다. 같은 status 를 경로 코드의 BC 오류와 경로 앞 답이 함께 쓰면 한 응답 항목에 몸통 둘(`anyOf`)과 머리\n합집합이 실린다(경로 코드가 이미 적은 같은 이름 머리는 그대로 둔다).\n\n"@ko .
+    djr:text "**프로젝트 행.** 응답을 직접 만드는 미들웨어(서드파티 포함)와 앞단의 답을 행 하나에 하나씩 적는다. 칸은 `status`(400–599) ·\n`when`(`all` · `auth` · `body` · `input`) · `description` · 몸통 `body`(같은 파일의 Schema) 또는 `media_type` ·\n선택 `headers`(그 답이 싣는 머리 — 캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)는 적지 않아도 되고 검사기도 대조하지 않는다)와 좁히는 칸 `methods`(대문자 HTTP 메서드) · `namespaces`(루트 API\n`urls_namespace=` 이름 — 내부 창구 객체는 `\"internal_api\"`) · `exempt`(`(메서드 | None, \"<settings 이름>\")` — 그 설정 목록의 경로는 뺀다 · 목록은 base\nsettings 에 둔다) · `operations`(`\"GET /api/orders/{order_id}\"` 꼴 — 메서드 + 생성 문서 경로 · `namespaces` 하나와\n함께 · 승인 endpoint 의 406 · 415 · 인증 안 `HttpError(403)` · 확립 표면(`preserve-established`)의 경로 코드가\n직접 raise 하는 `HttpError` 처럼 경로 객체로 못 가르는 답만)다. 좁히는 칸은 빈 튜플로 두지 않는다. 행마다 G1\n근거를 단다 — 그 답을 내는 미들웨어 코드 줄 · 설정 · 앞단 설정.\n`NOT_API_MIDDLEWARE` 줄은 그 미들웨어가 API 경로(공개 API 주소와 `/internal/` 둘 다)를 빼는 코드 줄을 근거로 단다 — 빼는 줄이 없는 미들웨어(서버렌더\ntransient 미들웨어 등)는 API 경로에도 답하므로 이 목록에 넣지 않고 행으로 적는다. 검사기는 프로젝트 미들웨어의\n정해진 꼴 답만 표와 대조한다 — 그 답의 행이 좁힌 행(`methods` · `namespaces` · `exempt` · `operations` · `all` 이\n아닌 `when`)뿐이거나 그 답을 글자로 못 읽으면 위반이 아니라 ⓓ 후보 줄을 내고(G1 에서는 api 리뷰어가 그 행의\n근거가 그 미들웨어 줄인지 코드로 보고, G2 의 ⓓ 줄은 감수자가 닫는다), 서드파티 미들웨어 · 앞단 행은 대조하지\n않는다(api 리뷰어 몫).\n\n**표 검증.** 정본은 문서를 만들 때 표를 `TypeAdapter`(엄격 검증)로 본다 — 모르는 칸 · `status` 범위 · 소문자\n메서드 · 빈 좁히는 칸 · `operations` 꼴과 이름공간 하나 · 그 이름공간 문서에 없는 대상 · 잇지 못한 경로 객체 ·\n꼴이 다른 같은 이름 component 는 문서 생성 실패다(import 때는 보지 않는다 — `manage.py check` · 시험 수집을\n죽이지 않는다). 같은 (메서드, 문서 경로)가 둘이면 Ninja 문서처럼 뒤의 것이 이긴다. 칸 · 값 · 이름공간 ·\n`handler400` 대조 같은 정적 몫은 검사기가 G2 전에 잡는다. 표의 `dict[str, object]` 주석은 그대로 둔다 — 정본이\n문서를 만들 때 검증하는 즉시 검증 자리다(ⓓ#647 후보 줄의 답).\n\n**적는 것의 경계.** 코드 · 설정 · 앞단 설정에 그 status 가 적힌 의도된 답만 적는다. 미식별 500 · 앞단 502/504 는\n결함이라 약속이 아니고 꼴도 정해지지 않아 적지 않는다. 없는 경로 404 · 다른 메서드 405 는 그 operation 의 답이\n아니다. 같은 status 를 경로 코드의 BC 오류와 경로 앞 답이 함께 쓰면 한 응답 항목에 몸통 둘(`anyOf`)과 머리\n합집합이 실린다(경로 코드가 이미 적은 같은 이름 머리는 그대로 둔다).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b41> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
@@ -3877,7 +4054,7 @@ djr:R-3751 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
     djr:statesNorm djr:R-0031, djr:R-0032, djr:R-0033, djr:R-0034 ;
-    djr:text "공통 `FrameworkErrorSchema`는 slot 6에서 승인된 transport core shape만 소유한다. concrete 오류와 BC\nErrorCode catalog를 이 파일에 추가하지 않으며, 승인 shape 밖의 validator·field metadata·임의\nextension bag도 발명하지 않는다. 독립된 public/internal,\nversion, namespace가 실제로 다른 계약 scope라면 G1에서 scope와 공통 경로를 각각 승인한다.\n기존 공용 경로가 있으면 승인된 동등 계약을 우선 재사용한다.\n\n"@ko .
+    djr:text "공통 `FrameworkErrorSchema`는 slot 6에서 승인된 transport core shape만 소유한다. concrete 오류와 BC\nErrorCode catalog를 이 파일에 추가하지 않으며, 승인 shape 밖의 validator·field metadata·임의\nextension bag도 발명하지 않는다. 표준 내부 scope(`internal_api` — §2.3)는 공개 scope 와 profile 이 같으면\n같은 공통 `FrameworkErrorSchema` 와 같은 BC `bc_error_schema.py` 를 쓴다 — 그래서 내부 창구만 쓰는 식별자도 공개\n문서의 enum 에 보인다. 가리려면 공개 창구가 선언하는 concrete 를 모두 `Literal` 로 좁혀야 하고, 공개 경로가 BC base 를\n선언하면 가릴 수 없다(가리는 것은 의무가 아니다). 그 밖의 독립된 public/internal,\nversion, namespace가 실제로 다른 계약 scope라면 G1에서 scope와 공통 경로를 각각 승인한다.\n기존 공용 경로가 있으면 승인된 동등 계약을 우선 재사용한다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b8> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
@@ -4040,7 +4217,7 @@ djr:R-3751 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
     djr:statesNorm djr:R-0805, djr:R-0806, djr:R-0807 ;
-    djr:text "아래 항목은 자동 테스트 목록이 아니라 중앙 영구 테스트 입장 심사의 candidate다. 공개 OpenAPI\n계약과 독자 failure를 보호해 `add/update`인 항목만 프로젝트 URLconf에 mount된 API가 생성하는\n문서에서 검증한다. isolated Schema나 미등록 Router/controller가 만든 문서는 공개 OpenAPI 증거가 아니다.\n\n"@ko .
+    djr:text "아래 항목은 자동 테스트 목록이 아니라 중앙 영구 테스트 입장 심사의 candidate다. 공개 OpenAPI\n계약과 독자 failure를 보호해 `add/update`인 항목만 프로젝트 URLconf에 mount된 API가 생성하는\n문서에서 검증한다(내부 창구는 `/internal/` 에 mount 된 `internal_api` 가 생성한 문서 — §2.3). isolated Schema나 미등록 Router/controller가 만든 문서는 공개 OpenAPI 증거가 아니다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8> ;
@@ -4091,7 +4268,7 @@ djr:R-3751 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
     djr:statesNorm djr:R-0813, djr:R-0814 ;
-    djr:text "공개 HTTP 계약은 `django.test.Client` 또는 프로젝트가 이미 쓰는 동등한 Django client로 실제\nURLconf에 mount된 endpoint를 호출한다. `ninja.testing.TestClient(router)`나\n`ninja_extra.testing.TestClient(Controller)`로 미등록 Router/controller를 직접 감싼 결과는 공개\nmount·registrar·middleware·URL prefix를 통과하지 않으므로 공개 HTTP 계약의 영구 증거가 아니다.\n\n"@ko .
+    djr:text "공개 HTTP 계약은 `django.test.Client` 또는 프로젝트가 이미 쓰는 동등한 Django client로 실제\nURLconf에 mount된 endpoint를 호출한다. 앞단이 인터넷에 열지 않는 내부 창구도 다른 서버와의 계약이라 같은\n방법으로 `/internal/…` 에 mount 된 endpoint 를 부른다(§2.3 «내부 창구»). `ninja.testing.TestClient(router)`나\n`ninja_extra.testing.TestClient(Controller)`로 미등록 Router/controller를 직접 감싼 결과는 공개\nmount·registrar·middleware·URL prefix를 통과하지 않으므로 공개 HTTP 계약의 영구 증거가 아니다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s028-9.1/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s028-9.1> ;

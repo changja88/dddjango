@@ -679,6 +679,11 @@ class Case:
     note: str = ""
     baseline_files: dict[str, str] | None = None
     allowed_arg_issues: frozenset[str] = frozenset()
+    # 주면 stdout 의 위반 줄 규칙 번호(`[#N]` — ⓓ 후보 빼고) 모음이 이것과 같아야 한다(순서 무관 · 줄 수 그대로).
+    expected_rules: tuple[str, ...] | None = None
+
+
+VIOLATION_RULE: Final = re.compile(r"^\s*\[(#\d+)\]", re.MULTILINE)
 
 
 def schema_args(*extra: str) -> tuple[str, ...]:
@@ -5138,6 +5143,7 @@ def load_lesson():
         Case("context-tests-migrations-cache-still-scanned", {**CONTEXT_FILES, "application/lesson/application_layer/tests/test_leak.py": "from ninja import Status\n", "application/lesson/application_layer/migrations/0001_leak.py": "from ninja import Status\n", "application/lesson/application_layer/.cache/leak.py": "from ninja import Status\n", "application/lesson/application_layer/.venv/leak.py": "from ninja import Status\n"}, "check-context-isolation.py", context_args(), 2, "blocker"),
         Case("context-generated-path-still-scanned", {**CONTEXT_FILES, ".gitignore": "application/lesson/application_layer/ignored_leak.py\n", "application/lesson/application_layer/generated/leak.py": "from application.lesson.driving_layer.open_host_service.public.contract.request.lesson_query_request import LessonQueryRequest\n"}, "check-context-isolation.py", context_args(), 2, "blocker", baseline_files={**CONTEXT_FILES, ".gitignore": "application/lesson/application_layer/ignored_leak.py\n"}),
         Case("context-git-ignored-path-still-scanned", {**CONTEXT_FILES, ".gitignore": "application/lesson/application_layer/ignored_leak.py\n", "application/lesson/application_layer/ignored_leak.py": "from application.lesson.driving_layer.open_host_service.public.contract.request.lesson_query_request import LessonQueryRequest\n"}, "check-context-isolation.py", context_args(), 2, "blocker", baseline_files={**CONTEXT_FILES, ".gitignore": "application/lesson/application_layer/ignored_leak.py\n"}),
+        *standard_api_context_cases(),
         # Reviewer-only: dynamic/relative import equivalents, semantic root
         # mapping lookalikes, and source-surface membership completeness.
     ]
@@ -5322,6 +5328,7 @@ if settings.PUBLIC_API_ENABLED:
         Case("composition-fp-tests-migrations-cache-venv", {**COMPOSITION_CLEAN_FILES, "application/lesson/tests/composition_root.py": "pass\n", "application/lesson/migrations/composition_root.py": "pass\n", "application/lesson/.cache/composition_root.py": "pass\n", "application/lesson/.venv/composition_root.py": "pass\n"}, "check-composition-root.py", (TARGET_DIR,), 0, ""),
         Case("composition-fp-unignored-generated-path", {**COMPOSITION_CLEAN_FILES, ".gitignore": "application/lesson/driven_layer/ignored/composition_root.py\n", "application/lesson/driven_layer/generated/composition_root.py": "pass\n"}, "check-composition-root.py", (TARGET_DIR,), 0, "", baseline_files={**COMPOSITION_CLEAN_FILES, ".gitignore": "application/lesson/driven_layer/ignored/composition_root.py\n"}),
         Case("composition-fp-git-ignored-selected-path", {**COMPOSITION_CLEAN_FILES, ".gitignore": "application/lesson/driven_layer/ignored/composition_root.py\n", "application/lesson/driven_layer/ignored/composition_root.py": "pass\n"}, "check-composition-root.py", (TARGET_DIR,), 0, "", baseline_files={**COMPOSITION_CLEAN_FILES, ".gitignore": "application/lesson/driven_layer/ignored/composition_root.py\n"}),
+        *standard_api_composition_cases(),
         # Reviewer-only: dynamic/re-export calls and semantic completeness of
         # the controller set registered inside each registrar.
     ]
@@ -6400,6 +6407,7 @@ def get_lesson(request, lesson_id: int):
         Case("openapi-round4-mandatory-finally-error-return", with_files(("application/lesson/driving_layer/controller.py", mandatory_finally_error), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-round4-mandatory-finally-selected-api", with_files(("config/api.py", mandatory_finally_selected_api), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-round4-clean-terminal-try-benign-finally", with_files(("config/api.py", documented(terminal_try_benign_finally)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        *standard_api_openapi_cases(),
         # Reviewer-only: dynamic response mappings and status-specific code
         # subset precision for a shared BC base schema.
     ]
@@ -7905,14 +7913,437 @@ def run_case(case: Case) -> tuple[bool, str, int]:
     output = f"{completed.stdout}\n{completed.stderr}"
     tracebacks = output.count("Traceback (most recent call last):")
     fragment_matches = not case.expected_fragment or case.expected_fragment in output
-    passed = completed.returncode == case.expected_exit and fragment_matches
+    rules = tuple(sorted(VIOLATION_RULE.findall(completed.stdout)))
+    rules_match = case.expected_rules is None or rules == tuple(sorted(case.expected_rules))
+    passed = completed.returncode == case.expected_exit and fragment_matches and rules_match
     if passed:
         return True, "", tracebacks
     return False, (
-        f"[{case.name}] expected exit={case.expected_exit}, fragment={case.expected_fragment!r}; "
+        f"[{case.name}] expected exit={case.expected_exit}, fragment={case.expected_fragment!r}, "
+        f"rules={case.expected_rules!r}; actual rules={rules!r} "
         f"actual exit={completed.returncode}\nstdout:\n{completed.stdout or '<empty>'}\n"
         f"stderr:\n{completed.stderr or '<empty>'}"
     ), tracebacks
+
+
+# ── 표준 API 객체 둘(F4-150) — 공개 `<project>/api.py` · 내부 `<project>/internal_api.py` 의 `internal_api` ──
+# 진짜 프로젝트 패키지(manage.py 의 DJANGO_SETTINGS_MODULE)가 `config` 인 장난감. 등록 함수 이름이 scope 를 정하고(#107 · #440),
+# 두 모듈은 닫힌 허용 목록(#437)이다. 적대 꼴(별칭 · 복사 · 셋째 객체 · 주소 바꿔치기 등)은 여기가 영구 자리다.
+STD_PUBLIC_CTOR: Final = 'api: DocumentedAPI = DocumentedAPI(urls_namespace="api")\n'
+STD_INTERNAL_API: Final = (
+    '"""내부 창구 API."""\n\nfrom config.api import DocumentedAPI\n\n'
+    'internal_api: DocumentedAPI = DocumentedAPI(urls_namespace="internal_api")\n'
+)
+STD_LESSON_REGISTRAR: Final = """from ninja_extra import NinjaExtraAPI
+
+from .controller import LessonController, LessonFeedController
+
+
+def register_lesson_api(api: NinjaExtraAPI) -> None:
+    api.register_controllers(LessonController)
+
+
+def register_lesson_internal_api(api: NinjaExtraAPI) -> None:
+    api.register_controllers(LessonFeedController)
+"""
+STD_WORKER_REGISTRAR: Final = """from ninja_extra import NinjaExtraAPI
+
+from .controller import JobController
+
+
+def register_worker_internal_api(api: NinjaExtraAPI) -> None:
+    api.register_controllers(JobController)
+"""
+STD_URLS: Final = """from django.urls import path
+
+from application.lesson.driving_layer.api.api_router import register_lesson_api, register_lesson_internal_api
+from application.worker.driving_layer.api.api_router import register_worker_internal_api
+from config.api import api
+from config.internal_api import internal_api
+
+register_lesson_api(api)
+register_lesson_internal_api(internal_api)
+register_worker_internal_api(internal_api)
+
+urlpatterns: list[object] = [
+    path("api/", api.urls),
+    path("internal/", internal_api.urls),
+]
+"""
+STD_API_FILES: Final = {
+    "manage.py": 'import os\n\nos.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")\n',
+    "config/__init__.py": "",
+    "config/settings.py": 'SECRET_KEY: str = "matrix"\n',
+    "config/api.py": DOCUMENTED_API,
+    "config/internal_api.py": STD_INTERNAL_API,
+    "config/urls.py": STD_URLS,
+    "application/lesson/driving_layer/controller.py": "class LessonController: pass\n\n\nclass LessonFeedController: pass\n",
+    "application/lesson/driving_layer/api/api_router.py": STD_LESSON_REGISTRAR,
+    "application/worker/driving_layer/controller.py": "class JobController: pass\n",
+    "application/worker/driving_layer/api/api_router.py": STD_WORKER_REGISTRAR,
+}
+STD_LESSON_ROUTER: Final = "application/lesson/driving_layer/api/api_router.py"
+STD_WORKER_ROUTER: Final = "application/worker/driving_layer/api/api_router.py"
+
+
+def std_composition_args(api_module: str, *registrars: str) -> tuple[str, ...]:
+    args: list[str] = [TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "std-v1",
+                       "--api-module", api_module, "--urlconf-module", "config/urls.py"]
+    for registrar in registrars:
+        args += ["--registrar-module", registrar]
+    return tuple(args)
+
+
+def std_api_with(tail: str) -> str:
+    """`config/api.py` — 정해진 루트 API 클래스는 그대로 두고 생성 문장 자리만 바꾼다."""
+    return DOCUMENTED_API.replace(STD_PUBLIC_CTOR, tail)
+
+
+def standard_api_composition_cases() -> list[Case]:
+    """#107 · #437 · #440 — 표준 꼴은 0, 그 자리 밖의 둘째 객체 · 이름 ↔ 객체 ↔ 주소 어긋남은 줄(렌더는 분석 불능 아님)."""
+    cr: str = "check-composition-root.py"
+    tree: tuple[str, ...] = (TARGET_DIR,)
+    public: tuple[str, ...] = std_composition_args("config/api.py", STD_LESSON_ROUTER)
+    internal: tuple[str, ...] = std_composition_args("config/internal_api.py", STD_LESSON_ROUTER, STD_WORKER_ROUTER)
+    base: dict[str, str] = STD_API_FILES
+    lesson_public_only: str = (
+        "from ninja_extra import NinjaExtraAPI\n\nfrom .controller import LessonController\n\n\n"
+        "def register_lesson_api(api: NinjaExtraAPI) -> None:\n    api.register_controllers(LessonController)\n"
+    )
+    single_api: dict[str, str] = with_files(
+        ("config/internal_api.py", ""),
+        ("config/urls.py", "from django.urls import path\n\n"
+                           "from application.lesson.driving_layer.api.api_router import register_lesson_api\n"
+                           "from config.api import api\n\nregister_lesson_api(api)\n\n"
+                           'urlpatterns: list[object] = [path("api/v1/", api.urls)]\n'),
+        (STD_LESSON_ROUTER, lesson_public_only),
+        (STD_WORKER_ROUTER, "<REMOVE>"),
+        ("application/worker/driving_layer/controller.py", "<REMOVE>"),
+        base=base,
+    )
+    worker_public_name: dict[str, str] = with_files(
+        (STD_WORKER_ROUTER, STD_WORKER_REGISTRAR.replace("register_worker_internal_api", "register_worker_api")),
+        ("config/urls.py", STD_URLS.replace("register_worker_internal_api", "register_worker_api")),
+        base=base,
+    )
+    second_in_api: str = std_api_with(
+        STD_PUBLIC_CTOR + 'internal_api: DocumentedAPI = DocumentedAPI(urls_namespace="internal_api")\n'
+    )
+    urls_from_api: str = STD_URLS.replace(
+        "from config.api import api\nfrom config.internal_api import internal_api\n",
+        "from config.api import api, internal_api\n",
+    )
+
+    def internal_module(body: str) -> dict[str, str]:
+        return with_files(("config/internal_api.py", '"""내부 창구 API."""\n\n' + body), base=base)
+
+    def urls(old: str, new: str) -> dict[str, str]:
+        return with_files(("config/urls.py", STD_URLS.replace(old, new)), base=base)
+
+    ctor_alias_two: str = std_api_with(
+        "_Ctor = DocumentedAPI\n" + STD_PUBLIC_CTOR.replace("DocumentedAPI(", "_Ctor(")
+        + 'internal_api: DocumentedAPI = _Ctor(urls_namespace="internal_api")\n'
+    )
+    tuple_two: str = std_api_with(
+        'api, internal_api = DocumentedAPI(urls_namespace="api"), DocumentedAPI(urls_namespace="internal_api")\n'
+    )
+    type_copy: str = std_api_with(
+        STD_PUBLIC_CTOR + 'internal_api: DocumentedAPI = type(api)(urls_namespace="internal_api")\n'
+    )
+    side_api: str = (
+        '"""옆 창구."""\n\nfrom config.api import DocumentedAPI\n\n'
+        'side_api: DocumentedAPI = DocumentedAPI(urls_namespace="side_api")\n'
+    )
+    side_urls: str = STD_URLS.replace(
+        "from config.internal_api import internal_api\n", "from config.internal_api import internal_api\n{import}"
+    ).replace("register_lesson_internal_api(internal_api)", "register_lesson_internal_api(side_api)")
+    legacy_two: dict[str, str] = {
+        **base,
+        "legacy/__init__.py": "",
+        "legacy/api.py": "from ninja_extra import NinjaExtraAPI\n\napi = NinjaExtraAPI()\nreports_api = NinjaExtraAPI()\n",
+        "legacy/urls.py": ("from application.lesson.driving_layer.api.api_router import register_lesson_api\n"
+                           "from legacy.api import api, reports_api\n\nregister_lesson_api(reports_api)\n\n"
+                           "urlpatterns: list[object] = []\n"),
+    }
+    side_root: str = (
+        '"""옆 루트 클래스."""\n\nfrom config.api import DocumentedAPI\n\n\nclass SideAPI(DocumentedAPI):\n    pass\n'
+    )
+    try_api: str = std_api_with("try:\n    " + STD_PUBLIC_CTOR + "except ValueError:\n    raise\n")
+    include_urls: str = STD_URLS.replace("from django.urls import path\n", "from django.urls import include, path\n")
+    return [
+        # 표준 꼴 — 한 BC 가 두 scope 에 창구 · 내부 창구만 가진 BC · 공개 객체 이름 자유 · 지금 허용 문장 · 단일 API.
+        Case("composition-std-api-clean-tree", base, cr, tree, 0, "", expected_rules=()),
+        Case("composition-std-api-clean-public-render", base, cr, public, 0, "", expected_rules=()),
+        Case("composition-std-api-clean-internal-render", base, cr, internal, 0, "", expected_rules=()),
+        Case("composition-std-api-single-api-v1-empty-internal-module", single_api, cr, tree, 0, "", expected_rules=()),
+        Case("composition-std-api-single-api-v1-public-render", single_api, cr, public, 0, "", expected_rules=()),
+        Case("composition-std-api-empty-internal-module-is-not-a-scope", single_api, cr,
+             std_composition_args("config/internal_api.py", STD_LESSON_ROUTER), 1, "빈 내부 API 모듈은 scope 가 아니다"),
+        Case("composition-std-api-public-object-name-is-free",
+             with_files(("config/api.py", std_api_with(STD_PUBLIC_CTOR.replace("api:", "api_v1:"))),
+                        ("config/urls.py", STD_URLS.replace("import api\n", "import api_v1\n")
+                         .replace("register_lesson_api(api)", "register_lesson_api(api_v1)")
+                         .replace('path("api/", api.urls)', 'path("api/", api_v1.urls)')), base=base),
+             cr, public, 0, "", expected_rules=()),
+        Case("composition-std-api-public-module-keeps-allowed-statements",
+             with_files(("config/api.py", "import logging\nfrom typing import TYPE_CHECKING\n\n" + std_api_with(
+                 "if TYPE_CHECKING:\n    from collections.abc import Sequence\n\n"
+                 '__all__: list[str] = ["api", "DocumentedAPI"]\nlogger: logging.Logger = logging.getLogger(__name__)\n'
+                 + STD_PUBLIC_CTOR)), base=base),
+             cr, tree, 0, "", expected_rules=()),
+        Case("composition-std-api-preserved-scope-outside-project-package", legacy_two, cr, tree, 0, "", expected_rules=()),
+        # #429 · #488 — `<project>/internal_api.py` 는 고정 칸이다(내부 창구를 안 쓰는 프로젝트도 빈 파일).
+        Case("skeleton-owns-required-internal-api-module",
+             {**COMPOSITION_CLEAN_FILES, **{f"config/{name}": "" for name in ("settings.py", "api.py", "urls.py", "celery.py")}},
+             "check-layer-skeleton.py", tree, 2, "config/internal_api.py: 고정 파일 부재"),
+        # #437 — `internal_api.py` 닫힌 허용 목록(루트 API 클래스는 `<project>/api.py` 에서 들여 짓는다).
+        Case("composition-std-api-internal-redefines-root-class",
+             internal_module("from ninja_extra import NinjaExtraAPI\n\n\nclass DocumentedAPI(NinjaExtraAPI):\n    pass\n\n\n"
+                             'internal_api: DocumentedAPI = DocumentedAPI(urls_namespace="internal_api")\n'),
+             cr, tree, 2, "루트 API 클래스는 `<project>/api.py` 의 것을 들여 짓는다", expected_rules=("#437", "#437")),
+        Case("composition-std-api-internal-plain-ninja-constructor",
+             internal_module('from ninja_extra import NinjaExtraAPI\n\ninternal_api: NinjaExtraAPI = NinjaExtraAPI(urls_namespace="internal_api")\n'),
+             cr, internal, 2, "내부 API 객체는", expected_rules=("#437",)),
+        Case("composition-std-api-internal-factory",
+             internal_module("from config.api import DocumentedAPI\n\n\ndef _build() -> DocumentedAPI:\n"
+                             '    return DocumentedAPI(urls_namespace="internal_api")\n\n\ninternal_api: DocumentedAPI = _build()\n'),
+             cr, internal, 2, "selected standard API module needs exactly one proven root API construction",
+             expected_rules=("#437", "#437")),
+        Case("composition-std-api-internal-two-constructors",
+             internal_module("from config.api import DocumentedAPI\n\n"
+                             'internal_api: DocumentedAPI = DocumentedAPI(urls_namespace="internal_api")\n'
+                             'worker_api: DocumentedAPI = DocumentedAPI(urls_namespace="worker_api")\n'),
+             cr, internal, 2, "selected standard API module needs exactly one proven root API construction",
+             expected_rules=("#437",)),
+        Case("composition-std-api-internal-two-constructors-tree",
+             internal_module("from config.api import DocumentedAPI\n\n"
+                             'internal_api: DocumentedAPI = DocumentedAPI(urls_namespace="internal_api")\n'
+                             'worker_api: DocumentedAPI = DocumentedAPI(urls_namespace="worker_api")\n'),
+             cr, tree, 2, "루트 API 를 한 번만 짓는다", expected_rules=("#437",)),
+        Case("composition-std-api-internal-passthrough-subclass",
+             internal_module("from config.api import DocumentedAPI\n\n\nclass InternalAPI(DocumentedAPI):\n    pass\n\n\n"
+                             'internal_api: InternalAPI = InternalAPI(urls_namespace="internal_api")\n'),
+             cr, internal, 2, "", expected_rules=("#437", "#437")),
+        Case("composition-std-api-internal-reexported-class",
+             {**internal_module('from config import DocumentedAPI\n\ninternal_api: DocumentedAPI = DocumentedAPI(urls_namespace="internal_api")\n'),
+              "config/__init__.py": "from config.api import DocumentedAPI\n"},
+             cr, internal, 2, "selected standard API module needs exactly one proven root API construction",
+             expected_rules=("#437",)),
+        Case("composition-std-api-internal-aliases-public-object",
+             internal_module("from config.api import DocumentedAPI, api as _public\n\ninternal_api: DocumentedAPI = _public\n"),
+             cr, tree, 2, "별칭 대입", expected_rules=("#437",)),
+        Case("composition-std-api-internal-aliases-public-object-render",
+             internal_module("from config.api import DocumentedAPI, api as _public\n\ninternal_api: DocumentedAPI = _public\n"),
+             cr, internal, 2, "selected standard API module needs exactly one proven root API construction",
+             expected_rules=("#437",)),
+        Case("composition-std-api-internal-without-construction",
+             internal_module("from config.api import DocumentedAPI\n"),
+             cr, tree, 2, "생성 문장이 없다", expected_rules=("#437",)),
+        # import 로 `internal_api` 이름을 묶으면(생성 대신 · 생성 뒤 다시 묶기) 별칭이다 — 트리도 #437.
+        Case("composition-std-api-internal-imports-public-object-as-name",
+             internal_module("from config.api import api as internal_api\n"),
+             cr, tree, 2, "import 가 `internal_api` 이름을 묶는다", expected_rules=("#437",)),
+        Case("composition-std-api-internal-import-rebinds-name-after-construction",
+             internal_module(STD_INTERNAL_API.split('"""\n\n', 1)[1] + "from config.api import api as internal_api\n"),
+             cr, tree, 2, "import 가 `internal_api` 이름을 묶는다", expected_rules=("#437",)),
+        Case("composition-std-api-internal-import-rebinds-name-after-construction-render",
+             internal_module(STD_INTERNAL_API.split('"""\n\n', 1)[1] + "from config.api import api as internal_api\n"),
+             cr, internal, 2, "selected standard API module needs exactly one proven root API construction",
+             expected_rules=("#437",)),
+        # 루트 API 클래스는 `<project>/api.py` 에서 들인다 — 셋째 모듈의 루트 API 클래스로 지으면 #437.
+        Case("composition-std-api-internal-root-class-from-third-module",
+             {**internal_module("from framework.ninja.side_root import SideAPI\n\n"
+                                'internal_api: SideAPI = SideAPI(urls_namespace="internal_api")\n'),
+              "framework/ninja/side_root.py": side_root},
+             cr, tree, 2, "내부 API 객체는", expected_rules=("#437",)),
+        Case("composition-std-api-internal-imports-bc",
+             internal_module("import application.lesson.driving_layer.controller\n" + STD_INTERNAL_API.split('"""\n\n', 1)[1]),
+             cr, tree, 2, "BC import 금지", expected_rules=("#437",)),
+        # #437 — `api.py` 는 지금 허용 그대로 + 생성 둘 · 별칭 · 튜플 · 복사 금지. 공개 렌더는 #437 한 줄(트리의 생성 꼴 줄과 한 사건).
+        Case("composition-std-api-public-second-constructor-tree",
+             with_files(("config/api.py", second_in_api), ("config/internal_api.py", ""), ("config/urls.py", urls_from_api), base=base),
+             cr, tree, 2, "루트 API 를 또 짓는다", expected_rules=("#437", "#440", "#440")),
+        Case("composition-std-api-public-second-constructor-render",
+             with_files(("config/api.py", second_in_api), ("config/internal_api.py", ""), ("config/urls.py", urls_from_api), base=base),
+             cr, public, 2, "selected standard API module needs exactly one proven root API construction",
+             expected_rules=("#437", "#440", "#440")),
+        Case("composition-std-api-public-constructor-alias",
+             with_files(("config/api.py", ctor_alias_two), ("config/internal_api.py", ""), ("config/urls.py", urls_from_api), base=base),
+             cr, public, 2, "selected standard API module", expected_rules=("#437", "#440", "#440")),
+        Case("composition-std-api-public-tuple-constructors",
+             with_files(("config/api.py", tuple_two), ("config/internal_api.py", ""), ("config/urls.py", urls_from_api), base=base),
+             cr, tree, 2, "튜플 · 목록 대입 안에서", expected_rules=("#437", "#437", "#440", "#440")),
+        Case("composition-std-api-public-type-copy",
+             with_files(("config/api.py", type_copy), ("config/internal_api.py", ""), ("config/urls.py", urls_from_api), base=base),
+             cr, public, 2, "selected standard API module", expected_rules=("#437", "#440", "#440")),
+        Case("composition-std-api-public-object-alias",
+             with_files(("config/api.py", std_api_with(STD_PUBLIC_CTOR.replace("api:", "api_v1:") + "api = api_v1\n")), base=base),
+             cr, public, 2, "selected standard API module", expected_rules=("#437", "#440")),
+        # 생성 문장 하나가 조건 갈래 안이면 금지 목록 밖(트리 0)이지만 생성 출처를 못 세워 렌더는 #437 줄이다(분석 불능 아님).
+        Case("composition-std-api-public-construction-in-try-tree",
+             with_files(("config/api.py", std_api_with("try:\n    " + STD_PUBLIC_CTOR + "except ValueError:\n    raise\n")), base=base),
+             cr, tree, 0, "", expected_rules=()),
+        Case("composition-std-api-public-construction-in-try-render",
+             with_files(("config/api.py", std_api_with("try:\n    " + STD_PUBLIC_CTOR + "except ValueError:\n    raise\n")), base=base),
+             cr, public, 2, "selected standard API module needs exactly one proven root API construction",
+             expected_rules=("#437",)),
+        Case("composition-std-api-public-construction-per-branch",
+             with_files(("config/api.py", "import sys\n\n" + std_api_with(
+                 'if sys.flags.dev_mode:\n    api: DocumentedAPI = DocumentedAPI(urls_namespace="api", docs_url="/docs")\n'
+                 "else:\n    " + STD_PUBLIC_CTOR)), base=base),
+             cr, tree, 2, "루트 API 를 또 짓는다", expected_rules=("#437",)),
+        # #440 — 등록 함수 이름의 scope ↔ 넘긴 표준 객체(출처로 푼다) ↔ 주소.
+        Case("composition-std-api-public-registrar-receives-internal-object-tree", worker_public_name, cr, tree, 2,
+             "`register_worker_api` 은 공개 표준 API 객체를 받는다", expected_rules=("#440",)),
+        Case("composition-std-api-public-registrar-receives-internal-object-render", worker_public_name, cr, internal, 2,
+             "registrar scope mismatch: register_worker_api is called where this scope needs register_worker_internal_api",
+             expected_rules=("#107", "#440")),
+        Case("composition-std-api-internal-registrar-receives-public-object",
+             urls("register_lesson_internal_api(internal_api)", "register_lesson_internal_api(api)"),
+             cr, internal, 2, "registrar scope mismatch: register_lesson_internal_api receives config.api.api",
+             expected_rules=("#440",)),
+        Case("composition-std-api-alias-swapped-imports",
+             urls("from config.api import api\nfrom config.internal_api import internal_api\n",
+                  "from config.api import api as internal_api\nfrom config.internal_api import internal_api as api\n"),
+             cr, public, 2, "registrar scope mismatch", expected_rules=("#440", "#440", "#440", "#440", "#440")),
+        Case("composition-std-api-module-reassignment-tree",
+             urls("register_lesson_api(api)", "api = internal_api\nregister_lesson_api(api)"),
+             cr, tree, 2, "넘긴 것: `api`", expected_rules=("#440",)),
+        Case("composition-std-api-module-reassignment-render-unanalyzable",
+             urls("register_lesson_api(api)", "api = internal_api\nregister_lesson_api(api)"),
+             cr, public, 1, "URLconf registrar-call API object identity 분석 불능"),
+        Case("composition-std-api-swapped-mounts",
+             urls('path("api/", api.urls),\n    path("internal/", internal_api.urls)',
+                  'path("internal/", api.urls),\n    path("api/", internal_api.urls)'),
+             cr, tree, 2, "`internal_api.urls` 는", expected_rules=("#440", "#440")),
+        Case("composition-std-api-internal-under-public-prefix",
+             urls('path("internal/", internal_api.urls)', 'path("api/internal/", internal_api.urls)'),
+             cr, tree, 2, "`internal_api.urls` 는", expected_rules=("#440",)),
+        Case("composition-std-api-third-object-in-framework",
+             with_files(("framework/ninja/side_api.py", side_api),
+                        ("config/urls.py", side_urls.replace("{import}", "from framework.ninja.side_api import side_api\n")),
+                        base=base),
+             cr, tree, 2, "넘긴 것: `framework.ninja.side_api.side_api`", expected_rules=("#440",)),
+        Case("composition-std-api-third-object-at-repository-root",
+             with_files(("side_api.py", side_api), ("config/urls.py", side_urls.replace("{import}", "from side_api import side_api\n")),
+                        base=base),
+             cr, tree, 2, "넘긴 것: `side_api.side_api`", expected_rules=("#440",)),
+        # 공개 생성이 한 문장 꼴이 아니어도(공개 객체 미확정) 공개 등록 인자는 `<project>.api` 모듈 출처여야 한다.
+        Case("composition-std-api-public-construction-in-try-third-object-tree",
+             with_files(("config/api.py", try_api), ("framework/ninja/side_api.py", side_api),
+                        ("config/urls.py", STD_URLS.replace("from config.internal_api import internal_api\n",
+                                                            "from config.internal_api import internal_api\n"
+                                                            "from framework.ninja.side_api import side_api\n")
+                         .replace("register_lesson_api(api)", "register_lesson_api(side_api)")), base=base),
+             cr, tree, 2, "넘긴 것: `framework.ninja.side_api.side_api`", expected_rules=("#440",)),
+        Case("composition-std-api-public-construction-in-try-third-object-render",
+             with_files(("config/api.py", try_api), ("framework/ninja/side_api.py", side_api),
+                        ("config/urls.py", STD_URLS.replace("from config.internal_api import internal_api\n",
+                                                            "from config.internal_api import internal_api\n"
+                                                            "from framework.ninja.side_api import side_api\n")
+                         .replace("register_lesson_api(api)", "register_lesson_api(side_api)")), base=base),
+             cr, public, 1, "URLconf registrar-call API object identity 분석 불능"),
+        Case("composition-std-api-public-construction-in-try-internal-object-render",
+             with_files(("config/api.py", try_api),
+                        ("config/urls.py", STD_URLS.replace("register_lesson_api(api)", "register_lesson_api(internal_api)")),
+                        base=base),
+             cr, public, 2, "registrar scope mismatch: register_lesson_api receives config.internal_api.internal_api",
+             expected_rules=("#437", "#440")),
+        # 등록 함수는 그 scope 의 표준 객체 하나를 위치 인자로 받는다 — 키워드 · 펼침 인자는 트리도 #440.
+        Case("composition-std-api-registrar-keyword-and-starred-arguments-tree",
+             urls("register_lesson_internal_api(internal_api)\nregister_worker_internal_api(internal_api)",
+                  "register_lesson_internal_api(api=internal_api)\nregister_worker_internal_api(*(internal_api,))"),
+             cr, tree, 2, "위치 인자로 받는다", expected_rules=("#440", "#440")),
+        # `internal_api.urls` 는 모든 출현이 `urlpatterns` 에 바로 넣은 `path("internal/", …)` 다 — include 안 · 변수는 #440.
+        Case("composition-std-api-internal-mount-nested-in-include",
+             with_files(("config/urls.py", include_urls.replace(
+                 'path("internal/", internal_api.urls)', 'path("api/", include([path("internal/", internal_api.urls)]))')),
+                 base=base),
+             cr, tree, 2, "`internal_api.urls` 는 `urlpatterns` 에 바로 넣은", expected_rules=("#440",)),
+        Case("composition-std-api-internal-mount-through-variable",
+             urls('urlpatterns: list[object] = [\n    path("api/", api.urls),\n    path("internal/", internal_api.urls),\n]',
+                  'internal_urls: tuple[object, ...] = internal_api.urls\n\n'
+                  'urlpatterns: list[object] = [\n    path("api/", api.urls),\n    path("api/feed/", internal_urls),\n]'),
+             cr, tree, 2, "`internal_api.urls` 는 `urlpatterns` 에 바로 넣은", expected_rules=("#440",)),
+        Case("composition-std-api-internal-mount-append-and-augmented-forms",
+             urls('urlpatterns: list[object] = [\n    path("api/", api.urls),\n    path("internal/", internal_api.urls),\n]',
+                  'urlpatterns: list[object] = [path("api/", api.urls)] + []\n'
+                  'urlpatterns.append(path("internal/", internal_api.urls))\n'
+                  'if __debug__:\n    urlpatterns += [path("internal/", internal_api.urls)]'),
+             cr, tree, 0, "", expected_rules=()),
+        Case("composition-std-api-public-mount-re-path-under-internal",
+             with_files(("config/urls.py", STD_URLS.replace("from django.urls import path\n",
+                                                            "from django.urls import path, re_path\n")
+                         .replace('    path("internal/", internal_api.urls),\n',
+                                  '    path("internal/", internal_api.urls),\n    re_path(r"^internal/v2/", api.urls),\n')),
+                        base=base),
+             cr, tree, 2, "공개 API 객체의 `.urls` 를 `internal/` 아래에 달지 않는다", expected_rules=("#440",)),
+        # #107 — 등록 함수 이름의 BC 는 registrar 모듈 경로의 BC 와 정확히 같다.
+        Case("composition-std-api-registrar-name-names-another-bc",
+             with_files((STD_LESSON_ROUTER, STD_LESSON_REGISTRAR.replace("def register_lesson_api(", "def register_catalog_api(")),
+                        base=base),
+             cr, tree, 2, "`def register_lesson_api(api)` · 내부 창구의 `def register_lesson_internal_api(api)`",
+             expected_rules=("#107",)),
+        # 메시지는 등록 함수 둘을 함께 말한다(#109 top-level 등록 · #440 import 하고 부르지 않음).
+        Case("composition-std-api-registrar-top-level-registration-names-both-functions",
+             with_files((STD_WORKER_ROUTER, STD_WORKER_REGISTRAR + "\nJobController.register_controllers(JobController)\n"),
+                        base=base),
+             cr, tree, 2, "`register_worker_api(api)` · `register_worker_internal_api(api)` 함수 «안»에서만",
+             expected_rules=("#109",)),
+        Case("composition-std-api-urls-imports-registrar-without-call-names-both-functions",
+             urls("register_worker_internal_api(internal_api)\n", ""),
+             cr, tree, 2, "import 한 등록 함수(`register_<bc>_api` · `register_<bc>_internal_api`)",
+             expected_rules=("#440",)),
+    ]
+
+
+def standard_api_context_cases() -> list[Case]:
+    """#431 — `internal_api.py` 의 쓰이지 않는 BC import 도 부작용 등록이다(`api.py` · `urls.py` 와 같은 판)."""
+    unused_bc_import: dict[str, str] = with_files(
+        ("config/internal_api.py", "import application.lesson.driving_layer.controller\n" + STD_INTERNAL_API),
+        base=STD_API_FILES,
+    )
+    return [
+        Case("context-std-api-internal-module-unused-bc-import", unused_bc_import, "check-context-isolation.py", (TARGET_DIR,),
+             2, "[#431] config/internal_api.py: 쓰이지 않는 BC import"),
+    ]
+
+
+def standard_api_openapi_cases() -> list[Case]:
+    """#5 code 레인 — 들인 루트 API 클래스의 생성도 receiver 다 · 진짜 프로젝트 패키지의 표준 이름 모듈에서 생성 출처를
+    못 세우면 줄 없이 receiver 분석만 건너뛴다(그 밖 모듈은 분석 불능 그대로)."""
+    project: dict[str, str] = {
+        "manage.py": 'import os\n\nos.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")\n',
+        "config/settings.py": 'SECRET_KEY: str = "matrix"\n',
+    }
+    internal_api: str = "from config.api import DocumentedAPI\n\ninternal_api: DocumentedAPI = DocumentedAPI(urls_namespace=\"internal_api\")\n"
+    two_constructors: str = DOCUMENTED_API + 'internal_api: DocumentedAPI = DocumentedAPI(urls_namespace="internal_api")\n'
+    internal_args: tuple[str, ...] = tuple("config/internal_api.py" if arg == "config/api.py" else arg for arg in openapi_args())
+    return [
+        Case("openapi-std-api-internal-imported-root-class-receiver",
+             {**OPENAPI_FILES, **project, "config/internal_api.py": internal_api},
+             "check-openapi-error-declaration.py", internal_args, 0, ""),
+        # 들인 루트 클래스의 생성도 receiver 다 — 내부 API 객체의 문서 후처리는 #63 openapi-postprocess 줄이다(생략 길로
+        # 빠지지 않는다 · 닫힌 꼴 밖 문장이라 경로 앞 응답 레인의 #63 도 함께 난다).
+        Case("openapi-std-api-internal-imported-root-class-postprocess",
+             {**OPENAPI_FILES, **project,
+              "config/internal_api.py": internal_api + "SCHEMA: object = internal_api.get_openapi_schema()\n"},
+             "check-openapi-error-declaration.py", internal_args, 2, "openapi-postprocess", expected_rules=("#63", "#63")),
+        # 들인 루트 클래스를 이 모듈에서 다시 상속해 문서 생성을 덮으면 그 클래스도 루트 API 하위 클래스다 — openapi-override.
+        Case("openapi-std-api-internal-subclass-of-imported-root-class-override",
+             {**OPENAPI_FILES, **project,
+              "config/internal_api.py": "from config.api import DocumentedAPI\n\n\nclass InternalAPI(DocumentedAPI):\n"
+                                        "    def get_openapi_schema(self, *args, **kwargs):\n"
+                                        "        return super().get_openapi_schema(*args, **kwargs)\n\n\n"
+                                        'internal_api: InternalAPI = InternalAPI(urls_namespace="internal_api")\n'},
+             "check-openapi-error-declaration.py", internal_args, 2, "openapi-override", expected_rules=("#63", "#63")),
+        Case("openapi-std-api-public-two-constructors-skip-receiver",
+             {**OPENAPI_FILES, **project, "config/api.py": two_constructors},
+             "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-nonstandard-two-constructors-stay-unanalyzable",
+             {**OPENAPI_FILES, "config/api.py": two_constructors},
+             "check-openapi-error-declaration.py", openapi_args(), 1, "receiver provenance 분석 불능"),
+    ]
 
 
 def main() -> int:

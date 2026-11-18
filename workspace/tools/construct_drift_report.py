@@ -68,10 +68,10 @@ EXPECTED_SHA: "dict[str, str]" = {
     "check-common-container.py": "10f52932ce07457413bcb0c580ae8735a33f1ea08f3725a7a370962e1f5d39d0",
     "check-api-error-controller-contract.py": "502f3ec47923489b6d6fe87e5757b04ff02f8e61cc3eec30afd1f20a7d42066d",
     "check-error-centralization.py": "4360dbfa8557143519bed6c38096004f93213472d4d9a9a7ceff635128ee932f",
-    "check-composition-root.py": "4a12ac3325603484de4568ff910a984346731f1b7386c9b6085ab9a72d0e391a",
+    "check-composition-root.py": "88a427556d7c70346852e9397b566e163223794e45aa99b207c56a3d076dbf54",
     "check-openapi-error-declaration.py": "6842327c8fd1888af8e7bbb321297e15f514e8759d2c9394b165fbbba1694c85",
     "check-response-schema-bypass.py": "b1a77bebb4272f9eb817feb63f31b6715d52da9d0ad312a2f02d744717428793",
-    "check-context-isolation.py": "01a70f329224205c40cf3f86f8f2a0d5c59d5799cb926f5585ca0581cad5ab96",
+    "check-context-isolation.py": "fbdd53881a9f39471efbb51f95c728cd1e24d470dc3dbe8cac414603f9c1d9db",
 }
 
 CHECKER_TIMEOUT_S: int = 300

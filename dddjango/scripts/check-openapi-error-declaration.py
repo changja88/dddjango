@@ -116,6 +116,10 @@ class UsageError(Exception):
     """CLI, inventory, or required provenance failure."""
 
 
+class UnprovenConstructorError(UsageError):
+    """고른 API 모듈의 루트 API 생성 출처(생성 하나 · 최종 receiver)를 세우지 못함."""
+
+
 class _UsageParser(argparse.ArgumentParser):
     def error(self, message: str) -> None:
         raise UsageError(message)
@@ -2978,7 +2982,9 @@ def _api_module_findings(
     *,
     selected_imports: frozenset[str] = frozenset(),
     require_constructor: bool = True,
+    root_classes: frozenset[str] = frozenset(),
 ) -> tuple[list[Finding], frozenset[str]]:
+    """`root_classes` = 프로젝트의 루트 API 클래스(`_api_class_names`) — 들인 루트 API 클래스로 지은 생성도 receiver 다."""
     findings: list[Finding] = []
     receiver_events = 0
     annotations_evaluated = _annotations_are_evaluated(parsed.tree)
@@ -3129,7 +3135,7 @@ def _api_module_findings(
                 )
             api_subclass = require_constructor and any(
                 base in ROOT_API_CONSTRUCTORS
-                or (base is not None and base.startswith(API_TYPE_PREFIX))
+                or (base is not None and (base.startswith(API_TYPE_PREFIX) or base in root_classes))
                 for base in bases
             )
             documented_class = (
@@ -3191,13 +3197,13 @@ def _api_module_findings(
                 ):
                     constructor = _resolve_expression(value.func, bindings)
                     if _is_ambiguous_resolution(constructor):
-                        raise UsageError(
+                        raise UnprovenConstructorError(
                             "selected API constructor provenance 분석 불능: "
                             f"{parsed.relative_path}:{value.lineno}"
                         )
                     if constructor in ROOT_API_CONSTRUCTORS or (
                         constructor is not None
-                        and constructor.startswith(API_TYPE_PREFIX)
+                        and (constructor.startswith(API_TYPE_PREFIX) or constructor in root_classes)
                     ):
                         derived = API_RECEIVER
                         receiver_events += 1
@@ -3286,7 +3292,7 @@ def _api_module_findings(
         name for name, value in bindings.items() if value == API_RECEIVER
     }
     if require_constructor and (receiver_events != 1 or not final_receivers):
-        raise UsageError(
+        raise UnprovenConstructorError(
             "selected API receiver provenance 분석 불능: proven constructor event와 "
             "final receiver 필요"
         )
@@ -3372,7 +3378,16 @@ def _code_findings(
     findings: list[Finding] = []
     selected_imports: frozenset[str] = frozenset()
     if config.api_module is not None:
-        findings, selected_imports = _api_module_findings(parsed_by_path[Path(config.api_module)])
+        api_path: Path = Path(config.api_module)
+        root_classes: frozenset[str] = frozenset(_api_class_names(config.root, _project_python_files(config.root)))
+        try:
+            findings, selected_imports = _api_module_findings(parsed_by_path[api_path], root_classes=root_classes)
+        except UnprovenConstructorError:
+            if api_path not in _project_api_modules(config.root):
+                raise
+            # 진짜 프로젝트 패키지의 표준 이름 모듈 — 생성 사건(#437)은 check-composition-root 가 진다. 줄 없이 receiver
+            # 분석만 건너뛴다(monkeypatch · 후처리는 경로 앞 응답 레인의 글자 꼴 판독이 본다).
+            findings, selected_imports = [], frozenset()
     controller_operations: list[Operation] = []
     for raw in config.controller_modules:
         controller = parsed_by_path[Path(raw)]
@@ -3929,6 +3944,37 @@ def _api_namespace(call: ast.Call) -> str | None:
         if node.value:
             return node.value if name == "urls_namespace" else f"api-{node.value}"
     return None
+
+
+_SETTINGS_MODULE_RE = re.compile(r"DJANGO_SETTINGS_MODULE[\"']\s*,\s*[\"']([\w.]+)[\"']")
+
+
+def _find_project_pkg(root: Path) -> Path | None:
+    """`<project>` 판정 — check-layer-skeleton 과 같은 꼴(manage.py 의 DJANGO_SETTINGS_MODULE 이 1순위 · 없으면
+    settings 를 가진 유일 후보만)."""
+    manage = root / "manage.py"
+    if manage.is_file():
+        m = _SETTINGS_MODULE_RE.search(manage.read_text(encoding="utf-8", errors="ignore"))
+        if m:
+            pkg = root / m.group(1).split(".")[0]
+            if pkg.is_dir():
+                return pkg
+    cands = [
+        p for p in sorted(root.iterdir())
+        if p.is_dir() and not p.name.startswith(".")
+        and p.name not in ("venv", "site-packages", "node_modules", "__pycache__", "application", "framework")
+        and ((p / "settings").is_dir() or (p / "settings.py").is_file())
+    ]
+    return cands[0] if len(cands) == 1 else None
+
+
+def _project_api_modules(root: Path) -> frozenset[Path]:
+    """진짜 프로젝트 패키지의 표준 API 모듈(`<project>/api.py` · `<project>/internal_api.py`)."""
+    pkg: Path | None = _find_project_pkg(root)
+    if pkg is None:
+        return frozenset()
+    relative: Path = pkg.relative_to(root)
+    return frozenset({relative / "api.py", relative / "internal_api.py"})
 
 
 def _api_class_names(root: Path, files: list[Path]) -> dict[str, tuple[Path, ast.ClassDef]]:

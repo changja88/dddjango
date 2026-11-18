@@ -739,7 +739,7 @@
       </div>
       <p class="tguide"><b>왼쪽이 파일 트리, 오른쪽이 설명이다.</b> 파트를 누르면 그 아래로 트리가 펼쳐지고, 줄을 누르면 오른쪽의 그 칸으로 간다. 파트 순서는 요청이 <b>들어와 나가는 순서</b>다 — 루트 → 입구 → 조율 → 규칙 → 출구, 그다음이 테스트와 저장소 바깥이다.
       <span class="tg-v">설명에 나오는 <b>원전 어휘</b>는 계보를 색으로 말한다 — <b class="v d">DDD</b> Evans · <b class="v c">Clean</b> Martin · <b class="v h">Hexagonal</b> Cockburn</span></p>
-      <p class="tguide"><b>현행 표준: 2026-11-14 BC 밖 합성 칸 <code>cross_context/</code> 반영.</b> 182행의 경로·행 번호·승격 표시는 플러그인 트리와 함께 검증한다.
+      <p class="tguide"><b>현행 표준: 2026-11-19 내부 창구 API 객체 칸 <code>&lt;project&gt;/internal_api.py</code> 반영.</b> 183행의 경로·행 번호·승격 표시는 플러그인 트리와 함께 검증한다.
       내용 규칙은 <a href="../../dddjango/skills/discipline-houserules/references/final.md">하우스룰 정본</a>·<a href="../../dddjango/skills/discipline-houserules/SKILL.md">배치·승격 규율</a>·<a href="../../dddjango/skills/implementation-django-ninja/references/final.md">API 구현 계약</a>을 따른다.
       <b>⇄</b> 는 <a href="#promotion">동명 폴더 승격 허용</a> 표시다. D 표식과 «실측» 수치는 2026-08 초기 설계·이관 기록이며 현재 프로젝트 상태를 뜻하지 않는다.</p>
       <div class="tabwrap">
@@ -1475,7 +1475,7 @@
           </div>
         </div>
         <div class="pgroup">
-        <button type="button" class="tabbtn" data-p="project" role="tab" aria-selected="false"><span class="tb-n">&lt;project&gt;/</span><span class="tb-s">조립</span><span class="tb-z z-own">고유</span><span class="tb-c">6</span></button>
+        <button type="button" class="tabbtn" data-p="project" role="tab" aria-selected="false"><span class="tb-n">&lt;project&gt;/</span><span class="tb-s">조립</span><span class="tb-z z-own">고유</span><span class="tb-c">7</span></button>
           <div class="ptree" id="pt-project">
             <div class="tree-scroll">
               <div class="tree-head"><span>경로 <em>· 이름 규칙</em></span><span>구역</span><span>무엇인가 · 정할 것</span><span>결정</span></div>
@@ -1489,18 +1489,22 @@
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d25">D25</button></span>
         </div>
         <div data-r="168" class="tr fixed" style="--d:1">
-          <span class="path"><i class="g t"></i><b class="nm">urls.py</b></span>
+          <span class="path"><i class="g t"></i><b class="nm">internal_api.py</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d25">D25</button></span>
         </div>
         <div data-r="169" class="tr fixed" style="--d:1">
+          <span class="path"><i class="g t"></i><b class="nm">urls.py</b></span>
+          <span class="flagcell keep"><button type="button" class="pin d" data-k="d25">D25</button></span>
+        </div>
+        <div data-r="170" class="tr fixed" style="--d:1">
           <span class="path"><i class="g t"></i><b class="nm">celery.py</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d26">D26</button><button type="button" class="pin d" data-k="d25">D25</button></span>
         </div>
-        <div data-r="170" class="tr fixed" style="--d:1">
+        <div data-r="171" class="tr fixed" style="--d:1">
           <span class="path"><i class="g l"></i><b class="nm">settings/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d25">D25</button></span>
         </div>
-        <div data-r="171" class="tr fixed" style="--d:2">
+        <div data-r="172" class="tr fixed" style="--d:2">
           <span class="path"><i class="g sp"></i><i class="g l"></i><b class="nm">&lt;environment&gt;.py</b><em class="nmr">환경 이름</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d25">D25</button></span>
         </div>
@@ -1514,47 +1518,47 @@
             <div class="tree-scroll">
               <div class="tree-head"><span>경로 <em>· 이름 규칙</em></span><span>구역</span><span>무엇인가 · 정할 것</span><span>결정</span></div>
               <div class="tree">
-        <div data-r="172" class="tr own" style="--d:0">
+        <div data-r="173" class="tr own" style="--d:0">
           <span class="path"><b class="nm"><b>cross_context/</b></b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d25">D25</button></span>
         </div>
-        <div data-r="173" class="tr fixed" style="--d:1">
+        <div data-r="174" class="tr fixed" style="--d:1">
           <span class="path"><i class="g l"></i><b class="nm">backoffice/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d25">D25</button></span>
         </div>
-        <div data-r="174" class="tr fixed" style="--d:2">
+        <div data-r="175" class="tr fixed" style="--d:2">
           <span class="path"><i class="g sp"></i><i class="g t"></i><b class="nm">apps.py</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d25">D25</button></span>
         </div>
-        <div data-r="175" class="tr fixed" style="--d:2">
+        <div data-r="176" class="tr fixed" style="--d:2">
           <span class="path"><i class="g sp"></i><i class="g t"></i><b class="nm">urls.py</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d25">D25</button></span>
         </div>
-        <div data-r="176" class="tr fixed" style="--d:2">
+        <div data-r="177" class="tr fixed" style="--d:2">
           <span class="path"><i class="g sp"></i><i class="g t"></i><b class="nm">&lt;screen&gt;/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d25">D25</button></span>
         </div>
-        <div data-r="177" class="tr fixed" style="--d:3">
+        <div data-r="178" class="tr fixed" style="--d:3">
           <span class="path"><i class="g sp"></i><i class="g v"></i><i class="g t"></i><b class="nm">panel.py</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d25">D25</button></span>
         </div>
-        <div data-r="178" class="tr fixed" style="--d:3">
+        <div data-r="179" class="tr fixed" style="--d:3">
           <span class="path"><i class="g sp"></i><i class="g v"></i><i class="g t"></i><b class="nm">form/&lt;form&gt;_form.py</b><em class="nmr">폼 이름 + _form</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d25">D25</button></span>
         </div>
-        <div data-r="179" class="tr fixed" style="--d:3">
+        <div data-r="180" class="tr fixed" style="--d:3">
           <span class="path"><i class="g sp"></i><i class="g v"></i><i class="g l"></i><b class="nm">feature/&lt;feature&gt;.py</b><em class="nmr">동사구</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d25">D25</button></span>
         </div>
-        <div data-r="180" class="tr fixed" style="--d:2">
+        <div data-r="181" class="tr fixed" style="--d:2">
           <span class="path"><i class="g sp"></i><i class="g t"></i><b class="nm">templates/admin/backoffice/&lt;page&gt;.html</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d25">D25</button></span>
         </div>
-        <div data-r="181" class="tr fixed" style="--d:2">
+        <div data-r="182" class="tr fixed" style="--d:2">
           <span class="path"><i class="g sp"></i><i class="g l"></i><b class="nm">test/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d25">D25</button></span>
         </div>
-        <div data-r="182" class="tr fixed" style="--d:3">
+        <div data-r="183" class="tr fixed" style="--d:3">
           <span class="path"><i class="g sp"></i><i class="g sp"></i><i class="g l"></i><b class="nm">integration/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d25">D25</button></span>
         </div>
@@ -1715,7 +1719,7 @@ HTTP 면 <code>api/</code>, 같은 프로세스 함수 호출이면 <code>open_h
           </li>
           <li class="rd" id="rd-10">
             <div class="rd-p" style="--d:3"><b class="rd-n">api_router.py</b><span class="tb-z z-own">Main</span><span class="chg fix">개명</span><button type="button" class="pin d" data-k="d6">D6</button><button type="button" class="pin d" data-k="d11">D11</button><button type="button" class="pin d" data-k="d27">D27</button></div>
-            <div class="rd-w"><p>프로젝트가 전달한 API 객체에 자기 BC 를 등록하는 <code>register_&lt;bc&gt;_api(api)</code> 함수다. 전역 API 객체를 여기서 새로 만들거나 프로젝트 모듈에서 가져오지 않는다.</p><p>Ninja Extra 스택이면 <code>NinjaExtraAPI</code> 에 컨트롤러를 등록하고, 승인된 plain Ninja 스택이면 <code>NinjaAPI</code> 에 라우터를 붙인다. 실제 프로젝트 API 객체·BC registrar·URLconf 의 등록 경로가 하나로 이어져야 한다.</p></div>
+            <div class="rd-w"><p>프로젝트가 전달한 API 객체에 자기 BC 를 등록하는 함수다 — 공개 창구는 <code>register_&lt;bc&gt;_api(api)</code>, 앞단이 인터넷에 열지 않는 내부 창구는 <code>register_&lt;bc&gt;_internal_api(api)</code>. 이 파일에 하나 또는 둘을 두고(내부 창구만 가진 BC 는 뒤의 것만), 어느 객체에 다는지는 함수 이름이 정한다. API 객체를 여기서 새로 만들거나 프로젝트 모듈(<code>api.py</code> · <code>internal_api.py</code>)에서 가져오지 않는다.</p><p>Ninja Extra 스택이면 <code>NinjaExtraAPI</code> 에 컨트롤러를 등록하고, 승인된 plain Ninja 스택이면 <code>NinjaAPI</code> 에 라우터를 붙인다. scope 마다 프로젝트 API 객체·BC registrar·URLconf 의 등록 경로가 하나로 이어져야 한다.</p></div>
             <div class="rd-r"><span class="rd-k">규칙</span><b>와이어링</b> — <b>프로젝트를 import 하지 않는다</b> <em>← 그래서 D11 예외가 없어진다</em></div>
             <div class="rd-nm"><span class="rd-k">이름</span>고정 이름. <span class='no'>&lt;bounded_context&gt;_api_router.py</span> 로 짓지 않는다 — <b>BC 이름은 경로가 이미 말한다</b>.</div>
           </li>
@@ -3233,51 +3237,58 @@ BC 하나짜리 저장소에서도 <b>처음부터</b> 여기 만든다.
       <section class="tabpane" id="tp-project" role="tabpanel">
         <div class="pane-hd"><b class="ph-n">&lt;project&gt;/</b><span class="ph-s">조립</span><span class="tb-z z-own">고유</span></div>
         <dl class="pane-kv">
-          <dt>목적</dt><dd><p>프레임워크가 전역에 요구하는 API 객체·URLconf·Celery 앱·환경 설정을 조립한다. 각 BC 내부의 구현 조립은 그 BC 의 <code>composition_root/</code> 가 맡는다.</p><p>프로젝트는 공개 API registrar 를 통해 BC 를 등록한다. BC 내부 업무 타입·도메인 예외 목록을 import 해 처리하지 않는다. 앱 경로 문자열과 공개 registrar 는 등록 표면이다.</p></dd>
-          <dt>들어오는 것</dt><dd><p><code>api.py</code> 전역 API 객체와 전역 예외 핸들러 · <code>urls.py</code> 라우터 등록 ·
+          <dt>목적</dt><dd><p>프로젝트 전역에 정해진 개수로 두는 조립 파일 — 공개 API 객체 · 내부 창구 API 객체 · URLconf · Celery 앱 · 환경 설정 — 을 조립한다. 각 BC 내부의 구현 조립은 그 BC 의 <code>composition_root/</code> 가 맡는다.</p><p>프로젝트는 BC 등록 함수(공개 <code>register_&lt;bc&gt;_api</code> · 내부 창구 <code>register_&lt;bc&gt;_internal_api</code>)를 통해 BC 를 등록한다. BC 내부 업무 타입·도메인 예외 목록을 import 해 처리하지 않는다. 앱 경로 문자열과 BC 등록 함수는 등록 표면이다.</p></dd>
+          <dt>들어오는 것</dt><dd><p><code>api.py</code> 공개 API 객체와 그 예외 핸들러 · <code>internal_api.py</code> 내부 창구 API 객체(내부 창구가 없으면 빈 파일) · <code>urls.py</code> 라우터 등록과 두 객체의 mount ·
   <code>celery.py</code> 인스턴스와 <code>autodiscover_tasks</code> ·
   <code>settings/&lt;environment&gt;.py</code>(<code>base</code> · <code>local</code> · <code>production</code> · <code>test</code>).</p>
-  <p><em>넷 다 프레임워크가 「전역에 하나」를 강제하는 것들이고, 그래서 여기 말고는 둘 자리가 없다.</em></p></dd>
+  <p><em>다섯 다 프로젝트 전역에 정해진 개수로 두는 조립 파일이고, 그래서 여기 말고는 둘 자리가 없다.</em></p></dd>
           <dt class="no">안 들어오는 것</dt><dd><p><b>도메인 예외 목록.</b> 전역 예외 핸들러에 각 BC 의 예외를 나열하기 시작하면
   <b>BC 가 하나 늘 때마다 이 파일이 바뀐다</b> — 위의 «타입으로 알지 않는다»가 바로 여기서 깨진다.</p>
   <p>오류를 HTTP 언어로 옮기는 일은 각 BC 의 <code>driving_layer/api/bc_error_schema.py</code> 가 갖는다.</p></dd>
           <dt class="wy">이 모양이 된 까닭</dt><dd><p>전역 객체는 프로젝트, BC 구현 조립은 BC 루트, 업무 처리는 네 층이 나눠 소유한다. BC 는 전달받은 API 객체에 자신을 꽂으므로 프로젝트를 import 하지 않는다.</p><p>등록할 BC 가 늘거나 줄면 명시적 registrar 호출은 함께 바뀐다. 등록의 변화가 업무 규칙·오류 목록을 프로젝트에 옮길 근거는 아니다. 트리에 그리지 않은 <code>asgi.py</code>·<code>wsgi.py</code> 등의 프레임워크 진입점은 관할 밖이다.</p></dd>
         </dl>
-        <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">6칸</span></div>
+        <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">7칸</span></div>
         <ol class="rowdocs">
           <li class="rd" id="rd-166">
             <div class="rd-p" style="--d:0"><b class="rd-n"><b>&lt;project&gt;/</b></b><span class="tb-z z-own">고유</span><span class="chg fix">신설</span><button type="button" class="pin d" data-k="d25">D25</button></div>
-            <div class="rd-w"><p>전역 API·URLconf·Celery 앱·환경 설정을 조립하는 Django 프로젝트 패키지다. BC 의 내부 업무 타입을 가져와 분기하거나 나열하지 않는다.</p><p>BC API 의 공개 <code>register_&lt;bc&gt;_api(api)</code> 를 import 해서 등록하는 것은 허용된 조립 표면이다. 등록이 필요한 BC 가 추가되면 해당 등록 줄은 바뀐다. 업무 실패 목록이나 BC 내부 구현까지 아는 것과 구분한다.</p></div>
-            <div class="rd-r"><span class="rd-k">규칙</span>BC 밖의 프로젝트 조립 자리. BC 내부 타입은 모르고 공개 API registrar 로 등록한다. <code>health.py</code>·<code>home.py</code>·<code>asgi.py</code>·<code>wsgi.py</code> 는 표준 트리의 관할 밖이다(#436).</div>
+            <div class="rd-w"><p>공개 API · 내부 창구 API · URLconf · Celery 앱 · 환경 설정을 조립하는 Django 프로젝트 패키지다. BC 의 내부 업무 타입을 가져와 분기하거나 나열하지 않는다.</p><p>BC API 의 등록 함수(공개 <code>register_&lt;bc&gt;_api</code> · 내부 창구 <code>register_&lt;bc&gt;_internal_api</code>)를 import 해서 그 scope 의 API 객체로 부르는 것은 허용된 조립 표면이다. 등록이 필요한 BC 가 추가되면 해당 등록 줄은 바뀐다. 업무 실패 목록이나 BC 내부 구현까지 아는 것과 구분한다.</p></div>
+            <div class="rd-r"><span class="rd-k">규칙</span>BC 밖의 프로젝트 조립 자리. BC 내부 타입은 모르고 BC 등록 함수(공개 <code>register_&lt;bc&gt;_api</code> · 내부 창구 <code>register_&lt;bc&gt;_internal_api</code>)로 등록한다. <code>health.py</code>·<code>home.py</code>·<code>asgi.py</code>·<code>wsgi.py</code> 는 표준 트리의 관할 밖이다(#436).</div>
             <div class="rd-nm"><span class="rd-k">이름</span>장고 프로젝트 패키지 — 이름은 프로젝트가 정한다.</div>
           </li>
           <li class="rd" id="rd-167">
             <div class="rd-p" style="--d:1"><b class="rd-n">api.py</b><span class="tb-z z-own">고유</span><span class="chg fix">확정</span><button type="button" class="pin d" data-k="d25">D25</button></div>
-            <div class="rd-w">프레임워크가 <b>«전역에 딱 하나»</b>를 요구해서 이 자리가 생겼다.
+            <div class="rd-w"><b>공개 API 객체 하나</b>를 생성 문장 하나로 짓는 자리다 — 프로젝트에 정해진 개수로 두는 조립 파일이고, 둘째 표준 API 객체 <code>internal_api</code> 는 형제 <code>internal_api.py</code> 에 산다.
 업무 실패를 나열하기 시작하면 <b>BC 가 하나 늘 때마다 이 파일이 바뀐다</b>.</div>
-            <div class="rd-r"><span class="rd-k">규칙</span><b>전역 API 객체 하나와 전역 예외 핸들러</b> — 프레임워크가 하나를 요구해서 여기다. <em>도메인 예외 목록은 여기 없다</em> · <b>루트 API 객체는 경로 앞 응답을 문서에 붙이는 정해진 클래스 하나로 짓는다</b> <em>클래스 이름 · 기저는 프로젝트가 고르고 <code>get_openapi_schema</code> 의 서명 · 몸통은 글자 그대로다 — 그 몸통이 <code>framework/ninja/pre_route_responses.py</code> 를 부른다(<code>implementation-django-ninja</code> §6.2)</em> <span class='dim'>11-13 · F4-173 — API 문서는 그 경로에서 날 수 있는 오류를 누가 보내든 모두 적는다(사용자 결정).</span></div>
+            <div class="rd-r"><span class="rd-k">규칙</span><b>공개 API 객체 하나와 그 예외 핸들러</b> — 프로젝트에 정해진 개수로 두는 조립 파일이라 여기다(둘째 표준 API 객체는 형제 <code>internal_api.py</code>). <em>도메인 예외 목록은 여기 없다</em> · <b>생성 문장 하나로만 짓는다</b> <em>객체 이름은 프로젝트가 고른다 — 그 객체나 생성자를 다른 이름에 별칭으로 대입하거나 튜플 대입 안에서 짓거나 <code>type(…)(…)</code> · <code>copy</code> 로 복사하지 않는다</em> · <b>루트 API 객체는 경로 앞 응답을 문서에 붙이는 정해진 클래스 하나로 짓는다</b> <em>클래스 이름 · 기저는 프로젝트가 고르고 <code>get_openapi_schema</code> 의 서명 · 몸통은 글자 그대로다 — 그 몸통이 <code>framework/ninja/pre_route_responses.py</code> 를 부른다(<code>implementation-django-ninja</code> §6.2)</em> <span class='dim'>11-13 · F4-173 — API 문서는 그 경로에서 날 수 있는 오류를 누가 보내든 모두 적는다(사용자 결정).</span></div>
             <div class="rd-nm"><span class="rd-k">이름</span>장고·닌자가 정하는 고정 이름.</div>
           </li>
           <li class="rd" id="rd-168">
-            <div class="rd-p" style="--d:1"><b class="rd-n">urls.py</b><span class="tb-z z-own">고유</span><span class="chg fix">확정</span><button type="button" class="pin d" data-k="d25">D25</button></div>
-            <div class="rd-w">각 BC 의 <code>register_&lt;bc&gt;_api(api)</code> 를 <b>명시적으로</b> 부른다.
-자동 탐색을 쓰지 않는 것은 <b>«무엇이 얹혔나»가 이 파일 하나로 보여야</b> 하기 때문이다.</div>
-            <div class="rd-r"><span class="rd-k">규칙</span><code>api.py</code> 의 전역 API 객체에 각 BC 의 공개 <code>register_&lt;bc&gt;_api(api)</code> 를 명시적으로 한 번 등록한다. registrar import 는 허용된 조립이고 BC 내부 업무 타입 import 는 하지 않는다.</div>
+            <div class="rd-p" style="--d:1"><b class="rd-n">internal_api.py</b><span class="tb-z z-own">고유</span><span class="chg fix">신설</span><button type="button" class="pin d" data-k="d25">D25</button></div>
+            <div class="rd-w"><b>내부 창구 API 객체 <code>internal_api</code> 하나</b> — 앞단이 인터넷에 열지 않는 창구(같은 시스템의 SSE 서버 · 워커가 부르는 창구)를 여기 단다.
+<code>api.py</code> 의 루트 API 클래스를 들여 짓고, <code>urls.py</code> 가 <code>/internal/</code> 에 단다. <b>내부 창구가 없어도 빈 파일로 둔다</b> — 빈 파일은 API surface 가 아니고, 내부 창구가 생기면 그 착지 자리다.</div>
+            <div class="rd-r"><span class="rd-k">규칙</span><b>내부 창구 API 객체 <code>internal_api</code> 하나와 그 예외 핸들러</b> — 앞단(리버스 프록시)이 인터넷에 열지 않는 HTTP 창구를 다는 둘째 표준 API 객체다. <em>예: 같은 시스템의 SSE 서버 · 워커가 부르는 창구</em> · <b><code>api.py</code> 의 루트 API 클래스를 들여 짓는다</b> <em><code>internal_api = &lt;그 클래스&gt;(urls_namespace="internal_api")</code> 한 문장 — 이 파일에는 import 들 · 생성 문장 하나 · <code>@internal_api.exception_handler</code> 함수만 온다. 클래스 정의 · 별칭 · 둘째 생성은 위반이다</em> · <b>내부 창구가 없는 프로젝트도 빈 파일로 둔다</b> <em>내용 없는 <code>internal_api.py</code> 는 API surface 가 아니다 — 뒤에 내부 창구가 생기면 이 빈 파일이 착지 자리다</em> · <b>«internal» 은 앞단 바깥에 열리지 않는다는 뜻이다</b> <em>같은 배포 단위 안을 오가는 <code>framework/broker/internal/</code> 의 internal 과 다르다</em> <span class='dim'>11-19 · F4-150 — 내부 창구 객체의 표준 자리(사용자 결정 — 별도 API 객체 · 주소 <code>/internal/</code>).</span></div>
+            <div class="rd-nm"><span class="rd-k">이름</span>고정 이름 — 안의 객체 이름도 <code>internal_api</code>(<code>urls_namespace="internal_api"</code>).</div>
           </li>
           <li class="rd" id="rd-169">
+            <div class="rd-p" style="--d:1"><b class="rd-n">urls.py</b><span class="tb-z z-own">고유</span><span class="chg fix">확정</span><button type="button" class="pin d" data-k="d25">D25</button></div>
+            <div class="rd-w">각 BC 의 등록 함수를 <b>명시적으로</b> 부른다 — 공개 <code>register_&lt;bc&gt;_api(api)</code> · 내부 창구 <code>register_&lt;bc&gt;_internal_api(internal_api)</code>, 이름의 scope 에 맞는 객체로.
+자동 탐색을 쓰지 않는 것은 <b>«무엇이 얹혔나»가 이 파일 하나로 보여야</b> 하기 때문이다.</div>
+            <div class="rd-r"><span class="rd-k">규칙</span>각 BC 의 등록 함수를 그 이름의 scope 에 맞는 표준 API 객체로 명시적으로 한 번씩 부른다 — 공개 <code>register_&lt;bc&gt;_api(api)</code> 는 <code>api.py</code> 의 공개 객체로, 내부 창구 <code>register_&lt;bc&gt;_internal_api(internal_api)</code> 는 <code>internal_api.py</code> 의 <code>internal_api</code> 로. <code>internal_api</code> 는 <code>urlpatterns</code> 에 바로 넣은 <code>path("internal/", internal_api.urls)</code> 로만 달고, 공개 객체는 <code>internal/</code> 이 아닌 주소에 단다. registrar import 는 허용된 조립이고 BC 내부 업무 타입 import 는 하지 않는다.</div>
+          </li>
+          <li class="rd" id="rd-170">
             <div class="rd-p" style="--d:1"><b class="rd-n">celery.py</b><span class="tb-z z-own">고유</span><span class="chg fix">신설</span><button type="button" class="pin d" data-k="d26">D26</button><button type="button" class="pin d" data-k="d25">D25</button></div>
             <div class="rd-w"><b>Celery 인스턴스와 <code>autodiscover_tasks</code>.</b>
 <code>api.py</code> 와 같은 자리이고 같은 자를 받는다 — <b>얹기만 하고 안을 모른다</b>.</div>
             <div class="rd-r"><span class="rd-k">규칙</span><code>Celery</code> 인스턴스와 <code>autodiscover_tasks(packages=…, related_name=None)</code> — <b>조립</b>. <em>경로 문자열만 쓰고 타입을 모른다</em> · <b>기본값으로는 못 닿는다</b> — <em>Django 가 넘기는 package 는 <code>AppConfig.name</code>(=<code>…driven_layer/django_&lt;bc&gt;</code>) 이라 위로 못 올라간다. <code>packages</code> 를 «콜러블»로 주되 <b>목록이 아니라 규칙</b>으로 짓는다 — <code>label</code> 로 도는 한 줄</em></div>
           </li>
-          <li class="rd" id="rd-170">
+          <li class="rd" id="rd-171">
             <div class="rd-p" style="--d:1"><b class="rd-n">settings/</b><span class="tb-z z-own">고유</span><span class="chg fix">확정</span><button type="button" class="pin d" data-k="d25">D25</button></div>
             <div class="rd-w"><b>장고가 자리를 정한 설정.</b>
 기능별로 파일을 쪼개기 시작하면 «이 값이 어느 환경에서 무엇인가»를 여러 파일을 열어 봐야 알게 된다.</div>
             <div class="rd-r"><span class="rd-k">규칙</span><b>Django 가 정한 자리</b> — <em>여기서 갈리는 건 환경뿐이다</em></div>
             <div class="rd-nm"><span class="rd-k">이름</span>종류 이름 폴더.</div>
           </li>
-          <li class="rd" id="rd-171">
+          <li class="rd" id="rd-172">
             <div class="rd-p" style="--d:2"><b class="rd-n">&lt;environment&gt;.py</b><span class="tb-z z-own">고유</span><span class="chg fix">확정</span><button type="button" class="pin d" data-k="d25">D25</button></div>
             <div class="rd-w"><b>환경 하나 = 파일 하나</b> — <code>base</code> · <code>local</code> · <code>production</code> · <code>test</code>.
 공통은 <code>base</code> 에 두고 나머지는 그것을 가져와 덮어쓴다.</div>
@@ -3295,66 +3306,66 @@ BC 하나짜리 저장소에서도 <b>처음부터</b> 여기 만든다.
         </dl>
         <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">11칸</span></div>
         <ol class="rowdocs">
-          <li class="rd" id="rd-172">
+          <li class="rd" id="rd-173">
             <div class="rd-p" style="--d:0"><b class="rd-n"><b>cross_context/</b></b><span class="tb-z z-own">고유</span><span class="chg fix">신설</span><button type="button" class="pin d" data-k="d25">D25</button></div>
             <div class="rd-w"><b>BC 둘 이상의 값을 함께 쓰는 합성 칸들의 뿌리</b> — BC 밖 · 위에 서서 각 BC 의 공개 창구를 따로 부르고 식별자로 맞춘다.
 BC 는 이 아래를 모른다. <b>있을 때 본다</b> — 그런 화면이 생길 때 만들고, 있으면 그 아래 고정 칸이 반드시 선다.</div>
             <div class="rd-r"><span class="rd-k">규칙</span><b>BC 둘 이상의 값을 함께 쓰는 합성 칸들의 뿌리</b> — 저장소 루트 · <b>BC 밖 · BC 위</b> · <b>판정 물음: 「이 코드는 BC 둘 이상의 값을 함께 쓰나?」</b> <em>예이면 이 아래, 한 BC 것이면 그 BC 안</em> · <b>있을 때 본다</b> <em>그런 화면이 생길 때 만든다 — <code>framework/</code> 처럼 있으면 그 아래 고정 칸이 반드시 선다</em> · 규칙: <b>여기서 <code>application/</code> 으로 나가는 import 는 각 BC 의 <code>driving_layer/open_host_service/</code>(창구 서비스 함수 · 계약 · 창구 예외)뿐</b> <em>BC 의 모델 · 유스케이스 · 도메인 · <code>composition_root/</code> · <code>test/</code> 를 import 하거나, <code>get_model()</code> 로 모델을 꺼내거나, 시험 밖에서 <code>get_user_model()</code> 을 부르면 위반</em> · <b>모델 클래스 · 날 SQL 0</b> <em>모델 클래스를 정의하지 않고 <code>connection</code> · <code>RawSQL</code> · DB 드라이버 · <code>.raw(</code> · <code>.extra(</code> 를 쓰지 않는다 — 값은 그 BC 창구로만 읽는다</em> · <b>BC · <code>framework/</code> · <code>&lt;project&gt;/</code> 에서 여기로 들어오는 import 가 0</b> <em><code>&lt;project&gt;/</code> 는 <code>include("cross_context.backoffice.urls")</code> 와 <code>INSTALLED_APPS</code> 의 문자열로만 넣는다 — 그래서 이 칸은 BC 순환 셈(#450 · 리팩토링 deps)에 들지 않는다</em> · <b>업무 판정 0</b> <em>업무 판정(예: 로그인 정지 확인)은 지금처럼 BC 사이(ACL → OHS)에 두고, 남의 값을 «보여 주려고» 모으는 합성만 여기 온다</em> · <b>자식은 합성 종류 하나 = 폴더 하나</b> <em>지금은 <code>backoffice/</code> 하나</em></div>
             <div class="rd-nm"><span class="rd-k">이름</span>고정 이름 <code>cross_context/</code> — <b>무엇이 들어오는지로 짓는다</b>(BC 둘 이상의 값을 함께 쓰는 것) · <span class='no'>cycle_breaker/</span> ✗ — 하는 방법으로 지으면 순환을 일으키는 것은 무엇이든(업무 판정까지) 밀어 넣게 된다.</div>
           </li>
-          <li class="rd" id="rd-173">
+          <li class="rd" id="rd-174">
             <div class="rd-p" style="--d:1"><b class="rd-n">backoffice/</b><span class="tb-z z-own">고유</span><span class="chg fix">신설</span><button type="button" class="pin d" data-k="d25">D25</button></div>
             <div class="rd-w">운영자 화면(Django admin) 합성 — BC 둘 이상의 값을 한 화면에 보인다. 장고 앱 <code>cross_context.backoffice</code> 하나이고 모델이 없다.</div>
             <div class="rd-r"><span class="rd-k">규칙</span><b>운영자 화면(Django admin) 합성</b> — <b>BC 둘 이상의 값을 한 화면에 보이는 admin 화면</b>만 산다. <em>한 BC 값만 보이는 admin 은 지금처럼 그 BC 의 <code>driven_layer/django_&lt;bounded_context&gt;/admin/</code> 에 둔다</em> · 장고 앱 하나(<code>cross_context.backoffice</code>) · <b>폴더는 화면뿐</b> <em><code>static/</code> · <code>templatetags/</code> · <code>management/</code> 같은 폴더는 <code>&lt;screen&gt;/</code> 으로 읽혀 위반이다</em></div>
             <div class="rd-nm"><span class="rd-k">이름</span>합성 종류 이름 — 지금은 <code>backoffice/</code>(운영자 화면) 하나.</div>
           </li>
-          <li class="rd" id="rd-174">
+          <li class="rd" id="rd-175">
             <div class="rd-p" style="--d:2"><b class="rd-n">apps.py</b><span class="tb-z z-own">고유</span><span class="chg fix">신설</span><button type="button" class="pin d" data-k="d25">D25</button></div>
             <div class="rd-w">장고 앱 등록 파일 — label <code>backoffice</code> · 모델 없는 앱이다.</div>
             <div class="rd-r"><span class="rd-k">규칙</span>장고 앱 등록 — <code>INSTALLED_APPS</code> 의 <code>"cross_context.backoffice"</code> · label <code>backoffice</code> · <b>모델이 없다</b> <em><code>models.py</code> · <code>models/</code> · <code>migrations/</code> 를 두지 않는다 — 모델 · 마이그레이션은 그 BC 의 <code>django_&lt;bounded_context&gt;/</code> 에 있다</em></div>
             <div class="rd-nm"><span class="rd-k">이름</span>장고가 정하는 고정 이름.</div>
           </li>
-          <li class="rd" id="rd-175">
+          <li class="rd" id="rd-176">
             <div class="rd-p" style="--d:2"><b class="rd-n">urls.py</b><span class="tb-z z-own">고유</span><span class="chg fix">신설</span><button type="button" class="pin d" data-k="d25">D25</button></div>
             <div class="rd-w">운영자 화면 주소를 admin 주소 아래에 모은다 — 화면마다 <code>admin.site.admin_view</code> 로 감싼다.</div>
             <div class="rd-r"><span class="rd-k">규칙</span>운영자 화면 주소 묶음 — <code>app_name = "backoffice"</code> · <b>화면마다 <code>path("&lt;screen&gt;/", admin.site.admin_view(…), name="&lt;screen&gt;")</code></b> <em>모든 <code>path</code> · <code>re_path</code> 의 둘째 인자가 <code>admin.site.admin_view(…)</code> 호출이다 — admin 로그인 · 권한을 그대로 쓴다. 감싸지 않으면 다른 BC 값을 보이는 화면이 로그인 없이 열린다</em> · <b>주소는 이 파일 하나에만 적는다</b> <em><code>include(…)</code> 도, 이 칸의 다른 파일에 둔 <code>path</code> · ninja <code>Router</code> 도 위반이다</em> · <code>&lt;project&gt;/urls.py</code> 가 <code>path("admin/backoffice/", include("cross_context.backoffice.urls"))</code> 를 <code>admin/</code> 줄 앞에 한 번 둔다 · <b>BC 모델에 <code>admin.register</code> 하지 않는다</b> <em>그래서 admin 첫 화면 목록에는 안 뜬다(장고는 등록 모델만 그린다) — 화면은 <code>reverse("backoffice:&lt;screen&gt;")</code> 링크로 연다</em></div>
             <div class="rd-nm"><span class="rd-k">이름</span>장고가 정하는 고정 이름.</div>
           </li>
-          <li class="rd" id="rd-176">
+          <li class="rd" id="rd-177">
             <div class="rd-p" style="--d:2"><b class="rd-n">&lt;screen&gt;/</b><span class="tb-z z-own">고유</span><span class="chg fix">신설</span><button type="button" class="pin d" data-k="d25">D25</button></div>
             <div class="rd-w">운영자 화면 하나 — 그 화면의 입구 · 폼 · 기능을 담는다.</div>
             <div class="rd-r"><span class="rd-k">규칙</span>운영자 화면 하나 — 예: <code>suspension/</code>(정지 화면 — 손님 닉네임은 계정 쪽 BC, 정지는 정책 쪽 BC) · <b>안은 <code>panel.py</code> · <code>form/</code> · <code>feature/</code> 뿐</b> <em>BC 안 <code>admin/&lt;entity&gt;/</code> 와 같다</em></div>
             <div class="rd-nm"><span class="rd-k">이름</span>운영자가 부르는 화면 이름 — 예: <code>suspension/</code>.</div>
           </li>
-          <li class="rd" id="rd-177">
+          <li class="rd" id="rd-178">
             <div class="rd-p" style="--d:3"><b class="rd-n">panel.py</b><span class="tb-z z-own">고유</span><span class="chg fix">신설</span><button type="button" class="pin d" data-k="d25">D25</button></div>
             <div class="rd-w">화면 입구 — 주소 · 권한 · 기능으로 넘기기만 한다.</div>
             <div class="rd-r"><span class="rd-k">규칙</span>화면 입구 — 주소 · 권한 · 기능으로 넘기기만 · <em>BC 안 <code>admin/&lt;entity&gt;/panel.py</code> 와 같은 몫</em></div>
             <div class="rd-nm"><span class="rd-k">이름</span>고정 이름.</div>
           </li>
-          <li class="rd" id="rd-178">
+          <li class="rd" id="rd-179">
             <div class="rd-p" style="--d:3"><b class="rd-n">form/&lt;form&gt;_form.py</b><span class="tb-z z-own">고유</span><span class="chg fix">신설</span><button type="button" class="pin d" data-k="d25">D25</button></div>
             <div class="rd-w">입력 폼 — 값의 모양만 본다.</div>
             <div class="rd-r"><span class="rd-k">규칙</span>입력 폼 — 값의 모양만 본다 · <b>업무 규칙 검사는 각 BC 창구가 한다</b></div>
             <div class="rd-nm"><span class="rd-k">이름</span>폼 이름 + <code>_form</code>.</div>
           </li>
-          <li class="rd" id="rd-179">
+          <li class="rd" id="rd-180">
             <div class="rd-p" style="--d:3"><b class="rd-n">feature/&lt;feature&gt;.py</b><span class="tb-z z-own">고유</span><span class="chg fix">신설</span><button type="button" class="pin d" data-k="d25">D25</button></div>
             <div class="rd-w">한 기능 — 각 BC 창구를 부르고 식별자로 맞춘다 · 창구 예외를 화면 알림으로 옮긴다.</div>
             <div class="rd-r"><span class="rd-k">규칙</span><b>한 기능</b> — 각 BC 창구를 따로 부르고 <b>식별자(계정 번호)로 맞춘다</b> <em>예: 닉네임으로 찾기 → 계정 쪽 BC 창구가 번호를 준다 → 정책 쪽 BC 창구에 그 번호들의 지금 정지를 묻는다 → 번호로 맞춰 보인다</em> · <b>판정은 하지 않는다</b> <em>정지를 걸어도 되나 · 무엇이 지금 정지인가는 그 BC 창구가 정한다</em> · <b>창구가 던지는 <code>&lt;service&gt;_published_error</code> 는 여기서 화면 알림으로 옮긴다</b></div>
             <div class="rd-nm"><span class="rd-k">이름</span>동사구 — BC 안 admin 기능과 같다.</div>
           </li>
-          <li class="rd" id="rd-180">
+          <li class="rd" id="rd-181">
             <div class="rd-p" style="--d:2"><b class="rd-n">templates/admin/backoffice/&lt;page&gt;.html</b><span class="tb-z z-own">고유</span><span class="chg fix">신설</span><button type="button" class="pin d" data-k="d25">D25</button></div>
             <div class="rd-w">admin 화면 템플릿 — 화면별 하위 폴더 없이 평평하게 둔다.</div>
             <div class="rd-r"><span class="rd-k">규칙</span>admin 화면 템플릿 — <b>평평하게</b> <em>화면별 하위 폴더 없이 이 폴더 바로 아래에 둔다 · BC 안 <code>templates/admin/&lt;bounded_context&gt;/</code> 와 같은 꼴 — 셋째 마디가 앱 label <code>backoffice</code> 다</em></div>
           </li>
-          <li class="rd" id="rd-181">
+          <li class="rd" id="rd-182">
             <div class="rd-p" style="--d:2"><b class="rd-n">test/</b><span class="tb-z z-own">고유</span><span class="chg fix">신설</span><button type="button" class="pin d" data-k="d25">D25</button></div>
             <div class="rd-w">이 칸의 시험.</div>
             <div class="rd-r"><span class="rd-k">규칙</span>이 칸의 시험 — <b>자식은 <code>integration/</code> 하나</b></div>
           </li>
-          <li class="rd" id="rd-182">
+          <li class="rd" id="rd-183">
             <div class="rd-p" style="--d:3"><b class="rd-n">integration/</b><span class="tb-z z-own">고유</span><span class="chg fix">신설</span><button type="button" class="pin d" data-k="d25">D25</button></div>
             <div class="rd-w">화면 시험 — Django client 로 admin 주소를 열고 각 BC 는 진짜로 돈다.</div>
             <div class="rd-r"><span class="rd-k">규칙</span>화면 시험 — Django client 로 admin 주소를 연다 · <b>각 BC 는 진짜</b> <em>같은 프로세스 · 시험 DB — 다른 BC 데이터는 그 BC 의 제품 입구(HTTP · admin 화면) · 창구 · 플랫폼 API(<code>get_user_model()</code>)로 만들고, BC <code>test/</code> 재료 · 모델은 import 하지 않는다. 공용 고정물은 이 폴더의 <code>conftest.py</code> 에 둔다</em> · <b>안은 pytest 가 이름을 소유한다</b> <em>프로젝트 <code>testpaths</code> 에 <code>cross_context</code> 를 더한다</em></div>
@@ -3513,7 +3524,7 @@ BC 는 이 아래를 모른다. <b>있을 때 본다</b> — 그런 화면이 �
         <li class="st">
           <span class="st-n">·</span>
           <div class="st-b">
-            <div class="st-f"><button type="button" class="fgo stpath" data-r="168" aria-label="&lt;project&gt;/urls.py — 1장 트리 168행으로">&lt;project&gt;/urls.py</button><span class="st-l z-own">프로젝트</span></div>
+            <div class="st-f"><button type="button" class="fgo stpath" data-r="169" aria-label="&lt;project&gt;/urls.py — 1장 트리 169행으로">&lt;project&gt;/urls.py</button><span class="st-l z-own">프로젝트</span></div>
             <pre class="st-sig"><code>register_order_api(api)</code></pre>
             <p class="st-t">프로젝트의 전역 API 객체에 BC registrar 를 한 번 등록한다.</p>
           </div>
@@ -4016,7 +4027,7 @@ class NinjaOrderController:
     d7: { id: "D7", vd: "확정 · 08-04", t: "api/ 는 area 1차 · ninja/ 폴더는 없다",
       d: "트리 전체가 <b>도메인 축 1차 · 종류 2차</b>이고 정본 §0-4 가 그렇게 못 박았다. 게다가 기술 축의 값이 <b>하나뿐</b>(ninja 63 · 나머지 0)이라 폴더를 만들면 16개 BC 에 빈 한 겹이 생긴다. 기술은 §4 대로 <b>이름</b>에 붙인다." },
     d8: { id: "D8", vd: "확정 · 08-04", t: "schema/ 는 api/<area>/ 밑으로",
-      d: "실측이 이미 반쯤 그렇다 — area 로 나눈 BC(하위 폴더 11개)와 <b>평면으로 둔 BC(파일 16개)</b>가 섞여 있고 그 평면이 §0-4 위반이다. 34파일 전부 ninja 종속이라 <code>api/</code> 것이 맞다.<br><b>08-06 재검 — 실측이 전제를 확인했다.</b> <em>「이 스키마를 여러 area 가 나눠 쓰나?」</em> — <b>컨트롤러가 쓰는 70클래스 전부가 area 하나에만 갇혀 있고 공유는 0건</b>(HEAD 재측정 — 총 101 · 쓰임 70 · 안 쓰임 31. 옛 값 「63/43/20」은 BC 층만 센 것). 같은 자로 <code>bc_error_schema</code> 을 재면 정반대다: <b>401 이 컨트롤러 보유 area 23개 전부</b>(422 는 20 · 503 은 19 · BC 로는 13·10·12). 그래서 하나는 <code>&lt;area&gt;/</code> 밑이고 하나는 <code>api/</code> 바로 밑이다. 현행이 BC 층인 건 증상이다 — <code>accounts/…/schema_in.py</code> 한 파일에 <b>세 area 것 6클래스</b>가 뭉쳐 있다.<br><b>이름 <code>schema_in</code> 은 반복이 아니다</b> — 규칙의 선은 <b>「자리표시자면 접미사를 뗀다」</b>(무접미 <b>32</b>)이고, 접미사를 다는 자리 <b>34</b> 는 <b>이름만으로 «무엇인지»가 안 보이는 곳</b>이며, 고정 이름 <b>25</b> 개는 그냥 이름을 쓴다(<code>command</code>·<code>panel</code>·<code>composition_root</code>…). 자리표시자는 파일이 늘 때마다 접미사가 같이 늘어서다. 대안 <code>input/output</code> 은 <code>command/out</code> 과 어휘가 어긋나고, <code>request/response</code> 는 <code>contract/request/</code> 와 같은 말이 되며, <code>in.py</code> 는 <b>예약어라 import 가 안 된다</b>." },
+      d: "실측이 이미 반쯤 그렇다 — area 로 나눈 BC(하위 폴더 11개)와 <b>평면으로 둔 BC(파일 16개)</b>가 섞여 있고 그 평면이 §0-4 위반이다. 34파일 전부 ninja 종속이라 <code>api/</code> 것이 맞다.<br><b>08-06 재검 — 실측이 전제를 확인했다.</b> <em>「이 스키마를 여러 area 가 나눠 쓰나?」</em> — <b>컨트롤러가 쓰는 70클래스 전부가 area 하나에만 갇혀 있고 공유는 0건</b>(HEAD 재측정 — 총 101 · 쓰임 70 · 안 쓰임 31. 옛 값 「63/43/20」은 BC 층만 센 것). 같은 자로 <code>bc_error_schema</code> 을 재면 정반대다: <b>401 이 컨트롤러 보유 area 23개 전부</b>(422 는 20 · 503 은 19 · BC 로는 13·10·12). 그래서 하나는 <code>&lt;area&gt;/</code> 밑이고 하나는 <code>api/</code> 바로 밑이다. 현행이 BC 층인 건 증상이다 — <code>accounts/…/schema_in.py</code> 한 파일에 <b>세 area 것 6클래스</b>가 뭉쳐 있다.<br><b>이름 <code>schema_in</code> 은 반복이 아니다</b> — 규칙의 선은 <b>「자리표시자면 접미사를 뗀다」</b>(무접미 <b>32</b>)이고, 접미사를 다는 자리 <b>34</b> 는 <b>이름만으로 «무엇인지»가 안 보이는 곳</b>이며, 고정 이름 <b>26</b> 개는 그냥 이름을 쓴다(<code>command</code>·<code>panel</code>·<code>composition_root</code>…). 자리표시자는 파일이 늘 때마다 접미사가 같이 늘어서다. 대안 <code>input/output</code> 은 <code>command/out</code> 과 어휘가 어긋나고, <code>request/response</code> 는 <code>contract/request/</code> 와 같은 말이 되며, <code>in.py</code> 는 <b>예약어라 import 가 안 된다</b>." },
     d10: { id: "D10", vd: "확정 · 08-04 · 개정 10-27 · D60", t: "규정은 «검사할 수 있는 데까지»",
       d: "깊이가 기준이 아니라 <b>판정 가능성</b>이 기준이다. <code>contract/{request,response,exception}</code>은 경계를 넘는 표면이라, <code>schema/{in,out}</code>은 <b>방향이 검사 대상</b>이라 규정한다. 반면 그 안의 클래스 구성은 검사할 골격이 없어 규정하지 않는다." },
     d11: { id: "D11", vd: "확정 · 08-06", t: "칸 아래는 application_layer/&lt;area&gt;/ 와 도메인 exception·value_object 만 의존한다",

@@ -369,12 +369,18 @@ djr:R-2932 a djr:Prohibition ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-2933 a djr:Obligation ;
-    skos:prefLabel "프로젝트 api.py 의 NinjaExtraAPI 단일 소유"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2933@2026-08-22> .
+    skos:prefLabel "프로젝트 api.py 의 공개 NinjaExtraAPI 하나 · internal_api.py 의 내부 창구 internal_api 하나 소유(새 내부 창구를 /api/internal/… 에 두지 않음)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2933@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-2933@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2933 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2933@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-2933 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2933@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2934 a djr:Obligation ;
     skos:prefLabel "명시 registrar 소유 controller 의 auto_import=False"@ko ;
@@ -385,8 +391,8 @@ djr:R-2934 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2935 a djr:Obligation ;
-    skos:prefLabel "BC 의 side-effect-free register_<bc>_api(api: NinjaExtraAPI) 노출(인자 타입 축자)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2935@2026-08-25> .
+    skos:prefLabel "BC 의 side-effect-free register_<bc>_api(api: NinjaExtraAPI) · 내부 창구 register_<bc>_internal_api 노출(인자 타입 축자)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2935@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-2935@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2935 ;
@@ -398,13 +404,25 @@ djr:R-2935 a djr:Obligation ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-clarification .
 
+<https://numchida.com/ns/djr#R-2935@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-2935 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2935@2026-08-25> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-2936 a djr:Obligation ;
-    skos:prefLabel "urls.py 의 registrar 명시 호출·mount"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2936@2026-08-22> .
+    skos:prefLabel "urls.py 의 registrar 명시 호출(이름의 scope 에 맞는 객체)·mount"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2936@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-2936@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2936 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2936@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-2936 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2936@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2937 a djr:Obligation ;
     skos:prefLabel "composition_root/(dependency_wiring.py) 의 use-case DI 한정 소유"@ko ;
@@ -805,7 +823,7 @@ djr:R-3466 a djr:Obligation ;
     djr:order 9 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b18>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b22>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b8>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b9> ;
     djr:statesNorm djr:R-2933, djr:R-2934, djr:R-2935, djr:R-2936, djr:R-2937 ;
-    djr:text "- 프로젝트 `api.py`가 `NinjaExtraAPI` 하나를 소유하고, 명시 registrar가 소유하는 controller는 `@api_controller(..., auto_import=False)`로 auto-import/global registry side effect를 끈다. BC는 side-effect-free `register_<bc>_api(api: NinjaExtraAPI)`를 노출하고(인자 타입 축자 — 본뜬 Protocol·별칭 금지) 프로젝트 `urls.py`가 registrar를 명시 호출·mount하며, BC `composition_root/`(`dependency_wiring.py`)는 use-case DI만 소유한다 (§2.3)\n"@ko .
+    djr:text "- 프로젝트 `api.py`가 공개 `NinjaExtraAPI` 하나를, `internal_api.py`가 앞단이 인터넷에 열지 않는 내부 창구의 `internal_api`(`api.py` 의 루트 클래스를 들여 지음 · `urls_namespace=\"internal_api\"` · `/internal/` 에 mount · 내부 창구가 없으면 빈 파일) 하나를 소유한다. 새 내부 창구를 `/api/internal/…` 에 두지 않는다. 명시 registrar가 소유하는 controller는 `@api_controller(..., auto_import=False)`로 auto-import/global registry side effect를 끈다. BC는 side-effect-free `register_<bc>_api(api: NinjaExtraAPI)`(내부 창구는 같은 `api_router.py` 의 `register_<bc>_internal_api(api: NinjaExtraAPI)`)를 노출하고(인자 타입 축자 — 본뜬 Protocol·별칭 금지) 프로젝트 `urls.py`가 registrar를 그 이름의 scope 에 맞는 객체로 명시 호출·mount하며, BC `composition_root/`(`dependency_wiring.py`)는 use-case DI만 소유한다 (§2.3)\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/SKILL.md/s005> a djr:Section ;
     djr:headingSnapshot "## 상세 레퍼런스"@ko ;

@@ -122,7 +122,7 @@ djr:R-3184 a djr:Permission ;
 
 djr:R-3185 a djr:Exception ;
     skos:prefLabel "#490 — framework/·<project>/ 는 이 원칙의 주어가 아니다 · cross_context/** 는 주어(backoffice/ 폴더는 화면뿐 · <screen>/ 안은 panel.py·form/·feature/ · 템플릿은 templates/admin/backoffice/ 바로 아래 · test/integration/ 은 pytest 소유)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3185@2026-11-14> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-3185@2026-11-19> .
 
 <https://numchida.com/ns/djr#R-3185@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3185 ;
@@ -133,6 +133,12 @@ djr:R-3185 a djr:Exception ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-3185@2026-08-22> ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-3185@2026-11-19> a djr:Expression ;
+    prov:specializationOf djr:R-3185 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3185@2026-11-14> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3186 a djr:Obligation ;
     skos:prefLabel "#491 — 칸의 유형은 셋뿐이고 «조건부»는 없다"@ko ;
@@ -417,16 +423,22 @@ djr:R-3215 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-3216 a djr:Obligation ;
-    skos:prefLabel "#429 — <project>/ 에는 프레임워크가 전역 하나를 요구하는 것만(api.py·urls.py·celery.py·settings/)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3216@2026-08-22> .
+    skos:prefLabel "#429 — <project>/ 에는 프로젝트 전역에 정해진 개수로 두는 조립 파일만(표준 API 객체 둘 api.py·internal_api.py · urls.py · celery.py · settings/)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3216@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-3216@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3216 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3216@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-3216 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3216@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3217 a djr:Exception ;
-    skos:prefLabel "#429 — celery.py «채택» 전제는 정본 트리(표준) 수준 — 미채택 프로젝트도 빈 파일 보유(#488)·<project>/ 파트는 이 목록이 관할(#491 밖)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3217@2026-08-24> .
+    skos:prefLabel "#429 — celery.py·internal_api.py «채택» 전제는 정본 트리(표준) 수준 — 안 쓰는 프로젝트도 빈 파일 보유(#488)·<project>/ 파트는 이 목록이 관할(#491 밖)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3217@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-3217@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3217 ;
@@ -437,6 +449,12 @@ djr:R-3217 a djr:Exception ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-3217@2026-08-22> ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-clarification .
+
+<https://numchida.com/ns/djr#R-3217@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-3217 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3217@2026-08-24> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3218 a djr:Prohibition ;
     skos:prefLabel "#430 — <project>/ 는 application/ 을 등록만 하고 타입으로 알지 않는다"@ko ;
@@ -898,6 +916,14 @@ djr:R-3766 a djr:Prohibition ;
     prov:specializationOf djr:R-3766 ;
     djr:revision 1 .
 
+djr:R-3775 a djr:Exception ;
+    skos:prefLabel "#441 — <project>/urls.py 의 BC import 는 등록 함수 둘(register_<bc>_api · register_<bc>_internal_api)을 명시 호출하려는 그 함수 import 뿐"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3775@2026-11-18> .
+
+<https://numchida.com/ns/djr#R-3775@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-3775 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/references/final.md> a djr:Document ;
     skos:prefLabel "discipline-houserules-final"@ko .
 
@@ -1006,7 +1032,7 @@ djr:R-3766 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
     djr:statesNorm djr:R-3183, djr:R-3184, djr:R-3185 ;
-    djr:text "- **#490** — `application/<bounded_context>/**` 안에 트리에 없는 경로가 하나라도 있으면 위반이다(`utils/`·`common/`·`helpers/`). 폐쇄는 **칸**(폴더 + 트리가 이름을 준 파일)에만 걸리고, 트리가 리프로 닫은 폴더 «안»의 추가 모듈은 작성자 재량이다(#15). `framework/`·`<project>/` 는 이 원칙의 주어가 아니다. `cross_context/**` 는 주어다(트리 172~182행) — `backoffice/` 의 폴더는 화면(`<screen>/`)뿐이고, `<screen>/` 안은 `panel.py` · `form/` · `feature/` 뿐이며, 템플릿은 `templates/admin/backoffice/` 바로 아래 평평하게 두고, `test/integration/` 안은 pytest 가 이름을 소유한다. 단, §1 트리의 **승격 허용 표기**가 붙은 파일 칸은 두 실현을 갖는다 — `<이름>.py`(기본) ⇄ 동명 폴더 `<이름>/`(**동명 폴더 승격**). 유효한 승격 폴더는 트리에 있는 실현이지 «트리에 없는 경로»가 아니다(형태 요건은 아래). §1 트리의 **묶음 허용 표기**가 붙은 파일 칸(트리 64·66·68·71·73·75행)의 인스턴스 파일은 부모 바로 아래 **묶음** 한 계층으로 나눠 둘 수 있고, 유효한 묶음은 «트리에 없는 경로»가 아니다(요건은 아래 «의미 묶음» — #654~#656).\n"@ko .
+    djr:text "- **#490** — `application/<bounded_context>/**` 안에 트리에 없는 경로가 하나라도 있으면 위반이다(`utils/`·`common/`·`helpers/`). 폐쇄는 **칸**(폴더 + 트리가 이름을 준 파일)에만 걸리고, 트리가 리프로 닫은 폴더 «안»의 추가 모듈은 작성자 재량이다(#15). `framework/`·`<project>/` 는 이 원칙의 주어가 아니다. `cross_context/**` 는 주어다(트리 173~183행) — `backoffice/` 의 폴더는 화면(`<screen>/`)뿐이고, `<screen>/` 안은 `panel.py` · `form/` · `feature/` 뿐이며, 템플릿은 `templates/admin/backoffice/` 바로 아래 평평하게 두고, `test/integration/` 안은 pytest 가 이름을 소유한다. 단, §1 트리의 **승격 허용 표기**가 붙은 파일 칸은 두 실현을 갖는다 — `<이름>.py`(기본) ⇄ 동명 폴더 `<이름>/`(**동명 폴더 승격**). 유효한 승격 폴더는 트리에 있는 실현이지 «트리에 없는 경로»가 아니다(형태 요건은 아래). §1 트리의 **묶음 허용 표기**가 붙은 파일 칸(트리 64·66·68·71·73·75행)의 인스턴스 파일은 부모 바로 아래 **묶음** 한 계층으로 나눠 둘 수 있고, 유효한 묶음은 «트리에 없는 경로»가 아니다(요건은 아래 «의미 묶음» — #654~#656).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0/b6> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0> ;
@@ -1037,7 +1063,7 @@ djr:R-3766 a djr:Prohibition ;
     djr:text "동명 폴더 승격의 형태: 승격 폴더는 안에 **본체 `<이름>.py`** 와 **재수출 전용 `__init__.py`** 를 반드시 가진다 — 본체 없는 폴더는 위장이고, 형제 `<이름>.py` 와 `<이름>/` 의 공존도 위반이다(파일시스템은 공존을 허용하고 import 는 패키지가 이겨 조용한 위장 중복이 된다). 내부는 **1단 평평**이다 — 하위 폴더는 위반이며, 부품 군집이 폴더를 요구하면 그것은 트리 개정 신호이지 중첩 근거가 아니다. `__init__.py` 재수출은 `from .<모듈> import <이름> as <이름>`(redundant alias) 또는 `__all__` 선언으로 한다(mypy strict `--no-implicit-reexport` 가 인정하는 두 형태) — 본체 코드를 `__init__.py` 에 두지 않고, 폴더 내부 상호 참조는 `__init__` 경유 없이 모듈 직접 상대 import 로 한다. 바깥 import 표면(`...<칸>` 모듈 경로로 공개되는 이름 집합)은 승격·환원 어느 방향이든 불변이어야 한다 — 앞 `_` 이름은 표면 밖이다. `_` 정의를 다른 파일로 옮기면, 그 이름을 옛 모듈 경로로 가져오는 시험을 찾아 같은 창(단계)에서 정의를 가진 파일의 경로로 고친다 — 옛 모듈이 그 이름을 다시 import 해서 시험이 우연히 통과해도 같다. 승격은 `git mv` 로 이력을 보존한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s004-1> a djr:Section ;
-    djr:headingSnapshot "## §1 표준 트리 — 182행"@ko ;
+    djr:headingSnapshot "## §1 표준 트리 — 183행"@ko ;
     djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/references/final.md> ;
     djr:sectionNumber "1" ;
     djr:sectionOwner djr:owner-graph .
@@ -1059,7 +1085,7 @@ djr:R-3766 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s004-1> ;
     djr:kind djr:kind-code ;
     djr:order 3 ;
-    djr:text "```text\n  1 application/<bounded_context>/\n  2   composition_root/\n  3     dependency_wiring.py\n  4     event_wiring.py\n  5     wiring_material.py\n  6   published_event/\n  7     <event>.py\n  8   driving_layer/\n  9     api/\n 10       api_router.py\n 11       bc_error_schema.py\n 12       <area>/\n 13         <area>_controller.py\n 14         schema/\n 15           schema_in.py\n 16           schema_out.py\n 17       webhook/\n 18         <provider>/\n 19           <provider>_controller.py\n 20           schema/\n 21             schema_in.py\n 22             schema_out.py\n 23     open_host_service/\n 24       <service>/\n 25         <service>_service.py\n 26         contract/\n 27           request/\n 28             <request>_request.py\n 29           response/\n 30             <response>_response.py\n 31           exception/\n 32             <service>_published_error.py\n 33             <exception>_exception.py\n 34     cron_job/\n 35       <job>_cron_job.py\n 36     event_subscription/\n 37       event_router.py\n 38       <event>_subscription.py\n 39   application_layer/\n 40     <area>/\n 41       <use_case>/\n 42         <use_case>_use_case.py\n 43         <use_case>_command.py\n 44         <use_case>_query.py\n 45         <use_case>_result.py\n 46     port/\n 47       <capability>/\n 48         <capability>_port.py\n 49         exception.py\n 50         <data>_out.py\n 51         <data>_in.py\n 52       domain_bypass_query/\n 53         <capability>/\n 54           <capability>_query.py\n 55           <data>_out.py\n 56           <data>_in.py\n 57           exception.py\n 58       unit_of_work/\n 59         <boundary>_unit_of_work.py\n 60   domain_layer/\n 61     <aggregate>/\n 62       <aggregate>.py\n 63       entity/\n 64         <entity>.py\n 65       value_object/\n 66         <value_object>.py\n 67       event/\n 68         <event>.py\n 69       <aggregate>_repository.py\n 70       exception/\n 71         <exception>.py\n 72     shared_value_object/\n 73       <value_object>.py\n 74     domain_service/\n 75       <domain_service>.py\n 76   driven_layer/\n 77     django_<bounded_context>/\n 78       apps.py\n 79       models/\n 80         <entity>_model.py\n 81       migrations/\n 82         <migration>.py\n 83       admin/\n 84         <entity>/\n 85           panel.py\n 86           form/<form>_form.py\n 87           feature/<feature>.py\n 88       templates/admin/<bounded_context>/<page>.html\n 89       templates/<bounded_context>/<capability>/<template>.html\n 90     adapter/\n 91       persistence/\n 92         repository/\n 93           <aggregate>_repository.py\n 94         domain_bypass_query/\n 95           <capability>_query.py\n 96         unit_of_work/\n 97           <boundary>_unit_of_work.py\n 98       anticorruption_layer/\n 99         <other_bounded_context>/\n100           <capability>_adapter/\n101             adapter/\n102               <implementation>_adapter.py\n103             command/\n104               <command>.py\n105             constant/\n106               <constant>.py\n107             contract/\n108               <contract>.py\n109             schema/\n110               <schema>.py\n111       external_system/\n112         <system>/\n113           <capability>_adapter/\n114             adapter/\n115               <implementation>_adapter.py\n116             command/\n117               <command>.py\n118             constant/\n119               <constant>.py\n120             contract/\n121               <contract>.py\n122             schema/\n123               <schema>.py\n124       <capability>/\n125         <technology>_adapter/\n126           adapter/\n127             <implementation>_adapter.py\n128           command/\n129             <command>.py\n130           constant/\n131             <constant>.py\n132           contract/\n133             <contract>.py\n134           schema/\n135             <schema>.py\n136   test/\n137     unit/\n138     integration/\n139     e2e/\n140     factories/\n141     fake/\n142       <declaration>.py\n143 framework/\n144   broker/\n145     internal/\n146       internal_broker_port.py\n147       internal_broker.py\n148     external/\n149       external_broker_port.py\n150       external_broker.py\n151   <capability>/\n152     <capability>_port.py\n153     exception.py\n154     <data>_out.py\n155     <data>_in.py\n156     <technology>_adapter.py\n157   <technology>/\n158     <module>.py\n159   pure/\n160     <module>.py\n161   test/\n162     <module>.py\n163     fake/\n164       <declaration>.py\n165     unit/\n166 <project>/\n167   api.py\n168   urls.py\n169   celery.py\n170   settings/\n171     <environment>.py\n172 cross_context/\n173   backoffice/\n174     apps.py\n175     urls.py\n176     <screen>/\n177       panel.py\n178       form/<form>_form.py\n179       feature/<feature>.py\n180     templates/admin/backoffice/<page>.html\n181     test/\n182       integration/\n```\n" .
+    djr:text "```text\n  1 application/<bounded_context>/\n  2   composition_root/\n  3     dependency_wiring.py\n  4     event_wiring.py\n  5     wiring_material.py\n  6   published_event/\n  7     <event>.py\n  8   driving_layer/\n  9     api/\n 10       api_router.py\n 11       bc_error_schema.py\n 12       <area>/\n 13         <area>_controller.py\n 14         schema/\n 15           schema_in.py\n 16           schema_out.py\n 17       webhook/\n 18         <provider>/\n 19           <provider>_controller.py\n 20           schema/\n 21             schema_in.py\n 22             schema_out.py\n 23     open_host_service/\n 24       <service>/\n 25         <service>_service.py\n 26         contract/\n 27           request/\n 28             <request>_request.py\n 29           response/\n 30             <response>_response.py\n 31           exception/\n 32             <service>_published_error.py\n 33             <exception>_exception.py\n 34     cron_job/\n 35       <job>_cron_job.py\n 36     event_subscription/\n 37       event_router.py\n 38       <event>_subscription.py\n 39   application_layer/\n 40     <area>/\n 41       <use_case>/\n 42         <use_case>_use_case.py\n 43         <use_case>_command.py\n 44         <use_case>_query.py\n 45         <use_case>_result.py\n 46     port/\n 47       <capability>/\n 48         <capability>_port.py\n 49         exception.py\n 50         <data>_out.py\n 51         <data>_in.py\n 52       domain_bypass_query/\n 53         <capability>/\n 54           <capability>_query.py\n 55           <data>_out.py\n 56           <data>_in.py\n 57           exception.py\n 58       unit_of_work/\n 59         <boundary>_unit_of_work.py\n 60   domain_layer/\n 61     <aggregate>/\n 62       <aggregate>.py\n 63       entity/\n 64         <entity>.py\n 65       value_object/\n 66         <value_object>.py\n 67       event/\n 68         <event>.py\n 69       <aggregate>_repository.py\n 70       exception/\n 71         <exception>.py\n 72     shared_value_object/\n 73       <value_object>.py\n 74     domain_service/\n 75       <domain_service>.py\n 76   driven_layer/\n 77     django_<bounded_context>/\n 78       apps.py\n 79       models/\n 80         <entity>_model.py\n 81       migrations/\n 82         <migration>.py\n 83       admin/\n 84         <entity>/\n 85           panel.py\n 86           form/<form>_form.py\n 87           feature/<feature>.py\n 88       templates/admin/<bounded_context>/<page>.html\n 89       templates/<bounded_context>/<capability>/<template>.html\n 90     adapter/\n 91       persistence/\n 92         repository/\n 93           <aggregate>_repository.py\n 94         domain_bypass_query/\n 95           <capability>_query.py\n 96         unit_of_work/\n 97           <boundary>_unit_of_work.py\n 98       anticorruption_layer/\n 99         <other_bounded_context>/\n100           <capability>_adapter/\n101             adapter/\n102               <implementation>_adapter.py\n103             command/\n104               <command>.py\n105             constant/\n106               <constant>.py\n107             contract/\n108               <contract>.py\n109             schema/\n110               <schema>.py\n111       external_system/\n112         <system>/\n113           <capability>_adapter/\n114             adapter/\n115               <implementation>_adapter.py\n116             command/\n117               <command>.py\n118             constant/\n119               <constant>.py\n120             contract/\n121               <contract>.py\n122             schema/\n123               <schema>.py\n124       <capability>/\n125         <technology>_adapter/\n126           adapter/\n127             <implementation>_adapter.py\n128           command/\n129             <command>.py\n130           constant/\n131             <constant>.py\n132           contract/\n133             <contract>.py\n134           schema/\n135             <schema>.py\n136   test/\n137     unit/\n138     integration/\n139     e2e/\n140     factories/\n141     fake/\n142       <declaration>.py\n143 framework/\n144   broker/\n145     internal/\n146       internal_broker_port.py\n147       internal_broker.py\n148     external/\n149       external_broker_port.py\n150       external_broker.py\n151   <capability>/\n152     <capability>_port.py\n153     exception.py\n154     <data>_out.py\n155     <data>_in.py\n156     <technology>_adapter.py\n157   <technology>/\n158     <module>.py\n159   pure/\n160     <module>.py\n161   test/\n162     <module>.py\n163     fake/\n164       <declaration>.py\n165     unit/\n166 <project>/\n167   api.py\n168   internal_api.py\n169   urls.py\n170   celery.py\n171   settings/\n172     <environment>.py\n173 cross_context/\n174   backoffice/\n175     apps.py\n176     urls.py\n177     <screen>/\n178       panel.py\n179       form/<form>_form.py\n180       feature/<feature>.py\n181     templates/admin/backoffice/<page>.html\n182     test/\n183       integration/\n```\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s004-1/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s004-1> ;
@@ -1229,14 +1255,14 @@ djr:R-3766 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:statesNorm djr:R-3216, djr:R-3217 ;
-    djr:text "\n- **#429** — `<project>/` 에는 프레임워크가 «전역에 딱 하나»를 요구하는 것만 온다 — `api.py` · `urls.py` · `celery.py` · `settings/`. `celery.py` 항목의 «celery 채택» 전제는 **정본 트리(표준) 수준**의 채택이다 — 개별 프로젝트의 채택 여부가 아니다. celery 를 안 쓰는 프로젝트도 이 칸을 «빈 파일»로 갖는다(#488 — 빈 `celery.py` 가 규범 준수의 정상 상태이고, 뒤에 celery 가 필요해지면 그 빈 파일이 착지 자리다). 표준이 celery 를 버리는 개정에서만 이 목록이 다시 선다(#491 «조건부 없음»의 자리는 트리 1행 `application/**` 이라 여기 걸리지 않는다 — `<project>/` 파트는 이 목록이 관할한다).\n"@ko .
+    djr:text "\n- **#429** — `<project>/` 에는 프로젝트 전역에 정해진 개수로 두는 조립 파일만 온다 — 표준 API 객체 둘(`api.py` · `internal_api.py`) · `urls.py` · `celery.py` · `settings/`. `celery.py` · `internal_api.py` 항목의 «채택» 전제는 **정본 트리(표준) 수준**의 채택이다 — 개별 프로젝트의 채택 여부가 아니다. celery 를 안 쓰거나 내부 창구(앞단이 인터넷에 열지 않는 HTTP 창구 — `implementation-django-ninja` §2.3)가 없는 프로젝트도 그 칸을 «빈 파일»로 갖는다(#488 — 빈 파일이 규범 준수의 정상 상태이고, 뒤에 필요해지면 그 빈 파일이 착지 자리다). 표준이 그 칸을 버리는 개정에서만 이 목록이 다시 선다(#491 «조건부 없음»의 자리는 트리 1행 `application/**` 이라 여기 걸리지 않는다 — `<project>/` 파트는 이 목록이 관할한다). `internal_api.py` 의 «internal» 은 앞단 바깥에 열리지 않는 창구라는 뜻이다 — 같은 배포 단위 안을 오가는 `framework/broker/internal/` 의 internal 과 다르다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s010/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s010> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
-    djr:statesNorm djr:R-3218 ;
-    djr:text "- **#430** — `<project>/` 는 `application/` 을 «등록»만 하고 «타입»으로 알지 않는다 — 문자열 경로는 등록이고 import 는 앎이다.\n"@ko .
+    djr:statesNorm djr:R-3218, djr:R-3775 ;
+    djr:text "- **#430** — `<project>/` 는 `application/` 을 «등록»만 하고 «타입»으로 알지 않는다 — 문자열 경로는 등록이고 import 는 앎이다.\n- **#441** — #430 의 예외는 `<project>/urls.py` 가 BC 등록 함수 둘(`register_<bc>_api` · `register_<bc>_internal_api`)을 명시 호출하려고 그 함수를 import 하는 것뿐이다 — 그 밖의 BC 심볼은 들이지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s010/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s010> ;
@@ -1369,7 +1395,7 @@ djr:R-3766 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s019-6> ;
     djr:kind djr:kind-prose ;
     djr:order 1 ;
-    djr:text "\n`cross_context/`(§1 트리 172~182행)는 BC 둘 이상의 값을 함께 쓰는 합성 칸이다 — BC 밖 · BC 위에 서고, 지금 칸은 운영자 화면(Django admin) 합성 `backoffice/`(장고 앱 `cross_context.backoffice` · label `backoffice`) 하나다.\n\n"@ko .
+    djr:text "\n`cross_context/`(§1 트리 173~183행)는 BC 둘 이상의 값을 함께 쓰는 합성 칸이다 — BC 밖 · BC 위에 서고, 지금 칸은 운영자 화면(Django admin) 합성 `backoffice/`(장고 앱 `cross_context.backoffice` · label `backoffice`) 하나다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s019-6/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s019-6> ;

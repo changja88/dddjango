@@ -1249,12 +1249,13 @@ class NewScopeApiModuleRegression(unittest.TestCase):
     ctrl: str = "application/lesson/driving_layer/controller.py"
     registrar: str = "application/lesson/driving_layer/api/api_router.py"
     internal_api: str = "from ninja_extra import NinjaExtraAPI\n\ninternal_api = NinjaExtraAPI()\n"
+    # `--api-module` 파일 이름이 `internal_api.py` 면 부를 등록 함수는 `register_<bc>_internal_api` 다(F4-150).
     internal_urls: str = ("from config.internal_api import internal_api\n"
-                          "from application.lesson.driving_layer.api.api_router import register_lesson_api\n\n"
-                          "register_lesson_api(internal_api)\n"
+                          "from application.lesson.driving_layer.api.api_router import register_lesson_internal_api\n\n"
+                          "register_lesson_internal_api(internal_api)\n"
                           "urlpatterns = []\n")
     registrar_old: str = ("from .controller import LessonController\n\n"
-                          "def register_lesson_api(api):\n"
+                          "def register_lesson_internal_api(api):\n"
                           "    api.register_controllers(LessonController)\n\n"
                           "def lesson_helper(api):\n"
                           "    return api\n")
@@ -1266,6 +1267,7 @@ class NewScopeApiModuleRegression(unittest.TestCase):
                         "--registrar-module", registrar]
     c572: str = BaselineSliceRegression.c572
     c404: str = BaselineSliceRegression.c404
+    c63: str = BaselineSliceRegression.c63("get_lesson")  # 경로 앞 응답 꼴이 없는 저장소의 operation 줄(2.37.0 뒤 · 앵커부터 있음)
     old15: set[str] = {
         "[#62] " + ctrl + ":N: bare catch forbidden: except:",
         "[#62] " + ctrl + ":N: catch must be direct own-BC domain exception — 응용 예외는 포트 예외뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다: except Exception:",
@@ -1319,12 +1321,12 @@ class NewScopeApiModuleRegression(unittest.TestCase):
     def test_reg05_old_missing_response_is_existing_and_new_api_module_violation_stays_new(self) -> None:
         anchor = {**_T_FILES, self.ctrl: BaselineSliceRegression.missing}
         repo, sha = self.lane("c05", None, anchor, {"config/internal_api.py": self.internal_api})
-        self.assert_diff(_run(OPENAPI, repo, [*self.sel, "--anchor", sha]), 0, set(), {self.c404})
+        self.assert_diff(_run(OPENAPI, repo, [*self.sel, "--anchor", sha]), 0, set(), {self.c404, self.c63})
         post = self.internal_api + "SCHEMA = internal_api.get_openapi_schema()\n"
         repo, sha = self.lane("c05api", None, anchor, {"config/internal_api.py": post})
         self.assert_diff(_run(OPENAPI, repo, [*self.sel, "--anchor", sha]), 2,
                          {"[#63] config/internal_api.py:N: openapi-postprocess: 선택 API receiver의 get_openapi_schema 직접 호출/후처리"},
-                         {self.c404})
+                         {self.c404, self.c63})
 
     def test_reg15_old_controller_violations_are_existing_and_new_handler_stays_new(self) -> None:
         base: Path = F / "api_error_controller_code/bad_rules"
@@ -1354,6 +1356,44 @@ class NewScopeApiModuleRegression(unittest.TestCase):
             "[#109] config/internal_api.py:N: register_controllers outside canonical registrar owner — "
             "internal_api.register_controllers(LessonController)",
         }, {self.old16})
+        # 잘못 단 이름 — 내부 scope 렌더에서 URLconf 가 공개 이름(`register_lesson_api`)을 부르면 분석 불능이 아니라 #440 줄이다.
+        wrong_name: str = self.internal_urls.replace("register_lesson_internal_api", "register_lesson_api")
+        repo, sha = self.lane("c16name", base, {self.registrar: self.registrar_old},
+                              {**change, "config/internal_urls.py": wrong_name})
+        self.assert_diff(_run(COMP, repo, [*self.sel16, "--anchor", sha]), 2, {
+            "[#440] config/internal_urls.py:N: registrar scope mismatch: register_lesson_api is called where this scope needs "
+            "register_lesson_internal_api — register_lesson_api(internal_api)",
+        }, {self.old16})
+
+    def test_reg16_empty_internal_module_in_anchor_is_an_absent_scope(self) -> None:
+        """앵커의 `internal_api.py` 가 빈 파일이면(내부 창구를 아직 안 연 프로젝트) 앵커 재실행은 그 모듈이 없는 것과 같은
+        판이다 — 기준선이 positional 로 떨어지지 않고 옛 registrar 빚은 기존분 · 레인이 낸 진짜 어긋남만 신규다."""
+        base: Path = F / "composition_selector/good"
+        public_old: str = ("from .controller import LessonController\n\n"
+                           "def register_lesson_api(api):\n"
+                           "    api.register_controllers(LessonController)\n\n"
+                           "def lesson_helper(api):\n"
+                           "    return api\n")
+        both: str = public_old.replace(
+            "def lesson_helper(", "def register_lesson_internal_api(api):\n    api.register_controllers(LessonController)\n\n"
+            "def lesson_helper(")
+        anchor: dict[str, str] = {self.registrar: public_old, "config/internal_api.py": ""}
+        change: dict[str, str] = {"config/internal_api.py": self.internal_api, "config/internal_urls.py": self.internal_urls,
+                                  self.registrar: both}
+        repo, sha = self.lane("c16empty", base, anchor, change)
+        result: "tuple[int, str]" = _run(COMP, repo, [*self.sel16, "--anchor", sha])
+        self.assert_diff(result, 0, set(), {self.old16})
+        self.assertNotIn("기준선 오류", result[1])
+        wrong_object: str = (self.internal_urls.replace("from config.internal_api import internal_api\n",
+                                                        "from config.api import api\nfrom config.internal_api import internal_api\n")
+                             .replace("register_lesson_internal_api(internal_api)", "register_lesson_internal_api(api)"))
+        repo, sha = self.lane("c16emptybad", base, anchor, {**change, "config/internal_urls.py": wrong_object})
+        result = _run(COMP, repo, [*self.sel16, "--anchor", sha])
+        self.assert_diff(result, 2, {
+            "[#440] config/internal_urls.py:N: registrar scope mismatch: register_lesson_internal_api receives config.api.api "
+            "— register_lesson_internal_api(api)",
+        }, {self.old16})
+        self.assertNotIn("기준선 오류", result[1])
 
 
 class ApprovedInflowRepo:
@@ -2740,7 +2780,12 @@ class RenamedBcBaselineRegression(unittest.TestCase):
                                "--registrar-module", "application/fortune_saju/driving_layer/api/api_router.py"]
         new, old = self.run_both(r, anchor, (merge,), preserve, COMP)
         self.assertIn("기준선 오류: [check-composition-root] 사용 오류: preserve-established의 --urlconf-module/--registrar-module", old[1])
-        self.assertEqual(new, old)
+        # F4-150(F4-151 한계 2) — 기준선 재실행은 걷힌 registrar 와 남은 URLconf 의 짝을 묻지 않는다: 옛 판의 positional 강등 ·
+        # 기준선 오류 줄 없이 selector 렌더 기준선이 서고, 판정(exit · 신규분)은 옛 판과 같다.
+        self.assertEqual(new[0], old[0], new[1])
+        self.assertIn("기준선=selector 렌더 재실행):", new[1])
+        self.assertNotIn("기준선 오류", new[1])
+        self.assertEqual(_section(new[1], "신규분"), _section(old[1], "신규분"))
         # #15 · 다른 영역(accounts)이 개명된 영역의 오류 클래스를 import — 지금 이름 렌더가 `re-export provenance 분석 불능` 으로
         # 서지 않는 꼴. 대응은 #2 에만 넘기지만, 파일을 가리키는 못 읽음은 기준선 재실행이 버티므로(F4-59 ①) selector 렌더로 선다.
         def xref(rr: ApprovedInflowRepo, other: str) -> None:
@@ -4005,7 +4050,7 @@ def _main() -> int:
         UnnumberedDebtRegression, BaselineSliceRegression, ApprovedInflowPartitionRegression,
         BcRenamePairingRegression, RenamedBcBaselineRegression, AnchorSnapshotEscapeRegression,
         SnapshotLinkHelperRegression, HiddenSnapshotRegression, BaselineLadderHoldsRegression,
-        ViolationSinkRegression))
+        ViolationSinkRegression, NewScopeApiModuleRegression))
     result = unittest.TextTestRunner(verbosity=2).run(
         suite)
     if not result.wasSuccessful():

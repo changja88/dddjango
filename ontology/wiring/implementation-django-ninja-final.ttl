@@ -619,3 +619,25 @@ djr:R-3750 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ap
 
 djr:R-3751 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/check-openapi-error-declaration.py> .
+
+djr:R-3767 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-composition-root.py> .
+
+djr:R-3768 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-3769 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-3770 djr:enforcedBy <https://numchida.com/ns/djr#c/check-composition-root.py> .
+
+djr:R-3771 djr:enforcedBy <https://numchida.com/ns/djr#c/check-composition-root.py>, <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-3772 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-composition-root.py> .
+
+djr:R-3773 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-3774 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-3781 djr:enforcedBy <https://numchida.com/ns/djr#c/check-composition-root.py> .
+
+djr:R-3782 djr:enforcedBy <https://numchida.com/ns/djr#c/check-composition-root.py> .

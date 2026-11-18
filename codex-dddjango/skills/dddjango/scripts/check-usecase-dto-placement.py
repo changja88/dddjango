@@ -244,9 +244,9 @@ def _find_project_dirs(root: Path) -> list[Path]:
     return out
 
 
-def _project_uses_registrar(root: Path, registrar_name: str) -> bool:
+def _project_uses_registrar(root: Path, registrar_names: frozenset[str]) -> bool:
     for project in _find_project_dirs(root):
-        for module_path in (project / "api.py", project / "urls.py"):
+        for module_path in (project / "api.py", project / "internal_api.py", project / "urls.py"):
             if not module_path.is_file():
                 continue
             mod = _parse(module_path)
@@ -254,16 +254,16 @@ def _project_uses_registrar(root: Path, registrar_name: str) -> bool:
                 continue
             for node in ast.walk(mod):
                 if isinstance(node, ast.ImportFrom) and any(
-                    alias.name == registrar_name for alias in node.names
+                    alias.name in registrar_names for alias in node.names
                 ):
                     return True
                 if not isinstance(node, ast.Call):
                     continue
                 called = node.func
                 if (
-                    isinstance(called, ast.Name) and called.id == registrar_name
+                    isinstance(called, ast.Name) and called.id in registrar_names
                 ) or (
-                    isinstance(called, ast.Attribute) and called.attr == registrar_name
+                    isinstance(called, ast.Attribute) and called.attr in registrar_names
                 ):
                     return True
     return False
@@ -284,7 +284,7 @@ def _has_concrete_api_surface(root: Path, api: Path, bc_name: str) -> bool:
             if entry.name.startswith(".") or entry.name in {"__init__.py", "__pycache__"}:
                 continue
             return True
-    return _project_uses_registrar(root, f"register_{bc_name}_api")
+    return _project_uses_registrar(root, frozenset({f"register_{bc_name}_api", f"register_{bc_name}_internal_api"}))
 
 
 # #188 의 이름 안 맞는 입구 — 이 폴더 아래 파일이 `application_layer/<area>/` 를 import 하면(직접 · 그 영역을 짓는

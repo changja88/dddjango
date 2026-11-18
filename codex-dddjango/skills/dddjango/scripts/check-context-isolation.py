@@ -13,7 +13,7 @@ Kernel 없음)·#83(BC 삭제 내성)은 아래 각론 진단이 집행한다.
          들어오는 화살표는 composition_root 뿐 · #328 django_<bc> 는 persistence 만
   타 BC  #12 부를 수 있는 것은 OHS·published_event 둘 · #13 OHS 소비는 ACL 뿐
          #98 타 BC composition_root 금지 · #102 driving 중 OHS 만 · #51 test→타 BC test 금지
-         #664 `cross_context/**`(트리 172~182행)는 BC 의 `driving_layer/open_host_service/` 만 import 하고 모델 클래스 ·
+         #664 `cross_context/**`(트리 173~183행)는 BC 의 `driving_layer/open_host_service/` 만 import 하고 모델 클래스 ·
          `get_model()` · 시험 밖 `get_user_model()` · 날 SQL 길(connection(s) · RawSQL · DB 드라이버 import · `.raw(` · `.extra(`)을 안 쓴다
          #665 application · framework · <project> 는 cross_context 를 import 하지 않는다(<project> 의 `cross_context.` 문자열은
          `include("cross_context.backoffice.urls")` 와 설정 모듈의 앱 문자열만) · #666 주소는 `cross_context/backoffice/urls.py` 에만 · 모두 `admin_view`
@@ -2921,7 +2921,7 @@ def _check_project_registration(target: Path, out: Findings) -> None:
     if pkg is None:
         return
     _check_project_rule_lists(pkg, target, out)
-    for name in ("api.py", "urls.py"):
+    for name in ("api.py", "internal_api.py", "urls.py"):
         f = pkg / name
         if not f.is_file():
             continue
@@ -2931,7 +2931,8 @@ def _check_project_registration(target: Path, out: Findings) -> None:
         except (OSError, UnicodeDecodeError):
             continue
         if "noqa: F401" in src:
-            out.add("#431", rel, "부작용 등록(`# noqa: F401` import 등록)은 금지다 — 허용은 `urls.py` 의 `register_<bc>_api(api)` 명시 호출뿐이다")
+            out.add("#431", rel, "부작용 등록(`# noqa: F401` import 등록)은 금지다 — 허용은 `urls.py` 의 "
+                                 "`register_<bc>_api(api)` · `register_<bc>_internal_api(internal_api)` 명시 호출뿐이다")
         mod = _parse(f)
         if mod is None:
             continue
@@ -2950,7 +2951,7 @@ def _check_project_registration(target: Path, out: Findings) -> None:
                 out.add("#431", rel, f"쓰이지 않는 BC import — 부작용 등록이다(`{path}`)")
 
 
-# ── cross_context — #664 · #665 · #666(트리 172~182행 · 2026-11-14 F4-159) ──────────
+# ── cross_context — #664 · #665 · #666(트리 173~183행 · 2026-11-14 F4-159) ──────────
 
 CROSS_URLS_MODULE = "cross_context.backoffice.urls"
 CROSS_APP_RE = re.compile(r"cross_context\.backoffice(?:\.apps\.[A-Za-z_][A-Za-z0-9_]*)?")
@@ -3124,7 +3125,7 @@ def _check_cross_strings(proj: Path, target: Path, out: Findings) -> None:
 
 
 def _check_cross_context(target: Path, out: Findings) -> None:
-    """#664 · #665 · #666 — BC 밖 합성 칸 `cross_context/`(트리 172~182행)."""
+    """#664 · #665 · #666 — BC 밖 합성 칸 `cross_context/`(트리 173~183행)."""
     proj = _find_project_pkg(target)
     _check_cross_inbound(target, proj, out)
     if proj is not None:

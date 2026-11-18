@@ -9271,6 +9271,48 @@ def _toy_rule_where(files: dict[str, str], script: str, prefix: str) -> list[tup
                   if (m := re.match(r"^\s*\[(ⓓ?#\d+)\] (\S+?): ", line)))
 
 
+class InternalApiOneHopRegression(unittest.TestCase):
+    """F4-150(F4-151 한계 1) — 내부 scope 렌더(`--api-module <project>/internal_api.py`)의 #15 one-hop 은 다른 루트 API
+    모듈(진짜 프로젝트 패키지의 `api.py`)을 고르지 않는다 — 그 모듈의 줄은 공개 scope 렌더의 몫이다. 진짜 프로젝트 패키지가
+    아닌 폴더(manage.py · settings 없음)의 같은 이름 모듈은 지금처럼 one-hop 이다(파일 이름만 보지 않는다)."""
+
+    ARGS: tuple[str, ...] = (
+        "--error-profile", "dddjango-code-json", "--scope", "internal-v1", "--api-module", "config/internal_api.py",
+        "--controller-module", CODE, "--scope-bc", "lesson", "--error-bc", "lesson")
+    PUBLIC_API: str = ("from ninja import Router\nfrom ninja_extra import NinjaExtraAPI\n\n\n"
+                       "class RootAPI(NinjaExtraAPI):\n    pass\n\n\napi = RootAPI()\nlegacy_router = Router()\n\n\n"
+                       "@legacy_router.exception_handler(KeyError)\ndef legacy_key_error(request, exc):\n    return exc\n")
+    INTERNAL_API: str = "from config.api import RootAPI\n\ninternal_api = RootAPI()\n"
+    PROJECT: dict[str, str] = {
+        "manage.py": 'import os\n\nos.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")\n',
+        "config/settings.py": 'SECRET_KEY: str = "x"\n',
+    }
+
+    def run_internal(self, project: bool) -> "tuple[int, str]":
+        with tempfile.TemporaryDirectory(prefix="internal-one-hop-") as tmp:
+            root: Path = Path(tmp) / "repo"
+            shutil.copytree(FIXTURES / "api_error_controller_code/good", root)
+            files: dict[str, str] = {"config/api.py": self.PUBLIC_API, "config/internal_api.py": self.INTERNAL_API,
+                                     **(self.PROJECT if project else {})}
+            for rel, source in files.items():
+                (root / rel).write_text(source, encoding="utf-8")
+            env: dict[str, str] = dict(os.environ, DJR_FINDINGS_JSON=str(Path(tmp) / "findings.jsonl"),
+                                       DJR_VIOLATIONS_DIR=str(Path(tmp) / "violations"), PYTHONDONTWRITEBYTECODE="1")
+            done = subprocess.run([sys.executable, "-B", str(SCRIPTS / "check-api-error-controller-contract.py"), str(root),
+                                   *self.ARGS], capture_output=True, text=True, env=env)
+        return done.returncode, done.stdout + done.stderr
+
+    def test_internal_render_leaves_the_public_api_module_to_its_own_scope(self) -> None:
+        code, out = self.run_internal(project=True)
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("config/api.py", out)
+
+    def test_same_name_module_outside_the_project_package_stays_one_hop(self) -> None:
+        code, out = self.run_internal(project=False)
+        self.assertEqual(code, 2, out)
+        self.assertIn("[#59] config/api.py:", out)
+
+
 class CrossScopeControllerHelperRegression(unittest.TestCase):
     """F4-168 — 선택 컨트롤러가 one-hop 으로 들인 같은 BC 의 선택 밖 컨트롤러 모듈(다른 scope 의 입구)의 라우트는 #126
     helper 로 세지 않는다(그 라우트는 자기 scope 렌더의 몫). 모듈 수준 helper · 라우트 안 중첩 helper 는 그대로 #126 이고,

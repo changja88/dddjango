@@ -2414,7 +2414,7 @@ def error_occurred(order_result, message):
 
 이 절의 client·assert 예시는 `discipline-tdd` §5.5에서 입장된 API 계약의 작성 mechanics다. framework 동작이나 도구 사용법을 확인하기 위해 endpoint·status·Schema 테스트를 추가하지 않는다.
 
-Django Ninja의 **공개 HTTP 계약**은 실제 URLconf에 mount된 endpoint를 Django test client로 호출해 검증한다. 그래야 registrar·URL prefix·middleware·인증과 실제 API instance를 함께 지난다.
+Django Ninja의 **공개 HTTP 계약**은 실제 URLconf에 mount된 endpoint를 Django test client로 호출해 검증한다. 그래야 registrar·URL prefix·middleware·인증과 실제 API instance를 함께 지난다. 앞단이 인터넷에 열지 않는 내부 창구도 다른 서버와 맺은 계약이라 여기 들고, `/internal/…` 에 mount 된 endpoint 로 검증한다.
 
 `ninja.testing.TestClient(router)`나 `ninja_extra.testing.TestClient(Controller)`는 별도 입장된 **adapter-local 계약**에서 mount와 무관한 독자 failure를 보호할 때만 쓸 수 있다. middleware·URL resolver·registrar를 통과하지 않으므로 public HTTP/OpenAPI 증거를 대신하지 못하고, 같은 failure를 mounted 테스트가 이미 보호하면 `reuse`다.
 

@@ -1,6 +1,6 @@
 """dddjango 표준 파일트리 — 정본의 기계 가독 사본 (데이터 모듈 · 게이트 아님).
 
-정본은 저장소의 `docs/master/file_tree.html`(트리 182행)이고, 이 파일은 검사기 19종이
+정본은 저장소의 `docs/master/file_tree.html`(트리 183행)이고, 이 파일은 검사기 19종이
 import 하는 유일한 트리 데이터다. **손으로 고치지 않는다** — 정본이 개정되면
 `workspace/tools/tree_mirror_check.py --write` 가 이 파일을 다시 쓰고,
 `--check` 가 «정본 ≡ 이 파일 ≡ houserules final.md 트리 블록» 삼중 동기를 지킨다.
@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 SOURCE: str = "docs/master/file_tree.html"
-SOURCE_SHA: str = "8ba63e6db40fdea6"  # 생성 시점 정본 sha256[:16] — 출처 표시(동기 판정은 행 비교로 한다)
+SOURCE_SHA: str = "5f5614ed8c69593a"  # 생성 시점 정본 sha256[:16] — 출처 표시(동기 판정은 행 비교로 한다)
 
 Kind = Literal["fixed", "placeholder", "reappear"]
 
@@ -208,21 +208,22 @@ ROWS: tuple[Row, ...] = (
     Row(165, 2, 'unit/', 'fixed'),
     Row(166, 0, '<project>/', 'placeholder'),
     Row(167, 1, 'api.py', 'fixed'),
-    Row(168, 1, 'urls.py', 'fixed'),
-    Row(169, 1, 'celery.py', 'fixed'),
-    Row(170, 1, 'settings/', 'fixed'),
-    Row(171, 2, '<environment>.py', 'placeholder'),
-    Row(172, 0, 'cross_context/', 'fixed'),
-    Row(173, 1, 'backoffice/', 'fixed'),
-    Row(174, 2, 'apps.py', 'fixed'),
-    Row(175, 2, 'urls.py', 'fixed'),
-    Row(176, 2, '<screen>/', 'placeholder'),
-    Row(177, 3, 'panel.py', 'fixed'),
-    Row(178, 3, 'form/<form>_form.py', 'placeholder'),
-    Row(179, 3, 'feature/<feature>.py', 'placeholder'),
-    Row(180, 2, 'templates/admin/backoffice/<page>.html', 'placeholder'),
-    Row(181, 2, 'test/', 'fixed'),
-    Row(182, 3, 'integration/', 'fixed'),
+    Row(168, 1, 'internal_api.py', 'fixed'),
+    Row(169, 1, 'urls.py', 'fixed'),
+    Row(170, 1, 'celery.py', 'fixed'),
+    Row(171, 1, 'settings/', 'fixed'),
+    Row(172, 2, '<environment>.py', 'placeholder'),
+    Row(173, 0, 'cross_context/', 'fixed'),
+    Row(174, 1, 'backoffice/', 'fixed'),
+    Row(175, 2, 'apps.py', 'fixed'),
+    Row(176, 2, 'urls.py', 'fixed'),
+    Row(177, 2, '<screen>/', 'placeholder'),
+    Row(178, 3, 'panel.py', 'fixed'),
+    Row(179, 3, 'form/<form>_form.py', 'placeholder'),
+    Row(180, 3, 'feature/<feature>.py', 'placeholder'),
+    Row(181, 2, 'templates/admin/backoffice/<page>.html', 'placeholder'),
+    Row(182, 2, 'test/', 'fixed'),
+    Row(183, 3, 'integration/', 'fixed'),
 )
 
 

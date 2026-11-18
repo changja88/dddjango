@@ -797,12 +797,18 @@ djr:R-2566 a djr:Exception ;
     djr:revision 1 .
 
 djr:R-2567 a djr:Obligation ;
-    skos:prefLabel "profile 무관 배선·등록 표준(승인 scope 당 API 하나·auto_import=False controller·side-effect-free BC registrar register_<bc>_api·명시 호출 root URL composition)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2567@2026-08-22> .
+    skos:prefLabel "profile 무관 배선·등록 표준(승인된 scope 당 그 scope 의 profile 에 맞는 표준 API 객체 하나(공개 api.py 의 객체 · 내부 internal_api) · 이미 확립된 다른 API 인스턴스는 보존만 · auto_import=False controller·side-effect-free BC registrar register_<bc>_api · 내부 창구 register_<bc>_internal_api·이름의 scope 객체로 명시 호출하는 root URL composition)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2567@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-2567@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2567 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2567@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-2567 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2567@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2568 a djr:Prohibition ;
     skos:prefLabel "import-time registration 금지"@ko ;
@@ -1482,7 +1488,7 @@ djr:R-3760 a djr:Obligation ;
     djr:order 21 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b17>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b2> ;
     djr:statesNorm djr:R-2567, djr:R-2568, djr:R-2569, djr:R-2570, djr:R-2571, djr:R-2572, djr:R-2573 ;
-    djr:text "- **배선·등록 형태는 profile 무관 표준이다**(2026-08-12 라운드 1′): 승인 scope마다 API 하나, `auto_import=False` controller, side-effect-free BC registrar(`register_<bc>_api`), registrar를 명시적으로 호출해 API를 mount하는 root URL composition. import-time registration을 금지하며 BC `composition_root/`(`dependency_wiring.py` — final.md §1 트리 2~4행)가 dependency injection만 소유한다. framework 오류를 위해 함수형 `Router`를 발명하거나 강제하지 않는다. `preserve-established`가 유지하는 native 는 오류 wire 산출물(schema/handler/body)이지 registration/composition 이 아니다 — **기존 BC 의 배선 실물(`*_api_router.py` 동형)은 배선 결정의 입력이 아니다.** 이 표준의 관할은 승인 스코프가 낳는 산출물(신규 파일·기존 파일에 추가되는 줄)이다 — 승인 스코프 밖 기존 배선·배치는 어떤 위반 판정을 근거로도 이 작업에서 옮기지 않는다(강제 전파 금지 — 이동 권한은 G0 사용자 빚 결정→리팩토링 슬라이스(슬라이스 0 · 리팩토링 모드 변경 슬라이스)와 이 실행의 새 · 바뀐 파일이 부른 묶음 이동(형성 · 해체 · 다시 놓기 — `folder_group.py` 가 계산 · 파일 이름 · 내용 무변 · import 기계 치환만 · 묶음 창 안에서 — 규칙이 권한이다 · 묻지 않는다 · 이미 있던 빚의 정리는 G0 빚 결정 그대로) 뿐 · `discipline-houserules` SKILL §1.1 판정 물음 · 2026-08-13 · 2026-10-27).\n"@ko .
+    djr:text "- **배선·등록 형태는 profile 무관 표준이다**(2026-08-12 라운드 1′): 승인된 scope마다 그 scope의 profile에 맞는 표준 API 객체 하나(공개 창구는 `<project>/api.py`의 객체 · 내부 창구는 `<project>/internal_api.py`의 `internal_api` — 이미 독립 계약 surface로 확립돼 소비자가 의존하는 다른 API 인스턴스는 승인된 보존 scope로 그대로 둘 뿐 새로 만들지 않는다), `auto_import=False` controller, side-effect-free BC registrar(`register_<bc>_api` · 내부 창구 scope 는 같은 `api_router.py` 의 `register_<bc>_internal_api`), registrar를 그 이름의 scope 에 맞는 API 객체로 명시적으로 호출해 API를 mount하는 root URL composition(내부 창구 객체는 `<project>/internal_api.py` 의 `internal_api` · `/internal/`). import-time registration을 금지하며 BC `composition_root/`(`dependency_wiring.py` — final.md §1 트리 2~4행)가 dependency injection만 소유한다. framework 오류를 위해 함수형 `Router`를 발명하거나 강제하지 않는다. `preserve-established`가 유지하는 native 는 오류 wire 산출물(schema/handler/body)이지 registration/composition 이 아니다 — **기존 BC 의 배선 실물(`*_api_router.py` 동형)은 배선 결정의 입력이 아니다.** 이 표준의 관할은 승인 스코프가 낳는 산출물(신규 파일·기존 파일에 추가되는 줄)이다 — 승인 스코프 밖 기존 배선·배치는 어떤 위반 판정을 근거로도 이 작업에서 옮기지 않는다(강제 전파 금지 — 이동 권한은 G0 사용자 빚 결정→리팩토링 슬라이스(슬라이스 0 · 리팩토링 모드 변경 슬라이스)와 이 실행의 새 · 바뀐 파일이 부른 묶음 이동(형성 · 해체 · 다시 놓기 — `folder_group.py` 가 계산 · 파일 이름 · 내용 무변 · import 기계 치환만 · 묶음 창 안에서 — 규칙이 권한이다 · 묻지 않는다 · 이미 있던 빚의 정리는 G0 빚 결정 그대로) 뿐 · `discipline-houserules` SKILL §1.1 판정 물음 · 2026-08-13 · 2026-10-27).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b22> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;

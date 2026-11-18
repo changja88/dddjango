@@ -419,12 +419,18 @@ djr:R-3280 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-3281 a djr:Obligation ;
-    skos:prefLabel "입장된 HTTP add/update 행의 실제 mounted Django client request 검증(승인 status/body/error-sensitive header·비노출 의미)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3281@2026-08-22> .
+    skos:prefLabel "입장된 HTTP add/update 행의 실제 mounted Django client request 검증(승인 status/body/error-sensitive header·비노출 의미 · 내부 창구는 /internal/… mount)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3281@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-3281@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3281 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3281@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-3281 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3281@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3282 a djr:Prohibition ;
     skos:prefLabel "helper/factory/serializer/mapping/handler 내부의 직접 테스트 금지"@ko ;
@@ -968,7 +974,7 @@ djr:R-3734 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 15 ;
     djr:statesNorm djr:R-3281, djr:R-3282 ;
-    djr:text "- 입장된 HTTP `add/update` 행은 실제 mounted Django client request로 승인 status/body/error-sensitive header와 비노출 의미를 검증한다. helper/factory/serializer/mapping/handler 내부는 직접 테스트하지 않는다.\n"@ko .
+    djr:text "- 입장된 HTTP `add/update` 행은 실제 mounted Django client request로 승인 status/body/error-sensitive header와 비노출 의미를 검증한다. 앞단이 인터넷에 열지 않는 내부 창구도 다른 서버와의 계약이라 같은 방법으로 `/internal/…` 에 mount 된 경로를 부른다. helper/factory/serializer/mapping/handler 내부는 직접 테스트하지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004/b16> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004> ;

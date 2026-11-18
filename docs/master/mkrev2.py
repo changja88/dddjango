@@ -457,9 +457,10 @@ ROWS = [
  row("fixed", ["sp","sp","l"], "&lt;declaration&gt;.py", "Hex", "<b>선언을 상속하지 않으면 위반</b> <em>이름만 같고 계약을 안 따르면 «가짜»가 아니라 다른 물건이다</em> · <b>짝이 1:1</b> <em>선언 폴더에 없는 이름이 여기 있으면 위반</em> · <b>기술이 없다</b> <em>DB·HTTP·파일을 만지면 위반 — 그러면 <code>&lt;capability&gt;/</code> 의 어댑터다</em>", "신설", "fix", pin(24)+pin(56)),
  row("fixed", ["sp","l"], "unit/", "고유", "<code>framework</code> <b>자신의</b> 테스트 — 뼈대와 섞지 않는다", "확정", "fix", pin(24)),
 
- row("own", [], "&lt;project&gt;/", "고유", 'BC 밖의 프로젝트 조립 자리. BC 내부 타입은 모르고 공개 API registrar 로 등록한다. <code>health.py</code>·<code>home.py</code>·<code>asgi.py</code>·<code>wsgi.py</code> 는 표준 트리의 관할 밖이다(#436).', "신설", "fix", pin(25), bold=True),
- row("fixed", ["t"], "api.py", "고유", "<b>전역 API 객체 하나와 전역 예외 핸들러</b> — 프레임워크가 하나를 요구해서 여기다. <em>도메인 예외 목록은 여기 없다</em> · <b>루트 API 객체는 경로 앞 응답을 문서에 붙이는 정해진 클래스 하나로 짓는다</b> <em>클래스 이름 · 기저는 프로젝트가 고르고 <code>get_openapi_schema</code> 의 서명 · 몸통은 글자 그대로다 — 그 몸통이 <code>framework/ninja/pre_route_responses.py</code> 를 부른다(<code>implementation-django-ninja</code> §6.2)</em> <span class='dim'>11-13 · F4-173 — API 문서는 그 경로에서 날 수 있는 오류를 누가 보내든 모두 적는다(사용자 결정).</span>", "확정", "fix", pin(25)),
- row("fixed", ["t"], "urls.py", "고유", '<code>api.py</code> 의 전역 API 객체에 각 BC 의 공개 <code>register_&lt;bc&gt;_api(api)</code> 를 명시적으로 한 번 등록한다. registrar import 는 허용된 조립이고 BC 내부 업무 타입 import 는 하지 않는다.', "확정", "fix", pin(25)),
+ row("own", [], "&lt;project&gt;/", "고유", 'BC 밖의 프로젝트 조립 자리. BC 내부 타입은 모르고 BC 등록 함수(공개 <code>register_&lt;bc&gt;_api</code> · 내부 창구 <code>register_&lt;bc&gt;_internal_api</code>)로 등록한다. <code>health.py</code>·<code>home.py</code>·<code>asgi.py</code>·<code>wsgi.py</code> 는 표준 트리의 관할 밖이다(#436).', "신설", "fix", pin(25), bold=True),
+ row("fixed", ["t"], "api.py", "고유", "<b>공개 API 객체 하나와 그 예외 핸들러</b> — 프로젝트에 정해진 개수로 두는 조립 파일이라 여기다(둘째 표준 API 객체는 형제 <code>internal_api.py</code>). <em>도메인 예외 목록은 여기 없다</em> · <b>생성 문장 하나로만 짓는다</b> <em>객체 이름은 프로젝트가 고른다 — 그 객체나 생성자를 다른 이름에 별칭으로 대입하거나 튜플 대입 안에서 짓거나 <code>type(…)(…)</code> · <code>copy</code> 로 복사하지 않는다</em> · <b>루트 API 객체는 경로 앞 응답을 문서에 붙이는 정해진 클래스 하나로 짓는다</b> <em>클래스 이름 · 기저는 프로젝트가 고르고 <code>get_openapi_schema</code> 의 서명 · 몸통은 글자 그대로다 — 그 몸통이 <code>framework/ninja/pre_route_responses.py</code> 를 부른다(<code>implementation-django-ninja</code> §6.2)</em> <span class='dim'>11-13 · F4-173 — API 문서는 그 경로에서 날 수 있는 오류를 누가 보내든 모두 적는다(사용자 결정).</span>", "확정", "fix", pin(25)),
+ row("fixed", ["t"], "internal_api.py", "고유", "<b>내부 창구 API 객체 <code>internal_api</code> 하나와 그 예외 핸들러</b> — 앞단(리버스 프록시)이 인터넷에 열지 않는 HTTP 창구를 다는 둘째 표준 API 객체다. <em>예: 같은 시스템의 SSE 서버 · 워커가 부르는 창구</em> · <b><code>api.py</code> 의 루트 API 클래스를 들여 짓는다</b> <em><code>internal_api = &lt;그 클래스&gt;(urls_namespace=\"internal_api\")</code> 한 문장 — 이 파일에는 import 들 · 생성 문장 하나 · <code>@internal_api.exception_handler</code> 함수만 온다. 클래스 정의 · 별칭 · 둘째 생성은 위반이다</em> · <b>내부 창구가 없는 프로젝트도 빈 파일로 둔다</b> <em>내용 없는 <code>internal_api.py</code> 는 API surface 가 아니다 — 뒤에 내부 창구가 생기면 이 빈 파일이 착지 자리다</em> · <b>«internal» 은 앞단 바깥에 열리지 않는다는 뜻이다</b> <em>같은 배포 단위 안을 오가는 <code>framework/broker/internal/</code> 의 internal 과 다르다</em> <span class='dim'>11-19 · F4-150 — 내부 창구 객체의 표준 자리(사용자 결정 — 별도 API 객체 · 주소 <code>/internal/</code>).</span>", "신설", "fix", pin(25)),
+ row("fixed", ["t"], "urls.py", "고유", '각 BC 의 등록 함수를 그 이름의 scope 에 맞는 표준 API 객체로 명시적으로 한 번씩 부른다 — 공개 <code>register_&lt;bc&gt;_api(api)</code> 는 <code>api.py</code> 의 공개 객체로, 내부 창구 <code>register_&lt;bc&gt;_internal_api(internal_api)</code> 는 <code>internal_api.py</code> 의 <code>internal_api</code> 로. <code>internal_api</code> 는 <code>urlpatterns</code> 에 바로 넣은 <code>path("internal/", internal_api.urls)</code> 로만 달고, 공개 객체는 <code>internal/</code> 이 아닌 주소에 단다. registrar import 는 허용된 조립이고 BC 내부 업무 타입 import 는 하지 않는다.', "확정", "fix", pin(25)),
  row("fixed", ["t"], "celery.py", "고유", "<code>Celery</code> 인스턴스와 <code>autodiscover_tasks(packages=…, related_name=None)</code> — <b>조립</b>. <em>경로 문자열만 쓰고 타입을 모른다</em> · <b>기본값으로는 못 닿는다</b> — <em>Django 가 넘기는 package 는 <code>AppConfig.name</code>(=<code>…driven_layer/django_&lt;bc&gt;</code>) 이라 위로 못 올라간다. <code>packages</code> 를 «콜러블»로 주되 <b>목록이 아니라 규칙</b>으로 짓는다 — <code>label</code> 로 도는 한 줄(08-07 · R10)</em>", "신설", "fix", pin(26)+pin(25)),
  row("fixed", ["l"], "settings/", "고유", "<b>Django 가 정한 자리</b> — <em>여기서 갈리는 건 환경뿐이다</em>", "확정", "fix", pin(25)),
  row("fixed", ["sp","l"], "&lt;environment&gt;.py", "고유", "", "확정", "fix", pin(25)),
@@ -831,11 +832,11 @@ PARTS = [
   <code>util</code>·<code>support</code>·<code>shared</code> 는 여기서도 탈락이다 — <b>「공통이냐」는 정도로 재는 말이라 아무도 «아니오»라고 답할 수 없다</b>.</p>"""),
 
  dict(key="project", tab="&lt;project&gt;/", sub="조립", zone="own", rows=None,
-  goal='<p>프레임워크가 전역에 요구하는 API 객체·URLconf·Celery 앱·환경 설정을 조립한다. 각 BC 내부의 구현 조립은 그 BC 의 <code>composition_root/</code> 가 맡는다.</p><p>프로젝트는 공개 API registrar 를 통해 BC 를 등록한다. BC 내부 업무 타입·도메인 예외 목록을 import 해 처리하지 않는다. 앱 경로 문자열과 공개 registrar 는 등록 표면이다.</p>',
-  inn="""<p><code>api.py</code> 전역 API 객체와 전역 예외 핸들러 · <code>urls.py</code> 라우터 등록 ·
+  goal='<p>프로젝트 전역에 정해진 개수로 두는 조립 파일 — 공개 API 객체 · 내부 창구 API 객체 · URLconf · Celery 앱 · 환경 설정 — 을 조립한다. 각 BC 내부의 구현 조립은 그 BC 의 <code>composition_root/</code> 가 맡는다.</p><p>프로젝트는 BC 등록 함수(공개 <code>register_&lt;bc&gt;_api</code> · 내부 창구 <code>register_&lt;bc&gt;_internal_api</code>)를 통해 BC 를 등록한다. BC 내부 업무 타입·도메인 예외 목록을 import 해 처리하지 않는다. 앱 경로 문자열과 BC 등록 함수는 등록 표면이다.</p>',
+  inn="""<p><code>api.py</code> 공개 API 객체와 그 예외 핸들러 · <code>internal_api.py</code> 내부 창구 API 객체(내부 창구가 없으면 빈 파일) · <code>urls.py</code> 라우터 등록과 두 객체의 mount ·
   <code>celery.py</code> 인스턴스와 <code>autodiscover_tasks</code> ·
   <code>settings/&lt;environment&gt;.py</code>(<code>base</code> · <code>local</code> · <code>production</code> · <code>test</code>).</p>
-  <p><em>넷 다 프레임워크가 「전역에 하나」를 강제하는 것들이고, 그래서 여기 말고는 둘 자리가 없다.</em></p>""",
+  <p><em>다섯 다 프로젝트 전역에 정해진 개수로 두는 조립 파일이고, 그래서 여기 말고는 둘 자리가 없다.</em></p>""",
   out="""<p><b>도메인 예외 목록.</b> 전역 예외 핸들러에 각 BC 의 예외를 나열하기 시작하면
   <b>BC 가 하나 늘 때마다 이 파일이 바뀐다</b> — 위의 «타입으로 알지 않는다»가 바로 여기서 깨진다.</p>
   <p>오류를 HTTP 언어로 옮기는 일은 각 BC 의 <code>driving_layer/api/bc_error_schema.py</code> 가 갖는다.</p>""",
@@ -918,7 +919,7 @@ HTTP 면 <code>api/</code>, 같은 프로세스 함수 호출이면 <code>open_h
 <b>전송은 같아서 라우터는 하나를 같이 쓴다</b> — 그래서 이 갈림이 <code>driving_layer/</code> 가 아니라 여기서 일어난다.""",
 
 
-10: '<p>프로젝트가 전달한 API 객체에 자기 BC 를 등록하는 <code>register_&lt;bc&gt;_api(api)</code> 함수다. 전역 API 객체를 여기서 새로 만들거나 프로젝트 모듈에서 가져오지 않는다.</p><p>Ninja Extra 스택이면 <code>NinjaExtraAPI</code> 에 컨트롤러를 등록하고, 승인된 plain Ninja 스택이면 <code>NinjaAPI</code> 에 라우터를 붙인다. 실제 프로젝트 API 객체·BC registrar·URLconf 의 등록 경로가 하나로 이어져야 한다.</p>',
+10: '<p>프로젝트가 전달한 API 객체에 자기 BC 를 등록하는 함수다 — 공개 창구는 <code>register_&lt;bc&gt;_api(api)</code>, 앞단이 인터넷에 열지 않는 내부 창구는 <code>register_&lt;bc&gt;_internal_api(api)</code>. 이 파일에 하나 또는 둘을 두고(내부 창구만 가진 BC 는 뒤의 것만), 어느 객체에 다는지는 함수 이름이 정한다. API 객체를 여기서 새로 만들거나 프로젝트 모듈(<code>api.py</code> · <code>internal_api.py</code>)에서 가져오지 않는다.</p><p>Ninja Extra 스택이면 <code>NinjaExtraAPI</code> 에 컨트롤러를 등록하고, 승인된 plain Ninja 스택이면 <code>NinjaAPI</code> 에 라우터를 붙인다. scope 마다 프로젝트 API 객체·BC registrar·URLconf 의 등록 경로가 하나로 이어져야 한다.</p>',
 
 
 11: '<p>이 BC 가 HTTP 로 공개하는 오류 언어를 한 파일에 모은다. <b><code>dddjango-code-json</code> 프로필</b>에서는 <code>&lt;Bc&gt;ErrorCode(StrEnum)</code> 하나, 공통 <code>FrameworkErrorSchema</code> 의 식별자 필드만 좁히는 <code>&lt;Bc&gt;ErrorSchema</code> 하나, 반복되는 사건별 concrete 오류 클래스를 함께 둔다.</p><p>오류의 필드·고정값·HTTP status 는 승인된 외부 계약을 따른다. concrete 오류는 승인된 기본값으로 인자 없이(또는 공통 shape 의 유일한 일반 <code>str</code> 설명 칸 keyword 하나로) 생성하며, 별도 concrete 가 필요 없는 사건으로 승인된 경우에는 controller 가 BC base 의 필드를 직접 채운다. 새로운 오류마다 파일이나 공통 코드 목록을 늘리지 않는다.</p>',
@@ -1594,26 +1595,30 @@ BC 하나짜리 저장소에서도 <b>처음부터</b> 여기 만든다.
 
 
 # ── <project> ───────────────────────────────────────────────────────
-166: '<p>전역 API·URLconf·Celery 앱·환경 설정을 조립하는 Django 프로젝트 패키지다. BC 의 내부 업무 타입을 가져와 분기하거나 나열하지 않는다.</p><p>BC API 의 공개 <code>register_&lt;bc&gt;_api(api)</code> 를 import 해서 등록하는 것은 허용된 조립 표면이다. 등록이 필요한 BC 가 추가되면 해당 등록 줄은 바뀐다. 업무 실패 목록이나 BC 내부 구현까지 아는 것과 구분한다.</p>',
+166: '<p>공개 API · 내부 창구 API · URLconf · Celery 앱 · 환경 설정을 조립하는 Django 프로젝트 패키지다. BC 의 내부 업무 타입을 가져와 분기하거나 나열하지 않는다.</p><p>BC API 의 등록 함수(공개 <code>register_&lt;bc&gt;_api</code> · 내부 창구 <code>register_&lt;bc&gt;_internal_api</code>)를 import 해서 그 scope 의 API 객체로 부르는 것은 허용된 조립 표면이다. 등록이 필요한 BC 가 추가되면 해당 등록 줄은 바뀐다. 업무 실패 목록이나 BC 내부 구현까지 아는 것과 구분한다.</p>',
 
 
-167: """프레임워크가 <b>«전역에 딱 하나»</b>를 요구해서 이 자리가 생겼다.
+167: """<b>공개 API 객체 하나</b>를 생성 문장 하나로 짓는 자리다 — 프로젝트에 정해진 개수로 두는 조립 파일이고, 둘째 표준 API 객체 <code>internal_api</code> 는 형제 <code>internal_api.py</code> 에 산다.
 업무 실패를 나열하기 시작하면 <b>BC 가 하나 늘 때마다 이 파일이 바뀐다</b>.""",
 
 
-168: """각 BC 의 <code>register_&lt;bc&gt;_api(api)</code> 를 <b>명시적으로</b> 부른다.
+168: """<b>내부 창구 API 객체 <code>internal_api</code> 하나</b> — 앞단이 인터넷에 열지 않는 창구(같은 시스템의 SSE 서버 · 워커가 부르는 창구)를 여기 단다.
+<code>api.py</code> 의 루트 API 클래스를 들여 짓고, <code>urls.py</code> 가 <code>/internal/</code> 에 단다. <b>내부 창구가 없어도 빈 파일로 둔다</b> — 빈 파일은 API surface 가 아니고, 내부 창구가 생기면 그 착지 자리다.""",
+
+
+169: """각 BC 의 등록 함수를 <b>명시적으로</b> 부른다 — 공개 <code>register_&lt;bc&gt;_api(api)</code> · 내부 창구 <code>register_&lt;bc&gt;_internal_api(internal_api)</code>, 이름의 scope 에 맞는 객체로.
 자동 탐색을 쓰지 않는 것은 <b>«무엇이 얹혔나»가 이 파일 하나로 보여야</b> 하기 때문이다.""",
 
 
-169: """<b>Celery 인스턴스와 <code>autodiscover_tasks</code>.</b>
+170: """<b>Celery 인스턴스와 <code>autodiscover_tasks</code>.</b>
 <code>api.py</code> 와 같은 자리이고 같은 자를 받는다 — <b>얹기만 하고 안을 모른다</b>.""",
 
 
-170: """<b>장고가 자리를 정한 설정.</b>
+171: """<b>장고가 자리를 정한 설정.</b>
 기능별로 파일을 쪼개기 시작하면 «이 값이 어느 환경에서 무엇인가»를 여러 파일을 열어 봐야 알게 된다.""",
 
 
-171: """<b>환경 하나 = 파일 하나</b> — <code>base</code> · <code>local</code> · <code>production</code> · <code>test</code>.
+172: """<b>환경 하나 = 파일 하나</b> — <code>base</code> · <code>local</code> · <code>production</code> · <code>test</code>.
 공통은 <code>base</code> 에 두고 나머지는 그것을 가져와 덮어쓴다.""",
 
 101: '포트를 실제로 구현하는 클래스들을 둔다.',
@@ -1646,33 +1651,33 @@ BC 하나짜리 저장소에서도 <b>처음부터</b> 여기 만든다.
 133: '호출 준비 결과 등의 구조를 내부 계약 클래스로 묶는다.',
 134: '외부 입출력의 검증 스키마들을 둔다.',
 135: 'Pydantic 등으로 외부 데이터가 갖춰야 할 모양을 선언한다.',
-172: """<b>BC 둘 이상의 값을 함께 쓰는 합성 칸들의 뿌리</b> — BC 밖 · 위에 서서 각 BC 의 공개 창구를 따로 부르고 식별자로 맞춘다.
+173: """<b>BC 둘 이상의 값을 함께 쓰는 합성 칸들의 뿌리</b> — BC 밖 · 위에 서서 각 BC 의 공개 창구를 따로 부르고 식별자로 맞춘다.
 BC 는 이 아래를 모른다. <b>있을 때 본다</b> — 그런 화면이 생길 때 만들고, 있으면 그 아래 고정 칸이 반드시 선다.""",
-173: '운영자 화면(Django admin) 합성 — BC 둘 이상의 값을 한 화면에 보인다. 장고 앱 <code>cross_context.backoffice</code> 하나이고 모델이 없다.',
-174: '장고 앱 등록 파일 — label <code>backoffice</code> · 모델 없는 앱이다.',
-175: '운영자 화면 주소를 admin 주소 아래에 모은다 — 화면마다 <code>admin.site.admin_view</code> 로 감싼다.',
-176: '운영자 화면 하나 — 그 화면의 입구 · 폼 · 기능을 담는다.',
-177: '화면 입구 — 주소 · 권한 · 기능으로 넘기기만 한다.',
-178: '입력 폼 — 값의 모양만 본다.',
-179: '한 기능 — 각 BC 창구를 부르고 식별자로 맞춘다 · 창구 예외를 화면 알림으로 옮긴다.',
-180: 'admin 화면 템플릿 — 화면별 하위 폴더 없이 평평하게 둔다.',
-181: '이 칸의 시험.',
-182: '화면 시험 — Django client 로 admin 주소를 열고 각 BC 는 진짜로 돈다.',
+174: '운영자 화면(Django admin) 합성 — BC 둘 이상의 값을 한 화면에 보인다. 장고 앱 <code>cross_context.backoffice</code> 하나이고 모델이 없다.',
+175: '장고 앱 등록 파일 — label <code>backoffice</code> · 모델 없는 앱이다.',
+176: '운영자 화면 주소를 admin 주소 아래에 모은다 — 화면마다 <code>admin.site.admin_view</code> 로 감싼다.',
+177: '운영자 화면 하나 — 그 화면의 입구 · 폼 · 기능을 담는다.',
+178: '화면 입구 — 주소 · 권한 · 기능으로 넘기기만 한다.',
+179: '입력 폼 — 값의 모양만 본다.',
+180: '한 기능 — 각 BC 창구를 부르고 식별자로 맞춘다 · 창구 예외를 화면 알림으로 옮긴다.',
+181: 'admin 화면 템플릿 — 화면별 하위 폴더 없이 평평하게 둔다.',
+182: '이 칸의 시험.',
+183: '화면 시험 — Django client 로 admin 주소를 열고 각 BC 는 진짜로 돈다.',
 }
 
-assert len(WHAT) == 182, len(WHAT)
+assert len(WHAT) == 183, len(WHAT)
 
 # ── 칸마다 «이름 규칙» ────────────────────────────────────────────────
 #    번호는 WHAT 과 같은 축(파트 순서)이다. 규칙이 없는 칸은 아예 넣지 않는다.
 NAMES = {
-172: "고정 이름 <code>cross_context/</code> — <b>무엇이 들어오는지로 짓는다</b>(BC 둘 이상의 값을 함께 쓰는 것) · <span class='no'>cycle_breaker/</span> ✗ — 하는 방법으로 지으면 순환을 일으키는 것은 무엇이든(업무 판정까지) 밀어 넣게 된다.",
-173: "합성 종류 이름 — 지금은 <code>backoffice/</code>(운영자 화면) 하나.",
-174: "장고가 정하는 고정 이름.",
+173: "고정 이름 <code>cross_context/</code> — <b>무엇이 들어오는지로 짓는다</b>(BC 둘 이상의 값을 함께 쓰는 것) · <span class='no'>cycle_breaker/</span> ✗ — 하는 방법으로 지으면 순환을 일으키는 것은 무엇이든(업무 판정까지) 밀어 넣게 된다.",
+174: "합성 종류 이름 — 지금은 <code>backoffice/</code>(운영자 화면) 하나.",
 175: "장고가 정하는 고정 이름.",
-176: "운영자가 부르는 화면 이름 — 예: <code>suspension/</code>.",
-177: "고정 이름.",
-178: "폼 이름 + <code>_form</code>.",
-179: "동사구 — BC 안 admin 기능과 같다.",
+176: "장고가 정하는 고정 이름.",
+177: "운영자가 부르는 화면 이름 — 예: <code>suspension/</code>.",
+178: "고정 이름.",
+179: "폼 이름 + <code>_form</code>.",
+180: "동사구 — BC 안 admin 기능과 같다.",
 1: "폴더 이름은 <b>업무 경계의 이름</b>이다 — 장고 앱 이름이 아니다(<code>accounts</code>·<code>billing</code>·<code>ai_chat</code>). 이 이름이 <code>driven_layer/django_&lt;bounded_context&gt;/</code> 와 <code>apps.py</code> 의 <code>label</code> 까지 그대로 간다.",
 2: '고정 이름 폴더. 결선 파일 이름도 <code>dependency_wiring.py</code>·<code>event_wiring.py</code> 로, 결선 재료 파일 이름은 <code>wiring_material.py</code> 로 고정한다.',
 # ── driving_layer ───────────────────────────────────────────────────
@@ -1816,8 +1821,9 @@ NAMES = {
 164: '<b>선언 파일과 «같은 이름»</b> — <code>&lt;capability&gt;_port.py</code>. 클래스는 <code>&lt;구현방식&gt;&lt;Capability&gt;</code>.',
 166: "장고 프로젝트 패키지 — 이름은 프로젝트가 정한다.",
 167: "장고·닌자가 정하는 고정 이름.",
-170: "종류 이름 폴더.",
-171: "환경 이름 — <code>local.py</code> · <code>production.py</code>.",
+168: '고정 이름 — 안의 객체 이름도 <code>internal_api</code>(<code>urls_namespace="internal_api"</code>).',
+171: "종류 이름 폴더.",
+172: "환경 이름 — <code>local.py</code> · <code>production.py</code>.",
 
 101: '고정 이름 <code>adapter/</code> — 내용이 없어도 유지한다.',
 102: '구현 이름 + <code>_adapter.py</code> — 예: <code>intent_generation_adapter.py</code>.',
@@ -1915,8 +1921,8 @@ _NMR = {
     159: "판정이 곧 이름", 160: "갈래로 · 접미사 ✗",
     162: "하는 일로",
     163: "고정 이름", 164: "선언과 같은 이름",
-    171: "환경 이름",
-    178: "폼 이름 + _form", 179: "동사구",
+    172: "환경 이름",
+    179: "폼 이름 + _form", 180: "동사구",
 }
 _NMR_CLS = re.compile(r'클래스는 <code>(.*?)</code>')
 
@@ -2245,7 +2251,7 @@ def _st(mark, r, path, layer, zcls, sig="", note="", sub=False):
 FLOWSTEPS = "\n".join([
   '      <div class="fs-g">부팅 시 등록 · 요청별 조립</div>',
   '      <ol class="steps">',
-  _st("·", 138, "&lt;project&gt;/urls.py", "프로젝트", "z-own",
+  _st("·", 139, "&lt;project&gt;/urls.py", "프로젝트", "z-own",
       sig='register_order_api(api)',
       note='프로젝트의 전역 API 객체에 BC registrar 를 한 번 등록한다.'),
   _st("·", 10, "driving_layer/api/api_router.py", "driving", "z-hex",
@@ -6541,7 +6547,7 @@ TIPS = """  var TIPS = {
     d7: { id: "D7", vd: "확정 · 08-04", t: "api/ 는 area 1차 · ninja/ 폴더는 없다",
       d: "트리 전체가 <b>도메인 축 1차 · 종류 2차</b>이고 정본 §0-4 가 그렇게 못 박았다. 게다가 기술 축의 값이 <b>하나뿐</b>(ninja 63 · 나머지 0)이라 폴더를 만들면 16개 BC 에 빈 한 겹이 생긴다. 기술은 §4 대로 <b>이름</b>에 붙인다." },
     d8: { id: "D8", vd: "확정 · 08-04", t: "schema/ 는 api/<area>/ 밑으로",
-      d: "실측이 이미 반쯤 그렇다 — area 로 나눈 BC(하위 폴더 11개)와 <b>평면으로 둔 BC(파일 16개)</b>가 섞여 있고 그 평면이 §0-4 위반이다. 34파일 전부 ninja 종속이라 <code>api/</code> 것이 맞다.<br><b>08-06 재검 — 실측이 전제를 확인했다.</b> <em>「이 스키마를 여러 area 가 나눠 쓰나?」</em> — <b>컨트롤러가 쓰는 70클래스 전부가 area 하나에만 갇혀 있고 공유는 0건</b>(HEAD 재측정 — 총 101 · 쓰임 70 · 안 쓰임 31. 옛 값 「63/43/20」은 BC 층만 센 것). 같은 자로 <code>bc_error_schema</code> 을 재면 정반대다: <b>401 이 컨트롤러 보유 area 23개 전부</b>(422 는 20 · 503 은 19 · BC 로는 13·10·12). 그래서 하나는 <code>&lt;area&gt;/</code> 밑이고 하나는 <code>api/</code> 바로 밑이다. 현행이 BC 층인 건 증상이다 — <code>accounts/…/schema_in.py</code> 한 파일에 <b>세 area 것 6클래스</b>가 뭉쳐 있다.<br><b>이름 <code>schema_in</code> 은 반복이 아니다</b> — 규칙의 선은 <b>「자리표시자면 접미사를 뗀다」</b>(무접미 <b>32</b>)이고, 접미사를 다는 자리 <b>34</b> 는 <b>이름만으로 «무엇인지»가 안 보이는 곳</b>이며, 고정 이름 <b>25</b> 개는 그냥 이름을 쓴다(<code>command</code>·<code>panel</code>·<code>composition_root</code>…). 자리표시자는 파일이 늘 때마다 접미사가 같이 늘어서다. 대안 <code>input/output</code> 은 <code>command/out</code> 과 어휘가 어긋나고, <code>request/response</code> 는 <code>contract/request/</code> 와 같은 말이 되며, <code>in.py</code> 는 <b>예약어라 import 가 안 된다</b>." },
+      d: "실측이 이미 반쯤 그렇다 — area 로 나눈 BC(하위 폴더 11개)와 <b>평면으로 둔 BC(파일 16개)</b>가 섞여 있고 그 평면이 §0-4 위반이다. 34파일 전부 ninja 종속이라 <code>api/</code> 것이 맞다.<br><b>08-06 재검 — 실측이 전제를 확인했다.</b> <em>「이 스키마를 여러 area 가 나눠 쓰나?」</em> — <b>컨트롤러가 쓰는 70클래스 전부가 area 하나에만 갇혀 있고 공유는 0건</b>(HEAD 재측정 — 총 101 · 쓰임 70 · 안 쓰임 31. 옛 값 「63/43/20」은 BC 층만 센 것). 같은 자로 <code>bc_error_schema</code> 을 재면 정반대다: <b>401 이 컨트롤러 보유 area 23개 전부</b>(422 는 20 · 503 은 19 · BC 로는 13·10·12). 그래서 하나는 <code>&lt;area&gt;/</code> 밑이고 하나는 <code>api/</code> 바로 밑이다. 현행이 BC 층인 건 증상이다 — <code>accounts/…/schema_in.py</code> 한 파일에 <b>세 area 것 6클래스</b>가 뭉쳐 있다.<br><b>이름 <code>schema_in</code> 은 반복이 아니다</b> — 규칙의 선은 <b>「자리표시자면 접미사를 뗀다」</b>(무접미 <b>32</b>)이고, 접미사를 다는 자리 <b>34</b> 는 <b>이름만으로 «무엇인지»가 안 보이는 곳</b>이며, 고정 이름 <b>26</b> 개는 그냥 이름을 쓴다(<code>command</code>·<code>panel</code>·<code>composition_root</code>…). 자리표시자는 파일이 늘 때마다 접미사가 같이 늘어서다. 대안 <code>input/output</code> 은 <code>command/out</code> 과 어휘가 어긋나고, <code>request/response</code> 는 <code>contract/request/</code> 와 같은 말이 되며, <code>in.py</code> 는 <b>예약어라 import 가 안 된다</b>." },
     d10: { id: "D10", vd: "확정 · 08-04 · 개정 10-27 · D60", t: "규정은 «검사할 수 있는 데까지»",
       d: "깊이가 기준이 아니라 <b>판정 가능성</b>이 기준이다. <code>contract/{request,response,exception}</code>은 경계를 넘는 표면이라, <code>schema/{in,out}</code>은 <b>방향이 검사 대상</b>이라 규정한다. 반면 그 안의 클래스 구성은 검사할 골격이 없어 규정하지 않는다." },
     d11: { id: "D11", vd: "확정 · 08-06", t: "칸 아래는 application_layer/&lt;area&gt;/ 와 도메인 exception·value_object 만 의존한다",
@@ -6692,7 +6698,7 @@ body = """<!doctype html>
       </div>
       <p class="tguide"><b>왼쪽이 파일 트리, 오른쪽이 설명이다.</b> 파트를 누르면 그 아래로 트리가 펼쳐지고, 줄을 누르면 오른쪽의 그 칸으로 간다. 파트 순서는 요청이 <b>들어와 나가는 순서</b>다 — 루트 → 입구 → 조율 → 규칙 → 출구, 그다음이 테스트와 저장소 바깥이다.
       <span class="tg-v">설명에 나오는 <b>원전 어휘</b>는 계보를 색으로 말한다 — <b class="v d">DDD</b> Evans · <b class="v c">Clean</b> Martin · <b class="v h">Hexagonal</b> Cockburn</span></p>
-      <p class="tguide"><b>현행 표준: 2026-11-14 BC 밖 합성 칸 <code>cross_context/</code> 반영.</b> 182행의 경로·행 번호·승격 표시는 플러그인 트리와 함께 검증한다.
+      <p class="tguide"><b>현행 표준: 2026-11-19 내부 창구 API 객체 칸 <code>&lt;project&gt;/internal_api.py</code> 반영.</b> 183행의 경로·행 번호·승격 표시는 플러그인 트리와 함께 검증한다.
       내용 규칙은 <a href="../../dddjango/skills/discipline-houserules/references/final.md">하우스룰 정본</a>·<a href="../../dddjango/skills/discipline-houserules/SKILL.md">배치·승격 규율</a>·<a href="../../dddjango/skills/implementation-django-ninja/references/final.md">API 구현 계약</a>을 따른다.
       <b>⇄</b> 는 <a href="#promotion">동명 폴더 승격 허용</a> 표시다. D 표식과 «실측» 수치는 2026-08 초기 설계·이관 기록이며 현재 프로젝트 상태를 뜻하지 않는다.</p>
       <div class="tabwrap">

@@ -20,7 +20,7 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
 - **#486** — 어느 BC 를 열어도 이 트리의 골격이 «그대로» 있다 — 내용이 있든 없든 상관없다. 파일트리를 지키지 않는 구현·설계는 «반환»이다.
 - **#488** — 고정 이름의 칸은 «부모가 있으면» 반드시 있다 — 폴더는 비어도 `__init__.py` 로, 파일도 비면 «빈 파일»로 만든다. 칸의 승격 실현(#490 교체형)이 이미 있으면 그 실현이 이 충족이다 — 동명 빈 파일을 병설하지 않는다. 승격 허용 파일 칸의 빈 실현은 «빈 파일»이다 — 승격형은 내용이 생긴 뒤의 대체 실현이며, 예비 폴더형을 미리 파지 않는다. 빈 파일로 실현된 칸의 **내용 규칙**(진입점·포트 «하나» 등)은 내용이 생긴 뒤부터 선다 — Coordinator 가 빈 모듈을 error inventory 에서 제외하는 것(R-0319)과 같은 시점이며, 검사기는 내용 없는 골격 파일(0바이트·docstring/주석뿐)을 내용 규칙에서 건너뛴다. 빈 파일을 지워 red 를 푸는 것은 #488 위반이다.
 - **#489** — `<…>` 가 붙은 자리표시자 칸만 그 개념이 실제로 생길 때 생긴다 — 그 외에 「이 BC 엔 없으니 뺀다」는 축소가 아니라 위반이다.
-- **#490** — `application/<bounded_context>/**` 안에 트리에 없는 경로가 하나라도 있으면 위반이다(`utils/`·`common/`·`helpers/`). 폐쇄는 **칸**(폴더 + 트리가 이름을 준 파일)에만 걸리고, 트리가 리프로 닫은 폴더 «안»의 추가 모듈은 작성자 재량이다(#15). `framework/`·`<project>/` 는 이 원칙의 주어가 아니다. `cross_context/**` 는 주어다(트리 172~182행) — `backoffice/` 의 폴더는 화면(`<screen>/`)뿐이고, `<screen>/` 안은 `panel.py` · `form/` · `feature/` 뿐이며, 템플릿은 `templates/admin/backoffice/` 바로 아래 평평하게 두고, `test/integration/` 안은 pytest 가 이름을 소유한다. 단, §1 트리의 **승격 허용 표기**가 붙은 파일 칸은 두 실현을 갖는다 — `<이름>.py`(기본) ⇄ 동명 폴더 `<이름>/`(**동명 폴더 승격**). 유효한 승격 폴더는 트리에 있는 실현이지 «트리에 없는 경로»가 아니다(형태 요건은 아래). §1 트리의 **묶음 허용 표기**가 붙은 파일 칸(트리 64·66·68·71·73·75행)의 인스턴스 파일은 부모 바로 아래 **묶음** 한 계층으로 나눠 둘 수 있고, 유효한 묶음은 «트리에 없는 경로»가 아니다(요건은 아래 «의미 묶음» — #654~#656).
+- **#490** — `application/<bounded_context>/**` 안에 트리에 없는 경로가 하나라도 있으면 위반이다(`utils/`·`common/`·`helpers/`). 폐쇄는 **칸**(폴더 + 트리가 이름을 준 파일)에만 걸리고, 트리가 리프로 닫은 폴더 «안»의 추가 모듈은 작성자 재량이다(#15). `framework/`·`<project>/` 는 이 원칙의 주어가 아니다. `cross_context/**` 는 주어다(트리 173~183행) — `backoffice/` 의 폴더는 화면(`<screen>/`)뿐이고, `<screen>/` 안은 `panel.py` · `form/` · `feature/` 뿐이며, 템플릿은 `templates/admin/backoffice/` 바로 아래 평평하게 두고, `test/integration/` 안은 pytest 가 이름을 소유한다. 단, §1 트리의 **승격 허용 표기**가 붙은 파일 칸은 두 실현을 갖는다 — `<이름>.py`(기본) ⇄ 동명 폴더 `<이름>/`(**동명 폴더 승격**). 유효한 승격 폴더는 트리에 있는 실현이지 «트리에 없는 경로»가 아니다(형태 요건은 아래). §1 트리의 **묶음 허용 표기**가 붙은 파일 칸(트리 64·66·68·71·73·75행)의 인스턴스 파일은 부모 바로 아래 **묶음** 한 계층으로 나눠 둘 수 있고, 유효한 묶음은 «트리에 없는 경로»가 아니다(요건은 아래 «의미 묶음» — #654~#656).
 - **#491** — 칸의 유형은 셋뿐이고 «조건부»는 없다 — ① 고정 이름 ② `<>` 첫 등장 ③ `<>` 재등장(조상이 이미 연 낱말이라 값이 이미 채워져 있어 ①과 같다). «조건부 없음»의 주어는 칸의 **존재**(생성 조건)다 — 승격 허용 표기는 존재가 아니라 실현 형태(#490)의 값이다. 묶음 허용 표기도 칸의 존재가 아니라 실현 형태의 값이다.
 - **#492** — 「그 파일이 있어야 하나」는 트리가 정하고 「그것을 어떻게 쓰나」는 스킬이 정한다. 묶음의 개수 조건(셋 · 둘)은 노드 조건이 아니다 — 의미 묶음(#654~#656 · D60)이 묶음 허용 여섯 칸에 한해 명시적으로 개정한 값이다.
 
@@ -49,7 +49,7 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
 **#651 클래스별 파일** — `adapter/`·`command/`·`contract/`·`schema/` 의 내용 파일은 비공개 클래스를 포함해 클래스 하나당 파일 하나다. 같은 역할의 클래스가 여러 개면 각각 파일을 만든다. `constant/` 는 클래스 없이 관련 상수끼리 한 파일에 묶는다. 내용 없는 골격 파일과 재수출 초기화 파일은 클래스 수 검사의 대상이 아니다.
 
 **역할 배치** — `adapter/` 는 포트를 구현하는 클래스를 소유한다. 외부 응답을 포트 반환값으로 바꾸는 reader 는 그 구현의 private 메서드 또는 본문에 둔다. `command/` 는 주입되는 호출 계약(Protocol 등)을 클래스별로 둔다. `contract/` 는 내부 계약 클래스를 소유하며 그 계약을 반환하는 builder 도 같은 파일에 둔다. `schema/` 는 외부 입출력 검증 클래스를 소유하며 관련 타입 별칭은 해당 스키마 파일에 둔다. `constant/` 는 프롬프트 등 관련 값을 `prompt.py` 같은 응집된 묶음으로 둔다. 반환 클래스가 포트 소유라는 이유로 외부 스키마를 아는 변환 함수를 포트 파일로 옮기지 않는다. 내부 참조는 모듈 직접 상대 import 로 연결한다. 기존 상속·명명·예외 번역 검사는 구현 역할 파일에, 의존 방향과 격리는 전체 역할 파일에 적용한다.
-## §1 표준 트리 — 182행
+## §1 표준 트리 — 183행
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 행 번호는 정본의 행 번호이고, 규칙·검사기·명세가 「트리 N행」으로 이 번호를 가리킨다. `<…>` 는 자리표시자(§0 유형 ②③)다.
@@ -223,21 +223,22 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
 165     unit/
 166 <project>/
 167   api.py
-168   urls.py
-169   celery.py
-170   settings/
-171     <environment>.py
-172 cross_context/
-173   backoffice/
-174     apps.py
-175     urls.py
-176     <screen>/
-177       panel.py
-178       form/<form>_form.py
-179       feature/<feature>.py
-180     templates/admin/backoffice/<page>.html
-181     test/
-182       integration/
+168   internal_api.py
+169   urls.py
+170   celery.py
+171   settings/
+172     <environment>.py
+173 cross_context/
+174   backoffice/
+175     apps.py
+176     urls.py
+177     <screen>/
+178       panel.py
+179       form/<form>_form.py
+180       feature/<feature>.py
+181     templates/admin/backoffice/<page>.html
+182     test/
+183       integration/
 ```
 <!-- TREE:END -->
 
@@ -287,8 +288,9 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
 ### `<project>/`
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
-- **#429** — `<project>/` 에는 프레임워크가 «전역에 딱 하나»를 요구하는 것만 온다 — `api.py` · `urls.py` · `celery.py` · `settings/`. `celery.py` 항목의 «celery 채택» 전제는 **정본 트리(표준) 수준**의 채택이다 — 개별 프로젝트의 채택 여부가 아니다. celery 를 안 쓰는 프로젝트도 이 칸을 «빈 파일»로 갖는다(#488 — 빈 `celery.py` 가 규범 준수의 정상 상태이고, 뒤에 celery 가 필요해지면 그 빈 파일이 착지 자리다). 표준이 celery 를 버리는 개정에서만 이 목록이 다시 선다(#491 «조건부 없음»의 자리는 트리 1행 `application/**` 이라 여기 걸리지 않는다 — `<project>/` 파트는 이 목록이 관할한다).
+- **#429** — `<project>/` 에는 프로젝트 전역에 정해진 개수로 두는 조립 파일만 온다 — 표준 API 객체 둘(`api.py` · `internal_api.py`) · `urls.py` · `celery.py` · `settings/`. `celery.py` · `internal_api.py` 항목의 «채택» 전제는 **정본 트리(표준) 수준**의 채택이다 — 개별 프로젝트의 채택 여부가 아니다. celery 를 안 쓰거나 내부 창구(앞단이 인터넷에 열지 않는 HTTP 창구 — `implementation-django-ninja` §2.3)가 없는 프로젝트도 그 칸을 «빈 파일»로 갖는다(#488 — 빈 파일이 규범 준수의 정상 상태이고, 뒤에 필요해지면 그 빈 파일이 착지 자리다). 표준이 그 칸을 버리는 개정에서만 이 목록이 다시 선다(#491 «조건부 없음»의 자리는 트리 1행 `application/**` 이라 여기 걸리지 않는다 — `<project>/` 파트는 이 목록이 관할한다). `internal_api.py` 의 «internal» 은 앞단 바깥에 열리지 않는 창구라는 뜻이다 — 같은 배포 단위 안을 오가는 `framework/broker/internal/` 의 internal 과 다르다.
 - **#430** — `<project>/` 는 `application/` 을 «등록»만 하고 «타입»으로 알지 않는다 — 문자열 경로는 등록이고 import 는 앎이다.
+- **#441** — #430 의 예외는 `<project>/urls.py` 가 BC 등록 함수 둘(`register_<bc>_api` · `register_<bc>_internal_api`)을 명시 호출하려고 그 함수를 import 하는 것뿐이다 — 그 밖의 BC 심볼은 들이지 않는다.
 - **#432** — `<project>/` 는 BC 가 늘어도 커지지 않는다 — 판정 물음은 「BC 하나를 통째로 지웠을 때 이 파일이 바뀌나」다.
 - **#436** — `<project>/` 의 `health.py`·`home.py`·`asgi.py`·`wsgi.py` 는 표준 트리의 관할 밖이라 칸을 만들지 않는다(면제).
 
@@ -338,7 +340,7 @@ Evans(바운디드 컨텍스트·애그리거트·유비쿼터스 언어) · Ver
 ## §6 `cross_context/` — BC 밖 합성 칸
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
-`cross_context/`(§1 트리 172~182행)는 BC 둘 이상의 값을 함께 쓰는 합성 칸이다 — BC 밖 · BC 위에 서고, 지금 칸은 운영자 화면(Django admin) 합성 `backoffice/`(장고 앱 `cross_context.backoffice` · label `backoffice`) 하나다.
+`cross_context/`(§1 트리 173~183행)는 BC 둘 이상의 값을 함께 쓰는 합성 칸이다 — BC 밖 · BC 위에 서고, 지금 칸은 운영자 화면(Django admin) 합성 `backoffice/`(장고 앱 `cross_context.backoffice` · label `backoffice`) 하나다.
 
 - **#664** — `cross_context/**` 가 `application/` 에서 import 하는 것은 각 BC 의 `driving_layer/open_host_service/` 아래(창구 서비스 함수 · 계약 · 창구 예외)뿐이다. BC 의 모델 · 유스케이스 · 도메인 · `composition_root/` · `test/` 를 import 하면 위반이다(`from application import <bc>` 꼴도). `get_model()` 로 모델을 꺼내도, 시험 밖에서 `get_user_model()` 을 불러도 위반이다. 이 칸은 모델 클래스(`models.Model` 을 잇는 클래스 — `managed = False` 도 · 별칭이나 프로젝트 추상 기저를 거쳐도 · 안 `Meta` 에 `db_table` · `managed` · `proxy` 가 있는 클래스도)를 정의하지 않고 날 SQL 길(`django.db` 의 `connection` · `connections` · `RawSQL` · DB 드라이버 모듈(`sqlite3` · `psycopg` · `psycopg2` · `MySQLdb` · `pymysql` · `cx_Oracle` · `oracledb`)의 import · `.raw(` · `.extra(`)을 쓰지 않는다 — 값은 그 BC 창구로만 읽는다. 상대 import 가 `cross_context/` 밖에 닿아도 위반이다.
 - **#665** — `application/**` · `framework/**` · `<project>/**` 는 `cross_context` 를 import 하지 않는다(함수 안 import · admin · 합성 루트 포함) — BC 와 framework 는 이 칸을 모르고, `<project>/urls.py` 는 `include("cross_context.backoffice.urls")` 문자열로만 넣는다(`INSTALLED_APPS` 문자열도 import 가 아니다). `<project>/` 파일의 문자열 상수 가운데 `cross_context.` 로 시작하는 것은 `include(…)` 첫 인자(문자열이거나 튜플의 첫 칸)의 `"cross_context.backoffice.urls"` 와, 설정 모듈(`settings.py` · `settings/**`) 어디에 있든 값이 앱 문자열(`cross_context.backoffice` · 그 `apps` 모듈의 설정 클래스 경로)과 같은 문자열만 받는다 — 다른 문자열(`include("cross_context.….feature.…")` · ninja `add_router(…, "cross_context.….router")`)은 위반이다. 그래서 이 칸은 BC 순환 셈(#450 · 리팩토링 deps)에 들지 않고, 화면이 `admin_view` 를 비켜 프로젝트 주소에 바로 붙지 않는다.

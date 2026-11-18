@@ -1638,6 +1638,18 @@ class ListShrinkRegression(unittest.TestCase):
 # 숨김 뺀 앵커 · 임시 사본 뿌리 바로 앞 배포판(dddjango 2.24.2) — «판정이 옛 판과 같음» 대조의 옛 판(HEAD 금지).
 _RELEASED_2242_COMMIT: str = "2119e502"
 
+# F4-150 — `<project>/internal_api.py` 가 고정 칸이 되어(#429 허용 · #488 필수) 옛 배포판과 현행 check-layer-skeleton 의
+# 줄 수가 갈린다(의도된 규칙 변화). 옛 판 대조에서 그 셈만 가린다 — layer-skeleton 표 행 · legacy 머리 총수 ·
+# legacy 의 `check-layer-skeleton.py: n` 줄(한쪽에만 있어도). 귀속 절 · sidecar 는 그대로 대조한다.
+_SKELETON_TABLE_ROW: "re.Pattern[str]" = re.compile(r"^\| `check-layer-skeleton\.py` \| \d+ \| \d+ \|$")
+_SKELETON_LEGACY_LINE: "re.Pattern[str]" = re.compile(r"^  check-layer-skeleton\.py: \d+$")
+_LEGACY_HEAD_TOTAL: "re.Pattern[str]" = re.compile(r"^== legacy 잔존\(L∩N\) \d+건")
+
+
+def _mask_skeleton_counts(out: str) -> str:
+    return "\n".join(_LEGACY_HEAD_TOTAL.sub("== legacy 잔존(L∩N) <n>건", line) for line in out.split("\n")
+                     if not _SKELETON_TABLE_ROW.match(line) and not _SKELETON_LEGACY_LINE.match(line))
+
 
 # ── 앵커부터의 «건드림» · 계약 줄 · 승인 머지가 들인 도메인 파일 · ⓓ 수 칸(2.40.0 — F4-28 · F4-46) ─────────────────────────
 # 장난감은 작은 git 저장소다: 뿌리 `application/` (표준 채택) · 설정 패키지 · legacy 평면 앱 `catalog`(앵커에 있음).
@@ -2354,7 +2366,7 @@ class HiddenAnchorGateRegression(unittest.TestCase):
         code, out = _gate(repo, anchor, [*(extra or []), "--introduced-json", str(new_side)])
         old_code, old_out = _gate(repo, anchor, [*(extra or []), "--introduced-json", str(old_side)], gate=self.old)
         self.assertNotIn("Traceback", out)
-        self.assertEqual((code, _mask(out)), (old_code, _mask(old_out)))
+        self.assertEqual((code, _mask_skeleton_counts(_mask(out))), (old_code, _mask_skeleton_counts(_mask(old_out))))
         self.assertEqual(_mask_sidecar(new_side), _mask_sidecar(old_side))
         return out
 
@@ -2587,9 +2599,13 @@ class TempRootRegression(unittest.TestCase):
         ref: "dict[str, object]" = _par_run(old, self.repo, self.anchor, self.td, None)
         swept: "dict[str, object]" = _par_run(GATE, self.repo, self.anchor, self.td, None, seed=leftover)
         clean: "dict[str, object]" = _par_run(GATE, self.repo, self.anchor, self.td, None)
+
+        def compared(run: "dict[str, object]") -> "list[object]":
+            return [_mask_skeleton_counts(str(run[k])) if k == "stdout" else run[k]
+                    for k in ("exit", "stdout", "introduced", "contract")]
+
         for got in (swept, clean):
-            self.assertEqual([got[k] for k in ("exit", "stdout", "introduced", "contract")],
-                             [ref[k] for k in ("exit", "stdout", "introduced", "contract")])
+            self.assertEqual(compared(got), compared(ref))
             self.assertEqual(got["leaked"], [])
         self.assertEqual(clean["stderr"], ref["stderr"])
         extra: "list[str]" = [line for line in str(swept["stderr"]).splitlines()

@@ -88,7 +88,8 @@ Router operation은 HTTP adapter다. 다음은 Router 안에 둘 수 있다.
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Django Ninja는 `NinjaAPI`와 `Router`를 통해 path operation을 등록한다.
-프로젝트의 API namespace와 versioning 방식이 이미 있으면 그 방식을 따른다.
+프로젝트의 API namespace와 versioning 방식이 이미 있으면 그 방식을 따른다(새 내부 창구의 자리는
+§2.3 «내부 창구»가 이보다 먼저다).
 
 프로젝트에 Django Ninja가 아직 의존성으로 없는 신규 도입이면, 글로벌로 임의 설치하지 말고 의존성 매니페스트(`requirements/*.txt` 등, `implementation-django` §3.1)에 **버전을 핀해 추가**한다 — 핀 표기는 프로젝트의 기존 관례를 따른다(기존 항목이 `Django==4.2.30`처럼 정확 핀이면 `django-ninja==<버전>`으로 맞춘다). 버전 *값*(`<버전>`에 무엇을 핀할지)은 다음 버전-핀 규율을 따른다 — 기억 속/추정 버전을 쓰지 않는다. 설치 시점에 resolve한 실제 버전을 매니페스트(`requirements`/`pyproject`)에 핀으로 기록하되 기존 프레임워크 핀과 호환되는 최신으로 한다. `django-ninja`·`django-ninja-extra` 모두 동일하다. `INSTALLED_APPS`·`NinjaAPI` 인스턴스·URL 등록 같은 런타임 배선도 함께 둔다.
 
@@ -245,16 +246,19 @@ operation 함수가 `self` 첫 인자를 받는 메서드로 올라간다.
   자동 주입한다(명시 상속은 중복이다).
 
 **등록 — 프로젝트 소유 API, BC 소유 registrar, URLconf 소유 합성.** contract scope 안에서
-프로젝트 `api.py`가 `NinjaExtraAPI` 인스턴스 하나를 소유한다(루트 API 는 경로 앞 응답을 문서에 붙이는
-정해진 클래스로 짓는다 — §6.2 «경로 앞 응답»). 각 BC는 project API를 import하지
-않는 side-effect-free `register_<bc>_api(api)`만 노출한다. 프로젝트 `urls.py`가 API와 registrar를
-import하고, 각 registrar를 명시적으로 한 번 호출한 뒤 API를 mount한다. BC 모듈 import만으로
+프로젝트 `api.py`가 공개 API 인스턴스(`NinjaExtraAPI`) 하나를 소유한다(객체 이름은 프로젝트가 고른다 ·
+루트 API 는 경로 앞 응답을 문서에 붙이는 정해진 클래스로 짓는다 — §6.2 «경로 앞 응답»). `api.py` 는 그 객체를
+생성 문장 하나로만 짓고, 그 객체나 생성자를 다른 이름에 별칭으로 대입하거나 튜플 대입 안에서 짓거나 `type(…)(…)` ·
+`copy` 로 복사하지 않는다(둘째 표준 API 객체는 아래 «내부 창구» 의 `internal_api.py` 에 둔다). 각 BC는 project API를
+import하지 않는 side-effect-free registrar만 노출한다 — 공개 창구는 `register_<bc>_api(api)`, 내부 창구는
+`register_<bc>_internal_api(api)`(아래 «내부 창구»)다. 프로젝트 `urls.py`가 API와 registrar를
+import하고, 각 registrar를 그 이름의 scope 에 맞는 API 객체로 명시적으로 한 번 호출한 뒤 API를 mount한다. BC 모듈 import만으로
 registration이 일어나면 안 된다.
 
 명시 registrar 합성을 선택한 controller는 `@api_controller(..., auto_import=False)`로
 Ninja Extra auto-import를 끈다. 그래야 controller import가 global registry를 채우는
-side effect를 만들지 않고, 등록 집합과 시점은 `register_<bc>_api(api)`와 프로젝트
-`urls.py` 호출만으로 결정된다.
+side effect를 만들지 않고, 등록 집합과 시점은 BC registrar(`register_<bc>_api(api)` ·
+`register_<bc>_internal_api(api)`)와 프로젝트 `urls.py` 호출만으로 결정된다.
 
 ```python
 # config/api.py — 프로젝트가 contract scope의 API 인스턴스 하나를 소유한다(경로 앞 응답 꼴 — §6.2).
@@ -299,17 +303,73 @@ urlpatterns = [
 ]
 ```
 
+**내부 창구 — 표준 API 객체 `internal_api`.** 앞단(리버스 프록시)이 인터넷에 열지 않는 HTTP 창구(예: 같은
+시스템의 SSE 서버 · 워커가 부르는 창구)는 공개 API 객체와 다른 표준 API 객체 `internal_api` 에 등록한다 —
+`<project>/internal_api.py` 가 `internal_api` 를 `urls_namespace="internal_api"` 로 짓고 `<project>/urls.py` 의
+`urlpatterns` 에 `path("internal/", internal_api.urls)` 를 그대로 넣어 단다(다른 `include` 안이나 `.urls` 를 담은
+변수를 거치지 않는다). `internal/` 주소는 `internal_api` 만의 자리라 공개 API 객체의 `.urls` 를
+그 아래에 달지 않는다. 새 내부 창구를 공개 API 아래 경로(`/api/internal/…`)에 두지
+않는다 — 기존 API namespace 관례를 따르라는 §2.1 보다 이 문장이 먼저다. 이미 `/api/internal/…` 로 배포된 창구는
+소비자 계약이라 그대로 둔다(옮기면 계약 변경이다). `internal_api` 는 `<project>/api.py` 의 루트 API 클래스를
+들여 짓는다(§6.2) — `internal_api.py` 에는 import 들 · 생성 문장 하나 · 그 객체의 프레임워크 오류 핸들러만 두고
+클래스를 새로 정의하지 않는다. 내부 창구가 없는 프로젝트도 이 파일을 빈 채로 두며(`discipline-houserules` #429),
+내용 없는 `internal_api.py` 는 API surface 가 아니다. BC 는 내부 창구 컨트롤러를
+`register_<bc>_internal_api(api: NinjaExtraAPI)` 로 등록한다 — 공개 창구의 `register_<bc>_api` 와 같은
+`api_router.py` 에 두고, 내부 창구만 가진 BC 는 이 함수만 둔다. 컨트롤러 칸은 공개 창구와 같은 기준으로 고른다
+(`api/<area>/` · 남이 정한 계약이면 `api/webhook/<provider>/`) — 어느 객체에 다는지는 등록 함수 이름이 정한다.
+내부 창구도 밖(다른 서버)과의 계약이라 오류 프로필 · 경로 앞 응답 · OpenAPI · 시험은 scope 마다 공개 창구와 같은
+규칙을 따른다(§6.2 · §8 · §9).
+
+```python
+# application/order/driving_layer/api/api_router.py — 공개 창구와 내부 창구를 함께 가진 BC.
+from ninja_extra import NinjaExtraAPI
+
+from .order.order_controller import OrderController
+from .order_sync.order_sync_controller import OrderSyncController
+
+
+def register_order_api(api: NinjaExtraAPI) -> None:
+    api.register_controllers(OrderController)
+
+
+def register_order_internal_api(api: NinjaExtraAPI) -> None:
+    api.register_controllers(OrderSyncController)
+
+
+# config/internal_api.py — 내부 창구 API 객체(내부 창구가 없는 프로젝트는 빈 파일).
+from config.api import DocumentedAPI
+
+internal_api: DocumentedAPI = DocumentedAPI(urls_namespace="internal_api")
+
+
+# config/urls.py — registrar 마다 그 이름의 scope 에 맞는 객체를 넘기고 두 객체를 단다.
+from django.urls import path
+
+from application.order.driving_layer.api.api_router import register_order_api, register_order_internal_api
+from config.api import api
+from config.internal_api import internal_api
+
+register_order_api(api)
+register_order_internal_api(internal_api)
+
+urlpatterns = [
+    path("api/", api.urls),
+    path("internal/", internal_api.urls),
+]
+```
+
 요점:
 
 - registrar는 자기 BC controller만 import하며, 전달받은 `api`에 등록하는 함수 밖에서는
   아무 등록도 하지 않는다. `api` 인자의 타입은 `NinjaExtraAPI` 축자다 — 그 형상을 본뜬
   Protocol·별칭 타입으로 대체하지 않는다(어댑터 층은 프레임워크 타입을 숨기지 않는다 — 2026-08-25).
-- registrar가 `config.api`를 import하거나 모듈 top-level에서 `register_controllers`를
-  호출하지 않는다.
+- registrar가 project API 모듈(`config.api` · `config.internal_api`)을 import하거나 모듈 top-level에서
+  `register_controllers`를 호출하지 않는다.
 - 프로젝트 `urls.py` 밖에서 registrar를 몰래 호출하거나 직접 controller를 등록하지 않는다.
-- public/internal 또는 version별 API 인스턴스가 이미 독립 계약 surface로 확립돼 **소비자가
+- 표준 API 객체는 공개 API 객체(`<project>/api.py` — 이름은 프로젝트가 고른다)와 `internal_api` 둘뿐이다. 그 밖의
+  public/internal 또는 version별 API 인스턴스가 이미 독립 계약 surface로 확립돼 **소비자가
   의존하는** 경우는 승인된 별도 scope로 보존할 수 있다 — 보존의 근거는 «소비자 의존»이지
-  «먼저 작성돼 있음»이 아니다. 신규 BC마다 API 인스턴스를 만드는 것은 scope 분리가 아니다.
+  «먼저 작성돼 있음»이 아니다. 신규 BC마다 · 기능마다 API 인스턴스를 만드는 것은 scope 분리가 아니다.
 
 **컴포지션 루트(배선) — `composition_root/`.** operation/메서드 본문에서 `Django…Repository()`·`…Adapter()`를 직접 생성하면 presentation→infra 직접 결합(Q-7)이다. DI 조립은 BC 루트 `application/<bounded_context>/composition_root/`에 모은다 — 결선은 `dependency_wiring.py`가 소유하고 use-case마다 `build_<use_case>()` 팩토리를 두며, presentation은 컨트롤러 메서드에서 그 팩토리를 **호출만** 한다(매요청 조립). `build_<use_case>()` 가 어댑터 생성자에 꽂는 callable(함수·메서드·`partial`)은 **꽂히는 자리가 선언한 Protocol·`Callable` 시그니처와 같아야 한다** — 실물 함수가 더 많은 인자(경로·모델·설정)를 요구하면 그 인자는 팩토리 **본문 안에서** `functools.partial`/클로저로 묶어 넘기고 어댑터·use case 는 모른다(모듈 최상단 대입은 #85 위반 · 시그니처가 다른 함수를 그대로 꽂는 것은 «꽂기» 가 아니라 미완성 배선이다). 이벤트 구독 결선은 `event_wiring.py`가 따로 진다. use-case 없는 순수 데이터소스 BC는 둘 게 없으니 생략한다.
 
@@ -437,6 +497,9 @@ operation 수준에 auth를 연결할 수 있다. 프로젝트의 기존 auth me
 - `ErrorSchema`를 auth 결과로 반환하거나 `request.auth`에 저장하지 않는다. framework 401을
   BC 식별자 body로 바꾸는 전역 변환도 추가하지 않는다(§6.2).
 - local development를 제외한 API traffic은 HTTPS를 전제로 한다.
+- 내부 창구(`/internal/…` — §2.3)는 앞단 안쪽 사설망에서 부르면 http 로 받아도 된다 — 부르는 서버 · 사설망 ·
+  앞단 차단의 근거를 G1 명세(slot 2)에 적는다. 사설망에서 http 로 부르는 프로젝트가 앱의 HTTPS 강제
+  넘김(`SECURE_SSL_REDIRECT`)을 켰으면 `SECURE_REDIRECT_EXEMPT` 에 `^internal/` 을 둔다.
 
 ### 4.2 Authorization
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
@@ -608,7 +671,10 @@ class FrameworkErrorSchema(Schema):
 
 공통 `FrameworkErrorSchema`는 slot 6에서 승인된 transport core shape만 소유한다. concrete 오류와 BC
 ErrorCode catalog를 이 파일에 추가하지 않으며, 승인 shape 밖의 validator·field metadata·임의
-extension bag도 발명하지 않는다. 독립된 public/internal,
+extension bag도 발명하지 않는다. 표준 내부 scope(`internal_api` — §2.3)는 공개 scope 와 profile 이 같으면
+같은 공통 `FrameworkErrorSchema` 와 같은 BC `bc_error_schema.py` 를 쓴다 — 그래서 내부 창구만 쓰는 식별자도 공개
+문서의 enum 에 보인다. 가리려면 공개 창구가 선언하는 concrete 를 모두 `Literal` 로 좁혀야 하고, 공개 경로가 BC base 를
+선언하면 가릴 수 없다(가리는 것은 의무가 아니다). 그 밖의 독립된 public/internal,
 version, namespace가 실제로 다른 계약 scope라면 G1에서 scope와 공통 경로를 각각 승인한다.
 기존 공용 경로가 있으면 승인된 동등 계약을 우선 재사용한다.
 
@@ -899,7 +965,7 @@ framework status는 `response=`에 BC 오류로도 다른 Schema 로도 선언�
 몸통 400 · 입력 422, Django 몸통 · 쿼리 칸 수 상한 400, 응답을 직접 만드는 미들웨어(서드파티 포함), 앞단(nginx 등) —
 이 보내는 의도된 오류도 그 경로의 생성 문서에 적는다(`architecture-api` §5.2). 경로마다 손으로 적지 않고
 정해진 꼴 하나가 경로의 Ninja 경로 객체와 생성 문서 칸을 읽어 그 답이 실제로 나는 경로에만 붙인다.
-프로젝트에 한 번 두는 파일은 셋이다.
+프로젝트에 한 번 두는 파일은 넷이다.
 
 - `framework/ninja/pre_route_responses.py` — 플러그인 정본. 아래 정본 코드 블록을 옮기고 **코드는 고치지 않는다** —
   검사기가 코드(구문 나무)를 정본과 맞춘다. 코드가 아닌 것은 프로젝트 포매터 · 린터에 맞춰도 되고 검사기도 보지
@@ -913,13 +979,15 @@ framework status는 `response=`에 BC 오류로도 다른 Schema 로도 선언�
   그 몸통 Schema, `BAD_REQUEST_RESPONSE`(Django 상한 400 의 꼴 — 기본 `{"media_type": "text/html"}` · 루트 URLconf 가
   `handler400` 을 두면 그 답의 꼴), `NOT_API_MIDDLEWARE`(API 경로에 답하지 않는 프로젝트 미들웨어의 점 경로 글자
   튜플)를 둔다. 기본 행은 여기 두지 않는다(빼서 401 · 422 를 끌 수 없다).
-- `<project>/api.py` — 루트 API 객체를 아래 꼴의 클래스 하나로 짓는다(루트 API 가 둘 이상이면 모두 이 클래스로).
+- `<project>/api.py` — 루트 API 객체를 아래 꼴의 클래스 하나로 짓는다(`internal_api` · 보존 scope 의 것 등 프로젝트의 루트 API 는 모두 이 클래스로).
   클래스 이름과 기저(`NinjaAPI` · `NinjaExtraAPI`)는 프로젝트가 고르고, `get_openapi_schema` 의 서명 · 몸통은 코드
   그대로다(서식 · 주석은 위 정본과 같이 프로젝트 도구 몫). 이 꼴 말고의 문서 재정의 · monkeypatch · 후처리는
   금지다(위 «응답 선언과 OpenAPI»). 받는 판은 Ninja
   1.6 · Python 3.12(정본이 `type` 별칭을 쓴다) · pydantic 2.5(`JsonValue`) 이상이다 — 낮으면 architect 가 G1 에서 판
-  올림을 먼저 적는다. 프레임워크 오류 핸들러(`api.py` 의 exception handler)가 Ninja 기본 401 · 422 등의 몸통을 바꾸는
-  scope 는 아래 기본 행 몸통과 맞지 않아 행 시험이 붉으므로 G1 에서 멈춘다(`STOP_FOR_USER_APPROVAL`).
+  올림을 먼저 적는다. 프레임워크 오류 핸들러(`api.py` · `internal_api.py` 의 exception handler)가 Ninja 기본 401 ·
+  422 등의 몸통을 바꾸는 scope 는 아래 기본 행 몸통과 맞지 않아 행 시험이 붉으므로 G1 에서 멈춘다(`STOP_FOR_USER_APPROVAL`).
+- `<project>/internal_api.py` — 내부 창구 API 객체 `internal_api`(§2.3 «내부 창구»)를 위 `api.py` 의 그 클래스를
+  들여와 짓는다(제 클래스를 따로 정의하지 않는다). 내부 창구가 없으면 내용 없는 파일로 둔다.
 
 ```python
 # config/api.py — 루트 API 객체를 이 꼴의 클래스로 짓는다(클래스 이름 · 기저는 프로젝트가 고른다).
@@ -959,12 +1027,12 @@ api: DocumentedAPI = DocumentedAPI(...)
 **프로젝트 행.** 응답을 직접 만드는 미들웨어(서드파티 포함)와 앞단의 답을 행 하나에 하나씩 적는다. 칸은 `status`(400–599) ·
 `when`(`all` · `auth` · `body` · `input`) · `description` · 몸통 `body`(같은 파일의 Schema) 또는 `media_type` ·
 선택 `headers`(그 답이 싣는 머리 — 캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)는 적지 않아도 되고 검사기도 대조하지 않는다)와 좁히는 칸 `methods`(대문자 HTTP 메서드) · `namespaces`(루트 API
-`urls_namespace=` 이름) · `exempt`(`(메서드 | None, "<settings 이름>")` — 그 설정 목록의 경로는 뺀다 · 목록은 base
+`urls_namespace=` 이름 — 내부 창구 객체는 `"internal_api"`) · `exempt`(`(메서드 | None, "<settings 이름>")` — 그 설정 목록의 경로는 뺀다 · 목록은 base
 settings 에 둔다) · `operations`(`"GET /api/orders/{order_id}"` 꼴 — 메서드 + 생성 문서 경로 · `namespaces` 하나와
 함께 · 승인 endpoint 의 406 · 415 · 인증 안 `HttpError(403)` · 확립 표면(`preserve-established`)의 경로 코드가
 직접 raise 하는 `HttpError` 처럼 경로 객체로 못 가르는 답만)다. 좁히는 칸은 빈 튜플로 두지 않는다. 행마다 G1
 근거를 단다 — 그 답을 내는 미들웨어 코드 줄 · 설정 · 앞단 설정.
-`NOT_API_MIDDLEWARE` 줄은 그 미들웨어가 API 경로를 빼는 코드 줄을 근거로 단다 — 빼는 줄이 없는 미들웨어(서버렌더
+`NOT_API_MIDDLEWARE` 줄은 그 미들웨어가 API 경로(공개 API 주소와 `/internal/` 둘 다)를 빼는 코드 줄을 근거로 단다 — 빼는 줄이 없는 미들웨어(서버렌더
 transient 미들웨어 등)는 API 경로에도 답하므로 이 목록에 넣지 않고 행으로 적는다. 검사기는 프로젝트 미들웨어의
 정해진 꼴 답만 표와 대조한다 — 그 답의 행이 좁힌 행(`methods` · `namespaces` · `exempt` · `operations` · `all` 이
 아닌 `when`)뿐이거나 그 답을 글자로 못 읽으면 위반이 아니라 ⓓ 후보 줄을 내고(G1 에서는 api 리뷰어가 그 행의
@@ -1568,7 +1636,7 @@ runtime behavior뿐 아니라 generated schema의 client-visible contract를 바
 
 아래 항목은 자동 테스트 목록이 아니라 중앙 영구 테스트 입장 심사의 candidate다. 공개 OpenAPI
 계약과 독자 failure를 보호해 `add/update`인 항목만 프로젝트 URLconf에 mount된 API가 생성하는
-문서에서 검증한다. isolated Schema나 미등록 Router/controller가 만든 문서는 공개 OpenAPI 증거가 아니다.
+문서에서 검증한다(내부 창구는 `/internal/` 에 mount 된 `internal_api` 가 생성한 문서 — §2.3). isolated Schema나 미등록 Router/controller가 만든 문서는 공개 OpenAPI 증거가 아니다.
 
 입장 심사 후보:
 
@@ -1609,7 +1677,8 @@ Django Ninja HTTP 항목도 먼저 `discipline-tdd`의 중앙 입장 심사를 �
 - DRF-to-Ninja compatibility
 
 공개 HTTP 계약은 `django.test.Client` 또는 프로젝트가 이미 쓰는 동등한 Django client로 실제
-URLconf에 mount된 endpoint를 호출한다. `ninja.testing.TestClient(router)`나
+URLconf에 mount된 endpoint를 호출한다. 앞단이 인터넷에 열지 않는 내부 창구도 다른 서버와의 계약이라 같은
+방법으로 `/internal/…` 에 mount 된 endpoint 를 부른다(§2.3 «내부 창구»). `ninja.testing.TestClient(router)`나
 `ninja_extra.testing.TestClient(Controller)`로 미등록 Router/controller를 직접 감싼 결과는 공개
 mount·registrar·middleware·URL prefix를 통과하지 않으므로 공개 HTTP 계약의 영구 증거가 아니다.
 

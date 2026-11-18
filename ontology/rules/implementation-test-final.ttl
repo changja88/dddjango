@@ -893,12 +893,18 @@ djr:R-1869 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-1870 a djr:Obligation ;
-    skos:prefLabel "공개 HTTP 계약은 mount 된 endpoint 를 Django test client 로 검증"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1870@2026-08-22> .
+    skos:prefLabel "공개 HTTP 계약은 mount 된 endpoint 를 Django test client 로 검증(내부 창구도 — /internal/… mount)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1870@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-1870@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1870 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1870@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-1870 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1870@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-1871 a djr:Permission ;
     skos:prefLabel "adapter-local TestClient 는 입장된 adapter-local 계약 한정 허용"@ko ;
@@ -2599,7 +2605,7 @@ djr:R-3752 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
     djr:statesNorm djr:R-1870 ;
-    djr:text "Django Ninja의 **공개 HTTP 계약**은 실제 URLconf에 mount된 endpoint를 Django test client로 호출해 검증한다. 그래야 registrar·URL prefix·middleware·인증과 실제 API instance를 함께 지난다.\n\n"@ko .
+    djr:text "Django Ninja의 **공개 HTTP 계약**은 실제 URLconf에 mount된 endpoint를 Django test client로 호출해 검증한다. 그래야 registrar·URL prefix·middleware·인증과 실제 API instance를 함께 지난다. 앞단이 인터넷에 열지 않는 내부 창구도 다른 서버와 맺은 계약이라 여기 들고, `/internal/…` 에 mount 된 endpoint 로 검증한다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/references/final.md/s092-19/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/references/final.md/s092-19> ;

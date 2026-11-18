@@ -45,7 +45,7 @@
        `_` 도우미(함수 · 클래스) · import · 상수는 곁에 둔다 · 가짜 구현 · pytest 고정물 · 시험 · 그 밖 공개 클래스 ·
        함수와 재료가 하나도 없는 모듈은 위반 — 2026-11-14 F4-175).
 
-⑶ 트리 개정 명세 몫 — `<project>/settings/` 환경축 (트리 170·171행):
+⑶ 트리 개정 명세 몫 — `<project>/settings/` 환경축 (트리 171·172행):
   #445 갈리는 축은 환경 하나뿐 — 기능별 분할 파일(celery.py·logging.py 등) 금지.
   #446 «환경 하나 = 파일 하나» — base·local·production·test 는 예시(목록 열림 — T64).
        온전한 환경 이름(staging 등)은 허용하고 «약어»(prod·stg·dev …)만 위반이다.
@@ -644,7 +644,7 @@ def main(argv: list[str]) -> int:
         return 1
 
     if findings:
-        print(f"blocker {len(findings)}건 — 테스트·settings 규율 위반 (트리 136~142·170·171행)")
+        print(f"blocker {len(findings)}건 — 테스트·settings 규율 위반 (트리 136~142·171·172행)")
         emit_all(findings, printer=print, indent="  ")
         return 2
     print(f"clean — test/ {len(test_dirs)}곳 · pytest 설정 {len(configs)}개 · settings {len(settings_dirs)}곳 규율 일치 (standard_tree {tree.SOURCE_SHA})")

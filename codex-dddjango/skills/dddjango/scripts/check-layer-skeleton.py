@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱.
 
-트리 데이터는 `standard_tree.py`(정본 182행의 기계 사본) 하나에서 온다 — 이 파일에
+트리 데이터는 `standard_tree.py`(정본 183행의 기계 사본) 하나에서 온다 — 이 파일에
 경로 문자열을 다시 적지 않는다. 정본이 개정되면 데이터만 갈리고 이 검사기는 그대로다.
 
 무엇을 잡나 (규칙 번호는 트리 개정 명세):
   #486  어느 BC 를 열어도 골격이 그대로 있다 — 내용 유무 무관. 채택 저장소에서는
         `application/` 직계 전부가 BC 다(신호 없는 평면 BC 도 검사 대상).
   #488  고정(·재등장) 칸은 부모가 있으면 반드시 있다 — 폴더는 비어도 `__init__.py` 로,
-        파일도 비면 빈 파일로. `<project>/`(트리 167~170행)·`framework/`·`cross_context/`(트리
-        172~182행) 고정 서브트리에도 적용.
+        파일도 비면 빈 파일로. `<project>/`(트리 167~171행)·`framework/`·`cross_context/`(트리
+        173~183행) 고정 서브트리에도 적용.
   #489  `<…>` 자리표시자 칸만 그 개념이 생길 때 생긴다.
   #490  BC 안에 트리에 없는 경로가 있으면 위반. 재량은 «리프로 닫은 폴더 안»의 추가
         모듈뿐이다(#15 작성자 재량) — 자리표시자 «파일» 칸이 있는 층만 파일 이름이 자유다.
         BC `test/` 바로 아래 `conftest.py` 한 파일은 트리 행 없이 둘 수 있다(이 원칙의 부칙 —
         그 고정물은 `autouse=True` 로 두지 않는다 #383).
-        `cross_context/**` 도 주어다(트리 172~182행 · 있을 때만 본다 — `framework/` 와 같은 판) —
+        `cross_context/**` 도 주어다(트리 173~183행 · 있을 때만 본다 — `framework/` 와 같은 판) —
         `backoffice/` 의 폴더는 화면(`<screen>/`)뿐이라 `static/` 같은 폴더는 화면으로 읽혀
         `panel.py` 부재(#488)로 난다 · 템플릿은 `templates/admin/backoffice/` 바로 아래 평평하게 ·
         `test/integration/` 안은 pytest 가 이름을 소유한다.
@@ -83,9 +83,9 @@ except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango"}
 IGNORE_FILES = {"__init__.py", ".DS_Store"}
 DJANGO_APP_MARKERS = ("models.py", "apps.py", "views.py", "admin.py")
-PROJECT_ALLOWED = {"api.py", "urls.py", "celery.py", "settings"}
+PROJECT_ALLOWED = {"api.py", "internal_api.py", "urls.py", "celery.py", "settings"}
 PROJECT_EXEMPT = {"health.py", "home.py", "asgi.py", "wsgi.py", "__init__.py"}
-PROJECT_REQUIRED_FILES = ("api.py", "urls.py", "celery.py")  # 트리 167~169행 fixed (#488)
+PROJECT_REQUIRED_FILES = ("api.py", "internal_api.py", "urls.py", "celery.py")  # 트리 167~170행 fixed (#488)
 
 NEW_LAYERS = {"driving_layer", "application_layer", "domain_layer", "driven_layer"}
 TOKEN = re.compile(r"<([a-z_]+)>")
@@ -903,15 +903,16 @@ def _check_project(pkg: Path, out: Findings) -> None:
         if p.name in PROJECT_ALLOWED or p.name in PROJECT_EXEMPT:
             continue
         hint = " — `settings/` 로 이관한다" if p.name == "settings.py" else ""
-        out.add("#429", p, f"`<project>/` 에는 전역에 하나만 요구되는 것만 온다 (api.py·urls.py·celery.py·settings/){hint}")
-    for name in PROJECT_REQUIRED_FILES:  # #488 — 트리 167~169행 fixed
+        out.add("#429", p, f"`<project>/` 에는 프로젝트 전역에 정해진 개수로 두는 조립 파일만 온다 "
+                           f"(api.py·internal_api.py·urls.py·celery.py·settings/){hint}")
+    for name in PROJECT_REQUIRED_FILES:  # #488 — 트리 167~170행 fixed
         if not (pkg / name).is_file():
-            out.add("#488", pkg / name, "고정 파일 부재 — 비면 빈 파일로 만든다 (`<project>/` · 트리 167~169행)")
+            out.add("#488", pkg / name, "고정 파일 부재 — 비면 빈 파일로 만든다 (`<project>/` · 트리 167~170행)")
     if not (pkg / "settings").is_dir() and not (pkg / "settings.py").is_file():
-        out.add("#488", pkg / "settings", "고정 칸 `settings/` 부재 (트리 170행)")
+        out.add("#488", pkg / "settings", "고정 칸 `settings/` 부재 (트리 171행)")
 
 
-# ── cross_context/ — BC 밖 합성 칸(트리 172~182행) · 폐쇄(#490)의 주어다 ──
+# ── cross_context/ — BC 밖 합성 칸(트리 173~183행) · 폐쇄(#490)의 주어다 ──
 
 def _cross_context_row() -> "tree.Row":
     return next(r for r in tree.ROWS if r.depth == 0 and r.name == "cross_context/")

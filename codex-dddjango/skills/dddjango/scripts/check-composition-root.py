@@ -61,6 +61,7 @@ import warnings
 
 import checker_target
 import folder_group
+from collections.abc import Callable
 from findings import Candidates, ContractFindings, Findings, emit_all, lines
 from dataclasses import dataclass
 from pathlib import Path
@@ -105,6 +106,15 @@ ROOT_API_CONSTRUCTORS = {"ninja.NinjaAPI", "ninja_extra.NinjaExtraAPI"}
 # 경계 표지로만 남는다(그 폴더 자체는 여기서 검사하지 않는다 — 귀속 매핑표 v2 §3.2).
 COMPOSITION_FILE = "composition_root.py"
 COMPOSITION_DIR = "composition"
+
+# 표준 API 객체는 둘 — 공개(`<project>/api.py` · 이름은 프로젝트가 고름)와 내부(`<project>/internal_api.py` 의
+# `internal_api` · `path("internal/", …)`). 등록 함수 이름(`register_<bc>_api` · `register_<bc>_internal_api`)이 scope 를 정한다.
+PROJECT_API_MODULE = "api.py"
+INTERNAL_API_MODULE = "internal_api.py"
+STANDARD_API_MODULES = (PROJECT_API_MODULE, INTERNAL_API_MODULE)
+INTERNAL_API_OBJECT = "internal_api"
+INTERNAL_API_MOUNT = "internal/"
+_SETTINGS_MODULE_RE = re.compile(r"DJANGO_SETTINGS_MODULE[\"']\s*,\s*[\"']([\w.]+)[\"']")
 
 
 class UsageError(Exception):
@@ -174,6 +184,18 @@ class RegistrarSpec:
     bc: str
     function_name: str
     full_path: str
+    # 같은 api_router.py 의 다른 scope 등록 함수(공개 ↔ 내부) — 그 scope 렌더의 몫이다.
+    pair_name: str
+    pair_full_path: str
+
+
+@dataclass(frozen=True)
+class ApiIssue:
+    """`<project>/api.py` · `internal_api.py` 닫힌 허용 목록(#437) 사건 하나 — kind 는 사건 꼴이다."""
+
+    lineno: int
+    kind: str
+    message: str
 
 
 def _find_application_containers(root: Path) -> list[Path]:
@@ -325,7 +347,8 @@ def _parse_config(argv: list[str]) -> Config:
     if code_profile and not registrar_modules and not namespace.anchor_baseline:
         # anchor-baseline 모드에선 앵커 트리에 없는 registrar 가 걷혀 빈 집합이 정상이다.
         issues.append("필수 인자 누락: --registrar-module")
-    if preserve_profile and bool(urlconf_module) != bool(registrar_modules):
+    if preserve_profile and bool(urlconf_module) != bool(registrar_modules) and not namespace.anchor_baseline:
+        # anchor-baseline 모드에선 앵커 트리에 없는 URLconf · registrar 가 걷혀 한쪽만 남는 것이 정상이다.
         issues.append(
             "preserve-established의 --urlconf-module/--registrar-module은 함께 전달해야 함"
         )
@@ -379,6 +402,9 @@ def _parse_config(argv: list[str]) -> Config:
 
     if issues:
         raise UsageError("; ".join(issues))
+    if namespace.anchor_baseline and api_module is not None and _empty_internal_api_module(root, api_module):
+        # 앵커의 빈 `internal_api.py` 는 그 scope 가 앵커에 아직 없다는 뜻이다 — 앵커에 없는 모듈과 같은 판(맨 실행은 사용 오류 그대로).
+        api_module = None
     return Config(
         root=root,
         profile=profile,
@@ -1094,7 +1120,421 @@ def _assignment_target_names(target: ast.AST) -> list[str | None]:
     return [_expression_dotted_name(target)]
 
 
-def _required_root_api_object(parsed: ParsedSource) -> str:
+def _find_project_pkg(root: Path) -> Path | None:
+    """`<project>` 판정 — check-layer-skeleton 과 같은 꼴(manage.py 의 DJANGO_SETTINGS_MODULE 이 1순위 · 없으면
+    settings 를 가진 유일 후보만)."""
+    manage = root / "manage.py"
+    if manage.is_file():
+        m = _SETTINGS_MODULE_RE.search(manage.read_text(encoding="utf-8", errors="ignore"))
+        if m:
+            pkg = root / m.group(1).split(".")[0]
+            if pkg.is_dir():
+                return pkg
+    cands = [
+        p for p in sorted(root.iterdir())
+        if p.is_dir() and not p.name.startswith(".") and p.name not in SKIP_DIRS
+        and p.name not in ("application", "framework")
+        and ((p / "settings").is_dir() or (p / "settings.py").is_file())
+    ]
+    return cands[0] if len(cands) == 1 else None
+
+
+def _placeholder_module(tree: ast.Module) -> bool:
+    """내용 없는 모듈(문장 0 · docstring 하나) — `checker_target.skeleton_placeholder` 와 같은 판."""
+    return not tree.body or (len(tree.body) == 1 and _is_docstring(tree.body[0]))
+
+
+def _empty_internal_api_module(root: Path, relative: str) -> bool:
+    """`relative` 가 내용 없는 `internal_api.py` 인가(못 읽으면 아니다 — 그 판정은 선택 source 분석이 한다)."""
+    if Path(relative).name != INTERNAL_API_MODULE:
+        return False
+    try:
+        return _placeholder_module(ast.parse((root / relative).read_text(encoding="utf-8")))
+    except (OSError, UnicodeError, SyntaxError, ValueError):
+        return False
+
+
+def _tree_readable(root: Path) -> Callable[[Path], bool]:
+    """tree 레인이 루트 API 클래스를 찾으러 읽어도 되는 모듈 — 운영 경로 · 파일 · 뿌리 안."""
+    resolved_root: Path = root.resolve()
+
+    def readable(relative: Path) -> bool:
+        path: Path = root / relative
+        if not _is_code_production_path(relative) or not path.is_file():
+            return False
+        try:
+            path.resolve().relative_to(resolved_root)
+        except (OSError, RuntimeError, ValueError):
+            return False
+        return True
+
+    return readable
+
+
+class RootApiClasses:
+    """루트 API 클래스 판독 — check-openapi-error-declaration `_api_class_names` 와 같은 집합이다(루트 API 기저
+    `NinjaAPI` · `NinjaExtraAPI` 를, 다른 모듈의 그런 클래스를 거쳐서라도 상속한 모듈 수준 클래스). 묻는 이름마다 그
+    클래스를 정의한 모듈 하나를 읽어 정하고, 읽을 수 없는 모듈(`readable` 밖 · 못 읽음 · 문법 오류)의 이름은 루트 API
+    클래스로 세우지 않는다."""
+
+    def __init__(self, root: Path, readable: Callable[[Path], bool]) -> None:
+        self._root: Path = root
+        self._readable: Callable[[Path], bool] = readable
+        self._known: dict[str, bool] = {}
+        self._parsed: dict[str, ParsedSource | None] = {}
+
+    def module(self, module: str) -> ParsedSource | None:
+        """점 경로 모듈(`a/b.py` · `a/b/__init__.py`)의 파싱 — 읽을 수 없으면 None."""
+        if module not in self._parsed:
+            self._parsed[module] = None
+            parts: list[str] = module.split(".")
+            if not all(part.isidentifier() for part in parts):
+                return None
+            base: Path = Path(*parts)
+            for relative in (base.with_suffix(".py"), base / "__init__.py"):
+                if not self._readable(relative):
+                    continue
+                try:
+                    source: str = (self._root / relative).read_text(encoding="utf-8")
+                    self._parsed[module] = ParsedSource(relative, source, ast.parse(source))
+                except (OSError, UnicodeError, SyntaxError, ValueError):
+                    pass
+                break
+        return self._parsed[module]
+
+    def is_root_class(self, dotted: str | None) -> bool:
+        if dotted is None or "." not in dotted:
+            return False
+        if dotted not in self._known:
+            self._known[dotted] = False  # 상속 고리가 자기에게 돌아오면 루트 API 클래스로 세우지 않는다
+            module, _, name = dotted.rpartition(".")
+            parsed: ParsedSource | None = self.module(module)
+            self._known[dotted] = parsed is not None and self._defines_root_class(parsed, module, name)
+        return self._known[dotted]
+
+    def _defines_root_class(self, parsed: ParsedSource, module: str, name: str) -> bool:
+        before, invalidated, _ = _import_state(parsed)
+        local: set[str] = set()
+        for node in parsed.tree.body:
+            if not isinstance(node, ast.ClassDef):
+                continue
+            bindings: dict[str, str] = before.get(id(node), {})
+            stale: frozenset[str] = invalidated.get(id(node), frozenset())
+            for base in node.bases:
+                resolved: str | None = _resolve_imported_expression(base, bindings, stale)
+                if resolved is None and isinstance(base, ast.Name) and base.id in local:
+                    resolved = f"{module}.{base.id}"
+                if resolved in ROOT_API_CONSTRUCTORS or self.is_root_class(resolved):
+                    if node.name == name:
+                        return True
+                    break
+            local.add(node.name)
+        return False
+
+
+def _module_evaluated_calls(statement: ast.stmt) -> list[ast.Call]:
+    """모듈 문장이 평가하는 호출(함수 · 클래스 몸통 밖) — 소스 순서."""
+    calls: list[ast.Call] = []
+    stack: list[ast.AST] = [statement]
+    while stack:
+        node: ast.AST = stack.pop()
+        if isinstance(node, ast.Call):
+            calls.append(node)
+        stack.extend(
+            child for child in ast.iter_child_nodes(node)
+            if not isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+        )
+    return sorted(calls, key=lambda call: (call.lineno, call.col_offset))
+
+
+def _assignment_parts(statement: ast.stmt) -> tuple[list[ast.expr], ast.expr | None]:
+    if isinstance(statement, ast.Assign):
+        return list(statement.targets), statement.value
+    if isinstance(statement, ast.AnnAssign) and statement.value is not None:
+        return [statement.target], statement.value
+    return [], None
+
+
+_API_COUNT_MSG = (
+    "루트 API 를 또 짓는다 — `<project>/api.py` 는 공개 API 객체 하나만 짓는다"
+    "(내부 창구 객체는 `<project>/internal_api.py` 의 `internal_api`)"
+)
+_API_TUPLE_MSG = "튜플 · 목록 대입 안에서 루트 API 를 짓는다 — 생성은 `<이름> = <루트 API 클래스>(…)` 한 문장뿐이다"
+_API_ALIAS_MSG = "루트 API 객체 · 생성자의 별칭 대입 — API 객체는 생성 문장이 묶은 이름 하나로만 쓴다"
+_API_COPY_MSG = "루트 API 를 `type(…)(…)` · `copy` 로 복사한다 — 둘째 API 객체는 `<project>/internal_api.py` 에만 둔다"
+_INTERNAL_SHAPE = "`internal_api = <`<project>/api.py` 의 루트 API 클래스>(…)`"
+
+
+def _copy_call(call: ast.Call, objects: set[str], resolve: Callable[[ast.AST], str | None]) -> bool:
+    """`type(<객체>)(…)` · `copy.copy(<API 객체>)` · `copy.deepcopy(<API 객체>)`."""
+    if isinstance(call.func, ast.Call) and isinstance(call.func.func, ast.Name) and call.func.func.id == "type":
+        return True
+    return (
+        resolve(call.func) in {"copy.copy", "copy.deepcopy"}
+        and bool(call.args)
+        and isinstance(call.args[0], ast.Name)
+        and call.args[0].id in objects
+    )
+
+
+def _api_construction(parsed: ParsedSource, classes: RootApiClasses) -> tuple[str | None, list[ApiIssue]]:
+    """`<project>/api.py` 의 루트 API 생성 — 첫 생성 문장이 묶은 이름(공개 표준 객체 · 이름 자유 · 그 문장이
+    `<이름>[: T] = <생성자>(…)` 한 문장일 때만)과 더하는 금지(#437 — 둘째부터의 생성 · 튜플 · 목록 대입 속 생성 ·
+    루트 API 객체 · 생성자의 별칭 대입 · `type(…)(…)` · `copy` 복사). 생성자 = `NinjaAPI` · `NinjaExtraAPI` ·
+    루트 API 클래스(이 모듈 안 · 들인 것) · 그 별칭."""
+    before, invalidated, _ = _import_state(parsed)
+    parents: dict[int, ast.AST] = _parent_map(parsed.tree)
+    annotations_evaluated: bool = _annotations_are_evaluated(parsed.tree)
+    root_names: set[str] = set()
+    objects: set[str] = set()
+    public: str | None = None
+    constructed: bool = False
+    issues: list[ApiIssue] = []
+
+    def resolve(node: ast.AST) -> str | None:
+        owner: ast.stmt | None = _snapshot_statement(node, parents, before)
+        if owner is None:
+            return None
+        return _resolve_imported_expression(node, before.get(id(owner), {}), invalidated.get(id(owner), frozenset()))
+
+    def root_callable(node: ast.AST) -> bool:
+        if isinstance(node, ast.Name) and node.id in root_names:
+            return True
+        resolved: str | None = resolve(node)
+        return resolved in ROOT_API_CONSTRUCTORS or classes.is_root_class(resolved)
+
+    for statement in parsed.tree.body:
+        if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            rooted: bool = isinstance(statement, ast.ClassDef) and any(root_callable(base) for base in statement.bases)
+            root_names.discard(statement.name)
+            objects.discard(statement.name)
+            if rooted:
+                root_names.add(statement.name)
+            continue
+        targets, value = _assignment_parts(statement)
+        plain_target: str | None = (
+            targets[0].id if len(targets) == 1 and isinstance(targets[0], ast.Name) else None
+        )
+        public_here: bool = False
+        for call in _module_evaluated_calls(statement):
+            if _copy_call(call, objects, resolve):
+                issues.append(ApiIssue(call.lineno, "copy", _API_COPY_MSG))
+                continue
+            if not root_callable(call.func):
+                continue
+            if isinstance(value, (ast.Tuple, ast.List)) and call in value.elts:
+                issues.append(ApiIssue(call.lineno, "tuple", _API_TUPLE_MSG))
+            elif constructed:
+                issues.append(ApiIssue(call.lineno, "count", _API_COUNT_MSG))
+            elif value is call and plain_target is not None:
+                public, public_here = plain_target, True
+            # 첫 생성이 한 문장 꼴이 아니면(조건 갈래 안 · 다른 호출의 인자) 금지 목록 밖이다 — 공개 표준 객체만 서지 않는다.
+            constructed = True
+        alias_object: bool = isinstance(value, ast.Name) and value.id in objects
+        alias_callable: bool = isinstance(value, (ast.Name, ast.Attribute)) and root_callable(value)
+        if alias_object or alias_callable:
+            issues.append(ApiIssue(statement.lineno, "alias", _API_ALIAS_MSG))
+        bound: set[str] = _statement_bound_names(statement, annotations_evaluated=annotations_evaluated)
+        root_names.difference_update(bound)
+        objects.difference_update(bound)
+        names: set[str] = {name for target in targets for name in _target_names(target)}
+        if public_here and public is not None:
+            objects.add(public)
+        elif alias_callable:
+            root_names.update(names)
+        elif alias_object:
+            objects.update(names)
+    return public, issues
+
+
+def _internal_exception_handler(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    for decorator in node.decorator_list:
+        target: ast.expr = decorator.func if isinstance(decorator, ast.Call) else decorator
+        if (
+            isinstance(target, ast.Attribute)
+            and target.attr == "exception_handler"
+            and isinstance(target.value, ast.Name)
+            and target.value.id == INTERNAL_API_OBJECT
+        ):
+            return True
+    return False
+
+
+def _bound_resolver(bindings: dict[str, str], stale: frozenset[str]) -> Callable[[ast.AST], str | None]:
+    return lambda expression: _resolve_imported_expression(expression, bindings, stale)
+
+
+def _root_constructor_call(
+    node: ast.AST, resolve: Callable[[ast.AST], str | None], classes: RootApiClasses, local_classes: set[str]
+) -> bool:
+    """루트 API 생성 호출 — 생성자가 `NinjaAPI` · `NinjaExtraAPI` · 루트 API 클래스 · 이 모듈에서 정의한 클래스."""
+    if not isinstance(node, ast.Call):
+        return False
+    constructor: str | None = resolve(node.func)
+    return (
+        constructor in ROOT_API_CONSTRUCTORS
+        or classes.is_root_class(constructor)
+        or (constructor is None and isinstance(node.func, ast.Name) and node.func.id in local_classes)
+    )
+
+
+def _internal_api_issues(parsed: ParsedSource, classes: RootApiClasses) -> list[ApiIssue]:
+    """`<project>/internal_api.py` 닫힌 허용 목록(#437) — import 들 · docstring · 정확히 한 문장
+    `internal_api[: T] = <`<project>/api.py` 의 루트 API 클래스>(…)` · `@internal_api.exception_handler` 함수.
+    내용 없는 파일은 내용 규칙을 건너뛴다(자리는 #488)."""
+    tree: ast.Module = parsed.tree
+    if _placeholder_module(tree):
+        return []
+    project_api: str = _module_name(parsed.relative_path.parent / PROJECT_API_MODULE)
+    before, invalidated, _ = _import_state(parsed)
+    issues: list[ApiIssue] = [
+        ApiIssue(
+            lineno,
+            "import",
+            f"`{path_str}` import — `<project>/internal_api.py` 에는 내부 API 객체 하나와 그 프레임워크 오류 핸들러만 "
+            "온다(BC import 금지)",
+        )
+        for lineno, path_str in _slice_imports(tree)
+        if path_str.split(".")[0] == "application"
+    ]
+    local_classes: set[str] = set()
+    constructed: bool = False
+    for index, node in enumerate(tree.body):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            if any((alias.asname or alias.name.split(".", 1)[0]) == INTERNAL_API_OBJECT for alias in node.names):
+                issues.append(ApiIssue(
+                    node.lineno, "alias",
+                    f"import 가 `{INTERNAL_API_OBJECT}` 이름을 묶는다 — 내부 API 객체는 {_INTERNAL_SHAPE} 생성 문장 하나로만 짓는다",
+                ))
+            continue
+        if index == 0 and _is_docstring(node):
+            continue
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if not _internal_exception_handler(node):
+                issues.append(ApiIssue(
+                    node.lineno, "function",
+                    f"`{node.name}()` — `@internal_api.exception_handler` 밖의 함수는 이 파일에 오지 않는다",
+                ))
+            continue
+        if isinstance(node, ast.ClassDef):
+            local_classes.add(node.name)
+            issues.append(ApiIssue(
+                node.lineno, "class",
+                f"`{node.name}` 정의 — 루트 API 클래스는 `<project>/api.py` 의 것을 들여 짓는다"
+                "(이 파일에는 import · 생성 문장 하나 · 오류 핸들러만 온다)",
+            ))
+            continue
+        targets, value = _assignment_parts(node)
+        if value is None:
+            issues.append(ApiIssue(
+                node.lineno, "statement",
+                "닫힌 허용 목록 밖 문장 — `internal_api.py` 에는 import · 생성 문장 하나 · "
+                "`@internal_api.exception_handler` 함수만 온다",
+            ))
+            continue
+        resolve: Callable[[ast.AST], str | None] = _bound_resolver(
+            before.get(id(node), {}), invalidated.get(id(node), frozenset())
+        )
+        named_internal: bool = len(targets) == 1 and isinstance(targets[0], ast.Name) and targets[0].id == INTERNAL_API_OBJECT
+        is_root: bool = _root_constructor_call(value, resolve, classes, local_classes)
+        if isinstance(value, ast.Call) and _copy_call(value, set(), resolve):
+            issues.append(ApiIssue(node.lineno, "copy", _API_COPY_MSG))
+        elif isinstance(value, ast.Call):
+            constructor: str | None = resolve(value.func)
+            allowed: bool = (
+                constructor is not None
+                and constructor.rpartition(".")[0] == project_api
+                and classes.is_root_class(constructor)
+            )
+            if is_root and constructed:
+                issues.append(ApiIssue(node.lineno, "count", "`internal_api.py` 는 루트 API 를 한 번만 짓는다 — 둘째 생성이다"))
+            elif named_internal and allowed:
+                constructed = True
+            elif named_internal or is_root:
+                issues.append(ApiIssue(
+                    node.lineno, "origin",
+                    f"내부 API 객체는 {_INTERNAL_SHAPE} 한 문장으로 짓는다 — 루트 API 클래스를 이 파일에서 다시 짓거나 "
+                    "`NinjaAPI` · `NinjaExtraAPI` 로 바로 · 다른 이름으로 짓지 않는다",
+                ))
+                constructed = constructed or is_root
+            else:
+                issues.append(ApiIssue(
+                    node.lineno, "statement",
+                    "닫힌 허용 목록 밖 대입 — `internal_api.py` 에는 import · 생성 문장 하나 · "
+                    "`@internal_api.exception_handler` 함수만 온다",
+                ))
+        elif isinstance(value, (ast.Tuple, ast.List)) and any(
+            _root_constructor_call(element, resolve, classes, local_classes) for element in value.elts
+        ):
+            issues.append(ApiIssue(node.lineno, "tuple", _API_TUPLE_MSG))
+        elif isinstance(value, (ast.Name, ast.Attribute)):
+            issues.append(ApiIssue(
+                node.lineno, "alias", f"별칭 대입 — 내부 API 객체는 {_INTERNAL_SHAPE} 생성 문장 하나로만 짓는다",
+            ))
+        else:
+            issues.append(ApiIssue(
+                node.lineno, "statement",
+                "닫힌 허용 목록 밖 대입 — `internal_api.py` 에는 import · 생성 문장 하나 · "
+                "`@internal_api.exception_handler` 함수만 온다",
+            ))
+    if not constructed and not issues:
+        issues.append(ApiIssue(
+            1, "count", f"{_INTERNAL_SHAPE} 생성 문장이 없다 — 내부 창구를 안 쓰면 파일을 비워 둔다",
+        ))
+    return issues
+
+
+def _public_api_closed_issues(tree: ast.Module) -> list[ApiIssue]:
+    """`<project>/api.py` 의 지금 허용 — 정해진 루트 API 클래스 하나 · 프레임워크 오류 핸들러 함수 · 그 밖 문장."""
+    import_names: dict[str, str] = _module_import_names(tree)
+    issues: list[ApiIssue] = [
+        ApiIssue(
+            lineno,
+            "import",
+            f"`{path_str}` import — `<project>/api.py` 에는 전역 API 객체 하나와 프레임워크 오류 핸들러만 온다(BC import 금지)",
+        )
+        for lineno, path_str in _slice_imports(tree)
+        if path_str.split(".")[0] == "application"
+    ]
+    documented_seen: bool = False
+    for node in tree.body:
+        if isinstance(node, ast.ClassDef):
+            if not documented_seen and _documented_api_class(node, import_names):
+                documented_seen = True  # 닫힌 목록의 클래스 하나 — 경로 앞 응답을 붙이는 루트 API 클래스
+                continue
+            issues.append(ApiIssue(
+                node.lineno, "class", f"`{node.name}` 정의 — ErrorSchema·예외 목록·매핑은 전부 위반이다(닫힌 허용 목록)",
+            ))
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            deco_names = set()
+            for d in node.decorator_list:
+                fn = d.func if isinstance(d, ast.Call) else d
+                deco_names.add(fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", ""))
+            if "exception_handler" not in deco_names:
+                issues.append(ApiIssue(
+                    node.lineno, "function", f"`{node.name}()` — 프레임워크 오류 핸들러 밖의 함수는 이 파일에 오지 않는다",
+                ))
+    return issues
+
+
+def _project_api_issues(parsed: ParsedSource, classes: RootApiClasses, *, standard: bool) -> list[ApiIssue]:
+    """#437 — `api.py` 는 지금 허용 그대로(+ 진짜 프로젝트 패키지면 생성 금지 셋) · `internal_api.py` 는 진짜 프로젝트
+    패키지에서만 닫힌 허용 목록으로 본다."""
+    if parsed.relative_path.name == INTERNAL_API_MODULE:
+        return _internal_api_issues(parsed, classes) if standard else []
+    issues: list[ApiIssue] = _public_api_closed_issues(parsed.tree)
+    if standard:
+        issues.extend(_api_construction(parsed, classes)[1])
+    return issues
+
+
+# #437 사건 가운데 생성 꼴 — code 레인은 고른 표준 API 모듈에 이 꼴(또는 증명 못 한 생성)이 있으면 객체 대응 분석을
+# 건너뛰고 #437 줄 하나를 내며, tree 레인은 그 파일의 생성 꼴 줄을 같은 사건으로 억제한다(_SAME_CONSTRUCTION_KINDS).
+_CONSTRUCTION_KINDS: frozenset[str] = frozenset({"count", "alias", "tuple", "copy"})
+_SAME_CONSTRUCTION_KINDS: frozenset[str] = _CONSTRUCTION_KINDS | {"origin"}
+
+
+def _required_root_api_object(parsed: ParsedSource, classes: RootApiClasses) -> str:
     bindings_before, invalidated_before, _ = _import_state(parsed)
     annotations_evaluated = _annotations_are_evaluated(parsed.tree)
     assigned_objects: set[str] = set()
@@ -1134,7 +1574,7 @@ def _required_root_api_object(parsed: ParsedSource) -> str:
                     bindings_before.get(id(node), {}),
                     invalidated_before.get(id(node), frozenset()),
                 )
-                if resolved_base in ROOT_API_CONSTRUCTORS or (
+                if resolved_base in ROOT_API_CONSTRUCTORS or classes.is_root_class(resolved_base) or (
                     resolved_base is None
                     and isinstance(base, ast.Name)
                     and base.id in local_root_subclasses
@@ -1148,7 +1588,7 @@ def _required_root_api_object(parsed: ParsedSource) -> str:
             bindings_before.get(id(node), {}),
             invalidated_before.get(id(node), frozenset()),
         )
-        if constructor not in ROOT_API_CONSTRUCTORS and not (
+        if constructor not in ROOT_API_CONSTRUCTORS and not classes.is_root_class(constructor) and not (
             constructor is None
             and isinstance(value.func, ast.Name)
             and value.func.id in local_root_subclasses
@@ -1409,7 +1849,9 @@ def _bare_registration_decorators(parsed: ParsedSource) -> list[tuple[ast.Attrib
     return decorators
 
 
-def _registrar_spec(relative_path: Path) -> RegistrarSpec:
+def _registrar_spec(relative_path: Path, api_module: str | None) -> RegistrarSpec:
+    """부를 등록 함수 — `--api-module` 파일 이름이 `internal_api.py` 면 `register_<bc>_internal_api` · 그 밖은
+    `register_<bc>_api`(BC 이름은 registrar 경로의 BC)."""
     parts = relative_path.parts
     if (
         len(parts) != 5
@@ -1422,9 +1864,13 @@ def _registrar_spec(relative_path: Path) -> RegistrarSpec:
             f"{relative_path} (application/<bc>/driving_layer/api/api_router.py 필요)"
         )
     bc = parts[1]
-    function_name = f"register_{bc}_api"
+    public_name: str = f"register_{bc}_api"
+    internal_name: str = f"register_{bc}_internal_api"
+    internal: bool = api_module is not None and Path(api_module).name == INTERNAL_API_MODULE
+    function_name, pair_name = (internal_name, public_name) if internal else (public_name, internal_name)
+    module: str = _module_name(relative_path)
     return RegistrarSpec(
-        relative_path, bc, function_name, f"{_module_name(relative_path)}.{function_name}"
+        relative_path, bc, function_name, f"{module}.{function_name}", pair_name, f"{module}.{pair_name}"
     )
 
 
@@ -1480,9 +1926,10 @@ def _analyze_registrar(
         and not node.name.startswith("_")
     ]
     canonical_nodes = [node for node in public_functions if node.name == spec.function_name]
+    pair_nodes = [node for node in public_functions if node.name == spec.pair_name]
     for node in public_functions:
-        if node.name != spec.function_name:
-            # #107 «등록 함수 하나만 갖는다» — 행2.
+        if node.name not in (spec.function_name, spec.pair_name):
+            # #107 «등록 함수는 scope 마다 하나(공개 · 내부 둘까지)» — 행2.
             _append_finding(
                 findings, seen, parsed, node,
                 "additional public registrar function", rule="#107",
@@ -1545,6 +1992,8 @@ def _analyze_registrar(
         else {}
     )
     for call in _direct_registration_calls(parsed):
+        if any(_canonical_lexical_owner(call, pair, parsed.tree, parents) for pair in pair_nodes):
+            continue  # 짝 scope 등록 함수 안의 등록은 그 scope 렌더가 본다
         direct_owner = _expression_dotted_name(call.func.value)
         parameter_state = parameter_states.get(id(call))
         inside_canonical = canonical is not None and _canonical_lexical_owner(
@@ -1621,16 +2070,31 @@ def _previous_import_resolves(
 def _analyze_urlconf(
     parsed: ParsedSource,
     specs: list[RegistrarSpec],
-    selected_api_object: str,
+    selected_api_module: str,
+    selected_api_object: str | None,
+    standard_objects: frozenset[str],
     analysis: list[str],
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
 ) -> None:
+    """selected_api_object 가 None 이면(고른 표준 API 모듈의 생성 사건 — #437 줄이 진다) 객체를 세우지 못하니 넘긴 것이
+    고른 API 모듈 출처인지만 본다. 이름 scope 와 넘긴 객체가 어긋나면(scope 함수 없이 짝 함수를 import · 호출 · 다른 표준
+    API 객체를 넘김) #440 줄이고, 표준 밖 · 못 읽는 객체만 분석 불능이다."""
     before, invalidated_before, facts = _import_state(parsed)
-    required = [selected_api_object, *(spec.full_path for spec in specs)]
+    required = [
+        *((selected_api_object,) if selected_api_object is not None else ()),
+        *(spec.full_path for spec in specs),
+    ]
+    mismatched: dict[str, RegistrarSpec] = {}
     for target in required:
-        if not any(_fact_covers(fact, target) for fact in facts):
-            analysis.append(f"URLconf required import provenance 분석 불능: {target}")
+        if any(_fact_covers(fact, target) for fact in facts):
+            continue
+        spec_for = next((spec for spec in specs if spec.full_path == target), None)
+        if spec_for is not None and any(_fact_covers(fact, spec_for.pair_full_path) for fact in facts):
+            mismatched[spec_for.pair_full_path] = spec_for
+            continue
+        analysis.append(f"URLconf required import provenance 분석 불능: {target}")
+    reported: set[str] = set()
 
     parents = _parent_map(parsed.tree)
     events: dict[str, list[ast.Call]] = {spec.full_path: [] for spec in specs}
@@ -1645,6 +2109,18 @@ def _analyze_urlconf(
             invalidated_before.get(id(owner), frozenset()) if owner is not None else frozenset()
         )
         resolved = _resolve_imported_expression(call.func, bindings, invalidated)
+        mismatch = mismatched.get(resolved or "")
+        if mismatch is not None:
+            if mismatch.full_path not in reported:
+                reported.add(mismatch.full_path)
+                # #440 — 이 scope 의 등록 함수 자리에 짝 scope 함수를 부른다(이름 ↔ 넘긴 객체 어긋남).
+                _append_finding(
+                    findings, seen, parsed, call,
+                    f"registrar scope mismatch: {mismatch.pair_name} is called where this scope needs "
+                    f"{mismatch.function_name}",
+                    rule="#440", overlap_fn=mismatch.pair_name,
+                )
+            continue
         if resolved not in expected_paths:
             for expected in expected_paths:
                 if _previous_import_resolves(call.func, facts, expected, call.lineno):
@@ -1670,13 +2146,42 @@ def _analyze_urlconf(
             )
             continue
         resolved_argument = _resolve_imported_expression(call.args[0], bindings, invalidated)
-        if resolved_argument != selected_api_object:
-            analysis.append(
-                "URLconf registrar-call API object identity 분석 불능: "
-                f"{resolved}:{call.lineno}"
+        if selected_api_object is None:
+            if resolved_argument is not None and resolved_argument.startswith(f"{selected_api_module}."):
+                continue
+        elif resolved_argument == selected_api_object:
+            continue
+        if resolved_argument in standard_objects:
+            # #440 — 등록 함수 이름의 scope 와 다른 표준 API 객체를 넘긴다.
+            _append_finding(
+                findings, seen, parsed, call,
+                f"registrar scope mismatch: {function_by_path[resolved]} receives {resolved_argument}",
+                rule="#440", overlap_fn=function_by_path[resolved],
             )
+            continue
+        analysis.append(
+            "URLconf registrar-call API object identity 분석 불능: "
+            f"{resolved}:{call.lineno}"
+        )
+
+    for spec in mismatched.values():
+        if spec.full_path in reported:
+            continue
+        line = next(
+            (fact.lineno for fact in facts if _fact_covers(fact, spec.pair_full_path)), None
+        )
+        anchor = next(
+            (node for node in parsed.tree.body if getattr(node, "lineno", None) == line), parsed.tree
+        )
+        _append_finding(
+            findings, seen, parsed, anchor,
+            f"registrar scope mismatch: {spec.pair_name} is imported where this scope needs {spec.function_name}",
+            rule="#440", overlap_fn=spec.pair_name,
+        )
 
     for spec in specs:
+        if spec.pair_full_path in mismatched:
+            continue
         count = len(events[spec.full_path])
         if count == 0:
             # 행10ⓐ(U6 분할) — 0회는 #440 «각 BC 의 register_<bc>_api(api) 를 명시적으로
@@ -1702,27 +2207,86 @@ def _analyze_urlconf(
             )
 
 
+def _standard_api_objects(
+    urlconf: ParsedSource, api_source: ParsedSource | None, classes: RootApiClasses
+) -> frozenset[str]:
+    """URLconf 폴더(`<project>`)의 표준 API 객체 — 내부 `<project>.internal_api.internal_api` 와 공개
+    `<project>.api.<첫 생성 문장 객체>`(그 문장이 서면)."""
+    project: Path = urlconf.relative_path.parent
+    prefix: str = ".".join(project.parts)
+    prefix = f"{prefix}." if prefix else ""
+    objects: set[str] = {f"{prefix}internal_api.{INTERNAL_API_OBJECT}"}
+    public_path: Path = project / PROJECT_API_MODULE
+    public_source: ParsedSource | None = (
+        api_source if api_source is not None and api_source.relative_path == public_path
+        else classes.module(_module_name(public_path))
+    )
+    if public_source is not None:
+        public, _ = _api_construction(public_source, classes)
+        if public is not None:
+            objects.add(f"{prefix}api.{public}")
+    return frozenset(objects)
+
+
 def _composition_semantics(
-    config: Config, parsed: dict[Path, ParsedSource]
+    config: Config, parsed: dict[Path, ParsedSource], inventory: CodeInventory
 ) -> tuple[list[str], list[Finding]]:
     analysis: list[str] = []
     findings: list[Finding] = []
     seen: set[tuple[Path, int, str]] = set()
+    inventory_paths: frozenset[Path] = frozenset(inventory.relative_paths)
+    classes = RootApiClasses(config.root, lambda relative: relative in inventory_paths)
+    project_pkg: Path | None = _find_project_pkg(config.root)
     specs: list[RegistrarSpec] = []
     for raw in config.registrar_modules:
         try:
-            specs.append(_registrar_spec(Path(raw)))
+            specs.append(_registrar_spec(Path(raw), config.api_module))
         except UsageError as exc:
             analysis.append(str(exc))
 
     api_path: Path | None = Path(config.api_module) if config.api_module is not None else None
     api_source = parsed.get(api_path) if api_path is not None else None
     selected_api_object: str | None = None
-    if api_source is not None:
-        try:
-            selected_api_object = _required_root_api_object(api_source)
-        except UsageError as exc:
-            analysis.append(str(exc))
+    identity_skipped: bool = False
+    if api_source is not None and api_path is not None:
+        # 진짜 프로젝트 패키지의 표준 이름 모듈 — 생성 사건은 분석 불능이 아니라 #437 줄이다(그 밖 모듈은 fail-closed).
+        standard: bool = (
+            project_pkg is not None
+            and api_path.parent == project_pkg.relative_to(config.root)
+            and api_path.name in STANDARD_API_MODULES
+        )
+        if api_path.name == INTERNAL_API_MODULE and _placeholder_module(api_source.tree):
+            analysis.append(f"빈 내부 API 모듈은 scope 가 아니다(API surface 아님): {api_path.as_posix()}")
+        else:
+            unproven: bool = False
+            try:
+                selected_api_object = _required_root_api_object(api_source, classes)
+            except UsageError as exc:
+                if not standard:
+                    analysis.append(str(exc))
+                unproven = True
+            issues: list[ApiIssue] = (
+                _project_api_issues(api_source, classes, standard=True) if standard else []
+            )
+            if standard and (unproven or any(issue.kind in _CONSTRUCTION_KINDS for issue in issues)):
+                line = next(
+                    (issue.lineno for issue in issues
+                     if issue.kind in _SAME_CONSTRUCTION_KINDS or issue.kind == "statement"),
+                    None,
+                )
+                anchor: ast.AST = next(
+                    (node for node in api_source.tree.body
+                     if line is not None and node.lineno <= line <= (node.end_lineno or node.lineno)),
+                    api_source.tree,
+                )
+                # #437 «루트 API 생성 문장 하나 · 별칭 · 복사 금지» — 고른 표준 API 모듈의 생성 사건(tree 의 생성 꼴 줄과 한 사건).
+                _append_finding(
+                    findings, seen, api_source, anchor,
+                    "selected standard API module needs exactly one proven root API construction without alias or copy",
+                    rule="#437", overlap_fn="construction",
+                )
+                selected_api_object = None
+                identity_skipped = True
         for call in _direct_registration_calls(api_source):
             # 행5ⓐ — canonical 밖 파일의 등록 호출도 #109 «함수 안에서만» 위반.
             _append_finding(
@@ -1772,17 +2336,19 @@ def _composition_semantics(
                     "register_controllers decorator side effect in URLconf module",
                     rule="#440",
                 )
-        if selected_api_object is not None and len(specs) == len(config.registrar_modules):
+        if (selected_api_object is not None or identity_skipped) and len(specs) == len(config.registrar_modules):
             _analyze_urlconf(
-                urlconf, specs, selected_api_object, analysis, findings, seen
+                urlconf, specs, selected_api_module or "", selected_api_object,
+                _standard_api_objects(urlconf, api_source, classes),
+                analysis, findings, seen,
             )
     return sorted(set(analysis)), sorted(
         findings, key=lambda item: (item.relative_path.as_posix(), item.lineno, item.category)
     )
 
 
-# tree↔code 선점 억제 키의 rule 공간(귀속 매핑표 v2 §5 overlap 표 — CR 4행).
-_OVERLAP_RULES: frozenset[str] = frozenset({"#107", "#108", "#109", "#440"})
+# tree↔code 선점 억제 키의 rule 공간(귀속 매핑표 v2 §5 overlap 표 — CR 4행 + 표준 API 모듈 생성 사건 #437).
+_OVERLAP_RULES: frozenset[str] = frozenset({"#107", "#108", "#109", "#437", "#440"})
 # 양 레인 locator 가 rel:lineno 동축인 rule — discriminant = lineno.
 _LINE_KEY_RULES: frozenset[str] = frozenset({"#108", "#109"})
 
@@ -1801,7 +2367,11 @@ def _code_overlap_keys(
                   여부만 본다).
       #440      — 사건 식별자 = registrar fn 이름: discriminant = overlap_fn.
                   overlap_fn 미채움 #440(행6ⓒ decorator)은 대응 tree 사이트가 없어
-                  키를 만들지 않는다.
+                  키를 만들지 않는다. 이름 scope ↔ 넘긴 객체 어긋남(scope mismatch)도
+                  같은 키다(tree 의 등록 함수 인자 #440 이 그 하위 사건).
+      #437      — 고른 표준 API 모듈의 생성 사건(overlap_fn 이 찬 것만): 파일 단위라
+                  discriminant = None — tree 는 그 파일의 생성 꼴 줄(_SAME_CONSTRUCTION_KINDS)만
+                  억제한다. overlap_fn 미채움 #437(행6ⓑ decorator)은 키를 만들지 않는다.
     """
     keys: set[tuple[str, str, int | str | None]] = set()
     for finding in findings:
@@ -1812,6 +2382,9 @@ def _code_overlap_keys(
             keys.add((finding.rule, rel, finding.lineno))
         elif finding.rule == "#107":
             keys.add(("#107", rel, None))
+        elif finding.rule == "#437":
+            if finding.overlap_fn is not None:
+                keys.add(("#437", rel, None))
         elif finding.overlap_fn is not None:
             keys.add(("#440", rel, finding.overlap_fn))
     return frozenset(keys)
@@ -1837,7 +2410,9 @@ def _code_overlap_keys(
 #   #105/#112 api/ 직계 파일 둘뿐 · 등록 파일 이름은 api_router.py(접두 금지)
 #   #107/#108/#109/#111 api_router.py 의 등록 함수 하나·전역 API import 금지·
 #        top-level 부작용 등록 금지·등록 밖 일 금지
-#   #437 <project>/api.py 닫힌 허용 목록 · #440/#441 <project>/urls.py 등록만
+#   #437 <project>/api.py 닫힌 허용 목록(진짜 프로젝트 패키지면 + 생성 하나 · 별칭 · 복사 금지) ·
+#        <project>/internal_api.py 닫힌 허용 목록(진짜 프로젝트 패키지만)
+#   #440/#441 <project>/urls.py 등록만 · #440 등록 함수 이름의 scope ↔ 넘긴 표준 API 객체 ↔ 주소
 #   #511(ⓓ) api/ 2차 축 — 계약 소유(OAuth 콜백은 webhook/<provider>/) 후보
 #
 # tree↔code 동일 사건 선점 억제(귀속 매핑표 v2 §5 overlap · MEDIATION-3 M1/R2): code
@@ -1846,7 +2421,7 @@ def _code_overlap_keys(
 # 대응하는 tree 엔트리만 억제한다(정밀 레인이 이긴다 — 그 대상에 대해 겹치는 tree
 # 술어만 선점 억제). code 가 포착하지 않는 사건(사설 함수·임의 import·spec 밖
 # registrar 미호출·add_router 등)은 code-profile 활성 파일이라도 tree 단독 그대로
-# 방출한다(#437 은 겹침 미등재 — 관찰 대상이라 억제하지 않는다).
+# 방출한다(#437 은 code 레인이 고른 표준 API 모듈의 생성 사건을 냈을 때만 그 파일의 생성 꼴 줄을 억제한다).
 
 _DRIVING_SEGMENTS = frozenset(
     {"driving_layer"}
@@ -2726,9 +3301,9 @@ def _check_inner_driving_imports(bc: Path, bc_rel: Path, findings: Findings) -> 
                 )
 
 
-def _project_uses_registrar(root: Path, registrar_name: str) -> bool:
+def _project_uses_registrar(root: Path, registrar_names: frozenset[str]) -> bool:
     for project in _find_project_dirs(root):
-        for module_path in (project / "api.py", project / "urls.py"):
+        for module_path in (project / PROJECT_API_MODULE, project / INTERNAL_API_MODULE, project / "urls.py"):
             if not module_path.is_file():
                 continue
             mod = _slice_parse(module_path)
@@ -2736,16 +3311,16 @@ def _project_uses_registrar(root: Path, registrar_name: str) -> bool:
                 continue
             for node in ast.walk(mod):
                 if isinstance(node, ast.ImportFrom) and any(
-                    alias.name == registrar_name for alias in node.names
+                    alias.name in registrar_names for alias in node.names
                 ):
                     return True
                 if not isinstance(node, ast.Call):
                     continue
                 called = node.func
                 if (
-                    isinstance(called, ast.Name) and called.id == registrar_name
+                    isinstance(called, ast.Name) and called.id in registrar_names
                 ) or (
-                    isinstance(called, ast.Attribute) and called.attr == registrar_name
+                    isinstance(called, ast.Attribute) and called.attr in registrar_names
                 ):
                     return True
     return False
@@ -2770,7 +3345,7 @@ def _has_concrete_api_surface(root: Path, api: Path, bc_name: str) -> bool:
                 continue
             if not checker_target.skeleton_placeholder(entry):
                 return True
-    return _project_uses_registrar(root, f"register_{bc_name}_api")
+    return _project_uses_registrar(root, frozenset({f"register_{bc_name}_api", f"register_{bc_name}_internal_api"}))
 
 
 def _check_api_dir(
@@ -2841,20 +3416,23 @@ def _check_api_router(
     rel_key: str = rel.as_posix()
     file_107_covered: bool = ("#107", rel_key, None) in code_keys
     reg_fns = [n for n in mod.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
-    named = [n for n in reg_fns if n.name.startswith("register_") and n.name.endswith("_api")]
-    if len(named) != 1 or len(reg_fns) != len(named):
+    allowed_names: set[str] = {f"register_{bc_name}_api", f"register_{bc_name}_internal_api"}
+    named = [n for n in reg_fns if n.name in allowed_names]
+    if not 1 <= len(named) <= 2 or len(reg_fns) != len(named) or len({n.name for n in named}) != len(named):
         if not file_107_covered:
             findings.add(
                 "#107",
                 rel,
-                f"`def register_{bc_name}_api(api)` 등록 함수 «하나»만 갖는다(지금 함수 {len(reg_fns)}개)",
+                f"등록 함수는 `def register_{bc_name}_api(api)` · 내부 창구의 `def register_{bc_name}_internal_api(api)` "
+                f"뿐이다 — scope 마다 하나(지금 함수 {len(reg_fns)}개)",
             )
-    elif len(named[0].args.args) != 1:
+    elif any(len(n.args.args) != 1 for n in named):
         if not file_107_covered:
             findings.add(
                 "#107",
                 rel,
-                f"등록 함수는 전역 API 를 «인자 하나»로 받는다 — `register_{bc_name}_api(api)`",
+                f"등록 함수는 API 객체를 «인자 하나»로 받는다 — `register_{bc_name}_api(api)` · "
+                f"`register_{bc_name}_internal_api(api)`",
             )
     for node in mod.body:
         if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
@@ -2865,7 +3443,8 @@ def _check_api_router(
                     findings.add(
                         "#109",
                         f"{rel}:{node.lineno}",
-                        "module top-level 등록 호출 — 등록은 `register_<bc>_api(api)` 함수 «안»에서만 한다(부작용 등록 금지)",
+                        f"module top-level 등록 호출 — 등록은 `register_{bc_name}_api(api)` · "
+                        f"`register_{bc_name}_internal_api(api)` 함수 «안»에서만 한다(부작용 등록 금지)",
                     )
             else:
                 findings.add(
@@ -2949,39 +3528,192 @@ def _documented_api_class(node: ast.ClassDef, names: dict[str, str]) -> bool:
     return all(names.get(name) == origin for name, origin in _DOCUMENTED_API_NAMES.items())
 
 
-def _check_project_api(f: Path, rel: Path, findings: Findings) -> None:
+def _check_project_api(
+    f: Path,
+    rel: Path,
+    findings: Findings,
+    *,
+    standard: bool,
+    classes: RootApiClasses,
+    code_keys: frozenset[tuple[str, str, int | str | None]],
+) -> None:
+    """#437 — code 레인이 이 파일(고른 표준 API 모듈)의 생성 사건을 냈으면 생성 꼴 줄은 그 사건이라 억제한다."""
     mod = _slice_parse(f)
     if mod is None:
         return
-    import_names: dict[str, str] = _module_import_names(mod)
-    documented_seen: bool = False
-    for lineno, path_str in _slice_imports(mod):
-        if path_str.split(".")[0] == "application":
-            findings.add(
-                "#437",
-                f"{rel}:{lineno}",
-                f"`{path_str}` import — `<project>/api.py` 에는 전역 API 객체 하나와 프레임워크 오류 핸들러만 온다(BC import 금지)",
+    covered: bool = ("#437", rel.as_posix(), None) in code_keys
+    for issue in _project_api_issues(ParsedSource(rel, "", mod), classes, standard=standard):
+        if covered and issue.kind in _SAME_CONSTRUCTION_KINDS:
+            continue
+        findings.add("#437", f"{rel}:{issue.lineno}", issue.message)
+
+
+def _project_public_object(f: Path, rel: Path, classes: RootApiClasses) -> tuple[bool, str | None]:
+    """`<project>/api.py` 를 읽었는가와 그 공개 표준 객체 이름(첫 생성이 한 문장 꼴일 때만 · 아니면 None)."""
+    mod = _slice_parse(f) if f.is_file() else None
+    if mod is None:
+        return False, None
+    return True, _api_construction(ParsedSource(rel, "", mod), classes)[0]
+
+
+def _urlpatterns_element(call: ast.Call, parents: dict[int, ast.AST]) -> bool:
+    """`call` 이 루트 URLconf 의 `urlpatterns` 에 바로 넣은 원소인가 — `urlpatterns[: T] = [...]`(목록 · 튜플 · `+` 로 이은
+    것) · `urlpatterns += [...]` · `urlpatterns.append(…)` · `urlpatterns.extend([...])` 이고 함수 · 클래스 몸통 밖이다."""
+
+    def urlpatterns_method(node: ast.AST | None, method: str, argument: ast.AST) -> bool:
+        return (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == method
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id == "urlpatterns"
+            and len(node.args) == 1
+            and not node.keywords
+            and node.args[0] is argument
+        )
+
+    holder: ast.AST | None = parents.get(id(call))
+    statement: ast.AST | None
+    placed: bool
+    if urlpatterns_method(holder, "append", call):
+        statement = parents.get(id(holder))
+        placed = isinstance(statement, ast.Expr)
+    elif isinstance(holder, (ast.List, ast.Tuple)):
+        container: ast.AST = holder
+        statement = parents.get(id(container))
+        while isinstance(statement, ast.BinOp) and isinstance(statement.op, ast.Add):
+            container, statement = statement, parents.get(id(statement))
+        if urlpatterns_method(statement, "extend", container):
+            statement = parents.get(id(statement))
+            placed = isinstance(statement, ast.Expr)
+        elif isinstance(statement, ast.Assign):
+            placed = statement.value is container and any(
+                isinstance(target, ast.Name) and target.id == "urlpatterns" for target in statement.targets
             )
-    for node in mod.body:
-        if isinstance(node, ast.ClassDef):
-            if not documented_seen and _documented_api_class(node, import_names):
-                documented_seen = True  # 닫힌 목록의 클래스 하나 — 경로 앞 응답을 붙이는 루트 API 클래스
-                continue
-            findings.add(
-                "#437",
-                f"{rel}:{node.lineno}",
-                f"`{node.name}` 정의 — ErrorSchema·예외 목록·매핑은 전부 위반이다(닫힌 허용 목록)",
+        elif isinstance(statement, (ast.AnnAssign, ast.AugAssign)):
+            placed = (
+                statement.value is container
+                and isinstance(statement.target, ast.Name)
+                and statement.target.id == "urlpatterns"
+                and (isinstance(statement, ast.AnnAssign) or isinstance(statement.op, ast.Add))
             )
-        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            deco_names = set()
-            for d in node.decorator_list:
-                fn = d.func if isinstance(d, ast.Call) else d
-                deco_names.add(fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", ""))
-            if "exception_handler" not in deco_names:
+        else:
+            placed = False
+    else:
+        return False
+    while placed and statement is not None and not isinstance(statement, ast.Module):
+        placed = not isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda))
+        statement = parents.get(id(statement))
+    return placed
+
+
+def _check_registrar_scope(
+    rel: Path,
+    mod: ast.Module,
+    findings: Findings,
+    *,
+    public_module: bool,
+    public_object: str | None,
+    code_keys: frozenset[tuple[str, str, int | str | None]],
+) -> None:
+    """#440(진짜 프로젝트 패키지의 URLconf) — 등록 함수 이름의 scope ↔ 넘긴 객체(import 출처로 푼다) ↔ 주소. 등록 함수는
+    위치 인자 하나로 그 scope 의 표준 객체를 받는다 — 공개 `register_<bc>_api` 는 `<project>/api.py` 의 첫 생성 문장 객체(그
+    문장이 서지 않으면 `<project>.api` 모듈 출처의 이름) · 내부 `register_<bc>_internal_api` 는
+    `<project>.internal_api.internal_api`(scope = registrar 모듈 경로의 BC + 정확한 함수 이름 · 모듈 수준 재대입으로 출처가
+    끊긴 이름은 표준 객체가 아니다). `internal_api.urls` 는 모든 출현이 `urlpatterns` 에 바로 넣은
+    `path("internal/", internal_api.urls)` 여야 하고(include 안 · 변수 · 다른 쓰임 금지), 공개 객체의 `.urls` 는 `path` ·
+    `re_path` 로 `internal/` 아래에 두지 않는다(공개 객체 이름 · 주소는 고정하지 않는다)."""
+    parsed = ParsedSource(rel, "", mod)
+    before, invalidated, _ = _import_state(parsed)
+    parents: dict[int, ast.AST] = _parent_map(mod)
+    prefix: str = ".".join(rel.parent.parts)
+    prefix = f"{prefix}." if prefix else ""
+    internal_object: str = f"{prefix}internal_api.{INTERNAL_API_OBJECT}"
+    public_prefix: str = f"{prefix}api."
+    public: str | None = f"{public_prefix}{public_object}" if public_module and public_object is not None else None
+    rel_key: str = rel.as_posix()
+
+    def resolve(node: ast.AST, at: ast.AST) -> str | None:
+        owner: ast.stmt | None = _snapshot_statement(at, parents, before)
+        if owner is None:
+            return None
+        return _resolve_imported_expression(node, before.get(id(owner), {}), invalidated.get(id(owner), frozenset()))
+
+    for call in sorted((n for n in ast.walk(mod) if isinstance(n, ast.Call)), key=lambda n: (n.lineno, n.col_offset)):
+        function: str | None = resolve(call.func, call)
+        if function is None:
+            continue
+        parts: list[str] = function.split(".")
+        if not (len(parts) == 6 and parts[0] == "application" and parts[2:5] == ["driving_layer", "api", "api_router"]):
+            continue
+        bc, name = parts[1], parts[5]
+        scope: str | None = {f"register_{bc}_api": "public", f"register_{bc}_internal_api": "internal"}.get(name)
+        if scope is None or ("#440", rel_key, name) in code_keys:
+            continue
+        if len(call.args) != 1 or call.keywords or isinstance(call.args[0], ast.Starred):
+            findings.add(
+                "#440",
+                f"{rel}:{call.lineno}",
+                f"`{name}` 은 그 scope 의 표준 API 객체 하나를 위치 인자로 받는다 — `{name}(<API 객체>)`",
+            )
+            continue
+        passed: str | None = resolve(call.args[0], call)
+        if scope == "internal":
+            matched: bool = passed == internal_object
+        elif public is not None:
+            matched = passed == public
+        elif public_module:
+            # 공개 생성이 한 문장 꼴이 아니라 객체를 못 세우면(그 사건은 #437) 넘긴 것이 `<project>.api` 모듈 출처인지만 본다.
+            matched = passed is not None and passed.startswith(public_prefix)
+        else:
+            matched = passed != internal_object  # `<project>/api.py` 를 못 읽으면 다른 표준 객체만 가린다
+        if not matched:
+            shown: str = passed if passed is not None else ast.unparse(call.args[0])
+            findings.add(
+                "#440",
+                f"{rel}:{call.lineno}",
+                f"`{name}` 은 {'내부' if scope == 'internal' else '공개'} 표준 API 객체를 받는다 — 넘긴 것: `{shown}`"
+                "(공개 = `<project>/api.py` 의 생성 문장 객체 · 내부 = `<project>/internal_api.py` 의 `internal_api`)",
+            )
+
+    urls_nodes: list[ast.Attribute] = sorted(
+        (n for n in ast.walk(mod) if isinstance(n, ast.Attribute) and n.attr == "urls"),
+        key=lambda n: (n.lineno, n.col_offset),
+    )
+    for node in urls_nodes:
+        owner: str | None = resolve(node.value, node)
+        holder: ast.AST | None = parents.get(id(node))
+        mount: ast.Call | None = (
+            holder if isinstance(holder, ast.Call) and len(holder.args) >= 2 and holder.args[1] is node else None
+        )
+        mount_function: str | None = resolve(mount.func, mount) if mount is not None else None
+        route_node: ast.expr | None = mount.args[0] if mount is not None else None
+        route: str | None = (
+            route_node.value if isinstance(route_node, ast.Constant) and isinstance(route_node.value, str) else None
+        )
+        lineno: int = mount.lineno if mount is not None else node.lineno
+        if owner == internal_object:
+            if not (
+                mount is not None
+                and mount_function == "django.urls.path"
+                and route == INTERNAL_API_MOUNT
+                and _urlpatterns_element(mount, parents)
+            ):
                 findings.add(
-                    "#437",
-                    f"{rel}:{node.lineno}",
-                    f"`{node.name}()` — 프레임워크 오류 핸들러 밖의 함수는 이 파일에 오지 않는다",
+                    "#440",
+                    f"{rel}:{lineno}",
+                    f'`internal_api.urls` 는 `urlpatterns` 에 바로 넣은 `path("{INTERNAL_API_MOUNT}", internal_api.urls)` '
+                    "로만 단다 — include 안 · 변수 · 다른 주소에 두지 않는다",
+                )
+        elif public is not None and owner == public and route is not None and mount_function in {
+            "django.urls.path", "django.urls.re_path"
+        }:
+            pattern: str = route[1:] if mount_function == "django.urls.re_path" and route.startswith("^") else route
+            if pattern.startswith(INTERNAL_API_MOUNT):
+                findings.add(
+                    "#440",
+                    f"{rel}:{lineno}",
+                    f"공개 API 객체의 `.urls` 를 `{INTERNAL_API_MOUNT}` 아래에 달지 않는다 — 그 주소는 `internal_api` 자리다",
                 )
 
 
@@ -2991,12 +3723,16 @@ def _check_project_urls(
     findings: Findings,
     *,
     code_keys: frozenset[tuple[str, str, int | str | None]],
+    standard: bool,
+    public_module: bool,
+    public_object: str | None,
 ) -> None:
     """tree #440 사이트의 선점 억제는 code 레인 «실발화 사건 키»로만 한다(귀속
     매핑표 v2 §5 · MEDIATION-3 M1/R2 — 파일 단위 활성 폐기): 사건 식별자는 registrar
     fn 이름이다 — code 가 같은 URLconf 에서 같은 fn 의 #440 사건을 실발화했을 때만
     그 fn 의 tree #440 을 억제한다. spec 밖 registrar 의 미호출 등 code 미발화
-    사건은 그대로 방출한다(#441 은 겹침 미등재라 항상 그대로)."""
+    사건은 그대로 방출한다(#441 은 겹침 미등재라 항상 그대로). 이름 scope ↔ 객체 ↔
+    주소 대조는 진짜 프로젝트 패키지의 URLconf 에만 한다(그 밖 폴더는 보존 scope 등)."""
     mod = _slice_parse(f)
     if mod is None:
         return
@@ -3013,7 +3749,8 @@ def _check_project_urls(
                     findings.add(
                         "#441",
                         f"{rel}:{node.lineno}",
-                        f"`{node.module}.{a.name}` import — urls.py 가 BC 심볼을 쓰는 예외는 `register_<bc>_api` 명시 호출 하나뿐이다",
+                        f"`{node.module}.{a.name}` import — urls.py 가 BC 심볼을 쓰는 예외는 등록 함수 "
+                        "`register_<bc>_api` · `register_<bc>_internal_api` 의 명시 호출뿐이다",
                     )
     called = {
         (n.func.id if isinstance(n.func, ast.Name) else getattr(n.func, "attr", ""))
@@ -3026,8 +3763,12 @@ def _check_project_urls(
         findings.add(
             "#440",
             f"{rel}:{lineno}",
-            f"`{name}` 을 import 하고 부르지 않았다 — urls.py 는 각 BC 의 `register_<bc>_api(api)` 를 «명시적으로 부른다»",
+            f"`{name}` 을 import 하고 부르지 않았다 — urls.py 는 import 한 등록 함수(`register_<bc>_api` · "
+            "`register_<bc>_internal_api`)를 그 scope 의 API 객체로 «명시적으로 부른다»",
         )
+    if standard:
+        _check_registrar_scope(rel, mod, findings, public_module=public_module, public_object=public_object,
+                               code_keys=code_keys)
 
 
 def _standard_tree_slice(
@@ -3048,14 +3789,25 @@ def _standard_tree_slice(
         _check_composition_dir(bc, bc_rel, findings, candidates)
         _check_inner_driving_imports(bc, bc_rel, findings)
         _check_api_dir(root, bc, bc_rel, findings, candidates, code_keys)
+    project_pkg: Path | None = _find_project_pkg(root)
+    classes = RootApiClasses(root, _tree_readable(root))
     for d in _find_project_dirs(root):
-        api_py = d / "api.py"
+        # 진짜 프로젝트 패키지 하나만 표준 — 그 밖의 `urls.py` + `api.py` 폴더(보존 scope 등)는 지금의 #437 만 본다.
+        standard: bool = project_pkg is not None and d.resolve() == project_pkg.resolve()
+        api_py = d / PROJECT_API_MODULE
         if api_py.is_file():
-            _check_project_api(api_py, api_py.relative_to(root), findings)
+            _check_project_api(api_py, api_py.relative_to(root), findings,
+                               standard=standard, classes=classes, code_keys=code_keys)
+        internal_py = d / INTERNAL_API_MODULE
+        if standard and internal_py.is_file():
+            _check_project_api(internal_py, internal_py.relative_to(root), findings,
+                               standard=True, classes=classes, code_keys=code_keys)
         urls_py = d / "urls.py"
         if urls_py.is_file():
             urls_rel: Path = urls_py.relative_to(root)
-            _check_project_urls(urls_py, urls_rel, findings, code_keys=code_keys)
+            public_module, public_object = _project_public_object(api_py, api_py.relative_to(root), classes)
+            _check_project_urls(urls_py, urls_rel, findings, code_keys=code_keys, standard=standard,
+                                public_module=public_module, public_object=public_object)
     _check_wiring_material_references(root, findings)
     return findings, candidates
 
@@ -3075,7 +3827,7 @@ def main(argv: list[str]) -> int:
             parsed = _selected_sources(config, inventory)
         composition_findings: list[Finding] = []
         if config.profile == "dddjango-code-json":
-            analysis, composition_findings = _composition_semantics(config, parsed)
+            analysis, composition_findings = _composition_semantics(config, parsed, inventory)
             if analysis:
                 raise UsageError("; ".join(analysis))
         di_findings: Findings = _filtered_di_findings(config.root, inventory)
@@ -3127,10 +3879,10 @@ def main(argv: list[str]) -> int:
         print("[check-composition-root] BLOCKER — API registrar/URLconf 조립 계약 위반:")
         emit_all(*code_surfaces, printer=print)
         print(
-            "  API 근거: implementation-django-ninja §2.2·discipline-houserules final.md §1. "
-            "각 BC의 canonical `driving_layer/api/api_router.py`가 "
-            "`register_<bc>_api(api)` 안에서만 controller를 등록하고, 선택 URLconf가 "
-            "선택 API object를 각 registrar에 정확히 한 번 전달한다. 위 finding의 "
+            "  API 근거: implementation-django-ninja §2.3·discipline-houserules final.md §1. "
+            "각 BC의 canonical `driving_layer/api/api_router.py`가 등록 함수 "
+            "`register_<bc>_api(api)` · 내부 창구 `register_<bc>_internal_api(api)` 안에서만 controller를 등록하고, "
+            "선택 URLconf가 선택 API object를 그 scope 의 각 registrar에 정확히 한 번 전달한다. 위 finding의 "
             "signature/provenance/owner/count를 그 직접 계약에 맞춰라."
         )
     if di_findings:

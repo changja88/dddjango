@@ -66,7 +66,7 @@
        인자·무주석 Assign(#493 몫)은 후보 아님. 좌표 = AnnAssign/Return 문장 줄 · 그 밖 호출 줄.
   #646·#647·#650 은 뿌리 `application/`·`framework/`·`cross_context/` 아래 파일만 본다(BC 마다 도는 검사기의 BC 고르기와 같은 판 — 자매
        플러그인 구역 `web/application/**`·`web_test/**` · 운영 스크립트 · 뿌리 밖 중첩 컨테이너 `src/application/**` 제외 —
-       기존 5규칙의 대상은 무변). BC 밖 합성 칸 `cross_context/`(트리 172~182행)도 BC admin 과 같은 타입 규율을 진다.
+       기존 5규칙의 대상은 무변). BC 밖 합성 칸 `cross_context/`(트리 173~183행)도 BC admin 과 같은 타입 규율을 진다.
        그 뿌리 아래 시험 본문은 #647 차단만 산다(아래 «시험 본문»).
 
 문법 외 면제(도구·프로토콜 소유 — 사람이 짓는 자리가 아니다):
@@ -173,7 +173,7 @@ STUB_GENERIC_MODULES = (
     "django.views.generic", "django.views.generic.detail", "django.views.generic.list",
     "django.views.generic.edit", "django.views.generic.dates",
 )
-RULE_ROOTS = {"application", "framework", "cross_context"}  # #646·#647·#650 뿌리 필터(상대 경로 첫 성분 · 신규 3규칙만 — 기존 규칙 무변 · 트리 172행)
+RULE_ROOTS = {"application", "framework", "cross_context"}  # #646·#647·#650 뿌리 필터(상대 경로 첫 성분 · 신규 3규칙만 — 기존 규칙 무변 · 트리 173행)
 TYPE_IGNORE_RE = re.compile(r"#\s*type:\s*ignore(?:\[([^\]]*)\])?")
 
 # #647 — 값 자리 판정 재료.

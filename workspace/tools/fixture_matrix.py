@@ -7,7 +7,7 @@ FROZEN 이므로 실측은 이 fixture 결정 레인만 쓴다.
 
 케이스: skeleton 9 + 기존 15종×2 + API-error 3종×2(--error-profile auto)
        + 신설 8종×2 + checker_lint 2 + 호출 계약 27 + 수정 사이클 레인 3×2 + 음성 · 양성 단독 레인
-       = exit 대조 127 + 줄 대조 44(GROUP_CASES — 아래) = 171(실행 표 끝 «케이스» 줄이 실측이다).
+       = exit 대조 128 + 줄 대조 44(GROUP_CASES — 아래) = 172(실행 표 끝 «케이스» 줄이 실측이다).
 
 의미 묶음 줄 대조(2.28.0 · #654~#656 · 설계 7.4): exit 만 보는 레인은 ⓓ 후보 줄(exit 불산입)과
 줄 글자(#656 주어)를 못 본다 — 이 레인은 거름 규칙의 줄 전부를 글자 그대로 기대와 대조한다.
@@ -105,6 +105,8 @@ NEGATIVE_LANES: "list[tuple[str, str, str]]" = [
 
 POSITIVE_LANES: "list[tuple[str, str, str]]" = [
     ("check-usecase-dto-placement.py", "usecase_dto", "registrar_only"),
+    # F4-150 — 내부 창구 등록 함수(`register_<bc>_internal_api`)를 부르는 것도 REST 표면이다(#188 짝 검사가 선다).
+    ("check-usecase-dto-placement.py", "usecase_dto", "internal_registrar_only"),
     ("check-usecase-dto-placement.py", "usecase_dto", "orphan_area"),
     ("check-usecase-dto-placement.py", "usecase_dto", "api_only_area"),
     # ②′ 역할 내 독립 흐름(10-29) — #662 바깥 import · #541 본체 + 틀 · ⓓ#194 흐름 부품(줄은 GROUP_CASES 가 고정).
@@ -750,8 +752,8 @@ GROUP_CASES: "list[tuple[str, str, str, str, tuple[str, ...]]]" = [
     # `<screen>/` 안 도우미 · 화면으로 읽힌 `static/`(`panel.py` 부재) · 템플릿 하위 폴더 · 트리에 없는 `cross_context/reporting/`.
     ("skeleton/bad_cross", "check-layer-skeleton.py", "skeleton/bad_cross", r"^\[#\d+\] cross_context", (
         "[#488] cross_context: 고정 칸 폴더에 `__init__.py` 가 없다",
-        "[#488] cross_context/backoffice/apps.py: 고정 파일 부재 — 비면 빈 파일로 만든다 (트리 174행)",
-        "[#488] cross_context/backoffice/static/panel.py: 고정 파일 부재 — 비면 빈 파일로 만든다 (트리 177행)",
+        "[#488] cross_context/backoffice/apps.py: 고정 파일 부재 — 비면 빈 파일로 만든다 (트리 175행)",
+        "[#488] cross_context/backoffice/static/panel.py: 고정 파일 부재 — 비면 빈 파일로 만든다 (트리 178행)",
         "[#490] cross_context/backoffice/static/backoffice: 트리에 없는 칸이다 — 반환",
         "[#490] cross_context/backoffice/suspension/helpers.py: 트리가 이 층에 이름을 준 파일이 아니다",
         "[#490] cross_context/backoffice/templates/admin/backoffice/suspension: 트리에 없는 칸이다 — 반환",

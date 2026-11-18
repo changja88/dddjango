@@ -663,12 +663,18 @@ djr:R-0905 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0906 a djr:Obligation ;
-    skos:prefLabel "inventory 누락·중복 module·profile 혼합 공유·API instance 복수의 blocker 및 Coordinator 승인 handback"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0906@2026-08-22> .
+    skos:prefLabel "inventory 누락·중복 module·profile 혼합 공유·API instance 복수의 blocker 및 Coordinator 승인 handback(빈 internal_api.py 는 누락 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0906@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-0906@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0906 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0906@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-0906 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0906@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0907 a djr:Obligation ;
     skos:prefLabel "canonical common path·공통 FrameworkErrorSchema 하나·common 내 BC concrete 부재·slot 5/6 확인"@ko ;
@@ -1677,8 +1683,8 @@ djr:R-1022 a djr:Obligation ;
     djr:revisionKind djr:revision-clarification .
 
 djr:R-1023 a djr:Obligation ;
-    skos:prefLabel "contract scope마다 project api.py의 API instance 단독 소유 · 루트 API 는 경로 앞 응답의 정해진 클래스로"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1023@2026-11-13> .
+    skos:prefLabel "contract scope마다 project API 모듈의 API instance 단독 소유(공개 api.py · 내부 창구 internal_api.py 의 internal_api) · 루트 API 는 경로 앞 응답의 정해진 클래스로 · internal_api 는 그 클래스를 들여 지음"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1023@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-1023@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1023 ;
@@ -1690,21 +1696,39 @@ djr:R-1023 a djr:Obligation ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-clarification .
 
+<https://numchida.com/ns/djr#R-1023@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-1023 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1023@2026-11-13> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-1024 a djr:Obligation ;
-    skos:prefLabel "BC api_router의 side-effect-free 자기 controller 한정 등록"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1024@2026-08-22> .
+    skos:prefLabel "BC api_router의 side-effect-free 자기 controller 한정 등록(register_<bc>_api · 내부 창구 register_<bc>_internal_api)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1024@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-1024@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1024 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-1024@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-1024 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1024@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-1025 a djr:Obligation ;
-    skos:prefLabel "project urls.py의 registrar 명시 1회 호출 후 API mount"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1025@2026-08-22> .
+    skos:prefLabel "project urls.py의 registrar 명시 1회 호출(이름의 scope 에 맞는 객체) 후 API mount"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1025@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-1025@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1025 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1025@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-1025 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1025@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-1026 a djr:Obligation ;
     skos:prefLabel "controller의 auto_import=False"@ko ;
@@ -1934,7 +1958,7 @@ djr:R-1051 a djr:Exception ;
 
 djr:R-1052 a djr:Obligation ;
     skos:prefLabel "트리·배치·명명 값의 houserules final.md 단일 소유(§0~§6)(이 문서에 값 미보유)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1052@2026-11-14> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-1052@2026-11-19> .
 
 <https://numchida.com/ns/djr#R-1052@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1052 ;
@@ -1944,6 +1968,12 @@ djr:R-1052 a djr:Obligation ;
     prov:specializationOf djr:R-1052 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-1052@2026-08-22> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
+
+<https://numchida.com/ns/djr#R-1052@2026-11-19> a djr:Expression ;
+    prov:specializationOf djr:R-1052 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1052@2026-11-14> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-clarification .
 
 djr:R-1053 a djr:Obligation ;
@@ -3250,7 +3280,7 @@ djr:R-3743 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:statesNorm djr:R-0904, djr:R-0905, djr:R-0906 ;
-    djr:text "\n- **12-slot·surface inventory(Phase 1 필수)**: `Error response contract 12-slot`과 Phase 1 입력의 현재 project-wide production tree/inventory를 대조한다. 모든 현재 API/controller/URLconf/registrar module, API instance·namespace/version·public/internal scope, 모든 `scope-bc`와 `error-bc`, profile과 module sharing을 project-wide로 확인한다. inventory 누락, 같은 profile의 충돌하는 중복 module, `dddjango-code-json`/`preserve-established` 혼합 공유, 선택된 source 안의 API instance 복수는 checker가 추론하지 못해도 blocker이며 Coordinator의 승인 handback 대상이다.\n"@ko .
+    djr:text "\n- **12-slot·surface inventory(Phase 1 필수)**: `Error response contract 12-slot`과 Phase 1 입력의 현재 project-wide production tree/inventory를 대조한다. 모든 현재 API/controller/URLconf/registrar module, API instance·namespace/version·public/internal scope, 모든 `scope-bc`와 `error-bc`, profile과 module sharing을 project-wide로 확인한다. inventory 누락, 같은 profile의 충돌하는 중복 module, `dddjango-code-json`/`preserve-established` 혼합 공유, 선택된 source 안의 API instance 복수는 checker가 추론하지 못해도 blocker이며 Coordinator의 승인 handback 대상이다. 내용 없는 `internal_api.py`(내부 창구를 쓰지 않는 프로젝트가 두는 빈 칸)는 inventory 누락의 대상이 아니다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s006/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s006> ;
@@ -3381,7 +3411,7 @@ djr:R-3743 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 22 ;
     djr:statesNorm djr:R-1023, djr:R-1024, djr:R-1025, djr:R-1026, djr:R-1027, djr:R-1028, djr:R-1029, djr:R-1030, djr:R-1031, djr:R-1032, djr:R-1033, djr:R-1034 ;
-    djr:text "- **API instance·registrar·composition 규율**: active `dddjango-code-json` contract scope마다 project `<project>/api.py`가 API instance 하나를 소유한다(루트 API 는 경로 앞 응답의 정해진 클래스로 짓는다 — `implementation-django-ninja` §6.2). 각 BC의 side-effect-free api_router(`driving_layer/api/api_router.py`의 `register_<bc>_api` — final.md §1 10행)는 전달받은 API에 자기 controller만 등록하고, project `urls.py`가 각 registrar를 명시적으로 한 번 호출한 뒤 API를 mount한다. controller는 `auto_import=False`여야 하며 project API import·module-top-level 등록·dynamic registrar·import-time side effect·scope 안의 API 복수는 blocker다. HTTP registrar와 DI-only `composition_root/`(트리 2~4행)를 섞지 않고, root-local catalog/mapping 또는 registrar/composition lookalike도 직접 확인한다. controller 형태는 승인된 presentation 계약을 보존한다. 오류 대응, 특히 406/415를 이유로 승인된 class controller를 함수형 `Router`로 바꾸거나 별도 API instance로 격리하지 않는다. `preserve-established` scope 에서도 **registration/composition 은 이 표준으로 대조한다** — preserve 가 보존하는 것은 오류 wire 산출물이지 배선이 아니다(구 «native registration/API-instance layout 보존» 문구는 라운드 1′ 배선 답습의 통로로 실증되어 걷었다 — 2026-08-12). 배선 표준화가 오류 profile 이주를 뜻하지도 않는다 — 오류 산출물은 slot 승인대로 유지한다. Phase 1의 project-wide inventory와 mixed-profile sharing 점검은 profile에 관계없이 유지한다.\n"@ko .
+    djr:text "- **API instance·registrar·composition 규율**: active `dddjango-code-json` contract scope마다 project API 모듈이 API instance 하나를 소유한다 — 공개 scope 는 `<project>/api.py`, 내부 창구 scope 는 `<project>/internal_api.py` 의 `internal_api`(루트 API 는 경로 앞 응답의 정해진 클래스로 짓고 `internal_api` 는 그 클래스를 `api.py` 에서 들여 짓는다 — `implementation-django-ninja` §2.3 · §6.2). 각 BC의 side-effect-free api_router(`driving_layer/api/api_router.py`의 `register_<bc>_api` · 내부 창구는 `register_<bc>_internal_api` — final.md §1 10행)는 전달받은 API에 자기 controller만 등록하고, project `urls.py`가 각 registrar를 그 이름의 scope 에 맞는 객체로 명시적으로 한 번 호출한 뒤 API를 mount한다. controller는 `auto_import=False`여야 하며 project API import·module-top-level 등록·dynamic registrar·import-time side effect·scope 안의 API 복수는 blocker다. HTTP registrar와 DI-only `composition_root/`(트리 2~4행)를 섞지 않고, root-local catalog/mapping 또는 registrar/composition lookalike도 직접 확인한다. controller 형태는 승인된 presentation 계약을 보존한다. 오류 대응, 특히 406/415를 이유로 승인된 class controller를 함수형 `Router`로 바꾸거나 별도 API instance로 격리하지 않는다. `preserve-established` scope 에서도 **registration/composition 은 이 표준으로 대조한다** — preserve 가 보존하는 것은 오류 wire 산출물이지 배선이 아니다(구 «native registration/API-instance layout 보존» 문구는 라운드 1′ 배선 답습의 통로로 실증되어 걷었다 — 2026-08-12). 배선 표준화가 오류 profile 이주를 뜻하지도 않는다 — 오류 산출물은 slot 승인대로 유지한다. Phase 1의 project-wide inventory와 mixed-profile sharing 점검은 profile에 관계없이 유지한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b23> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;
@@ -3424,7 +3454,7 @@ djr:R-3743 a djr:Obligation ;
     djr:order 28 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s009-5/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s001/b1> ;
     djr:statesNorm djr:R-1052, djr:R-1053, djr:R-1054, djr:R-1055, djr:R-1056, djr:R-1057, djr:R-1058, djr:R-1059, djr:R-1060, djr:R-1061, djr:R-1062, djr:R-1063, djr:R-1064, djr:R-1065, djr:R-1066, djr:R-3713 ;
-    djr:text "- **파일트리·구조·명명 준수 — 값은 정본, 기계 판정은 백스톱**: 트리·배치·명명의 «값»(어느 칸·어느 이름·어느 층·어느 파일)은 전부 `discipline-houserules` `references/final.md` §0(제1원칙)·§1(표준 트리 182행)·§2(골격 규칙)·§3(명명)·§4(이관 — brownfield=빚)·§5(driven 출구 면제)·§6(BC 밖 합성 칸)이 소유한다 — 이 문서에는 값을 두지 않는다(값 사본은 썩는다 — 낡은 사본이 정본과 어긋난 사고가 이 절의 전신이다). 절차: ① 코드를 final.md 와 «직접» 대조한다 — 명세 부합만으로 통과시키지 않으며, **명세 자체가 §0 불변식·§2 골격 규칙·포트/칸 위치를 어긴 채 통과했으면 그 자체를 발견으로 올린다(설계 반송 — 명세 정당화는 면제 사유가 아니다)**. 레이아웃 대조 기준은 언제나 표준 트리다(houserules SKILL §1 — 소스 트리에 «기존 규약 존중» 케이스는 없다·기존 배치와의 일치는 통과 사유가 아니다; 시험도 표준 위치와 대조한다 — 기존 시험의 제자리 `update` · `remove` 는 위치 판정 밖이고, 입장 `add` 행 owner/path 가 표준 밖 기존 파일이면 발견(새 case 를 표준 밖에 더함)이다). 이 대조의 대상은 **이번 작업의 diff(승인 스코프의 산출물)**다 — 범위 밖 legacy 잔존은 발견이 아니라 빚 보고 채널이고 거기서 수리·이동 지시를 만들지 않으며, 반대로 명세·구현이 승인 스코프 산출물 목록 밖 기존 파일을 이동·재배선했으면 «표준 트리 일치»는 통과 사유가 아니라 **그 이동 자체가 발견(설계 반송)**이다(2026-08-13 라운드 2 실증: 리뷰어가 «filesystem matches approved inventory»로 11 BC 이관을 통과시켰다). ② 경로·AST 로 서는 판정은 registry 결정적 백스톱(`commands/dddjango.md` 의 registry 표)이 소유한다 — 백스톱이 잡는 위반을 재판정하지 않고(이중 계상 금지), 반대로 **백스톱 exit 0 을 «의미 준수»의 증거로 읽지 않는다** — 형태로 못 가르는 의미 변종(개명 폴더·빈-정본 위장·변수 우회·간접 재수출·helper 재수출·이름-위장 클래스·모듈/lazy 싱글톤 공유 — build 팩토리가 반환·주입하는 객체가 import 나 첫 호출 시점 1회 생성으로 요청 간 공유되는 매요청 계약 위반 포함)은 네가 직접 읽는다. 단 «동명 폴더 승격» 폴더의 `__init__.py` 재수출은 세 조건 — 승격 허용 표기 칸 + 본체 `<이름>.py` 실존 + 자기 폴더 모듈의 명시적 이름 재수출(as-alias/`__all__`) — 전건 충족 시 정상 형태다(그 외 재수출 문면 판정은 그대로다). 어댑터 고정 패키지와 역할 폴더의 `__init__.py` 는 houserules §0의 재수출 전용 형태를 대조하며 승격 본체를 요구하지 않는다. 역할 배치·builder와 반환 계약의 동거·reader의 구현 소유도 해당 규범과 직접 대조한다. ③ 옛 이름 재등장은 트리 밖 칸 위반(#81·#490 — §4 이관 종료)이고 면제로 읽지 않는다. ④ 주석·docstring 언어가 프로젝트 관례(없으면 한국어)와 일치하는지도 여기서 본다(기계 밖). ⑤ 타입 규율은 `check-public-surface-annotation` 이 전면(시그니처·지역·속성·모듈/클래스) 기계 소유다 — 네 몫은 ⓓ#69 후보의 물음과, 면제 자리에 억지로 어노테이트해 ORM/enum 을 깨뜨리는 역방향 오류뿐이다. ⑥ 묶음 자리(묶음 허용 칸 파일 · 묶음 폴더 — #654~#656)는 기계 판정이라 다시 판정하지 않는다 — 네 몫은 #657(여러 애그리거트가 함께 쓰는 개념의 업무 규칙 예외가 `shared_value_object/` 에 있는가)이다.\n"@ko .
+    djr:text "- **파일트리·구조·명명 준수 — 값은 정본, 기계 판정은 백스톱**: 트리·배치·명명의 «값»(어느 칸·어느 이름·어느 층·어느 파일)은 전부 `discipline-houserules` `references/final.md` §0(제1원칙)·§1(표준 트리 183행)·§2(골격 규칙)·§3(명명)·§4(이관 — brownfield=빚)·§5(driven 출구 면제)·§6(BC 밖 합성 칸)이 소유한다 — 이 문서에는 값을 두지 않는다(값 사본은 썩는다 — 낡은 사본이 정본과 어긋난 사고가 이 절의 전신이다). 절차: ① 코드를 final.md 와 «직접» 대조한다 — 명세 부합만으로 통과시키지 않으며, **명세 자체가 §0 불변식·§2 골격 규칙·포트/칸 위치를 어긴 채 통과했으면 그 자체를 발견으로 올린다(설계 반송 — 명세 정당화는 면제 사유가 아니다)**. 레이아웃 대조 기준은 언제나 표준 트리다(houserules SKILL §1 — 소스 트리에 «기존 규약 존중» 케이스는 없다·기존 배치와의 일치는 통과 사유가 아니다; 시험도 표준 위치와 대조한다 — 기존 시험의 제자리 `update` · `remove` 는 위치 판정 밖이고, 입장 `add` 행 owner/path 가 표준 밖 기존 파일이면 발견(새 case 를 표준 밖에 더함)이다). 이 대조의 대상은 **이번 작업의 diff(승인 스코프의 산출물)**다 — 범위 밖 legacy 잔존은 발견이 아니라 빚 보고 채널이고 거기서 수리·이동 지시를 만들지 않으며, 반대로 명세·구현이 승인 스코프 산출물 목록 밖 기존 파일을 이동·재배선했으면 «표준 트리 일치»는 통과 사유가 아니라 **그 이동 자체가 발견(설계 반송)**이다(2026-08-13 라운드 2 실증: 리뷰어가 «filesystem matches approved inventory»로 11 BC 이관을 통과시켰다). ② 경로·AST 로 서는 판정은 registry 결정적 백스톱(`commands/dddjango.md` 의 registry 표)이 소유한다 — 백스톱이 잡는 위반을 재판정하지 않고(이중 계상 금지), 반대로 **백스톱 exit 0 을 «의미 준수»의 증거로 읽지 않는다** — 형태로 못 가르는 의미 변종(개명 폴더·빈-정본 위장·변수 우회·간접 재수출·helper 재수출·이름-위장 클래스·모듈/lazy 싱글톤 공유 — build 팩토리가 반환·주입하는 객체가 import 나 첫 호출 시점 1회 생성으로 요청 간 공유되는 매요청 계약 위반 포함)은 네가 직접 읽는다. 단 «동명 폴더 승격» 폴더의 `__init__.py` 재수출은 세 조건 — 승격 허용 표기 칸 + 본체 `<이름>.py` 실존 + 자기 폴더 모듈의 명시적 이름 재수출(as-alias/`__all__`) — 전건 충족 시 정상 형태다(그 외 재수출 문면 판정은 그대로다). 어댑터 고정 패키지와 역할 폴더의 `__init__.py` 는 houserules §0의 재수출 전용 형태를 대조하며 승격 본체를 요구하지 않는다. 역할 배치·builder와 반환 계약의 동거·reader의 구현 소유도 해당 규범과 직접 대조한다. ③ 옛 이름 재등장은 트리 밖 칸 위반(#81·#490 — §4 이관 종료)이고 면제로 읽지 않는다. ④ 주석·docstring 언어가 프로젝트 관례(없으면 한국어)와 일치하는지도 여기서 본다(기계 밖). ⑤ 타입 규율은 `check-public-surface-annotation` 이 전면(시그니처·지역·속성·모듈/클래스) 기계 소유다 — 네 몫은 ⓓ#69 후보의 물음과, 면제 자리에 억지로 어노테이트해 ORM/enum 을 깨뜨리는 역방향 오류뿐이다. ⑥ 묶음 자리(묶음 허용 칸 파일 · 묶음 폴더 — #654~#656)는 기계 판정이라 다시 판정하지 않는다 — 네 몫은 #657(여러 애그리거트가 함께 쓰는 개념의 업무 규칙 예외가 `shared_value_object/` 에 있는가)이다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b29> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;

@@ -391,7 +391,7 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 
 - **비밀 정보를 쿼리 파라미터에 담지 않는다** — URL은 서버/프록시 로그에 기록됨
 - 인증 정보는 `Authorization` 헤더에 전달
-- 모든 API 통신에 HTTPS 사용
+- 모든 API 통신에 HTTPS 사용 — local development 밖의 예외는 앞단 안쪽 사설망에서 부르는 내부 창구뿐이다(`implementation-django-ninja` §4.1)
 
 > 출처: Go_Deeper/Wiki/Http/StatusCode, Go_Deeper/Wiki/OAuth, Go_Deeper/Book/Architecture/DesigningAPIS
 

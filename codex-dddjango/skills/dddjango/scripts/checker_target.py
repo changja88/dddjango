@@ -60,7 +60,7 @@ _BC_LAYER_DIRS: "tuple[str, ...]" = ("domain_layer", "application_layer", "drivi
 # 같은 꼴(`git diff --name-status <앵커>` 의 지우지 않은 경로 ∪ `status --untracked-files=all` 의 미추적)이라 변경을 커밋한
 # 실행도 같은 판정이다.
 
-# 모델 없는 운영자 화면 합성 앱의 단 하나의 자리(트리 173행) — check-app-container 는 이 자리를 모델 표지 한 줄로만 판정하고,
+# 모델 없는 운영자 화면 합성 앱의 단 하나의 자리(트리 174행) — check-app-container 는 이 자리를 모델 표지 한 줄로만 판정하고,
 # 게이트는 이 줄의 승인 머지 출처를 폴더 tree 로 가른다(건드림에 기대지 않는 줄이다).
 BACKOFFICE_APP: "tuple[str, ...]" = ("cross_context", "backoffice")
 

@@ -2760,11 +2760,45 @@ def _one_hop_paths(
     return selected
 
 
+_SETTINGS_MODULE_RE = re.compile(r"DJANGO_SETTINGS_MODULE[\"']\s*,\s*[\"']([\w.]+)[\"']")
+
+
+def _find_project_pkg(root: Path) -> Path | None:
+    """`<project>` 판정 — check-layer-skeleton 과 같은 꼴(manage.py 의 DJANGO_SETTINGS_MODULE 이 1순위 · 없으면
+    settings 를 가진 유일 후보만)."""
+    manage = root / "manage.py"
+    if manage.is_file():
+        m = _SETTINGS_MODULE_RE.search(manage.read_text(encoding="utf-8", errors="ignore"))
+        if m:
+            pkg = root / m.group(1).split(".")[0]
+            if pkg.is_dir():
+                return pkg
+    cands = [
+        p for p in sorted(root.iterdir())
+        if p.is_dir() and not p.name.startswith(".")
+        and p.name not in ("venv", "site-packages", "node_modules", "__pycache__", "application", "framework")
+        and ((p / "settings").is_dir() or (p / "settings.py").is_file())
+    ]
+    return cands[0] if len(cands) == 1 else None
+
+
+def _project_api_modules(root: Path) -> frozenset[Path]:
+    """진짜 프로젝트 패키지의 표준 API 모듈(`<project>/api.py` · `<project>/internal_api.py`)."""
+    pkg: Path | None = _find_project_pkg(root)
+    if pkg is None:
+        return frozenset()
+    relative: Path = pkg.relative_to(root)
+    return frozenset({relative / "api.py", relative / "internal_api.py"})
+
+
 def _api_one_hop_paths(
     parsed: ParsedSource,
     module_paths: dict[str, Path],
+    root_api_modules: frozenset[Path],
 ) -> set[Path]:
-    """Select direct helper modules in the configured API module's package."""
+    """Select direct helper modules in the configured API module's package.
+
+    다른 루트 API 모듈(진짜 프로젝트 패키지의 `api.py` · `internal_api.py`)은 그 scope 렌더가 보므로 고르지 않는다."""
 
     selected: set[Path] = set()
     api_module = _module_name(parsed.relative_path)
@@ -2774,7 +2808,7 @@ def _api_one_hop_paths(
         if module != package and not module.startswith(f"{package}."):
             return
         path = module_paths.get(module)
-        if path is not None and path != parsed.relative_path:
+        if path is not None and path != parsed.relative_path and path not in root_api_modules:
             selected.add(path)
 
     for statement in parsed.tree.body:
@@ -8405,7 +8439,7 @@ def _run(config: Config) -> tuple[list[str], list[Finding]]:
     if config.api_module is not None:
         api_source = selected.get(config.api_module)
         if api_source is not None:
-            one_hop.update(_api_one_hop_paths(api_source, module_paths))
+            one_hop.update(_api_one_hop_paths(api_source, module_paths, _project_api_modules(config.root)))
     canonical = {_bc_error_path(bc) for bc in config.error_bcs}
     managed = {*active, *canonical, *one_hop}
     required = {

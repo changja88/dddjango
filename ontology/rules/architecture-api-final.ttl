@@ -793,12 +793,18 @@ djr:R-2024 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2025 a djr:Obligation ;
-    skos:prefLabel "전 API 통신의 HTTPS 사용"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2025@2026-08-22> .
+    skos:prefLabel "전 API 통신의 HTTPS 사용 — local development 밖의 예외는 앞단 안쪽 사설망에서 부르는 내부 창구뿐(ninja §4.1)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2025@2026-11-18> .
 
 <https://numchida.com/ns/djr#R-2025@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2025 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2025@2026-11-18> a djr:Expression ;
+    prov:specializationOf djr:R-2025 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2025@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2026 a djr:Obligation ;
     skos:prefLabel "Bearer 토큰 만료·권한 범위의 계약 명시"@ko ;
@@ -2264,7 +2270,7 @@ djr:R-3748 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
     djr:statesNorm djr:R-2025 ;
-    djr:text "- 모든 API 통신에 HTTPS 사용\n\n"@ko .
+    djr:text "- 모든 API 통신에 HTTPS 사용 — local development 밖의 예외는 앞단 안쪽 사설망에서 부르는 내부 창구뿐이다(`implementation-django-ninja` §4.1)\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s038-8.3/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s038-8.3> ;

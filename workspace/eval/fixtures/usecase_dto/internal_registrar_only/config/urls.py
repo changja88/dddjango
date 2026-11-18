@@ -1,0 +1,4 @@
+from application.lesson.driving_layer.api.api_router import register_lesson_internal_api
+from config.internal_api import internal_api
+
+register_lesson_internal_api(internal_api)

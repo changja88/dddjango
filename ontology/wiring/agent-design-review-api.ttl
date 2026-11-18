@@ -260,3 +260,7 @@ djr:R-3603 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 djr:R-3658 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
 
 djr:R-3739 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-3779 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-3780 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api>, <https://numchida.com/ns/djr#a/command-dddjango> .
