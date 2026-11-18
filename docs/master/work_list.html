@@ -118,12 +118,12 @@
 <div class="wrap">
   <p class="kicker">05 · dddjango · dddjango-web</p>
   <h1>작업 리스트</h1>
-  <p class="lead">현장 보고 가운데 아직 고치지 않은 일 <b>13개</b>다(dddjango 7 · dddjango-web 6). 차례는 4판 → 5판(web)이다. 기준 판 dddjango 2.40.0 · dddjango-web 2.9.1(2026-11-16).</p>
+  <p class="lead">현장 보고 가운데 아직 고치지 않은 일 <b>14개</b>다(dddjango 8 · dddjango-web 6). 차례는 4판 → 5판(web)이고, 새 보고는 판을 정해 넣는다. 기준 판 dddjango 2.40.0 · dddjango-web 2.9.1(2026-11-16).</p>
 
   <div class="index">
     <div class="tabs" role="tablist" aria-label="플러그인">
       <button type="button" role="tab" id="tab-core" aria-controls="panel-core" aria-selected="true" data-key="dddjango">
-        <span class="t">dddjango</span><span class="s">7개 · 4판 · 보류</span>
+        <span class="t">dddjango</span><span class="s">8개 · 4판 · 새 보고 · 보류</span>
       </button>
       <button type="button" role="tab" id="tab-web" aria-controls="panel-web" aria-selected="false" tabindex="-1" data-key="web">
         <span class="t">dddjango-web</span><span class="s">6개 · 5판(맨 뒤)</span>
@@ -131,6 +131,7 @@
     </div>
     <ul class="jump" id="jump-core" aria-label="dddjango 차례">
       <li><a href="#core-4">4판<span class="n">1</span></a></li>
+      <li><a href="#core-new">새 보고<span class="n">1</span></a></li>
       <li><a href="#core-hold">보류<span class="n">6</span></a></li>
     </ul>
     <ul class="jump" id="jump-web" aria-label="dddjango-web 차례" hidden>
@@ -147,8 +148,16 @@
       </ul>
     </section>
 
+    <section id="core-new">
+      <h2><span class="no">2</span>새 보고 — 판 아직 안 정함<span class="cnt">1개</span></h2>
+      <p class="why">무게 높음 — 시험 대부분이 비동기인 서버의 BC 는 리팩토링을 시작할 길이 없고, 그 BC 의 문서 누락 빚(#63)도 기능 모드 · 리팩토링 모드 어느 쪽으로도 갚지 못한다. 바라는 결과(설계는 플러그인 몫): 비동기 시험 본문도 동작 보존 증거로 받기 · 또는 지원 밖 시험은 «정리 전후 모두 녹색» 으로만 보는 갈래 · 또는 기능 모드 첫 슬라이스에서 «실제 응답은 그대로 · 문서만 사실대로 늘어남» 을 동작 불변으로 인정.</p>
+      <ul class="items">
+        <li><span class="num">F4-185</span><span class="what">리팩토링 입구의 동작 보존 확인이 비동기(<code>async def</code>) 시험을 지원 밖으로 빼서, 시험 대부분이 비동기인 BC 는 G0 에서 늘 멈춘다</span><span class="st left">그대로</span></li>
+      </ul>
+    </section>
+
     <section id="core-hold">
-      <h2><span class="no">2</span>보류 — 설계 때 미리 못 보고 구현 뒤에 드러남 · 계기가 사라짐<span class="cnt">6개</span></h2>
+      <h2><span class="no">3</span>보류 — 설계 때 미리 못 보고 구현 뒤에 드러남 · 계기가 사라짐<span class="cnt">6개</span></h2>
       <p class="why">되돌아감 줄이기(11-08 ~ 11-09)를 접은 판단과 겹쳐 보류했다. 새 사례가 쌓이면 다시 연다. F4-161 은 계기가 2.38.0 에서 사라져 보류했다 — 다시 나면 연다.</p>
       <ul class="items">
         <li><span class="num">F4-35 · 133</span><span class="what">포트 자료에 도메인 타입을 쓰면 구현 뒤에 걸린다 · 문서는 값 객체를 쓰라 하고 검사기는 막는다</span><span class="st left">그대로</span></li>
