@@ -8,14 +8,18 @@
   - 허용 메커니즘의 원본 상위 집합 — 시험 함수의 실행 원본 사슬(정확한 표준 타입만 · `__wrapped__` 전부 ·
     환경 층이 클로저로 쥔 함수 한 단) · 시험 클래스 MRO 와 몸체 루틴 · fixture 관리자의 모든 정의 · 모듈 · 패키지 xunit ·
     generate · 등록 플러그인과 훅 구현(이름 · 원본 · 갈래) · Django fixtures 폴더 · 실행 중 인스턴스 lifecycle 원본.
-  - 정의 자리(이름) 밖 · 원본 못 찾음 · 허용 밖(항목 종류 · 일시 중단 가능한 본문 · 결과 증거 없음 · 감시 구간 재진입 ·
-    Django 찾는 자리 변화 · 적재 메서드 재정의).
+  - 정의 자리(이름) 밖 · 원본 못 찾음 · 허용 밖(항목 종류 · 일시 중단 가능한 본문 · 실행기 목록 밖 비동기 본문 · 결과 증거 없음 ·
+    감시 구간 재진입 · Django 찾는 자리 변화 · 적재 메서드 재정의).
   - 양 — 수집 · 선택 항목 · 구조 키 · call 보고 · skip · 완료 · 실패 보고 수 · import 실패 skip · exitstatus ·
     `sys.flags.optimize` · 역할(단일 · 조정자 · 일꾼) · 준비된 일꾼 · 확정 표지 · 확정 뒤 등록.
 결과 증거: `pytest_itemcollected` 때 결속한 가장 안쪽 코드 객체 하나에만 call 단계 동안 `sys.monitoring` 지역 사건
-`PY_START` · `PY_RETURN` 을 켜, 감시 구간을 연 call 실행 맥락(스레드 — greenlet 이 적재돼 있으면 그 greenlet)의 시작 ·
-정상 반환과 맥락 밖 사건을 센다. passed call 보고 때 꺼내 «시작 ≥ 1 · 정상 반환 = 시작 · 맥락 밖 0 · 재진입 없음»이
-아니면 허용 밖으로 남긴다. 구간이 열린 채 call 단계 훅이 다시 불리면 재진입으로 남긴다.
+`PY_START` · `PY_RESUME` · `PY_YIELD` · `PY_RETURN` 을 켜, 감시 구간을 연 call 실행 맥락(스레드 — greenlet 이 적재돼 있으면 그
+greenlet)에서 구간 안에 시작한 프레임만 표에 넣어 센다 — 표에 있는 동안 참조를 쥐고(구간 동안 같은 id 의 새 프레임이 없다), 정상
+반환하면 그때 표에서 빼고 참조를 놓는다. 다른 맥락의 사건과 표에 없는 프레임의 재개 · 일시 중단 · 반환(구간 밖에서 시작한 실행이
+이어지거나 반환함)은 맥락 밖으로 센다. passed call 보고 때 꺼내 «시작 ≥ 1 · 정상 반환 = 시작 · 맥락 밖 0 · 재진입 없음»이
+아니면 허용 밖으로 남긴다. 구간이 열린 채 call 단계 훅이 다시 불리면 재진입으로 남긴다. 코루틴 본문은 실행기가 닫힌 목록 안일
+때만 결속한다 — pytest-asyncio 항목 · Django 시험 클래스가 아니고 저장소 쪽이 실행기 메서드를 재정의하지 않은 unittest
+`IsolatedAsyncioTestCase`(그 밖은 수집 때 허용 밖).
 실행 기록(기록 판 2 · 설계 3판 §C1): import 때 감사 훅 하나가 사건 «exec» 의 코드 객체 파일 이름(날 글자 — 상대 이름은 그 사건
 때 작업 폴더로 풂 · `<` 로 시작하면 버림)을 모은다. 수집 끝 · 기록 확정 때 그때까지 모은 것과 `sys.modules` 의 `__file__`(날 글자)
 가운데 저장소 뿌리(`DDDJANGO_PROBE_ROOTS` — 날 · 풀린 둘) 아래인 것을 `loaded_collect` · `loaded_end` 로, 후보 전부의 파일 정체
@@ -74,7 +78,9 @@ ROOTS = tuple(r.rstrip(os.sep) + os.sep for r in json.loads(os.environ.get("DDDJ
 XUNIT_MODULE = ("setup_module", "teardown_module", "setUpModule", "tearDownModule", "setup_function", "teardown_function")
 PACKAGE_XUNIT = ("setUpModule", "setup_module", "tearDownModule", "teardown_module")
 DJANGO_LOAD = ("setUpClass", "_fixture_setup", "_pre_setup")
-ALLOWED_ITEMS = {"_pytest.python.Function", "_pytest.unittest.TestCaseFunction"}
+ALLOWED_ITEMS = {"_pytest.python.Function", "_pytest.unittest.TestCaseFunction", "pytest_asyncio.plugin.Coroutine"}
+PYTEST_ASYNCIO_ITEM = "pytest_asyncio.plugin.Coroutine"   # call 안에서 같은 스레드의 asyncio.Runner 로 돈다
+ISOLATED_RUNNER = ("_callTestMethod", "_callAsync", "_callMaybeAsync", "_setupAsyncioRunner")   # 저장소 쪽 MRO 가 재정의하면 실행기를 모른다
 ALLOWED_SOURCELESS = {("__channelexec__", "WorkerInteractor")}
 PYTEST_DIR = str(Path(_pytest.__file__).resolve().parent)
 SITE_DIRS = sorted({str(Path(p).resolve()) for p in (sysconfig.get_paths()["purelib"], sysconfig.get_paths()["platlib"])})
@@ -83,7 +89,7 @@ SELF = str(Path(__file__).resolve())
 LRU = type(functools.lru_cache(maxsize=None)(lambda: None))
 MON = getattr(sys, "monitoring", None)
 _S: dict = {"seen_cls": set(), "tool": None, "bound": {}, "watch": None, "owner": None, "starts": 0, "returns": 0, "foreign": 0,
-            "proof": {}, "suspend": set(), "initial": [], "final": [], "files": set(), "unresolved": [], "bad": [], "calls": set(),
+            "proof": {}, "suspend": set(), "started": {}, "initial": [], "final": [], "files": set(), "unresolved": [], "bad": [], "calls": set(),
             "skips": set(), "passed": set(), "complete": set(), "workers_ready": set(), "allowed_sourceless": set(), "django": None,
             "hookimpls": {}, "finalized": False, "late": [], "exitstatus": None,
             "failed": 0, "import_skips": [], "packages": set(), "meta": {}, "anchor": [], "names": {}, "flags": {}, "reentry": False,
@@ -301,7 +307,8 @@ def _home(item) -> "tuple[str | None, str | None]":
 
 
 def pytest_itemcollected(item) -> None:
-    """수집 때(modifyitems · fixture 앞) — 구조 키 · 원본 사슬 · 정의 자리(이름) · 결속 코드 · 일시 중단 가능 본문(v13)."""
+    """수집 때(modifyitems · fixture 앞) — 구조 키 · 원본 사슬 · 정의 자리(이름) · 결속 코드 · 일시 중단 가능 본문(v13) ·
+    비동기 본문의 실행기(닫힌 목록)."""
     nid = item.nodeid
     _S["initial"].append(nid)
     _S["meta"][nid] = _meta(item)
@@ -317,15 +324,44 @@ def pytest_itemcollected(item) -> None:
     inner = codes[-1]
     if home is None or _code_file(inner) != home or inner.co_qualname != qual:
         _S["anchor"].append({"nid": nid, "home": home, "qual": qual, "inner": _code_file(inner), "inner_qual": inner.co_qualname})
-    kinds = [n for n, f in (("generator", inspect.CO_GENERATOR), ("coroutine", inspect.CO_COROUTINE),
-                            ("iterable coroutine", inspect.CO_ITERABLE_COROUTINE), ("async generator", inspect.CO_ASYNC_GENERATOR))
+    kinds = [n for n, f in (("generator", inspect.CO_GENERATOR), ("iterable coroutine", inspect.CO_ITERABLE_COROUTINE),
+                            ("async generator", inspect.CO_ASYNC_GENERATOR))
              if inner.co_flags & f]
-    if kinds:                                         # v13 ①: 일시 중단 가능한 본문은 결과 증거로 증명하지 못한다
+    if kinds:                                         # v13 ①: 일시 중단 가능한 본문(코루틴 밖)은 결과 증거로 증명하지 못한다
         _S["flags"][nid] = kinds
         _S["suspend"].add(nid)
         _S["bad"].append([nid, f"결과 증거 범위 밖 — 일시 중단 가능한 본문({' · '.join(kinds)})"])
         return
+    if inner.co_flags & inspect.CO_COROUTINE:
+        why = _async_runner_gap(item)
+        if why:                                       # 실행기 닫힌 목록 밖 — 같은 맥락에서 돈다는 것을 수집 때 말할 수 없다
+            _S["flags"][nid] = ["coroutine"]
+            _S["suspend"].add(nid)
+            _S["bad"].append([nid, f"결과 증거 범위 밖 — {why}"])
+            return
     _S["bound"][nid] = inner
+
+
+def _async_runner_gap(item) -> "str | None":
+    """코루틴 본문의 실행기가 닫힌 목록 안이면 None · 밖이면 까닭(G0 사유 글). Django 판별이 Isolated 판별보다 먼저다(함께 상속해도)."""
+    kind = f"{type(item).__module__}.{type(item).__qualname__}"
+    if kind == PYTEST_ASYNCIO_ITEM:
+        return None
+    cls = getattr(item, "cls", None)
+    if kind == "_pytest.unittest.TestCaseFunction" and cls is not None:
+        if any(c.__module__ == "django.test.testcases" for c in cls.__mro__):
+            return "다른 스레드에서 도는 비동기 본문(Django 시험 클래스의 async 메서드 — async_to_sync)"
+        iso = getattr(sys.modules.get("unittest.async_case"), "IsolatedAsyncioTestCase", None)   # 하위 클래스면 이미 실려 있다 — 새로 싣지 않는다
+        if iso is not None and issubclass(cls, iso):
+            hit = set()
+            for c in cls.__mro__:
+                f = _class_file(c)
+                if f is not None and _origin(f) == "그 밖":
+                    hit.update(n for n in ISOLATED_RUNNER if n in vars(c))
+            if hit:
+                return f"실행기 메서드를 재정의한 비동기 본문(IsolatedAsyncioTestCase · {' · '.join(sorted(hit))})"
+            return None
+    return f"실행기를 모르는 비동기 본문(coroutine · 항목 종류 {kind})"
 
 
 def _fixture_superset(session) -> None:
@@ -495,15 +531,23 @@ def _same_ctx() -> bool:
 def _on_start(code, offset):
     if code is _S["watch"]:
         if _same_ctx():
+            f = sys._getframe(1)
+            _S["started"][id(f)] = f                     # 참조를 쥔다 — 표에 있는 동안 같은 id 의 새 프레임이 생기지 않는다
             _S["starts"] += 1
         else:
             _S["foreign"] += 1
 
 
+def _on_mid(code, offset, *rest):                    # PY_RESUME · PY_YIELD — 구간 안에서 시작해 아직 표에 있는 프레임만 받는다
+    if code is _S["watch"]:
+        if not (_same_ctx() and id(sys._getframe(1)) in _S["started"]):
+            _S["foreign"] += 1
+
+
 def _on_return(code, offset, retval):
     if code is _S["watch"]:
-        if _same_ctx():
-            _S["returns"] += 1
+        if _same_ctx() and _S["started"].pop(id(sys._getframe(1)), None) is not None:
+            _S["returns"] += 1                           # 정상 반환 — 표에서 빼고 참조를 놓는다(시험 몸 지역 값의 수명은 그대로)
         else:
             _S["foreign"] += 1
 
@@ -519,6 +563,8 @@ def _monitor_on() -> None:
             continue
         _S["tool"] = tid
         MON.register_callback(tid, MON.events.PY_START, _on_start)
+        MON.register_callback(tid, MON.events.PY_RESUME, _on_mid)
+        MON.register_callback(tid, MON.events.PY_YIELD, _on_mid)
         MON.register_callback(tid, MON.events.PY_RETURN, _on_return)
         return
     _S["unresolved"].append(["monitoring", "sys.monitoring 빈 도구 자리 없음"])
@@ -555,7 +601,8 @@ def _inst_sources(item, nid) -> None:
 
 @pytest.hookimpl(wrapper=True, tryfirst=True)
 def pytest_runtest_call(item):
-    """call 단계(탐침 tryfirst 래퍼): Django 찾는 자리 · 결속 코드의 시작 · 정상 반환 계수(call 실행 맥락만 · v13)."""
+    """call 단계(탐침 tryfirst 래퍼): Django 찾는 자리 · 결속 코드 프레임의 시작 · 정상 반환 계수(구간 안에서 시작한 프레임 ·
+    call 실행 맥락만)."""
     nid = item.nodeid
     if _S["django"] is not None and _django_state() != _S["django"]:
         _S["bad"].append([nid, "Django FIXTURE_DIRS · 앱 목록이 수집 때와 다름"])
@@ -573,14 +620,14 @@ def pytest_runtest_call(item):
         return (yield)
     _inst_sources(item, nid)
     _S["watch"], _S["owner"], _S["starts"], _S["returns"], _S["foreign"] = code, _ctx(), 0, 0, 0
-    _S["reentry"] = False
-    MON.set_local_events(tid, code, MON.events.PY_START | MON.events.PY_RETURN)
+    _S["started"], _S["reentry"] = {}, False
+    MON.set_local_events(tid, code, MON.events.PY_START | MON.events.PY_RESUME | MON.events.PY_YIELD | MON.events.PY_RETURN)
     try:
         return (yield)
     finally:
         MON.set_local_events(tid, code, 0)
         _S["proof"][nid] = (_S["starts"], _S["returns"], _S["foreign"], _S["reentry"])
-        _S["watch"], _S["owner"] = None, None
+        _S["watch"], _S["owner"], _S["started"] = None, None, {}   # 돌아오지 않은 프레임의 참조는 구간 끝에 놓는다
         _inst_sources(item, nid)
 
 
@@ -598,7 +645,7 @@ def pytest_runtest_logreport(report) -> None:
             # 결과 증거는 시험을 실제로 돈 프로세스(단일 · 일꾼)에서 본다 — 조정자는 보고만 받는다
             pr = _S["proof"].pop(report.nodeid, None)    # v13 ④: 꺼내 쓴다 — 앞 구간의 셈을 다시 쓰지 못한다
             if report.nodeid in _S["suspend"]:
-                pass                                      # 수집 때 이미 정지(일시 중단 가능한 본문)
+                pass                                      # 수집 때 이미 정지(일시 중단 가능한 본문 · 실행기 목록 밖 비동기 본문)
             elif pr is None or pr[0] < 1 or pr[1] != pr[0] or pr[2] or pr[3]:
                 s, r, f, _re = pr if pr else (0, 0, 0, False)
                 _S["bad"].append([report.nodeid, f"passed 인데 결속한 시험 코드의 결과 증거 없음(시작 {s} · 정상 반환 {r} · 맥락 밖 사건 {f})"])

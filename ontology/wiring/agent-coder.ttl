@@ -324,3 +324,5 @@ djr:R-3709 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 djr:R-3733 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder> .
 
 djr:R-3760 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3783 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .

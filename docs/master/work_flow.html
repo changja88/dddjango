@@ -4949,7 +4949,7 @@
       </div>
     </div>
 
-    <script id="archify-guided-views-data" type="application/json">[{"id":"main-pipeline","label":"요청에서 보고까지","focus":["req","phase0","g0","spec","pregate","g1","slice0","slice","align","audit","backstop","g2","report"],"note":"사용자 게이트 G0·G1·G2를 지나는 본선 — Coordinator는 위임과 판정만 하고 명세·테스트·코드는 쓰지 않는다."},{"id":"design-gate","label":"설계와 pre-gate","focus":["g0","spec","reviews","pregate","g1"],"note":"명세는 리뷰 다발을 거쳐 반영되고, pre-gate가 막힘 0을 확인해야 G1에 올라간다 — red면 설계자에게 돌아간다."},{"id":"guard-windows","label":"보존·묶음 창","focus":["g1","slice0","slice","align","backstop","g2"],"note":"슬라이스 0(0T 시험 → 0C 코드)과 끝 맞춤 묶음 이동은 창 안에서만 — behavior_guard·folder_group이 창마다 판정한다."},{"id":"refactor-entry","label":"리팩토링 입구","focus":["req","phase0","refscan","g0","slice0","align","backstop"],"note":"/dddjango:refactor는 같은 Coordinator에 리팩토링 모드로 위임 — BC 점검(R1–R3) 뒤 G0, 0T·0C·0F·변경 창으로 간다."},{"id":"ontology-layer","label":"온톨로지가 있는 곳","focus":["graph","md","rulepack","reviews"],"note":"규범 정본은 그래프(Turtle) — md는 렌더 투영물, rulepack은 소성물이다."}]</script>
+    <script id="archify-guided-views-data" type="application/json">[{"id":"main-pipeline","label":"요청에서 보고까지","focus":["req","phase0","g0","spec","pregate","g1","slice0","slice","align","audit","backstop","g2","report"],"note":"사용자 게이트 G0·G1·G2를 지나는 본선 — Coordinator는 위임과 판정만 하고 명세·테스트·코드는 쓰지 않는다."},{"id":"design-gate","label":"설계와 pre-gate","focus":["g0","spec","reviews","pregate","g1"],"note":"명세는 리뷰 다발을 거쳐 반영되고, pre-gate가 막힘 0을 확인해야 G1에 올라간다 — red면 설계자에게 돌아간다."},{"id":"guard-windows","label":"보존·묶음 창","focus":["g1","slice0","slice","align","backstop","g2"],"note":"슬라이스 0(0T 시험 → 0C 코드)과 끝 맞춤 묶음 이동 · 그 뒤 import 정렬 맞춤은 창 안에서만 — behavior_guard·folder_group이 창마다 판정한다."},{"id":"refactor-entry","label":"리팩토링 입구","focus":["req","phase0","refscan","g0","slice0","align","backstop"],"note":"/dddjango:refactor는 같은 Coordinator에 리팩토링 모드로 위임 — BC 점검(R1–R3) 뒤 G0, 0T·0C·0F·변경 창으로 간다."},{"id":"ontology-layer","label":"온톨로지가 있는 곳","focus":["graph","md","rulepack","reviews"],"note":"규범 정본은 그래프(Turtle) — md는 렌더 투영물, rulepack은 소성물이다."}]</script>
 
     <div class="guided-views no-print" id="guided-views" hidden aria-label="Guided diagram views">
       <button id="guided-view-prev" type="button" aria-label="Previous guided view" title="Previous guided view ([)">&#8592;</button>
@@ -5209,8 +5209,8 @@
           <text data-detail="context" x="430" y="627" class="t-muted" font-size="8" text-anchor="middle">0T 시험 → 0C 코드</text>
         </g>
 
-        <g id="node-align" data-node-id="align" data-node-label="끝 맞춤" tabindex="0" role="button" aria-label="Focus 끝 맞춤, 묶음 창 · verify, 보존·묶음 창 › Phase 2 · 구현 (이중 루프 TDD) → G2 · 보고" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="묶음 창 · verify" data-node-context="보존·묶음 창 › Phase 2 · 구현 (이중 루프 TDD) → G2 · 보고">
-          <title>끝 맞춤 · 묶음 창 · verify · 보존·묶음 창 › Phase 2 · 구현 (이중 루프 TDD) → G2 · 보고</title>
+        <g id="node-align" data-node-id="align" data-node-label="끝 맞춤" tabindex="0" role="button" aria-label="Focus 끝 맞춤, 묶음 창 · 정렬 창, 보존·묶음 창 › Phase 2 · 구현 (이중 루프 TDD) → G2 · 보고" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="묶음 창 · 정렬 창" data-node-context="보존·묶음 창 › Phase 2 · 구현 (이중 루프 TDD) → G2 · 보고">
+          <title>끝 맞춤 · 묶음 창 · 정렬 창 · 보존·묶음 창 › Phase 2 · 구현 (이중 루프 TDD) → G2 · 보고</title>
           <rect x="579" y="589" width="92" height="52" rx="6" class="c-mask"/>
           <rect x="579" y="589" width="92" height="52" rx="6" class="c-messagebus" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(585 595) scale(0.6875)">
@@ -5220,7 +5220,7 @@
             <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
           <text data-node-label data-detail-anchor x="625" y="610" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">끝 맞춤</text>
-          <text data-detail="context" x="625" y="627" class="t-muted" font-size="8" text-anchor="middle">묶음 창 · verify</text>
+          <text data-detail="context" x="625" y="627" class="t-muted" font-size="8" text-anchor="middle">묶음 창 · 정렬 창</text>
         </g>
 
         <g id="node-reviews" data-node-id="reviews" data-node-label="리뷰 다발" tabindex="0" role="button" aria-label="Focus 리뷰 다발, ddd·api·db·규율, 리뷰어·감사 › Phase 1 · 설계" aria-pressed="false" data-node-kind="backend" data-node-sublabel="ddd·api·db·규율" data-node-context="리뷰어·감사 › Phase 1 · 설계">
@@ -5568,7 +5568,7 @@
           <li>&bull; 정본층(메인테이너 저장소 전용): Turtle(RDF)+RDFS 어휘 · SHACL 검증(pySHACL) · RDFC-1.0 정규화 해시 · SPARQL 질의(rdflib)</li>
           <li>&bull; 4단 저작 게이트: 파스 → 정본 직렬화 diff=0 → RDFC 해시 → SHACL — 커밋마다 pre-commit이 기계로 막는다</li>
           <li>&bull; 설치본(플러그인): 표준 라이브러리만 — 검사기 27(AST·파일 트리 판정) + 결정적 도구(pre-gate · registry_gate · behavior_guard · folder_group · refactor_audit) + rulepack.json 조회. rdflib 금지(동결 E7)</li>
-          <li>&bull; DB·서버 없음 — 전부 git 안의 파일. 릴리즈 2.38.0 기준</li>
+          <li>&bull; DB·서버 없음 — 전부 git 안의 파일. 릴리즈 2.42.0 기준</li>
         </ul>
       </div>
 

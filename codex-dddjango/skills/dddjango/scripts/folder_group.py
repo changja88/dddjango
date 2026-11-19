@@ -1465,7 +1465,8 @@ def string_substituter(pairs: "Iterable[Tuple[str, str]]") -> "Callable[[str], s
 def move_texts(files: "Mapping[str, str]", pairs: "Iterable[Tuple[str, str]]",
                drops: "Iterable[str]" = ()) -> "Dict[str, str]":
     """경로 → 글 트리에 이동 쌍을 적용한다(설계 8 — `apply` · `apply_to_copy` · 창 판정 · 불변식이 같은 함수를 쓴다).
-    옮긴 파일과 옮긴 모듈 이름이 든 파일만 import 를 기계 치환하고, 새 묶음에 빈 `__init__.py` 를 만들고, 이번 이동으로
+    옮긴 파일과 옮긴 모듈 이름이 든 파일만 import 를 기계 치환하고, 새 묶음과 이번 이동이 파일을 넣는데 `__init__.py` 가
+    없는 묶음에 빈 `__init__.py` 를 만들고(있는 것은 그대로 · 이동을 받지 않는 옛 묶음은 손대지 않는다), 이번 이동으로
     비워진 묶음 · `drops`(푸는 묶음 — 이미 `__init__.py` 만 남은 것)의 빈 `__init__.py`(`empty_init`)를 지운다(내용이 있는
     `__init__.py` 는 남긴다)."""
     pair_list: "list[Tuple[str, str]]" = list(pairs)
@@ -1481,7 +1482,8 @@ def move_texts(files: "Mapping[str, str]", pairs: "Iterable[Tuple[str, str]]",
             text = rewrite_source(text, path, new, moves, sub)
         out[new] = text
     before: "set[str]" = group_dirs_of(files)
-    for d in sorted(group_dirs_of(out) - before):
+    received: "set[str]" = {new.rsplit("/", 1)[0] for _old, new in pair_list}   # 이번 이동이 파일을 넣는 폴더(F4-183)
+    for d in sorted(d for d in group_dirs_of(out) if d not in before or d in received):
         out.setdefault(f"{d}/__init__.py", "")
     drop_set: "set[str]" = set(drops)
     for d in sorted(before):
@@ -2106,9 +2108,15 @@ def _bc_under(path: str, bcs: "Set[str]") -> "Optional[str]":
     return None
 
 
-def perform(root: Path, pairs: "List[Tuple[str, str]]", use_git: bool, drops: "Iterable[str]" = ()) -> "List[str]":
-    """디스크에서 옮긴다 — 파일 이동(`git mv` · 미추적은 이름 바꿈) · import · 설정 파일 치환 · 새 묶음 빈 `__init__.py` ·
-    비워진 묶음과 `drops`(푸는 묶음의 빈 `__init__.py`) 지움. 돌려주는 값은 고친 파일(새 경로)."""
+class Performed(NamedTuple):
+    changed: "List[str]"     # 고친 파일(새 경로) — 새로 쓴 묶음 `__init__.py` 포함
+    markers: "List[str]"     # 새로 쓴 묶음 `__init__.py`(표지)
+
+
+def perform(root: Path, pairs: "List[Tuple[str, str]]", use_git: bool, drops: "Iterable[str]" = ()) -> Performed:
+    """디스크에서 옮긴다 — 파일 이동(`git mv` · 미추적은 이름 바꿈) · import · 설정 파일 치환 · 새 묶음과 이동을 받는 묶음의
+    빈 `__init__.py`(디스크에 이미 있으면 — 읽지 못한 UTF-8 아닌 글 · 링크 — 쓰지 않는다) · 비워진 묶음과 `drops`(푸는 묶음의
+    빈 `__init__.py`) 지움. 돌려주는 값은 고친 파일(새 경로)과 그 가운데 새로 쓴 묶음 `__init__.py`."""
     drop_list: "list[str]" = list(drops)
     texts: "dict[str, str]" = _project_texts(root)
     after: "dict[str, str]" = rewrite_tree(texts, pairs, drop_list)
@@ -2132,10 +2140,14 @@ def perform(root: Path, pairs: "List[Tuple[str, str]]", use_git: bool, drops: "I
         if after[new_path] != text:
             (root / new_path).write_text(after[new_path], encoding="utf-8")
             changed.append(new_path)
+    markers: "list[str]" = []
     for p in sorted(set(after) - {moved_to.get(o, o) for o in texts}):
+        if os.path.lexists(root / p):   # `_project_texts` 가 뺀 표지(UTF-8 아님 · 링크)를 덮지 않는다
+            continue
         (root / p).parent.mkdir(parents=True, exist_ok=True)
         (root / p).write_text(after[p], encoding="utf-8")
         changed.append(p)
+        markers.append(p)
     for old in [o for o, _new in pairs] + drop_list:
         d: Path = (root / old).parent
         while d != root and d.is_dir():
@@ -2146,7 +2158,7 @@ def perform(root: Path, pairs: "List[Tuple[str, str]]", use_git: bool, drops: "I
                 break
             d.rmdir()
             d = d.parent
-    return sorted(set(changed))
+    return Performed(sorted(set(changed)), markers)
 
 
 def apply_to_copy(root: Path, pairs: "Iterable[Tuple[str, str]]",
@@ -2360,11 +2372,14 @@ def cmd_apply(args: argparse.Namespace) -> int:
             print(f"기계 이동 불가 {x}")
         print(f"요약: apply 멈춤 — 기계 이동 불가 {len(stops)}건(옮기지 않았다)")
         return 1
-    changed: "list[str]" = perform(root, full, use_git=True, drops=drops)
+    done: Performed = perform(root, full, use_git=True, drops=drops)
+    changed: "list[str]" = done.changed
     for a, b in full:
         print(f"이동 {a} -> {b}")
     for c in changed:
         print(f"고침 {c}")
+    for m in done.markers:
+        print(f"표지 {m}")
     for x in hz.other_bc:
         print(f"다른 BC import {x}")
     for d in drops:

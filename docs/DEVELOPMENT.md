@@ -137,7 +137,7 @@ Scheme URI와 `#fragment`만 허용하며 code span·fence·HTML comment·escape
 
 ```bash
 make ontology-env      # python3.14 .venv + rdflib·pySHACL·rdfcanon (버전 고정)
-make probe-env         # python3.14 .venv-probe + pytest·xdist·Django·pytest-django·greenlet (버전 고정 — B0 픽스처 전용)
+make probe-env         # python3.14 .venv-probe + pytest·xdist·Django·pytest-django·greenlet·pytest-asyncio (버전 고정 — B0 픽스처 전용)
 make ontology-hooks    # core.hooksPath = workspace/hooks (pre-commit 게이트)
 ```
 

@@ -3717,7 +3717,7 @@ def _suite_lines(record: "dict | None", confirmed: "tuple[str, str, str] | None"
         ready: int = sum(int(c.get("workers_ready", 0)) for c in commands)
         outputs: int = sum(int(c.get("worker_outputs", 0)) for c in commands)
         zero: "dict[str, str]" = {"failed": "실패 보고", "optimize": "최적화", "reentry": "감시 구간 재진입", "anchor": "정의 자리 밖",
-                                  "suspend": "일시 중단 본문", "observer_hits": "실행 관찰 API", "nolist": "허용 목록 밖",
+                                  "suspend": "결과 증거 밖 본문", "observer_hits": "실행 관찰 API", "nolist": "허용 목록 밖",
                                   "unresolved": "원본 못 찾음", "late": "확정 뒤 등록"}
         reds += [f"suite {label} {counts[k]}" for k, label in zero.items() if counts[k] != 0]
         unchanged: int = counts["observer_unchanged"]   # 실행 관찰 API 가운데 이번 실행이 바꾸지 않은 파일(설계 3판 §C2)
@@ -3757,8 +3757,8 @@ def _suite_lines(record: "dict | None", confirmed: "tuple[str, str, str] | None"
         f"실패 보고 {counts['failed']}(일꾼 포함 합) · 최적화 {counts['optimize']} · "
         f"선택 합 {eq(selected == collected)} 수집 합 {collected} · 선택 {selected} ⊆ 처분(call {counts['calls']} · "
         f"skip {counts['skips']}) · 완료 {counts['complete']} · 결과 증거 {counts['proof_ok']}/{counts['proof_total']}(passed call "
-        "마다 call 실행 맥락의 시작 = 정상 반환 ≥ 1 · 맥락 밖 사건 0) · "
-        f"감시 구간 재진입 {counts['reentry']}(보고 무관) · 정의 자리 밖 {counts['anchor']} · 일시 중단 본문 {counts['suspend']} · "
+        "마다 call 실행 맥락에서 구간 안에 시작한 프레임 ≥ 1 · 모두 정상 반환 · 그 밖 프레임 · 맥락 사건 0) · "
+        f"감시 구간 재진입 {counts['reentry']}(보고 무관) · 정의 자리 밖 {counts['anchor']} · 결과 증거 밖 본문 {counts['suspend']} · "
         f"실행 관찰 API {counts['observer_hits']}(실린 범위 {counts['observer_files']} 파일 · "
         + (f"이번 실행 편집 갈래 {split}" if split else f"그중 이번 실행이 바꾸지 않은 파일 {unchanged}") + ") · "
         f"허용 목록 밖 {counts['nolist']}(프로젝트 훅 {counts['hooks']} 개 모두 목록 안) · 원본 못 찾음 {counts['unresolved']} · "

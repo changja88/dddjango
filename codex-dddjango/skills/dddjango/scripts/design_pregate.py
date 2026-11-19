@@ -4610,14 +4610,25 @@ def _generated_methods(module: ast.Module) -> list[GeneratedMethod]:
     return result
 
 
+def _group_dir(copy: Path, rel: Path) -> bool:
+    """`rel` 이 묶음 허용 칸 직계의 묶음 폴더인가 — `folder_group.slot_of` 의 칸 아래 한 계층 · `recognize` 가 `group`(승격 ·
+    캐시만 남은 폴더 밖)."""
+    hit = folder_group.slot_of(f"{rel.as_posix()}/x.py")
+    return (hit is not None and len(hit[1]) == 2 and (copy / rel).is_dir()
+            and folder_group.recognize(copy / rel, hit[0].row) == "group")
+
+
 def materialize(copy: Path, plan: Plan, *, realized: "frozenset[str]" = frozenset(),
                 base_short: str = "", promoted: "frozenset[str]" = frozenset(),
                 baseline_bcs: "frozenset[str] | None" = None,
-                declared_scope: "dict[str, str] | None" = None) -> MaterializationReport:
+                declared_scope: "dict[str, str] | None" = None,
+                group_made: "frozenset[str]" = frozenset()) -> MaterializationReport:
     """태그 의미론(D2)대로 사본 위에 팬텀을 겹친다 — add 실존 충돌은 FormError.
 
     `promoted` = `baseline_form_errors` 가 승격 형태 예외로 통과시킨 update 경로(미시뮬레이션 문면만 다르다).
     `declared_scope` = `forecast_scope` 가 잰 update 칸의 선언 예보 범위(미시뮬레이션 사유 꼬리 · 문면 전용).
+    `group_made` = 이 실행의 묶음 이동(`_group_copy_moves`)이 파일을 넣는 묶음의 `__init__.py` — 그 자리의 `empty` 충돌은
+    묶음 창 몫 문면으로 가른다(판정 · 요약 종류는 «empty 충돌» 그대로).
 
     **재발화 판형(`--base` 명시 — Phase 2 진입 후 명세 개정 재실행)**: `realized` 는 `lift_realized_adds` 가
     앵커 커밋 전에 사본에서 걷어낸 «기실현 add» 경로다 — 여기서는 다른 add 와 똑같이 스텁으로 실체화하고
@@ -4670,6 +4681,9 @@ def materialize(copy: Path, plan: Plan, *, realized: "frozenset[str]" = frozense
         elif entry.tag == "empty":
             # add 와 같은 «새 파일» 태그 — 기준선 실존은 baseline_form_errors 가 앞서 형식 red 로 세우고, `--base` 재발화의
             # 오버레이 실존(기실현)은 lift_realized_adds 가 걷어내 여기서 빈 파일로 다시 쓴다(실체화 계수 · 도피 봉쇄).
+            if target.exists() and "/".join(_plan_parts(entry.path)) in group_made:
+                raise FormError(f"empty 충돌(묶음 창 몫): {entry.path} — 이 실행의 묶음 이동이 이 묶음에 파일을 넣고 표지를 "
+                                "만든다(묶음 창 — --debt · 끝 맞춤 · folder_group.py apply) — file-plan 에서 이 행을 뺀다")
             if target.exists():
                 raise FormError(f"empty 충돌(실존): {entry.path} — 계획과 실물의 모순은 그 자체가 발견이다")
             if entry.path in realized:
@@ -4735,13 +4749,14 @@ def materialize(copy: Path, plan: Plan, *, realized: "frozenset[str]" = frozense
             copy, "ls-tree", "HEAD", f"application/{bc}", check=False)
         if not listed.stdout.strip():
             materialize_skeleton(copy, bc)
-    # `__init__.py` 체인 보강 — 패키지 인식(골격 최소).
+    # `__init__.py` 체인 보강 — 패키지 인식(골격 최소). 묶음 허용 칸 직계의 묶음 폴더는 건너뛴다 — 새 파일만으로 서는
+    # 묶음의 표지는 명세(`empty`) 몫이라, 빠지면 #655 로 예보된다(이동을 받는 묶음의 표지는 `_group_copy_moves` 가 만든다).
     for entry in plan.entries.values():
         if entry.tag in ("add", "empty"):
             parent: Path = Path(entry.path).parent
             while parent.parts and str(parent) != ".":
                 init_file: Path = copy / parent / "__init__.py"
-                if not init_file.exists() and (copy / parent).is_dir():
+                if not init_file.exists() and (copy / parent).is_dir() and not _group_dir(copy, parent):
                     init_file.write_text("", encoding="utf-8")
                 parent = parent.parent
     return report
@@ -6380,9 +6395,10 @@ def _main(argv: "list[str]") -> int:
         joint_lines: "list[str]" = joint_report_lines(text, *joint_baseline(copy, plan))
 
         try:
-            mat: MaterializationReport = materialize(copy, plan, realized=realized, base_short=base_sha[:12],
-                                                      promoted=promoted, baseline_bcs=baseline_bcs,
-                                                      declared_scope=declared_scope)
+            mat: MaterializationReport = materialize(
+                copy, plan, realized=realized, base_short=base_sha[:12], promoted=promoted, baseline_bcs=baseline_bcs,
+                declared_scope=declared_scope,
+                group_made=frozenset(f"{d}/__init__.py" for d in folder_group.group_dirs_of(b for _a, b in group_moved)))
         except FormError as exc:
             print(f"형식 red — {exc}")
             write_report_stub(report_path, spec_path, base_ref, base_sha, "형식 red", [str(exc)], blk_hash, execution_mode=execution_mode, header_notes=header_notes)

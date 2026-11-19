@@ -196,6 +196,8 @@ verify-base-core:
 	diff -rq dddjango/scripts codex-dddjango/skills/dddjango/scripts --exclude=__pycache__; \
 	for f in dddjango/commands/dddjango.md codex-dddjango/skills/dddjango/SKILL.md dddjango/agents/coder.md codex-dddjango/skills/dddjango-coder/SKILL.md; do grep -qF '**멈춘 시험 깨우기**' $$f && grep -qF 'test_watch.py stop <감시 폴더>' $$f && grep -qF '끈 뒤의 기록으로 시험을 다시 고르지 않는다' $$f || { echo "ERROR: $$f 에 멈춘 시험 깨우기(감시 도구 · stop · 멈춤 순간 목록)가 없다 — Claude · Codex 두 런타임에 둔다"; exit 1; }; done; \
 	for f in dddjango/agents/coder.md codex-dddjango/skills/dddjango-coder/SKILL.md; do grep -qF '기준선 대비 새 진단 0' $$f && grep -qF '줄 · 칸 번호를 빼고' $$f && grep -qF '그 파일에 포매터를 돌려 기존 줄을 다시 쓰지 않는다' $$f || { echo "ERROR: $$f 에 완료 조건 정적 검사의 기준선 대비 글(맞춤 열쇠 · 포매터 전파 금지)이 없다 — Claude · Codex 두 런타임에 둔다"; exit 1; }; done; \
+	for f in dddjango/agents/coder.md codex-dddjango/skills/dddjango-coder/SKILL.md; do grep -qF -- '--no-fix --force-exclude' $$f && grep -qF '**정렬 맞춤**' $$f || { echo "ERROR: $$f 에 묶음 창 읽기만 린터 꼴(--no-fix --force-exclude)과 정렬 맞춤 파견 글이 없다 — Claude · Codex 두 런타임에 둔다"; exit 1; }; done; \
+	for f in dddjango/commands/dddjango.md codex-dddjango/skills/dddjango/SKILL.md dddjango/agents/discipline-reviewer.md codex-dddjango/skills/dddjango-discipline-reviewer/SKILL.md; do grep -qF '정렬 맞춤 창' $$f || { echo "ERROR: $$f 에 정렬 맞춤 창(묶음 이동 뒤 import 정렬을 따로 여는 0C 창) 글이 없다 — Claude · Codex 두 런타임에 둔다"; exit 1; }; done; \
 	cmp -s dddjango/scripts/test_watch.py dddjango-web/scripts/test_watch.py && cmp -s dddjango/scripts/watch_probe/test_watch_probe.py dddjango-web/scripts/watch_probe/test_watch_probe.py || { echo "ERROR: test_watch.py · watch_probe/test_watch_probe.py core ↔ web byte 불일치(또는 없음) — 두 플러그인에 같은 파일을 둔다"; exit 1; }; \
 	echo "[verify-base-core] 쓰기 울타리 임시 폴더 지우기 — Claude · Codex 조정자(index 사본 · 창을 닫은 뒤 · 허용 밖은 남김)"; \
 	for f in dddjango/commands/dddjango.md codex-dddjango/skills/dddjango/SKILL.md; do \
@@ -248,6 +250,7 @@ verify-base-regen:
 verify-base-probe:
 	@set -euo pipefail; \
 	test -x .venv-probe/bin/python || { echo "ERROR: .venv-probe 부재 — make probe-env 필요"; exit 1; }; \
+	.venv-probe/bin/python -c "import pytest_asyncio" 2>/dev/null || { echo "ERROR: .venv-probe 에 pytest-asyncio 없음(옛 환경) — make probe-env 필요"; exit 1; }; \
 	echo "[verify-base-probe] B0 영구 픽스처 (pytest 탐침·지원 확인·증거 실행 — behavior_probe_fixture_run)"; \
 	PYTHONUTF8=1 python3 workspace/tools/behavior_probe_fixture_run.py; \
 	echo "[verify-base-probe] 경로 앞 응답 정본 동작 (생성 문서 = 실제 응답 · 표 검증 · mypy strict — pre_route_behavior_smoke)"; \
@@ -326,7 +329,7 @@ ontology-env:
 	.venv/bin/python workspace/tools/ontology_env_smoke.py
 
 # B0 픽스처 가상환경(.venv-probe) 구축 — 버전 고정: workspace/tools/probe-fixture-requirements.txt
-# pytest·xdist·Django·pytest-django·greenlet · ninja·ninja_extra·pydantic·mypy 는 이 venv 전용 (플러그인 배포물 침투 금지 — 블루프린트 E7)
+# pytest·xdist·Django·pytest-django·greenlet·pytest-asyncio · ninja·ninja_extra·pydantic·mypy 는 이 venv 전용 (플러그인 배포물 침투 금지 — 블루프린트 E7)
 # uv 가 있으면 uv(캐시 우선), 없으면 pip 로 깐다. 설치 실패는 그대로 실패한다.
 probe-env:
 	@set -euo pipefail; \
@@ -340,7 +343,7 @@ probe-env:
 		.venv-probe/bin/pip install --quiet --upgrade pip; \
 		.venv-probe/bin/pip install --quiet --no-deps -r workspace/tools/probe-fixture-requirements.txt; \
 	fi; \
-	.venv-probe/bin/python -c "from django.conf import settings; settings.configure(); import pytest, xdist, django, pytest_django, greenlet, ninja, ninja_extra, mypy.version; print('[probe-env] ok — pytest', pytest.__version__, '· Django', django.__version__, '· greenlet', greenlet.__version__, '· ninja', ninja.__version__, '· ninja_extra', ninja_extra.__version__, '· mypy', mypy.version.__version__)"
+	.venv-probe/bin/python -c "from django.conf import settings; settings.configure(); import pytest, xdist, django, pytest_django, greenlet, pytest_asyncio, ninja, ninja_extra, mypy.version; print('[probe-env] ok — pytest', pytest.__version__, '· Django', django.__version__, '· greenlet', greenlet.__version__, '· pytest-asyncio', pytest_asyncio.__version__, '· ninja', ninja.__version__, '· ninja_extra', ninja_extra.__version__, '· mypy', mypy.version.__version__)"
 
 # 새 버전 릴리즈 — 플러그인별 타깃이 대상 변수만 지정하고 공통 절차(_release)를 부른다.
 #   release      : dddjango      (태그 dddjango--vX.Y.Z)

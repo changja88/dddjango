@@ -1210,6 +1210,65 @@ def scen_bc_names(fg, scripts: Path, run: Run, td: Path) -> None:
          folder / "design-spec.md", "--run", folder)
 
 
+# ── F4-183 이동을 받는 묶음의 표지(2.42.0 설계 §3) ──────────────────────────────────────────────────────────
+
+ST: str = SV + "solar_term/"
+LATIN_MARKER: bytes = "# -*- coding: latin-1 -*-\n# caf\xe9\nVERSION: int = 1\n".encode("latin-1")
+
+
+def _marker_repo(td: Path, marker: "bytes | str | None" = None) -> "tuple[Repo, Path]":
+    """앵커 = 평평한 `solar_term_y` · `solar_term_z` + 표지 없는 옛 묶음 `kappa/`(이관 #655 · 이동을 받지 않음) → 슬라이스의 새 파일
+    `solar_term/solar_term_x.py` 가 묶음 폴더를 표지 없이 먼저 만든다. `marker` 를 주면 슬라이스가 그 표지도 둔다(bytes = 그 글 ·
+    str = 그 링크 — 링크 대상 `real_init.py` 는 앵커에 · `missing_init.py` 는 없다(끊긴 링크))."""
+    repo = Repo(td)
+    repo.write({SV + "__init__.py": "", SV + "moon_phase.py": _vo("moon_phase"), SV + "solar_term_y.py": _vo("solar_term_y"),
+                SV + "solar_term_z.py": _vo("solar_term_z", "from .moon_phase import MoonPhase"),
+                SV + "kappa/kappa_one.py": _vo("kappa_one"), SV + "kappa/kappa_two.py": _vo("kappa_two"),
+                "real_init.py": "SHARED: int = 1\n"})
+    folder = _folder(repo, "f183", repo.commit("앵커"))
+    repo.write({ST + "solar_term_x.py": _vo("solar_term_x")})
+    if isinstance(marker, bytes):
+        (repo.root / ST / "__init__.py").write_bytes(marker)
+    elif isinstance(marker, str):
+        (repo.root / ST / "__init__.py").symlink_to(marker)
+    repo.commit("슬라이스 — 새 파일이 묶음 폴더를 먼저 만듦")
+    return repo, folder
+
+
+def scen_marker(fg, scripts: Path, run: Run, td: Path) -> None:
+    """F4-183 — 끝 맞춤 묶음 창이 파일을 넣는 묶음에 표지(빈 `__init__.py`)가 없으면 만들고 `표지 <경로>` 줄로 낸다 · 이동을 받지 않는
+    옛 묶음(표지 없음)은 손대지 않는다 · 디스크에 이미 있는 표지(UTF-8 아닌 글 · 링크 — 도구가 읽지 않는 것)는 덮지 않는다."""
+    moves: "list[str]" = [f"{SV}solar_term_{x}.py -> {ST}solar_term_{x}.py" for x in "yz"]
+    repo, folder = _marker_repo(td / "marker")
+    rc, out = _tool(scripts, "draft", repo.root, "--bc", "orbit", "--run", folder)
+    run.eq("F4-183 draft --run — 새 파일이 먼저 만든 묶음으로 남은 이동 둘", (rc, _lines_of(out, "남은 이동")),
+           (0, [f"남은 이동 {m}" for m in moves]))
+    _code, got, _tail = _checker(scripts, "check-layer-skeleton.py", repo.root)
+    run.eq("F4-183 끝 맞춤 앞 #655 — 옛 묶음 · 새 파일이 만든 묶음", sorted(ln.split(":")[0] for ln in got if ln.startswith("[#655]")),
+           [f"[#655] {SV}kappa/__init__.py", f"[#655] {ST}__init__.py"])
+    vc, reds, out = _window(scripts, repo, folder, 1, "--run-moves")
+    run.eq("F4-183 apply — 이동 둘 · 받는 묶음 표지 줄 하나(옛 묶음 없음)", (_lines_of(out, "이동 "), _lines_of(out, "표지 ")),
+           ([f"이동 {m}" for m in moves], [f"표지 {ST}__init__.py"]))
+    run.eq("F4-183 받는 묶음 표지 = 빈 글 · 옛 묶음 `kappa/` 표지 없음",
+           ((repo.root / ST / "__init__.py").read_bytes(), (repo.root / SV / "kappa/__init__.py").exists()), (b"", False))
+    run.eq("F4-183 묶음 창 판정 green", (vc, reds), (0, []))
+    rc, out = _tool(scripts, "verify", repo.root, "--run", folder)
+    run.eq("F4-183 verify --run green", (rc, _lines_of(out, "red")), (0, []))
+    _code, got, _tail = _checker(scripts, "check-layer-skeleton.py", repo.root)
+    run.eq("F4-183 끝 맞춤 뒤 #655 — 옛 묶음 `kappa/` 만", [ln.split(":")[0] for ln in got if ln.startswith("[#655]")],
+           [f"[#655] {SV}kappa/__init__.py"])
+    for slug, label, marker in (("latin", "UTF-8 아닌 표지", LATIN_MARKER), ("link", "링크 표지", "../../../../../real_init.py"),
+                                ("dangling", "끊긴 링크 표지", "../../../../../missing_init.py")):
+        repo, folder = _marker_repo(td / f"marker-{slug}", marker)
+        init: Path = repo.root / ST / "__init__.py"
+        vc, reds, out = _window(scripts, repo, folder, 1, "--run-moves")
+        kept: object = os.readlink(init) if init.is_symlink() else init.read_bytes()
+        run.eq(f"F4-183 {label} 는 그대로 — 이동 둘 · 표지 줄 0 · 링크 대상 그대로(끊긴 링크 대상은 생기지 않음) · 창 green",
+               (_lines_of(out, "이동 "), _lines_of(out, "표지 "), kept, (repo.root / "real_init.py").read_bytes(),
+                os.path.lexists(repo.root / "missing_init.py"), vc, reds),
+               ([f"이동 {m}" for m in moves], [], marker, b"SHARED: int = 1\n", False, 0, []))
+
+
 # ── 진입 ──────────────────────────────────────────────────────────────────────
 
 def run_all(scripts: Path, fail_fast: bool = False) -> "tuple[Run, object]":
@@ -1231,6 +1290,7 @@ def run_all(scripts: Path, fail_fast: bool = False) -> "tuple[Run, object]":
              ("검토 링크", lambda td: scen_review_symlink(fg, scripts, run, td)),
              ("검토 하위 폴더", lambda td: scen_review_subfolder(fg, scripts, run, td)),
              ("F4-176 BC 이름", lambda td: scen_bc_names(fg, scripts, run, td)),
+             ("F4-183 묶음 표지", lambda td: scen_marker(fg, scripts, run, td)),
              ("검사기", lambda td: check_checkers(fg, scripts, run, td)))
     with tempfile.TemporaryDirectory(prefix="fg-fixture-") as tmp:
         for name, step in steps:
@@ -1326,7 +1386,12 @@ _MUTATIONS: "tuple[tuple[str, str, str], ...]" = (
      "elif (string_sub is not None and isinstance(node, ast.Constant) and isinstance(node.value, str)",
      "elif (False and isinstance(node, ast.Constant) and isinstance(node.value, str)"),
     ("계산된 import 를 막지 않음", "if hits_package(pieces):", "if False:"),
-    ("새 묶음에 빈 __init__.py 를 만들지 않음(불변식 2 — #655)", 'out.setdefault(f"{d}/__init__.py", "")', "pass"),
+    ("새 묶음 · 이동을 받는 묶음에 빈 __init__.py 를 만들지 않음(불변식 2 — #655)", 'out.setdefault(f"{d}/__init__.py", "")', "pass"),
+    ("F4-183 이동을 받는 옛 묶음에 표지를 만들지 않음(새 묶음만)", "if d not in before or d in received)", "if d not in before)"),
+    ("F4-183 이동을 받지 않는 옛 묶음에도 표지를 만듦", "if d not in before or d in received)", "if True)"),
+    ("F4-183 디스크에 있는 표지(UTF-8 아님 · 링크)를 덮음", "if os.path.lexists(root / p):", "if False:"),
+    ("F4-183 끊긴 링크 표지를 따라 씀(lexists → exists)", "if os.path.lexists(root / p):", "if os.path.exists(root / p):"),
+    ("F4-183 apply 가 `표지` 줄을 안 냄", 'print(f"표지 {m}")', "pass"),
     ("앵커에도 서는 묶음을 이 실행의 형성으로 셈(D2)", "(bset | ((g1 - g0p) - held)) - ((bset & g0p) - g1)",
      "(bset | (g1 - held)) - ((bset & g0p) - g1)"),
     ("⓪ «만든다» 이관 빚도 형성으로 셈", "(bset | ((g1 - g0p) - held)) - ((bset & g0p) - g1)",

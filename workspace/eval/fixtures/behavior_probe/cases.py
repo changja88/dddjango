@@ -1,16 +1,18 @@
-"""B0 영구 픽스처 사례 정의 — RD 설계 v15.2 §4-7 · §8 B0 · 계획 T11(644 칸 = R 412 · N 56 · C 176).
+"""B0 영구 픽스처 사례 정의 — RD 설계 v15.2 §4-7 · §8 B0 · 계획 T11(696 칸 = R 412 · N 56 · C 228).
 
 갈래(`Case.group`):
   R  원형 재현 — 원형 B0 사슬(b0_v8 ~ b0_v152 · Claude r11 사례 둘)의 사례 사전을 한 파일로 평평하게 옮겼다. 묶음(`bundle`)과
      순서는 원형 실행 `b0_v152.py v152 <묶음>` 그대로다(13 묶음 297 줄 · 394 칸 + minor 9 사례 · 18 칸).
   N  이름별 독립 사례 — inspect 거부 11 이름 · N1 17 이름(3판이 더한 넷 포함)마다 한 사례 × collect · run(56 칸 · 설계 «자기 시험 묶음»).
   C  빈 범주 — ① 원형 사례가 덮지 않던 정적 규칙 갈래(observer_scan 사유 판형 단위 · 설계 §4-1 문면에 판정이 있는 것) 12 사례 ·
-     24 칸(읽기 실패 = 시험 쪽 .py 자리의 끊긴 심링크 + 제품 쪽 자리 대조 포함) ② E 갈래가 넘긴 지원 확인 · 증거 실행 빈 조건(설계 §4-5 문면 · 계획 T10 E3) 5 사례 · 10 칸 ③ 수리한 결함의
+     24 칸(읽기 실패 = 시험 쪽 .py 자리의 끊긴 심링크 + 제품 쪽 자리 대조 포함) ② E 갈래가 넘긴 지원 확인 · 증거 실행 빈 조건(설계 §4-5 문면 · 계획 T10 E3) 5 사례 · 10 칸 + 완료 조건만 걸리는 xdist 꼴 1 사례 · 2 칸(F4-185 설계 §5) ③ 수리한 결함의
      반례 1 사례 · 2 칸(지운 추적 파일 · 한글 경로가 있는 커밋된 장난감의 트리 지문) ④ 600 초 상한 1 사례 · 2 칸(support ·
      suite — 구현판에서만 · 정오 2) ⑤ 수집·suite 상한 분리 6 사례 · 12 칸(F-B1R-6 수리 설계 §6) ⑥ 실린 범위 · 허용 목록 3판
      45 사례 · 90 칸(F4-107 · 2026-10-24 설계 3판 §C5 — 수집 때 · 실행 때 실림 · 범위 밖 예보 · 허용 목록 · 한계 · G2 두 갈래)
      ⑦ 3.1 고침 18 사례 · 36 칸(구현 검토 B1 파일 정체(실은 뒤 별칭이 사라지거나 inode 가 바뀌어도) · B2 로더 메서드 · I2 다시 쓰인 파일 · S1 TYPE_CHECKING 꼴 · S3 앵커 없음 ·
-     S4 승인 머지 겹침 · S5 find_spec — 대소문자 사례는 그 파일 시스템에서만 · `needs`).
+     S4 승인 머지 겹침 · S5 find_spec — 대소문자 사례는 그 파일 시스템에서만 · `needs`) ⑧ 비동기 본문의 결과 증거 25 사례 · 50 칸
+     (F4-185 · 2026-11-19 설계 §2.4 — pytest-asyncio 항목 · IsolatedAsyncioTestCase 의 미리 시작 · 이어 끝냄 공격과 대조 · 실행기 목록
+     밖 정지 · 동기 본문의 프레임 결속).
 
 종류(`Case.kind`):
   pair     collect · run 두 칸(원형 run_cases) — `env` = 상속 환경.
@@ -29,7 +31,9 @@
   COV_TRACE · COV_MON  저장소 밖 설치 도구 흉내(sitecustomize) — 아래 문자열을 러너가 장난감 밖 임시 폴더에 쓴다.
   EXT_PLUGIN     저장소 · 설치 패키지 밖 폴더의 pytest 플러그인 모듈 extplug(아래 문자열) — 상속 PYTHONPATH 로 붙인다.
 원형 문자열은 글자 그대로다. 바꾼 것: 이름 충돌을 피한 판 접미사(`SAME_V11` 등) · 비교판 스위치(MODE_ENV · CTX — 판 v152 에서
-빈 사전) 제거 · gzip `mtime=0`(장난감 바이트 결정성) · 위 환경 표지. 원형 사슬 대비 글자 대조는 T11 구현 기록에 있다.
+빈 사전) 제거 · gzip `mtime=0`(장난감 바이트 결정성) · 위 환경 표지 · r7-2c(old-13) 장난감 `addopts` 의 `--dist each`(두 일꾼이
+모두 시험을 돌아, 버린 일꾼이 시험을 돌았는지에 따라 사유가 하나 더 붙던 흔들림을 없앰 · 기대 무변 · F4-185 설계 §5). 원형 사슬 대비
+글자 대조는 T11 구현 기록에 있다.
 """
 from __future__ import annotations
 
@@ -120,7 +124,7 @@ CASES_V8: "dict[str, tuple[dict, dict, dict]]" = {
     "r7-2a conftest 의 사용자 Item": ({**INI, "conftest.py": "import pytest\n\n\nclass MyItem(pytest.Item):\n    def runtest(self):\n        pass\n\n\nclass MyFile(pytest.File):\n    def collect(self):\n        yield MyItem.from_parent(self, name='custom')\n\n\ndef pytest_collect_file(file_path, parent):\n    if file_path.name == 'cases.txt':\n        return MyFile.from_parent(parent, path=file_path)\n",
                                    "application/order/test/cases.txt": "x\n"}, {}, {}),
     "r7-2b conftest 가 탐침 상태를 비움": ({**INI, "conftest.py": "import pytest\n\n\n@pytest.hookimpl(tryfirst=True)\ndef pytest_sessionfinish(session, exitstatus):\n    import dddjango_collect_probe as p\n    p._S['fixtures'].clear()\n"}, {}, {}),
-    "r7-2c xdist -n 2 · 워커 출력 하나 빠짐": ({"pytest.ini": "[pytest]\naddopts = -n 2\n"}, {}, {"drop_worker": True}),
+    "r7-2c xdist -n 2 · 워커 출력 하나 빠짐": ({"pytest.ini": "[pytest]\naddopts = -n 2 --dist each\n"}, {}, {"drop_worker": True}),
     "대조 — xdist -n 2 전체 출력": ({"pytest.ini": "[pytest]\naddopts = -n 2\n"}, {}, {}),
     "r7-3 실행 중 제품 파일 변경": ({**INI, "application/order/test/test_mut.py": "from pathlib import Path\n\n\ndef test_mut():\n    p = Path(__file__).resolve().parents[1] / 'product.py'\n    p.write_text('def product():\\n    return 9\\n')\n"}, {}, {}),
     "r7-4 상속 PYTEST_ADDOPTS -k(동결 없음 → 덮음)": ({**INI, "application/order/test/test_sel.py": "def test_good():\n    assert True\n\n\ndef test_bad():\n    assert False\n"}, {"PYTEST_ADDOPTS": "-k test_good"}, {}),
@@ -1095,6 +1099,9 @@ C_CASES: "list[Case]" = [
     Case("C-gap-fp-between", "C", "gap", "명령 사이 지문 — 두 명령(-m pg · -m \"not pg\") · 명령 1 의 시험이 제품 파일을 바꿈", "pair",
          {"pytest.ini": "[pytest]\nmarkers =\n    pg: db\n", "application/order/test/test_mut.py": MUT_PG}, {},
          argvs=[[PY, "-m", "pytest", "-m", "pg"], [PY, "-m", "pytest", "-m", "not pg"]]),
+    Case("C-gap-xdist-complete", "C", "gap", "완료 조건만 — xdist -n 2 · 시험 둘(일꾼마다 하나) · 워커 출력 하나 빠짐", "pair",
+         {"pytest.ini": "[pytest]\naddopts = -n 2\n", "application/order/test/test_order2.py": "def test_order2():\n    assert True\n"}, {},
+         drop_worker=True),
     # 읽기 실패 — 수집되지 않는 시험 쪽 도우미 자리의 끊긴 심링크(.py)는 «확인 못 함» 정지 · 제품 쪽 자리는 보는 파일이 아니라 통과
     Case("C-read-fail-symlink", "C", "empty", "읽기 실패 — 수집되지 않는 시험 쪽 도우미 자리의 끊긴 심링크(.py)", "pair",
          {**INI}, {}, symlinks={"application/order/test/support/locked.py": "missing_target.py"}),
@@ -1433,7 +1440,197 @@ FIX_CASES += [
         needs="case-insensitive-fs"),
 ]
 
-ALL_CASES: "list[Case]" = [*R_CASES, *N_CASES, *C_CASES, *SCOPE_CASES, *FIX_CASES]
+# ── (C) ⑧ 비동기 본문의 결과 증거(F4-185 — 프레임 결속 · 실행기 닫힌 목록) ──
+# 결과 증거 = call 구간 안 · 같은 맥락에서 시작한 결속 코드 프레임만 세고(정상 반환하면 표에서 뺌) 그 밖 프레임의 재개 · 반환은
+# 맥락 밖. 코루틴 본문은 pytest-asyncio 항목 · 실행기 메서드를 재정의하지 않은 IsolatedAsyncioTestCase(Django 시험 클래스 아님)만
+# 받는다. 공격 꼴은 G2 에만 NO_BODY 를 준다(G0 은 정상 수집). 기대 = 장난감 실측(설계 §2.4 · 변이 셋을 잡는 사례 포함).
+AS_INI: "dict[str, str]" = {"pytest.ini": "[pytest]\nasyncio_mode = auto\nasyncio_default_fixture_loop_scope = function\n"}
+AS_STRICT: "dict[str, str]" = {"pytest.ini": "[pytest]\nasyncio_mode = strict\n"}
+AT: str = "application/order/test/test_async.py"
+AS_OK: str = ("import asyncio\n\nimport pytest\n\n\nasync def _double(v):\n    await asyncio.sleep(0)\n    return v * 2\n\n\n"
+              "@pytest.fixture\nasync def seeded():\n    await asyncio.sleep(0)\n    return 5\n\n\n"
+              "async def test_task(seeded):\n    task = asyncio.create_task(_double(seeded))\n    assert await task == 10\n\n\n"
+              "class TestInClass:\n    async def test_method(self):\n        await asyncio.sleep(0)\n        assert True\n")
+AS_BAD: str = ("import asyncio\n\nCOUNT = {\"n\": 0}\n\n\nasync def test_bad():\n    COUNT[\"n\"] += 1\n    n = COUNT[\"n\"]\n"
+               "    await asyncio.sleep(0)\n    assert n == 1\n")
+AS_BAD_THROW: str = ("import asyncio\n\nCOUNT = {\"n\": 0}\n\n\nasync def test_bad():\n    COUNT[\"n\"] += 1\n    n = COUNT[\"n\"]\n"
+                     "    try:\n        await asyncio.sleep(0)\n    except Exception:\n        pass\n    assert n == 1\n")
+AS_PRIME: str = ("import os\n\nimport pytest\n\n\n@pytest.fixture(autouse=True)\ndef prime(request):\n"
+                 "    if os.environ.get(\"NO_BODY\") and request.node.name == \"test_bad\":\n"
+                 "        pre = request.function()\n        pre.send(None)\n        orig = request.node.runtest\n\n"
+                 "        def runtest():\n            try:\n                orig()\n            except AssertionError:\n                pass\n"
+                 "            try:\n                pre.send(None)\n            except StopIteration:\n                pass\n\n"
+                 "        request.node.runtest = runtest\n")
+AS_THROW_PRIME: str = ("import os\n\nimport pytest\n\n\nclass Resume(Exception):\n    pass\n\n\n@pytest.fixture(autouse=True)\n"
+                       "def prime(request):\n    if os.environ.get(\"NO_BODY\") and request.node.name == \"test_bad\":\n"
+                       "        pre = request.function()\n        pre.send(None)\n        orig = request.node.runtest\n\n"
+                       "        def runtest():\n{real}            try:\n                pre.throw(Resume())\n"
+                       "            except StopIteration:\n                pass\n\n        request.node.runtest = runtest\n")
+AS_REAL_SWALLOW: str = "            try:\n                orig()\n            except AssertionError:\n                pass\n"
+AS_SWALLOW_B: str = ("import os\n\nimport pytest\n\n\n@pytest.fixture(autouse=True)\ndef swallow(request):\n"
+                     "    if os.environ.get(\"NO_BODY\") and request.node.name == \"test_b\":\n        orig = request.node.runtest\n\n"
+                     "        def runtest():\n            try:\n                orig()\n            except AssertionError:\n                pass\n\n"
+                     "        request.node.runtest = runtest\n")
+AS_TEST_B: str = ("{head}async def test_b():\n    {st}COUNT[\"n\"] += 1\n    n = {st}COUNT[\"n\"]\n    if n == 1 and \"e\" in {st}GATE:\n"
+                  "        await {st}GATE[\"e\"].wait()\n    else:\n        if \"e\" in {st}GATE:\n            {st}GATE[\"e\"].set()\n"
+                  "        await asyncio.sleep(0)\n        await asyncio.sleep(0)\n    assert n == 1\n")
+AS_MODULE_LOOP: str = ("import asyncio\nimport os\n\nimport pytest\n\npytestmark = pytest.mark.asyncio(loop_scope=\"module\")\n"
+                       "COUNT = {\"n\": 0}\nGATE = {}\nKEEP = []\n\n\nasync def test_a():\n    if os.environ.get(\"NO_BODY\"):\n"
+                       "        GATE[\"e\"] = asyncio.Event()\n        KEEP.append(asyncio.get_running_loop().create_task(test_b()))\n"
+                       "        await asyncio.sleep(0)\n    assert True\n\n\n"
+                       + AS_TEST_B.format(head="", st=""))
+AS_SESSION_S1: str = ("import asyncio\nimport os\n\nimport pytest\n\nfrom application.order.test import shared_state as st\n"
+                      "from application.order.test.test_s2 import test_b as target\n\n"
+                      "pytestmark = pytest.mark.asyncio(loop_scope=\"session\")\n\n\nasync def test_a():\n"
+                      "    if os.environ.get(\"NO_BODY\"):\n        st.GATE[\"e\"] = asyncio.Event()\n"
+                      "        st.KEEP.append(asyncio.get_running_loop().create_task(target()))\n        await asyncio.sleep(0)\n"
+                      "    assert True\n")
+AS_SESSION_S2: str = AS_TEST_B.format(head=("import asyncio\n\nimport pytest\n\nfrom application.order.test import shared_state as st\n\n"
+                                            "pytestmark = pytest.mark.asyncio(loop_scope=\"session\")\n\n\n"), st="st.")
+AS_OTHER_TASK: str = ("import asyncio\n\nimport pytest\n\npytestmark = pytest.mark.asyncio(loop_scope=\"module\")\nKEEP = []\n\n\n"
+                      "async def _background():\n    for _ in range(3):\n        await asyncio.sleep(0)\n\n\n"
+                      "async def test_a():\n    KEEP.append(asyncio.get_running_loop().create_task(_background()))\n"
+                      "    await asyncio.sleep(0)\n\n\nasync def test_b():\n    await asyncio.sleep(0)\n    await asyncio.sleep(0)\n"
+                      "    assert True\n")
+AS_CTL: str = ("import asyncio\n\nimport pytest\n\n\nasync def test_rec(depth=0):\n    if depth < 2:\n        await test_rec(depth + 1)\n"
+               "    await asyncio.sleep(0)\n    assert depth >= 0\n\n\n"
+               "async def test_seq_self(depth=0):\n    if depth == 0:\n        await test_seq_self(1)\n        await test_seq_self(1)\n"
+               "    await asyncio.sleep(0)\n    assert True\n\n\n"
+               "@pytest.mark.parametrize(\"k\", range(3))\nasync def test_param(k):\n    await asyncio.sleep(0)\n    assert k >= 0\n")
+AS_INNER: str = ("import asyncio\n\n\nasync def test_inner_fails(depth=0):\n    if depth == 0:\n        try:\n"
+                 "            await test_inner_fails(1)\n        except AssertionError:\n            pass\n        return\n"
+                 "    await asyncio.sleep(0)\n    assert False\n\n\n"
+                 "def test_sync_inner_fails(depth=0):\n    if depth == 0:\n        try:\n            test_sync_inner_fails(1)\n"
+                 "        except AssertionError:\n            pass\n        return\n    assert False\n")
+AS_CLOSE: str = ("import asyncio\n\n\nasync def test_self_started(depth=0):\n    if depth == 0:\n        c = test_self_started(1)\n"
+                 "        c.send(None)\n        c.close()\n    await asyncio.sleep(0)\n    assert True\n")
+AS_LATE: str = ("import asyncio\nimport threading\nimport time\n\nLATE = []\n\n\nasync def _fails_later():\n    await asyncio.sleep(0.05)\n"
+                "    LATE.append(\"task ran\")\n    raise AssertionError(\"몸 반환 뒤 task 가 실패\")\n\n\n"
+                "async def test_task_fails_after_body():\n    asyncio.create_task(_fails_later())\n    assert True\n\n\n"
+                "def _thread_fails_later():\n    time.sleep(0.05)\n    LATE.append(\"thread ran\")\n"
+                "    raise AssertionError(\"몸 반환 뒤 스레드가 실패\")\n\n\n"
+                "def test_thread_fails_after_body():\n    threading.Thread(target=_thread_fails_later).start()\n    assert True\n")
+AS_RERUN: str = ("import asyncio\nimport inspect\nimport os\n\nimport pytest\n\n\n@pytest.fixture\ndef value():\n    return 2\n\n\n"
+                 "@pytest.fixture(autouse=True)\ndef rerun(request):\n"
+                 "    if os.environ.get(\"NO_BODY\") and request.node.name in (\"test_sync_value\", \"test_async_value\"):\n"
+                 "        fn = request.function\n\n        def runtest():\n            r = fn(value=1)\n            if inspect.iscoroutine(r):\n"
+                 "                asyncio.run(r)\n\n        request.node.runtest = runtest\n")
+AS_VALUE: str = ("import asyncio\n\n\ndef test_sync_value(value):\n    assert value == 1\n\n\n"
+                 "async def test_async_value(value):\n    await asyncio.sleep(0)\n    assert value == 1\n")
+AS_AGEN: str = "import pytest\n\n\n@pytest.mark.asyncio\nasync def test_agen():\n    yield 1\n"
+ISO_DONE: str = ("import asyncio\nimport unittest\n\n\nclass TestOrder(unittest.IsolatedAsyncioTestCase):\n    n = 0\n\n"
+                 "    {tear}(self):\n        if hasattr(self, \"pre\"):\n            try:\n                self.pre.send(None)\n"
+                 "            except StopIteration:\n                pass\n\n"
+                 "    async def test_bad(self):\n        type(self).n += 1\n        n = type(self).n\n        await asyncio.sleep(0)\n"
+                 "        self.assertEqual(n, 1)\n")
+ISO_PRIME: str = ("import os\n\nimport pytest\n\n\n@pytest.fixture(autouse=True)\ndef prime(request):\n"
+                  "    if os.environ.get(\"NO_BODY\") and request.instance is not None and request.node.name == \"test_bad\":\n"
+                  "        inst = request.instance\n        inst.pre = inst.test_bad()\n        inst.pre.send(None)\n"
+                  "        request.node.addFailure = lambda test, exc: None\n")
+ISO_SETUP: str = ("import asyncio\nimport os\nimport unittest\n\n\nclass TestOrder(unittest.IsolatedAsyncioTestCase):\n    n = 0\n\n"
+                  "    def setUp(self):\n        if os.environ.get(\"NO_BODY\"):\n            self.pre = self.test_bad()\n"
+                  "            self.pre.send(None)\n\n"
+                  "    def tearDown(self):\n        if hasattr(self, \"pre\"):\n            try:\n                self.pre.send(None)\n"
+                  "            except StopIteration:\n                pass\n\n"
+                  "    async def test_bad(self):\n        type(self).n += 1\n        n = type(self).n\n        await asyncio.sleep(0)\n"
+                  "        self.assertEqual(n, 1)\n")
+ISO_SWALLOW: str = ("import os\n\nimport pytest\n\n\n@pytest.fixture(autouse=True)\ndef swallow(request):\n"
+                    "    if os.environ.get(\"NO_BODY\") and request.instance is not None and request.node.name == \"test_bad\":\n"
+                    "        request.node.addFailure = lambda test, exc: None\n")
+ISO_THREADED: str = ("import asyncio\nimport threading\nimport unittest\n\n\nclass TestOverride(unittest.IsolatedAsyncioTestCase):\n"
+                     "    def _callTestMethod(self, method):\n        out = []\n"
+                     "        t = threading.Thread(target=lambda: out.append(asyncio.run(method())))\n        t.start()\n        t.join()\n\n"
+                     "    async def test_x(self):\n        await asyncio.sleep(0)\n        self.assertTrue(True)\n")
+ISO_DJANGO: str = ("import unittest\n\nfrom django.test import SimpleTestCase\n\n\n"
+                   "class IsoFirst(unittest.IsolatedAsyncioTestCase, SimpleTestCase):\n    async def test_a(self):\n"
+                   "        self.assertEqual(1, 1)\n\n\nclass DjFirst(SimpleTestCase, unittest.IsolatedAsyncioTestCase):\n"
+                   "    async def test_b(self):\n        self.assertEqual(1, 1)\n")
+ISO_RUN_SAME: str = ("import asyncio\nimport unittest\n\n\nclass RetryRun(unittest.IsolatedAsyncioTestCase):\n"
+                     "    def run(self, result=None):\n        return super().run(result)\n\n"
+                     "    async def test_y(self):\n        await asyncio.sleep(0)\n        self.assertEqual(1, 1)\n")
+ISO_ALL_RUNNERS: str = ("import asyncio\nimport unittest\n\n\nclass TestAllRunners(unittest.IsolatedAsyncioTestCase):\n"
+                        "    def _setupAsyncioRunner(self):\n        super()._setupAsyncioRunner()\n\n"
+                        "    def _callTestMethod(self, method):\n        super()._callTestMethod(method)\n\n"
+                        "    def _callAsync(self, func, /, *args, **kwargs):\n        return super()._callAsync(func, *args, **kwargs)\n\n"
+                        "    def _callMaybeAsync(self, func, /, *args, **kwargs):\n"
+                        "        return super()._callMaybeAsync(func, *args, **kwargs)\n\n"
+                        "    async def test_x(self):\n        await asyncio.sleep(0)\n        self.assertTrue(True)\n")
+UT_ASYNC: str = ("import asyncio\nimport unittest\n\n\nclass TestPlain(unittest.TestCase):\n    async def test_plain_async(self):\n"
+                 "        await asyncio.sleep(0)\n        self.assertTrue(False)\n")
+AS_UNMARKED: str = "import asyncio\n\n\nasync def test_strict_unmarked():\n    await asyncio.sleep(0)\n"
+SYNC_RETAIN: str = ("import unittest\nimport weakref\n\n\nclass Thing:\n    pass\n\n\nclass TestRelease(unittest.TestCase):\n"
+                    "    def tearDown(self):\n        self.assertIsNone(self.ref(), \"시험 몸이 만든 객체가 아직 살아 있다\")\n\n"
+                    "    def test_local_released(self):\n        thing = Thing()\n        self.ref = weakref.ref(thing)\n"
+                    "        self.assertIsNotNone(self.ref())\n")
+GL_HELPERS: str = ("import itertools\n\nSTATE = {\"count\": itertools.count(1)}\n\n\ndef checkpoint():\n"
+                   "    g = __import__(\"sys\").modules.get(\"greenlet\") or STATE.get(\"hide\")\n"
+                   "    if g is not None and g.getcurrent().parent is not None:\n        g.getcurrent().parent.switch()\n")
+GL_TEST: str = ("from application.order.helpers import STATE, checkpoint\n\n\ndef test_bad():\n    n = next(STATE[\"count\"])\n"
+                "    checkpoint()\n    assert n == 1\n")
+GL_HIDE: str = ("import os\nimport sys\n\nimport greenlet\nimport pytest\n\nfrom application.order.helpers import STATE\n\n\n"
+                "@pytest.fixture(autouse=True)\ndef prime(request):\n"
+                "    if not os.environ.get(\"NO_BODY\") or request.node.name != \"test_bad\":\n        yield\n        return\n"
+                "    g = greenlet.greenlet(request.function)\n    g.switch()\n"
+                "    STATE[\"hide\"] = sys.modules.pop(\"greenlet\")\n    orig = request.node.runtest\n\n"
+                "    def swallow():\n        try:\n            orig()\n        except AssertionError:\n            pass\n        g.switch()\n"
+                "    request.node.runtest = swallow\n    yield\n")
+NO_BODY: "dict[str, str]" = {"NO_BODY": "1"}
+
+
+def _ac(cid: str, name: str, kind: str, files: "dict[str, str]", env: "dict[str, str] | None" = None) -> Case:
+    return Case(f"C-async-{cid}", "C", "async", name, kind, files, env or {})
+
+
+ASYNC_CASES: "list[Case]" = [
+    # pytest-asyncio 항목(Coroutine) — 받음 · G2 프레임 결속
+    _ac("AP1", "AP1 pytest-asyncio auto 정상 — task await · async fixture · 클래스 안 async 메서드", "pair", {**AS_INI, AT: AS_OK}),
+    _ac("AP2", "AP2 pytest-asyncio — 같은 시험 함수의 실행을 창 밖에서 미리 시작 · runtest 가 실제 실패를 삼키고 창 안에서 이어 끝냄", "env",
+        {**AS_INI, "conftest.py": AS_PRIME, AT: AS_BAD}, NO_BODY),
+    _ac("AP3", "AP3 같음 · 미리 시작한 실행을 throw 로 이어 정상 반환", "env",
+        {**AS_INI, "conftest.py": AS_THROW_PRIME.format(real=AS_REAL_SWALLOW), AT: AS_BAD_THROW}, NO_BODY),
+    _ac("AP4", "AP4 실제 실행 없이 미리 시작한 실행만 throw 로 이어 정상 반환", "env",
+        {**AS_INI, "conftest.py": AS_THROW_PRIME.format(real=""), AT: AS_BAD_THROW}, NO_BODY),
+    _ac("AP5", "AP5 loop_scope module — 앞 시험이 같은 함수의 다른 실행을 task 로 남김 · 실제 실패 삼킴", "env",
+        {**AS_INI, "conftest.py": AS_SWALLOW_B, "application/order/test/test_shared.py": AS_MODULE_LOOP}, NO_BODY),
+    _ac("AP6", "AP6 loop_scope session — 다른 모듈의 시험이 남긴 task · 실제 실패 삼킴", "env",
+        {**AS_INI, "conftest.py": AS_SWALLOW_B, "application/order/test/shared_state.py": "COUNT = {\"n\": 0}\nGATE = {}\nKEEP = []\n",
+         "application/order/test/test_s1.py": AS_SESSION_S1, "application/order/test/test_s2.py": AS_SESSION_S2}, NO_BODY),
+    _ac("AP7", "AP7 대조 — module 루프에 다른 함수의 task 가 남아 이어짐 · 시험은 정상", "pair",
+        {**AS_INI, "application/order/test/test_shared.py": AS_OTHER_TASK}),
+    _ac("AP8", "AP8 대조 — 재귀 await · 같은 함수를 차례로 두 번 · parametrize 3(모두 정상)", "pair", {**AS_INI, AT: AS_CTL}),
+    _ac("AP9", "AP9 안쪽 재귀의 예외를 바깥이 삼킴(비동기 · 동기 짝)", "pair", {**AS_INI, AT: AS_INNER}),
+    _ac("AP10", "AP10 자기 다른 실행을 시작만 하고 close(받아들인 보수 쪽 red)", "pair", {**AS_INI, AT: AS_CLOSE}),
+    _ac("AP11", "AP11 대조(한계) — 몸 반환 뒤 task · 스레드의 실패(비동기 · 동기 짝)", "pair", {**AS_INI, AT: AS_LATE}),
+    _ac("AP12", "AP12 대조(한계) — runtest 가 같은 시험 함수를 다른 입력으로 창 안에서 다시 부름(동기 · 비동기)", "env",
+        {**AS_INI, "conftest.py": AS_RERUN, "application/order/test/test_value.py": AS_VALUE}, NO_BODY),
+    _ac("AP13", "AP13 AP2 꼴 · xdist -n 2", "env",
+        {"pytest.ini": AS_INI["pytest.ini"] + "addopts = -n 2\n", "conftest.py": AS_PRIME, AT: AS_BAD}, NO_BODY),
+    _ac("AP14", "AP14 pytest-asyncio async generator 시험(항목 종류 밖 · 일시 중단 가능한 본문)", "pair", {**AS_STRICT, AT: AS_AGEN}),
+    # unittest IsolatedAsyncioTestCase — 실행기 메서드를 재정의하지 않으면 받음
+    _ac("AI2", "AI2 IsolatedAsyncioTestCase — 창 밖에서 미리 시작 · addFailure 삼킴 · tearDown 에서 이어 끝냄", "env",
+        {**INI, "conftest.py": ISO_PRIME, AT: ISO_DONE.format(tear="def tearDown")}, NO_BODY),
+    _ac("AI3", "AI3 같음 · asyncTearDown 에서 이어 끝냄", "env",
+        {**INI, "conftest.py": ISO_PRIME, AT: ISO_DONE.format(tear="async def asyncTearDown")}, NO_BODY),
+    _ac("AI4", "AI4 IsolatedAsyncioTestCase — setUp(창 안)에서 미리 시작 · tearDown 에서 이어 끝냄 · 실패 삼킴", "env",
+        {**INI, "conftest.py": ISO_SWALLOW, AT: ISO_SETUP}, NO_BODY),
+    _ac("AI5", "AI5 IsolatedAsyncioTestCase 가 _callTestMethod 를 재정의(다른 스레드의 새 루프)", "pair", {**INI, AT: ISO_THREADED}),
+    _ac("AI6", "AI6 IsolatedAsyncioTestCase 와 Django SimpleTestCase 를 함께 상속(두 차례 — Django 판별이 먼저)", "pair",
+        {**DJ, AT: ISO_DJANGO}),
+    _ac("AI7", "AI7 대조 — IsolatedAsyncioTestCase 가 run 을 같은 스레드로 재정의(실행기 메서드 넷 밖)", "pair", {**INI, AT: ISO_RUN_SAME}),
+    _ac("AI8", "AI8 IsolatedAsyncioTestCase 가 실행기 메서드 넷을 모두 재정의(같은 스레드 · super 로 넘김 — 넷이 모두 사유에)", "pair",
+        {**INI, AT: ISO_ALL_RUNNERS}),
+    # 실행기 목록 밖 — 수집 때 정지
+    _ac("AU2", "AU2 그냥 unittest.TestCase 의 async 시험 메서드(몸이 돌지 않고 통과하던 꼴)", "pair", {**INI, AT: UT_ASYNC}),
+    _ac("AU3", "AU3 strict 모드 · 표지 없는 async 시험 함수", "pair", {**AS_STRICT, AT: AS_UNMARKED}),
+    # 동기 본문의 프레임 결속
+    _ac("SY1", "SY1 대조 — 동기 unittest tearDown 이 시험 몸 지역 값의 weakref 가 풀렸는지 봄(반환 때 참조를 놓음)", "pair",
+        {**INI, "application/order/test/test_retain.py": SYNC_RETAIN}),
+    _ac("SY2", "SY2 동기 — 창 밖 greenlet 으로 미리 시작한 실행 · 창을 열 때 greenlet 을 sys.modules 에서 숨김 · 실제 실패 삼킴 · "
+               "창 안에서 이어 끝냄", "env",
+        {**INI, "conftest.py": GL_HIDE, "application/order/helpers.py": GL_HELPERS, "application/order/test/test_sync.py": GL_TEST}, NO_BODY),
+]
+
+ALL_CASES: "list[Case]" = [*R_CASES, *N_CASES, *C_CASES, *SCOPE_CASES, *FIX_CASES, *ASYNC_CASES]
 
 
 def toy_files(case: Case) -> "dict[str, str | bytes]":

@@ -71,6 +71,11 @@
   `_domain_service_selected` 묶음 안 파일 · 묶음 안 승격 본체(18) · `_real_parts` 값 객체 C2 는 승격 본체로 잇지 않음(18′).
   group-dissolve: 명세가 `term_b` · `term_c` 를 지워 `term/` 이 한 파일로 풀림 → 사본이 `term_a` 를 부모로 · 빈 `term/__init__.py` 지움
   (`RunPlan.drops`) · exit 0 · 예보 0.
+  group-marker(F4-183 묶음 표지 두 갈래): `group-move-spec.md` + `empty void/__init__.py`(이 실행의 묶음 이동이 파일을 넣는 묶음) →
+  형식 red exit 3 · «empty 충돌(묶음 창 몫)» · 요약 «empty 충돌 1» / 표지 없는 옛 `kappa/` 가 G0 ⓐ 이동(`kappa_c`)을 받는데 명세에
+  `empty kappa/__init__.py` → 같은 형식 red(배포판은 green — 받아들인 판정 변화) / 새 파일 셋만으로 서는 `gift/` · `empty` 없음 →
+  사본 `__init__` 체인 보강이 묶음 폴더를 건너뛰어 #655 예보 1 · exit 2 / 같은 명세 + `empty gift/__init__.py` → exit 0 · 예보 0 /
+  새 승격 서비스 `domain_service/lunar_rule/`(본체 + 부품 · `empty` 없음) → 체인 보강이 표지를 만들어 exit 0 · 예보 0.
   묶음 joint(2.36.0 함께 커밋 — 합성 git 저장소 · 리포트 각 1): 유닛 = use-case-effects 행 끝 칸 형식(통과 4 · red 15 · 유스케이스 칸
   밖 행) · 블록 해시 · 지문(러너 독립 셈 `_joint_fp` · 행 · `함께` 차례 무관 · `잠금` 차례 · 행 0 = 빈 글) · `함께` 애그리거트 부재 ·
   리포트 두 소절(새 · 기준선 주석과 같은 칸 · 바꿈 · 전부터 있던 · 옮기거나 지우는 · 승격은 남음). G2 대조 장면 21(설계 §11.1 g01 · g02 ·
@@ -78,6 +83,7 @@
   표지 · g36 비 ASCII 경로)마다 `--joint-verify` exit 와 `요약:` 수 · 두 플래그 함께 = 사용 오류 exit 1 · update 만 하는 명세의
   pre-gate 리포트(skip exit 4 · 지문 1행 = 독립 셈 · 두 소절 · `--check-report` 정합). `--only-joint` 는 이 묶음만(처음 붉은 데서 멈춤).
   `--mutation-test`: «`apply_to_copy` 를 앵커 커밋 뒤로» 변이가 이 묶음을 붉게 하는지(계획 «단계 3 변이 회귀») · 이관 빚 · 빈 묶음 변이 ·
+  묶음 표지 변이 넷(F4-183 — 묶음 창 몫 문면 · 그 표지 목록 넘김 · 체인 보강의 묶음 폴더 건너뜀 · 승격 폴더는 건너뛰지 않음) ·
   함께 커밋 변이 17(`--only-joint` — 행 끝 칸 떼기 · 형식 red 넷 · 지문 1행 · 리포트 둘 · 대조 아홉).
   실행기 exit 규약: 0 green · 2 귀속 red(결손 병기) · 3 형식 red(문법 · 블록 부재·공허 · add 충돌 · update/remove 대상 기준선 부재) ·
   4 skip(실체화 0·결손 0) · 5 결손 ≥1 ∧ (귀속 0 ∨ 실체화 0) · 1 실행 불능 · `--check-report`: 0 정합 · 3 불비 · 1 리포트/절 부재.
@@ -2276,6 +2282,86 @@ def _run_group_dissolve_bundle(scratch: Path, failures: "list[str]") -> None:
         print("group-dissolve: 한 파일로 풀린 `term/` — 사본이 term_a 를 부모로 옮기고 빈 `__init__.py` 를 지움 · 예보 0 — 기대 일치")
 
 
+_GIFT_PLAN: str = "".join(f"add\t{_GROUP_SV}gift/gift_{n}.py\t# 새 값 객체 — 새 파일만으로 서는 묶음\n" for n in ("card", "wrap", "message"))
+_GIFT_SYMBOLS: str = "".join(f"{_GROUP_SV}gift/gift_{n}.py::Gift{n.capitalize()} {{value: str}}\n"
+                             for n in ("card", "wrap", "message"))
+_LUNAR_DS: str = "application/orders/domain_layer/domain_service/lunar_rule/"
+_VO_SRC: str = "from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass {name}:\n    value: str\n"
+
+
+def _group_marker_needle(rel: str) -> str:
+    return (f"형식 red — empty 충돌(묶음 창 몫): {_GROUP_SV}{rel} — 이 실행의 묶음 이동이 이 묶음에 파일을 넣고 표지를 만든다"
+            "(묶음 창 — --debt · 끝 맞춤 · folder_group.py apply) — file-plan 에서 이 행을 뺀다")
+
+
+def _group_marker_spec(title: str, plan: str, symbols: str = "") -> str:
+    return (f"# 미니 설계 명세 — orders BC {title} (group-marker)\n\n## 파일 계획\n\n<!-- machine: file-plan -->\n```paths\n"
+            f"{plan}```\n\n## 공개 심볼\n\n<!-- machine: symbols -->\n```symbols\n{symbols}```\n")
+
+
+def _run_group_marker_bundle(scratch: Path, failures: "list[str]") -> None:
+    """F4-183 — 묶음 표지(`__init__.py`)의 두 갈래. ① 이 실행의 묶음 이동이 파일을 넣는 묶음(`void/` 형성)의 `empty` 행 → 형식 red
+    exit 3 · 문면 «empty 충돌(묶음 창 몫)» · 요약 종류는 «empty 충돌» 그대로. ①′ 표지 없는 옛 묶음 `kappa/` 가 이 실행의 이동(G0 ⓐ
+    `kappa_c`)을 받는데 명세가 그 표지를 `empty` 로 적음 → 같은 형식 red(배포판 2.41.0 은 green — 받아들인 판정 변화 · 표지는 묶음
+    창이 만든다). ② 새 파일만으로 서는 묶음(`gift/`)에 `empty` 행이 없음 → 사본의 `__init__` 체인 보강이 묶음 폴더를 건너뛰어 #655
+    1건 예보 exit 2. ③ ② + `empty` 행 → exit 0 · 예보 0. ④ 새 승격 서비스 `lunar_rule/`(본체 + 부품 · `empty` 없음)는 묶음 폴더가
+    아니라 체인 보강이 표지를 만든다 → exit 0 · 예보 0(승격 폴더까지 건너뛰면 거짓 #638)."""
+    repo: Path = scratch / "repo-group-marker"
+    shutil.copytree(FIXTURES / "mini_repo", repo)
+    shutil.copytree(FIXTURES / "group_overlay", repo, dirs_exist_ok=True)
+    _git(repo, "init", "-q")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "fixture-baseline+group-overlay")
+    legacy: Path = scratch / "repo-group-marker-legacy"
+    shutil.copytree(FIXTURES / "mini_repo", legacy)
+    shutil.copytree(FIXTURES / "group_overlay", legacy, dirs_exist_ok=True)
+    for rel, name in (("kappa/kappa_a.py", "KappaA"), ("kappa/kappa_b.py", "KappaB"), ("kappa_c.py", "KappaC")):
+        (legacy / _GROUP_SV / rel).parent.mkdir(parents=True, exist_ok=True)
+        (legacy / _GROUP_SV / rel).write_text(_VO_SRC.format(name=name), encoding="utf-8")
+    _git(legacy, "init", "-q")
+    _git(legacy, "add", "-A")
+    _git(legacy, "commit", "-q", "-m", "fixture-baseline+group-overlay+unmarked-kappa")
+    kappa_line: str = f"[#656] {_GROUP_SV}kappa_c.py: 묶음 `kappa/` 에 둔다"
+    kappa_scope: str = ("| ID | 위반 | 백스톱 | 미룰 수 있나 |\n|---|---|---|---|\n"
+                        f"| D1 | {kappa_line} | check-domain-model | 예 |\n\nD1 · 결정 = ⓐ · 사유 = 시험 · 출처 = 본인 직접(0000)\n")
+    move_plan: str = (FIXTURES / "group-move-spec.md").read_text(encoding="utf-8").replace(
+        "```paths\n", f"```paths\nempty\t{_GROUP_SV}void/__init__.py\t# 묶음 표지\n", 1)
+    gift: str = _group_marker_spec("새 파일만으로 서는 묶음", _GIFT_PLAN, _GIFT_SYMBOLS)
+    gift_empty: str = _group_marker_spec("새 파일만으로 서는 묶음",
+                                         _GIFT_PLAN + f"empty\t{_GROUP_SV}gift/__init__.py\t# 묶음 표지\n", _GIFT_SYMBOLS)
+    kappa: str = _group_marker_spec("옛 표지 없는 묶음이 이동을 받음", f"empty\t{_GROUP_SV}kappa/__init__.py\t# 묶음 표지\n")
+    promo: str = _group_marker_spec(
+        "새 승격 서비스", f"add\t{_LUNAR_DS}lunar_rule.py\t# 승격 본체\nadd\t{_LUNAR_DS}lunar_rule_part.py\t# 부품\n",
+        f"{_LUNAR_DS}lunar_rule.py::LunarRule {{value: str}}\n{_LUNAR_DS}lunar_rule_part.py::LunarRulePart {{value: str}}\n")
+    # (이름, 저장소, refactor-scope 꼬리, 명세, 묶음 창 몫 문면의 경로) → 기대 (exit, 예보 규칙, 그 문면, «empty 충돌 1» 요약)
+    cases: "tuple[tuple[str, Path, str, str, str], ...]" = (
+        ("move-empty", repo, "", move_plan, "void/__init__.py"),
+        ("legacy-move-empty", legacy, kappa_scope, kappa, "kappa/__init__.py"),
+        ("new-only", repo, "", gift, "gift/__init__.py"),
+        ("new-only-empty", repo, "", gift_empty, "gift/__init__.py"),
+        ("promotion-new", repo, "", promo, "lunar_rule/__init__.py"))
+    want: "dict[str, tuple[int, list[str], bool, bool]]" = {
+        "move-empty": (3, [], True, True), "legacy-move-empty": (3, [], True, True), "new-only": (2, ["655"], False, False),
+        "new-only-empty": (0, [], False, False), "promotion-new": (0, [], False, False)}
+    got: "dict[str, tuple[int, list[str], bool, bool]]" = {}
+    for name, root, scope_tail, text, marker in cases:
+        run: Path = scratch / f"group-marker-{name}"
+        run.mkdir()
+        (run / "refactor-scope.md").write_text(f"실행 · G0 승인 group-marker-{name}\n\n{scope_tail}", encoding="utf-8")
+        spec: Path = run / "design-spec.md"
+        spec.write_text(text, encoding="utf-8")
+        proc: "subprocess.CompletedProcess[str]" = _run_pregate(spec, root, scratch / f"pregate-report-group-marker-{name}.md")
+        got[name] = (proc.returncode, sorted(_FORECAST_RULE_RE.findall(proc.stdout)), _group_marker_needle(marker) in proc.stdout,
+                     "요약: 형식 red 1건(empty 충돌 1)" in proc.stdout)
+        if got[name] != want[name]:
+            _dump(f"group-marker {name}", proc)
+    if got != want:
+        failures.append(f"group-marker(F4-183) 기대 {want} ≠ 실측 {got}")
+    else:
+        print("group-marker: 이동을 받는 묶음(새 · 표지 없는 옛)의 empty 행 = 형식 red «묶음 창 몫» · 새 파일만 묶음 empty 없음 = "
+              "#655 예보 1 · + empty = exit 0 · 새 승격 서비스 = exit 0 — 기대 일치")
+
+
 def _sid(path: str) -> str:
     """선언 #541 행의 안정 ID — 실행기 `_stable_id` 와 같은 결합(sha256(규칙#+경로)[:12])을 러너가 독립으로 계산한다."""
     return hashlib.sha256(f"#541+{path}".encode("utf-8")).hexdigest()[:12]
@@ -2811,6 +2897,15 @@ _MUTATIONS: "tuple[tuple[str, str, str], ...]" = (
      '        + (["--legacy-debt-file", str(legacy_debt_file)] if legacy_debt_file is not None else []),\n', ",\n"),
     ("사본이 R 에서 빈 묶음 `__init__.py` 를 안 지움(합류)",
      "        if (copy / d).is_file():\n            (copy / d).unlink()\n", "        pass\n"),
+    ("F4-183 묶음 창 몫 empty 충돌을 «실존» 으로", 'if target.exists() and "/".join(_plan_parts(entry.path)) in group_made:',
+     "if False:"),
+    ("F4-183 실체화에 이 실행의 묶음 표지를 안 넘김",
+     'group_made=frozenset(f"{d}/__init__.py" for d in folder_group.group_dirs_of(b for _a, b in group_moved)))',
+     "group_made=frozenset())"),
+    ("F4-183 체인 보강이 묶음 폴더 표지도 만듦(새 파일만 묶음의 #655 를 가림)",
+     "and not _group_dir(copy, parent):", ":"),
+    ("F4-183 체인 보강이 승격 폴더도 묶음으로 보고 건너뜀(거짓 #638)",
+     'and folder_group.recognize(copy / rel, hit[0].row) == "group")', "and True)"),
 )
 # 함께 커밋(2.36.0) 변이 — `--only-joint`(유닛 · G2 대조 장면 · pre-gate 리포트)가 붉어야 한다.
 _JOINT_MUTATIONS: "tuple[tuple[str, str, str], ...]" = (
@@ -2844,6 +2939,7 @@ def _only_group(scratch: Path) -> "list[str]":
     _run_group_bundle(scratch, failures)
     _run_group_legacy_bundle(scratch, failures)
     _run_group_dissolve_bundle(scratch, failures)
+    _run_group_marker_bundle(scratch, failures)
     return failures
 
 
@@ -2957,6 +3053,7 @@ def main(argv: "list[str]") -> int:
         _run_group_bundle(scratch, failures)              # 2.28.0 의미 묶음 — 사본 이동은 앵커 커밋 전(설계 9.3)
         _run_group_legacy_bundle(scratch, failures)       # 검토 B2 — 이관 빚이 붙든 묶음 자리(설계 5절 ⓪)
         _run_group_dissolve_bundle(scratch, failures)     # 합류 — 풀린 묶음의 빈 `__init__.py` 도 사본에서 지움
+        _run_group_marker_bundle(scratch, failures)       # F4-183 — 묶음 표지 두 갈래(묶음 창 몫 · 새 파일만 묶음 #655)
         _run_joint_bundle(scratch, failures)              # 2.36.0 함께 커밋 — G2 대조 장면 · pre-gate 리포트
 
         if failures:

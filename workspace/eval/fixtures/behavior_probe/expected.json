@@ -14,13 +14,13 @@
  "counts": {
   "R": 412,
   "N": 56,
-  "C": 176,
-  "total": 644
+  "C": 228,
+  "total": 696
  },
  "sources": {
   "R": "원형 2차 출력 out/b0_v152_<묶음>.txt(10-04 11:41:15 ~ 11:42:47 · 판 v152 · compare_v152 대 v15.1 판정 · 사유 다름 0) — 경로만 정규화",
   "N": "원형 엔진 실측 사유 · 수(판정은 설계 «자기 시험 묶음» 문면 — 전부 정지) · 3판 N1 이름 넷(__globals__ · f_globals · f_builtins · __builtins__) = 구현판 실측",
-  "C": "빈 갈래 · 빈 조건 · 반례 = 원형 엔진 실측 사유 · 수(판정은 설계 문면 — 사례마다 origin) · 상한 = 설계 :640 · 정오 2 · 상한 분리 = F-B1R-6 수리 설계 §3 · §6(T5a r12-06 · T5c r13-05 재사용) · 실린 범위(C-sc-*) = 설계 3판(2026-10-24 · F4-107) §C5 · 사유 · 수 = 구현판 실측 · 3.1 고침(C-sc-* 18 사례 — B1 잔여 넷 포함) = 구현 검토(2026-10-24) 처분 · 구현판 실측"
+  "C": "빈 갈래 · 빈 조건 · 반례 = 원형 엔진 실측 사유 · 수(판정은 설계 문면 — 사례마다 origin) · 상한 = 설계 :640 · 정오 2 · 상한 분리 = F-B1R-6 수리 설계 §3 · §6(T5a r12-06 · T5c r13-05 재사용) · 실린 범위(C-sc-*) = 설계 3판(2026-10-24 · F4-107) §C5 · 사유 · 수 = 구현판 실측 · 3.1 고침(C-sc-* 18 사례 — B1 잔여 넷 포함) = 구현 검토(2026-10-24) 처분 · 구현판 실측 · 비동기 결과 증거(C-async-* 25 사례 — pytest-asyncio 항목 · IsolatedAsyncioTestCase · 실행기 목록 밖 · 동기 프레임 결속) · 완료 조건만(C-gap-xdist-complete) = F4-185 설계(2026-11-19) §2.4 · §5 · 사유 · 수 = 구현판 실측"
  },
  "cases": {
   "r14-01": {
@@ -2170,14 +2170,13 @@
    "group": "R",
    "bundle": "r12",
    "kind": "env",
-   "origin": "out/b0_v152_r12.txt:4",
+   "origin": "out/b0_v152_r12.txt:4 · 2.42.0 기대 바꿈 = 비동기 본문의 프레임 결속 · 실행기 닫힌 목록(F4-185 설계 2026-11-19 §2.4 · 구현판 실측)",
    "cells": {
     "G0": {
      "verdict": "정지",
-     "count": 2,
+     "count": 1,
      "reasons": [
-      "실행 관찰 API(증명 지원 밖): application/order/test/test_thread.py:5 위험 모듈 허용 밖 types.coroutine[읽기]",
-      "허용 밖: 결과 증거 범위 밖 — 일시 중단 가능한 본문(coroutine)(application/order/test/test_thread.py::TestOrder::test_bad)"
+      "실행 관찰 API(증명 지원 밖): application/order/test/test_thread.py:5 위험 모듈 허용 밖 types.coroutine[읽기]"
      ],
      "extras": {
       "selected": 2,
@@ -2194,7 +2193,7 @@
      "count": 2,
      "reasons": [
       "실행 관찰 API(증명 지원 밖): application/order/test/test_thread.py:5 위험 모듈 허용 밖 types.coroutine[읽기]",
-      "허용 밖: 결과 증거 범위 밖 — 일시 중단 가능한 본문(coroutine)(application/order/test/test_thread.py::TestOrder::test_bad)"
+      "허용 밖: passed 인데 결속한 시험 코드의 결과 증거 없음(시작 1 · 정상 반환 0 · 맥락 밖 사건 2)(application/order/test/test_thread.py::TestOrder::test_bad)"
      ],
      "extras": {
       "selected": 2,
@@ -2213,14 +2212,13 @@
    "group": "R",
    "bundle": "r12",
    "kind": "env",
-   "origin": "out/b0_v152_r12.txt:5",
+   "origin": "out/b0_v152_r12.txt:5 · 2.42.0 기대 바꿈 = 비동기 본문의 프레임 결속 · 실행기 닫힌 목록(F4-185 설계 2026-11-19 §2.4 · 구현판 실측)",
    "cells": {
     "G0": {
      "verdict": "정지",
-     "count": 2,
+     "count": 1,
      "reasons": [
-      "실행 관찰 API(증명 지원 밖): application/order/test/test_thread.py:5 위험 모듈 허용 밖 types.coroutine[읽기]",
-      "허용 밖: 결과 증거 범위 밖 — 일시 중단 가능한 본문(coroutine)(application/order/test/test_thread.py::TestOrder::test_bad)"
+      "실행 관찰 API(증명 지원 밖): application/order/test/test_thread.py:5 위험 모듈 허용 밖 types.coroutine[읽기]"
      ],
      "extras": {
       "selected": 2,
@@ -2237,7 +2235,7 @@
      "count": 2,
      "reasons": [
       "실행 관찰 API(증명 지원 밖): application/order/test/test_thread.py:5 위험 모듈 허용 밖 types.coroutine[읽기]",
-      "허용 밖: 결과 증거 범위 밖 — 일시 중단 가능한 본문(coroutine)(application/order/test/test_thread.py::TestOrder::test_bad)"
+      "허용 밖: passed 인데 결속한 시험 코드의 결과 증거 없음(시작 1 · 정상 반환 0 · 맥락 밖 사건 2)(application/order/test/test_thread.py::TestOrder::test_bad)"
      ],
      "extras": {
       "selected": 2,
@@ -5428,14 +5426,12 @@
    "group": "R",
    "bundle": "v11",
    "kind": "pair",
-   "origin": "out/b0_v152_v11.txt:44 · out/b0_v152_v11.txt:45",
+   "origin": "out/b0_v152_v11.txt:44 · out/b0_v152_v11.txt:45 · 2.42.0 기대 바꿈 = 비동기 본문의 프레임 결속 · 실행기 닫힌 목록(F4-185 설계 2026-11-19 §2.4 · 구현판 실측)",
    "cells": {
     "collect": {
-     "verdict": "정지",
-     "count": 1,
-     "reasons": [
-      "허용 밖: 결과 증거 범위 밖 — 일시 중단 가능한 본문(coroutine)(application/order/test/test_async.py::T::test_x)"
-     ],
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
      "extras": {
       "selected": 2,
       "M": 2,
@@ -5449,11 +5445,9 @@
      }
     },
     "run": {
-     "verdict": "red",
-     "count": 1,
-     "reasons": [
-      "허용 밖: 결과 증거 범위 밖 — 일시 중단 가능한 본문(coroutine)(application/order/test/test_async.py::T::test_x)"
-     ],
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
      "extras": {
       "selected": 2,
       "M": 2,
@@ -5473,13 +5467,13 @@
    "group": "R",
    "bundle": "v11",
    "kind": "pair",
-   "origin": "out/b0_v152_v11.txt:46 · out/b0_v152_v11.txt:47",
+   "origin": "out/b0_v152_v11.txt:46 · out/b0_v152_v11.txt:47 · 2.42.0 기대 바꿈 = 비동기 본문의 프레임 결속 · 실행기 닫힌 목록(F4-185 설계 2026-11-19 §2.4 · 구현판 실측)",
    "cells": {
     "collect": {
      "verdict": "정지",
      "count": 1,
      "reasons": [
-      "허용 밖: 결과 증거 범위 밖 — 일시 중단 가능한 본문(coroutine)(application/order/test/test_dj.py::TestOrder::test_it)"
+      "허용 밖: 결과 증거 범위 밖 — 다른 스레드에서 도는 비동기 본문(Django 시험 클래스의 async 메서드 — async_to_sync)(application/order/test/test_dj.py::TestOrder::test_it)"
      ],
      "extras": {
       "selected": 2,
@@ -5497,7 +5491,7 @@
      "verdict": "red",
      "count": 1,
      "reasons": [
-      "허용 밖: 결과 증거 범위 밖 — 일시 중단 가능한 본문(coroutine)(application/order/test/test_dj.py::TestOrder::test_it)"
+      "허용 밖: 결과 증거 범위 밖 — 다른 스레드에서 도는 비동기 본문(Django 시험 클래스의 async 메서드 — async_to_sync)(application/order/test/test_dj.py::TestOrder::test_it)"
      ],
      "extras": {
       "selected": 2,
@@ -10709,6 +10703,50 @@
     }
    }
   },
+  "C-gap-xdist-complete": {
+   "name": "완료 조건만 — xdist -n 2 · 시험 둘(일꾼마다 하나) · 워커 출력 하나 빠짐",
+   "group": "C",
+   "bundle": "gap",
+   "kind": "pair",
+   "origin": "판정 = F4-185 설계(2026-11-19) §5 짝 사례(완료 조건만 — 시험 둘이 일꾼마다 하나 · 버린 일꾼의 시험은 완료 밖) · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "collect": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    },
+    "run": {
+     "verdict": "red",
+     "count": 2,
+     "reasons": [
+      "확인 못 함 — xdist 출력 불완전(준비 ['gw0', 'gw1'] · 출력 ['gw0']) · <PY> -m pytest",
+      "확인 못 함 — 선택 2 · 처분 2(call 보고 2 · skip 0) · 완료 1 · <PY> -m pytest"
+     ],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 2,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
   "C-read-fail-symlink": {
    "name": "읽기 실패 — 수집되지 않는 시험 쪽 도우미 자리의 끊긴 심링크(.py)",
    "group": "C",
@@ -13695,6 +13733,1042 @@
       "obs": [
        1,
        5,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AP1": {
+   "name": "AP1 pytest-asyncio auto 정상 — task await · async fixture · 클래스 안 async 메서드",
+   "group": "C",
+   "bundle": "async",
+   "kind": "pair",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "collect": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 3,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    },
+    "run": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 3,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AP2": {
+   "name": "AP2 pytest-asyncio — 같은 시험 함수의 실행을 창 밖에서 미리 시작 · runtest 가 실제 실패를 삼키고 창 안에서 이어 끝냄",
+   "group": "C",
+   "bundle": "async",
+   "kind": "env",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "G0": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    },
+    "G2": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "허용 밖: passed 인데 결속한 시험 코드의 결과 증거 없음(시작 1 · 정상 반환 0 · 맥락 밖 사건 2)(application/order/test/test_async.py::test_bad)"
+     ],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AP3": {
+   "name": "AP3 같음 · 미리 시작한 실행을 throw 로 이어 정상 반환",
+   "group": "C",
+   "bundle": "async",
+   "kind": "env",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "G0": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    },
+    "G2": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "허용 밖: passed 인데 결속한 시험 코드의 결과 증거 없음(시작 1 · 정상 반환 0 · 맥락 밖 사건 1)(application/order/test/test_async.py::test_bad)"
+     ],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AP4": {
+   "name": "AP4 실제 실행 없이 미리 시작한 실행만 throw 로 이어 정상 반환",
+   "group": "C",
+   "bundle": "async",
+   "kind": "env",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "G0": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    },
+    "G2": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "허용 밖: passed 인데 결속한 시험 코드의 결과 증거 없음(시작 0 · 정상 반환 0 · 맥락 밖 사건 1)(application/order/test/test_async.py::test_bad)"
+     ],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AP5": {
+   "name": "AP5 loop_scope module — 앞 시험이 같은 함수의 다른 실행을 task 로 남김 · 실제 실패 삼킴",
+   "group": "C",
+   "bundle": "async",
+   "kind": "env",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "G0": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 3,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    },
+    "G2": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "허용 밖: passed 인데 결속한 시험 코드의 결과 증거 없음(시작 1 · 정상 반환 0 · 맥락 밖 사건 2)(application/order/test/test_shared.py::test_b)"
+     ],
+     "extras": {
+      "selected": 3,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AP6": {
+   "name": "AP6 loop_scope session — 다른 모듈의 시험이 남긴 task · 실제 실패 삼킴",
+   "group": "C",
+   "bundle": "async",
+   "kind": "env",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "G0": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 3,
+      "obs": [
+       0,
+       6,
+       0,
+       0
+      ]
+     }
+    },
+    "G2": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "허용 밖: passed 인데 결속한 시험 코드의 결과 증거 없음(시작 1 · 정상 반환 0 · 맥락 밖 사건 2)(application/order/test/test_s2.py::test_b)"
+     ],
+     "extras": {
+      "selected": 3,
+      "obs": [
+       0,
+       6,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AP7": {
+   "name": "AP7 대조 — module 루프에 다른 함수의 task 가 남아 이어짐 · 시험은 정상",
+   "group": "C",
+   "bundle": "async",
+   "kind": "pair",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "collect": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 3,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    },
+    "run": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 3,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AP8": {
+   "name": "AP8 대조 — 재귀 await · 같은 함수를 차례로 두 번 · parametrize 3(모두 정상)",
+   "group": "C",
+   "bundle": "async",
+   "kind": "pair",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "collect": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 6,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    },
+    "run": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 6,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AP9": {
+   "name": "AP9 안쪽 재귀의 예외를 바깥이 삼킴(비동기 · 동기 짝)",
+   "group": "C",
+   "bundle": "async",
+   "kind": "pair",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "collect": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 3,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    },
+    "run": {
+     "verdict": "red",
+     "count": 2,
+     "reasons": [
+      "허용 밖: passed 인데 결속한 시험 코드의 결과 증거 없음(시작 2 · 정상 반환 1 · 맥락 밖 사건 0)(application/order/test/test_async.py::test_inner_fails)",
+      "허용 밖: passed 인데 결속한 시험 코드의 결과 증거 없음(시작 2 · 정상 반환 1 · 맥락 밖 사건 0)(application/order/test/test_async.py::test_sync_inner_fails)"
+     ],
+     "extras": {
+      "selected": 3,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AP10": {
+   "name": "AP10 자기 다른 실행을 시작만 하고 close(받아들인 보수 쪽 red)",
+   "group": "C",
+   "bundle": "async",
+   "kind": "pair",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "collect": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    },
+    "run": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "허용 밖: passed 인데 결속한 시험 코드의 결과 증거 없음(시작 2 · 정상 반환 1 · 맥락 밖 사건 0)(application/order/test/test_async.py::test_self_started)"
+     ],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AP11": {
+   "name": "AP11 대조(한계) — 몸 반환 뒤 task · 스레드의 실패(비동기 · 동기 짝)",
+   "group": "C",
+   "bundle": "async",
+   "kind": "pair",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "collect": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 3,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    },
+    "run": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 3,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AP12": {
+   "name": "AP12 대조(한계) — runtest 가 같은 시험 함수를 다른 입력으로 창 안에서 다시 부름(동기 · 비동기)",
+   "group": "C",
+   "bundle": "async",
+   "kind": "env",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "G0": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 3,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    },
+    "G2": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 3,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AP13": {
+   "name": "AP13 AP2 꼴 · xdist -n 2",
+   "group": "C",
+   "bundle": "async",
+   "kind": "env",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "G0": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    },
+    "G2": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "허용 밖: passed 인데 결속한 시험 코드의 결과 증거 없음(시작 1 · 정상 반환 0 · 맥락 밖 사건 2)(application/order/test/test_async.py::test_bad)"
+     ],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AP14": {
+   "name": "AP14 pytest-asyncio async generator 시험(항목 종류 밖 · 일시 중단 가능한 본문)",
+   "group": "C",
+   "bundle": "async",
+   "kind": "pair",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "collect": {
+     "verdict": "정지",
+     "count": 2,
+     "reasons": [
+      "허용 밖: 결과 증거 범위 밖 — 일시 중단 가능한 본문(async generator)(application/order/test/test_async.py::test_agen)",
+      "허용 밖: 허용 밖 항목 종류 pytest_asyncio.plugin.AsyncGenerator(application/order/test/test_async.py::test_agen)"
+     ],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    },
+    "run": {
+     "verdict": "red",
+     "count": 2,
+     "reasons": [
+      "허용 밖: 결과 증거 범위 밖 — 일시 중단 가능한 본문(async generator)(application/order/test/test_async.py::test_agen)",
+      "허용 밖: 허용 밖 항목 종류 pytest_asyncio.plugin.AsyncGenerator(application/order/test/test_async.py::test_agen)"
+     ],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AI2": {
+   "name": "AI2 IsolatedAsyncioTestCase — 창 밖에서 미리 시작 · addFailure 삼킴 · tearDown 에서 이어 끝냄",
+   "group": "C",
+   "bundle": "async",
+   "kind": "env",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "G0": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    },
+    "G2": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "허용 밖: passed 인데 결속한 시험 코드의 결과 증거 없음(시작 1 · 정상 반환 0 · 맥락 밖 사건 2)(application/order/test/test_async.py::TestOrder::test_bad)"
+     ],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AI3": {
+   "name": "AI3 같음 · asyncTearDown 에서 이어 끝냄",
+   "group": "C",
+   "bundle": "async",
+   "kind": "env",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "G0": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    },
+    "G2": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "허용 밖: passed 인데 결속한 시험 코드의 결과 증거 없음(시작 1 · 정상 반환 0 · 맥락 밖 사건 2)(application/order/test/test_async.py::TestOrder::test_bad)"
+     ],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AI4": {
+   "name": "AI4 IsolatedAsyncioTestCase — setUp(창 안)에서 미리 시작 · tearDown 에서 이어 끝냄 · 실패 삼킴",
+   "group": "C",
+   "bundle": "async",
+   "kind": "env",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "G0": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    },
+    "G2": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "허용 밖: passed 인데 결속한 시험 코드의 결과 증거 없음(시작 2 · 정상 반환 1 · 맥락 밖 사건 0)(application/order/test/test_async.py::TestOrder::test_bad)"
+     ],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AI5": {
+   "name": "AI5 IsolatedAsyncioTestCase 가 _callTestMethod 를 재정의(다른 스레드의 새 루프)",
+   "group": "C",
+   "bundle": "async",
+   "kind": "pair",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "collect": {
+     "verdict": "정지",
+     "count": 1,
+     "reasons": [
+      "허용 밖: 결과 증거 범위 밖 — 실행기 메서드를 재정의한 비동기 본문(IsolatedAsyncioTestCase · _callTestMethod)(application/order/test/test_async.py::TestOverride::test_x)"
+     ],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    },
+    "run": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "허용 밖: 결과 증거 범위 밖 — 실행기 메서드를 재정의한 비동기 본문(IsolatedAsyncioTestCase · _callTestMethod)(application/order/test/test_async.py::TestOverride::test_x)"
+     ],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AI6": {
+   "name": "AI6 IsolatedAsyncioTestCase 와 Django SimpleTestCase 를 함께 상속(두 차례 — Django 판별이 먼저)",
+   "group": "C",
+   "bundle": "async",
+   "kind": "pair",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "collect": {
+     "verdict": "정지",
+     "count": 2,
+     "reasons": [
+      "허용 밖: 결과 증거 범위 밖 — 다른 스레드에서 도는 비동기 본문(Django 시험 클래스의 async 메서드 — async_to_sync)(application/order/test/test_async.py::DjFirst::test_b)",
+      "허용 밖: 결과 증거 범위 밖 — 다른 스레드에서 도는 비동기 본문(Django 시험 클래스의 async 메서드 — async_to_sync)(application/order/test/test_async.py::IsoFirst::test_a)"
+     ],
+     "extras": {
+      "selected": 3,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    },
+    "run": {
+     "verdict": "red",
+     "count": 2,
+     "reasons": [
+      "허용 밖: 결과 증거 범위 밖 — 다른 스레드에서 도는 비동기 본문(Django 시험 클래스의 async 메서드 — async_to_sync)(application/order/test/test_async.py::DjFirst::test_b)",
+      "허용 밖: 결과 증거 범위 밖 — 다른 스레드에서 도는 비동기 본문(Django 시험 클래스의 async 메서드 — async_to_sync)(application/order/test/test_async.py::IsoFirst::test_a)"
+     ],
+     "extras": {
+      "selected": 3,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AI7": {
+   "name": "AI7 대조 — IsolatedAsyncioTestCase 가 run 을 같은 스레드로 재정의(실행기 메서드 넷 밖)",
+   "group": "C",
+   "bundle": "async",
+   "kind": "pair",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "collect": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    },
+    "run": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AI8": {
+   "name": "AI8 IsolatedAsyncioTestCase 가 실행기 메서드 넷을 모두 재정의(같은 스레드 · super 로 넘김 — 넷이 모두 사유에)",
+   "group": "C",
+   "bundle": "async",
+   "kind": "pair",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "collect": {
+     "verdict": "정지",
+     "count": 1,
+     "reasons": [
+      "허용 밖: 결과 증거 범위 밖 — 실행기 메서드를 재정의한 비동기 본문(IsolatedAsyncioTestCase · _callAsync · _callMaybeAsync · _callTestMethod · _setupAsyncioRunner)(application/order/test/test_async.py::TestAllRunners::test_x)"
+     ],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    },
+    "run": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "허용 밖: 결과 증거 범위 밖 — 실행기 메서드를 재정의한 비동기 본문(IsolatedAsyncioTestCase · _callAsync · _callMaybeAsync · _callTestMethod · _setupAsyncioRunner)(application/order/test/test_async.py::TestAllRunners::test_x)"
+     ],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AU2": {
+   "name": "AU2 그냥 unittest.TestCase 의 async 시험 메서드(몸이 돌지 않고 통과하던 꼴)",
+   "group": "C",
+   "bundle": "async",
+   "kind": "pair",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "collect": {
+     "verdict": "정지",
+     "count": 1,
+     "reasons": [
+      "허용 밖: 결과 증거 범위 밖 — 실행기를 모르는 비동기 본문(coroutine · 항목 종류 _pytest.unittest.TestCaseFunction)(application/order/test/test_async.py::TestPlain::test_plain_async)"
+     ],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    },
+    "run": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "허용 밖: 결과 증거 범위 밖 — 실행기를 모르는 비동기 본문(coroutine · 항목 종류 _pytest.unittest.TestCaseFunction)(application/order/test/test_async.py::TestPlain::test_plain_async)"
+     ],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-AU3": {
+   "name": "AU3 strict 모드 · 표지 없는 async 시험 함수",
+   "group": "C",
+   "bundle": "async",
+   "kind": "pair",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "collect": {
+     "verdict": "정지",
+     "count": 1,
+     "reasons": [
+      "허용 밖: 결과 증거 범위 밖 — 실행기를 모르는 비동기 본문(coroutine · 항목 종류 _pytest.python.Function)(application/order/test/test_async.py::test_strict_unmarked)"
+     ],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    },
+    "run": {
+     "verdict": "red",
+     "count": 3,
+     "reasons": [
+      "suite red — exit 1 · <PY> -m pytest",
+      "실패 보고 1(모든 출력 합) — exit 1 와 무관하게 정지 · <PY> -m pytest",
+      "허용 밖: 결과 증거 범위 밖 — 실행기를 모르는 비동기 본문(coroutine · 항목 종류 _pytest.python.Function)(application/order/test/test_async.py::test_strict_unmarked)"
+     ],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-SY1": {
+   "name": "SY1 대조 — 동기 unittest tearDown 이 시험 몸 지역 값의 weakref 가 풀렸는지 봄(반환 때 참조를 놓음)",
+   "group": "C",
+   "bundle": "async",
+   "kind": "pair",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "collect": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    },
+    "run": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "M": 2,
+      "outputs": 1,
+      "obs": [
+       0,
+       3,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "C-async-SY2": {
+   "name": "SY2 동기 — 창 밖 greenlet 으로 미리 시작한 실행 · 창을 열 때 greenlet 을 sys.modules 에서 숨김 · 실제 실패 삼킴 · 창 안에서 이어 끝냄",
+   "group": "C",
+   "bundle": "async",
+   "kind": "env",
+   "origin": "판정 = F4-185 설계(2026-11-19) §2.2 · §2.3 · §2.4 · 사유 · 수 = 구현판 실측",
+   "cells": {
+    "G0": {
+     "verdict": "통과",
+     "count": 0,
+     "reasons": [],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       4,
+       0,
+       0
+      ]
+     }
+    },
+    "G2": {
+     "verdict": "red",
+     "count": 1,
+     "reasons": [
+      "허용 밖: passed 인데 결속한 시험 코드의 결과 증거 없음(시작 1 · 정상 반환 0 · 맥락 밖 사건 1)(application/order/test/test_sync.py::test_bad)"
+     ],
+     "extras": {
+      "selected": 2,
+      "obs": [
+       0,
+       4,
        0,
        0
       ]

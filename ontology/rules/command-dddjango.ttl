@@ -4302,8 +4302,8 @@ djr:R-3532 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3533 a djr:Obligation ;
-    skos:prefLabel "리팩토링 모드 Phase 1~2 — 파견 입력에 모드·M ⓐ 목록·적용 범위 규범 원문·운영 전 예외 블록 원문(리팩토링 모드 슬라이스는 ⑴ 만) · Phase 2 = 0T → 0C → 0F → 변경 슬라이스(→ 남은 묶음 이동이 있으면 끝 0C 묶음 창 · 0C 안 묶음 창은 다른 0C 일과 나눔)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3533@2026-10-27> .
+    skos:prefLabel "리팩토링 모드 Phase 1~2 — 파견 입력에 모드·M ⓐ 목록·적용 범위 규범 원문·운영 전 예외 블록 원문(리팩토링 모드 슬라이스는 ⑴ 만) · Phase 2 = 0T → 0C → 0F → 변경 슬라이스(→ 남은 묶음 이동이 있으면 끝 0C 묶음 창 → import 정렬 새 진단이 있으면 정렬 맞춤 0C 창 · 0C 안 묶음 창은 다른 0C 일과 나눔)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3533@2026-11-19> .
 
 <https://numchida.com/ns/djr#R-3533@2026-09-27> a djr:Expression ;
     prov:specializationOf djr:R-3533 ;
@@ -4319,6 +4319,12 @@ djr:R-3533 a djr:Obligation ;
     prov:specializationOf djr:R-3533 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-3533@2026-10-04> ;
     djr:revision 3 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-3533@2026-11-19> a djr:Expression ;
+    prov:specializationOf djr:R-3533 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3533@2026-10-27> ;
+    djr:revision 4 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3534 a djr:Obligation ;
@@ -5241,8 +5247,8 @@ djr:R-3696 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3697 a djr:Obligation ;
-    skos:prefLabel "묶음 자리는 folder_group.py 가 계산(Coordinator·architect 판정 없음 · 이 실행이 부른 묶음 이동은 명세에 적지 않음) — architect 파견 입력에 draft --run 출력 · 명세 개정마다 pre-gate 와 같은 응답에서 draft --spec --run(이관 빚 목록이 있으면 --legacy-debt-file — pre-gate 도) · 새 파일 자리가 다르면 architect 가 file-plan 경로를 그 자리로 · 두 명령의 한 낱말 아님 exit 1 은 사용 오류 — BC 를 낱말마다 고쳐 다시(--run 꼴은 있는지 대조 없음 — 만드는 BC 도 줌)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3697@2026-11-14> .
+    skos:prefLabel "묶음 자리는 folder_group.py 가 계산(Coordinator·architect 판정 없음 · 이 실행이 부른 묶음 이동은 명세에 적지 않음) — architect 파견 입력에 draft --run 출력 · 명세 개정마다 pre-gate 와 같은 응답에서 draft --spec --run(이관 빚 목록이 있으면 --legacy-debt-file — pre-gate 도) · 새 파일 자리가 다르면 architect 가 file-plan 경로를 그 자리로 · 두 명령의 한 낱말 아님 exit 1 은 사용 오류 — BC 를 낱말마다 고쳐 다시(--run 꼴은 있는지 대조 없음 — 만드는 BC 도 줌) · 묶음 표지 두 갈래(이 실행의 묶음 이동이 파일을 넣는 묶음 = 묶음 창이 만듦 · 명세에 안 적음 / 새 파일만으로 서는 묶음 = file-plan empty · 빠지면 pre-gate #655 예보)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3697@2026-11-19> .
 
 <https://numchida.com/ns/djr#R-3697@2026-10-27> a djr:Expression ;
     prov:specializationOf djr:R-3697 ;
@@ -5253,6 +5259,12 @@ djr:R-3697 a djr:Obligation ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-3697@2026-10-27> ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-3697@2026-11-19> a djr:Expression ;
+    prov:specializationOf djr:R-3697 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3697@2026-11-14> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3698 a djr:Obligation ;
     skos:prefLabel "G1/G1′ 배너 직전 최종본 draft 출력을 group-moves.txt 로 · 배너 알림 1행 묶음(알림)(묻지 않음) · draft 다른 BC import 의 BC 는 추가 스캔·G0 재승인"@ko ;
@@ -5271,12 +5283,18 @@ djr:R-3699 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3700 a djr:Obligation ;
-    skos:prefLabel "묶음 이동(G0 ⓐ #656 빚 이동 · 이 실행이 부른 묶음 이동)은 묶음 창(묶음 이동만 하는 0C 창)에서 coder 의 folder_group apply --debt|--run-moves 로만 · open → apply → (커밋 실행이면 close 앞 커밋) → close → 다른 편집 전 verify --window · red 면 철회·열기 앞 확인 뒤 다시"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3700@2026-10-27> .
+    skos:prefLabel "묶음 이동(G0 ⓐ #656 빚 이동 · 이 실행이 부른 묶음 이동)은 묶음 창(묶음 이동만 하는 0C 창)에서 coder 의 folder_group apply --debt|--run-moves 로만(그 뒤 coder 묶음 창 린터 읽기만) · open → apply → (커밋 실행이면 close 앞 커밋) → close → 다른 편집 전 verify --window · red 면 철회·열기 앞 확인 뒤 다시"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3700@2026-11-19> .
 
 <https://numchida.com/ns/djr#R-3700@2026-10-27> a djr:Expression ;
     prov:specializationOf djr:R-3700 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3700@2026-11-19> a djr:Expression ;
+    prov:specializationOf djr:R-3700 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3700@2026-10-27> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3701 a djr:Obligation ;
     skos:prefLabel "묶음 창 열기 앞 — draft --run 의 미커밋 설정 줄 → 커밋하는 실행은 그 파일을 먼저 커밋 · 아니면 STOP(커밋해 달라/종료) · 열기 앞·끝 맞춤 draft --run 의 한 낱말 아님 exit 1 은 사용 오류 — BC 를 낱말마다 고쳐 다시"@ko ;
@@ -5301,12 +5319,18 @@ djr:R-3702 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3703 a djr:Obligation ;
-    skos:prefLabel "끝 맞춤 — 마지막 코드 변경 뒤(5번 감사·전체 suite·6번 게이트 앞) draft --run 남은 이동이 있으면 묶음 창 --run-moves(없으면 창 없음) · 감사 반송·G2 수정 요청·승인 병합·그 밖 코드 변경 뒤 다시 맞춤 · 감사·suite·게이트는 그 뒤"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3703@2026-10-27> .
+    skos:prefLabel "끝 맞춤 — 마지막 코드 변경 뒤(5번 감사·전체 suite·6번 게이트 앞) draft --run 남은 이동이 있으면 묶음 창 --run-moves(없으면 창 없음) · 감사 반송·G2 수정 요청·승인 병합·그 밖 코드 변경 뒤 다시 맞춤 · 감사·suite·게이트는 그 뒤 · 끝 맞춤 앞 수시 검사의 #656(draft --run 남은 이동 대상)과 그 새 경로 폴더의 #655 는 끝 맞춤 몫(반송 · STOP 아님) · 그 밖 #655 는 설계 반송(pre-gate 재예보)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3703@2026-11-19> .
 
 <https://numchida.com/ns/djr#R-3703@2026-10-27> a djr:Expression ;
     prov:specializationOf djr:R-3703 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3703@2026-11-19> a djr:Expression ;
+    prov:specializationOf djr:R-3703 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3703@2026-10-27> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3704 a djr:Obligation ;
     skos:prefLabel "끝에서 처음 드러난 일 — G1 목록 차이는 G2 배너(묻지 않음) · 새 다른 BC import / 기계 이동 불가는 창 열기 전 STOP(닫힌 선택지) · 부모에 두고 = #656 등재 줄 인용·발주자 등재 뒤 끝 맞춤 다시 · 새 경로 결속은 G2 알림"@ko ;
@@ -5418,6 +5442,14 @@ djr:R-3747 a djr:Obligation ;
 
 <https://numchida.com/ns/djr#R-3747@2026-11-10> a djr:Expression ;
     prov:specializationOf djr:R-3747 ;
+    djr:revision 1 .
+
+djr:R-3784 a djr:Obligation ;
+    skos:prefLabel "정렬 맞춤 창 — 묶음 창(--debt · 끝 맞춤) verify --window 뒤 coder 묶음 창 린터 줄에 import 정렬(ruff I · isort) 새 진단이 있으면 다른 편집 전 제 0C 창(open --kind code --mode feature|refactor) → coder 정렬 맞춤 파견(그 파일) → (커밋 실행이면 close 앞 커밋) → close → draft --run 남은 이동 없음 확인(있으면 끝 맞춤 묶음 창 다시) · 묶음 창 아님(verify --window 없음) · 리팩토링 모드 대상 BC 밖(묶음 import 치환) 파일은 빼고 G2 알림 · 정렬 밖 새 진단은 G2 알림(묻지 않음)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3784@2026-11-19> .
+
+<https://numchida.com/ns/djr#R-3784@2026-11-19> a djr:Expression ;
+    prov:specializationOf djr:R-3784 ;
     djr:revision 1 .
 
 <https://numchida.com/ns/djr#d/dddjango/commands/dddjango.md> a djr:Document ;
@@ -5802,7 +5834,7 @@ djr:R-3747 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 12 ;
     djr:statesNorm djr:R-3697, djr:R-3698, djr:R-3699 ;
-    djr:text "**묶음 자리(2026-10-27)**: 묶음 허용 칸(`dddjango:discipline-houserules` `references/final.md` «의미 묶음»)의 자리는 `scripts/folder_group.py` 가 계산한다 — 너와 architect 는 묶음을 판정하지 않고, 이 실행이 부른 묶음 이동은 명세에 적지 않는다(Phase 2 3번 «묶음 창»이 한다). ① 1번 architect 파견 입력에 `scripts/folder_group.py draft . --bc <스코프 bc>… --run <산출물 폴더>` 출력(지금 자리 줄 · 빚 이동 · 예상 이동)을 싣는다. ② 명세가 바뀔 때마다 pre-gate 와 같은 응답에서 `scripts/folder_group.py draft . --bc <스코프 bc>… --spec <산출물 폴더>/design-spec.md --run <산출물 폴더>` 를 돌려 그 출력을 다음 architect 반영 입력에 싣는다 — `새 파일 <명세 경로> -> <자리>` 의 두 경로가 다르면 architect 가 file-plan 경로를 그 자리로 고친다. 이관 빚 목록이 있으면 두 명령과 pre-gate 에 `--legacy-debt-file <목록>` 을 붙인다. 두 명령이 `요약: 실행 불능 — BC 이름이 한 낱말이 아님 …` 으로 exit 1 이면 사용 오류다 — BC 를 낱말마다(`--bc a b`) 고쳐 다시 돈다(`--run` 꼴은 BC 가 있는지 대조하지 않는다 — 이번 실행이 만드는 BC 도 준다 · 2026-11-14). ③ G1/G1′ 배너 직전 최종본의 ② 출력을 `<산출물 폴더>/group-moves.txt` 에 쓰고(끝 맞춤이 대조할 G1 목록 — 너의 기계 기록), 배너에 알림 1행 `묶음(알림): <그 출력의 «알림 묶음:» 뒤 글자> — 목록 group-moves.txt` 를 싣는다(묻지 않는다). 출력의 `다른 BC import` 줄이 가리키는 BC 는 이 실행이 고칠 BC 다 — Phase 0 3번의 추가 스캔 · G0 재승인으로 다룬다(리팩토링 모드는 «리팩토링 모드» 절 «다른 BC 편집 목록»). ④ 출력에 `기계 이동 불가` 줄이 있으면 배너를 내지 않고 `STOP_FOR_USER_APPROVAL` 로 올린다 — 선택지 «이번엔 그 파일 · 묶음을 부모에 두고 이관 빚으로 / 동작 변경(계산된 이름 고침)을 포함한 별도 요청을 먼저(이 요청은 여기서 정지) / 작업 중단»이고, 첫 선택지에는 등재할 줄을 목록 꼴 그대로 인용한다 — 그 이동에 걸린 `줄 [#656] <주어 경로>: <메시지>` 를 `#656 <주어 경로>: <메시지>` 로(이관 빚 목록은 발주자 소유 — Phase 2 «실행·종료 계약»). 발주자가 목록에 적으면 ②부터 다시 돈다.\n\n"@ko .
+    djr:text "**묶음 자리(2026-10-27)**: 묶음 허용 칸(`dddjango:discipline-houserules` `references/final.md` «의미 묶음»)의 자리는 `scripts/folder_group.py` 가 계산한다 — 너와 architect 는 묶음을 판정하지 않고, 이 실행이 부른 묶음 이동은 명세에 적지 않는다(Phase 2 3번 «묶음 창»이 한다). 묶음 표지(빈 `__init__.py`)는 두 갈래다 — 이 실행의 묶음 이동이 파일을 넣는 묶음의 표지는 묶음 창이 만든다(명세에 적지 않는다 — 적으면 pre-gate 가 «empty 충돌(묶음 창 몫)» 으로 막는다) · 새 파일만으로 서는 묶음의 표지는 file-plan `empty` 행으로 적는다(빠지면 pre-gate 가 #655 로 예보한다). ① 1번 architect 파견 입력에 `scripts/folder_group.py draft . --bc <스코프 bc>… --run <산출물 폴더>` 출력(지금 자리 줄 · 빚 이동 · 예상 이동)을 싣는다. ② 명세가 바뀔 때마다 pre-gate 와 같은 응답에서 `scripts/folder_group.py draft . --bc <스코프 bc>… --spec <산출물 폴더>/design-spec.md --run <산출물 폴더>` 를 돌려 그 출력을 다음 architect 반영 입력에 싣는다 — `새 파일 <명세 경로> -> <자리>` 의 두 경로가 다르면 architect 가 file-plan 경로를 그 자리로 고친다. 이관 빚 목록이 있으면 두 명령과 pre-gate 에 `--legacy-debt-file <목록>` 을 붙인다. 두 명령이 `요약: 실행 불능 — BC 이름이 한 낱말이 아님 …` 으로 exit 1 이면 사용 오류다 — BC 를 낱말마다(`--bc a b`) 고쳐 다시 돈다(`--run` 꼴은 BC 가 있는지 대조하지 않는다 — 이번 실행이 만드는 BC 도 준다 · 2026-11-14). ③ G1/G1′ 배너 직전 최종본의 ② 출력을 `<산출물 폴더>/group-moves.txt` 에 쓰고(끝 맞춤이 대조할 G1 목록 — 너의 기계 기록), 배너에 알림 1행 `묶음(알림): <그 출력의 «알림 묶음:» 뒤 글자> — 목록 group-moves.txt` 를 싣는다(묻지 않는다). 출력의 `다른 BC import` 줄이 가리키는 BC 는 이 실행이 고칠 BC 다 — Phase 0 3번의 추가 스캔 · G0 재승인으로 다룬다(리팩토링 모드는 «리팩토링 모드» 절 «다른 BC 편집 목록»). ④ 출력에 `기계 이동 불가` 줄이 있으면 배너를 내지 않고 `STOP_FOR_USER_APPROVAL` 로 올린다 — 선택지 «이번엔 그 파일 · 묶음을 부모에 두고 이관 빚으로 / 동작 변경(계산된 이름 고침)을 포함한 별도 요청을 먼저(이 요청은 여기서 정지) / 작업 중단»이고, 첫 선택지에는 등재할 줄을 목록 꼴 그대로 인용한다 — 그 이동에 걸린 `줄 [#656] <주어 경로>: <메시지>` 를 `#656 <주어 경로>: <메시지>` 로(이관 빚 목록은 발주자 소유 — Phase 2 «실행·종료 계약»). 발주자가 목록에 적으면 ②부터 다시 돈다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006> ;
@@ -6274,8 +6306,8 @@ djr:R-3747 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
-    djr:statesNorm djr:R-3700, djr:R-3701, djr:R-3702, djr:R-3703, djr:R-3704 ;
-    djr:text "   - **묶음 창**(2026-10-27): 묶음 이동(G0 ⓐ #656 빚 이동과 이 실행이 부른 묶음 이동)은 묶음 창 안에서 coder 가 `scripts/folder_group.py apply` 로만 한다. 묶음 창은 묶음 이동만 하는 0C 창이다 — 다른 ⓐ 항목 · 기능 편집과 창을 나눈다. 꼴: `scripts/behavior_guard.py open <산출물 폴더> --kind code --mode feature`(리팩토링 모드는 `--mode refactor`) → coder 를 «묶음 창»으로 파견해 `scripts/folder_group.py apply . --run <산출물 폴더> --debt`(G0 ⓐ 빚 이동) 또는 `--run-moves`(끝 맞춤)만 돌리게 한다(이관 빚 목록이 있으면 `--legacy-debt-file <목록>`) → (커밋하는 실행이면 close 앞에 커밋) → `close` → 다른 편집 전에 `scripts/folder_group.py verify . --run <산출물 폴더> --window <n>`(n = 그 창 번호). 창 판정이 red(exit 2)면 그 창의 편집을 철회하고 아래 «열기 앞» 확인 뒤 다시 연다. **열기 앞**: `scripts/folder_group.py draft . --bc <bc>… --run <산출물 폴더>` 가 `미커밋 설정 <이름>` 줄을 내면 커밋하는 실행은 그 파일을 먼저 커밋하고 연다 — 커밋하지 않는 실행은 `STOP_FOR_USER_APPROVAL` «그 파일을 커밋해 달라 / 종료»다. 묶음 창 앞의 `draft --run`(열기 앞 · 끝 맞춤)이 `요약: 실행 불능 — BC 이름이 한 낱말이 아님 …` 으로 exit 1 이면 사용 오류다 — BC 를 낱말마다(`--bc a b`) 고쳐 다시 돈다(2026-11-14). **슬라이스 0**: G0 ⓐ 로 고른 #656 줄의 이동은 0C 의 제 묶음 창 하나에서 `--debt` 로 한다. **끝 맞춤**: 마지막 코드 변경 뒤 — 마지막 기능 슬라이스와 그 경량 감사 반영 뒤, 5번 규율 감사 · 전체 suite · 6번 게이트 앞 — `draft --run` 에 `남은 이동` 줄이 있으면 묶음 창을 열어 `--run-moves` 로 한다(없으면 창을 열지 않는다). 5번 감사 반송 · G2 수정 요청 · 승인 병합 · 그 밖 코드 변경 뒤에도 같은 꼴로 다시 맞추고, 감사 · suite · 게이트는 그 뒤에 돈다. **끝에서 처음 드러난 일**: `draft --run` 의 `G1 목록 차이` 줄은 G2 배너에 싣는다(묻지 않는다). 그 차이에 G1 에 없던 `다른 BC import` 나 `기계 이동 불가` 가 있으면 창을 열기 전에 `STOP_FOR_USER_APPROVAL` 로 올린다 — `다른 BC import` 는 «옮기고 진행(이 답이 그 BC 편집의 승인이다 — 그 BC 를 Phase 0 3번 끝의 추가 스캔 꼴로 스캔에 더한다 · 리팩토링 모드는 G1′ 로 다른 BC 편집 목록에 더한다) / 이번엔 부모에 두고 그 줄을 이관 빚으로 / 종료», `기계 이동 불가` 는 «이번엔 부모에 두고 이관 빚으로 / 별도 요청 먼저(이 요청은 여기서 정지) / 종료»다. «부모에 두고»를 고르는 STOP 문서에는 Phase 1 «묶음 자리» ④ 와 같이 등재할 `#656 <주어 경로>: <메시지>` 줄을 인용하고, 발주자가 이관 빚 목록에 적은 뒤 끝 맞춤을 다시 돈다. 새 `경로 결속` 줄은 STOP 이 아니라 G2 배너 알림이다.\n"@ko .
+    djr:statesNorm djr:R-3700, djr:R-3701, djr:R-3702, djr:R-3703, djr:R-3704, djr:R-3784 ;
+    djr:text "   - **묶음 창**(2026-10-27): 묶음 이동(G0 ⓐ #656 빚 이동과 이 실행이 부른 묶음 이동)은 묶음 창 안에서 coder 가 `scripts/folder_group.py apply` 로만 한다. 묶음 창은 묶음 이동만 하는 0C 창이다 — 다른 ⓐ 항목 · 기능 편집과 창을 나눈다. 꼴: `scripts/behavior_guard.py open <산출물 폴더> --kind code --mode feature`(리팩토링 모드는 `--mode refactor`) → coder 를 «묶음 창»으로 파견해 `scripts/folder_group.py apply . --run <산출물 폴더> --debt`(G0 ⓐ 빚 이동) 또는 `--run-moves`(끝 맞춤)만 돌리게 한다(이관 빚 목록이 있으면 `--legacy-debt-file <목록>` · 그 뒤 coder 는 «작업 방식» 의 묶음 창 린터를 읽기만으로 돈다) → (커밋하는 실행이면 close 앞에 커밋) → `close` → 다른 편집 전에 `scripts/folder_group.py verify . --run <산출물 폴더> --window <n>`(n = 그 창 번호). 창 판정이 red(exit 2)면 그 창의 편집을 철회하고 아래 «열기 앞» 확인 뒤 다시 연다. **열기 앞**: `scripts/folder_group.py draft . --bc <bc>… --run <산출물 폴더>` 가 `미커밋 설정 <이름>` 줄을 내면 커밋하는 실행은 그 파일을 먼저 커밋하고 연다 — 커밋하지 않는 실행은 `STOP_FOR_USER_APPROVAL` «그 파일을 커밋해 달라 / 종료»다. 묶음 창 앞의 `draft --run`(열기 앞 · 끝 맞춤)이 `요약: 실행 불능 — BC 이름이 한 낱말이 아님 …` 으로 exit 1 이면 사용 오류다 — BC 를 낱말마다(`--bc a b`) 고쳐 다시 돈다(2026-11-14). **슬라이스 0**: G0 ⓐ 로 고른 #656 줄의 이동은 0C 의 제 묶음 창 하나에서 `--debt` 로 한다. **끝 맞춤**: 마지막 코드 변경 뒤 — 마지막 기능 슬라이스와 그 경량 감사 반영 뒤, 5번 규율 감사 · 전체 suite · 6번 게이트 앞 — `draft --run` 에 `남은 이동` 줄이 있으면 묶음 창을 열어 `--run-moves` 로 한다(없으면 창을 열지 않는다). 5번 감사 반송 · G2 수정 요청 · 승인 병합 · 그 밖 코드 변경 뒤에도 같은 꼴로 다시 맞추고, 감사 · suite · 게이트는 그 뒤에 돈다. 끝 맞춤 앞의 수시 검사(registry_gate · 검사기 · coder 완료 보고의 검사기 줄)에 뜨는 #656 가운데 `draft --run` 의 남은 이동 대상과, 그 남은 이동 새 경로 폴더의 표지 #655 는 끝 맞춤 몫이다 — 반송하거나 STOP 하지 않는다. 그 밖 #655(새 파일만으로 서는 묶음의 빠진 표지)는 설계 반송이다(명세를 고치면 pre-gate 를 다시 예보한다). **끝에서 처음 드러난 일**: `draft --run` 의 `G1 목록 차이` 줄은 G2 배너에 싣는다(묻지 않는다). 그 차이에 G1 에 없던 `다른 BC import` 나 `기계 이동 불가` 가 있으면 창을 열기 전에 `STOP_FOR_USER_APPROVAL` 로 올린다 — `다른 BC import` 는 «옮기고 진행(이 답이 그 BC 편집의 승인이다 — 그 BC 를 Phase 0 3번 끝의 추가 스캔 꼴로 스캔에 더한다 · 리팩토링 모드는 G1′ 로 다른 BC 편집 목록에 더한다) / 이번엔 부모에 두고 그 줄을 이관 빚으로 / 종료», `기계 이동 불가` 는 «이번엔 부모에 두고 이관 빚으로 / 별도 요청 먼저(이 요청은 여기서 정지) / 종료»다. «부모에 두고»를 고르는 STOP 문서에는 Phase 1 «묶음 자리» ④ 와 같이 등재할 `#656 <주어 경로>: <메시지>` 줄을 인용하고, 발주자가 이관 빚 목록에 적은 뒤 끝 맞춤을 다시 돈다. 새 `경로 결속` 줄은 STOP 이 아니라 G2 배너 알림이다. **정렬 맞춤 창**(2026-11-19): 묶음 창(`--debt` · 끝 맞춤)의 `verify --window` 뒤 coder 완료 보고의 `묶음 창 린터` 줄에 import 정렬 규칙(ruff `I` · isort) 새 진단이 있으면, 다른 편집 전에 그 파일만 제 0C 창에서 맞춘다 — `scripts/behavior_guard.py open <산출물 폴더> --kind code --mode feature`(리팩토링 모드는 `--mode refactor`) → coder 를 «정렬 맞춤» 으로 파견(입력 = 그 진단 파일 목록) → (커밋하는 실행이면 close 앞에 커밋) → `close` → `draft --run` 에 `남은 이동` 줄이 없는지 확인한다(있으면 끝 맞춤 묶음 창을 다시 연다). 이 창은 묶음 창이 아니다(`folder_group.py verify --window` 를 돌리지 않는다). 리팩토링 모드는 대상 BC 밖 파일(다른 BC 편집 목록 갈래 `묶음 import 치환` 으로 고친 파일)을 목록에서 빼고 G2 배너에 알림 1행 `묶음 import 차례(대상 BC 밖) n — <파일…>` 을 싣는다. import 정렬 밖 새 진단(줄 길이 등)은 정렬 맞춤에 넣지 않고 G2 배너에 알림 1행 `묶음 창 린터(정렬 밖) n — <파일 · 규칙 코드>` 를 싣는다(묻지 않는다).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b62> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
@@ -6505,7 +6537,7 @@ djr:R-3747 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 11 ;
     djr:statesNorm djr:R-3533, djr:R-3534, djr:R-3628, djr:R-3629, djr:R-3630, djr:R-3631, djr:R-3680, djr:R-3681 ;
-    djr:text "**Phase 1~2**(2026-09-27 · 2026-10-04): design-architect(리팩토링 명세 — 아래 «해소 판정» · «바뀌는 것 목록»)·Phase 1 리뷰어·acceptance-tester·coder·discipline-reviewer 파견 입력에 `모드 리팩토링` · `M<n>` ⓐ 목록(규칙 인용 포함) · 적용 범위 규범 원문 · 아래 «운영 전 예외» 블록 원문(대상 · 조건부 대상 · 유지 목록 포함 — 요약 금지)을 싣는다 — 리팩토링 모드의 슬라이스(0T · 0C · 0F · 변경 슬라이스)에는 적용 범위 규범의 ⑴ 만 풀리고 ⑵ 는 그대로다. Phase 2 의 슬라이스 차례는 **0T → 0C → 0F → S1…**(변경 슬라이스 · → 남은 묶음 이동이 있으면 끝 0C 묶음 창)이고 한 번에 창 하나다 — 0C 안 묶음 창(`C<n>` 의 #656 항목 — Phase 2 3번 «묶음 창»의 `--debt`)은 다른 0C 일과 나눈다 — 0T · 0C · 0F 는 동작 불변 구간이며, 0* 과 변경 슬라이스는 커밋을 나눈다. 창의 편집은 그 창 `close` 앞에 커밋한다(커밋하는 실행이면 — 커밋 주체·시점은 Phase 2 3번 그대로 사용자 지시·발주 계약이다) — `close` 뒤에 커밋했으면 그 창 `close` 를 한 번 더 돌린다(요구 키가 같으면 재감사 없음). `verify` 의 지문 대조(마지막 close 끝 = suite 시작 = 명령 사이 = 끝 = 지금)는 마지막 close 뒤에 HEAD 와 작업 트리가 그대로일 때만 선다. 창은 Phase 2 3번 «동작 보존 창» 그대로 열고 닫되 `scripts/behavior_guard.py open <산출물 폴더> --kind test|code|follow|change --mode refactor` 다 — 0T = `test` · 0C = `code` · 0F = `follow`(명세의 `retain` 재조직 행이 있는 파일만) · 변경 슬라이스 = `change`(승인 V 만 — 새 마이그레이션 연산 다중집합 = 승인 V 연산 · 케이스 증감 = V 시험 줄의 `add` · `remove` 케이스 · 대상 BC 밖 경로 ⊆ 다른 BC 편집 목록). `follow` · `change` 창은 현재 명세 승인판의 digest 가 마지막 `G1 변경판 확정` digest 와 같을 때만 열린다(다르면 open 이 실행 불능 — 창을 열지 않는다). `test` · `code` 창은 그 확정 없이도 열리지만 close 는 `G1 변경판 확정` 줄이 있고 현재 명세 승인판의 digest 가 그 줄의 digest 와 같을 때만 판정한다(다르면 close 가 실행 불능). 대상 BC 밖 경로는 0T 에서 루트 pytest 설정 절만이고(그 밖 편집은 시험 파일이어도 red) 0C · 0F 에서 «다른 BC 편집 목록»의 `프로젝트 합성` · `공유 표면` 줄과 (0C 묶음 창에서만) `묶음 import 치환` 줄만이다. 열린 `follow` · `change` 창 중에 G1′ 이 확정되면 `scripts/behavior_guard.py rebind <산출물 폴더>` 로 그 창의 허용 표만 바꾼다 — 창 기준선은 그대로이고, 승인판이 바뀌었는데 rebind 없이 close 하면 실행 불능이다. 열린 `test` · `code` 창은 rebind 하지 않는다 — 그 창의 close 가 그때의 명세 승인판과 마지막 `G1 변경판 확정` 의 일치를 확인한다(위). 변경 슬라이스의 밖 동작 V 는 acceptance-tester 의 시험 편집(`update` · `add` 는 Red · `remove` 는 케이스 삭제) 뒤 coder 이고, 안(내부 약속 · DB 구조) V 는 coder 이며, 같은 파일이면 acceptance-tester 가 먼저다. 창 안 파견 입력에는 창 종류(0T | 0C | 0F | 변경)와 (변경이면) 그 슬라이스의 승인 V 를 싣는다. close 는 시험 쪽에서 바이트가 바뀐(생긴 · 없어진 · 옮겨진) 파일을 전부 감사 키(묶음 감사 · 개별 감사 · 승인 변경 감사) 또는 red 로 처분하고 — 시험 편집에 자동 초록은 없다 — 감사 요청 파일 `behavior/<실행>/w<n>-audit-request.md` 를 쓴다. 제품 쪽 ↔ 시험 쪽 자리 이동도 처분 대상이다 — 제품 쪽에서 시험 쪽으로 옮긴 파일은 새 시험 쪽 파일로, 시험 쪽에서 제품 쪽으로 옮긴 파일은 짝 없는 삭제로 센다(기능 모드의 «이동은 분류 중립»은 쓰지 않는다 · 옮긴 새 자리가 제품 쪽이면 0T 에서는 제품 쪽 변경이다). 0T 에서 확정 기대 변화(D 확정)는 G1 확정 명세의 입장 표 `update` 행(V 에 딸리지 않은 행)의 `경로::케이스` 와 글자 그대로 같은 케이스 안이거나 `remove` 행이 승인한 케이스 통째 삭제일 때만 개별 감사이고(그 키에는 판정 `승인 후와 같음` 도 받는다) 그 밖은 red 다. red(exit 2)면 다음 파견을 하지 않고 Phase 2 3번 그대로 그 창의 작성 역할에 철회시킨 뒤 close 를 다시 돌린다. **케이스 개명**(2026-10-24): 0T · 0F 창은 명세의 승인 «개명» 행(아래 «바뀌는 것 목록»)의 옛 → 새 를 그 창 기준 판에 먼저 적용한 뒤 지금 규칙(케이스 이름 다중집합 · D 짝짓기 · 0T 개별 감사 · 0F 정규형 비교)대로 판정한다 — 이름 밖 편집(지역 이름 · 재료 개명 등)은 그 창 규칙이 처분한다. 한 쌍은 기준 판에 옛 이름이 있고 새 판에 옛 이름이 없는 창에서만 적용하고(옛 이름이 새 판에 남으면 그 창 몫이 아니다), 쌍마다 개별 감사 키(`개명 …` — «개명 — 이름 뜻» · 요구 판정 `기대 의미 그대로` · 감사 요청 글에 «이름 밖 편집 있음 / 없음 · 옛 글자 n자리»)를 낸다 — 기계가 혼자 통과시키지 않는다. 0C 창의 개명 · 행 없는 개명 · 꼴이 어긋난 개명(`개명 행 꼴 밖 — <까닭>`)은 red 이고, 같은 창의 이동과 개명도 red 다(창을 나눈다 — 이동한 창을 닫은 뒤 다음 창에서 개명). 0T 는 입장 표 `update` · `remove` 행의 옛 이름(G1 트리 이름)을 개명 적용 뒤 새 이름으로도 읽는다. **칸 개명**(2026-10-28): 0F 창은 승인 «칸 개명» 행(아래 «바뀌는 것 목록»)의 옛 → 새 를 그 시험 파일의 기준 판 원문에 먼저 적용한 뒤 창 규칙대로 판정한다 — 바꾸는 자리는 그 클래스로 풀리는 호출의 키워드 `옛=` 과 받는 쪽이 그 클래스로 풀리는 속성 `.옛` 뿐이고, 받는 쪽을 못 풀면 그 자리는 바꾸지 않는다. 운영 클래스 칸이 옛 → 새 로 정확히 바뀌지 않았거나, 그 클래스가 ninja `Schema` · pydantic 모델 · Django `Model` 이거나, 그 클래스의 기반이 같은 파일 클래스 · `object` · `NamedTuple` · `Generic` · `ABC` · 내장 예외로 풀리지 않거나(다른 파일 기반 · Enum · TypedDict · metaclass — 밖 계약 · DB 구조인지 모른다), 그 클래스로 풀리는 `옛=` · `.옛` 이 새 판에 남거나, 기준 판에 이미 새 이름이 있거나, 0T · 0C · 변경 창이면 red 다. 쌍마다 개별 감사 키 `개명 칸 <클래스>.<옛> → <새>` 를 낸다(기계가 혼자 통과시키지 않는다) — 케이스 키가 그대로라 G2 의 개명 케이스 선택 대조에는 들지 않고, 어느 창에도 적용되지 않으면 아래 `개명 행인데 개명 없음` 이다. 어느 창의 마지막 close 에도 적용되지 않은 개명 행은 verify red `개명 행인데 개명 없음` 이다. G2 에서 개명된 새 키가 선택되지 않으면 red `개명된 케이스가 G2 에서 선택되지 않았다` 이고(G0 에 없던 파일 — 실행 정의 밖 — 의 개명은 대조 밖), skip · xfail 이면 red 가 아니라 `suite:` 줄 `개명 케이스 skip n`(보고)이다. 다른 파일의 하위 클래스가 물려받는 기반 클래스 메서드의 개명은 창 close 를 지나 G2 의 G0 유지 `항목 단위` red 로 멈춘다(창 close 는 다른 파일의 하위 클래스를 보지 않는다). 기존 마이그레이션 파일의 수정 · 삭제와 `makemigrations` 산출 밖 연산은 어느 창에서든 red 다. 5번 규율 감사는 R2 와 같은 조각 단위로 나눠 부를 수 있고(`plan` 출력 재사용), 마지막 홀리스틱 감사는 조각별 리포트 종합과 조각 경계 교차 항목만 본다(BC 전체 diff 1회 호출이 아니다 — 5번의 «마지막 홀리스틱 1회 존치»는 이 형태로 채운다). 5번 감사 입력에 `M<n>` ⓐ 목록과 창 close 기록(`behavior/` — 대응 원소 `map_items` · 감사 요청 파일)을 더한다 — discipline-reviewer 는 의미 항목 정리를 diff 에서 대조하고(BC 재점검이 아니다), 감사 요청 파일의 요구 키마다 정확히 한 행(`<키> | 판정 = <값 하나> | <근거>` — `<값>` 은 감사 요청 파일의 그 키 줄에 적힌 «요구 판정» 가운데 하나 또는 `다름` 이다: 승인 원소 단위는 `승인 후와 같음` · 그 밖 단위는 `기대 의미 그대로` · 0T `update` 행 키는 둘 다 · 판형 줄을 베끼지 않고 값을 하나만 적는다 · 값이 둘 이상이거나 판형 그대로이거나 요구 판정 밖이면 verify 가 red)으로 판정한 `<산출물 폴더>/audit-tests-w<n>-<회차>.md` 를 낸다(부속 기록 판형 경로 · 판정 `다름` 이면 그 편집을 철회하거나 V 로 G1′). V 로 감사를 우회하지 않는다 — 승인 케이스인데 그 케이스의 «바뀌는 기대»에 확정 변화가 하나도 없거나(close) 승인 원소 단위가 «기대 의미 그대로»로 판정되면(verify) «승인 변경 미검출» red 이고, 너는 그 V 를 지우고 그 편집을 0F(`retain` 재조직 행)로 보내는 G1′(수정 모드 2번)로 처리한다. close 를 다시 돌려 키가 바뀌면 바뀐 키만 다시 감사하고, 요구 키가 줄었으면 새 회차 파일을 쓴다(남은 키만 — 다시 볼 키가 없으면 머리만 있는 회차).\n\n"@ko .
+    djr:text "**Phase 1~2**(2026-09-27 · 2026-10-04): design-architect(리팩토링 명세 — 아래 «해소 판정» · «바뀌는 것 목록»)·Phase 1 리뷰어·acceptance-tester·coder·discipline-reviewer 파견 입력에 `모드 리팩토링` · `M<n>` ⓐ 목록(규칙 인용 포함) · 적용 범위 규범 원문 · 아래 «운영 전 예외» 블록 원문(대상 · 조건부 대상 · 유지 목록 포함 — 요약 금지)을 싣는다 — 리팩토링 모드의 슬라이스(0T · 0C · 0F · 변경 슬라이스)에는 적용 범위 규범의 ⑴ 만 풀리고 ⑵ 는 그대로다. Phase 2 의 슬라이스 차례는 **0T → 0C → 0F → S1…**(변경 슬라이스 · → 남은 묶음 이동이 있으면 끝 0C 묶음 창 → 그 창 린터에 import 정렬 새 진단이 있으면 정렬 맞춤 0C 창 — Phase 2 3번)이고 한 번에 창 하나다 — 0C 안 묶음 창(`C<n>` 의 #656 항목 — Phase 2 3번 «묶음 창»의 `--debt`)은 다른 0C 일과 나눈다 — 0T · 0C · 0F 는 동작 불변 구간이며, 0* 과 변경 슬라이스는 커밋을 나눈다. 창의 편집은 그 창 `close` 앞에 커밋한다(커밋하는 실행이면 — 커밋 주체·시점은 Phase 2 3번 그대로 사용자 지시·발주 계약이다) — `close` 뒤에 커밋했으면 그 창 `close` 를 한 번 더 돌린다(요구 키가 같으면 재감사 없음). `verify` 의 지문 대조(마지막 close 끝 = suite 시작 = 명령 사이 = 끝 = 지금)는 마지막 close 뒤에 HEAD 와 작업 트리가 그대로일 때만 선다. 창은 Phase 2 3번 «동작 보존 창» 그대로 열고 닫되 `scripts/behavior_guard.py open <산출물 폴더> --kind test|code|follow|change --mode refactor` 다 — 0T = `test` · 0C = `code` · 0F = `follow`(명세의 `retain` 재조직 행이 있는 파일만) · 변경 슬라이스 = `change`(승인 V 만 — 새 마이그레이션 연산 다중집합 = 승인 V 연산 · 케이스 증감 = V 시험 줄의 `add` · `remove` 케이스 · 대상 BC 밖 경로 ⊆ 다른 BC 편집 목록). `follow` · `change` 창은 현재 명세 승인판의 digest 가 마지막 `G1 변경판 확정` digest 와 같을 때만 열린다(다르면 open 이 실행 불능 — 창을 열지 않는다). `test` · `code` 창은 그 확정 없이도 열리지만 close 는 `G1 변경판 확정` 줄이 있고 현재 명세 승인판의 digest 가 그 줄의 digest 와 같을 때만 판정한다(다르면 close 가 실행 불능). 대상 BC 밖 경로는 0T 에서 루트 pytest 설정 절만이고(그 밖 편집은 시험 파일이어도 red) 0C · 0F 에서 «다른 BC 편집 목록»의 `프로젝트 합성` · `공유 표면` 줄과 (0C 묶음 창에서만) `묶음 import 치환` 줄만이다. 열린 `follow` · `change` 창 중에 G1′ 이 확정되면 `scripts/behavior_guard.py rebind <산출물 폴더>` 로 그 창의 허용 표만 바꾼다 — 창 기준선은 그대로이고, 승인판이 바뀌었는데 rebind 없이 close 하면 실행 불능이다. 열린 `test` · `code` 창은 rebind 하지 않는다 — 그 창의 close 가 그때의 명세 승인판과 마지막 `G1 변경판 확정` 의 일치를 확인한다(위). 변경 슬라이스의 밖 동작 V 는 acceptance-tester 의 시험 편집(`update` · `add` 는 Red · `remove` 는 케이스 삭제) 뒤 coder 이고, 안(내부 약속 · DB 구조) V 는 coder 이며, 같은 파일이면 acceptance-tester 가 먼저다. 창 안 파견 입력에는 창 종류(0T | 0C | 0F | 변경)와 (변경이면) 그 슬라이스의 승인 V 를 싣는다. close 는 시험 쪽에서 바이트가 바뀐(생긴 · 없어진 · 옮겨진) 파일을 전부 감사 키(묶음 감사 · 개별 감사 · 승인 변경 감사) 또는 red 로 처분하고 — 시험 편집에 자동 초록은 없다 — 감사 요청 파일 `behavior/<실행>/w<n>-audit-request.md` 를 쓴다. 제품 쪽 ↔ 시험 쪽 자리 이동도 처분 대상이다 — 제품 쪽에서 시험 쪽으로 옮긴 파일은 새 시험 쪽 파일로, 시험 쪽에서 제품 쪽으로 옮긴 파일은 짝 없는 삭제로 센다(기능 모드의 «이동은 분류 중립»은 쓰지 않는다 · 옮긴 새 자리가 제품 쪽이면 0T 에서는 제품 쪽 변경이다). 0T 에서 확정 기대 변화(D 확정)는 G1 확정 명세의 입장 표 `update` 행(V 에 딸리지 않은 행)의 `경로::케이스` 와 글자 그대로 같은 케이스 안이거나 `remove` 행이 승인한 케이스 통째 삭제일 때만 개별 감사이고(그 키에는 판정 `승인 후와 같음` 도 받는다) 그 밖은 red 다. red(exit 2)면 다음 파견을 하지 않고 Phase 2 3번 그대로 그 창의 작성 역할에 철회시킨 뒤 close 를 다시 돌린다. **케이스 개명**(2026-10-24): 0T · 0F 창은 명세의 승인 «개명» 행(아래 «바뀌는 것 목록»)의 옛 → 새 를 그 창 기준 판에 먼저 적용한 뒤 지금 규칙(케이스 이름 다중집합 · D 짝짓기 · 0T 개별 감사 · 0F 정규형 비교)대로 판정한다 — 이름 밖 편집(지역 이름 · 재료 개명 등)은 그 창 규칙이 처분한다. 한 쌍은 기준 판에 옛 이름이 있고 새 판에 옛 이름이 없는 창에서만 적용하고(옛 이름이 새 판에 남으면 그 창 몫이 아니다), 쌍마다 개별 감사 키(`개명 …` — «개명 — 이름 뜻» · 요구 판정 `기대 의미 그대로` · 감사 요청 글에 «이름 밖 편집 있음 / 없음 · 옛 글자 n자리»)를 낸다 — 기계가 혼자 통과시키지 않는다. 0C 창의 개명 · 행 없는 개명 · 꼴이 어긋난 개명(`개명 행 꼴 밖 — <까닭>`)은 red 이고, 같은 창의 이동과 개명도 red 다(창을 나눈다 — 이동한 창을 닫은 뒤 다음 창에서 개명). 0T 는 입장 표 `update` · `remove` 행의 옛 이름(G1 트리 이름)을 개명 적용 뒤 새 이름으로도 읽는다. **칸 개명**(2026-10-28): 0F 창은 승인 «칸 개명» 행(아래 «바뀌는 것 목록»)의 옛 → 새 를 그 시험 파일의 기준 판 원문에 먼저 적용한 뒤 창 규칙대로 판정한다 — 바꾸는 자리는 그 클래스로 풀리는 호출의 키워드 `옛=` 과 받는 쪽이 그 클래스로 풀리는 속성 `.옛` 뿐이고, 받는 쪽을 못 풀면 그 자리는 바꾸지 않는다. 운영 클래스 칸이 옛 → 새 로 정확히 바뀌지 않았거나, 그 클래스가 ninja `Schema` · pydantic 모델 · Django `Model` 이거나, 그 클래스의 기반이 같은 파일 클래스 · `object` · `NamedTuple` · `Generic` · `ABC` · 내장 예외로 풀리지 않거나(다른 파일 기반 · Enum · TypedDict · metaclass — 밖 계약 · DB 구조인지 모른다), 그 클래스로 풀리는 `옛=` · `.옛` 이 새 판에 남거나, 기준 판에 이미 새 이름이 있거나, 0T · 0C · 변경 창이면 red 다. 쌍마다 개별 감사 키 `개명 칸 <클래스>.<옛> → <새>` 를 낸다(기계가 혼자 통과시키지 않는다) — 케이스 키가 그대로라 G2 의 개명 케이스 선택 대조에는 들지 않고, 어느 창에도 적용되지 않으면 아래 `개명 행인데 개명 없음` 이다. 어느 창의 마지막 close 에도 적용되지 않은 개명 행은 verify red `개명 행인데 개명 없음` 이다. G2 에서 개명된 새 키가 선택되지 않으면 red `개명된 케이스가 G2 에서 선택되지 않았다` 이고(G0 에 없던 파일 — 실행 정의 밖 — 의 개명은 대조 밖), skip · xfail 이면 red 가 아니라 `suite:` 줄 `개명 케이스 skip n`(보고)이다. 다른 파일의 하위 클래스가 물려받는 기반 클래스 메서드의 개명은 창 close 를 지나 G2 의 G0 유지 `항목 단위` red 로 멈춘다(창 close 는 다른 파일의 하위 클래스를 보지 않는다). 기존 마이그레이션 파일의 수정 · 삭제와 `makemigrations` 산출 밖 연산은 어느 창에서든 red 다. 5번 규율 감사는 R2 와 같은 조각 단위로 나눠 부를 수 있고(`plan` 출력 재사용), 마지막 홀리스틱 감사는 조각별 리포트 종합과 조각 경계 교차 항목만 본다(BC 전체 diff 1회 호출이 아니다 — 5번의 «마지막 홀리스틱 1회 존치»는 이 형태로 채운다). 5번 감사 입력에 `M<n>` ⓐ 목록과 창 close 기록(`behavior/` — 대응 원소 `map_items` · 감사 요청 파일)을 더한다 — discipline-reviewer 는 의미 항목 정리를 diff 에서 대조하고(BC 재점검이 아니다), 감사 요청 파일의 요구 키마다 정확히 한 행(`<키> | 판정 = <값 하나> | <근거>` — `<값>` 은 감사 요청 파일의 그 키 줄에 적힌 «요구 판정» 가운데 하나 또는 `다름` 이다: 승인 원소 단위는 `승인 후와 같음` · 그 밖 단위는 `기대 의미 그대로` · 0T `update` 행 키는 둘 다 · 판형 줄을 베끼지 않고 값을 하나만 적는다 · 값이 둘 이상이거나 판형 그대로이거나 요구 판정 밖이면 verify 가 red)으로 판정한 `<산출물 폴더>/audit-tests-w<n>-<회차>.md` 를 낸다(부속 기록 판형 경로 · 판정 `다름` 이면 그 편집을 철회하거나 V 로 G1′). V 로 감사를 우회하지 않는다 — 승인 케이스인데 그 케이스의 «바뀌는 기대»에 확정 변화가 하나도 없거나(close) 승인 원소 단위가 «기대 의미 그대로»로 판정되면(verify) «승인 변경 미검출» red 이고, 너는 그 V 를 지우고 그 편집을 0F(`retain` 재조직 행)로 보내는 G1′(수정 모드 2번)로 처리한다. close 를 다시 돌려 키가 바뀌면 바뀐 키만 다시 감사하고, 요구 키가 줄었으면 새 회차 파일을 쓴다(남은 키만 — 다시 볼 키가 없으면 머리만 있는 회차).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s012/b12> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s012> ;
