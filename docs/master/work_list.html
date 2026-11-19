@@ -118,19 +118,18 @@
 <div class="wrap">
   <p class="kicker">05 · dddjango · dddjango-web</p>
   <h1>작업 리스트</h1>
-  <p class="lead">현장 보고 가운데 아직 고치지 않은 일 <b>19개</b>다(dddjango 13 · dddjango-web 6). 새 보고는 판을 정해 넣고, web 은 맨 뒤다. 기준 판 dddjango 2.41.0 · dddjango-web 2.9.1(2026-11-19).</p>
+  <p class="lead">현장 보고 가운데 아직 고치지 않은 일 <b>16개</b>다(dddjango 10 · dddjango-web 6). 새 보고는 판을 정해 넣고, web 은 맨 뒤다. 기준 판 dddjango 2.42.0 · dddjango-web 2.9.1(2026-11-20).</p>
 
   <div class="index">
     <div class="tabs" role="tablist" aria-label="플러그인">
       <button type="button" role="tab" id="tab-core" aria-controls="panel-core" aria-selected="true" data-key="dddjango">
-        <span class="t">dddjango</span><span class="s">13개 · 다음 판 · 새 보고 · 보류</span>
+        <span class="t">dddjango</span><span class="s">10개 · 새 보고 · 보류</span>
       </button>
       <button type="button" role="tab" id="tab-web" aria-controls="panel-web" aria-selected="false" tabindex="-1" data-key="web">
         <span class="t">dddjango-web</span><span class="s">6개 · 5판(맨 뒤)</span>
       </button>
     </div>
     <ul class="jump" id="jump-core" aria-label="dddjango 차례">
-      <li><a href="#core-next">다음 판<span class="n">3</span></a></li>
       <li><a href="#core-new">새 보고<span class="n">4</span></a></li>
       <li><a href="#core-hold">보류<span class="n">6</span></a></li>
     </ul>
@@ -140,18 +139,8 @@
   </div>
 
   <div role="tabpanel" id="panel-core" aria-labelledby="tab-core">
-    <section id="core-next">
-      <h2><span class="no">1</span>다음 판 — 리팩토링 때 난 문제<span class="cnt">3개</span></h2>
-      <p class="why">사용자가 고른 범위(2026-11-19). F4-185 는 무게 높음 — 시험 대부분이 비동기인 서버의 BC 는 리팩토링을 시작할 길이 없고, 그 BC 의 문서 누락 빚(#63)도 기능 모드 · 리팩토링 모드 어느 쪽으로도 갚지 못한다. F4-183 · 184 는 같은 옮기기 도구의 작은 빈틈이다. 재현부터 한다.</p>
-      <ul class="items">
-        <li><span class="num">F4-185</span><span class="what">리팩토링 입구의 동작 보존 확인이 비동기(<code>async def</code>) 시험을 지원 밖으로 빼서, 시험 대부분이 비동기인 BC 는 G0 에서 늘 멈춘다</span><span class="st left">그대로</span></li>
-        <li><span class="num">F4-183</span><span class="what">묶음 이동(<code>folder_group.py apply --run-moves</code>)이 이미 있는 묶음 폴더에 빈 <code>__init__.py</code> 를 만들지 않는다</span><span class="st left">그대로</span></li>
-        <li><span class="num">F4-184</span><span class="what">묶음 이동이 import 경로를 바꾼 뒤 import 차례를 다시 정렬하지 않아 정렬 검사(ruff I001)에 걸린다</span><span class="st left">그대로</span></li>
-      </ul>
-    </section>
-
     <section id="core-new">
-      <h2><span class="no">2</span>새 보고 — 판 아직 안 정함<span class="cnt">4개</span></h2>
+      <h2><span class="no">1</span>새 보고 — 판 아직 안 정함<span class="cnt">4개</span></h2>
       <p class="why">모두 막힘 없는 작은 결함이고 레인은 기다리지 않고 간다.</p>
       <ul class="items">
         <li><span class="num">F4-181</span><span class="what">게이트의 ⓓ 신규 후보 셈이 승인된 main 들임으로 들어온 다른 레인 파일을 가르지 않아 감사 입력이 늘어난다</span><span class="st left">그대로</span></li>
@@ -162,7 +151,7 @@
     </section>
 
     <section id="core-hold">
-      <h2><span class="no">3</span>보류 — 설계 때 미리 못 보고 구현 뒤에 드러남 · 계기가 사라짐<span class="cnt">6개</span></h2>
+      <h2><span class="no">2</span>보류 — 설계 때 미리 못 보고 구현 뒤에 드러남 · 계기가 사라짐<span class="cnt">6개</span></h2>
       <p class="why">되돌아감 줄이기(11-08 ~ 11-09)를 접은 판단과 겹쳐 보류했다. 새 사례가 쌓이면 다시 연다. F4-161 은 계기가 2.38.0 에서 사라져 보류했다 — 다시 나면 연다. F4-188(11-19)은 F4-35 와 같은 꼴(포트 자료의 도메인 import 를 설계 때 예보하지 못함)의 새 사례다.</p>
       <ul class="items">
         <li><span class="num">F4-35 · 133 · 188</span><span class="what">포트 자료에 도메인 타입을 쓰면 구현 뒤에 걸린다 · 문서는 값 객체를 쓰라 하고 검사기는 막는다</span><span class="st left">그대로</span></li>
@@ -192,8 +181,8 @@
 
   <div class="foot">
     <p>상태 — <b>그대로</b>: 아직 손대지 않음 · <b>일부</b>: 앞 판에서 일부만 고쳐짐.</p>
-    <p>뺀 것 — 배포로 끝난 48개(dddjango 2.34.0 ~ 2.41.0 · 2.41.0 에서 F4-150 · 186) · 사용자가 고치지 않기로 정한 2개(F4-33 · F4-83 · 135 — 시험 본문 타입은 현행 유지).</p>
-    <p>현장 보고 밖 후보 — #188 입구 짝을 손님 API 없는 BC 로 넓힘(기동 전용 영역 자리 먼저) · 리팩토링 deps 의 빨리 감기 경고 · #473 꼴 ② «옮김 함수» 면제 · 기존 시험 장난감에 대상 저장소 BC 와 같은 이름 둘 — 지은 이름으로 바꿈 · 기준선 도구의 «그 판에 그 경로가 있나» 가 git 뿌리 아래 하위 폴더 대상에서 늘 «없음»(2.39.0 부터) · ⓓ#485 목록 밖 동사 소음 · ⓓ#191 바꾸는 동사 머리 + 명사 접미 · ⓓ#257 덧셈 대입만 하는 메서드 · 끝 <code>if</code> · 이 실행과 main 이 같은 시험 쪽 파일을 고친 자동 머지(pre-gate · arrange 점검 같은 사각).</p>
+    <p>뺀 것 — 배포로 끝난 51개(dddjango 2.34.0 ~ 2.42.0 · 2.42.0 에서 F4-183 · 184 · 185) · 사용자가 고치지 않기로 정한 2개(F4-33 · F4-83 · 135 — 시험 본문 타입은 현행 유지).</p>
+    <p>현장 보고 밖 후보 — #188 입구 짝을 손님 API 없는 BC 로 넓힘(기동 전용 영역 자리 먼저) · 리팩토링 deps 의 빨리 감기 경고 · #473 꼴 ② «옮김 함수» 면제 · 기존 시험 장난감에 대상 저장소 BC 와 같은 이름 둘 — 지은 이름으로 바꿈 · 기준선 도구의 «그 판에 그 경로가 있나» 가 git 뿌리 아래 하위 폴더 대상에서 늘 «없음»(2.39.0 부터) · ⓓ#485 목록 밖 동사 소음 · ⓓ#191 바꾸는 동사 머리 + 명사 접미 · ⓓ#257 덧셈 대입만 하는 메서드 · 끝 <code>if</code> · 이 실행과 main 이 같은 시험 쪽 파일을 고친 자동 머지(pre-gate · arrange 점검 같은 사각) · 같은 프로세스의 시험 코드가 동작 보존 탐침의 셈 자체를 고쳐 쓰는 꼴(2.41.0 부터 · 2.42.0 설계 검토가 찾음).</p>
     <p>대상 코드 몫(플러그인 일 아님) — 여러 BC 값을 보이는 admin 화면(정지 · 판촉)을 <code>cross_context/backoffice/</code> 로 옮기는 기능 · 수정 실행 → 순환이 풀린 BC 리팩토링 → 나머지 BC admin 은 그 BC 리팩토링이 새 admin 빚(#668)으로 갚는다.</p>
     <p>판마다 배포가 끝나면 끝난 항목을 이 목록에서 지운다.</p>
   </div>
