@@ -351,12 +351,18 @@ djr:R-1974 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-1975 a djr:Obligation ;
-    skos:prefLabel "① 배포된 에러 계약·공개 헤더 보존"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1975@2026-08-22> .
+    skos:prefLabel "① 배포된 에러 계약·공개 헤더 보존 · 그 가운데 401 의 WWW-Authenticate challenge 요구는 §8.1 대로 G1 멈춤 · 그 밖 프레임워크 기본 응답과의 차이는 별도 설계"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1975@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-1975@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1975 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1975@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-1975 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1975@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-1976 a djr:Obligation ;
     skos:prefLabel "② 신규 dddjango Ninja 범위의 기본 dddjango-code-json 선택"@ko ;
@@ -589,12 +595,18 @@ djr:R-2000 a djr:Prohibition ;
     djr:revisionKind djr:revision-clarification .
 
 djr:R-2001 a djr:Obligation ;
-    skos:prefLabel "확립 계약의 WWW-Authenticate·Retry-After 헤더 보존과 별도 설계"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2001@2026-08-22> .
+    skos:prefLabel "확립 계약의 401 WWW-Authenticate 요구는 G1 멈춤(붙이는 꼴 없음) · 429 Retry-After 는 보존과 별도 설계(ninja_extra Throttled)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2001@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-2001@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2001 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2001@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-2001 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2001@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2002 a djr:Obligation ;
     skos:prefLabel "controller 직접 공개 BC 오류의 승인 헤더(Retry-After · 사건 값 헤더) controller 소유"@ko ;
@@ -728,29 +740,47 @@ djr:R-2016 a djr:Prohibition ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-clarification .
 
-djr:R-2017 a djr:Obligation ;
-    skos:prefLabel "401 생성 시 적용 가능한 WWW-Authenticate challenge 필수(RFC 9110)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2017@2026-08-22> .
+djr:R-2017 a djr:Exception ;
+    skos:prefLabel "Ninja 401 은 challenge 없음 — 요구 안 함 · 감사 · 리뷰는 challenge 없는 Ninja 401 을 위반으로 올리지 않음"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2017@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-2017@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2017 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-2017@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-2017 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2017@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
+
 djr:R-2018 a djr:Obligation ;
-    skos:prefLabel "확립·공개 요구 계약의 challenge 보존과 G1 별도 설계 복귀"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2018@2026-08-22> .
+    skos:prefLabel "확립·공개 요구 계약이 challenge 를 요구하면(보존 필요) G1 멈춤 — STOP_FOR_USER_APPROVAL · Ninja 401 에 challenge 를 붙이는 꼴 없음"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2018@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-2018@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2018 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-2018@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-2018 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2018@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-2019 a djr:Prohibition ;
     skos:prefLabel "code-profile body 강제용 전역 handler·helper challenge 합성 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2019@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-2019@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-2019@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2019 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2019@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-2019 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2019@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-2020 a djr:Permission ;
     skos:prefLabel "API Key의 서버 간·내부 API 적합"@ko ;
@@ -815,20 +845,32 @@ djr:R-2026 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2027 a djr:Obligation ;
-    skos:prefLabel "401 생성 Bearer 서버의 §8.1 challenge 규칙 준수"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2027@2026-08-22> .
+    skos:prefLabel "Bearer 서버의 401 은 Ninja 가 냄(§8.1 — challenge 없음) · 표 401 행의 WWW-Authenticate 칸은 계약이 challenge 를 요구할 때의 Bearer 표면(그 경우 G1 멈춤)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2027@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-2027@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2027 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-2027@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-2027 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2027@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-2028 a djr:Obligation ;
-    skos:prefLabel "invalid_token의 401 + Bearer error challenge 매핑"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2028@2026-08-22> .
+    skos:prefLabel "invalid_token 의 401 · Bearer error challenge 표면은 계약이 challenge 를 요구할 때(그 경우 §8.1 G1 멈춤)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2028@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-2028@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2028 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2028@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-2028 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2028@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-2029 a djr:Obligation ;
     skos:prefLabel "insufficient_scope의 403 + scope 안내 매핑"@ko ;
@@ -839,32 +881,50 @@ djr:R-2029 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2030 a djr:Obligation ;
-    skos:prefLabel "토큰 만료의 401 인증 실패 귀속"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2030@2026-08-22> .
+    skos:prefLabel "토큰 만료의 401 인증 실패 귀속 — 그 401 은 Ninja 가 냄"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2030@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-2030@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2030 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-2030@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-2030 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2030@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
+
 djr:R-2031 a djr:Obligation ;
-    skos:prefLabel "401 생성 시 challenge의 인증 방법·오류 원인 안내"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2031@2026-08-22> .
+    skos:prefLabel "Ninja 401 은 challenge 없음 — 인증 방법은 API 문서 security 로 안내"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2031@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-2031@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2031 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-2031@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-2031 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2031@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
+
 djr:R-2032 a djr:Obligation ;
-    skos:prefLabel "확립 Bearer challenge 보존과 기본 401 차이의 G1 별도 설계"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2032@2026-08-22> .
+    skos:prefLabel "확립·공개 요구 Bearer 계약의 challenge 요구는 G1 멈춤(STOP_FOR_USER_APPROVAL — §8.1)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2032@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-2032@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2032 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-2032@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-2032 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2032@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-2033 a djr:Prohibition ;
-    skos:prefLabel "프레임워크 기본 401의 전역 handler·helper 헤더 합성 금지 · 문서에 경로 앞 응답으로 적는 것은 합성 아님(적었다고 합성 허용 아님)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2033@2026-11-13> .
+    skos:prefLabel "프레임워크 기본 401의 전역 handler·helper 헤더 합성 금지 · 문서에 그 401 을 경로 앞 응답으로 적는 것은 합성 아님(적었다고 합성 허용 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2033@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-2033@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2033 ;
@@ -874,6 +934,12 @@ djr:R-2033 a djr:Prohibition ;
     prov:specializationOf djr:R-2033 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-2033@2026-08-22> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
+
+<https://numchida.com/ns/djr#R-2033@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-2033 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2033@2026-11-13> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-clarification .
 
 djr:R-2034 a djr:Obligation ;
@@ -1411,12 +1477,18 @@ djr:R-2099 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3467 a djr:Obligation ;
-    skos:prefLabel "한 상태 코드의 성공 본문이 둘 이상의 모양이면 판별 필드(discriminator)를 가진 이름 붙은 schema 하나(oneOf+discriminator)로 계약 — 익명 anyOf 금지 · 오류 union 은 고정 공개 식별자(ErrorCode 값·RFC 9457 type)로 자기 판별되므로 대상 아님"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3467@2026-09-04> .
+    skos:prefLabel "한 상태 코드의 JSON 성공 본문이 둘 이상의 모양이면 판별 필드(discriminator)를 가진 이름 붙은 schema 하나(oneOf+discriminator)로 계약 — 익명 anyOf 금지 · 오류 union 은 고정 공개 식별자(ErrorCode 값·RFC 9457 type)로 자기 판별되므로 대상 아님 · 스트리밍(text/event-stream) 성공 본문은 «스트리밍 응답 설명서 꼴»"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3467@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-3467@2026-09-04> a djr:Expression ;
     prov:specializationOf djr:R-3467 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3467@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-3467 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3467@2026-09-04> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3656 a djr:Obligation ;
     skos:prefLabel "소비자가 쓸 값은 설명 문장 밖 승인 응답 머리에도 · 머리 이름·값 꼴·값 없음의 뜻을 승인 계약에"@ko ;
@@ -1427,11 +1499,25 @@ djr:R-3656 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3748 a djr:Obligation ;
-    skos:prefLabel "API 문서는 그 경로의 의도된 오류를 누가 보내든 모두 적음 — BC 오류는 response= · 경로 앞(framework · 미들웨어 · 앞단) 답은 경로 앞 응답 · 오류 머리는 머리 보충(캐시 지시 머리 셋은 적지 않아도 됨) · 의도된 답의 경계(미식별 500 · 앞단 502/504 · 없는 경로 404 · 다른 메서드 405 는 적지 않음)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3748@2026-11-13> .
+    skos:prefLabel "API 문서는 그 경로의 의도된 오류를 누가 보내든 모두 적음 — BC 오류는 response= · 경로 앞(framework · 미들웨어 · 앞단) 답은 경로 앞 응답(인증 틀 뒤 인증 실패는 Ninja 기본 401 행) · 오류 머리는 머리 보충(캐시 지시 머리 셋은 적지 않아도 됨) · 의도된 답의 경계(미식별 500 · 앞단 502/504 · 없는 경로 404 · 다른 메서드 405 는 적지 않음)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3748@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-3748@2026-11-13> a djr:Expression ;
     prov:specializationOf djr:R-3748 ;
+    djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3748@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-3748 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3748@2026-11-13> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
+
+djr:R-3785 a djr:Obligation ;
+    skos:prefLabel "스트리밍 응답 설명서 꼴 — text/event-stream 성공은 그 status 의 content.\"text/event-stream\" 에 프레임 설명서 · 종류마다 oneOf 갈래(title = 프레임 이름 · properties.data · required) · event 이름은 properties.event 고정값 const · 판별 키 요구 안 함 · 스트림 머리는 그 성공 칸 headers · OpenAPI 3.2 는 itemSchema + data 문자열(contentMediaType · contentSchema)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3785@2026-11-20> .
+
+<https://numchida.com/ns/djr#R-3785@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-3785 ;
     djr:revision 1 .
 
 <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> a djr:Document ;
@@ -1791,14 +1877,21 @@ djr:R-3748 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 8 ;
     djr:statesNorm djr:R-3467 ;
-    djr:text "- 한 상태 코드의 성공 본문이 둘 이상의 모양이면 판별 필드(discriminator)를 가진 **이름 붙은 schema 하나**(`oneOf` + `discriminator`)로 계약한다 — 익명 `anyOf` 는 클라이언트가 분기할 이름과 판별 키를 잃는다. 오류 본문의 union 은 각 오류 schema 가 고정 공개 식별자(code 프로필의 `<Bc>ErrorCode` 값 · RFC 9457 의 `type`)로 자기 판별되므로 이 요구의 대상이 아니다(§5.4 에러 프로필)\n\n"@ko .
+    djr:text "- 한 상태 코드의 JSON(`application/json` · `…+json`) 성공 본문이 둘 이상의 모양이면 판별 필드(discriminator)를 가진 **이름 붙은 schema 하나**(`oneOf` + `discriminator`)로 계약한다 — 익명 `anyOf` 는 클라이언트가 분기할 이름과 판별 키를 잃는다. 오류 본문의 union 은 각 오류 schema 가 고정 공개 식별자(code 프로필의 `<Bc>ErrorCode` 값 · RFC 9457 의 `type`)로 자기 판별되므로 이 요구의 대상이 아니다(§5.4 에러 프로필). 스트리밍(`text/event-stream`) 성공 본문은 아래 «스트리밍 응답 설명서 꼴» 을 따른다\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2/b8> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
     djr:statesNorm djr:R-3748 ;
-    djr:text "- **API 문서는 그 경로에서 날 수 있는 의도된 오류를 누가 보내든 모두 적는다** — 경로 코드가 보내는 BC 오류는 operation 응답 선언(`response=`)으로, 경로 앞에서 framework(인증 · CSRF · 권한 · throttle · 몸통 · 입력 검증) · 미들웨어 · 앞단이 보내는 답은 경로 앞 응답으로, 오류의 머리는 머리 보충으로 적는다(구현 꼴은 `implementation-django-ninja` §6.2 — 캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)는 오류 문서에 적지 않아도 된다: 모든 응답에 붙는 공통 지시라 오류 내용이 아니다). 적는 것은 코드 · 설정 · 앞단 설정에 그 status 가 적힌 의도된 답이다 — 미식별 500 · 앞단 502/504 는 결함이라 약속이 아니고, 없는 경로 404 · 다른 메서드 405 는 그 operation 의 답이 아니라 적지 않는다\n"@ko .
+    djr:text "- **API 문서는 그 경로에서 날 수 있는 의도된 오류를 누가 보내든 모두 적는다** — 경로 코드가 보내는 BC 오류는 operation 응답 선언(`response=`)으로, 경로 앞에서 framework(인증 · CSRF · 권한 · throttle · 몸통 · 입력 검증) · 미들웨어 · 앞단이 보내는 답은 경로 앞 응답으로(인증 틀 뒤 인증 실패 — Ninja 기본 401 행이 적는다), 오류의 머리는 머리 보충으로 적는다(구현 꼴은 `implementation-django-ninja` §6.2 — 캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)는 오류 문서에 적지 않아도 된다: 모든 응답에 붙는 공통 지시라 오류 내용이 아니다). 적는 것은 코드 · 설정 · 앞단 설정에 그 status 가 적힌 의도된 답이다 — 미식별 500 · 앞단 502/504 는 결함이라 약속이 아니고, 없는 경로 404 · 다른 메서드 405 는 그 operation 의 답이 아니라 적지 않는다\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 9 ;
+    djr:statesNorm djr:R-3785 ;
+    djr:text "- **스트리밍 응답 설명서 꼴** — `text/event-stream` 으로 프레임을 잇달아 보내는 성공 응답은 그 status 의 `content.\"text/event-stream\"` 에 프레임 설명서를 적는다. 프레임 종류가 둘 이상이면 종류마다 `oneOf` 한 갈래(`title` = 프레임 이름 · `properties.data` = 그 프레임 data 모양 · `required`)를 두고, `event:` 이름을 쓰면 `properties.event` 는 그 이름의 고정값(`const`)이다. 판별 키(discriminator)는 요구하지 않는다(OpenAPI 3.2 의 SSE 예와 같음 — 갈래는 event 고정값으로 갈린다). 스트림 머리(`Cache-Control` 등)는 그 성공 칸 `headers` 에 적는다. 문서가 OpenAPI 3.2 를 내면 프레임 설명서는 `itemSchema` 에 두고 `data` 는 문자열(`contentMediaType: application/json` · `contentSchema` = 그 프레임 data 모양)로 적는다(구현 꼴은 `implementation-django-ninja` §6.2 «스트림 설명서 보충»)\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3> a djr:Section ;
     djr:headingSnapshot "### 5.3 계약 체크리스트"@ko ;
@@ -1891,7 +1984,7 @@ djr:R-3748 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
     djr:statesNorm djr:R-1975 ;
-    djr:text "1. 이미 배포된 API의 에러 계약이 있으면 그 계약을 보존한다. `WWW-Authenticate`나 `Retry-After`처럼 이미 공개된 헤더도 이 계약의 일부이며, 프레임워크 기본 응답과의 차이는 별도 설계로 다룬다.\n"@ko .
+    djr:text "1. 이미 배포된 API의 에러 계약이 있으면 그 계약을 보존한다. `WWW-Authenticate`나 `Retry-After`처럼 이미 공개된 헤더도 이 계약의 일부다 — 그 가운데 401 의 `WWW-Authenticate` challenge 요구는 §8.1 대로 G1 에서 멈추고(`STOP_FOR_USER_APPROVAL` — 이 표준에는 Ninja 401 에 challenge 를 붙이는 꼴이 없다), 그 밖의 프레임워크 기본 응답과의 차이는 별도 설계로 다룬다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s024-5.4/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s024-5.4> ;
@@ -1985,7 +2078,7 @@ djr:R-3748 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:statesNorm djr:R-2000, djr:R-2001, djr:R-2002 ;
-    djr:text "\n프레임워크 기본 401/403/route 404/422/429/`HttpError`/500을 전역 handler나 helper로 BC body로 바꾸어 헤더를 합성하지 않는다. 확립된 계약이 401의 `WWW-Authenticate` 또는 429의 `Retry-After`를 요구하면 그 헤더는 보존하고 별도 설계한다. presentation controller가 직접 공개하는 BC 오류의 승인된 헤더(retryable 오류의 `Retry-After` · 사건 값 헤더)는 그 controller가 소유한다. API 문서에 이 답과 그 헤더를 경로 앞 응답으로 적는 것은 합성이 아니다 — 적었다고 실제 응답에 헤더 · status 합성이 허용되는 것도 아니다(§5.2).\n\n"@ko .
+    djr:text "\n프레임워크 기본 401/403/route 404/422/429/`HttpError`/500을 전역 handler나 helper로 BC body로 바꾸어 헤더를 합성하지 않는다. 확립된 계약이 401의 `WWW-Authenticate` 를 요구하면 G1 에서 멈춘다(§8.1 — 이 표준에는 붙이는 꼴이 없다). 429의 `Retry-After` 는 보존하고 별도 설계한다(ninja_extra `Throttled` 가 붙인다). presentation controller가 직접 공개하는 BC 오류의 승인된 헤더(retryable 오류의 `Retry-After` · 사건 값 헤더)는 그 controller가 소유한다. API 문서에 이 답과 그 헤더를 경로 앞 응답으로 적는 것은 합성이 아니다 — 적었다고 실제 응답에 헤더 · status 합성이 허용되는 것도 아니다(§5.2).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s027-6> a djr:Section ;
     djr:headingSnapshot "## 6. RFC 9457 에러 응답 형식"@ko ;
@@ -2159,6 +2252,13 @@ djr:R-3748 a djr:Obligation ;
     djr:order 1 ;
     djr:text "\n| 구분 | 인증 (Authentication) | 인가 (Authorization) |\n|------|---------------------|---------------------|\n" .
 
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1/b5> ;
+    djr:text "- 로그인 필요(인증 정보 없음 · 무효 · 인증 틀 뒤에 알게 된 인증 실패)는 401 이다 — 403 은 인증 실패를 뜻하지 않는다(인증된 주체의 권한 부족 · CSRF · 출처 같은 요청 거절). 확립된 계약이 로그인 필요를 403 으로 답해 왔어도 §5.4 ① 의 보존 대상이 아니다 — 401 로 바꾸는 것은 리팩토링이 바뀌는 것 목록으로 올린다(`implementation-django-ninja` §4.1). 기능 요청은 이미 있는 로그인 필요 403 을 바꾸지 않는다(리뷰어 nit `G1 전 닫기: 아니오` · 새로 짓는 operation 은 401).\n"@ko .
+
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1> ;
     djr:kind djr:kind-table-row ;
@@ -2182,7 +2282,7 @@ djr:R-3748 a djr:Obligation ;
     djr:kind djr:kind-table-row ;
     djr:order 5 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b8> ;
-    djr:text "| 실패 시 | 서버가 401을 생성하면 적용 가능한 `WWW-Authenticate` challenge를 보냄 | 권한 부족 메시지 |\n\n" .
+    djr:text "| 실패 시 | Ninja 401(challenge 없음 — 아래 «RFC 9110 과 Ninja 401») · 확립 계약의 challenge 는 아래 «구현/프로필 경계» | 권한 부족 메시지 |\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b6> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1> ;
@@ -2199,17 +2299,17 @@ djr:R-3748 a djr:Obligation ;
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b8> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1> ;
     djr:kind djr:kind-norm ;
-    djr:order 8 ;
+    djr:order 9 ;
     djr:statesNorm djr:R-2017 ;
-    djr:text "- **RFC 9110 규칙**: 서버가 401 응답을 생성하면 적용 가능한 `WWW-Authenticate` challenge를 반드시 보낸다. 이것은 에러 body 프로필과 별개의 HTTP 의미론이다.\n"@ko .
+    djr:text "- **RFC 9110 과 Ninja 401**: RFC 9110 은 401 에 `WWW-Authenticate` challenge 를 요구하지만 Django Ninja 가 내는 401(인증 틀이 막은 요청 · 컨트롤러가 던진 `AuthenticationError`)은 challenge 를 싣지 못한다. 이 표준은 그 401 을 그대로 쓴다 — challenge 를 요구하지 않는다. 감사 · 리뷰는 challenge 없는 Ninja 401 을 위반으로 올리지 않는다(확립된 계약이 challenge 를 요구하는 경우는 아래 «구현/프로필 경계» 줄).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b9> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1> ;
     djr:kind djr:kind-norm ;
-    djr:order 9 ;
+    djr:order 10 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s026/b1> ;
     djr:statesNorm djr:R-2018, djr:R-2019 ;
-    djr:text "- **구현/프로필 경계**: 테스트한 Django Ninja 기본 401은 이 challenge를 제공하지 않을 수 있다. 이미 배포되었거나 공개적으로 요구된 계약은 challenge를 보존하고, 기본 동작과 맞지 않으면 G1에서 별도 설계로 되돌린다. code-profile body를 강제하려고 전역 handler나 helper로 challenge를 합성하지 않는다.\n\n"@ko .
+    djr:text "- **구현/프로필 경계**: Django Ninja 401 은 이 challenge 를 제공하지 않는다(위 줄). 이미 배포되었거나 공개적으로 요구된 계약이 challenge 를 요구하면 G1 에서 멈춘다(`STOP_FOR_USER_APPROVAL` — 이 표준에는 Ninja 401 에 challenge 를 붙이는 꼴이 없다). code-profile body를 강제하려고 전역 handler나 helper로 challenge를 합성하지 않는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s037-8.2> a djr:Section ;
     djr:headingSnapshot "### 8.2 인증 메커니즘 선택 기준"@ko ;
@@ -2289,13 +2389,13 @@ djr:R-3748 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:statesNorm djr:R-2026, djr:R-2027 ;
-    djr:text "\nBearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 명시한다. 401을 생성하는 Bearer 서버는 §8.1의 RFC 9110 challenge 규칙을 지키며, 다음은 그 challenge가 포함하는 Bearer 계약의 표면이다.\n\n"@ko .
+    djr:text "\nBearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 명시한다. Bearer 서버의 401 은 Ninja 가 낸다(§8.1 — challenge 없음). 아래 표 401 행의 `WWW-Authenticate` 칸은 확립된 계약이 challenge 를 요구할 때의 Bearer 표면이다(그 경우 §8.1 대로 G1 에서 멈춤).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4> ;
     djr:kind djr:kind-table-row ;
     djr:order 2 ;
-    djr:text "| 상황 | 상태 코드 | WWW-Authenticate | 의미 |\n|------|----------|------------------|------|\n" .
+    djr:text "| 상황 | 상태 코드 | WWW-Authenticate(확립 계약 때) | 의미 |\n|------|----------|------------------|------|\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4> ;
@@ -2317,7 +2417,7 @@ djr:R-3748 a djr:Obligation ;
     djr:order 5 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b8>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b9> ;
     djr:statesNorm djr:R-2030, djr:R-2031, djr:R-2032, djr:R-2033 ;
-    djr:text "- 토큰 만료는 401이며 인증(§8.1) 실패다. 서버가 이 401을 생성하면 `WWW-Authenticate` challenge로 인증 방법과 오류 원인을 안내한다. 이미 배포되었거나 공개적으로 요구된 Bearer 계약의 challenge는 보존하고, 테스트한 Django Ninja 기본 401이 제공하지 못하는 차이는 G1에서 별도 설계한다. 프레임워크 기본 401에 전역 handler나 helper로 이 헤더를 합성하여 code-profile body를 강제하지 않는다. 문서에 이 401 과 challenge 헤더를 경로 앞 응답으로 적는 것은 합성이 아니고, 적었다고 합성이 허용되는 것도 아니다(§5.2).\n"@ko .
+    djr:text "- 토큰 만료는 401이며 인증(§8.1) 실패다 — 그 401 은 Ninja 가 낸다. Ninja 401 은 challenge 가 없다 — 인증 방법은 API 문서의 `security` 로 안내한다. 이미 배포되었거나 공개적으로 요구된 Bearer 계약이 challenge 를 요구하면 G1 에서 멈춘다(`STOP_FOR_USER_APPROVAL` — §8.1). 프레임워크 기본 401에 전역 handler나 helper로 이 헤더를 합성하여 code-profile body를 강제하지 않는다. 문서에 이 401 을 경로 앞 응답으로 적는 것은 합성이 아니고, 적었다고 합성이 허용되는 것도 아니다(§5.2).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4/b6> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4> ;

@@ -1040,12 +1040,26 @@ def _key(meta: list, root: Path) -> tuple:
     return (rel, cls, func, name)
 
 
+def _case_moved(rel: str, cls: "str | None", func: str, moves: "list[tuple]") -> str:
+    """케이스 옮김(창 당시 옛 경로 · 클래스 통째 또는 모듈 함수 → 새 경로)으로 구조 키의 파일을 접는다 — 클래스 단위는 그 클래스와
+    안 클래스(`클래스.안`)의 항목 모두."""
+    for path, unit_cls, unit_func, to in moves:
+        if rel != path:
+            continue
+        if unit_cls is not None and cls is not None and (cls == unit_cls or cls.startswith(unit_cls + ".")):
+            return to
+        if unit_func is not None and cls is None and func == unit_func:
+            return to
+    return rel
+
+
 def _fold_key(key: tuple, windows: "list[dict]") -> "tuple | None":
-    """구조 키 하나를 창 차례대로 접는다(설계 3.1 §D4) — 창마다 이동(옛 경로 → 새 경로) · 개명(창 당시 경로 · 클래스 · 옛 → 새 —
-    항목 이름의 함수 몫도) · 삭제(구조 키 · 지운 파일)를 그 차례로 · 삭제됐으면 None."""
+    """구조 키 하나를 창 차례대로 접는다(설계 3.1 §D4) — 창마다 이동(옛 경로 → 새 경로) · 케이스 옮김(창 당시 옛 경로의 단위 → 새
+    경로) · 개명(창 당시 경로 · 클래스 · 옛 → 새 — 항목 이름의 함수 몫도) · 삭제(구조 키 · 지운 파일)를 그 차례로 · 삭제됐으면 None."""
     rel, cls, func, name = key
     for w in windows:
         rel = w["moved"].get(rel, rel)
+        rel = _case_moved(rel, cls, func, w.get("case_moved", []))
         for r, c, old, new in w["renamed"]:
             if (r, c, old) == (rel, cls, func):
                 name = new + name[len(func):] if name.startswith(func) else name
@@ -1062,8 +1076,9 @@ def g0_keep(g0: dict, g2: dict, repo: Path, moved: "dict[str, str] | None" = Non
     """G0 유지 셋(v11 구조 키): ① 파일 단위 — 지금 있는 G0 수집 파일은 처분 항목이 하나 이상
     ② 바이트 같은 파일 — G0 항목(파일 · 클래스 · 함수 · 항목 이름) 전부 ③ 바뀐 파일 — (파일 · 클래스 · 함수)마다 처분 수 ≥ 그
     자리로 접힌 G0 수.
-    예외는 감사 · 승인 자료에 있는 것만 — 창별 목록 `windows`(창 차례 · `_g0_keep_exceptions`)로 G0 키마다 이동 · 개명 · 삭제를
-    창 차례대로 접는다(개명은 면제가 아니라 대응 — 옛 키 → 새 키). moved · removed 만 주면 창 하나로 본다(옛 부름)."""
+    예외는 감사 · 승인 자료에 있는 것만 — 창별 목록 `windows`(창 차례 · `_g0_keep_exceptions`)로 G0 키마다 이동 · 케이스 옮김 ·
+    개명 · 삭제를 창 차례대로 접는다(개명 · 옮김은 면제가 아니라 대응 — 옛 키 → 새 키). moved · removed 만 주면 창 하나로 본다(옛
+    부름)."""
     if windows is None:
         windows = [{"moved": moved or {}, "renamed": [],
                     "removed": {tuple(x) if isinstance(x, list) else x for x in (removed or set())}}]
@@ -1124,6 +1139,34 @@ def renamed_selection(windows: "list[dict]", g2: dict, g0: dict) -> "tuple[list[
             elif all(k in skipped for k in hits):
                 skips += 1
     return reds, skips
+
+
+def moved_selection(windows: "list[dict]", g2: dict, g0: dict) -> "tuple[list[str], int]":
+    """옮긴 케이스(창 기록 `case_moved` — 시험 파일 나누기 · 모으기) — G0 키에서 창 차례 접기로 이어져 온 그 단위의 항목마다 지금 자리를
+    구하고, G2 선택(final)에 그 자리 항목이 없으면 red «옮긴 케이스가 G2 에서 선택되지 않았다». 그 자리 항목이 모두 skip · xfail 이면
+    red 가 아니라 보고 수에 든다 · 뒤 창에서 지운 키는 대조 밖. (red 사유, skip · xfail 수)."""
+    keys: "dict[str, tuple]" = {n: tuple(k) for n, k in g2["keys"].items()}
+    selected: "set[tuple]" = {keys[n] for n in g2.get("selected_ids", ()) if n in keys}
+    skipped: "set[tuple]" = {keys[n] for n in g2.get("skipped_ids", ()) if n in keys}
+    origins: "set[tuple]" = {tuple(k) for k in g0["keys"].values()}
+    reds: "list[str]" = []
+    skips: int = 0
+    for i, w in enumerate(windows):
+        for path, unit_cls, unit_func, to in w.get("case_moved", []):
+            for origin in sorted(origins, key=repr):
+                here = _fold_key(origin, windows[:i])
+                if here is None or w["moved"].get(here[0], here[0]) != path \
+                        or _case_moved(path, here[1], here[2], [(path, unit_cls, unit_func, to)]) != to:
+                    continue
+                now = _fold_key(here, windows[i:])
+                if now is None:
+                    continue
+                hits = [k for k in selected if k[:3] == now[:3]]
+                if not hits:
+                    reds.append(f"옮긴 케이스가 G2 에서 선택되지 않았다: {now[:3]}(옮김 {path}::{unit_cls or unit_func} → {to})")
+                elif all(k in skipped for k in hits):
+                    skips += 1
+    return sorted(set(reds)), skips
 
 
 # ── 기록 자리 ─────────────────────────────────────────────────────────────────
@@ -1274,8 +1317,9 @@ def cmd_support(folder: Path, repo: Path) -> int:
 # ── suite ────────────────────────────────────────────────────────────────────
 
 def _g0_keep_exceptions(run_dir: Path) -> "list[dict]":
-    """그 실행의 창마다 마지막 close 의 g0_keep_exceptions — 창 차례 목록 [{moved, renamed, removed}](설계 3.1 §D4 · 합치지 않는다:
-    G0 키마다 창 차례대로 이동 · 개명 · 삭제를 접는다 — `g0_keep(windows=)`). renamed = (창 당시 경로 · 클래스 · 옛 → 새)."""
+    """그 실행의 창마다 마지막 close 의 g0_keep_exceptions — 창 차례 목록 [{moved, renamed, removed[, case_moved]}](설계 3.1 §D4 ·
+    합치지 않는다: G0 키마다 창 차례대로 이동 · 케이스 옮김 · 개명 · 삭제를 접는다 — `g0_keep(windows=)`). renamed = (창 당시 경로 ·
+    클래스 · 옛 → 새) · case_moved = (창 당시 옛 경로 · 클래스 통째 또는 모듈 함수 · 새 경로)."""
     windows: "list[dict]" = []
     for _n, _opened, closes in bg._windows(run_dir):
         if not closes:
@@ -1296,7 +1340,15 @@ def _g0_keep_exceptions(run_dir: Path) -> "list[dict]":
             if not (isinstance(item, dict) and all(isinstance(item.get(k), str) for k in ("path", "old", "new"))):
                 raise SupportError(f"g0_keep_exceptions.renamed 판형 밖 — {item!r}(path · class · old · new)")
             renamed.append((item["path"], item.get("class") or None, item["old"], item["new"]))
-        windows.append({"moved": dict(ex.get("moved") or {}), "renamed": renamed, "removed": removed})
+        case_moved: "list[tuple]" = []
+        for item in ex.get("case_moved") or []:
+            unit = (item.get("class"), item.get("func")) if isinstance(item, dict) else (None, None)
+            if not (isinstance(item, dict) and all(isinstance(item.get(k), str) for k in ("path", "to"))
+                    and sum(isinstance(x, str) and bool(x) for x in unit) == 1):
+                raise SupportError(f"g0_keep_exceptions.case_moved 판형 밖 — {item!r}(path · class 또는 func 하나 · to)")
+            case_moved.append((item["path"], item.get("class") or None, item.get("func") or None, item["to"]))
+        windows.append({"moved": dict(ex.get("moved") or {}), "renamed": renamed, "removed": removed,
+                        **({"case_moved": case_moved} if case_moved else {})})   # 케이스 옮김 없는 창은 옛 판형 그대로
     return windows
 
 
@@ -1364,6 +1416,10 @@ def cmd_suite(folder: Path, repo: Path) -> int:
                 missing, renamed_skip = renamed_selection(windows, info, g0)
                 keep += missing
                 info["counts"]["renamed_skip"] = renamed_skip
+            if any(w.get("case_moved") for w in windows):  # 옮긴 케이스의 새 자리 — 선택 빠짐 red · skip · xfail 은 보고
+                missing, moved_skip = moved_selection(windows, info, g0)
+                keep += missing
+                info["counts"]["moved_skip"] = moved_skip
         ended = _utc()
     except (SupportError, bg.RunError, ImportError, OSError, ValueError, KeyError, TypeError) as exc:
         _say(f"실행 불능: {type(exc).__name__}: {exc}", err=True)
@@ -1393,6 +1449,7 @@ def cmd_suite(folder: Path, repo: Path) -> int:
           + (f"이번 실행 편집 갈래 {record['observer_split']}" if record["observer_split"]
              else f"그중 이번 실행이 바꾸지 않은 파일 {counts['observer_unchanged']}") + ") · "
           f"G0 유지 위반 {len(keep)}" + (f" · 개명 케이스 skip {counts['renamed_skip']}" if "renamed_skip" in counts else "")
+          + (f" · 옮긴 케이스 skip {counts['moved_skip']}" if "moved_skip" in counts else "")
           + f" · 사유 {len(reasons)} · 기록 suite-{stamp}.json")
     return 0 if verdict == "green" else 2
 

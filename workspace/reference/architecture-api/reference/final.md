@@ -213,9 +213,10 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 - `202 Accepted`는 작업 접수 응답과 결과 확인 방법을 함께 제공한다
 - `204 No Content`는 응답 본문이 없다는 점을 계약으로 둔다
 - 오류 응답은 선택한 에러 프로필의 media type·필드·상태 코드별 schema를 문서화한다
-- **API 문서는 그 경로에서 날 수 있는 의도된 오류를 누가 보내든 모두 적는다** — 경로 코드가 보내는 BC 오류는 operation 응답 선언(`response=`)으로, 경로 앞에서 framework(인증 · CSRF · 권한 · throttle · 몸통 · 입력 검증) · 미들웨어 · 앞단이 보내는 답은 경로 앞 응답으로, 오류의 머리는 머리 보충으로 적는다(구현 꼴은 `implementation-django-ninja` §6.2 — 캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)는 오류 문서에 적지 않아도 된다: 모든 응답에 붙는 공통 지시라 오류 내용이 아니다). 적는 것은 코드 · 설정 · 앞단 설정에 그 status 가 적힌 의도된 답이다 — 미식별 500 · 앞단 502/504 는 결함이라 약속이 아니고, 없는 경로 404 · 다른 메서드 405 는 그 operation 의 답이 아니라 적지 않는다
+- **API 문서는 그 경로에서 날 수 있는 의도된 오류를 누가 보내든 모두 적는다** — 경로 코드가 보내는 BC 오류는 operation 응답 선언(`response=`)으로, 경로 앞에서 framework(인증 · CSRF · 권한 · throttle · 몸통 · 입력 검증) · 미들웨어 · 앞단이 보내는 답은 경로 앞 응답으로(인증 틀 뒤 인증 실패 — Ninja 기본 401 행이 적는다), 오류의 머리는 머리 보충으로 적는다(구현 꼴은 `implementation-django-ninja` §6.2 — 캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)는 오류 문서에 적지 않아도 된다: 모든 응답에 붙는 공통 지시라 오류 내용이 아니다). 적는 것은 코드 · 설정 · 앞단 설정에 그 status 가 적힌 의도된 답이다 — 미식별 500 · 앞단 502/504 는 결함이라 약속이 아니고, 없는 경로 404 · 다른 메서드 405 는 그 operation 의 답이 아니라 적지 않는다
 - 캐시, rate limit, retry, deprecation, idempotency replay처럼 클라이언트 동작을 바꾸는 헤더는 응답 계약에 포함한다
-- 한 상태 코드의 성공 본문이 둘 이상의 모양이면 판별 필드(discriminator)를 가진 **이름 붙은 schema 하나**(`oneOf` + `discriminator`)로 계약한다 — 익명 `anyOf` 는 클라이언트가 분기할 이름과 판별 키를 잃는다. 오류 본문의 union 은 각 오류 schema 가 고정 공개 식별자(code 프로필의 `<Bc>ErrorCode` 값 · RFC 9457 의 `type`)로 자기 판별되므로 이 요구의 대상이 아니다(§5.4 에러 프로필)
+- 한 상태 코드의 JSON(`application/json` · `…+json`) 성공 본문이 둘 이상의 모양이면 판별 필드(discriminator)를 가진 **이름 붙은 schema 하나**(`oneOf` + `discriminator`)로 계약한다 — 익명 `anyOf` 는 클라이언트가 분기할 이름과 판별 키를 잃는다. 오류 본문의 union 은 각 오류 schema 가 고정 공개 식별자(code 프로필의 `<Bc>ErrorCode` 값 · RFC 9457 의 `type`)로 자기 판별되므로 이 요구의 대상이 아니다(§5.4 에러 프로필). 스트리밍(`text/event-stream`) 성공 본문은 아래 «스트리밍 응답 설명서 꼴» 을 따른다
+- **스트리밍 응답 설명서 꼴** — `text/event-stream` 으로 프레임을 잇달아 보내는 성공 응답은 그 status 의 `content."text/event-stream"` 에 프레임 설명서를 적는다. 프레임 종류가 둘 이상이면 종류마다 `oneOf` 한 갈래(`title` = 프레임 이름 · `properties.data` = 그 프레임 data 모양 · `required`)를 두고, `event:` 이름을 쓰면 `properties.event` 는 그 이름의 고정값(`const`)이다. 판별 키(discriminator)는 요구하지 않는다(OpenAPI 3.2 의 SSE 예와 같음 — 갈래는 event 고정값으로 갈린다). 스트림 머리(`Cache-Control` 등)는 그 성공 칸 `headers` 에 적는다. 문서가 OpenAPI 3.2 를 내면 프레임 설명서는 `itemSchema` 에 두고 `data` 는 문자열(`contentMediaType: application/json` · `contentSchema` = 그 프레임 data 모양)로 적는다(구현 꼴은 `implementation-django-ninja` §6.2 «스트림 설명서 보충»)
 
 ### 5.3 계약 체크리스트
 
@@ -240,7 +241,7 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 
 에러 wire contract는 다음 우선순위로 하나를 선택한다.
 
-1. 이미 배포된 API의 에러 계약이 있으면 그 계약을 보존한다. `WWW-Authenticate`나 `Retry-After`처럼 이미 공개된 헤더도 이 계약의 일부이며, 프레임워크 기본 응답과의 차이는 별도 설계로 다룬다.
+1. 이미 배포된 API의 에러 계약이 있으면 그 계약을 보존한다. `WWW-Authenticate`나 `Retry-After`처럼 이미 공개된 헤더도 이 계약의 일부다 — 그 가운데 401 의 `WWW-Authenticate` challenge 요구는 §8.1 대로 G1 에서 멈추고(`STOP_FOR_USER_APPROVAL` — 이 표준에는 Ninja 401 에 challenge 를 붙이는 꼴이 없다), 그 밖의 프레임워크 기본 응답과의 차이는 별도 설계로 다룬다.
 2. 새 dddjango Django Ninja 범위는 기본으로 `dddjango-code-json`을 선택한다.
 3. RFC 9457은 외부 표준, 기존 소비자, 또는 별도 요구가 있을 때만 선택한다.
 
@@ -260,7 +261,7 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 
 #### framework 기본 응답과 공개 헤더의 경계
 
-프레임워크 기본 401/403/route 404/422/429/`HttpError`/500을 전역 handler나 helper로 BC body로 바꾸어 헤더를 합성하지 않는다. 확립된 계약이 401의 `WWW-Authenticate` 또는 429의 `Retry-After`를 요구하면 그 헤더는 보존하고 별도 설계한다. presentation controller가 직접 공개하는 BC 오류의 승인된 헤더(retryable 오류의 `Retry-After` · 사건 값 헤더)는 그 controller가 소유한다. API 문서에 이 답과 그 헤더를 경로 앞 응답으로 적는 것은 합성이 아니다 — 적었다고 실제 응답에 헤더 · status 합성이 허용되는 것도 아니다(§5.2).
+프레임워크 기본 401/403/route 404/422/429/`HttpError`/500을 전역 handler나 helper로 BC body로 바꾸어 헤더를 합성하지 않는다. 확립된 계약이 401의 `WWW-Authenticate` 를 요구하면 G1 에서 멈춘다(§8.1 — 이 표준에는 붙이는 꼴이 없다). 429의 `Retry-After` 는 보존하고 별도 설계한다(ninja_extra `Throttled` 가 붙인다). presentation controller가 직접 공개하는 BC 오류의 승인된 헤더(retryable 오류의 `Retry-After` · 사건 값 헤더)는 그 controller가 소유한다. API 문서에 이 답과 그 헤더를 경로 앞 응답으로 적는 것은 합성이 아니다 — 적었다고 실제 응답에 헤더 · status 합성이 허용되는 것도 아니다(§5.2).
 
 ## 6. RFC 9457 에러 응답 형식
 
@@ -370,12 +371,13 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 | 질문 | "너는 누구인가?" | "너는 이걸 할 수 있는가?" |
 | 시점 | 인가보다 먼저 | 인증 후에 수행 |
 | HTTP 코드 | 401 Unauthorized | 403 Forbidden |
-| 실패 시 | 서버가 401을 생성하면 적용 가능한 `WWW-Authenticate` challenge를 보냄 | 권한 부족 메시지 |
+| 실패 시 | Ninja 401(challenge 없음 — 아래 «RFC 9110 과 Ninja 401») · 확립 계약의 challenge 는 아래 «구현/프로필 경계» | 권한 부족 메시지 |
 
 - 인증이 있어야 인가가 있다
 - 401은 이름이 Unauthorized지만 실제로는 **인증(Authentication)** 오류다
-- **RFC 9110 규칙**: 서버가 401 응답을 생성하면 적용 가능한 `WWW-Authenticate` challenge를 반드시 보낸다. 이것은 에러 body 프로필과 별개의 HTTP 의미론이다.
-- **구현/프로필 경계**: 테스트한 Django Ninja 기본 401은 이 challenge를 제공하지 않을 수 있다. 이미 배포되었거나 공개적으로 요구된 계약은 challenge를 보존하고, 기본 동작과 맞지 않으면 G1에서 별도 설계로 되돌린다. code-profile body를 강제하려고 전역 handler나 helper로 challenge를 합성하지 않는다.
+- 로그인 필요(인증 정보 없음 · 무효 · 인증 틀 뒤에 알게 된 인증 실패)는 401 이다 — 403 은 인증 실패를 뜻하지 않는다(인증된 주체의 권한 부족 · CSRF · 출처 같은 요청 거절). 확립된 계약이 로그인 필요를 403 으로 답해 왔어도 §5.4 ① 의 보존 대상이 아니다 — 401 로 바꾸는 것은 리팩토링이 바뀌는 것 목록으로 올린다(`implementation-django-ninja` §4.1). 기능 요청은 이미 있는 로그인 필요 403 을 바꾸지 않는다(리뷰어 nit `G1 전 닫기: 아니오` · 새로 짓는 operation 은 401).
+- **RFC 9110 과 Ninja 401**: RFC 9110 은 401 에 `WWW-Authenticate` challenge 를 요구하지만 Django Ninja 가 내는 401(인증 틀이 막은 요청 · 컨트롤러가 던진 `AuthenticationError`)은 challenge 를 싣지 못한다. 이 표준은 그 401 을 그대로 쓴다 — challenge 를 요구하지 않는다. 감사 · 리뷰는 challenge 없는 Ninja 401 을 위반으로 올리지 않는다(확립된 계약이 challenge 를 요구하는 경우는 아래 «구현/프로필 경계» 줄).
+- **구현/프로필 경계**: Django Ninja 401 은 이 challenge 를 제공하지 않는다(위 줄). 이미 배포되었거나 공개적으로 요구된 계약이 challenge 를 요구하면 G1 에서 멈춘다(`STOP_FOR_USER_APPROVAL` — 이 표준에는 Ninja 401 에 challenge 를 붙이는 꼴이 없다). code-profile body를 강제하려고 전역 handler나 helper로 challenge를 합성하지 않는다.
 
 ### 8.2 인증 메커니즘 선택 기준
 
@@ -395,14 +397,14 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 
 ### 8.4 토큰 수명과 스코프
 
-Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 명시한다. 401을 생성하는 Bearer 서버는 §8.1의 RFC 9110 challenge 규칙을 지키며, 다음은 그 challenge가 포함하는 Bearer 계약의 표면이다.
+Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 명시한다. Bearer 서버의 401 은 Ninja 가 낸다(§8.1 — challenge 없음). 아래 표 401 행의 `WWW-Authenticate` 칸은 확립된 계약이 challenge 를 요구할 때의 Bearer 표면이다(그 경우 §8.1 대로 G1 에서 멈춤).
 
-| 상황 | 상태 코드 | WWW-Authenticate | 의미 |
+| 상황 | 상태 코드 | WWW-Authenticate(확립 계약 때) | 의미 |
 |------|----------|------------------|------|
 | 토큰 만료·폐기·변조 (`invalid_token`) | `401 Unauthorized` | `Bearer error="invalid_token"` | 재인증하거나 refresh로 새 토큰을 발급받는다 |
 | 토큰은 유효하나 권한 범위 부족 (`insufficient_scope`) | `403 Forbidden` | `Bearer error="insufficient_scope", scope="..."` | 필요한 scope를 응답에 안내할 수 있다 |
 
-- 토큰 만료는 401이며 인증(§8.1) 실패다. 서버가 이 401을 생성하면 `WWW-Authenticate` challenge로 인증 방법과 오류 원인을 안내한다. 이미 배포되었거나 공개적으로 요구된 Bearer 계약의 challenge는 보존하고, 테스트한 Django Ninja 기본 401이 제공하지 못하는 차이는 G1에서 별도 설계한다. 프레임워크 기본 401에 전역 handler나 helper로 이 헤더를 합성하여 code-profile body를 강제하지 않는다. 문서에 이 401 과 challenge 헤더를 경로 앞 응답으로 적는 것은 합성이 아니고, 적었다고 합성이 허용되는 것도 아니다(§5.2).
+- 토큰 만료는 401이며 인증(§8.1) 실패다 — 그 401 은 Ninja 가 낸다. Ninja 401 은 challenge 가 없다 — 인증 방법은 API 문서의 `security` 로 안내한다. 이미 배포되었거나 공개적으로 요구된 Bearer 계약이 challenge 를 요구하면 G1 에서 멈춘다(`STOP_FOR_USER_APPROVAL` — §8.1). 프레임워크 기본 401에 전역 handler나 helper로 이 헤더를 합성하여 code-profile body를 강제하지 않는다. 문서에 이 401 을 경로 앞 응답으로 적는 것은 합성이 아니고, 적었다고 합성이 허용되는 것도 아니다(§5.2).
 - scope는 토큰이 허용하는 작업 범위다. 엔드포인트가 요구하는 scope와 토큰의 scope를 비교해 부족하면 403 + `insufficient_scope`로 응답하고, 확립된 Bearer 계약이 정하면 필요한 scope를 헤더로 알린다.
 - 토큰 수명, refresh 흐름, scope 집합은 API 계약으로 고정한다. 토큰 검증·발급의 구체 구현은 인증 라이브러리/프레임워크가 담당한다.
 

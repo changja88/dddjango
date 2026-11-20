@@ -1530,6 +1530,14 @@ djr:R-1555 a djr:Obligation ;
     prov:specializationOf djr:R-1555 ;
     djr:revision 1 .
 
+djr:R-3789 a djr:Exception ;
+    skos:prefLabel "유스케이스 사이 흐름 중복 — DRY·중복 제거(§1.2·§13) 대상 아님 · 유스케이스는 서로 코드를 공유하지 않음(#189) · 같은 응용 흐름(포트 부르는 차례·자원 잡고 놓는 순서·포트 예외 → 도메인 예외 번역 — R-3449 유스케이스 몫)은 각 유스케이스 안에 따로(진입점 _ 사설 함수·메서드 · 승격 폴더면 부품 · #192) · 업무 판정·상태 전이·바깥 값 → 도메인 값 번역은 예외 밖(판정·전이는 도메인 · 번역은 어댑터 한 곳)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3789@2026-11-20> .
+
+<https://numchida.com/ns/djr#R-3789@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-3789 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/discipline-cleancode/references/final.md> a djr:Document ;
     skos:prefLabel "discipline-cleancode-final"@ko .
 
@@ -3214,7 +3222,14 @@ djr:R-1555 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s101-13.1> ;
     djr:kind djr:kind-code ;
     djr:order 4 ;
-    djr:text "\n```python\n# DRY가 아닌 경우: 우연히 같은 코드지만 다른 지식\ndef validate_user_age(age: int) -> bool:\n    return 0 < age < 150  # 사용자 나이 정책\n\ndef validate_building_floors(floors: int) -> bool:\n    return 0 < floors < 150  # 건물 층수 제한 -- 우연히 같은 범위\n\n# 이 두 함수를 합치면 안 된다. 서로 다른 도메인 지식을 표현한다.\n```\n\n" .
+    djr:text "\n```python\n# DRY가 아닌 경우: 우연히 같은 코드지만 다른 지식\ndef validate_user_age(age: int) -> bool:\n    return 0 < age < 150  # 사용자 나이 정책\n\ndef validate_building_floors(floors: int) -> bool:\n    return 0 < floors < 150  # 건물 층수 제한 -- 우연히 같은 범위\n\n# 이 두 함수를 합치면 안 된다. 서로 다른 도메인 지식을 표현한다.\n```\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s101-13.1/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s101-13.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-3789 ;
+    djr:text "\n**유스케이스 사이 흐름 중복은 DRY · 중복 제거(§1.2 · §13)의 대상이 아니다.** 유스케이스는 서로 코드를 공유하지 않는다(`discipline-houserules` #189 — 유스케이스 간 돌려쓰기 금지). 두 유스케이스가 같은 응용 흐름(포트를 부르는 차례 · 자원을 잡고 놓는 순서 · 포트 예외를 도메인 예외로 바꾸는 번역 — `architecture-ddd` R-3449 의 유스케이스 몫)을 쓰면 각 유스케이스 안에 따로 둔다(진입점의 `_` 사설 함수 · 메서드 — 승격 폴더면 그 부품 · #192) — 이 중복은 위반으로 올리지 않는다. 업무 판정 · 상태 전이 · 바깥 값(하위 서버 · 바깥 답의 값)을 도메인 값으로 바꾸는 번역은 이 예외 밖이다 — 판정 · 전이는 도메인 한 곳, 그 번역은 어댑터(`architecture-ddd` §5.3) 한 곳에 둔다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s103-13.3> a djr:Section ;
     djr:headingSnapshot "### 13.3 지역적 변화의 원칙 [IP]"@ko ;

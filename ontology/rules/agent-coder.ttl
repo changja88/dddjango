@@ -715,8 +715,8 @@ djr:R-2558 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2559 a djr:Obligation ;
-    skos:prefLabel "catch 직후 concrete/base ErrorSchema 생성과 승인 header 의 주입 응답용 HttpResponse 선기록 후 두 인자 Status 직접 반환 · 값 유무 가지면 두 가지 각각"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2559@2026-10-11> .
+    skos:prefLabel "catch 직후 concrete/base ErrorSchema 생성과 승인 header 의 주입 응답용 HttpResponse 선기록 후 두 인자 Status 직접 반환 · 값 유무 가지면 두 가지 각각(인증 틀 뒤 인증 실패는 implementation-django-ninja §6.2)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2559@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-2559@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2559 ;
@@ -727,6 +727,12 @@ djr:R-2559 a djr:Obligation ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-2559@2026-08-22> ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-2559@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-2559 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2559@2026-10-11> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-2560 a djr:Prohibition ;
     skos:prefLabel "plugin 의 status body property 추가·요구 금지"@ko ;
@@ -1167,12 +1173,18 @@ djr:R-3505 a djr:Permission ;
     djr:revision 1 .
 
 djr:R-3506 a djr:Obligation ;
-    skos:prefLabel "0T 창 — ⓐ 수리 테스트 편집만(소유 무관 · 새 case·케이스 개명·제품 편집 금지) · 반대쪽 본문이 필요하면 편집 말고 보고"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3506@2026-09-27> .
+    skos:prefLabel "0T 창 — ⓐ 수리 테스트 편집만(소유 무관 · 새 case·케이스 개명·제품 편집 금지 · 리팩토링 모드 승인 옮김 행대로 옮긴 단위는 새 case 아님) · 반대쪽 본문이 필요하면 편집 말고 보고"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3506@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-3506@2026-09-27> a djr:Expression ;
     prov:specializationOf djr:R-3506 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3506@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-3506 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3506@2026-09-27> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3577 a djr:Obligation ;
     skos:prefLabel "리팩토링 모드 파견 입력 = 모드 리팩토링 · M ⓐ 목록(규칙 인용) · 적용 범위 규범 원문 · 운영 전 예외 블록 원문 · 창 종류(0T|0C|0F|변경) · (변경) 그 슬라이스 승인 V"@ko ;
@@ -1211,12 +1223,18 @@ djr:R-3648 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3649 a djr:Obligation ;
-    skos:prefLabel "0T — 기대 변경은 V 밖 update 행 케이스에서만 · 0F(follow) — 명세 retain 재조직 행(재조직 표지) 파일만 기대 의미 그대로 편집(시험 소유 무관 · 기대 원소 변경 = red)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3649@2026-10-04> .
+    skos:prefLabel "0T — 기대 변경은 V 밖 update 행 케이스에서만 · 0F(follow) — 명세 retain 재조직 행(재조직 표지 · 옮김 행 빼고) 파일만 기대 의미 그대로 편집(시험 소유 무관 · 기대 원소 변경 = red)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3649@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-3649@2026-10-04> a djr:Expression ;
     prov:specializationOf djr:R-3649 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3649@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-3649 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3649@2026-10-04> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3650 a djr:Obligation ;
     skos:prefLabel "변경 창 — 안 V 몫과 그 시험 update/add/remove(owner coder) 집행 · 밖 V 는 acceptance-tester 시험 편집 뒤 제품(update/add = Red 뒤 · remove = 케이스 삭제 결과 · 삭제만 있는 V 에 Red 를 만들거나 기다리지 않음) · 바뀌는 기대 밖 기대 원소 무변 · 대상 BC 밖은 다른 BC 편집 목록만 · 리팩토링 모드 시험 편집은 감사 키 또는 red"@ko ;
@@ -1249,8 +1267,8 @@ djr:R-3670 a djr:Obligation ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3684 a djr:Obligation ;
-    skos:prefLabel "0T·0F 케이스 이름·parametrize 원소 id 는 명세 retain 개명 행대로만(정의 이름·id 리터럴 자리 · 픽스처·도우미 이름 개명 없음 · 개명 파일을 같은 창에서 옮기지 않음) · 0F 칸 개명 행 파일은 그 클래스로 풀리는 옛=·.옛 만 새 이름으로(못 푸는 자리·다른 클래스 칸 안 바꿈)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3684@2026-10-28> .
+    skos:prefLabel "0T·0F 케이스 이름·parametrize 원소 id 는 명세 retain 개명 행대로만(정의 이름·id 리터럴 자리 · 픽스처·도우미 이름 개명 없음 · 개명 파일을 같은 창에서 옮기지 않음) · 0F 칸 개명 행 파일은 그 클래스로 풀리는 옛=·.옛 만 새 이름으로(못 푸는 자리·다른 클래스 칸 안 바꿈) · 0T 의 시험 쪽 최상위 단위 파일 사이 옮김은 retain 옮김 행대로만(원문 바이트 그대로 · 같은 창 개명·기대 변경 없음 — update 는 뒤 0T 창 · 개명은 옮긴 뒤 창에서 새 경로 개명 행대로)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3684@2026-11-20> .
 
 <https://numchida.com/ns/djr#R-3684@2026-10-24> a djr:Expression ;
     prov:specializationOf djr:R-3684 ;
@@ -1260,6 +1278,12 @@ djr:R-3684 a djr:Obligation ;
     prov:specializationOf djr:R-3684 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-3684@2026-10-24> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-3684@2026-11-20> a djr:Expression ;
+    prov:specializationOf djr:R-3684 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3684@2026-10-28> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3708 a djr:Prohibition ;
@@ -1488,7 +1512,7 @@ djr:R-3783 a djr:Obligation ;
     djr:order 18 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b17> ;
     djr:statesNorm djr:R-2556, djr:R-2557, djr:R-2558, djr:R-2559, djr:R-2560 ;
-    djr:text "- `dddjango-code-json`의 prepared concrete `ErrorSchema`은 인자 없이, 또는 설명 칸 keyword 하나(문자 또는 slot 10이 승인한 사건 값 꼴)로 생성한다. 사건 시점 값이 승인됐으면 BC base를 slot 6의 모든 required field와 그 사건에서 default override가 필요한 approved optional field로 직접 생성할 수 있다. slot 10이 exception path를 고르면 controller는 입력을 `try` 밖에서 준비하고 `try`에는 application call 문장 하나만 두며 승인된 concrete exception 또는 tuple만 catch한다. catch 직후 승인된 concrete/base `ErrorSchema`을 만들고, 승인 header는 **주입된 응답용(temporal) Django `HttpResponse`**에 먼저 쓴 뒤 `Status(<승인된 HTTP status 표현>, error)` 두 인자로 직접 반환한다 — 값 유무로 가르는 사건 값 한 꼴 분기(`if <n>.<f> is not None:` · `else:`)면 두 가지 각각이 이 순서를 따른다. plugin이 `status` body property를 추가하거나 요구하지 않는다.\n"@ko .
+    djr:text "- `dddjango-code-json`의 prepared concrete `ErrorSchema`은 인자 없이, 또는 설명 칸 keyword 하나(문자 또는 slot 10이 승인한 사건 값 꼴)로 생성한다. 사건 시점 값이 승인됐으면 BC base를 slot 6의 모든 required field와 그 사건에서 default override가 필요한 approved optional field로 직접 생성할 수 있다. slot 10이 exception path를 고르면 controller는 입력을 `try` 밖에서 준비하고 `try`에는 application call 문장 하나만 두며 승인된 concrete exception 또는 tuple만 catch한다. catch 직후 승인된 concrete/base `ErrorSchema`을 만들고, 승인 header는 **주입된 응답용(temporal) Django `HttpResponse`**에 먼저 쓴 뒤 `Status(<승인된 HTTP status 표현>, error)` 두 인자로 직접 반환한다(인증 틀 뒤 인증 실패는 `implementation-django-ninja` §6.2 «인증 틀 뒤 인증 실패») — 값 유무로 가르는 사건 값 한 꼴 분기(`if <n>.<f> is not None:` · `else:`)면 두 가지 각각이 이 순서를 따른다. plugin이 `status` body property를 추가하거나 요구하지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b19> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
@@ -1677,7 +1701,7 @@ djr:R-3783 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
     djr:statesNorm djr:R-3505, djr:R-3506, djr:R-3649, djr:R-3650, djr:R-3651, djr:R-3684 ;
-    djr:text "- **슬라이스 0 창**(2026-09-27): Coordinator 가 창 종류(0T | 0C)를 준다. **0C**(코드 정리)에서는 옮긴·개명한 코드를 따라가는 테스트 치환 편집(import·문자열 속 경로·이름)을 테스트 소유와 무관하게(외부 계약 테스트 포함) 네가 한다 — 테스트의 로직·단언은 바꾸지 않고, 판정은 Coordinator 의 `behavior_guard.py close` 다. **0T**(테스트 정리)에서는 입력된 ⓐ 항목을 고치는 테스트 편집만 테스트 소유와 무관하게 한다 — 새 case 를 더하거나 케이스 이름을 바꾸지 않고, 제품 코드를 편집하지 않는다(루트 pytest 설정 절은 테스트 쪽이다). 어느 창이든 반대쪽 본문(0C 의 테스트 로직 · 0T 의 제품 코드)을 고쳐야 정리가 되면 편집하지 말고 그 사실을 보고한다(리팩토링 모드에서는 그 몫을 명세가 0F · 변경 슬라이스로 둔다). **리팩토링 모드 창**(2026-10-04): **0T**(`test`)의 기대 변경은 명세 입장 표 `update` 행(V 에 딸리지 않은 행)의 케이스에서만 한다(그 밖 확정 기대 변화는 red 다). **0F**(`follow` — 구조 추종)에서는 명세의 `retain` 재조직 행(candidate 칸에 낱말 `재조직`)에 적힌 파일만 «기대 의미 그대로» 고친다(시험 소유 무관 — 기대 원소를 바꾸면 red 다). 0T · 0F 에서 시험 케이스 이름 · parametrize 원소 id 는 명세의 `retain` «개명» 행대로만 바꾼다(정의 이름 · id 리터럴 자리만 — 픽스처 · 도우미 이름은 개명 행이 받지 않고, 개명하는 파일을 같은 창에서 옮기지 않는다 · 2026-10-24). 0F 의 «칸 개명» 행이 있는 시험 파일에서는 그 클래스로 풀리는 호출의 키워드 `옛=` 과 받는 쪽이 그 클래스로 풀리는 속성 `.옛` 만 새 이름으로 바꾼다(받는 쪽이 그 클래스로 풀리지 않는 자리 · 같은 이름의 다른 클래스 칸은 바꾸지 않는다 · 2026-10-28). **변경 창**(`change`)에서는 승인 V 의 안(내부 약속 · DB 구조) 몫과 그 시험 `update`/`add`/`remove`(owner coder)를 집행하고, 밖 동작 V 는 acceptance-tester 의 시험 편집 뒤에 제품 코드를 고친다(`update` · `add` 행은 그 Red 뒤 · `remove` 행은 acceptance-tester 가 그 케이스를 지운 결과를 받는다 — 삭제만 있는 V 에 Red 를 만들거나 기다리지 않는다) — «바뀌는 기대» 밖 기대 원소는 바꾸지 않고, 대상 BC 밖 파일은 다른 BC 편집 목록에 적힌 것만 고친다. DB 구조 V 는 `makemigrations` 로 새 마이그레이션 파일을 만들어 승인 연산 호출식과 같게 한다 — 기존 마이그레이션 파일은 고치거나 지우지 않고 `RunPython` · `RunSQL` · `SeparateDatabaseAndState` 는 쓰지 않는다. 리팩토링 모드의 어느 창이든 시험 편집은 close 가 감사 키 또는 red 로 처분한다(자동 초록 없음).\n"@ko .
+    djr:text "- **슬라이스 0 창**(2026-09-27): Coordinator 가 창 종류(0T | 0C)를 준다. **0C**(코드 정리)에서는 옮긴·개명한 코드를 따라가는 테스트 치환 편집(import·문자열 속 경로·이름)을 테스트 소유와 무관하게(외부 계약 테스트 포함) 네가 한다 — 테스트의 로직·단언은 바꾸지 않고, 판정은 Coordinator 의 `behavior_guard.py close` 다. **0T**(테스트 정리)에서는 입력된 ⓐ 항목을 고치는 테스트 편집만 테스트 소유와 무관하게 한다 — 새 case 를 더하거나 케이스 이름을 바꾸지 않고(리팩토링 모드의 승인 «옮김» 행대로 옮긴 단위는 새 case 가 아니다 — 아래), 제품 코드를 편집하지 않는다(루트 pytest 설정 절은 테스트 쪽이다). 어느 창이든 반대쪽 본문(0C 의 테스트 로직 · 0T 의 제품 코드)을 고쳐야 정리가 되면 편집하지 말고 그 사실을 보고한다(리팩토링 모드에서는 그 몫을 명세가 0F · 변경 슬라이스로 둔다). **리팩토링 모드 창**(2026-10-04): **0T**(`test`)의 기대 변경은 명세 입장 표 `update` 행(V 에 딸리지 않은 행)의 케이스에서만 한다(그 밖 확정 기대 변화는 red 다). **0F**(`follow` — 구조 추종)에서는 명세의 `retain` 재조직 행(candidate 칸에 낱말 `재조직` — «옮김» 행 빼고)에 적힌 파일만 «기대 의미 그대로» 고친다(시험 소유 무관 — 기대 원소를 바꾸면 red 다). 0T · 0F 에서 시험 케이스 이름 · parametrize 원소 id 는 명세의 `retain` «개명» 행대로만 바꾼다(정의 이름 · id 리터럴 자리만 — 픽스처 · 도우미 이름은 개명 행이 받지 않고, 개명하는 파일을 같은 창에서 옮기지 않는다 · 2026-10-24). 0T 에서 시험 쪽 파일의 최상위 함수(케이스 · 도움 함수 · 픽스처) · 최상위 클래스를 같은 폴더의 다른 파일로 옮기는 편집은 명세의 `retain` «옮김» 행대로만 한다 — 원문(이름 · 데코레이터 · 몸)을 바이트 그대로 옮기고, 옮기는 단위를 같은 창에서 개명하거나 그 기대를 바꾸지 않는다(그 `update` 는 Coordinator 가 뒤에 여는 0T 창 몫이고, 그 단위의 개명은 옮긴 뒤 창에서 새 경로로 적힌 개명 행대로 한다 · 2026-11-20). 0F 의 «칸 개명» 행이 있는 시험 파일에서는 그 클래스로 풀리는 호출의 키워드 `옛=` 과 받는 쪽이 그 클래스로 풀리는 속성 `.옛` 만 새 이름으로 바꾼다(받는 쪽이 그 클래스로 풀리지 않는 자리 · 같은 이름의 다른 클래스 칸은 바꾸지 않는다 · 2026-10-28). **변경 창**(`change`)에서는 승인 V 의 안(내부 약속 · DB 구조) 몫과 그 시험 `update`/`add`/`remove`(owner coder)를 집행하고, 밖 동작 V 는 acceptance-tester 의 시험 편집 뒤에 제품 코드를 고친다(`update` · `add` 행은 그 Red 뒤 · `remove` 행은 acceptance-tester 가 그 케이스를 지운 결과를 받는다 — 삭제만 있는 V 에 Red 를 만들거나 기다리지 않는다) — «바뀌는 기대» 밖 기대 원소는 바꾸지 않고, 대상 BC 밖 파일은 다른 BC 편집 목록에 적힌 것만 고친다. DB 구조 V 는 `makemigrations` 로 새 마이그레이션 파일을 만들어 승인 연산 호출식과 같게 한다 — 기존 마이그레이션 파일은 고치거나 지우지 않고 `RunPython` · `RunSQL` · `SeparateDatabaseAndState` 는 쓰지 않는다. 리팩토링 모드의 어느 창이든 시험 편집은 close 가 감사 키 또는 red 로 처분한다(자동 초록 없음).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s006/b7> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s006> ;

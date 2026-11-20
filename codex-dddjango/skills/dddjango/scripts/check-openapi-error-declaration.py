@@ -2780,7 +2780,7 @@ def _openapi_extra_findings(operation: Operation, tree: ast.Module | None = None
     if extra is None or not isinstance(_top_level_responses(extra), ast.Dict):
         return []  # 글자 Dict 가 아닌 responses · 중첩 responses 는 tree 레인 몫(사건 하나 — 대표 줄은 tree)
     problems = _supplement_problems(
-        extra, _declared_response_statuses(operation.function, operation.bindings)
+        extra, _declared_response_statuses(operation.function, operation.bindings), tree
     )
     if not problems:
         return []
@@ -3519,11 +3519,46 @@ def _dict_has_key(node: ast.AST, key: str) -> bool:
     return False
 
 
+DICT_MUTATING_METHODS: frozenset[str] = frozenset({"update", "pop", "popitem", "setdefault", "clear"})
+
+
+def _chain_root(node: ast.AST) -> ast.AST:
+    """첨자 · 속성 · 호출 사슬(`X["a"]["b"]` · `X.get("a").b`)의 뿌리."""
+    while True:
+        if isinstance(node, (ast.Subscript, ast.Attribute)):
+            node = node.value
+        elif isinstance(node, ast.Call):
+            node = node.func
+        else:
+            return node
+
+
+def _name_mutated(tree: ast.Module, name: str) -> bool:
+    """모듈 어디서든 그 이름이 가리키는 값을 고치는 문장이 있는가 — 사슬 뿌리가 그 이름인 첨자 · 속성 대입 · 덧셈 대입 ·
+    `del`, `del <그 이름>`, 변경 메서드 호출(`update` · `pop` · `popitem` · `setdefault` · `clear`). 이름 자체를 다시 묶는
+    대입(`X = …` · `X |= …`)은 Store 이름 셈이 잡는다. 다른 이름으로 받아 고치는 꼴은 보지 않는다(별칭 흐름 밖)."""
+    for sub in ast.walk(tree):
+        if isinstance(sub, (ast.Subscript, ast.Attribute)) and isinstance(sub.ctx, (ast.Store, ast.Del)):
+            root = _chain_root(sub)
+        elif isinstance(sub, ast.Name) and isinstance(sub.ctx, ast.Del):
+            root = sub
+        elif isinstance(sub, ast.Call) and isinstance(sub.func, ast.Attribute) and sub.func.attr in DICT_MUTATING_METHODS:
+            root = _chain_root(sub.func.value)
+        else:
+            continue
+        if isinstance(root, ast.Name) and root.id == name:
+            return True
+    return False
+
+
 def _resolved_extra(node: ast.AST, tree: ast.Module | None) -> ast.Dict | None:
-    """`openapi_extra=` 값 — 글자 Dict 그대로, 같은 모듈 맨 위에서 한 번만 묶인 이름이면 그 글자 Dict(못 풀면 None)."""
+    """`openapi_extra=` 값 · 그 오류 status 칸 값 · `headers` 값 — 글자 Dict 그대로, 같은 모듈 맨 위에서 한 번만 묶이고 뒤에서
+    고치지 않는(`_name_mutated`) 이름이면 그 글자 Dict(못 풀면 None)."""
     if isinstance(node, ast.Dict):
         return node
     if not isinstance(node, ast.Name) or tree is None:
+        return None
+    if _name_mutated(tree, node.id):
         return None
     stores = [n for n in ast.walk(tree) if isinstance(n, ast.Name) and n.id == node.id and isinstance(n.ctx, ast.Store)]
     values = [
@@ -3553,7 +3588,7 @@ def _extra_problems(node: ast.AST, tree: ast.Module | None, declared: set[int]) 
         return [EXTRA_NOT_LITERAL]
     if not _dict_has_key(extra, "responses"):
         return []
-    return _supplement_problems(extra, declared)
+    return _supplement_problems(extra, declared, tree)
 
 
 def _top_level_responses(extra: ast.AST) -> ast.AST | None:
@@ -3575,12 +3610,13 @@ def _int_status_key(node: ast.AST | None) -> int | None:
     return None
 
 
-def _supplement_problems(extra: ast.AST, declared: set[int]) -> list[str]:
+def _supplement_problems(extra: ast.AST, declared: set[int], tree: ast.Module | None) -> list[str]:
     """`openapi_extra` 의 responses 보충 판정(e) — 빈 목록이면 받는 꼴.
 
     받는 꼴은 정확히 이것뿐이다: top-level Dict 의 "responses" 값이 Dict 이고, 키 전부가
     **정수 글자**이며 그 status 가 operation `response=` 에 선언돼 있고, 오류 status(400–599)의
-    값은 `headers` 칸 하나만 가진 Dict 일 때(성공 status 는 메타데이터 보충). 숫자 문자열 키는
+    값은 `headers` 칸 하나만 가진 글자 Dict(같은 모듈 맨 위에서 한 번 묶고 뒤에서 고치지 않는 글자 Dict 상수면
+    풀어서 같은 판정 — `_resolved_extra`)일 때(성공 status 는 메타데이터 보충 — 값의 꼴을 묻지 않는다). 숫자 문자열 키는
     Ninja 가 정수 키 항목과 따로 남겨 문서에서 몸통 · `description` 이 사라지므로 성공 · 오류
     모두 위반이고, 변수 · 상수 표현식 키 · `**` · 중첩 responses · 비-Dict 도 위반이다."""
     responses = _top_level_responses(extra)
@@ -3612,11 +3648,14 @@ def _supplement_problems(extra: ast.AST, declared: set[int]) -> list[str]:
         if status not in declared:
             problems.append(f"status {status} — `response=` 에 선언되지 않았다")
             continue
-        if 400 <= status <= 599 and not (
-            isinstance(value, ast.Dict)
-            and len(value.keys) == 1
-            and isinstance(value.keys[0], ast.Constant)
-            and value.keys[0].value == "headers"
+        if not 400 <= status <= 599:
+            continue
+        entry = _resolved_extra(value, tree)
+        if not (
+            entry is not None
+            and len(entry.keys) == 1
+            and isinstance(entry.keys[0], ast.Constant)
+            and entry.keys[0].value == "headers"
         ):
             problems.append(f"오류 status {status} 에는 `headers` 칸 하나만 보충한다")
     return problems
@@ -3642,9 +3681,13 @@ def _declared_response_statuses(
     return statuses
 
 
-def _header_supplement(extra: ast.AST | None, tree: ast.Module | None = None) -> dict[int, set[str]] | None:
-    """머리 보충 — status → 머리 이름(소문자). `headers` 값이 같은 모듈 맨 위에서 한 번 묶인 글자 Dict 이름이면 푼다.
-    글자로 읽지 못하면 None."""
+def _header_supplement(
+    extra: ast.AST | None, tree: ast.Module | None = None
+) -> dict[int, set[str] | None] | None:
+    """머리 보충 — 오류 status(400–599) → 머리 이름(소문자). 그 status 칸 값과 `headers` 값이 같은 모듈 맨 위에서 한 번
+    묶이고 뒤에서 고치지 않는 글자 Dict 이름이면 푼다(`_resolved_extra`). 바깥(`openapi_extra` · `responses` 값 · 정수 글자 아닌 키)을 글자로 읽지 못하면 None,
+    한 오류 status 의 칸 값 · `headers` 값 · 머리 키를 읽지 못하면 그 status 만 None. 성공 status 칸은 머리 판정(f) 밖이라
+    읽지 않는다(못 읽어도 다른 status 판정은 그대로)."""
     if extra is None:
         return {}
     if not isinstance(extra, ast.Dict):
@@ -3654,24 +3697,32 @@ def _header_supplement(extra: ast.AST | None, tree: ast.Module | None = None) ->
     responses = _top_level_responses(extra)
     if not isinstance(responses, ast.Dict):
         return None
-    supplement: dict[int, set[str]] = {}
+    supplement: dict[int, set[str] | None] = {}
     for status_key, value in zip(responses.keys, responses.values):
         status = _int_status_key(status_key)
-        if status is None or not isinstance(value, ast.Dict):
+        if status is None:
             return None
-        names: set[str] = set()
-        for key, item in zip(value.keys, value.values):
-            if not (isinstance(key, ast.Constant) and key.value == "headers"):
-                continue
-            item = _resolved_extra(item, tree)
-            if item is None:
-                return None
-            for header in item.keys:
-                if not (isinstance(header, ast.Constant) and isinstance(header.value, str)):
-                    return None
-                names.add(header.value.lower())
-        supplement[status] = names
+        if 400 <= status <= 599:
+            supplement[status] = _status_header_names(_resolved_extra(value, tree), tree)
     return supplement
+
+
+def _status_header_names(entry: ast.Dict | None, tree: ast.Module | None) -> set[str] | None:
+    """한 오류 status 칸의 머리 이름(소문자) — 칸 값 · `headers` 값 · 머리 키를 글자로 읽지 못하면 None."""
+    if entry is None:
+        return None
+    names: set[str] = set()
+    for key, item in zip(entry.keys, entry.values):
+        if not (isinstance(key, ast.Constant) and key.value == "headers"):
+            continue
+        headers = _resolved_extra(item, tree)
+        if headers is None:
+            return None
+        for header in headers.keys:
+            if not (isinstance(header, ast.Constant) and isinstance(header.value, str)):
+                return None
+            names.add(header.value.lower())
+    return names
 
 
 def _tree_slice63(root: Path) -> tuple[Findings, list[tuple[str, str, int]]]:
@@ -5648,6 +5699,7 @@ def _header_findings(
         status = resolve_status(last.value, block, operation)  # type: ignore[arg-type]
         if status is not None and not 400 <= status <= 599:
             return  # 성공 쪽 머리는 f 밖
+        documented = None if supplement is None or status is None else supplement.get(status, set())
         for statement, header, definite in headers:
             if header is not None and header.lower() in CACHE_DIRECTIVE_HEADERS:
                 continue
@@ -5655,9 +5707,9 @@ def _header_findings(
                 message = "주입 응답에 싣는 머리 이름을 글자로 읽지 못했다"
             elif status is None:
                 message = f"머리 `{header}` — 그 branch 마지막 `Status` 의 status 를 글자로 읽지 못했다"
-            elif supplement is None:
+            elif documented is None:
                 message = f"머리 `{header}` — `openapi_extra` 머리 보충을 글자로 읽지 못했다"
-            elif header.lower() in supplement.get(status, set()):
+            elif header.lower() in documented:
                 continue
             elif not definite:
                 message = (

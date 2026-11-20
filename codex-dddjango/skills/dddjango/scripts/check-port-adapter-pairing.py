@@ -6,8 +6,11 @@
          하나=폴더 하나(직계 파일 금지) · #216 안은 계약·자료·실패 셋 · #218 파일명=폴더명 ·
          #219 추상 인터페이스 하나 · #220 <Capability>Port · #225 exception.py 필수 ·
          #64 포트 예외는 도메인 예외 비상속 · #214 애그리거트 리포지토리 선언은 여기 금지 ·
-         #227[ast+] 자료는 원시값으로 안 될 때만(후보) · #228 <data>_in/_out 에 도메인·
-         유스케이스 DTO 금지(토큰 검사 ✗ — predicates ⓐ) · #573 방향(_in/_out) 이름 교차 ·
+         #227[ast+] 자료는 원시값으로 안 될 때만(후보) · #228 <data>_in/_out 에 유스케이스 DTO
+         금지 · domain_layer 에서는 값 객체 칸(`<aggregate>.value_object.<모듈…>` · `shared_value_object.<모듈…>`)의
+         것만(R-0589 — 애그리거트 · 엔티티 · 이벤트 · 저장소 · 예외 · 도메인 서비스 · 칸 꾸러미째 · 꾸러미 다시 내보내기 ✗ ·
+         `import` 꼴 · 상대 import · `from X import <하위 모듈>` 도 모듈 경로로 푼다 · 다른 BC 는 #12 몫 · 2026-11-20
+         F4-197 · 토큰 검사 ✗ — predicates ⓐ) · #573 방향(_in/_out) 이름 교차 ·
          #485[ast+] 메서드는 의도(확정: notify·handle·execute… / 후보: 아는 동사 · 묻는 꼴 밖이고
          원시 값 · Enum 반환 선언이 아니거나 모호 동사 머리) ·
          #594[ast+] 폴더 이름에 누가·언제·어떻게 금지(#595 확정: 기술 이름 정확 일치) ·
@@ -458,14 +461,54 @@ def _imported_names(mod: ast.Module, chain: "tuple[str, ...]", origins: "set[str
     return names
 
 
+# #228 — domain_layer 바로 아래에서 애그리거트 자리가 아닌 고정 폴더(표준 트리 72 · 74행).
+DOMAIN_FIXED_DIRS: "frozenset[str]" = frozenset({"shared_value_object", "domain_service"})
+
+
+def _import_targets(root: Path, py: Path, node: "ast.Import | ast.ImportFrom") -> "list[str]":
+    """#228 — import 한 문장이 들여오는 모듈의 점 이름들. `import a.b` 는 `a.b` · `from X import n` 은 `n` 이 X 아래
+    모듈 · 꾸러미(`n.py` 파일 · `n/` 폴더 — 대소문자를 가리지 않는 파일 시스템에서도 글자 그대로)면 `X.n`, 아니면 `X`.
+    상대 import 는 그 파일의 꾸러미 자리에서 뿌리 기준 점 이름으로 푼다(뿌리를 벗어나면 적힌 모듈 이름 그대로)."""
+    if isinstance(node, ast.Import):
+        return [alias.name for alias in node.names]
+    parts: "list[str]" = node.module.split(".") if node.module else []
+    if node.level:
+        pkg: "tuple[str, ...]" = py.relative_to(root).parts[:-1]
+        if node.level - 1 <= len(pkg):
+            parts = [*pkg[:len(pkg) - node.level + 1], *parts]
+    folder: Path = root.joinpath(*parts)
+    children: "set[str]" = {p.name for p in folder.iterdir()} if folder.is_dir() else set()
+    targets: "list[str]" = []
+    for alias in node.names:
+        submodule: bool = f"{alias.name}.py" in children or (alias.name in children and (folder / alias.name).is_dir())
+        targets.append(".".join([*parts, alias.name] if submodule else parts))
+    return targets
+
+
+def _value_object_module(dotted: str) -> bool:
+    """#228 — 점 이름이 domain_layer 의 값 객체 칸 모듈인가: `…domain_layer.<aggregate>.value_object.<모듈…>` ·
+    `…domain_layer.shared_value_object.<모듈…>`. 칸 꾸러미째(`…value_object` — `__init__` 이 다시 내보낸 이름 포함) ·
+    domain_layer 꾸러미째 · 칸 밖 마디(애그리거트 뿌리 · entity · event · exception · 저장소 · domain_service)는 아니다."""
+    parts: "list[str]" = dotted.split(".")
+    if "domain_layer" not in parts:
+        return False
+    rest: "list[str]" = parts[parts.index("domain_layer") + 1:]
+    if rest[:1] == ["shared_value_object"]:
+        return len(rest) >= 2
+    return len(rest) >= 3 and rest[0] not in DOMAIN_FIXED_DIRS and rest[1] == "value_object"
+
+
 def _check_port_data(root: Path, py: Path, mod: ast.Module, f: Findings, cand: Candidates) -> None:
     for node in ast.walk(mod):
+        if isinstance(node, (ast.Import, ast.ImportFrom)) and any(
+                "domain_layer" in target and not _value_object_module(target)
+                for target in _import_targets(root, py, node)):
+            f.add("#228", _rel(root, py, node.lineno),
+                  "<data> 파일이 domain_layer 의 값 객체 칸 밖(애그리거트 · 엔티티 · 이벤트 · 저장소 · 예외 · 도메인 "
+                  "서비스)을 import 한다 — `domain_layer` 에서는 `value_object/` · `shared_value_object/` 의 것만 "
+                  "싣는다(R-0589)")
         if isinstance(node, ast.ImportFrom):
             m = node.module or ""
-            if "domain_layer" in m:
-                f.add("#228", _rel(root, py, node.lineno),
-                      "<data> 파일이 domain_layer 를 import 한다 — 업무 어휘가 포트 밖으로 새면 "
-                      "안 된다(필요한 값은 «펴서» 싣는다 · 값 객체 «모양»은 #227 이 허용)")
             if m.endswith(("_command", "_query", "_result")) or "_use_case" in m:
                 f.add("#228", _rel(root, py, node.lineno),
                       "<data> 파일이 유스케이스 어휘를 참조한다 — 여기는 «이름 붙인 정적 타입»이다")

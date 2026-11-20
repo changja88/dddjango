@@ -231,6 +231,14 @@ def _run(script: Path, target: Path, extra: "list[str]") -> "tuple[int, str]":
 _TREE_SHA: "re.Pattern[str]" = re.compile(r"(standard_tree )[0-9a-f]{16}\b")
 
 
+def _help_words(text: str) -> str:
+    """argparse 도움말의 줄 접힘을 접은 글자 — 새 인자 칸을 뺀 뒤 나머지 낱말 차례만 대조할 때."""
+    return " ".join(text.split())
+
+
+_NEW_HELP_FLAG: "re.Pattern[str]" = re.compile(r"\[?--auth-failure AUTH_FAILURE\]? ?")
+
+
 def _section(out: str, title: str) -> set[str]:
     match = re.search(rf"^  == {re.escape(title)}.*?\n(.*?)(?=^  == |^판정:|\Z)", out, re.S | re.M)
     return {line.strip() for line in match.group(1).splitlines()} if match else set()
@@ -1865,7 +1873,13 @@ class ApprovedInflowPartitionRegression(unittest.TestCase):
                 _install_pre_route(r.write)
             for argv in (["--help"], ["--ap", "config/api.py"], ["--anchor", anchor]):
                 with self.subTest(script=script.name, argv=argv):
-                    self.assertEqual(_run(script, r.root, argv), _run(old / "dddjango/scripts" / script.name, r.root, argv))
+                    new_run: "tuple[int, str]" = _run(script, r.root, argv)
+                    old_run: "tuple[int, str]" = _run(old / "dddjango/scripts" / script.name, r.root, argv)
+                    if script is CONTRACT and argv == ["--help"]:
+                        # 2.43.0 — `--auth-failure` 는 옛 판에 없는 새 인자다 · 공백을 접고 usage · options 의 그 칸만 빼 나머지를 대조한다.
+                        new_run = (new_run[0], _NEW_HELP_FLAG.sub("", _help_words(new_run[1])))
+                        old_run = (old_run[0], _help_words(old_run[1]))
+                    self.assertEqual(new_run, old_run)
             if script is OPENAPI:
                 r.write("config/api.py", plain_api)
                 r.rm("framework/ninja/pre_route_responses.py")

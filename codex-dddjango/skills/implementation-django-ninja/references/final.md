@@ -109,7 +109,7 @@ Django Ninja는 `NinjaAPI`와 `Router`를 통해 path operation을 등록한다.
 Django Ninja operation은 decorator의 HTTP method, path, response 선언,
 operation 함수의 typed parameters로 API contract를 만든다. 여러 status code가
 가능한 경우 `response={status: Schema}` 형태로 성공/오류 schema를 분리한다. 한 status 의
-성공 본문이 둘 이상의 모양이면 `response={200: A | B}` 익명 union 을 적지 않는다 — 이름 붙은
+JSON 성공 본문이 둘 이상의 모양이면 `response={200: A | B}` 익명 union 을 적지 않는다 — 이름 붙은
 컴포넌트와 discriminator 를 잃어 계약이 바뀐다(`architecture-api` §5.2) · §3.1 의 `RootModel` 하나를 선언한다.
 
 > **형태 선택.** 신규 표준 presentation 표면은 §2.3의 ninja-extra 클래스 컨트롤러다.
@@ -136,12 +136,14 @@ Operation 구현 기준:
   리터럴 키만 받는다 — 성공·리다이렉트 status(100–399)는 메타데이터 보충(header 문서화 등),
   오류 status 는 `headers` 만(머리 보충 — 설명 · 몸통을 바꾸지 않는다)이다. 숫자 문자열 키 ·
   변수/상수 키 · `**` splat 은 성공 · 오류 모두 위반이다(fail-closed — 2026-11-13).
+  - 스트리밍 성공(`response=` 에 그 성공 status 를 `None`)의 프레임 설명서는 그 성공 status 칸
+    `content."text/event-stream".schema` 에 적는 메타데이터 보충이다(§6.2 «스트림 설명서 보충»).
 - known 도메인 예외는 컨트롤러가 구체적으로 catch하고(응용 예외는 포트 예외(바깥 행위자의 죽음)뿐이고 유스케이스가 도메인 예외로 번역해 넘긴다), 준비된
   concrete `ErrorSchema`(무인자 · 또는 설명 칸 keyword 하나 — §6.2 사건 값)를
-  `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 오류
+  `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다(인증 틀 뒤 인증 실패는 §6.2 «인증 틀 뒤 인증 실패»). 오류
   `(status, schema)` tuple, raw `Response`/dict, 오류 helper/factory/serializer/mapper,
   등록 handler/decorator로 우회하지 않는다(§6.2).
-- `dddjango-code-json` 표면에서 빈 값 · 범위 같은 입력 확인은 입력 Schema 선언(`Field` 제약 · `Query` · `Header` · `Path`)으로 둔다 — 응답은 framework 422 다. operation 본문에서 application call 앞의 분기로 오류를 반환하거나 raise 하지 않는다(§6.3 의 `raise HttpError(406)` · `raise HttpError(415)` 만 예외). 로그인과 권한은 framework 인증 틀(§4)이, 요청의 뜻 판정은 유스케이스가 맡는다(controller 는 그 뒤에 catch 한다). 승인된 `400` 을 바꾸는 일은 G1 에서 계약 변경(`400` → `422`) 또는 사용자 승인 빚 목록으로 간다.
+- `dddjango-code-json` 표면에서 빈 값 · 범위 같은 입력 확인은 입력 Schema 선언(`Field` 제약 · `Query` · `Header` · `Path`)으로 둔다 — 응답은 framework 422 다. operation 본문에서 application call 앞의 분기로 오류를 반환하거나 raise 하지 않는다(§6.3 의 `raise HttpError(406)` · `raise HttpError(415)` 만 예외). 로그인과 권한은 framework 인증 틀(§4)이(인증 틀 뒤 인증 실패 — Ninja 기본 401 행이 적는다), 요청의 뜻 판정은 유스케이스가 맡는다(controller 는 그 뒤에 catch 한다). 승인된 `400` 을 바꾸는 일은 G1 에서 계약 변경(`400` → `422`) 또는 사용자 승인 빚 목록으로 간다.
 - **operation을 문서화한다** — `summary`·`description`·`tags`를 decorator 인자로 주어 Swagger UI의 그룹과 설명을 채운다. 외부 client가 읽는 계약 문서다.
 - **반환 타입을 명시한다** — `-> object`처럼 정보 없는 타입을 쓰지 않는다. 직렬화 자체는 `response=`가 결정하지만, 반환 타입 annotation은 사람·mypy를 위한 계약 표현이다. 직접 반환하는 성공 Schema와 BC `ErrorSchema`/`Status`를 실제 흐름에 맞게 표현한다. **반환 주석의 `Status` 상자는 하나다** — `-> Status[Out | ErrA | ErrB]`(성공·오류 union 을 한 `Status` 안에) 또는 `-> Out | Status[Err]`. `Status[A] | Status[B]`(상자 둘)는 쓰지 않는다: `Status[T]` 의 `T` 는 불변이라 concrete 값을 직접 넣는 순간 mypy strict 가 `[return-value]` 로 막히고, 값 변수를 base 로 주석해 통과시킨 형태도 같은 금지다 — 형태 자체를 금지한다(#648).
 - 선언된 JSON 성공은 Schema 또는 `Status`로 반환한다. `FileResponse`,
@@ -156,6 +158,8 @@ Operation은 10번 slot이 승인한 **한 경로**를 선택한다.
   만든 뒤 두 인자 `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다 — 잡은 예외의
   승인 필드 값(사건 값)은 설명 칸과 머리 값에만 싣고, 값 유무로 가를 때만 사건 값 한 꼴 분기를
   쓴다(§6.2). 성공 변환은 `try` 뒤에 둔다.
+  - 인증 틀 뒤 인증 실패(slot 10 «인증 실패(Ninja 401)» 예외)를 잡은 catch 는 `raise AuthenticationError()` 한
+    문장이다 — `Status` 를 반환하지 않고 `response=` 에 401 을 적지 않는다(§6.2 «인증 틀 뒤 인증 실패»).
 - **`None` path:** 조회 use case가 대상이 없어 `None`을 돌려주는 경우에만 쓴다. application call을
   정확히 한 번 한 뒤, `try` 없이 call 바로 다음 `if result is None:`에서 같은 ErrorSchema/header/두 인자
   `Status` 구성을 직접 수행한다. 실패가 둘 이상이거나 사유가 있으면 exception path다 — 실패를 Result
@@ -491,11 +495,20 @@ operation 수준에 auth를 연결할 수 있다. 프로젝트의 기존 auth me
 
 - API credential은 `Authorization` header 같은 header 기반 전달을 우선한다.
 - secret을 query parameter에 넣지 않는다.
-- 인증 실패 또는 인증 필요는 `401`로 응답한다.
+- 인증 실패 또는 인증 필요(인증 정보 없음 · 무효 · 인증 틀 뒤에 알게 된 인증 실패)는 `401`로 응답한다 — 403 으로
+  답하지 않는다. 403 은 인증 실패를 뜻하지 않는다(인증된 주체의 권한 부족 · CSRF · 출처 같은 요청 거절에 쓴다).
+  확립된 계약이 로그인 필요를 403 으로 답해 왔어도 `architecture-api` §5.4 ① 의 보존 대상이 아니다 — 401 로
+  바꾸는 것은 밖 동작 변경(받는 쪽 맞춤 동반)이다: 리팩토링은 바뀌는 것 목록(영향 칸에 받는 쪽)으로 올린다. 기능
+  요청은 이미 있는 로그인 필요 403 을 바꾸지 않는다 — 리뷰어는 그것을 발견이 아니라 nit(`G1 전 닫기: 아니오` — 그
+  BC 리팩토링 몫)로 적는다(G1 배너 «미반영 minor·nit» 와 G2 감수 리포트로 간다) · 기능 요청이 새로 짓는
+  operation 은 401 이다.
 - auth adapter는 성공 시 identity/principal을 반환한다. 실패는 `None`을 반환하거나
   framework `AuthenticationError`를 raise한다.
 - `ErrorSchema`를 auth 결과로 반환하거나 `request.auth`에 저장하지 않는다. framework 401을
   BC 식별자 body로 바꾸는 전역 변환도 추가하지 않는다(§6.2).
+- 인증 틀이 있는 operation 에서 유스케이스가 로그인이 필요함을 알린 예외(slot 10 «인증 실패(Ninja 401)»)를 잡은
+  catch 는 `raise AuthenticationError()` 한 문장으로 Ninja 401 을 낸다 — BC 401 · 403 으로 바꾸지 않는다(§6.2
+  «인증 틀 뒤 인증 실패»).
 - local development를 제외한 API traffic은 HTTPS를 전제로 한다.
 - 내부 창구(`/internal/…` — §2.3)는 앞단 안쪽 사설망에서 부르면 http 로 받아도 된다 — 부르는 서버 · 사설망 ·
   앞단 차단의 근거를 G1 명세(slot 2)에 적는다. 사설망에서 http 로 부르는 프로젝트가 앱의 HTTPS 강제
@@ -749,6 +762,13 @@ dictionary unpacking, builder, factory, mapping table로 field 작성을 우회�
    두 인자 `Status(<승인된 HTTP status 표현>, error)`를 직접 반환한다 — 잡은 예외의 승인 필드
    값(사건 값)은 설명 칸과 머리 값에만 싣고, 값 유무로 가를 때만 아래 사건 값 한 꼴 분기를 쓴다. status 표현은 literal/Ninja
    status 상수 또는 slot 6이 실제로 승인한 body field 접근일 수 있다. 성공 변환은 `try` 뒤에 둔다.
+   - **인증 틀 뒤 인증 실패.** 인증 틀이 있는 operation 에서 유스케이스가 하위 서버 답 · 세션 확인으로 로그인이
+     필요함을 알린 구체 예외(slot 10 이 «인증 실패(Ninja 401)» 로 승인한 예외 하나)를 잡으면 그 catch
+     (`except <그 예외>:` — 튜플 · `as` 없음) 본문은 `raise AuthenticationError()`(`ninja.errors` · 인자 없음 — 호출 없이
+     이름만 써도 · `from None` 을 붙여도 된다) 한 문장이다 — 위 두 인자 `Status` 직접 반환 · `HttpError` forwarding
+     금지의 예외다. 인자를 주면 몸통이 경로 앞 응답의 Ninja 기본 401 행과 달라진다. 이 401 은 Ninja 기본 경로 앞 응답
+     행이 이미 문서에 적으므로 `response=` 에 401 을 적지 않고 프로젝트 표 `operations` 행도 두지 않는다. BC 401
+     (`Status(401, …)`) · 403 으로 바꾸지 않는다.
 2. **`None` path:** 조회 use case가 대상이 없어 `None`을 돌려주는 경우에만 쓴다. 입력 Schema를
    준비한 뒤 application call을 정확히 한 번 하고, `try` 없이 call 바로 다음 `if result is None:`
    branch에서 같은 ErrorSchema/header/두 인자 Status 구성을 직접 수행하며, 성공 변환은 그 branch
@@ -914,7 +934,8 @@ handler 등록 decorator, generic response builder를 만들거나 호출하지 
 **framework 오류 경계.** 인증 401, 인가 403, route 404, request validation 422,
 throttling 429, 일반 `HttpError`, 미식별 500은 framework가 소유한다. 새 code-profile은
 이를 BC `ErrorSchema`/`<Bc>ErrorCode`로 바꾸지 않으며, 전역 handler나 catch-all mapper로
-가로채지 않는다. 깨진 JSON과 framework validation body도 정확하고 안정적인
+가로채지 않는다(컨트롤러의 `raise AuthenticationError()` — 위 «인증 틀 뒤 인증 실패» — 는 framework 401 을
+그대로 내는 길이라 BC 전환도 가로채기도 아니다). 깨진 JSON과 framework validation body도 정확하고 안정적인
 `dddjango-code-json` wire contract라고 주장하지 않는다. framework status를 특정 BC의
 `response={...}`에 광고하지 않고 BC 오류로 바꾸지 않는다 — 그 가운데 경로 앞에서 나는 의도된 답만
 문서에 경로 앞 응답으로 관찰된 꼴 그대로 적는다(아래 «경로 앞 응답»).
@@ -960,6 +981,11 @@ framework status는 `response=`에 BC 오류로도 다른 Schema 로도 선언�
 성공 항목의 content/schema 기입은 기계 판정 밖이다 — `response=` 선언과의 문서 정합은
 리뷰어 소관. 공개 OpenAPI
 후보가 중앙 입장 심사에서 `add/update`이면 mounted API의 생성 문서에서 status별로 선언한 오류 schema를 확인한다.
+
+**스트림 설명서 보충.** Ninja 가 OpenAPI 3.1.0 을 내는 동안 스트리밍 성공(`response=` 에 그 성공 status 를 `None` 으로
+선언)의 프레임 설명서는 `openapi_extra` 그 성공 status 칸의 `content."text/event-stream".schema` 에 적는다 — 메타데이터
+보충에 든다(`architecture-api` §5.2 «스트리밍 응답 설명서 꼴»). Ninja 1.7 의 내장 `SSE[T]` 는 오류 status 와 함께
+선언되지 않고 `event:` 줄을 내지 않아 이 꼴을 대신하지 못한다.
 
 **경로 앞 응답.** 경로 코드보다 먼저 답하는 쪽 — Ninja 인증 401 · CSRF 403 · 권한 403 · throttle 429 ·
 몸통 400 · 입력 422, Django 몸통 · 쿼리 칸 수 상한 400, 응답을 직접 만드는 미들웨어(서드파티 포함), 앞단(nginx 등) —
@@ -1057,9 +1083,11 @@ transient 미들웨어 등)는 API 경로에도 답하므로 이 목록에 넣�
 정수 리터럴이다 — 숫자 문자열 키(`"503"`)는 Ninja 가 정수 키 항목과 따로 남겨 문서에서 그 응답의 몸통 · 설명이
 사라지고(섞인 키는 `export_openapi_schema --sorted` 도 죽인다), 숫자 문자열 키 · 변수 키 · `**` 는 성공 · 오류 모두
 위반이다. `openapi_extra=` 의 값은 (응답 보충이 없어도) 글자 Dict 이거나 같은 모듈 맨 위에서 한 번 묶은 글자 Dict
-상수다 — import 한 상수 · 도움 함수 호출 값은 검사기가 보충을 가릴 수 없어 막는다. `headers` 의 값도 글자 Dict
-이거나 같은 모듈 맨 위에서 한 번 묶은 글자 Dict 상수로 둔다 — 그 밖의 꼴은 검사기가 머리를 읽지 못해 사람이 볼
-ⓓ 후보 줄이 선다. 주입 응답에 싣는 머리 이름은 그 머리를 실은 뒤 반환하는 오류 status 의 머리 보충에 있어야
+상수다 — import 한 상수 · 도움 함수 호출 값은 검사기가 보충을 가릴 수 없어 막는다. 응답 보충의
+오류 status 칸 값도 글자 Dict 이거나 같은 모듈 맨 위에서 한 번 묶은 글자 Dict 상수다(그 밖은 위반) — 그 `headers`
+값도 같은 꼴로 둔다: 검사기가 그 값을 읽지 못하면 그 status 의 머리만 사람이 볼 ⓓ 후보가 된다. 성공 status 칸의
+값(스트림 설명서 등)은 머리 판정 밖이라 꼴을 묻지 않는다(키 규칙은 그대로) — 두 경로가 같은 설명서를 쓰면 상수
+하나를 함께 쓴다. 주입 응답에 싣는 머리 이름은 그 머리를 실은 뒤 반환하는 오류 status 의 머리 보충에 있어야
 한다. 캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)는 오류 문서에 적지 않아도 된다 — 모든 응답에 붙는
 공통 지시라 오류 내용이 아니다(설명 글에 적는 것은 그대로) · 검사기도 대조하지 않는다. 머리 `description` 에 이름 ·
 값 꼴 · 값 없음(생략)의 뜻 · 소비법을 적는다.

@@ -2335,6 +2335,11 @@ FIELD_KIND: str = "칸"
 _FIELD_HEAD: "re.Pattern[str]" = re.compile(r"\s*재조직\s*[—–-]\s*칸\s+개명\s+(?=`?[\w./-]+\.py::)")
 _FIELD_RENAME: "re.Pattern[str]" = re.compile(
     r"([\w./-]+\.py)::([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*(?:→|->)\s*([A-Za-z_]\w*)")
+# 네 번째 꼴 «옮김»(시험 파일 나누기 · 모으기) — `재조직 — 옮김 <옛 경로>::<최상위 이름> → <새 경로>` · owner/path = 옛 경로 · 한 행에
+# 하나 · 단위 = 시험 쪽 파일의 최상위 함수(케이스 · 도움 함수 · 픽스처) 또는 최상위 클래스 통째 · 옛 · 새 경로는 같은 폴더의 시험 쪽
+# 경로. 스냅숏 `retain_rows[].moves`(개명과 따로) — behavior_guard 0T 가 받는다(0C · 0F · 변경 창 몫이면 red).
+_MOVE_HEAD: "re.Pattern[str]" = re.compile(r"\s*재조직\s*[—–-]\s*옮김\s+(?=`?[\w./-]+\.py::)")
+_MOVE: "re.Pattern[str]" = re.compile(r"([\w./-]+\.py)::([A-Za-z_]\w*)\s*(?:→|->)\s*([\w./-]+\.py)")
 UPDATE_DECISION: str = "update"
 REMOVE_DECISION: str = "remove"
 
@@ -2789,6 +2794,53 @@ def _field_item(row: AdmissionRow, rest: str) -> "tuple[dict | None, str]":
     return {"kind": FIELD_KIND, "path": path, "source": source, "class": m.group(2), "old": m.group(3), "new": m.group(4)}, ""
 
 
+def _move_item(row: AdmissionRow) -> "tuple[dict | None, str]":
+    """retain 재조직 행의 «옮김» 항목(G1 스냅숏 `retain_rows[].moves` 원소 — behavior_guard 0T 가 받는다) — (항목, red 사유). 옮김 행이
+    아니면 (None, ""). 항목 = {path 옛 경로, name 최상위 이름, to 새 경로}. 꼴 밖(한 행에 하나) · 옛 = 새 · 저장소 밖 경로 · 시험 쪽
+    경로 아님 · 다른 폴더 · owner/path 파일 ≠ 옛 경로면 red. 단위가 그 파일 최상위 정의인지 · 원문 · 묶임이 같은지는 behavior_guard 가
+    창에서 본다."""
+    head = _MOVE_HEAD.match(row.candidate)
+    if head is None:
+        return None, ""
+    m = _MOVE.fullmatch(row.candidate[head.end():].replace("`", "").strip())
+    if m is None:
+        return None, (f"옮김 행 꼴 밖 — «{row.candidate[:80]}» 가 `재조직 — 옮김 <옛 경로>::<최상위 이름> → <새 경로>` 가 아니다"
+                      "(최상위 함수 · 클래스 하나 · 한 행에 하나)")
+    old, new = (os.path.normpath(x).replace(os.sep, "/") for x in (m.group(1), m.group(3)))
+    for where in (old, new):
+        if where == ".." or where.startswith(("../", "/")):
+            return None, f"옮김 행 꼴 밖 — «{row.candidate[:80]}» 경로 `{where}` 가 저장소 상대 경로가 아니다"
+        if not _is_test_path(where):
+            return None, f"옮김 행 꼴 밖 — «{row.candidate[:80]}» 경로 `{where}` 가 시험 쪽 경로가 아니다(시험 파일 · conftest.py)"
+    if old == new:
+        return None, f"옮김 행 꼴 밖 — «{row.candidate[:80]}» 옛 경로 = 새 경로"
+    if old.rpartition("/")[0] != new.rpartition("/")[0]:
+        return None, (f"옮김 행 꼴 밖 — «{row.candidate[:80]}» 옛 · 새 경로가 다른 폴더다(같은 폴더 안에서만 — 같은 conftest 사슬)")
+    if os.path.normpath(row.path or "").replace(os.sep, "/") != old:
+        return None, f"옮김 행 owner/path 파일 `{row.path}` ≠ 옮김 옛 경로 `{old}`"
+    return {"path": old, "name": m.group(2), "to": new}, ""
+
+
+def _move_duplicates(moves: "list[dict]", renames: "list[dict]") -> "list[str]":
+    """같은 옮김 행 두 번 · 한 단위(옛 경로 · 최상위 이름)에 옮김 행 둘 · 옮기는 단위에 개명 행(케이스 · ids — 단위 안 케이스의 개명)
+    → red(옮김은 원문 그대로 · 한 단위를 한 곳으로만 — 옮긴 단위의 개명은 옮긴 뒤 창에서 새 경로로 적은 개명 행으로)."""
+    reds: "list[str]" = []
+    seen: "dict[tuple[str, str], dict]" = {}
+    for it in moves:
+        first: dict = seen.setdefault((it["path"], it["name"]), it)
+        if first is not it:
+            text: str = "같은 옮김 행이 두 번" if first == it else "한 단위에 옮김 행 둘"
+            reds.append(f"옮김 행 꼴 밖 — {text}: `{it['path']}::{it['name']}` → `{first['to']}` · `{it['to']}`")
+    for it in renames:
+        if it.get("kind") == FIELD_KIND:
+            continue
+        unit: str = str(it.get("class") or (it.get("case") if it.get("kind") == "ids" else it["old"])).split("::")[0]
+        if (it["path"], unit) in seen:
+            reds.append(f"옮김 행 꼴 밖 — 옮기는 단위 `{it['path']}::{unit}` 에 개명 행(옮김은 원문 그대로 — 옮긴 단위의 개명은 옮긴 뒤 "
+                        "창에서 새 경로로 적은 개명 행으로)")
+    return reds
+
+
 def _row_v(row_text: str, case: str, links: "list[tuple[str, str, str]]") -> "str | None":
     """입장 행(표 행 원문)이 딸린 V — 그 행을 가리키는 `시험:` 줄(V id, 입장 행, 케이스) 가운데 케이스가 같은 것이 먼저,
     없으면 그 행을 가리키는 첫 V · 어느 V 도 가리키지 않으면 None."""
@@ -2861,7 +2913,8 @@ def _support_binding(folder: Path) -> "tuple[str, str]":
 
 
 class SpecChanges:
-    """명세(승인판)에서 읽은 G1 결속 재료 — V · 다른 BC 편집 · 입장 표 · retain 재조직 행(«개명» 행은 `renames`) · update 행."""
+    """명세(승인판)에서 읽은 G1 결속 재료 — V · 다른 BC 편집 · 입장 표 · retain 재조직 행(«개명» 행은 `renames` · «옮김» 행은
+    `moves`) · update 행."""
 
     def __init__(self, folder: Path) -> None:
         self.spec: Path = folder / "design-spec.md"
@@ -2878,7 +2931,8 @@ class SpecChanges:
                 if r.path is None:
                     self.reds.append(f"retain 재조직 행 «{r.candidate[:40]}» owner/path 에 파일 주소가 없다")
                     continue
-                item, why = _rename_item(r)
+                move, why = _move_item(r)
+                item, why = (None, why) if move is not None or why else _rename_item(r)
                 if why:
                     self.reds.append(why)
                     continue
@@ -2886,8 +2940,12 @@ class SpecChanges:
                 if item is not None:
                     entry["renames"] = [item]               # 키는 개명 행에만 — 개명 행 없는 명세는 digest 무변
                     renamed_rows.append((item, r.text))
+                if move is not None:
+                    entry["moves"] = [move]                 # 키는 옮김 행에만 — 옮김 행 없는 명세는 digest 무변
                 self.retain.append(entry)
         self.reds += _rename_duplicates([it for r in self.retain for it in r.get("renames", [])])
+        self.reds += _move_duplicates([it for r in self.retain for it in r.get("moves", [])],
+                                      [it for r in self.retain for it in r.get("renames", [])])
         self.reds += _rename_row_clashes(renamed_rows, [(d, it) for d in (UPDATE_DECISION, REMOVE_DECISION)
                                                         for it in _update_items([r for r in self.rows if r.decision == d], [])])
 
@@ -3154,12 +3212,22 @@ def _window_elements(snap: dict) -> "dict[tuple, list[tuple[str, object]]]":
     return out
 
 
+ALLOW_ADDED_KEYS: "tuple[str, ...]" = ("retain_alias", "moves")   # 2.43.0 이 허용 표에 더한 칸
+
+
+def _same_allow(rebuilt: dict, opened: dict) -> bool:
+    """되살린 허용 표가 창 open 의 허용 표와 같은가 — open 기록에 없는 2.43.0 칸(`ALLOW_ADDED_KEYS`)은 빼고 대조한다(그 칸 없이 연
+    옛 판 창 기록 — 옛 판은 그 칸 없이 더 좁게 판정했다)."""
+    return {k: v for k, v in rebuilt.items() if k in opened or k not in ALLOW_ADDED_KEYS} == opened
+
+
 def _closed_windows(folder: Path, upto: "int | None") -> "list[_PastWindow]":
     """이 실행의 쓸 수 있는 닫힌 변경 창(F-B1R-5 · 설계 v2 §1-1 · §1-2) — 번호(정수) 차례 · 열린 창(그리고 `upto`) 앞만.
 
     닫힌 창 = 마지막 close 판정 green · audit · 그 마지막 close 가 마지막 rebind 보다 엄격히 뒤(시각을 못 읽으면 안 씀). 그 창
     `g1_digest` 의 `G1 변경판 확정` 줄 → 후보 → `_expected_applied` 로 결속 판을 되살려 `allow_table` 이 open allow 와 같을 때만
-    쓴다(다르면 · 못 찾으면 안 씀). 증거로 쓰려던 open · close 가 JSON 이 아니거나 필수 칸 자료형이 틀리면 실행 불능이다."""
+    쓴다(다르면 · 못 찾으면 안 씀 · open 기록에 없는 2.43.0 칸은 대조 밖 — `_same_allow`). 증거로 쓰려던 open · close 가 JSON 이
+    아니거나 필수 칸 자료형이 틀리면 실행 불능이다."""
     m = re.search(r"실행 · G0 승인 (\S+)", _read(Path(folder) / "refactor-scope.md"))
     if not m:
         return []
@@ -3227,7 +3295,7 @@ def _closed_windows(folder: Path, upto: "int | None") -> "list[_PastWindow]":
             removed: "set[str]" = {v["id"] for v in cand.get("V", [])} - set(opened["allow"].get("V", []))
             rebuilt: dict = _expected_applied(cand, removed)
             guard = guard or _guard_module()
-            if guard.allow_table(rebuilt) == opened["allow"]:
+            if _same_allow(guard.allow_table(rebuilt), opened["allow"]):
                 snap = rebuilt
                 break
         if snap is None:
@@ -3292,6 +3360,29 @@ def _past_case_source(data: "bytes | None", name: str, where: str, rel: str) -> 
     return _case_source(data, name)
 
 
+def _key_spellings(folder: Path, spec: SpecChanges, case: str, upto: "int | None") -> "list[str]":
+    """시험 줄 케이스의 철자 — 적은 그대로 · 닫힌 앞 창(번호 < `upto` · 없으면 전부) 기록의 끝난 개명 · 옮김 · 통째 이동으로 접은 키
+    (behavior_guard 정규화 지도 `forward_key`) · 명세의 옮김 · 개명 행으로 되짚은 옛 키(옮기기 · 개명하기 전 기준 판). 뒤 창 행은 옮긴 ·
+    개명한 케이스의 옛 키 · 새 키 어느 쪽으로 적어도 같은 케이스를 가리킨다."""
+    guard = _guard_module()
+    try:
+        prior: "list[tuple[dict, dict]]" = [(o, c[-1]) for m, o, c in guard._windows(guard._run_dir(folder))
+                                            if c and (upto is None or m < upto)]
+    except (guard.RunError, OSError, ValueError, KeyError, TypeError):
+        prior = []
+    out: "list[str]" = [case, guard.forward_key(case, prior)]
+    path, _sep, rest = case.partition("::")
+    for r in spec.retain:
+        for m in r.get("moves", []):
+            if m["to"] == path and rest.split("::")[0] == m["name"]:
+                out.append(f"{m['path']}::{rest}")
+        for it in r.get("renames", []):
+            scope: str = f"{it['class']}::" if it.get("class") else ""
+            if it.get("kind") == "케이스" and it["path"] == path and rest == scope + it["new"]:
+                out.append(f"{path}::{scope}{it['old']}")
+    return list(dict.fromkeys(out))
+
+
 def _semantic_reds(project: Path, folder: Path, spec: SpecChanges,
                    baseline: "Path | None") -> "tuple[list[str], list[int]]":
     """시험 줄 입장 행 실재 · decision = 동사 · owner/path 파일 = 케이스 파일 · «바뀌는 기대» 원문 실재(기준 판) ·
@@ -3300,7 +3391,8 @@ def _semantic_reds(project: Path, folder: Path, spec: SpecChanges,
     기준 판은 원소마다 고른다(F-B1R-5 · 설계 v2 §1-3): 닫힌 변경 창에서 집행이 결속된 원소(같은 V id · 케이스 · 동사 · 옛 원문 —
     그 창 결속 판에서 모호하지 않고 그 창 마지막 close 가 소비함)는 번호가 가장 큰 그 창의 기준선 — ① 옛 원문 실재 ② add 케이스
     없음 ③ remove 케이스 있음 ④ 기대 추가의 케이스 있음. 그 밖은 `--baseline`(열린 창 open 기록 — 없으면 지금 시험). 쓸 수 있는
-    닫힌 창에서 집행된 원소는 지금 명세에 같은 꼴로 남아 있어야 한다(§1-4)."""
+    닫힌 창에서 집행된 원소는 지금 명세에 같은 꼴로 남아 있어야 한다(§1-4). 기준 판의 케이스는 시험 줄 철자 그대로 · 앞 창 기록으로
+    접은 키 · 명세 옮김 · 개명 행으로 되짚은 옛 키 가운데 그 판에 있는 것으로 읽는다(`_key_spellings`)."""
     reds: "list[str]" = []
     read = _baseline_reader(project, baseline)
     upto: "int | None" = None
@@ -3361,12 +3453,14 @@ def _semantic_reds(project: Path, folder: Path, spec: SpecChanges,
                     routed.append(w.n)
                 groups.setdefault(key, []).append(o if kind == "old" else None)
             for key, olds in sorted(groups.items()):
-                if key:
-                    body = _past_case_source(past_read(wins[key])(path), name, wins[key].where, path)
-                    where: str = f"닫힌 창 w{key} 기준선"
-                else:
-                    body = _case_source(read(path), name)
-                    where = "창 기준선" if baseline else "지금 시험"
+                body = None
+                for spelled in _key_spellings(folder, spec, t.case, key if key else upto):
+                    s_path, _sep, s_name = spelled.partition("::")
+                    body = (_past_case_source(past_read(wins[key])(s_path), s_name, wins[key].where, s_path) if key
+                            else _case_source(read(s_path), s_name))
+                    if body is not None:
+                        break
+                where: str = f"닫힌 창 w{key} 기준선" if key else "창 기준선" if baseline else "지금 시험"
                 if body is None:
                     reds.append(f"{tag} 케이스가 기준 판에 없다({where})")
                     continue
@@ -3914,9 +4008,11 @@ def cmd_changes(project: Path, folder: Path, mode: str, applied: "Path | None", 
     updates: "list[dict]" = spec.update_rows()
     removes: "list[dict]" = spec.decision_rows(REMOVE_DECISION)
     renamed: int = sum(1 for r in spec.retain if r.get("renames"))
+    moved: int = sum(1 for r in spec.retain if r.get("moves"))
+    reorg_parts: str = " · ".join(x for x in (f"개명 {renamed}" if renamed else "", f"옮김 {moved}" if moved else "") if x)
     print(f"요약: changes V {len(spec.v)}({' · '.join(f'{k} {n}' for k, n in kinds.items())}) · 시험 줄 "
           f"{sum(len(v.tests) for v in spec.v)} · 바뀌는 기대 {expect} · 연산 {ops} · 다른 BC 편집 {len(spec.edits)} · "
-          f"retain 재조직 {len(spec.retain)}{f'(개명 {renamed})' if renamed else ''} · "
+          f"retain 재조직 {len(spec.retain)}{f'({reorg_parts})' if reorg_parts else ''} · "
           f"update 케이스 {len(updates)}(V 밖 {sum(1 for u in updates if u['v'] is None)})"
           f" · remove 케이스 {len(removes)}(V 밖 {sum(1 for u in removes if u['v'] is None)})"
           f"{base_text}{f' · 확인 필요 {len(notes)}' if notes else ''} · red {len(reds)}{' · ' + mode if mode != 'check' else ''}"

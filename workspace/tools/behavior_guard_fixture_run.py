@@ -3,10 +3,11 @@
 
 각 사례는 새 임시 저장소에서 «기준 커밋 → open → 편집(커밋 또는 작업 트리) → close» 를 돌려 exit 와 요약을 대조한다.
 현장 재생(spring_dream 5커밋 green · 계약 변경 7커밋 red)은 구현 리뷰 기록(scratch)이 맡고, 여기서는 규칙마다 양성·음성을 둔다.
-기능 모드 사례(`--mode feature`)는 지금 판정 그대로다. 리팩토링 모드 사례(설계 v15.2 §4 · §8 B0 «+약 40»)는 처분 · r4 · r5 · 보충 ·
-감사 단위 · 묶음 자료 · D · 감사 키 · DB · 창을 보고, 모든 사례에서 «바이트가 바뀐 시험 쪽 파일 수 = 감사 키 낸 파일 + red 파일»
+기능 모드 사례(`--mode feature`)는 지금 판정 그대로다(0C 이름 단서 짝 포함). 리팩토링 모드 사례(설계 v15.2 §4 · §8 B0 «+약 40»)는
+처분 · r4 · r5 · 보충 · 감사 단위 · 묶음 자료 · D · 감사 키 · DB · 창 · 개명 · 옮김(시험 파일 나누기 · 모으기) · 정규화 지도를 보고, 모든 사례에서 «바이트가 바뀐 시험 쪽 파일 수 = 감사 키 낸 파일 + red 파일»
 (자동 초록 0)을 따로 센다. G1 스냅숏(refactor_audit.changes_snapshot)은 사례가 정한 값을 돌려주는 대역으로 바꿔 끼운다(명세
 판형은 refactor_audit 픽스처 몫) — `--stub-support` 면 behavior_support 도 k0 서명 그대로의 대역을 쓴다.
+`--only-group`(묶음 창 사례) · `--only-new`(2.43.0 새 갈래 사례)는 `--mutation-test` 가 변이 scripts 사본에 대고 돈다.
 exit 0 = 전건 기대 일치 · 1 = 불일치.
 """
 from __future__ import annotations
@@ -18,6 +19,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Callable
 
@@ -200,7 +202,95 @@ def cases() -> "list[tuple]":
         ("0T 케이스 추가", "test",
          lambda r: _write(r, {"app/test/test_service.py": BASE["app/test/test_service.py"]
                               + "\n\ndef test_more() -> None:\n    assert True\n"}), True, 2, "케이스 추가"),
-    ] + review_j_cases()
+    ] + review_j_cases() + name_clue_cases()
+
+
+# 이름 단서 짝(F4-196) — 이름 뺀 본문이 같은 정의 여럿을 한 창에서 개명(같은 파일 · 새 이름이 옛 이름을 품는 쌍이 양쪽 하나뿐 ·
+# 그 본문 무리의 새 정의가 모두 짝으로 설명될 때만 대응) · 기능 모드 0C
+NC_DIR: str = "app/core/errs"
+NC_TEST: str = "app/test/test_errs.py"
+NC_FIELD: "tuple[tuple[str, str], ...]" = (("slots_full", "SlotsFull"), ("turn_lost", "TurnLost"), ("seat_taken", "SeatTaken"))
+
+
+def _nc_exc(name: str, doc: str) -> str:
+    return f'"""{doc}."""\n\n\nclass {name}(Exception):\n    """{doc} — 자세히."""\n'
+
+
+def _nc_raises(i: int, name: str) -> str:
+    return f"def test_{i}() -> None:\n    with pytest.raises({name}):\n        raise {name}()\n"
+
+
+def _nc_field(suffix: str) -> "dict[str, str | None]":
+    """현장 꼴 — 한 파일에 예외 하나 · 모든 본문이 같다(docstring 만 다름) · 시험이 이름을 따라 바꾼다."""
+    out: "dict[str, str | None]" = {f"{NC_DIR}/__init__.py": ""}
+    imports: "list[str]" = []
+    for mod, name in NC_FIELD:
+        out[f"{NC_DIR}/{mod}.py"] = _nc_exc(name + suffix, mod)
+        imports.append(f"from app.core.errs.{mod} import {name + suffix}")
+    out[NC_TEST] = "import pytest\n\n" + "\n".join(imports) + "\n\n\n" + "\n\n".join(
+        _nc_raises(i, name + suffix) for i, (_mod, name) in enumerate(NC_FIELD))
+    return out
+
+
+def _nc_files(classes: "dict[str, tuple[str, ...]]", raises: "tuple[str, ...]") -> "dict[str, str | None]":
+    """{모듈: 클래스 이름들}(본문 같음) · 시험은 `raises` 차례로 케이스 하나씩."""
+    out: "dict[str, str | None]" = {f"{NC_DIR}/__init__.py": ""}
+    imports: "list[str]" = []
+    for mod, names in classes.items():
+        out[f"{NC_DIR}/{mod}.py"] = '"""모음."""\n' + "".join(f'\n\nclass {n}(Exception):\n    """{n}."""\n' for n in names)
+        used = sorted({r for r in raises if r in names})
+        if used:
+            imports.append(f"from app.core.errs.{mod} import {', '.join(used)}")
+    out[NC_TEST] = "import pytest\n\n" + "\n".join(imports) + "\n\n\n" + "\n\n".join(
+        _nc_raises(i, r) for i, r in enumerate(raises))
+    return out
+
+
+def name_clue_cases() -> "list[tuple]":
+    pair: "dict[str, tuple[str, ...]]" = {"pair": ("Foo", "Bar")}
+    return [
+        ("0C 이름 단서 짝 — 본문 같은 예외 여럿 이름 끝에 Error(한 파일에 하나 · 시험이 따라감) → green", "code",
+         lambda r: _write(r, _nc_field("Error")), True, 0, "close green", _nc_field("")),
+        ("0C 이름 단서 짝 — 한 파일 두 예외(Foo · Bar → FooError · BarError · 시험이 따라감) → green", "code",
+         lambda r: _write(r, _nc_files({"pair": ("FooError", "BarError")}, ("FooError", "BarError"))), True, 0, "close green",
+         _nc_files(pair, ("Foo", "Bar"))),
+        ("0C 이름 단서 짝 — 바꿔치기(시험이 Foo 자리를 BarError 로 · Bar 자리를 FooError 로) → red", "code",
+         lambda r: _write(r, _nc_files({"pair": ("FooError", "BarError")}, ("BarError", "FooError"))), True, 2, "치환으로",
+         _nc_files(pair, ("Foo", "Bar"))),
+        ("0C 이름 단서 짝 — 한 파일 접두 겹침(Foo · FooBar → FooError · FooBarError) → red(창을 나눈다)", "code",
+         lambda r: _write(r, _nc_files({"pair": ("FooError", "FooBarError")}, ("FooError", "FooBarError"))), True, 2, "치환으로",
+         _nc_files({"pair": ("Foo", "FooBar")}, ("Foo", "FooBar"))),
+        ("0C 이름 단서 짝 — 두 옛 이름을 한 새 이름으로(Foo · FooBar → FooBarError) → red", "code",
+         lambda r: _write(r, _nc_files({"pair": ("FooBarError",)}, ("FooBarError", "FooBarError"))), True, 2, "치환으로",
+         _nc_files({"pair": ("Foo", "FooBar")}, ("Foo", "FooBar"))),
+        ("0C 이름 단서 짝 — 새 이름이 기준 판 그 파일에 있던 이름(Foo · FooError → FooError) → red", "code",
+         lambda r: _write(r, _nc_files({"pair": ("FooError",)}, ("FooError", "FooError"))), True, 2, "치환으로",
+         _nc_files({"pair": ("Foo", "FooError")}, ("Foo", "FooError"))),
+        ("0C 이름 단서 짝 — 개명 + 본문 같은 새 정의(Foo → BarBaz · 새 FooQux · 시험은 FooQux) → red(그 무리 전부 설명 못 함)",
+         "code", lambda r: _write(r, _nc_files({"pair": ("BarBaz", "FooQux")}, ("FooQux",))), True, 2, "치환으로",
+         _nc_files({"pair": ("Foo",)}, ("Foo",))),
+        ("0C 이름 단서 짝 — 새 이름이 옛 이름을 품지 않음(세 파일 Foo → Qux · Bar → BarError · Baz → Zap) → red", "code",
+         lambda r: _write(r, _nc_files({"one": ("Qux",), "two": ("BarError",), "three": ("Zap",)}, ("Qux", "BarError", "Zap"))),
+         True, 2, "치환으로",
+         _nc_files({"one": ("Foo",), "two": ("Bar",), "three": ("Baz",)}, ("Foo", "Bar", "Baz"))),
+        ("0C 이름 단서 짝 — 새 이름이 기준 판 그 파일에 있던 이름(본문이 Foo 것으로 바뀜 · 다른 파일 Bar → BarError · 시험이 안 "
+         "따라간 개명 둘) → red", "code",
+         lambda r: _write(r, {**_nc_files({"one": ("FooError",), "two": ("BarError",), "three": ("Baz",), "four": ("Qaz",)},
+                                          ("FooError", "BarError", "Baz", "Qaz")),
+                              f"{NC_DIR}/three.py": _nc_files({"three": ("Zap",)}, ())[f"{NC_DIR}/three.py"],
+                              f"{NC_DIR}/four.py": _nc_files({"four": ("Zip",)}, ())[f"{NC_DIR}/four.py"]}), True, 2, "치환으로",
+         {**_nc_files({"one": ("Foo",), "two": ("Bar",), "three": ("Baz",), "four": ("Qaz",)}, ("Foo", "Bar", "Baz", "Qaz")),
+          f"{NC_DIR}/one.py": '"""모음."""\n\n\nclass Foo(Exception):\n    """Foo."""\n\n\nclass FooError(Exception):\n'
+                              '    code: int = 1\n'}),
+        ("0C 이름 단서 짝 — 짝 뒤 남은 하나를 다음 회차 본문 유일 규칙이 소거로 짝짓지 않음(one: Foo · Bar → FooError · BarError · "
+         "two: Baz → Qux · 시험 따라감) → red", "code",
+         lambda r: _write(r, _nc_files({"one": ("FooError", "BarError"), "two": ("Qux",)}, ("FooError", "BarError", "Qux"))),
+         True, 2, "치환으로", _nc_files({"one": ("Foo", "Bar"), "two": ("Baz",)}, ("Foo", "Bar", "Baz"))),
+        ("0C 이름 단서 짝 — 새 이름이 다른 대응이 가져간 정의(다른 파일에서 옮겨 온 FooError) → red", "code",
+         lambda r: _write(r, {**_nc_files({"one": ("FooError",)}, ("FooError", "FooError")), f"{NC_DIR}/other.py": None}),
+         True, 2, "치환으로",
+         {**_nc_files({"one": ("Foo",), "other": ("FooError",)}, ("Foo", "FooError"))}),
+    ]
 
 
 def _move(repo: Path, old: str, new: str, *subs: "tuple[str, str]") -> None:
@@ -624,12 +714,13 @@ def _row(case: str) -> str:
 
 def _snap(*vs: dict, retain: "tuple[str, ...]" = (), other: "tuple[tuple[str, str, str], ...]" = (),
           update: "tuple[tuple[str, str | None], ...]" = (), remove: "tuple[tuple[str, str | None], ...]" = (),
-          renames: "tuple[dict, ...]" = ()) -> dict:
+          renames: "tuple[dict, ...]" = (), moves: "tuple[dict, ...]" = ()) -> dict:
     """G1 스냅숏 대역(k0 §4-4 판형) — `update` · `remove` = 입장 표 update · remove 행 (경로::케이스, 딸린 V | None) ·
-    `renames` = «개명» 행(retain 재조직 — 한 행에 하나 · `retain_rows[].renames`)."""
+    `renames` = «개명» 행 · `moves` = «옮김» 행(retain 재조직 — 한 행에 하나 · `retain_rows[].renames` · `.moves`)."""
     return {"version": 1, "V": list(vs), "other_bc_edits": [{"path": p, "kind": k, "ref": r} for p, k, r in other],
             "linked_rows": [], "retain_rows": [{"path": p, "case": None, "why": "기대 의미 그대로"} for p in retain]
-            + [{"path": it["path"], "case": None, "why": "기대 의미 그대로", "renames": [it]} for it in renames],
+            + [{"path": it["path"], "case": None, "why": "기대 의미 그대로", "renames": [it]} for it in renames]
+            + [{"path": it["path"], "case": None, "why": "기대 의미 그대로", "moves": [it]} for it in moves],
             "update_rows": [{"case": c, "owner": "coder", "row": _row(c), "v": v} for c, v in update],
             "remove_rows": [{"case": c, "owner": "coder", "row": f"| {c} | remove | coder | M1 ⓐ |", "v": v} for c, v in remove],
             "run_definition_digest": RUN_DEF, "support_record": "20261004T020000Z"}
@@ -1490,6 +1581,15 @@ def rename_rcases() -> "list[dict]":
         _edit({}, IDS_CONST.replace("choose_card", "choose_tarot_card")),
         {TP: ("red", None, {"reason": "모듈 상수 목록 안 pytest.param(id=) 는 꼴 밖"})},
         snap=_snap(renames=(_rn_ids("test_x", "choose_card", "choose_tarot_card"),)))
+
+    def nc_app(files: "dict[str, str | None]") -> "dict[str, str | None]":
+        """기능 모드 이름 단서 짝 재료(app/…)를 리팩토링 모드 대상 BC 자리(application/core/…)로."""
+        return {k.replace("app/test/", "application/core/test/").replace("app/core/", "application/core/"):
+                None if v is None else v.replace("app.core.", "application.core.") for k, v in files.items()}
+    nc_test: str = "application/core/test/test_errs.py"
+    add("이름 단서 짝: 0C 본문 같은 예외 여럿 이름 끝에 Error(F4-196) → 묶음 감사(0C 검사 합격 · 짝은 감사 키로 — 자동 초록 아님)",
+        "code", nc_app(_nc_field("")), _edit(nc_app(_nc_field("Error"))),
+        {nc_test: ("묶음 감사", ["<module>", "test_0", "test_1", "test_2"], {"reason": "0C 검사 합격"})})
     add("개명: 판정 시점 — 개명 행 파일에 다른 편집만(옛 이름이 새 판에 남음) · 0T → 건너뜀(개별 감사 · red 아님)", "test", {TP: RN},
         _edit({}, RN.replace("    assert product() > 0\n", "    # 설명\n    assert product() > 0\n")),
         {TP: ("개별 감사", ["test_other"], {"reason": "0T"})}, snap=base_rn, post=_renamed())
@@ -1498,6 +1598,549 @@ def rename_rcases() -> "list[dict]":
         post=_renamed())
     out += rename_review_rcases()
     out += field_rename_rcases()
+    out += move_rcases()
+    return out
+
+
+# 시험 파일 나누기 · 모으기 — 승인 «옮김» 행(`재조직 — 옮김 <옛 경로>::<최상위 이름> → <새 경로>`)을 0T 만 받는다
+MV_BIG: str = "application/core/test/test_big.py"
+MV_OTHER: str = "application/core/test/test_big_other.py"
+MV_CONF: str = "application/core/test/conftest.py"
+MV_HEAD: str = "from application.core.product import Old, product\n\n\n"
+MV_CASE: str = "def test_old_is_class():\n    assert isinstance(Old, type)\n"
+MV_CLASS: str = "class TestGroup:\n    def test_in_class(self):\n        assert product() > 1\n"
+MV_KEEP: str = "def test_product_is_nine():\n    assert product() == 9\n"
+MV_BASE: str = MV_HEAD + MV_KEEP + "\n\n" + MV_CASE + "\n\n" + MV_CLASS
+MV_LEFT: str = "from application.core.product import product\n\n\n" + MV_KEEP
+MV_SPLIT: str = MV_HEAD + MV_CASE + "\n\n" + MV_CLASS
+MV_ASSERT: str = "def check_nine(value):\n    assert value == 9\n    assert value > 0\n"
+MV_USER: Callable[[str], str] = lambda name: f"def test_{name}():\n    check_nine(9)\n"  # noqa: E731
+MV_FIX: str = "@pytest.fixture\ndef nine():\n    return 9\n"
+MV_FIX_USER: str = "def test_uses_nine(nine):\n    assert nine == 9\n"
+
+
+def _mv(old: str, name: str, new: str) -> dict:
+    """스냅숏 «옮김» 항목 — `옛 경로::최상위 이름 → 새 경로`."""
+    return {"path": old, "name": name, "to": new}
+
+
+def _mv_unit(old: str, name: str, new: str) -> str:
+    return f"옮김 {old}::{name} → {new}"
+
+
+def _moved(*labels: str, cases: "tuple[dict, ...]" = (), notes: "tuple[str, ...]" = (),
+           verdicts: bool = True) -> "Callable[[Path, dict, str], list[str]]":
+    """close 기록 `moves`(이 창이 받은 옮김 행 글자) · `g0_keep_exceptions.case_moved`(케이스 단위) · 감사 요청 글 · 옮김 키의 요구
+    판정(기대 의미 그대로 만)."""
+    def check(repo: Path, rec: dict, _out: str) -> "list[str]":
+        got = [r.get("label") for r in rec.get("moves", [])]
+        moved = (rec.get("g0_keep_exceptions") or {}).get("case_moved", [])
+        text = _request(repo)
+        bad_verdicts = [(k, w) for d in rec.get("dispositions", []) for k, w in zip(d["keys"], d.get("요구 판정", []))
+                        if " · 옮김 " in k and w != "기대 의미 그대로"]
+        return ([f"moves {got} (기대 {list(labels)})"] if got != list(labels) else []) \
+            + ([f"g0_keep_exceptions.case_moved {moved} (기대 {list(cases)})"] if moved != list(cases) else []) \
+            + [f"감사 요청에 «{n}» 없음" for n in notes if n not in text] \
+            + ([f"옮김 키 요구 판정 {bad_verdicts}"] if verdicts and bad_verdicts else [])
+    return check
+
+
+def move_rcases() -> "list[dict]":
+    """시험 파일 나누기 · 모으기(F4-194 · 195) — 0T 옮김 행(같은 폴더 · 원문 그대로 · 묶임 맥락 같음)은 옮김 키(기대 의미 그대로 만)로 ·
+    행 없음 · 0C · 0F · 내용 다름 · 다른 폴더 · 묶임 다름 · 픽스처 conftest 드나듦 · autouse · 쓰는 쪽 남음 · 덮어쓰기 픽스처 · 데코레이터
+    바꿈 · 같은 이름 둘 · 옮기며 개명은 red."""
+    out: "list[dict]" = []
+
+    def add(label: str, kind: str, files: dict, edit: "Callable[[Path], None]", expect: dict, **kw: object) -> None:
+        out.append({"label": label, "kind": kind, "files": files, "edit": edit, "expect": expect, **kw})
+
+    split_rows = (_mv(MV_BIG, "test_old_is_class", MV_OTHER), _mv(MV_BIG, "TestGroup", MV_OTHER))
+    split_snap = _snap(moves=split_rows)
+    split_units = ["<file>", _mv_unit(MV_BIG, "test_old_is_class", MV_OTHER), _mv_unit(MV_BIG, "TestGroup", MV_OTHER)]
+    split_labels = tuple(f"{MV_BIG}::{n} → {MV_OTHER}" for n in ("test_old_is_class", "TestGroup"))
+    split_cases = ({"path": MV_BIG, "class": None, "func": "test_old_is_class", "to": MV_OTHER},
+                   {"path": MV_BIG, "class": "TestGroup", "func": None, "to": MV_OTHER})
+    add("옮김: 0T 나누기(모듈 함수 케이스 · 클래스 통째 → 같은 폴더 새 파일) → 개별 감사 · 옮김 키 · 케이스 다중집합 그대로", "test",
+        {MV_BIG: MV_BASE}, _edit({MV_BIG: MV_LEFT, MV_OTHER: MV_SPLIT}),
+        {MV_BIG: ("개별 감사", ["<module>"], {"reason": "옮겨 나감"}), MV_OTHER: ("개별 감사", split_units, {"reason": "옮겨 옴"})},
+        snap=split_snap, needles=("옮김 행 적용 2",),
+        post=_moved(*split_labels, cases=split_cases,
+                    notes=("요구 판정: 기대 의미 그대로(옮김 — 케이스 단위 원문 그대로", "| `Old` | import application.core.product.Old | "
+                           "import application.core.product.Old |", f"### 단위 `{_mv_unit(MV_BIG, 'TestGroup', MV_OTHER)}` 묶임")))
+    other_base: str = "from application.core.product import product\n\n\ndef test_other():\n    assert product() > 0\n"
+    add("옮김: 0T 나누기 — 기존 파일로(새 파일 아님) → 개별 감사 · 새 파일 처분에 <module> + 옮김 키", "test",
+        {MV_BIG: MV_BASE, MV_OTHER: other_base},
+        _edit({MV_BIG: MV_LEFT + "\n\n" + MV_CLASS, MV_OTHER: MV_HEAD + "def test_other():\n    assert product() > 0\n\n\n" + MV_CASE}),
+        {MV_BIG: ("개별 감사", ["<module>"]), MV_OTHER: ("개별 감사", ["<module>", split_units[1]])},
+        snap=_snap(moves=split_rows[:1]), post=_moved(split_labels[0], cases=split_cases[:1]))
+    add("옮김: 0T 옛 파일 비워 지움(모두 옮김) → 통째 이동 짝 아님 · 옛 = 짝 없는 삭제 · 새 = <file> + 옮김 키", "test",
+        {MV_BIG: MV_SPLIT}, _edit({MV_BIG: None, MV_OTHER: MV_SPLIT}),
+        {MV_BIG: ("개별 감사", ["<file>"], {"reason": "짝 없는 삭제"}), MV_OTHER: ("개별 감사", split_units)},
+        snap=split_snap, post=lambda repo, rec, _o: [] if not rec["map_items"]["pairs"] else [f"pairs {rec['map_items']['pairs']}"])
+    gather_a, gather_b = "application/core/test/test_start.py", "application/core/test/test_resume.py"
+    conf_base: str = "import pytest\n\n\n" + MV_FIX
+    add("옮김: 0T 모으기 — 단언 든 도움 함수(두 파일의 같은 원문) → conftest.py · 쓰는 쪽은 import(F4-195 꼴) → 개별 감사", "test",
+        {MV_CONF: conf_base, gather_a: MV_ASSERT + "\n\n" + MV_USER("start"), gather_b: MV_ASSERT + "\n\n" + MV_USER("resume")},
+        _edit({MV_CONF: conf_base + "\n\n" + MV_ASSERT,
+               gather_a: "from application.core.test.conftest import check_nine\n\n\n" + MV_USER("start"),
+               gather_b: "from application.core.test.conftest import check_nine\n\n\n" + MV_USER("resume")}),
+        {MV_CONF: ("개별 감사", ["<module>", _mv_unit(gather_a, "check_nine", MV_CONF), _mv_unit(gather_b, "check_nine", MV_CONF)]),
+         gather_a: ("개별 감사", ["<module>"]), gather_b: ("개별 감사", ["<module>"])},
+        snap=_snap(moves=(_mv(gather_a, "check_nine", MV_CONF), _mv(gather_b, "check_nine", MV_CONF))),
+        post=_moved(f"{gather_a}::check_nine → {MV_CONF}", f"{gather_b}::check_nine → {MV_CONF}"))
+    add("옮김: 행 없는 나누기 · 0T → red(D 확정 삭제 · 케이스 감소 · 추가)", "test", {MV_BIG: MV_BASE},
+        _edit({MV_BIG: MV_LEFT, MV_OTHER: MV_SPLIT}), {MV_BIG: ("red", None, {"reason": "D 확정"}), MV_OTHER: ("개별 감사", ["<file>"])},
+        needles=(f"테스트 케이스 감소 `{MV_BIG}::test_old_is_class`", f"테스트 케이스 추가 `{MV_OTHER}::test_old_is_class`"))
+    for kind, label in (("code", "0C"), ("follow", "0F")):
+        add(f"옮김: {label} 창의 옮김 몫 → red(옮김 행은 0T 창 몫)", kind, {MV_BIG: MV_BASE},
+            _edit({MV_BIG: MV_LEFT, MV_OTHER: MV_SPLIT}),
+            {MV_BIG: ("red", None, {"reason": "옮김 행은 0T 창 몫"}), MV_OTHER: ("red", None, {"reason": "옮김 행은 0T 창 몫"})},
+            snap=split_snap)
+    add("옮김: 0T 내용 다름(옮기며 기대를 바꿈) → red(단위 원문이 다르다 — 기대 바꿈은 다른 0T 창)", "test", {MV_BIG: MV_BASE},
+        _edit({MV_BIG: MV_LEFT, MV_OTHER: MV_SPLIT.replace("> 1", "> 2")}),
+        {MV_BIG: ("red", None, {"reason": "단위 원문이 다르다"}), MV_OTHER: ("red", None, {"reason": "단위 원문이 다르다"})},
+        snap=split_snap)
+    add("옮김: 0T 데코레이터 바꿈 → red(단위 원문)", "test", {MV_BIG: MV_BASE},
+        _edit({MV_BIG: MV_LEFT + "\n\n" + MV_CLASS, MV_OTHER: "import pytest\n" + MV_HEAD + "@pytest.mark.slow\n" + MV_CASE}),
+        {MV_BIG: ("red", None, {"reason": "단위 원문이 다르다"}), MV_OTHER: ("red", None)},
+        snap=_snap(moves=split_rows[:1]), exit=2)
+    deep: str = "application/core/test/unit/test_big_other.py"
+    add("옮김: 0T 다른 폴더 → red(같은 폴더 안에서만)", "test", {MV_BIG: MV_BASE},
+        _edit({MV_BIG: MV_LEFT, deep: MV_SPLIT}),
+        {MV_BIG: ("red", None, {"reason": "다른 폴더"}), deep: ("red", None, {"reason": "다른 폴더"})},
+        snap=_snap(moves=(_mv(MV_BIG, "test_old_is_class", deep), _mv(MV_BIG, "TestGroup", deep))))
+    add("옮김: 0T 새 파일에 같은 이름 최상위 정의 둘 → red", "test", {MV_BIG: MV_BASE},
+        _edit({MV_BIG: MV_LEFT, MV_OTHER: MV_SPLIT + "\n\n" + MV_CASE}),
+        {MV_BIG: ("red", None, {"reason": "같은 이름 최상위 정의가 둘 이상"}), MV_OTHER: ("red", None)}, snap=split_snap)
+    add("옮김: 0T 새 경로 기준 판에 같은 이름 → red", "test",
+        {MV_BIG: MV_BASE, MV_OTHER: "TestGroup = None\n"}, _edit({MV_BIG: MV_LEFT, MV_OTHER: MV_SPLIT}),
+        {MV_BIG: ("red", None, {"reason": "새 경로 기준 판에 같은 이름"}), MV_OTHER: ("red", None)}, snap=split_snap)
+    renamed_split: str = MV_SPLIT.replace("def test_old_is_class", "def test_old_is_a_class")
+    add("옮김: 0T 옮기며 개명(새 경로에 그 이름 없음 — 옮김 몫 아님) → red(D 삭제 · 케이스 감소 · 추가)", "test", {MV_BIG: MV_BASE},
+        _edit({MV_BIG: MV_LEFT, MV_OTHER: renamed_split}), {MV_BIG: ("red", None, {"reason": "D 확정"}), MV_OTHER: ("개별 감사", None)},
+        snap=split_snap, needles=(f"테스트 케이스 추가 `{MV_OTHER}::test_old_is_a_class`",), post=_moved(f"{MV_BIG}::TestGroup → {MV_OTHER}",
+                                                                                                cases=split_cases[1:]))
+    const_base: str = MV_HEAD + "LIMIT = 1\n\n\n" + MV_KEEP + "\n\n" + "def test_limit():\n    assert product() > LIMIT\n"
+    add("옮김: 0T 묶임 다름(케이스가 읽는 모듈 상수가 새 파일에서 다른 값) → red", "test", {MV_BIG: const_base},
+        _edit({MV_BIG: MV_LEFT, MV_OTHER: MV_HEAD + "LIMIT = 2\n\n\ndef test_limit():\n    assert product() > LIMIT\n"}),
+        {MV_BIG: ("red", None, {"reason": "`LIMIT` 의 묶임이 다르다"}), MV_OTHER: ("red", None)},
+        snap=_snap(moves=(_mv(MV_BIG, "test_limit", MV_OTHER),)))
+    add("옮김: 0T 묶임 같음(모듈 상수를 새 파일에 같은 원문으로 복사) → 개별 감사", "test", {MV_BIG: const_base},
+        _edit({MV_BIG: MV_HEAD.replace("Old, ", "") + "LIMIT = 1\n\n\n" + MV_KEEP,
+               MV_OTHER: MV_HEAD + "LIMIT = 1\n\n\ndef test_limit():\n    assert product() > LIMIT\n"}),
+        {MV_BIG: ("개별 감사", ["<module>"]), MV_OTHER: ("개별 감사", ["<file>", _mv_unit(MV_BIG, "test_limit", MV_OTHER)])},
+        snap=_snap(moves=(_mv(MV_BIG, "test_limit", MV_OTHER),)),
+        post=_moved(f"{MV_BIG}::test_limit → {MV_OTHER}", cases=({"path": MV_BIG, "class": None, "func": "test_limit",
+                                                                   "to": MV_OTHER},),
+                    notes=("| `LIMIT` | 파일 안 정의 ",)))
+    helper_base: str = MV_HEAD + MV_ASSERT + "\n\n" + MV_USER("kept") + "\n\n" + MV_USER("moved")
+    add("옮김: 0T 케이스와 도움 함수를 함께 옮김(같은 창 다른 옮김 행 · 남은 쪽은 새 파일에서 import) → 개별 감사", "test",
+        {MV_BIG: helper_base},
+        _edit({MV_BIG: f"from application.core.test.test_big_other import check_nine\n\n\n" + MV_USER("kept"),
+               MV_OTHER: MV_ASSERT + "\n\n" + MV_USER("moved")}),
+        {MV_BIG: ("개별 감사", ["<module>"]),
+         MV_OTHER: ("개별 감사", ["<file>", _mv_unit(MV_BIG, "check_nine", MV_OTHER), _mv_unit(MV_BIG, "test_moved", MV_OTHER)])},
+        snap=_snap(moves=(_mv(MV_BIG, "check_nine", MV_OTHER), _mv(MV_BIG, "test_moved", MV_OTHER))))
+    imp_conf: str = "from application.core.test.conftest import check_nine\n\n\n"
+    add("옮김: 0T 케이스는 새 파일로 · 도움 함수는 conftest.py 로(새 파일은 conftest 에서 import — 같은 창 다른 옮김 행) → 개별 감사",
+        "test", {MV_BIG: helper_base, MV_CONF: conf_base},
+        _edit({MV_BIG: imp_conf + MV_USER("kept"), MV_CONF: conf_base + "\n\n" + MV_ASSERT, MV_OTHER: imp_conf + MV_USER("moved")}),
+        {MV_BIG: ("개별 감사", ["<module>"]), MV_CONF: ("개별 감사", ["<module>", _mv_unit(MV_BIG, "check_nine", MV_CONF)]),
+         MV_OTHER: ("개별 감사", ["<file>", _mv_unit(MV_BIG, "test_moved", MV_OTHER)])},
+        snap=_snap(moves=(_mv(MV_BIG, "check_nine", MV_CONF), _mv(MV_BIG, "test_moved", MV_OTHER))))
+    imp_big: str = "from application.core.test.test_big import check_nine\n\n\n"
+    add("옮김: 0T 도움 함수는 옛 파일에 그대로 · 새 파일은 옛 파일에서 import → 개별 감사(같은 것에 풀림)", "test",
+        {MV_BIG: helper_base}, _edit({MV_BIG: MV_HEAD + MV_ASSERT + "\n\n" + MV_USER("kept"), MV_OTHER: imp_big + MV_USER("moved")}),
+        {MV_BIG: ("개별 감사", ["<module>"]), MV_OTHER: ("개별 감사", ["<file>", _mv_unit(MV_BIG, "test_moved", MV_OTHER)])},
+        snap=_snap(moves=(_mv(MV_BIG, "test_moved", MV_OTHER),)))
+    imp_other: str = "from application.core.test.test_big_other import check_nine\n\n\n"
+    add("옮김: 0T 옛 파일이 새 파일의 도움 함수를 import 하던 케이스를 새 파일로 → 개별 감사(같은 것에 풀림)", "test",
+        {MV_BIG: imp_other + MV_USER("kept") + "\n\n" + MV_USER("moved"), MV_OTHER: MV_ASSERT},
+        _edit({MV_BIG: imp_other + MV_USER("kept"), MV_OTHER: MV_ASSERT + "\n\n" + MV_USER("moved")}),
+        {MV_BIG: ("개별 감사", ["<module>"]), MV_OTHER: ("개별 감사", ["<module>", _mv_unit(MV_BIG, "test_moved", MV_OTHER)])},
+        snap=_snap(moves=(_mv(MV_BIG, "test_moved", MV_OTHER),)))
+    upd_case: str = f"{MV_OTHER}::test_other"
+    add("옮김: 0T 옮겨 온 파일에 update 행 케이스의 D 확정도 → 개별 감사 · 옮김 키 요구 판정은 기대 의미 그대로 만", "test",
+        {MV_BIG: MV_BASE, MV_OTHER: other_base},
+        _edit({MV_BIG: MV_LEFT + "\n\n" + MV_CLASS,
+               MV_OTHER: MV_HEAD + "def test_other():\n    assert product() >= 0\n\n\n" + MV_CASE}),
+        {MV_BIG: ("개별 감사", ["<module>"]),
+         MV_OTHER: ("개별 감사", ["<module>", "test_other", split_units[1]], {"reason": f"0T update 행 — {_row(upd_case)}"})},
+        snap=_snap(update=((upd_case, None),), moves=split_rows[:1]), post=_moved(split_labels[0], cases=split_cases[:1]))
+    add("옮김: 0T 새 파일에 같은 이름 대입이 더 있다(클래스 별칭) → red(최상위 묶음 하나)", "test", {MV_BIG: MV_BASE},
+        _edit({MV_BIG: MV_HEAD + MV_KEEP + "\n\n" + MV_CASE, MV_OTHER: MV_HEAD + MV_CLASS + "\n\nTestGroup = TestGroup\n"}),
+        {MV_BIG: ("red", None, {"reason": "최상위 묶음"}), MV_OTHER: ("red", None)}, snap=_snap(moves=split_rows[1:]), exit=2)
+    fix_base: str = "import pytest\n\n\n" + MV_FIX + "\n\n" + MV_FIX_USER + "\n\n" + MV_KEEP.replace("product()", "9")
+    fix_left: str = MV_KEEP.replace("product()", "9")
+    add("옮김: 0T 픽스처와 쓰는 쪽을 함께 옮김(파일 안 픽스처 · autouse 아님) → 개별 감사", "test", {MV_BIG: fix_base},
+        _edit({MV_BIG: fix_left, MV_OTHER: "import pytest\n\n\n" + MV_FIX + "\n\n" + MV_FIX_USER}),
+        {MV_BIG: ("개별 감사", ["<module>"]),
+         MV_OTHER: ("개별 감사", ["<file>", _mv_unit(MV_BIG, "nine", MV_OTHER), _mv_unit(MV_BIG, "test_uses_nine", MV_OTHER)])},
+        snap=_snap(moves=(_mv(MV_BIG, "nine", MV_OTHER), _mv(MV_BIG, "test_uses_nine", MV_OTHER))))
+    add("옮김: 0T 픽스처만 옮기고 쓰는 쪽은 옛 파일에 남음 → red(쓰는 쪽과 함께)", "test", {MV_BIG: fix_base},
+        _edit({MV_BIG: MV_FIX_USER + "\n\n" + fix_left, MV_OTHER: "import pytest\n\n\n" + MV_FIX}),
+        {MV_BIG: ("red", None, {"reason": "요청하는 단위가 옛 파일에 남았다"}), MV_OTHER: ("red", None)},
+        snap=_snap(moves=(_mv(MV_BIG, "nine", MV_OTHER),)))
+    add("옮김: 0T 픽스처를 conftest.py 로 넣음(쓰는 쪽과 함께여도) → red(conftest 드나듦)", "test", {MV_BIG: fix_base},
+        _edit({MV_BIG: fix_left, MV_CONF: "import pytest\n\n\n" + MV_FIX}),
+        {MV_BIG: ("red", None, {"reason": "conftest.py 로 넣거나 빼는"}), MV_CONF: ("red", None)},
+        snap=_snap(moves=(_mv(MV_BIG, "nine", MV_CONF),)))
+    auto: str = "@pytest.fixture(autouse=True)\ndef nine():\n    return 9\n"
+    add("옮김: 0T autouse 픽스처 옮김 → red", "test", {MV_BIG: "import pytest\n\n\n" + auto + "\n\n" + MV_KEEP.replace("product()", "9")},
+        _edit({MV_BIG: fix_left, MV_OTHER: "import pytest\n\n\n" + auto}),
+        {MV_BIG: ("red", None, {"reason": "autouse 픽스처는 옮기지 않는다"}), MV_OTHER: ("red", None)},
+        snap=_snap(moves=(_mv(MV_BIG, "nine", MV_OTHER),)))
+    add("옮김: 0T 케이스를 conftest.py 로 → red(새 경로에서 수집되지 않는다)", "test", {MV_BIG: MV_BASE},
+        _edit({MV_BIG: MV_LEFT + "\n\n" + MV_CLASS, MV_CONF: MV_HEAD + MV_CASE}),
+        {MV_BIG: ("red", None, {"reason": "케이스가 새 경로에서 수집되지 않는다"}), MV_CONF: ("red", None)},
+        snap=_snap(moves=(_mv(MV_BIG, "test_old_is_class", MV_CONF),)), exit=2)
+    mark: str = "import pytest\n\npytestmark = pytest.mark.slow\n\n\n"
+    add("옮김: 0T 케이스 옮김 — 옛 · 새 파일 pytestmark 다름 → red", "test", {MV_BIG: mark + MV_HEAD + MV_KEEP + "\n\n" + MV_CASE},
+        _edit({MV_BIG: mark + MV_LEFT, MV_OTHER: MV_HEAD + MV_CASE}),
+        {MV_BIG: ("red", None, {"reason": "`pytestmark` 가 옛 · 새 파일에서 다르다"}), MV_OTHER: ("red", None)},
+        snap=_snap(moves=(_mv(MV_BIG, "test_old_is_class", MV_OTHER),)))
+    xunit: str = "def setup_module():\n    pass\n\n\n"
+    add("옮김: 0T 케이스 옮김 — 옛 파일에만 xunit setup_module → red", "test", {MV_BIG: MV_HEAD + xunit + MV_KEEP + "\n\n" + MV_CASE},
+        _edit({MV_BIG: MV_HEAD.replace("Old, ", "") + xunit + MV_KEEP, MV_OTHER: MV_HEAD + MV_CASE}),
+        {MV_BIG: ("red", None, {"reason": "xunit"}), MV_OTHER: ("red", None)},
+        snap=_snap(moves=(_mv(MV_BIG, "test_old_is_class", MV_OTHER),)))
+    local_fix: str = "import pytest\n\n\n@pytest.fixture\ndef nine():\n    return {}\n\n\n"
+    add("옮김: 0T 케이스가 요청하는 파일 안 픽스처가 새 파일에서 다른 원문 → red", "test",
+        {MV_BIG: local_fix.format(9) + MV_FIX_USER + "\n\n" + fix_left},
+        _edit({MV_BIG: local_fix.format(9) + fix_left, MV_OTHER: local_fix.format(10) + MV_FIX_USER}),
+        {MV_BIG: ("red", None, {"reason": "케이스가 요청하는 파일 안 픽스처 `nine`"}), MV_OTHER: ("red", None)},
+        snap=_snap(moves=(_mv(MV_BIG, "test_uses_nine", MV_OTHER),)))
+    # 덮어쓰기 픽스처(rev-t pytoy 두 꼴) — conftest 의 limit 을 파일 안 limit 이 덮어쓴다 · quota 는 limit 을 요청한다
+    py_conf: str = ("import pytest\n\n\n@pytest.fixture\ndef limit():\n    return 10\n\n\n@pytest.fixture\ndef quota(limit):\n"
+                    "    return limit * 2\n")
+    py_override: str = "@pytest.fixture\ndef limit():\n    return 1\n"
+    py_case: str = "def test_quota(quota):\n    assert quota > 0\n"
+    py_other: str = "def test_other():\n    assert True\n"
+    add("옮김: 0T 덮어쓰기 픽스처(conftest 사슬과 같은 이름) 옮김 → red(남은 시험의 값이 바뀐다)", "test",
+        {MV_CONF: py_conf, MV_BIG: "import pytest\n\n\n" + py_override + "\n\n" + py_case, MV_OTHER: py_other},
+        _edit({MV_BIG: py_case, MV_OTHER: "import pytest\n\n\n" + py_override + "\n\n" + py_other}),
+        {MV_BIG: ("red", None, {"reason": "덮어쓰기 픽스처 `limit`"}), MV_OTHER: ("red", None)},
+        snap=_snap(moves=(_mv(MV_BIG, "limit", MV_OTHER),)))
+    add("옮김: 0T 덮어쓰기 픽스처가 있는 파일에서 케이스 옮김(새 파일엔 없음) → red(값이 조용히 바뀐다)", "test",
+        {MV_CONF: py_conf, MV_BIG: "import pytest\n\n\n" + py_override + "\n\n" + py_case, MV_OTHER: py_other},
+        _edit({MV_BIG: "import pytest\n\n\n" + py_override, MV_OTHER: py_other + "\n\n" + py_case}),
+        {MV_BIG: ("red", None, {"reason": "덮어쓰기 픽스처(conftest 사슬과 같은 이름 파일 안 픽스처)가 옛 · 새 파일에서 다르다"}),
+         MV_OTHER: ("red", None)},
+        snap=_snap(moves=(_mv(MV_BIG, "test_quota", MV_OTHER),)))
+    # 묶임 맥락(구현 검토 IT-B — 실제 pytest 에서 옮긴 케이스 값이 바뀌던 꼴) — 꼴 4 · 5 · 7 의 픽스처 풀이 · 모듈 수준 이름 전이
+    # (`ctx` 표 — 변이 시험의 `--only-new ctx` 묶음)
+    ctx_from: int = len(out)
+    fixmod: str = "application/core/test/fixtures.py"
+    fix_src: str = ("import pytest\n\n\n@pytest.fixture\ndef quota():\n    return 2\n\n\n@pytest.fixture\ndef limit(quota):\n"
+                    "    return quota * 10\n")
+    quota20: str = "import pytest\n\n\n@pytest.fixture\ndef quota():\n    return 20\n"
+    lim_case: str = "def test_moved(limit):\n    assert limit > 0\n"
+    lim_keep: str = "\n\ndef test_keep(limit):\n    assert limit > 0\n"
+    lim_other: str = "def test_other(limit):\n    assert limit > 0\n"
+    one_move: dict = _snap(moves=(_mv(MV_BIG, "test_moved", MV_OTHER),))
+    one_unit: "list[str]" = ["<module>", _mv_unit(MV_BIG, "test_moved", MV_OTHER)]
+    one_case: "tuple[dict, ...]" = ({"path": MV_BIG, "class": None, "func": "test_moved", "to": MV_OTHER},)
+    accepted: dict = {MV_BIG: ("개별 감사", ["<module>"]), MV_OTHER: ("개별 감사", one_unit)}
+
+    def both_red(why: str) -> dict:
+        return {MV_BIG: ("red", None, {"reason": why}), MV_OTHER: ("red", None)}
+    lim_edit = _edit({MV_BIG: quota20 + lim_keep, MV_OTHER: lim_other + "\n\n" + lim_case})
+    add("옮김: 0T 케이스 옮김 — conftest 가 픽스처를 import 로 들임 · 옛 파일이 그 픽스처를 덮어씀(새 파일엔 없음) → red(꼴 7)", "test",
+        {fixmod: fix_src, MV_CONF: "from application.core.test.fixtures import limit, quota  # noqa: F401\n",
+         MV_BIG: quota20 + lim_keep + "\n\n" + lim_case, MV_OTHER: lim_other},
+        lim_edit, both_red("덮어쓰기 픽스처(conftest 사슬과 같은 이름 파일 안 픽스처)가 옛 · 새 파일에서 다르다 — 옛 ['quota']"),
+        snap=one_move)
+    star_conf: str = "from application.core.test.fixtures import *  # noqa: F403\n"
+    add("옮김: 0T 케이스 옮김 — conftest 별 import(저장소 안 모듈 — 그 모듈 픽스처가 사슬에) · 옛 파일이 그 픽스처를 덮어씀 → red(꼴 7)",
+        "test", {fixmod: fix_src, MV_CONF: star_conf, MV_BIG: quota20 + lim_keep + "\n\n" + lim_case, MV_OTHER: lim_other},
+        lim_edit, both_red("덮어쓰기 픽스처(conftest 사슬과 같은 이름 파일 안 픽스처)가 옛 · 새 파일에서 다르다 — 옛 ['quota']"),
+        snap=one_move)
+    ext_star: str = "from external_fixtures import *  # noqa: F403\n"
+    add("옮김: 0T 케이스 옮김 — conftest 별 import 가 저장소 밖 모듈(픽스처 풀이를 다 볼 수 없다) · 파일 안 픽스처가 옛 · 새에서 다름 → red",
+        "test", {MV_CONF: ext_star, MV_BIG: quota20 + lim_keep + "\n\n" + lim_case, MV_OTHER: lim_other},
+        lim_edit, both_red("픽스처 풀이를 다 볼 수 없다(`application/core/test/conftest.py` 의 별 import `external_fixtures` 가 저장소 밖"),
+        snap=one_move)
+    seat: str = "import pytest\n\n\n@pytest.fixture\ndef seat():\n    return 1\n\n\n"
+    add("옮김: 0T 케이스 옮김 — conftest 별 import · 파일 안 픽스처가 옛 · 새에서 이름 · 원문 같음 → 개별 감사", "test",
+        {fixmod: fix_src, MV_CONF: star_conf, MV_BIG: seat + "def test_keep(seat):\n    assert seat\n\n\n" + lim_case,
+         MV_OTHER: seat + lim_other},
+        _edit({MV_BIG: seat + "def test_keep(seat):\n    assert seat\n", MV_OTHER: seat + lim_other + "\n\n" + lim_case}),
+        accepted, snap=one_move, post=_moved(f"{MV_BIG}::test_moved → {MV_OTHER}", cases=one_case))
+    add("옮김: 0T 픽스처 단위 옮김 — conftest 별 import 가 저장소 밖 모듈(덮어쓰기인지 알 수 없다) → red", "test",
+        {MV_CONF: ext_star, MV_BIG: fix_base},
+        _edit({MV_BIG: fix_left, MV_OTHER: "import pytest\n\n\n" + MV_FIX + "\n\n" + MV_FIX_USER}),
+        both_red("픽스처 단위 옮김은 받지 않는다"),
+        snap=_snap(moves=(_mv(MV_BIG, "nine", MV_OTHER), _mv(MV_BIG, "test_uses_nine", MV_OTHER))))
+    conf_quota: str = "import pytest\n\n\n@pytest.fixture\ndef quota():\n    return 2\n"
+    q_case: str = "def test_moved(quota):\n    assert quota > 0\n"
+    q_keep: str = "\n\ndef test_keep(quota):\n    assert quota\n"
+    q_other: str = "def test_other(quota):\n    assert quota\n"
+    alias: str = 'import pytest\n\n\n@pytest.fixture(name="quota")\ndef _quota_override():\n    return 20\n'
+    add("옮김: 0T 케이스 옮김 — 옛 파일 `@pytest.fixture(name=\"quota\")`(함수 이름 다름)가 conftest quota 를 덮어씀 · 새 파일엔 없음 → "
+        "red(꼴 7)", "test",
+        {MV_CONF: conf_quota, MV_BIG: alias + q_keep + "\n\n" + q_case, MV_OTHER: q_other},
+        _edit({MV_BIG: alias + q_keep, MV_OTHER: q_other + "\n\n" + q_case}),
+        both_red("덮어쓰기 픽스처(conftest 사슬과 같은 이름 파일 안 픽스처)가 옛 · 새 파일에서 다르다 — 옛 ['quota']"), snap=one_move)
+    imp_q: str = "from application.core.test.fixtures import quota  # noqa: F401\n"
+    add("옮김: 0T 케이스 옮김 — 옛 파일이 저장소 안 픽스처를 import 로 들여 conftest quota 를 덮어씀 · 새 파일엔 없음 → red(꼴 7)", "test",
+        {MV_CONF: conf_quota, fixmod: quota20, MV_BIG: imp_q + q_keep + "\n\n" + q_case, MV_OTHER: q_other},
+        _edit({MV_BIG: imp_q + q_keep, MV_OTHER: q_other + "\n\n" + q_case}),
+        both_red("덮어쓰기 픽스처(conftest 사슬과 같은 이름 파일 안 픽스처)가 옛 · 새 파일에서 다르다 — 옛 ['quota']"), snap=one_move)
+    s_case: str = "def test_moved(settings):\n    assert settings is not None\n"
+    add("옮김: 0T 케이스 옮김 — conftest 의 저장소 밖 import(`from django.conf import settings`)는 사슬 픽스처가 아님 · 케이스가 안 쓰는 "
+        "파일 안 픽스처는 달라도 → 개별 감사", "test",
+        {MV_CONF: "from django.conf import settings  # noqa: F401\n" + conf_quota,
+         MV_BIG: seat + "def test_keep(seat):\n    assert seat\n\n\n" + s_case, MV_OTHER: "def test_other():\n    assert True\n"},
+        _edit({MV_BIG: seat + "def test_keep(seat):\n    assert seat\n",
+               MV_OTHER: "def test_other():\n    assert True\n\n\n" + s_case}),
+        accepted, snap=one_move, post=_moved(f"{MV_BIG}::test_moved → {MV_OTHER}", cases=one_case))
+    extra: "Callable[[int], str]" = lambda n: f"import pytest\n\n\n@pytest.fixture\ndef extra():\n    return {n}\n"  # noqa: E731
+    add("옮김: 0T 케이스 옮김 — conftest `limit(extra)` · extra 는 파일마다 정의(덮어쓰기 아님 · 옛 · 새 다름) → red(꼴 4 — 사슬 픽스처 "
+        "매개변수까지 전이)", "test",
+        {MV_CONF: "import pytest\n\n\n@pytest.fixture\ndef limit(extra):\n    return extra * 10\n",
+         MV_BIG: extra(20) + lim_keep + "\n\n" + lim_case, MV_OTHER: extra(2) + "\n\n" + lim_other},
+        _edit({MV_BIG: extra(20) + lim_keep, MV_OTHER: extra(2) + "\n\n" + lim_other + "\n\n" + lim_case}),
+        both_red("케이스가 요청하는 파일 안 픽스처 `extra` 가 옛 · 새 파일에서 다르다"), snap=one_move)
+    env: "Callable[[str], str]" = (lambda v: 'import os\n\nimport pytest\n\n\n@pytest.fixture\ndef env_mode():\n'  # noqa: E731
+                                   f'    os.environ["MODE"] = "{v}"\n')
+    env_keep: str = "\n\ndef test_keep(env_mode):\n    assert True\n"
+    env_other: str = "\n\ndef test_other(env_mode):\n    assert True\n"
+    mode_cls: str = ('class TestMode:\n    pytestmark = [pytest.mark.usefixtures("env_mode")]\n\n    def test_mode(self):\n'
+                     '        assert os.environ.get("MODE")\n')
+    add("옮김: 0T 클래스 통째 옮김 — 클래스 몸 `pytestmark = [usefixtures(\"env_mode\")]` · env_mode 가 옛 · 새 파일에서 다른 원문 → "
+        "red(꼴 4)", "test",
+        {MV_BIG: env("strict") + env_keep + "\n\n" + mode_cls, MV_OTHER: env("loose") + env_other},
+        _edit({MV_BIG: env("strict") + env_keep, MV_OTHER: env("loose") + env_other + "\n\n" + mode_cls}),
+        both_red("케이스가 요청하는 파일 안 픽스처 `env_mode` 가 옛 · 새 파일에서 다르다"),
+        snap=_snap(moves=(_mv(MV_BIG, "TestMode", MV_OTHER),)))
+    mark_env: str = 'pytestmark = pytest.mark.usefixtures("env_mode")\n'
+    mode_fn: str = 'def test_mode():\n    assert os.environ.get("MODE")\n'
+    plain_other: str = "\n\ndef test_other():\n    assert True\n"
+    add("옮김: 0T 케이스 옮김 — 두 파일 모듈 `pytestmark = usefixtures(\"env_mode\")`(같은 글) · env_mode 가 파일마다 다름 → red(꼴 4)",
+        "test",
+        {MV_BIG: env("strict") + mark_env + env_keep + "\n\n" + mode_fn, MV_OTHER: env("loose") + mark_env + plain_other},
+        _edit({MV_BIG: env("strict") + mark_env + env_keep, MV_OTHER: env("loose") + mark_env + plain_other + "\n\n" + mode_fn}),
+        both_red("케이스가 요청하는 파일 안 픽스처 `env_mode` 가 옛 · 새 파일에서 다르다"),
+        snap=_snap(moves=(_mv(MV_BIG, "test_mode", MV_OTHER),)))
+    auto_mode: str = 'import os\n\nimport pytest\n\n\n@pytest.fixture(autouse=True)\ndef _mode():\n    os.environ["MODE"] = "strict"\n'
+    strict_fn: str = 'def test_mode():\n    assert os.environ.get("MODE") == "strict"\n'
+    add("옮김: 0T 케이스 옮김 — 옛 파일에만 autouse 픽스처 → red(꼴 4)", "test",
+        {MV_BIG: auto_mode + "\n\ndef test_keep():\n    assert True\n\n\n" + strict_fn,
+         MV_OTHER: "import os\n\n\ndef test_other():\n    assert True\n"},
+        _edit({MV_BIG: auto_mode + "\n\ndef test_keep():\n    assert True\n",
+               MV_OTHER: "import os\n\n\ndef test_other():\n    assert True\n\n\n" + strict_fn}),
+        both_red("파일 안 autouse 픽스처 묶음이 옛 · 새 파일에서 다르다"), snap=_snap(moves=(_mv(MV_BIG, "test_mode", MV_OTHER),)))
+    nested_fn: str = "def test_moved():\n    def inner(quota):\n        return quota\n    assert inner(3) == 3\n"
+    add("옮김: 0T 케이스 옮김 — 케이스 안 중첩 함수 매개변수 이름이 옛 파일 픽스처 이름과 같음(픽스처 요청 아님) → 개별 감사", "test",
+        {MV_BIG: quota20 + q_keep + "\n\n" + nested_fn, MV_OTHER: "def test_other():\n    assert True\n"},
+        _edit({MV_BIG: quota20 + q_keep, MV_OTHER: "def test_other():\n    assert True\n\n\n" + nested_fn}),
+        accepted, snap=one_move, post=_moved(f"{MV_BIG}::test_moved → {MV_OTHER}", cases=one_case))
+    p_head: str = "from application.core.product import product\n\n\n"
+    check_fn: str = "def check(v):\n    assert v > LIMIT\n"
+    lim_head: "Callable[[int], str]" = lambda n: p_head + f"LIMIT = {n}\n\n\n" + check_fn  # noqa: E731
+    calls: "Callable[[str], str]" = lambda name: f"\n\ndef test_{name}():\n    check(product())\n"  # noqa: E731
+    add("옮김: 0T 케이스 옮김 — 케이스가 부르는 도움 함수(두 파일 같은 원문)가 읽는 LIMIT 이 옛 · 새에서 다름 → red(꼴 5 — 정의가 읽는 "
+        "이름까지 전이)", "test",
+        {MV_BIG: lim_head(5) + calls("keep") + calls("moved"), MV_OTHER: lim_head(0) + calls("other")},
+        _edit({MV_BIG: lim_head(5) + calls("keep"), MV_OTHER: lim_head(0) + calls("other") + calls("moved")}),
+        both_red("`LIMIT`(`check` 가 읽음) 의 묶임이 다르다"), snap=one_move)
+    add("옮김: 0T 케이스 옮김 — 도움 함수와 그 함수가 읽는 LIMIT 이 두 파일 같은 원문 → 개별 감사 · 묶임 표에 전이 이름", "test",
+        {MV_BIG: lim_head(5) + calls("keep") + calls("moved"), MV_OTHER: lim_head(5) + calls("other")},
+        _edit({MV_BIG: lim_head(5) + calls("keep"), MV_OTHER: lim_head(5) + calls("other") + calls("moved")}),
+        accepted, snap=one_move,
+        post=_moved(f"{MV_BIG}::test_moved → {MV_OTHER}", cases=one_case,
+                    notes=("| `check` | 파일 안 정의 ", "| `LIMIT` (`check` 가 읽음) | 파일 안 정의 ")))
+    m_head: str = "import pytest\n\nfrom application.core.product import product\n\n"
+    nine: "Callable[[str], str]" = lambda name: f"\n\ndef test_{name}():\n    assert product() == 9\n"  # noqa: E731
+    skip_marks: str = 'MARKS = [pytest.mark.skip(reason="slow")]\npytestmark = MARKS\n'
+    add("옮김: 0T 케이스 옮김 — 두 파일 `pytestmark = MARKS`(같은 글) · MARKS 가 옛 · 새에서 다름(새 파일 skip) → red(꼴 4 · 5)", "test",
+        {MV_BIG: m_head + "MARKS = []\npytestmark = MARKS\n" + nine("keep") + nine("moved"), MV_OTHER: m_head + skip_marks + nine("other")},
+        _edit({MV_BIG: m_head + "MARKS = []\npytestmark = MARKS\n" + nine("keep"),
+               MV_OTHER: m_head + skip_marks + nine("other") + nine("moved")}),
+        both_red("`MARKS`(`pytestmark` 가 읽음) 의 묶임이 다르다"), snap=one_move)
+    plus_skip: str = 'pytestmark = []\npytestmark += [pytest.mark.skip(reason="slow")]\n'
+    add("옮김: 0T 케이스 옮김 — 새 파일만 `pytestmark += [skip]`(덧셈 대입) → red(꼴 4)", "test",
+        {MV_BIG: m_head + "pytestmark = []\n" + nine("keep") + nine("moved"), MV_OTHER: m_head + plus_skip + nine("other")},
+        _edit({MV_BIG: m_head + "pytestmark = []\n" + nine("keep"), MV_OTHER: m_head + plus_skip + nine("other") + nine("moved")}),
+        both_red("모듈 `pytestmark` 가 옛 · 새 파일에서 다르다"), snap=one_move)
+    over_fn: str = "def test_moved():\n    assert product() > LIMIT\n"
+    add("옮김: 0T 케이스 옮김 — 케이스가 읽는 LIMIT 을 새 파일이 `LIMIT += 5` 로 고쳐 씀 → red(꼴 5)", "test",
+        {MV_BIG: p_head + "LIMIT = 1\n\n\ndef test_keep():\n    assert product() > LIMIT\n\n\n" + over_fn,
+         MV_OTHER: p_head + "LIMIT = 1\nLIMIT += 5\n\n\ndef test_other():\n    assert product() > LIMIT\n"},
+        _edit({MV_BIG: p_head + "LIMIT = 1\n\n\ndef test_keep():\n    assert product() > LIMIT\n",
+               MV_OTHER: p_head + "LIMIT = 1\nLIMIT += 5\n\n\ndef test_other():\n    assert product() > LIMIT\n\n\n" + over_fn}),
+        both_red("`LIMIT` 을 모듈에서 고쳐 쓴다"), snap=one_move)
+    most_fn: str = "def test_moved():\n    assert product() > max(LIMITS)\n"
+    add("옮김: 0T 케이스 옮김 — 케이스가 읽는 LIMITS 를 새 파일이 `LIMITS.append(5)` 로 고쳐 씀(대입 원문은 같음) → red(꼴 5)", "test",
+        {MV_BIG: p_head + "LIMITS = [1]\n\n\ndef test_keep():\n    assert product() > max(LIMITS)\n\n\n" + most_fn,
+         MV_OTHER: p_head + "LIMITS = [1]\nLIMITS.append(5)\n\n\ndef test_other():\n    assert product() > max(LIMITS)\n"},
+        _edit({MV_BIG: p_head + "LIMITS = [1]\n\n\ndef test_keep():\n    assert product() > max(LIMITS)\n",
+               MV_OTHER: p_head + "LIMITS = [1]\nLIMITS.append(5)\n\n\ndef test_other():\n    assert product() > max(LIMITS)\n\n\n"
+               + most_fn}),
+        both_red("`LIMITS` 을 모듈에서 고쳐 쓴다"), snap=one_move)
+    outer: str = "class TestOuter:\n    class TestInner:\n        def test_x(self):\n            assert product() == 9\n"
+    add("옮김: 0T 클래스 통째 옮김 — 안 클래스만 있는 클래스 → 개별 감사 · case_moved 는 클래스 단위", "test",
+        {MV_BIG: p_head + "def test_keep():\n    assert product() == 9\n\n\n" + outer,
+         MV_OTHER: p_head + "def test_other():\n    assert True\n"},
+        _edit({MV_BIG: p_head + "def test_keep():\n    assert product() == 9\n",
+               MV_OTHER: p_head + "def test_other():\n    assert True\n\n\n" + outer}),
+        {MV_BIG: ("개별 감사", ["<module>"]), MV_OTHER: ("개별 감사", ["<module>", _mv_unit(MV_BIG, "TestOuter", MV_OTHER)])},
+        snap=_snap(moves=(_mv(MV_BIG, "TestOuter", MV_OTHER),)),
+        post=_moved(f"{MV_BIG}::TestOuter → {MV_OTHER}", cases=({"path": MV_BIG, "class": "TestOuter", "func": None, "to": MV_OTHER},)))
+    add("옮김: 0F 허용 파일 밖 편집 — 옮김 행이 있는 승인판이면 red 사유에 «retain 행은 옮긴 뒤 경로로»", "follow",
+        {TP: R42B, MV_BIG: MV_BASE},
+        _edit({}, R42B.replace("application.core.real", "application.core.fake_impl")),
+        {TP: ("red", None, {"reason": "`retain` 재조직 행(0F 허용 파일)에 없는 파일(옮김 행이 있는 승인판 — 0F 허용 파일을 주는 "
+                                      "`retain` 행은 옮긴 뒤 경로로 적는다)"})},
+        snap=_snap(retain=(MV_BIG,), moves=split_rows[:1]))
+    # 사슬 모듈 따라 읽기(IT-B 재확인 R2-1) — 저장소 안 `pytest_plugins` · 별 import 모듈의 픽스처를 사슬에(`__all__` · 전이 · 순환)
+    root_conf: str = "conftest.py"
+    shared_mod: str = "import pytest\n\n\n@pytest.fixture\ndef shared():\n    return 1\n"
+    thing: str = "import pytest\n\n\n@pytest.fixture\ndef thing():\n    return 1\n\n\ndef test_keep(thing):\n    assert thing\n"
+    sh_case: str = "def test_moved(shared):\n    assert shared\n"
+    sh_edit = _edit({MV_BIG: thing, MV_OTHER: "def test_other():\n    assert True\n\n\n" + sh_case})
+    sh_files: "Callable[..., dict]" = lambda **more: {MV_BIG: thing + "\n\n" + sh_case,  # noqa: E731
+                                                     MV_OTHER: "def test_other():\n    assert True\n", **more}
+    plugins_line: str = 'pytest_plugins = ["application.core.test.fixtures"]\n'
+    add("옮김: 0T 케이스 옮김 — 뿌리 conftest `pytest_plugins`(저장소 안 모듈) · 옛 파일에 케이스와 무관한 파일 안 픽스처 → 개별 감사", "test",
+        sh_files(**{root_conf: plugins_line, fixmod: shared_mod}), sh_edit, accepted, snap=one_move)
+    add("옮김: 0T 케이스 옮김 — 같은 폴더 conftest 별 import(저장소 안 모듈) · 옛 파일에 무관한 파일 안 픽스처 → 개별 감사", "test",
+        sh_files(**{MV_CONF: star_conf, fixmod: shared_mod}), sh_edit, accepted, snap=one_move)
+    hidden_mod: str = shared_mod + "\n\n@pytest.fixture\ndef hidden():\n    return 2\n"
+    hidden_keep: str = ("import pytest\n\n\n@pytest.fixture\ndef hidden():\n    return 20\n\n\ndef test_keep(hidden):\n"
+                        "    assert hidden\n")
+    hidden_files: "Callable[[str], dict]" = lambda mod: {MV_CONF: star_conf, fixmod: mod,  # noqa: E731
+                                                        MV_BIG: hidden_keep + "\n\n" + sh_case,
+                                                        MV_OTHER: "def test_other():\n    assert True\n"}
+    hidden_edit = _edit({MV_BIG: hidden_keep, MV_OTHER: "def test_other():\n    assert True\n\n\n" + sh_case})
+    add("옮김: 0T 케이스 옮김 — 별 import 모듈의 `__all__` 밖 픽스처 이름을 옛 파일이 정의(덮어쓰기 아님) → 개별 감사", "test",
+        hidden_files('__all__ = ["shared"]\n\n' + hidden_mod), hidden_edit, accepted, snap=one_move)
+    add("옮김: 0T 케이스 옮김 — 같은 꼴 · `__all__` 없음(그 이름도 사슬에 — 옛 파일이 덮어씀) → red(꼴 7)", "test",
+        hidden_files(hidden_mod), hidden_edit,
+        both_red("덮어쓰기 픽스처(conftest 사슬과 같은 이름 파일 안 픽스처)가 옛 · 새 파일에서 다르다 — 옛 ['hidden']"), snap=one_move)
+    lim_mod: str = "import pytest\n\n\n@pytest.fixture\ndef limit(extra):\n    return extra * 10\n"
+    add("옮김: 0T 케이스 옮김 — `pytest_plugins` 모듈 픽스처 `limit(extra)` · extra 는 파일마다 다름 → red(꼴 4 — 플러그인 모듈 매개변수까지)",
+        "test", {root_conf: plugins_line, fixmod: lim_mod, MV_BIG: extra(20) + lim_keep + "\n\n" + lim_case,
+                 MV_OTHER: extra(2) + "\n\n" + lim_other},
+        _edit({MV_BIG: extra(20) + lim_keep, MV_OTHER: extra(2) + "\n\n" + lim_other + "\n\n" + lim_case}),
+        both_red("케이스가 요청하는 파일 안 픽스처 `extra` 가 옛 · 새 파일에서 다르다"), snap=one_move)
+    more_mod: str = "application/core/test/more_fixtures.py"
+    deep_case: str = "def test_moved(deep):\n    assert deep\n"
+    deep_keep: str = "import pytest\n\n\n@pytest.fixture\ndef deep():\n    return 20\n\n\ndef test_keep(deep):\n    assert deep\n"
+    add("옮김: 0T 케이스 옮김 — `pytest_plugins` 모듈이 다시 `pytest_plugins` 로 든 모듈의 픽스처를 옛 파일이 덮어씀 → red(꼴 7 — 전이)",
+        "test", {root_conf: plugins_line, fixmod: 'pytest_plugins = ["application.core.test.more_fixtures"]\n',
+                 more_mod: "import pytest\n\n\n@pytest.fixture\ndef deep():\n    return 2\n",
+                 MV_BIG: deep_keep + "\n\n" + deep_case, MV_OTHER: "def test_other():\n    assert True\n"},
+        _edit({MV_BIG: deep_keep, MV_OTHER: "def test_other():\n    assert True\n\n\n" + deep_case}),
+        both_red("덮어쓰기 픽스처(conftest 사슬과 같은 이름 파일 안 픽스처)가 옛 · 새 파일에서 다르다 — 옛 ['deep']"), snap=one_move)
+    add("옮김: 0T 케이스 옮김 — 별 import 모듈이 다시 별 import 로 든 픽스처(두 단계) · 옛 파일에 무관한 픽스처 → 개별 감사", "test",
+        sh_files(**{MV_CONF: star_conf, fixmod: "from application.core.test.more_fixtures import *  # noqa: F403\n",
+                    more_mod: shared_mod}), sh_edit, accepted, snap=one_move)
+    shared20: str = "import pytest\n\n\n@pytest.fixture\ndef shared():\n    return 20\n\n\ndef test_keep(shared):\n    assert shared\n"
+    add("옮김: 0T 케이스 옮김 — 두 단계 별 import 의 픽스처 shared 를 옛 파일이 덮어씀 → red(꼴 7 — 전이)", "test",
+        {MV_CONF: star_conf, fixmod: "from application.core.test.more_fixtures import *  # noqa: F403\n", more_mod: shared_mod,
+         MV_BIG: shared20 + "\n\n" + sh_case, MV_OTHER: "def test_other():\n    assert True\n"},
+        _edit({MV_BIG: shared20, MV_OTHER: "def test_other():\n    assert True\n\n\n" + sh_case}),
+        both_red("덮어쓰기 픽스처(conftest 사슬과 같은 이름 파일 안 픽스처)가 옛 · 새 파일에서 다르다 — 옛 ['shared']"), snap=one_move)
+    add("옮김: 0T 케이스 옮김 — 별 import 순환(두 모듈이 서로 별 import) · 옛 파일에 무관한 픽스처 → red(픽스처 풀이를 다 볼 수 없다)", "test",
+        sh_files(**{MV_CONF: star_conf, fixmod: "from application.core.test.more_fixtures import *  # noqa: F403\n",
+                    more_mod: "from application.core.test.fixtures import *  # noqa: F403\n"}), sh_edit,
+        both_red("한도 · 순환"), snap=one_move)
+    add("옮김: 0T 케이스 옮김 — 뿌리 conftest `pytest_plugins` 가 저장소 밖 모듈(설치 플러그인처럼 대조 밖) · 옛 파일에 무관한 픽스처 → "
+        "개별 감사", "test", sh_files(**{root_conf: 'pytest_plugins = ("celery.contrib.pytest",)\n'}), sh_edit, accepted,
+        snap=one_move)
+    add("옮김: 0T 케이스 옮김 — 뿌리 `pytest_plugins` 에 저장소 밖 · 저장소 안 모듈 · 저장소 안 `limit(extra)` 의 extra 가 파일마다 다름 → "
+        "red(저장소 안 모듈은 그대로 읽음)", "test",
+        {root_conf: 'pytest_plugins = ["celery.contrib.pytest", "application.core.test.fixtures"]\n', fixmod: lim_mod,
+         MV_BIG: extra(20) + lim_keep + "\n\n" + lim_case, MV_OTHER: extra(2) + "\n\n" + lim_other},
+        _edit({MV_BIG: extra(20) + lim_keep, MV_OTHER: extra(2) + "\n\n" + lim_other + "\n\n" + lim_case}),
+        both_red("케이스가 요청하는 파일 안 픽스처 `extra` 가 옛 · 새 파일에서 다르다"), snap=one_move)
+    ext_q: str = "from ext_fixtures import quota  # noqa: F401\n"
+    add("옮김: 0T 케이스 옮김 — 옛 파일이 저장소 밖 모듈에서 conftest 픽스처와 같은 이름 quota 를 import(덮어쓰기인지 모름) · 새 파일엔 없음 "
+        "→ red(꼴 7)", "test",
+        {MV_CONF: conf_quota, MV_BIG: ext_q + q_keep + "\n\n" + q_case, MV_OTHER: q_other},
+        _edit({MV_BIG: ext_q + q_keep, MV_OTHER: q_other + "\n\n" + q_case}),
+        both_red("덮어쓰기 픽스처(conftest 사슬과 같은 이름 파일 안 픽스처)가 옛 · 새 파일에서 다르다 — 옛 ['quota']"), snap=one_move)
+    dj_settings: str = "from django.conf import settings  # noqa: F401\n\n\n"
+    add("옮김: 0T 케이스 옮김 — 옛 파일만 저장소 밖 `from django.conf import settings`(사슬 픽스처 이름 아님) · 케이스가 settings 요청 → "
+        "개별 감사", "test",
+        {MV_CONF: conf_quota, MV_BIG: dj_settings + "def test_keep(quota):\n    assert quota\n\n\n" + s_case, MV_OTHER: q_other},
+        _edit({MV_BIG: dj_settings + "def test_keep(quota):\n    assert quota\n", MV_OTHER: q_other + "\n\n" + s_case}),
+        accepted, snap=one_move)
+    # 모듈 맨 문장(R2-2) — 두 파일 같은 «고쳐 쓰는 문장» 차례면 통과 · 그 문장이 읽는 이름도 전이 · 다르거나 한쪽만이면 red
+    for label, head, unit in (
+            ("`pytest.importorskip(\"json\")` · 케이스가 pytest 를 읽음", 'import pytest\n\npytest.importorskip("json")\n\n\n',
+             "def test_moved():\n    with pytest.raises(ValueError):\n        int('x')\n"),
+            ("`os.environ.setdefault(\"X\", \"1\")` · 케이스가 os 를 읽음", 'import os\n\nos.environ.setdefault("X", "1")\n\n\n',
+             "def test_moved():\n    assert os.environ['X'] == '1'\n"),
+            ("`RNG = random.Random()` + `RNG.seed(0)` · 케이스가 RNG 를 읽음", "import random\n\nRNG = random.Random()\nRNG.seed(0)\n\n\n",
+             "def test_moved():\n    assert 0 <= RNG.random() < 1\n"),
+            ("`LIMIT = 1` + `LIMIT += 5` · 케이스가 LIMIT 을 읽음", p_head + "LIMIT = 1\nLIMIT += 5\n\n\n",
+             "def test_moved():\n    assert product() > LIMIT\n")):
+        add(f"옮김: 0T 케이스 옮김 — 두 파일 같은 모듈 맨 문장 {label} → 개별 감사", "test",
+            {MV_BIG: head + "def test_keep():\n    assert True\n\n\n" + unit, MV_OTHER: head + "def test_other():\n    assert True\n"},
+            _edit({MV_BIG: head + "def test_keep():\n    assert True\n", MV_OTHER: head + "def test_other():\n    assert True\n\n\n" + unit}),
+            accepted, snap=one_move)
+    rng: "Callable[[int], str]" = lambda n: f"import random\n\nRNG = random.Random()\nRNG.seed({n})\n\n\n"  # noqa: E731
+    rng_unit: str = "def test_moved():\n    assert 0 <= RNG.random() < 1\n"
+    add("옮김: 0T 케이스 옮김 — 두 파일 맨 문장이 다름(`RNG.seed(0)` · `RNG.seed(1)`) → red(꼴 5)", "test",
+        {MV_BIG: rng(0) + "def test_keep():\n    assert True\n\n\n" + rng_unit, MV_OTHER: rng(1) + "def test_other():\n    assert True\n"},
+        _edit({MV_BIG: rng(0) + "def test_keep():\n    assert True\n", MV_OTHER: rng(1) + "def test_other():\n    assert True\n\n\n" + rng_unit}),
+        both_red("`RNG` 을 모듈에서 고쳐 쓴다 — 옛 · 새 파일의 고쳐 쓰는 문장"), snap=one_move)
+    env_head: str = 'import os\n\nos.environ.setdefault("X", "1")\n\n\n'
+    env_unit: str = "def test_moved():\n    assert os.environ['X'] == '1'\n"
+    add("옮김: 0T 케이스 옮김 — 맨 문장 `os.environ.setdefault` 가 옛 파일에만 → red(꼴 5)", "test",
+        {MV_BIG: env_head + "def test_keep():\n    assert True\n\n\n" + env_unit, MV_OTHER: "import os\n\n\ndef test_other():\n    assert True\n"},
+        _edit({MV_BIG: env_head + "def test_keep():\n    assert True\n",
+               MV_OTHER: "import os\n\n\ndef test_other():\n    assert True\n\n\n" + env_unit}),
+        both_red("`os` 을 모듈에서 고쳐 쓴다 — 옛 · 새 파일의 고쳐 쓰는 문장"), snap=one_move)
+    val_head: "Callable[[str], str]" = (lambda v: f'import os\n\nVALUE = "{v}"\nos.environ.setdefault("X", VALUE)\n\n\n')  # noqa: E731
+    add("옮김: 0T 케이스 옮김 — 두 파일 같은 맨 문장 `os.environ.setdefault(\"X\", VALUE)` · 그 문장이 읽는 VALUE 가 다름 → red(꼴 5 전이)",
+        "test",
+        {MV_BIG: val_head("1") + "def test_keep():\n    assert True\n\n\n" + env_unit,
+         MV_OTHER: val_head("2") + "def test_other():\n    assert True\n"},
+        _edit({MV_BIG: val_head("1") + "def test_keep():\n    assert True\n",
+               MV_OTHER: val_head("2") + "def test_other():\n    assert True\n\n\n" + env_unit}),
+        both_red("`VALUE`(`os` 가 읽음) 의 묶임이 다르다"), snap=one_move)
+    # 글자 아닌 usefixtures 인자(R2-3) · 대입 꼴 픽스처(R2-4) · conftest autouse 의 매개변수(R2-5 · N8)
+    star_mark: str = 'FIXES = ("env_mode",)\npytestmark = pytest.mark.usefixtures(*FIXES)\n'
+    for label, other_env, want in (("env_mode 가 파일마다 다름 → red(픽스처 풀이를 다 볼 수 없다)", "loose",
+                                    both_red("`usefixtures(…)` 인자가 글자가 아니다")),
+                                   ("env_mode 가 두 파일 같은 원문 → 개별 감사", "strict", None)):
+        add(f"옮김: 0T 케이스 옮김 — `pytestmark = usefixtures(*FIXES)`(글자 아닌 인자) · {label}", "test",
+            {MV_BIG: env("strict") + star_mark + plain_other.replace("test_other", "test_keep") + "\n\n" + mode_fn,
+             MV_OTHER: env(other_env) + star_mark + plain_other},
+            _edit({MV_BIG: env("strict") + star_mark + plain_other.replace("test_other", "test_keep"),
+                   MV_OTHER: env(other_env) + star_mark + plain_other + "\n\n" + mode_fn}),
+            want or {MV_BIG: ("개별 감사", ["<module>"]), MV_OTHER: ("개별 감사", ["<module>", _mv_unit(MV_BIG, "test_mode", MV_OTHER)])},
+            snap=_snap(moves=(_mv(MV_BIG, "test_mode", MV_OTHER),)))
+    assign_q: str = "import pytest\n\n\ndef _quota_impl():\n    return 20\n\n\nquota = pytest.fixture(_quota_impl)\n"
+    add("옮김: 0T 케이스 옮김 — 옛 파일이 대입 꼴 `quota = pytest.fixture(_quota_impl)` 로 conftest quota 를 덮어씀 · 새 파일엔 없음 → "
+        "red(꼴 7)", "test",
+        {MV_CONF: conf_quota, MV_BIG: assign_q + q_keep + "\n\n" + q_case, MV_OTHER: q_other},
+        _edit({MV_BIG: assign_q + q_keep, MV_OTHER: q_other + "\n\n" + q_case}),
+        both_red("덮어쓰기 픽스처(conftest 사슬과 같은 이름 파일 안 픽스처)가 옛 · 새 파일에서 다르다 — 옛 ['quota']"), snap=one_move)
+    add("옮김: 0T 케이스 옮김 — 두 파일 같은 대입 꼴 픽스처(덮어쓰기 · 이름 · 원문 같음) → 개별 감사", "test",
+        {MV_CONF: conf_quota, MV_BIG: assign_q + q_keep + "\n\n" + q_case, MV_OTHER: assign_q + "\n\n" + q_other},
+        _edit({MV_BIG: assign_q + q_keep, MV_OTHER: assign_q + "\n\n" + q_other + "\n\n" + q_case}), accepted, snap=one_move)
+    made_q: str = "import pytest\n\nfrom application.core.product import product\n\nquota = pytest.fixture(product.__call__)\n"
+    add("옮김: 0T 케이스 옮김 — 대입 꼴 픽스처가 감싼 함수를 못 읽음(두 파일 같음) · 옛 파일에 무관한 픽스처 → red(픽스처 풀이를 다 볼 수 "
+        "없다)", "test",
+        {MV_BIG: made_q + "\n\n" + thing.replace("import pytest\n\n\n", "") + "\n\n" + q_case, MV_OTHER: made_q + "\n\n" + q_other},
+        _edit({MV_BIG: made_q + "\n\n" + thing.replace("import pytest\n\n\n", ""), MV_OTHER: made_q + "\n\n" + q_other + "\n\n" + q_case}),
+        both_red("픽스처 `quota` 를 따라 읽지 못했다"), snap=one_move)
+    auto_conf: str = ('import os\n\nimport pytest\n\n\n@pytest.fixture(autouse=True)\ndef _setup(extra):\n'
+                      '    os.environ["E"] = str(extra)\n')
+    e_unit: str = 'def test_moved():\n    assert os.environ["E"]\n'
+    e_fix: "Callable[[int], str]" = lambda n: f"import os\n\nimport pytest\n\n\n@pytest.fixture\ndef extra():\n    return {n}\n"  # noqa: E731
+    add("옮김: 0T 케이스 옮김 — conftest autouse `_setup(extra)` · extra 는 파일마다 다름(케이스는 픽스처 요청 없음) → red(꼴 4)", "test",
+        {MV_CONF: auto_conf, MV_BIG: e_fix(20) + "\n\ndef test_keep():\n    assert True\n\n\n" + e_unit,
+         MV_OTHER: e_fix(2) + "\n\ndef test_other():\n    assert True\n"},
+        _edit({MV_BIG: e_fix(20) + "\n\ndef test_keep():\n    assert True\n",
+               MV_OTHER: e_fix(2) + "\n\ndef test_other():\n    assert True\n\n\n" + e_unit}),
+        both_red("케이스가 요청하는 파일 안 픽스처 `extra` 가 옛 · 새 파일에서 다르다"), snap=one_move)
+    for case in out[ctx_from:]:
+        case["ctx"] = True
     return out
 
 
@@ -2189,6 +2832,227 @@ def verify_checks() -> "list[str]":
                "승인 V 1건", "승인 기대 원소 1 중 변경 1", "요약: 동작 보존 green")
     fails += rename_verify_checks()
     fails += field_rename_verify_checks()
+    fails += normalize_verify_checks()
+    fails += move_verify_checks()
+    return fails
+
+
+def move_verify_checks() -> "list[str]":
+    """옮김 행 verify · G2 — 적용 · 감사 뒤 green(옮김 행 2 중 적용 2) · 어느 창에도 적용 안 된 옮김 행 red · 적용된 옮김 행(done)은
+    다음 창에서 다시 판정하지 않음 · 뒤 창 0T update 행 · 변경 창 V 가 옮긴 케이스의 옛 키(정규화 지도) · G2 유지 대응(case_moved
+    접기) · 옮긴 케이스의 새 자리가 G2 선택에 없으면 red · suite 기록 옮긴 케이스 skip 보고."""
+    fails: "list[str]" = []
+    bs = STATE["bs"]
+
+    def expect(label: str, got: "tuple[int, str]", code: int, *needles: str, absent: "tuple[str, ...]" = ()) -> None:
+        missing = [x for x in needles if x not in got[1]]
+        stray = [x for x in absent if x in got[1]]
+        if got[0] != code or missing or stray:
+            fails.append(f"옮김 verify {label}: exit {got[0]} (기대 {code} · 없는 글 {missing} · 있으면 안 되는 글 {stray})\n{got[1]}")
+
+    rows = (_mv(MV_BIG, "test_old_is_class", MV_OTHER), _mv(MV_BIG, "TestGroup", MV_OTHER))
+    split: "dict[str, str | None]" = {MV_BIG: MV_LEFT, MV_OTHER: MV_SPLIT}
+    with tempfile.TemporaryDirectory(prefix="bg-mv1-") as td:
+        repo = _rrepo(Path(td), {MV_BIG: MV_BASE})
+        digest = _bind(repo, _snap(moves=rows))
+        got = _windows_run(repo, [("test", split)])
+        expect("0T 나누기 close", got[0], 0, "옮김 행 적용 2")
+        _suite(repo, digest)
+        expect("옮김 적용 · 감사 → verify green(옮김 행 2 중 적용 2)", _rguard(repo, "verify"), 0, "옮김 행 2 중 적용 2",
+               "요약: 동작 보존 green")
+        g0_keys: "dict[str, list]" = {f"{MV_BIG}::test_product_is_nine": [MV_BIG, None, "test_product_is_nine", "test_product_is_nine"],
+                                      f"{MV_BIG}::test_old_is_class": [MV_BIG, None, "test_old_is_class", "test_old_is_class"],
+                                      f"{MV_BIG}::TestGroup::test_in_class": [MV_BIG, "TestGroup", "test_in_class", "test_in_class"]}
+        g2_keys: "dict[str, list]" = {f"{MV_BIG}::test_product_is_nine": [MV_BIG, None, "test_product_is_nine", "test_product_is_nine"],
+                                      f"{MV_OTHER}::test_old_is_class": [MV_OTHER, None, "test_old_is_class", "test_old_is_class"],
+                                      f"{MV_OTHER}::TestGroup::test_in_class": [MV_OTHER, "TestGroup", "test_in_class", "test_in_class"]}
+        g0 = {"keys": g0_keys, "digests": {MV_BIG: "g0"}}
+        try:
+            windows = bs._g0_keep_exceptions(_run_dir(repo))
+            full = {"keys": g2_keys, "ok": set(g2_keys), "selected_ids": set(g2_keys), "skipped_ids": set()}
+            keep = bs.g0_keep(g0, full, repo, windows=windows)
+            chosen = bs.moved_selection(windows, full, g0)
+            short = dict(full, selected_ids=set(g2_keys) - {f"{MV_OTHER}::TestGroup::test_in_class"})
+            missing, _skips = bs.moved_selection(windows, short, g0)
+            skipped = bs.moved_selection(windows, dict(full, skipped_ids={f"{MV_OTHER}::test_old_is_class"}), g0)
+        except Exception as exc:                            # noqa: BLE001 — 옛 판(case_moved 없음)은 다름으로 선다
+            fails.append(f"옮김 G2 — behavior_support 창별 접기: {type(exc).__name__}: {exc}")
+        else:
+            if keep:
+                fails.append(f"옮김 G2 — G0 유지 {keep}(기대 [] — 옮긴 케이스를 새 경로로 접는다)")
+            if chosen != ([], 0):
+                fails.append(f"옮김 G2 — 옮긴 케이스 G2 선택 {chosen}(기대 ([], 0))")
+            if not any("옮긴 케이스가 G2 에서 선택되지 않았다" in m and "TestGroup" in m for m in missing):
+                fails.append(f"옮김 G2 — 새 자리 선택 빠짐 → red 기대 · 받은 {missing}")
+            if skipped != ([], 1):
+                fails.append(f"옮김 G2 — 새 자리 항목이 모두 skip → 보고 1 기대 · 받은 {skipped}")
+        _suite(repo, digest, counts={**GOOD_COUNTS, "moved_skip": 1})
+        expect("suite 기록 옮긴 케이스 skip 1 → verify suite 줄 «옮긴 케이스 skip 1»(보고 · green)", _rguard(repo, "verify"), 0,
+               "옮긴 케이스 skip 1", "요약: 동작 보존 green")
+        _suite(repo, digest, g0_keep=[f"옮긴 케이스가 G2 에서 선택되지 않았다: ('{MV_OTHER}', 'TestGroup', 'test_in_class')"])
+        expect("suite G0 유지 «옮긴 케이스가 G2 에서 선택되지 않았다» → verify red", _rguard(repo, "verify"), 2,
+               "suite G0 유지: 옮긴 케이스가 G2 에서 선택되지 않았다")
+        got = _windows_run(repo, [("test", {MV_BIG: MV_LEFT.replace("    assert", "    # 설명\n    assert")})])
+        expect("done — w2 0T 다른 편집(적용된 옮김 행을 다시 판정하지 않음)", got[0], 0, "감사 요청 키", absent=("옮김 행",))
+    with tempfile.TemporaryDirectory(prefix="bg-mv2-") as td:
+        repo = _rrepo(Path(td), {MV_BIG: MV_BASE})
+        digest = _bind(repo, _snap(moves=rows))
+        got = _windows_run(repo, [("test", {MV_BIG: MV_BASE.replace("    assert product() == 9", "    # 설명\n    assert product() == 9")})])
+        expect("옮김 행 파일에 다른 편집만 → close(옮김 몫 아님)", got[0], 0, "감사 요청 키", absent=("옮김 행 적용",))
+        _suite(repo, digest)
+        expect("어느 창에도 적용되지 않은 옮김 행 → verify red", _rguard(repo, "verify"), 2,
+               f"옮김 행인데 옮김 없음 — {MV_BIG}::test_old_is_class → {MV_OTHER}", "옮김 행 2 중 적용 0")
+    with tempfile.TemporaryDirectory(prefix="bg-mv3-") as td:   # 뒤 창 0T update 행이 옮긴 케이스의 옛 키
+        repo = _rrepo(Path(td), {MV_BIG: MV_BASE})
+        _bind(repo, _snap(update=((f"{MV_BIG}::TestGroup::test_in_class", None),), moves=rows))
+        got = _windows_run(repo, [("test", split), ("test", {MV_OTHER: MV_SPLIT.replace("> 1", ">= 1")})])
+        expect("w2 0T update 행 옛 키(옮김 앞 경로) → 개별 감사(update 행 승인)", got[1], 0, "감사 요청 키")
+        if "0T update 행 —" not in _last_close(repo)["dispositions"][0]["사유"]:
+            fails.append(f"옮김 뒤 update 행 옛 키 — 사유 {_last_close(repo)['dispositions'][0]['사유']}")
+    with tempfile.TemporaryDirectory(prefix="bg-mv4-") as td:   # 뒤 변경 창 V 가 옮긴 케이스의 옛 키
+        repo = _rrepo(Path(td), {MV_BIG: MV_BASE})
+        case = f"{MV_BIG}::test_old_is_class"
+        digest = _bind(repo, _snap(_v("V1", case, ["assert isinstance(Old, type)"]), moves=rows))
+        product = {"application/core/product.py": RB["application/core/product.py"].replace("class Old:", "class Old(int):")}
+        got = _windows_run(repo, [("test", split),
+                                  ("change", {**product, MV_OTHER: MV_SPLIT.replace("isinstance(Old, type)", "issubclass(Old, int)")})])
+        expect("w2 변경 창 V 옛 키(옮김 앞 경로) → 승인 변경 감사", got[1], 0, "승인 변경 감사 1")
+        hits = _last_close(repo).get("approved_hits")
+        if list(hits or {}) != [case]:
+            fails.append(f"옮김 뒤 V 옛 키 — approved_hits {hits}(기대 G1 키 {case} 하나)")
+        _suite(repo, digest)
+        expect("옮김 뒤 V 옛 키 verify green", _rguard(repo, "verify"), 0, "승인 기대 원소 1 중 변경 1", "옮김 행 2 중 적용 2",
+               "요약: 동작 보존 green")
+    p_head: str = "from application.core.product import product\n\n\n"
+    outer: str = "class TestOuter:\n    class TestInner:\n        def test_x(self):\n            assert product() == 9\n"
+    with tempfile.TemporaryDirectory(prefix="bg-mv5-") as td:   # 안 클래스만 있는 클래스 통째 옮김 → G2 접기(클래스 단위)
+        repo = _rrepo(Path(td), {MV_BIG: p_head + "def test_keep():\n    assert True\n\n\n" + outer,
+                                 MV_OTHER: p_head + "def test_other():\n    assert True\n"})
+        _bind(repo, _snap(moves=(_mv(MV_BIG, "TestOuter", MV_OTHER),)))
+        got = _windows_run(repo, [("test", {MV_BIG: p_head + "def test_keep():\n    assert True\n",
+                                            MV_OTHER: p_head + "def test_other():\n    assert True\n\n\n" + outer})])
+        expect("안 클래스만 있는 클래스 옮김 close", got[0], 0, "옮김 행 적용 1")
+        inner_key: "list" = [MV_BIG, "TestOuter.TestInner", "test_x", "test_x"]
+        g0 = {"keys": {f"{MV_BIG}::TestOuter::TestInner::test_x": inner_key,
+                       f"{MV_BIG}::test_keep": [MV_BIG, None, "test_keep", "test_keep"]}, "digests": {MV_BIG: "g0"}}
+        g2_keys: "dict[str, list]" = {f"{MV_OTHER}::TestOuter::TestInner::test_x": [MV_OTHER, *inner_key[1:]],
+                                      f"{MV_BIG}::test_keep": [MV_BIG, None, "test_keep", "test_keep"]}
+        try:
+            windows = bs._g0_keep_exceptions(_run_dir(repo))
+            full = {"keys": g2_keys, "ok": set(g2_keys), "selected_ids": set(g2_keys), "skipped_ids": set()}
+            keep = bs.g0_keep(g0, full, repo, windows=windows)
+        except Exception as exc:                            # noqa: BLE001
+            keep = [f"{type(exc).__name__}: {exc}"]
+        if keep:
+            fails.append(f"옮김 G2 — 안 클래스만 있는 클래스 옮김 G0 유지 {keep}(기대 [] — 클래스 단위로 접는다)")
+    return fails
+
+
+def _windows_run(repo: Path, steps: "list[tuple[str, dict[str, str | None]]]") -> "list[tuple[int, str]]":
+    """창 여럿을 차례로 — 창마다 open → 편집 · 커밋 → close → 감사 기록(키마다 요구 판정의 첫 값). close 결과 목록."""
+    out: "list[tuple[int, str]]" = []
+    for n, (kind, edit) in enumerate(steps, 1):
+        _rguard(repo, "open", "--kind", kind, "--mode", "refactor")
+        _write(repo, edit)
+        _commit(repo)
+        out.append(_rguard(repo, "close"))
+        _audit(repo, n, _rows(_last_close(repo)))
+    return out
+
+
+def normalize_verify_checks() -> "list[str]":
+    """정규화 지도(D11) — 앞 창이 끝낸 케이스 개명 · 통째 이동 뒤 변경 창 V `시험:` · 0T update 행 · 변경 창 remove 행을 옛 키 ·
+    새 키 어느 쪽으로 적어도 같은 케이스로 읽고 실행 흔적은 G1 키로 남긴다(verify 녹색) · 0F 명시 retain 행은 앞 창 통째 이동의 새
+    파일로 잇되 `conftest.py` 로는 잇지 않는다."""
+    fails: "list[str]" = []
+
+    def expect(label: str, got: "tuple[int, str]", code: int, *needles: str) -> None:
+        missing = [x for x in needles if x not in got[1]]
+        if got[0] != code or missing:
+            fails.append(f"정규화 지도 {label}: exit {got[0]} (기대 {code} · 없는 글 {missing})\n{got[1]}")
+
+    moved: str = "application/core/test/test_moved.py"
+    renamed: str = SIMPLE.replace("def test_check(", "def test_product_is_nine(")
+    product: "dict[str, str | None]" = {"application/core/product.py": RB["application/core/product.py"].replace("return 9", "return 10")}
+    rn_item: dict = _rn("test_check", "test_product_is_nine")
+    for label, case, renames, first, second in (
+            ("0T 개명 → 변경 창 V 옛 이름", f"{TP}::test_check", (rn_item,), {TP: renamed},
+             {**product, TP: renamed.replace("== 9", "== 10")}),
+            ("0T 개명 → 변경 창 V 새 이름", f"{TP}::test_product_is_nine", (rn_item,), {TP: renamed},
+             {**product, TP: renamed.replace("== 9", "== 10")}),
+            ("0T 통째 이동 → 변경 창 V 옛 경로", f"{TP}::test_check", (), {TP: None, moved: SIMPLE},
+             {**product, moved: SIMPLE.replace("== 9", "== 10")}),
+            ("0T 통째 이동 → 변경 창 V 새 경로", f"{moved}::test_check", (), {TP: None, moved: SIMPLE},
+             {**product, moved: SIMPLE.replace("== 9", "== 10")})):
+        with tempfile.TemporaryDirectory(prefix="bg-nm-") as td:
+            repo = _rrepo(Path(td), {TP: SIMPLE})
+            digest = _bind(repo, _snap(_v("V1", case, ["assert product() == 9"]), renames=renames))
+            for n, got in enumerate(_windows_run(repo, [("test", first), ("change", second)]), 1):
+                expect(f"{label} w{n} close", got, 0, "감사 요청 키")
+            hits = _last_close(repo).get("approved_hits")
+            if list(hits or {}) != [case]:
+                fails.append(f"정규화 지도 {label} — approved_hits {hits}(기대 G1 키 {case} 하나)")
+            _suite(repo, digest)
+            expect(f"{label} verify", _rguard(repo, "verify"), 0, "승인 기대 원소 1 중 변경 1", "요약: 동작 보존 green")
+    with tempfile.TemporaryDirectory(prefix="bg-nm-u-") as td:   # 0T update 행이 옛 경로 — w1 0T 통째 이동 · w2 0T D 확정
+        repo = _rrepo(Path(td), {TP: SIMPLE})
+        _bind(repo, _snap(update=((f"{TP}::test_check", None),)))
+        got = _windows_run(repo, [("test", {TP: None, moved: SIMPLE}), ("test", {moved: SIMPLE.replace("== 9", ">= 9")})])
+        expect("0T update 행 옛 경로 · 앞 창 통째 이동 → w2 개별 감사(update 행 승인)", got[1], 0, "감사 요청 키")
+        if "0T update 행 —" not in _last_close(repo)["dispositions"][0]["사유"]:
+            fails.append(f"정규화 지도 0T update 행 옛 경로 — 사유 {_last_close(repo)['dispositions'][0]['사유']}")
+    two: str = SIMPLE + "\n\ndef test_old():\n    assert 2 == 2\n"
+    with tempfile.TemporaryDirectory(prefix="bg-nm-r-") as td:   # 변경 창 remove 행이 옛 경로 — w1 0T 통째 이동 · w2 케이스 삭제
+        repo = _rrepo(Path(td), {TP: two})
+        digest = _bind(repo, _snap(_v("V1", f"{TP}::test_old", ["assert 2 == 2"], verb="remove")))
+        got = _windows_run(repo, [("test", {TP: None, moved: two}), ("change", {moved: SIMPLE})])
+        expect("변경 창 remove 행 옛 경로 · 앞 창 통째 이동 → w2 승인 변경 감사", got[1], 0, "승인 변경 감사 1")
+        record = _last_close(repo)
+        if record["cases_removed"] != [f"{TP}::test_old"] or record["g0_keep_exceptions"]["removed"] != [f"{moved}::::test_old"]:
+            fails.append(f"정규화 지도 remove 행 — cases_removed {record['cases_removed']}(기대 G1 키) · g0_keep_exceptions.removed "
+                         f"{record['g0_keep_exceptions']['removed']}(기대 이 창 키)")
+        _suite(repo, digest)
+        expect("변경 창 remove 행 옛 경로 verify", _rguard(repo, "verify"), 0, "승인 기대 원소 1 중 변경 1", "요약: 동작 보존 green")
+    with tempfile.TemporaryDirectory(prefix="bg-nm-t-") as td:   # 0T remove 행이 옛 경로 — w1 0T 통째 이동 · w2 0T 케이스 삭제
+        repo = _rrepo(Path(td), {TP: two})
+        _bind(repo, _snap(remove=((f"{TP}::test_old", None),)))
+        got = _windows_run(repo, [("test", {TP: None, moved: two}), ("test", {moved: SIMPLE})])
+        expect("0T remove 행 옛 경로 · 앞 창 통째 이동 → w2 개별 감사(케이스 감소 red 아님)", got[1], 0, "감사 요청 키")
+    printed: "Callable[[str], str]" = lambda s: s.replace("    assert", "    print(1)\n    assert")  # noqa: E731 — D 밖 · 0C 검사 불합격
+    with tempfile.TemporaryDirectory(prefix="bg-nm-f-") as td:   # 0F 명시 retain 행 옛 파일 — w1 0T 통째 이동 · w2 0F 새 파일 편집
+        repo = _rrepo(Path(td), {TP: SIMPLE})
+        _bind(repo, _retain(TP))
+        got = _windows_run(repo, [("test", {TP: None, moved: SIMPLE}), ("follow", {moved: printed(SIMPLE)})])
+        expect("0F retain 행 옛 파일 · 앞 창 통째 이동 → w2 개별 감사(허용 파일)", got[1], 0, "개별 감사 1")
+    with tempfile.TemporaryDirectory(prefix="bg-nm-g-") as td:   # 개명 행만 있는 파일 — 앞 창 통째 이동의 새 파일로 잇지 않는다
+        repo = _rrepo(Path(td), {TP: SIMPLE})
+        _bind(repo, _snap(renames=(_rn("test_check", "test_product_is_nine"),)))
+        got = _windows_run(repo, [("test", {TP: None, moved: SIMPLE}), ("follow", {moved: printed(SIMPLE)})])
+        expect("개명 행 파일 · 앞 창 통째 이동 → w2 0F 새 파일 편집 red(명시 retain 행만 별칭)", got[1], 2,
+               "`retain` 재조직 행(0F 허용 파일)에 없는 파일")
+    support: str = "application/core/test/support.py"
+    conftest: str = "application/core/test/conftest.py"
+    with tempfile.TemporaryDirectory(prefix="bg-nm-c-") as td:   # retain 행 파일이 conftest.py 로 통째 이동 → 별칭 없음
+        body: str = "import pytest\n\n\n@pytest.fixture\ndef seven():\n    return 7\n"
+        repo = _rrepo(Path(td), {TP: SIMPLE, support: body})
+        _bind(repo, _retain(support))
+        got = _windows_run(repo, [("test", {support: None, conftest: body}),
+                                  ("follow", {conftest: body.replace("    return 7", "    print(1)\n    return 7")})])
+        expect("0F retain 행 파일이 conftest.py 로 통째 이동 → w2 red(conftest.py 로는 잇지 않는다)", got[1], 2,
+               "`retain` 재조직 행(0F 허용 파일)에 없는 파일")
+    with tempfile.TemporaryDirectory(prefix="bg-nm-2-") as td:   # 같은 케이스를 옛 · 새 철자로 적은 V 둘 — w1 0T 개명 · w2 변경 창
+        repo = _rrepo(Path(td), {TP: SIMPLE})
+        new_key: str = f"{TP}::test_product_is_nine"
+        digest = _bind(repo, _snap(_v("V1", f"{TP}::test_check", ["assert product() == 9"]), _v("V2", new_key, (), 1),
+                                   renames=(rn_item,)))
+        got = _windows_run(repo, [("test", {TP: renamed}),
+                                  ("change", {**product, TP: renamed.replace("== 9", "== 10") + "    assert product() > 0\n"})])
+        expect("두 철자 V(V1 옛 이름 · V2 새 이름) → w2 승인 변경 감사(승인 칸 합침)", got[1], 0, "승인 변경 감사 1")
+        hits = _last_close(repo).get("approved_hits") or {}
+        if sorted(hits) != sorted([f"{TP}::test_check", new_key]):
+            fails.append(f"정규화 지도 두 철자 V — approved_hits {hits}(기대 G1 키 둘 · 흔적은 G1 키마다)")
+        _suite(repo, digest)
+        expect("두 철자 V verify", _rguard(repo, "verify"), 0, "승인 기대 원소 2 중 변경 2", "요약: 동작 보존 green")
     return fails
 
 
@@ -2559,6 +3423,40 @@ def _only_group(stub_support: bool) -> int:
     return 0
 
 
+NEW_GROUPS: "tuple[str, ...]" = ("move", "ctx", "clue", "map", "g2")
+
+
+def _only_new(stub_support: bool, groups: "tuple[str, ...]" = NEW_GROUPS) -> int:
+    """2.43.0 새 갈래 사례만 — move(옮김 행 0T 꼴 확인 · 몫) · ctx(옮김 행 묶임 맥락 — 픽스처 풀이 · 모듈 이름 · 사슬 모듈) · clue(이름
+    단서 짝 — 기능 0C · 리팩토링 0C 묶음) · map(정규화 지도) · g2(옮김 verify · G2 접기). 변이 시험이 scripts 사본에 대고 그 변이의
+    묶음만 돈다."""
+    fails: "list[str]" = []
+    ran: int = 0
+    if "clue" in groups:
+        cases_ = name_clue_cases()
+        ran += len(cases_)
+        fails += [msg for case in cases_ for msg in [run_case(*case)] if msg]
+    with tempfile.TemporaryDirectory(prefix="bg-stub-") as stub:
+        _setup_refactor(Path(stub), stub_support)
+        group: "list[dict]" = [case for case in move_rcases() if ("ctx" if case.get("ctx") else "move") in groups] + (
+            [case for case in rename_rcases() if "이름 단서 짝" in case["label"]] if "clue" in groups else [])
+        ran += len(group)
+        for case in group:
+            msg, _counts = run_rcase(case)
+            if msg:
+                fails.append(f"{case['label']}: {msg}")
+        fails += (normalize_verify_checks() if "map" in groups else []) + (move_verify_checks() if "g2" in groups else [])
+        fails += [f"자동 초록 0: {b}" for b in STATE["invariant_fails"]]  # type: ignore[union-attr]
+    if fails:
+        print("\nFAIL — behavior_guard 새 갈래 사례 기대 불일치:")
+        for f in fails:
+            print("  - " + f.replace("\n", "\n    ")[:600])
+        return 1
+    print(f"\nPASS — behavior_guard 새 갈래 사례 {ran}건{' + 정규화 지도' if 'map' in groups else ''}"
+          f"{' + 옮김 verify · G2 접기' if 'g2' in groups else ''}({', '.join(groups)})")
+    return 0
+
+
 # 변이(묶음 창 사례가 잡아야 한다) — (이름, ((옛 글, 새 글), …)) · behavior_guard.py 사본에 하나씩
 _MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...]], ...]" = (
     ("갈래 `묶음 import 치환` 뺌", (('frozenset({"프로젝트 합성", "공유 표면", "묶음 import 치환"})',
@@ -2584,10 +3482,95 @@ _MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...]], ...]" = (
 )
 
 
+# 2.43.0 새 갈래 변이(새 갈래 사례 `--only-new <묶음>` 이 잡아야 한다) — (이름, 파일, 묶음, ((옛 글, 새 글), …)) · 갈래마다 핵심 하나
+_NEW_MUTATIONS: "tuple[tuple[str, str, str, tuple[tuple[str, str], ...]], ...]" = (
+    ("옮김 꼴 2 단위 원문 대조 끔", "behavior_guard.py", "move", (('    if info["before"] != info["after"]:', "    if False:"),)),
+    ("0T 아닌 창의 옮김 몫 허용", "behavior_guard.py", "move", (('        if kind != "test":\n            why = f"옮김 행은 0T 창 몫',
+                                                     '        if False:\n            why = f"옮김 행은 0T 창 몫'),)),
+    ("옮김 꼴 4 요청 픽스처 풀이 대조 끔", "behavior_guard.py", "ctx", (("                if files0.get(want) != files1.get(want):",
+                                                               "                if False:"),)),
+    ("옮김 꼴 4 사슬 픽스처 매개변수 전이 끔", "behavior_guard.py", "ctx", (("                queue += [x for x in got[-1] if x not in seen]\n",
+                                                                  ""),)),
+    ("옮김 꼴 4 모듈 pytestmark 안 usefixtures 끔", "behavior_guard.py", "ctx", (
+        ("            queue: \"list[str]\" = sorted(_requested([unit0]) | _mark_fixtures(old0.tree) | _mark_fixtures(new1.tree)\n",
+         "            queue: \"list[str]\" = sorted(_requested([unit0])\n"),)),
+    ("옮김 꼴 4 클래스 몸 pytestmark 안 usefixtures 끔", "behavior_guard.py", "ctx", (
+        ('        out += [x for stmt in fn.body if "pytestmark" in _assigned(stmt) for x in _usefixtures_in(stmt)]\n',
+         "        out += []\n"),)),
+    ("옮김 꼴 4 usefixtures 글자 아닌 인자 «모름» 끔", "behavior_guard.py", "ctx", (
+        ("                        if _usefixtures_opaque(s.tree)), \"\")", "                        if False), \"\")"),)),
+    ("옮김 꼴 4 autouse 대조 끔", "behavior_guard.py", "ctx", (("            if autos0 != autos1:", "            if False:"),)),
+    ("옮김 꼴 4 conftest autouse 를 요청에 안 넣음", "behavior_guard.py", "ctx", (
+        ("                                        | set(autos0) | set(chain.autouse))", "                                        | set(autos0))"),)),
+    ("옮김 꼴 7 덮어쓰기 대조 끔", "behavior_guard.py", "ctx", (("            if over0 != over1:", "            if False:"),)),
+    ("옮김 «모름» 끔", "behavior_guard.py", "ctx", (("            if unknown and files0 != files1:", "            if False:"),)),
+    ("사슬 pytest_plugins 따라 읽기 끔", "behavior_guard.py", "ctx", (("            specs += space.plugins\n", ""),)),
+    ("저장소 밖 pytest_plugins 를 «모름» 으로(대조 밖 건너뜀 끔)", "behavior_guard.py", "ctx", (
+        ("            continue                                       # 저장소 밖 모듈 — 설치 플러그인처럼 대조 밖(설계 §9.5)",
+         '            unknown = unknown or "저장소 밖"\n            continue'),)),
+    ("저장소 밖 import 이름 · 사슬 픽스처 이름 겹침 끔", "behavior_guard.py", "ctx", (
+        ("                for x in sorted(space.external & chain.names):", "                for x in []:"),)),
+    ("저장소 안 import · 별 import 모듈 따라 읽기 끔", "behavior_guard.py", "ctx", (
+        ('            sub: "_Space | None" = _module_space(base, read, depth + 1, inner_seen)',
+         '            sub: "_Space | None" = None'),)),
+    ("별 import `__all__` 무시", "behavior_guard.py", "ctx", (
+        ('                    picked: "frozenset[str]" = (sub.exports if sub.exports is not None',
+         '                    picked: "frozenset[str]" = (sub.exports if False'),)),
+    ("대입 꼴 픽스처 끔", "behavior_guard.py", "ctx", (("                        if call is not None:\n                            attrs[x] = _call_fix",
+                                                 "                        if False:\n                            attrs[x] = _call_fix"),)),
+    ("옮김 꼴 5 정의가 읽는 이름 전이 끔", "behavior_guard.py", "ctx", (
+        ("                names_todo += [(x, free) for x in sorted(_free_names(node)) if x not in seen_names]\n", ""),)),
+    ("옮김 꼴 5 고쳐 쓰는 문장 차례 대조 끔", "behavior_guard.py", "ctx", (
+        ("        if [_dump_node(s) for s in muts0] != [_dump_node(s) for s in muts1]:", "        if False:"),)),
+    ("옮김 꼴 5 고쳐 쓰는 문장이 읽는 이름 전이 끔", "behavior_guard.py", "ctx", (
+        ("        names_todo += [(x, free) for stmt in muts0 for x in sorted(_free_names(stmt)) if x not in seen_names]\n", ""),)),
+    ("이름 단서 ⑥ 무리 전부 끔", "behavior_guard.py", "clue", (("        if free(p, nl) - {pairs[k] for k in members}:", "        if False:"),)),
+    ("이름 단서 짝 뒤 소거 짝 허용", "behavior_guard.py", "clue", (("counts[nl] == 1 and nl not in maps.clue_bodies and",
+                                                         "counts[nl] == 1 and"),)),
+    ("정규화 지도 끔(forward_key 항등)", "behavior_guard.py", "map", (
+        ('    path, sep, rest = key.partition("::")\n    if not sep:\n        return key\n    for _opened, last in prior:',
+         '    path, sep, rest = key.partition("::")\n    if True:\n        return key\n    for _opened, last in prior:'),)),
+    ("두 철자 V 승인 칸 합침 끔", "behavior_guard.py", "map", (
+        ("approved_cases={now: _merged_cases(approved_g1, cases) for now, cases in g1_of.items()})",
+         "approved_cases={now: approved_g1[cases[-1]] for now, cases in g1_of.items()})"),)),
+    ("G2 케이스 옮김 접기 끔", "behavior_support.py", "g2", (('        rel = _case_moved(rel, cls, func, w.get("case_moved", []))\n', ""),)),
+)
+
+
+def _mutant_dies(fname: str, edits: "tuple[tuple[str, str], ...]", flags: "tuple[str, ...]", marker: str) -> str:
+    """scripts 사본의 그 파일에 변이를 넣고 `flags` 사례를 돈다 — 죽으면 빈 글 · 아니면 까닭."""
+    src: str = (GUARD.parent / fname).read_text(encoding="utf-8")
+    for old, new in edits:
+        if src.count(old) != 1:
+            return f"변이 지점이 정확히 한 곳이 아니다({src.count(old)}) — 변이 표를 코드에 맞춰라"
+        src = src.replace(old, new, 1)
+    with tempfile.TemporaryDirectory(prefix="bg-mutant-") as tmp:
+        copy: Path = Path(tmp) / "scripts"
+        shutil.copytree(GUARD.parent, copy, symlinks=False, ignore=shutil.ignore_patterns("__pycache__"))
+        (copy / fname).write_text(src, encoding="utf-8")
+        proc = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--scripts", str(copy), *flags],
+                              capture_output=True, text=True, env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
+    out: str = proc.stdout + proc.stderr
+    if proc.returncode == 0:
+        return "변이가 살아남음(시험이 못 잡는다)"
+    if marker not in out:
+        return f"변이가 러너를 깨뜨림(시험 실패가 아님) — {out.strip()[-300:]}"
+    return ""
+
+
 def _mutation_test() -> int:
-    """변이를 scripts 사본에 하나씩 넣고 묶음 창 사례(`--only-group`)를 돈다 — 모두 붉어야 green."""
+    """변이를 scripts 사본에 하나씩 넣고 묶음 창 사례(`--only-group`) · 2.43.0 새 갈래 사례(`--only-new` — 병렬)를 돈다 — 모두
+    붉어야 green."""
     src: str = GUARD.read_text(encoding="utf-8")
     survived: "list[str]" = []
+    with ThreadPoolExecutor(max_workers=max(1, min(len(_NEW_MUTATIONS), os.cpu_count() or 1))) as pool:
+        news = list(pool.map(lambda m: (m[0], _mutant_dies(m[1], m[3], ("--only-new", m[2]), "FAIL — behavior_guard 새 갈래")),
+                             _NEW_MUTATIONS))
+    for name, bad in news:
+        if bad:
+            survived.append(f"{name}: {bad}")
+        else:
+            print(f"  죽음 {name}")
     for name, edits in _MUTATIONS:
         text: str = src
         bad: str = ""
@@ -2617,7 +3600,7 @@ def _mutation_test() -> int:
         for line in survived:
             print(f"  {line}", file=sys.stderr)
         return 2
-    print(f"[mutation] behavior_guard 변이 {len(_MUTATIONS)}종 모두 red")
+    print(f"[mutation] behavior_guard 변이 {len(_MUTATIONS) + len(_NEW_MUTATIONS)}종 모두 red(새 갈래 {len(_NEW_MUTATIONS)})")
     return 0
 
 
@@ -2631,6 +3614,10 @@ def main() -> int:
         return _mutation_test()
     if "--only-group" in argv:
         return _only_group(stub_support)
+    if "--only-new" in argv:
+        at: int = argv.index("--only-new") + 1
+        picked: "tuple[str, ...]" = tuple(argv[at].split(",")) if at < len(argv) and not argv[at].startswith("--") else NEW_GROUPS
+        return _only_new(stub_support, picked)
     fails: "list[str]" = []
     for case in cases():
         msg = run_case(*case)

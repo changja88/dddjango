@@ -52,6 +52,16 @@ overlap 절 — #62·#474 는 handler 행, ⓓ#125 는 route 함수 def 행 좌�
   예외 catch 를 받는 것은 이미 있는 코드의 빚 때문이다(새 응용 예외 클래스는 context-isolation #292 가, 컨트롤러의
   포트 예외 import 는 #93 이 막아 새로 생기지 않는다).
 
+인증 틀 뒤 인증 실패(2026-11-20 F4-192 · implementation-django-ninja §6.2 «인증 틀 뒤 인증 실패» — code-json code lane):
+  managed catch 가 `except <클래스 하나>:`(튜플 · `as` 없음 · 그 클래스는 #62 가 받는 자기 BC 예외)이고 그 클래스의 원 경로가
+  `--auth-failure <예외 모듈>.<클래스>`(반복 · 중복은 사용 오류 · code-json 전용 · `--anchor-baseline` 에서는 BC 소속 대조
+  생략 — slot 10 «인증 실패(Ninja 401)» 행의 렌더) 값 하나와 같고, 본문이 정확히 한 문장 `raise AuthenticationError()` 또는
+  `raise AuthenticationError`(원 경로 `ninja.errors.AuthenticationError` · 인자 없음 · `from` 없음 또는 `from None`)이면
+  행6(#125 catch 안 `raise`)과 계약 줄(`managed catch must directly construct FrameworkErrorSchema and return Status`)을
+  비켜 준다 — 그 raise 는 Ninja 기본 401 을 그대로 낸다. 그 밖(`--auth-failure` 없음 · 다른 예외 · 튜플 · `as` · 인자 ·
+  `HttpError(401)` · `NotAuthenticated` · 다른 문장과 섞임 · `from exc`)은 그대로 위반이다. 잡는 예외의 뜻과 «인증 틀 있는
+  operation 에서만» 은 기계 밖이다(slot 10 승인 · 리뷰어 몫).
+
 호출 앞 입력 검사(2026-11-09 F4-130 · 사용자 결정 «나.» — code-json code lane):
   쓰임새 호출(뿌리 이름이 자기 BC `composition_root` · `application_layer` import 인 호출 · 응용 층 자료 생성 `*Command` · `*Query` ·
   `*Result` 와 맨 `build_*()` 제외 · 빌더로 묶인 이름의 호출 · `sync_to_async(<쓰임새>)` · 뿌리가 import 아닌 `.execute`/`use_case` 경로 포함)이
@@ -175,6 +185,9 @@ EVENT_VALUE_OUTSIDE_FORM = "caught exception read outside the approved event-val
 EVENT_VALUE_LAYERS = ("domain_layer", "application_layer")
 EVENT_VALUE_UTC = "datetime.UTC"
 EVENT_VALUE_RELAXED_PROFILES = frozenset({"auto", "dddjango-code-json"})
+# 2026-11-20 F4-192 — 인증 틀 뒤 인증 실패. code-json 은 `--auth-failure`(slot 10 «인증 실패(Ninja 401)» 행 렌더)가 승인한
+# 예외 하나를 잡은 catch 의 `raise AuthenticationError()` 한 문장만 비켜 준다(`_auth_failure_reraise`).
+AUTHENTICATION_ERROR = "ninja.errors.AuthenticationError"
 
 
 class UsageError(Exception):
@@ -200,6 +213,7 @@ class Config:
     anchor_baseline: bool = False
     event_values: tuple[str, ...] = ()
     anchor_approved_merge_file: str | None = None
+    auth_failures: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -314,6 +328,8 @@ def _argument_parser() -> _UsageParser:
     parser.add_argument("--error-bc", action="append", default=[])
     # F4-80 — slot 10 «사건 값» 칸의 승인 필드(`<예외 모듈>.<클래스>.<필드>`) — Coordinator 가 registry #15 에만 렌더.
     parser.add_argument("--event-value", action="append", default=[])
+    # F4-192 — slot 10 «인증 실패(Ninja 401)» 행의 예외(`<예외 모듈>.<클래스>`) — Coordinator 가 registry #15 에만 렌더.
+    parser.add_argument("--auth-failure", action="append", default=[])
     # 판정 차분(anchor_diff) — 신규분만 blocker·앵커 기존분은 보고 강등(2026-08-15 r2″).
     parser.add_argument("--anchor", default=None)
     parser.add_argument(anchor_diff.BASELINE_FLAG, action="store_true", dest="anchor_baseline")
@@ -356,6 +372,22 @@ def _event_value_parts(value: str) -> tuple[str, str, str] | None:
     ):
         return None
     return parts[1], ".".join(parts[:-1]), parts[-1]
+
+
+def _auth_failure_bc(value: str) -> str | None:
+    """`application.<bc>.(domain_layer|application_layer).<…>.<Class>` → bc(`--event-value` 의 클래스 원 경로와 같은 꼴).
+
+    `application.<bc>.` 뒤 마디는 `_` 로 시작하지 않고(사설 모듈 · 클래스 금지) 마디는 4개 이상이다."""
+    parts = value.split(".")
+    if (
+        len(parts) < 4
+        or parts[0] != "application"
+        or not BC_NAME_RE.fullmatch(parts[1])
+        or parts[2] not in EVENT_VALUE_LAYERS
+        or any(not part.isidentifier() or part.startswith("_") for part in parts[2:])
+    ):
+        return None
+    return parts[1]
 
 
 def _source_path(option: str, raw: str, issues: list[str]) -> Path | None:
@@ -403,6 +435,7 @@ def _parse_config(argv: list[str]) -> Config:
             namespace.scope_bc,
             namespace.error_bc,
             namespace.event_value,
+            namespace.auth_failure,
         )
     )
     if profile is not None and profile not in ERROR_PROFILES:
@@ -448,6 +481,19 @@ def _parse_config(argv: list[str]) -> Config:
             # 앵커 기준선 재실행은 앵커에 없는 BC 의 --error-bc 를 걷는다(anchor_diff._baseline_argv) — BC 소속
             # 대조를 건너뛴다(F4-80 A.2 «앵커 재실행»).
             issues.append(f"--event-value 의 BC 가 --error-bc 밖: {value}")
+    auth_failures = _unique("--auth-failure", namespace.auth_failure, issues)
+    if profile == "preserve-established" and auth_failures:
+        issues.append("preserve-established profile에는 --auth-failure 를 전달하지 않음(인증 실패 비켜 주기는 code-json 몫)")
+    for value in auth_failures:
+        bc = _auth_failure_bc(value)
+        if bc is None:
+            issues.append(
+                f"잘못된 --auth-failure: {value} "
+                "(application.<bc>.(domain_layer|application_layer).<모듈>.<클래스> · `_` 마디 금지)"
+            )
+        elif bc not in error_bcs and not namespace.anchor_baseline:
+            # 앵커 기준선 재실행은 앵커에 없는 BC 의 --error-bc 를 걷는다 — --event-value 와 같이 BC 소속 대조를 건너뛴다.
+            issues.append(f"--auth-failure 의 BC 가 --error-bc 밖: {value}")
     if explicit and not controller_raw and not namespace.anchor_baseline:
         # anchor-baseline 모드에선 앵커 트리에 없는 controller 가 걷혀 빈 집합이 정상이다.
         issues.append("필수 인자 누락: --controller-module")
@@ -508,6 +554,7 @@ def _parse_config(argv: list[str]) -> Config:
         anchor_approved_merge_file=namespace.anchor_approved_merge_file,
         anchor_baseline=namespace.anchor_baseline,
         event_values=event_values,
+        auth_failures=auth_failures,
     )
 
 
@@ -4284,6 +4331,39 @@ def _try_root_call(statement: ast.stmt) -> ast.Call | None:
     return value if isinstance(value, ast.Call) else None
 
 
+def _auth_failure_reraise(
+    operation: Operation,
+    handler: ast.ExceptHandler,
+    auth_failures: frozenset[str],
+) -> bool:
+    """«인증 틀 뒤 인증 실패» 꼴인가 — `except <클래스 하나>:`(튜플 · `as` 없음 · #62 가 받는 자기 BC 예외 · 원 경로가
+    `--auth-failure` 값 하나)의 본문이 정확히 `raise AuthenticationError()` 또는 `raise AuthenticationError`(원 경로
+    `ninja.errors.AuthenticationError` · 인자 없음 · `from` 없음 또는 `from None`) 한 문장이다."""
+    caught = handler.type
+    if not auth_failures or handler.name is not None or not isinstance(caught, ast.Name):
+        return False
+    if _exception_origin_valid(operation, caught) is not True:
+        return False
+    caught_binding = operation.body_bindings.get(caught.id)
+    if caught_binding is None or caught_binding.origin not in auth_failures:
+        return False
+    if len(handler.body) != 1 or not isinstance(handler.body[0], ast.Raise):
+        return False
+    statement = handler.body[0]
+    cause = statement.cause
+    if cause is not None and not (isinstance(cause, ast.Constant) and cause.value is None):
+        return False
+    raised = statement.exc
+    if isinstance(raised, ast.Call):
+        if raised.args or raised.keywords:
+            return False
+        raised = raised.func
+    if raised is None:
+        return False
+    raised_binding = _resolve_binding(raised, _operation_import_bindings(operation))
+    return raised_binding is not None and raised_binding.origin == AUTHENTICATION_ERROR
+
+
 def _analyze_try(
     operation: Operation,
     node: ast.Try,
@@ -4295,6 +4375,7 @@ def _analyze_try(
     allowed_status_calls: set[int],
     root: Path | None = None,
     event_values: frozenset[str] = frozenset(),
+    auth_failures: frozenset[str] = frozenset(),
 ) -> None:
     if node.orelse or node.finalbody:
         _append_finding(
@@ -4357,6 +4438,10 @@ def _analyze_try(
                         rule="#62",
                         overlap_line=handler.lineno,
                     )
+        if _auth_failure_reraise(operation, handler, auth_failures):
+            # 인증 틀 뒤 인증 실패 — 그 raise 는 Ninja 기본 401 을 그대로 낸다(행6 · 계약 줄 밖). 잡은 이름이 없어
+            # 사건 값 읽기 · 전달 판정은 설 것이 없다.
+            continue
         if any(
             isinstance(candidate, ast.Raise)
             for candidate in _iter_lexical_nodes(handler.body)
@@ -7401,6 +7486,7 @@ def _analyze_operation(
     seen: set[tuple[Path, int, str]],
     root: Path | None = None,
     event_values: frozenset[str] = frozenset(),
+    auth_failures: frozenset[str] = frozenset(),
 ) -> None:
     allowed_error_calls: set[int] = set()
     allowed_status_calls: set[int] = set()
@@ -7421,6 +7507,7 @@ def _analyze_operation(
                 allowed_status_calls,
                 root,
                 event_values,
+                auth_failures,
             )
     _analyze_results(
         operation,
@@ -8306,6 +8393,7 @@ def _semantic_findings(
                 seen,
                 config.root,
                 frozenset(config.event_values),
+                frozenset(config.auth_failures),
             )
 
     canonical_error_paths = {_bc_error_path(bc) for bc in config.error_bcs}

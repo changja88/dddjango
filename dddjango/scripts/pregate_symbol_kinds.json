@@ -1,7 +1,7 @@
 {
   "schema": "pregate-symbol-kinds/0",
   "source_sha": {
-    "check-api-error-controller-contract.py": "66ca32b1675bd391",
+    "check-api-error-controller-contract.py": "e653e1a75b1ab857",
     "check-app-container.py": "98a55d49722e7c8a",
     "check-broker-contract.py": "daf8705fbf3569cf",
     "check-business-vocabulary.py": "51eeaa9a6da97c81",
@@ -19,8 +19,8 @@
     "check-missable-entrance.py": "e346bb84a932ff8a",
     "check-naming.py": "9195bdeeaba4bf1b",
     "check-ninja-boundary-middleware.py": "e2f4aed8fef47305",
-    "check-openapi-error-declaration.py": "6a79e5d2e639967c",
-    "check-port-adapter-pairing.py": "3047317a5777c85e",
+    "check-openapi-error-declaration.py": "bdc9d3fee60562b6",
+    "check-port-adapter-pairing.py": "4043a0e81023c570",
     "check-public-surface-annotation.py": "5fca03f3e5e45b03",
     "check-response-schema-bypass.py": "0fd510470a0ac985",
     "check-synthetic-infra-exc.py": "f30d0f3e8320ee6b",

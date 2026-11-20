@@ -377,6 +377,49 @@ def verdict_cases(fails: "list[str]", aud: Audit, nov: "tuple[str, str, str]") -
     expect(fails, "R3 재실행이 기존 M 번호를 바꿈 → red", cv(a), 2, "번호를 M1 → M2")
 
 
+FLOW_RID: str = "R-3789"            # discipline-cleancode §13.1 «유스케이스 사이 흐름 중복» 예외(Exception)
+FLOW_TEXT: str = ("**유스케이스 사이 흐름 중복은 DRY · 중복 제거의 대상이 아니다.** 두 유스케이스가 같은 응용 흐름을 쓰면 각 유스케이스 "
+                  "안에 따로 둔다 — 이 중복은 위반으로 올리지 않는다.")
+
+
+def _flow_corpus(td: Path, kind: str) -> "tuple[list[str], str]":
+    """(corpus 인자, 인용) — 팩에 `FLOW_RID` 가 있으면 작업 트리 설치본 그대로 · 없으면 설치본 사본의 cleancode §13.1 끝에 그 블록을
+    더하고 팩 사본에 Norm(종류 `kind`) · Block 을 싣은 가짜 코퍼스(그래프가 들어오기 전 — 같은 검사를 지금 판으로)."""
+    pack: dict = json.loads((TOOL.parent / "rulepack.json").read_text(encoding="utf-8"))
+    if FLOW_RID in pack["works"] and kind == "Exception":
+        return [], _block_quote(FLOW_RID, sentence=True)[2]
+    root: Path = td / f"flow-{kind}"
+    shutil.copytree(TOOL.parent.parent, root / "dddjango", symlinks=False, ignore=shutil.ignore_patterns("__pycache__"))
+    doc: Path = root / "dddjango" / CLEAN
+    lines: "list[str]" = doc.read_text(encoding="utf-8").split("\n")
+    start: int = next(i for i, ln in enumerate(lines) if ln.startswith("### 13.1 "))
+    end: int = next(i for i in range(start + 1, len(lines)) if lines[i].startswith("#"))
+    lines[end:end] = [FLOW_TEXT, ""]
+    doc.write_text("\n".join(lines), encoding="utf-8")
+    index = ra.DocIndex(doc)
+    sha: str = hashlib.sha256(index.text[index.off[end]:index.off[end + 1]].encode("utf-8")).hexdigest()[:16]
+    section: str = pack["works"]["R-1511"]["section"]
+    bid: str = f"{section}/b99"
+    pack["blocks"][bid] = {"h": sha, "n": 1, "works": [FLOW_RID]}
+    pack["works"][FLOW_RID] = {**pack["works"]["R-1511"], "block": bid, "block_order": 99, "norm_kind": kind, "label": "유스케이스 사이 흐름 중복",
+                               "expression": f"https://numchida.com/ns/djr#{FLOW_RID}@2026-11-20", "aliases": [], "overrides": []}
+    (root / "dddjango" / "scripts" / "rulepack.json").write_text(json.dumps(pack, ensure_ascii=False), encoding="utf-8")
+    return (["--platform", "claude", "--plugin-root", str(root / "dddjango"), "--rulepack",
+             str(root / "dddjango" / "scripts" / "rulepack.json")], FLOW_TEXT.replace("*", "")[:40])
+
+
+def flow_exception_cases(fails: "list[str]", aud: Audit, td: Path) -> None:
+    """유스케이스 사이 흐름 중복 예외(cleancode §13.1 · Exception) — DRY 의무(R-1511) 위반 행을 그 예외 인용 «제외» 로 처분하면
+    check-verdict 를 지난다(허용 종류 Permission · Exception) · 같은 블록을 의무로 바꾼 팩이면 red ②."""
+    key, head, quote = _block_quote("R-1511")
+    for kind, code, needle in (("Exception", 0, "제외 1"), ("Obligation", 2, f"② {FLOW_RID} 종류 Obligation")):
+        extra, flow_quote = _flow_corpus(td, kind)
+        a = aud.make([row(1, cite(key, head, quote))], [f"M1 | ddd-01#1 | 제외 | {FLOW_RID} «{flow_quote}» | "])
+        expect(fails, f"RD-FL 유스케이스 사이 흐름 중복 {kind} 인용 «제외»(DRY 의무 위반 행) → "
+               f"{'check-verdict 통과' if code == 0 else 'red ②(의무는 제외 근거가 아니다)'}",
+               run(aud.repo, *extra, "check-verdict", str(a)), code, needle)
+
+
 def _res_folder(repo: Path, rows: "list[str]", verdicts: "list[str]",
                 disc: "list[str] | None" = None, confirm: bool = True, name: str = "refactor-demo") -> "tuple[Path, str]":
     """리팩토링 실행 산출물 폴더(G0 ⓐ 뒤 · 앵커 기록) — (폴더, 앵커). `disc` = discipline 렌즈 표 행.
@@ -1201,15 +1244,16 @@ def standing_cases(fails: "list[str]", td: Path) -> None:
 
 # ── RD(설계 v15.2 §8 «refactor_audit_fixture_run.py +약 32») ───────────────────────────────────────────
 
-def _block_quote(rid: str, platform: str = "claude") -> "tuple[str, str, str]":
-    """(문서 키, 그 블록을 담은 절 제목, 블록 안 인용 한 줄 40자) — 규범 블록에서 바로 뽑는다(번호 무관)."""
+def _block_quote(rid: str, platform: str = "claude", sentence: bool = False) -> "tuple[str, str, str]":
+    """(문서 키, 그 블록을 담은 절 제목, 블록 안 인용 한 줄 40자) — 규범 블록에서 바로 뽑는다(번호 무관). `sentence` 면 코드 울타리
+    줄(«```» — 블록 span 이 앞 코드 블록의 닫는 울타리에서 시작하는 꼴)과 빈 줄을 건너뛴 첫 문장 줄."""
     corpus = ra.Corpus(platform)
     meta: dict = corpus.works[rid]
     key: str = corpus.key_of(meta["document"])
     i, j = corpus.block_spans(key)[meta["block"]][0]
     index = corpus.doc(key)
     heading: str = next(t for line, _lv, t, _a in reversed(index.headings) if line <= i)
-    first: str = next(ln for ln in index.lines[i:j] if ln.strip())
+    first: str = next(ln for ln in index.lines[i:j] if ln.strip() and not (sentence and ln.strip().startswith("```")))
     body: str = first.replace("*", "").replace("`", "").strip().lstrip("-> ").strip()
     body = re.sub(r"^\d+[.)]\s*", "", body)
     return key, heading, body[:40]
@@ -1964,6 +2008,21 @@ def closed_window_cases(fails: "list[str]", td: Path) -> None:
     cw, w6 = s1("cw1")
     check("RD-W1 S1 닫힘 · S2 열림 · G1′ `changes --baseline w6` → 집행된 V1 · V2 원소는 닫힌 창 w5 기준선 → green · 요약 꼬리",
           cw.ch("--baseline", str(w6)), 0, ("red 0", "닫힌 창 기준선 2(w5)"))
+    # 1o 진행 중 실행 — 옛 판(2.42.0)이 연 w5 의 allow 에는 2.43.0 칸(`retain_alias`)이 없다 · 명세에 개명 행
+    big: str = "application/demo/test/test_big.py"
+    cwo = CwLane(td, "cw1o")
+    cwo.commit({big: "def test_old() -> None:\n    assert True\n"}, "big")
+    cwo.lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2,
+                  adm=V_SPEC_ROWS + _rn_row(f"재조직 — 개명 {big}::test_old → test_new", path=big))
+    cwo.confirm()
+    if "retain_alias" not in cwo.allow:
+        fails.append("RD-W1o 픽스처 전제 — 개명 행 명세의 허용 표에 `retain_alias` 칸이 없다(옛 판 allow 와 같아 사례가 헛돈다)")
+    head_o: str = cwo.head()
+    head_p: str = cwo.commit(s1_files, "S1")
+    cwo.window(5, head_o, [_cw_close(hits=s1_hits, added=[CW_GONE])],
+               allow={k: v for k, v in cwo.allow.items() if k != "retain_alias"})
+    check("RD-W1o 진행 중 실행 — 옛 판이 연 w5(allow 에 2.43.0 칸 `retain_alias` 없음) · 명세 개명 행 → 닫힌 창 기준선 w5 그대로 → green",
+          cwo.ch("--baseline", str(cwo.window(6, head_p))), 0, ("red 0", "닫힌 창 기준선 2(w5)"))
     # 2 집행된 V1 옛 원문을 지금 글로 다시 씀 → 보존 red
     cw.lane.spec(V1_TEXT.replace("«assert True»", "«assert 1 == 1»") + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2)
     check("RD-W2 G1′ 이 집행된 V1 옛 원문을 지금 글(«assert 1 == 1»)로 다시 씀 → red(보존 줄 · V1)", cw.ch("--baseline", str(w6)), 2,
@@ -2528,6 +2587,131 @@ def field_rename_row_cases(fails: "list[str]", td: Path) -> None:
     expect(fails, "RD-RF11 칸 개명은 케이스 키가 그대로 — 새 이름 꼴의 update 행 케이스와 겹침 대조 밖(red 0)",
            (lane.ch()[0] if got[-1].get("renames") == [_rf_item()] else 9, json.dumps(got, ensure_ascii=False)), 0)
     expect(fails, "RD-RF11 겹침 대조 밖 · red 0", lane.ch(), 0, "red 0")
+
+
+POLICY_SPLIT: str = "application/demo/test/test_policy_more.py"
+
+
+def move_row_cases(fails: "list[str]", td: Path) -> None:
+    """시험 파일 나누기 · 모으기 — 입장 표 `retain` 행 candidate `재조직 — 옮김 <옛 경로>::<최상위 이름> → <새 경로>`(owner/path = 옛
+    경로) 를 G1 스냅숏 `retain_rows[].moves` 로(키는 옮김 행에만 — 없는 명세는 digest 무변 · 개명 `renames` 와 따로) · 한 행에 하나 ·
+    꼴 밖 · 다른 폴더 · 시험 쪽 경로 아님 · owner/path ≠ 옛 경로 · 같은 옮김 두 번 · 한 단위 행 둘 · 같은 단위 옮김 + 개명 → red."""
+    lane = ChangesLane(td, "mvrow")
+    lane.support()
+    f = lane.folder
+
+    def retained() -> "list[dict]":
+        return ra.changes_snapshot(f, lane.repo)["retain_rows"]
+
+    d0: str = ra.snapshot_digest(ra.changes_snapshot(f, lane.repo))
+    plain: "list[dict]" = retained()
+    why: str = "기대 의미 그대로 — 파일만 나눔"
+    one: str = _rn_row(f"재조직 — 옮김 {POLICY_TEST}::test_rule → {POLICY_SPLIT}", why=why)
+    rows: str = one + _rn_row(f"재조직 — 옮김 `{POLICY_TEST}::TestBox` → `application/demo/test/conftest.py`", why=why)
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2, adm=V_SPEC_ROWS + rows)
+    got: "list[dict]" = retained()
+    want: "list[dict]" = plain + [
+        {"path": POLICY_TEST, "case": None, "why": why, "moves": [{"path": POLICY_TEST, "name": "test_rule", "to": POLICY_SPLIT}]},
+        {"path": POLICY_TEST, "case": None, "why": why,
+         "moves": [{"path": POLICY_TEST, "name": "TestBox", "to": "application/demo/test/conftest.py"}]}]
+    expect(fails, "RD-MV1 옮김 행 둘(함수 · 클래스 통째 → 같은 폴더 새 파일 · conftest.py) → `retain_rows[].moves` · `renames` 키 없음",
+           (0 if got == want else 9, json.dumps(got, ensure_ascii=False)), 0)
+    expect(fails, "RD-MV2 요약 `retain 재조직 3(옮김 2)` · red 0", lane.ch(), 0, "retain 재조직 3(옮김 2)", "red 0")
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2,
+              adm=V_SPEC_ROWS + one + _rn_row(f"재조직 — 개명 {POLICY_TEST}::test_other → test_other_two"))
+    expect(fails, "RD-MV3 옮김 · 개명 한 명세(다른 단위) → 요약 `retain 재조직 3(개명 1 · 옮김 1)` · red 0", lane.ch(), 0,
+           "retain 재조직 3(개명 1 · 옮김 1)", "red 0")
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2)
+    expect(fails, "RD-MV4 옮김 행을 지우면 처음 digest 로(옮김 행 없는 명세는 digest 무변)",
+           (0 if ra.snapshot_digest(ra.changes_snapshot(f, lane.repo)) == d0 else 9, ""), 0)
+    for label, row, needle in (
+            ("RD-MV5 새 경로 없음 → red(옮김 행 꼴 밖)", _rn_row(f"재조직 — 옮김 {POLICY_TEST}::test_rule →"), "옮김 행 꼴 밖"),
+            ("RD-MV5 클래스 안 메서드 하나(`::TestBox::test_m`) → red(최상위 단위만)",
+             _rn_row(f"재조직 — 옮김 {POLICY_TEST}::TestBox::test_m → {POLICY_SPLIT}"), "옮김 행 꼴 밖"),
+            ("RD-MV5 한 행에 옮김 둘 → red",
+             _rn_row(f"재조직 — 옮김 {POLICY_TEST}::test_a → {POLICY_SPLIT} · {POLICY_TEST}::test_b → {POLICY_SPLIT}"),
+             "옮김 행 꼴 밖"),
+            ("RD-MV5 옛 경로 = 새 경로 → red", _rn_row(f"재조직 — 옮김 {POLICY_TEST}::test_rule → {POLICY_TEST}"), "옛 경로 = 새 경로"),
+            ("RD-MV5 다른 폴더 → red", _rn_row(f"재조직 — 옮김 {POLICY_TEST}::test_rule → application/demo/test/unit/test_rule.py"),
+             "다른 폴더"),
+            ("RD-MV5 새 경로가 시험 쪽 경로 아님 → red",
+             _rn_row(f"재조직 — 옮김 {POLICY_TEST}::test_rule → application/demo/domain_layer/rule_cases.py"), "시험 쪽 경로가 아니다"),
+            ("RD-MV5 저장소 밖(`../`) → red", _rn_row(f"재조직 — 옮김 ../{POLICY_TEST}::test_rule → {POLICY_SPLIT}"),
+             "저장소 상대 경로가 아니다"),
+            ("RD-MV5 owner/path 파일 ≠ 옛 경로 → red",
+             _rn_row(f"재조직 — 옮김 {POLICY_TEST}::test_rule → {POLICY_SPLIT}", path="application/demo/test/test_big.py"),
+             "옮김 행 owner/path 파일 `application/demo/test/test_big.py` ≠ 옮김 옛 경로")):
+        lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2, adm=V_SPEC_ROWS + row)
+        expect(fails, label, lane.ch(), 2, needle)
+    for label, rows, needle in (
+            ("RD-MV6 같은 옮김 행 두 번 → red", one + one, "같은 옮김 행이 두 번"),
+            ("RD-MV6 한 단위에 옮김 행 둘 → red",
+             one + _rn_row(f"재조직 — 옮김 {POLICY_TEST}::test_rule → application/demo/test/test_policy_rest.py"), "한 단위에 옮김 행 둘"),
+            ("RD-MV6 옮기는 단위에 개명 행 → red",
+             one + _rn_row(f"재조직 — 개명 {POLICY_TEST}::test_rule → test_rule_adds_one"), "옮기는 단위 `"),
+            ("RD-MV6 옮기는 클래스 안 케이스에 개명 행 → red",
+             _rn_row(f"재조직 — 옮김 {POLICY_TEST}::TestBox → {POLICY_SPLIT}")
+             + _rn_row(f"재조직 — 개명 {POLICY_TEST}::TestBox::test_m → test_box_m"), "옮기는 단위 `")):
+        lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2, adm=V_SPEC_ROWS + rows)
+        expect(fails, label, lane.ch(), 2, needle)
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2,
+              adm=V_SPEC_ROWS + one + _rn_row(f"재조직 — 개명 {POLICY_TEST}::test_rule → test_rule_adds_one"))
+    expect(fails, "RD-MV6 옮기는 단위에 개명 행 → red 문구가 길을 가리킴(옮긴 뒤 창 · 새 경로로 적은 개명 행)", lane.ch(), 2,
+           "옮긴 단위의 개명은 옮긴 뒤 창에서 새 경로로 적은 개명 행으로")
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2,
+              adm=V_SPEC_ROWS + one + _rn_row(f"재조직 — 개명 {POLICY_SPLIT}::test_rule → test_rule_adds_one", path=POLICY_SPLIT))
+    expect(fails, "RD-MV6 옮긴 단위의 개명을 새 경로로 적은 개명 행(옮긴 뒤 창 몫) → red 0 · 요약 `retain 재조직 3(개명 1 · 옮김 1)`",
+           lane.ch(), 0, "retain 재조직 3(개명 1 · 옮김 1)", "red 0")
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2,
+              adm=V_SPEC_ROWS + _rn_row("재조직 — 옮김 큰 시험 파일을 둘로 나눔(설명 글)"))
+    got = retained()
+    expect(fails, "RD-MV7 «재조직 — 옮김» 뒤에 `.py::` 주소가 없는 글 → 보통 재조직 행(moves 키 없음 · red 0)",
+           (lane.ch()[0] if len(got) == 2 and all("moves" not in r for r in got) else 9, json.dumps(got, ensure_ascii=False)), 0)
+
+
+def move_key_cases(fails: "list[str]", td: Path) -> None:
+    """옮긴 케이스의 옛 키 · 새 키 — V 시험 줄을 옮김 앞 경로로 적든 뒤 경로로 적든 «바뀌는 기대» 실재를 그 케이스에서 본다: 창 기준선이
+    앞 창 옮김 뒤 판이면 닫힌 앞 창 기록(`moves`)으로 접고, 기준 판이 옮김 앞 판이면 명세 옮김 행으로 되짚는다."""
+    lane = ChangesLane(td, "mvkey")
+    lane.support()
+    repo, f = lane.repo, lane.folder
+    why: str = "기대 의미 그대로 — 파일만 나눔"
+    move_row: str = _rn_row(f"재조직 — 옮김 {POLICY_TEST}::test_rule → {POLICY_SPLIT}", why=why)
+    old_key, new_key = f"{POLICY_TEST}::test_rule", f"{POLICY_SPLIT}::test_rule"
+    new_v1: str = V1_TEXT.replace(old_key, new_key)
+    new_adm: str = V_SPEC_ROWS.replace(f"`{old_key}`", f"`{new_key}`")
+    lane.spec(new_v1 + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2, adm=new_adm + move_row)
+    expect(fails, "RD-MK1 V 새 키(옮김 뒤 경로) · 기준 판이 옮김 앞(지금 시험) → 명세 옮김 행으로 되짚어 실재 확인 · red 0", lane.ch(), 0,
+           "red 0")
+    lane.spec(new_v1.replace("«assert True»", "«assert False»") + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2, adm=new_adm + move_row)
+    expect(fails, "RD-MK1b 같은 꼴 · 바뀌는 기대가 그 케이스에 없음 → red(되짚은 키도 원문 대조)", lane.ch(), 2, "원문이 기준 판 케이스에 없다")
+    before: str = _git(repo, "rev-parse", "HEAD").strip()
+    body: str = (repo / POLICY_TEST).read_text(encoding="utf-8")
+    (repo / POLICY_SPLIT).write_text(body, encoding="utf-8")
+    (repo / POLICY_TEST).write_text("", encoding="utf-8")
+    _git(repo, "add", "-A", "application")
+    _git(repo, "commit", "-qm", "w1 0T 옮김")
+    after: str = _git(repo, "rev-parse", "HEAD").strip()
+    run_dir: Path = f / "behavior" / "20261004-1900"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    base: dict = {"run": "20261004-1900", "anchor": "x", "dirty": {}, "cases": {}, "pytest": {}, "mode": "refactor"}
+    (run_dir / "w1-open.json").write_text(json.dumps({**base, "window": 1, "kind": "test", "head": before}), encoding="utf-8")
+    (run_dir / "w1-close.json").write_text(json.dumps([{"closed": "2026-10-06T10:30:00Z", "verdict": "audit", "map_items": {"pairs": {}},
+                                                        "moves": [{"label": f"{old_key} → {POLICY_SPLIT}", "path": POLICY_TEST,
+                                                                   "name": "test_rule", "to": POLICY_SPLIT, "kind": "케이스"}]}]),
+                                           encoding="utf-8")
+    opened: Path = run_dir / "w2-open.json"
+    opened.write_text(json.dumps({**base, "window": 2, "kind": "test", "head": after}), encoding="utf-8")
+    lane.spec(new_v1 + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2, adm=new_adm + move_row)
+    expect(fails, "RD-MK2 V 새 키 · 창 기준선이 옮김 뒤(w2 open) → 그대로 실재 · red 0", lane.ch("--baseline", str(opened)), 0, "red 0")
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2, adm=V_SPEC_ROWS + move_row)
+    expect(fails, "RD-MK3 V 옛 키(옮김 앞 경로) · 창 기준선이 옮김 뒤 → 앞 창 기록으로 접어 실재 확인 · red 0",
+           lane.ch("--baseline", str(opened)), 0, "red 0")
+    expect(fails, "RD-MK4 V 옛 키 · 지금 시험(옮김 뒤 · 닫힌 앞 창 전부) → red 0", lane.ch(), 0, "red 0")
+    lane.spec(V1_TEXT.replace("«assert True»", "«assert False»") + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2,
+              adm=V_SPEC_ROWS + move_row)
+    expect(fails, "RD-MK5 V 옛 키 · 바뀌는 기대가 옮긴 케이스에 없음 → red(접은 키도 원문 대조)", lane.ch("--baseline", str(opened)), 2,
+           "원문이 기준 판 케이스에 없다")
 
 
 SLICE_PLAN: str = ("\n## 슬라이스 계획\n\n| 슬라이스 | 목적 | 인수 행 | 내부 행 | 완료 조건 |\n|---|---|---|---|---|\n"
@@ -6987,6 +7171,7 @@ def main() -> int:
         check_cases(fails, aud)
         sections_case(fails, aud, nov[0])
         verdict_cases(fails, aud, nov)
+        flow_exception_cases(fails, aud, td)
         residual_cases(fails, td)
         residual_floor_mark_cases(fails, td)
         residual_moved_case(fails, td)
@@ -7009,6 +7194,8 @@ def main() -> int:
         retain_notice_cases(fails, td)
         rename_row_cases(fails, td)
         field_rename_row_cases(fails, td)
+        move_row_cases(fails, td)
+        move_key_cases(fails, td)
         review_b_cases(fails, td)
         review_b_deps_cases(fails, td)
         review_b4_cases(fails, td)

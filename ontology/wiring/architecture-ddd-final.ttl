@@ -499,3 +499,5 @@ djr:R-3744 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-revie
 
 djr:R-3745 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .
+
+djr:R-3788 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .

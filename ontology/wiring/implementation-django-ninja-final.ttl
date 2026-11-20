@@ -426,7 +426,7 @@ djr:R-0755 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ap
 
 djr:R-0756 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 
-djr:R-0757 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+djr:R-0757 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/check-business-vocabulary.py> .
 
 djr:R-0758 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
@@ -641,3 +641,8 @@ djr:R-3774 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ap
 djr:R-3781 djr:enforcedBy <https://numchida.com/ns/djr#c/check-composition-root.py> .
 
 djr:R-3782 djr:enforcedBy <https://numchida.com/ns/djr#c/check-composition-root.py> .
+
+djr:R-3786 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .
+
+djr:R-3787 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .

@@ -37,6 +37,7 @@ ARGUMENT_ARITY: Final = {
     "--error-bc": 1,
     "--project-code-error-module": 1,
     "--project-preserve-error-module": 1,
+    "--auth-failure": 1,
 }
 SOURCE_PATH_ARGUMENTS: Final = frozenset(
     {
@@ -65,7 +66,7 @@ CHECKER_ALLOWED_ARGUMENTS: Final = {
         }
     ),
     "check-api-error-controller-contract.py": frozenset(
-        {"--error-profile", "--scope", "--api-module", "--controller-module", "--scope-bc", "--error-bc"}
+        {"--error-profile", "--scope", "--api-module", "--controller-module", "--scope-bc", "--error-bc", "--auth-failure"}
     ),
     "check-context-isolation.py": frozenset(
         {"--error-profile", "--scope", "--api-module", "--controller-module", "--scope-bc", "--error-bc"}
@@ -7012,6 +7013,91 @@ class MaintenanceMiddleware:
         "router = Router()\n", 'router = Router()\nHEADERS = {"Retry-After": {"schema": {"type": "integer"}}}\n'
     )
     headers_const_missing = headers_const.replace('HEADERS = {"Retry-After"', 'HEADERS = {"ETag"')
+    # F4-198 — 응답 보충을 status 칸마다 판정: 오류 칸 값은 글자 Dict · 같은 모듈 맨 위 상수(그 밖 · `headers` 값 못 읽음은
+    # 그 status 만 ⓓ) · 성공 칸 값은 머리 판정 밖. 2.42.0 은 칸 하나라도 글자 Dict 가 아니면 그 operation 의 머리 전부 ⓓ.
+    docs_module = ("application/lesson/driving_layer/api/lesson_docs.py",
+                   'RETRY_SUCCESS_DOC: dict = {"description": "Retried."}\n'
+                   'CONFLICT_DOC: dict = {"headers": {"Retry-After": {"schema": {"type": "integer"}}}}\n'
+                   'CONFLICT_HEADERS: dict = {"Retry-After": {"schema": {"type": "integer"}}}\n')
+    retry_after = '{"Retry-After": {"schema": {"type": "integer"}}}'
+    etag_only = '{"ETag": {"schema": {"type": "string"}}}'
+
+    def with_docs(extra: str, constants: str = "") -> str:
+        source = header_controller(extra).replace(
+            "from application.lesson.driving_layer.api.bc_error_schema import",
+            "from application.lesson.driving_layer.api.lesson_docs import CONFLICT_DOC, CONFLICT_HEADERS, RETRY_SUCCESS_DOC\n"
+            "from application.lesson.driving_layer.api.bc_error_schema import", 1)
+        return source.replace("router = Router()\n", "router = Router()\n" + constants, 1) if constants else source
+
+    two_errors = with_docs("EXTRA").replace("response={200: dict, 409: LessonConflictError}",
+                                            "response={200: dict, 404: LessonNotFoundError, 409: LessonConflictError}").replace(
+        '    return {"id": lesson_id}\n',
+        '    if lesson_id == 0:\n        missing = LessonNotFoundError()\n        response["Login-Blocked-Reason"] = "gone"\n'
+        '        return Status(404, missing)\n    return {"id": lesson_id}\n', 1)
+    supplement_cases = (
+        ("success-imported-clean", with_docs('{"responses": {200: RETRY_SUCCESS_DOC, 409: {"headers": ' + retry_after + '}}}'), 0, "",
+         "2.42.0 exit 0 · ⓓ(성공 칸 import 가 오류 머리를 가림) — 성공 칸은 머리 판정 밖"),
+        ("success-imported-masking", with_docs('{"responses": {200: RETRY_SUCCESS_DOC, 409: {"headers": ' + etag_only + '}}}'), 2,
+         "머리 `Retry-After` 가 그 뒤 반환하는 409 의 머리 보충에 없다", "red-first · 가림 닫힘(2.42.0 exit 0 · ⓓ 뿐)"),
+        ("success-module-constant-clean", with_docs('{"responses": {200: SUCCESS_200, 409: {"headers": ' + retry_after + '}}}',
+                                                    'SUCCESS_200 = {"description": "Retried."}\n'), 0, "", "2.42.0 exit 0 · ⓓ"),
+        ("error-module-constant-clean", with_docs('{"responses": {409: CONFLICT_409}}', 'CONFLICT_409 = {"headers": ' + retry_after + '}\n'), 0, "",
+         "red-first · 오류 칸 같은 모듈 상수는 풀어 판정(2.42.0 exit 2 «headers 칸 하나만»)"),
+        ("error-module-constant-missing", with_docs('{"responses": {409: CONFLICT_409}}', 'CONFLICT_409 = {"headers": ' + etag_only + '}\n'), 2,
+         "머리 `Retry-After` 가 그 뒤 반환하는 409 의 머리 보충에 없다", "red-first · 상수를 풀어 빠진 머리를 잡는다"),
+        ("error-module-constant-description", with_docs('{"responses": {409: CONFLICT_409}}',
+                                                        'CONFLICT_409 = {"description": "again", "headers": ' + retry_after + '}\n'), 2,
+         "오류 status 409 에는 `headers` 칸 하나만 보충한다", "guard · 풀어도 e 판정 그대로"),
+        ("error-imported", with_docs('{"responses": {409: CONFLICT_DOC}}'), 2, "오류 status 409 에는 `headers` 칸 하나만 보충한다",
+         "guard · 오류 칸 import 는 그대로 위반(2.42.0 과 같음)"),
+        ("error-headers-imported-that-status", two_errors.replace(
+            "EXTRA", '{"responses": {404: {"headers": {}}, 409: {"headers": CONFLICT_HEADERS}}}'), 2,
+         "머리 `Login-Blocked-Reason` 가 그 뒤 반환하는 404 의 머리 보충에 없다",
+         "red-first · 409 `headers` import 는 409 만 ⓓ — 404 판정은 그대로(2.42.0 exit 0 · ⓓ 뿐)"),
+        ("error-headers-imported-candidate", two_errors.replace(
+            "EXTRA", '{"responses": {404: {"headers": {"Login-Blocked-Reason": {}}}, 409: {"headers": CONFLICT_HEADERS}}}'), 0,
+         "머리 `Retry-After` — `openapi_extra` 머리 보충을 글자로 읽지 못했다", "guard · 못 읽은 409 머리는 ⓓ"),
+    )
+    # 같은 모듈 상수를 뒤에서 고치면 «못 읽음» — 오류 칸 값이면 e #63 · `headers` 값이면 그 status 만 ⓓ · `openapi_extra` 통째면
+    # «글자 Dict 가 아니다» #63(사슬 뿌리가 그 이름인 첨자 · 속성 대입 · `del` · 변경 메서드 — 모듈 어디서든).
+    conflict_const = 'CONFLICT_409 = {"headers": ' + retry_after + '}\n'
+    unread_retry_after = "머리 `Retry-After` — `openapi_extra` 머리 보충을 글자로 읽지 못했다"
+    entry_only_headers = "오류 status 409 에는 `headers` 칸 하나만 보충한다"
+    supplement_cases += (
+        ("error-module-constant-subscript-assigned",
+         with_docs('{"responses": {409: CONFLICT_409}}', conflict_const) + 'CONFLICT_409["description"] = "again"\n', 2, entry_only_headers,
+         "red-first · 뒤에서 칸을 더한 상수는 못 읽음(2.42.0 #63 · 고치기 전 2.43.0 판 exit 0)"),
+        ("error-module-constant-headers-replaced",
+         with_docs('{"responses": {409: CONFLICT_409}}', conflict_const) + 'CONFLICT_409["headers"] = {}\n', 2, entry_only_headers,
+         "red-first · 뒤에서 `headers` 를 바꾼 상수(2.42.0 #63 · 고치기 전 2.43.0 판 exit 0)"),
+        ("error-module-constant-nested-pop",
+         with_docs('{"responses": {409: CONFLICT_409}}', conflict_const) + 'CONFLICT_409["headers"].pop("Retry-After")\n', 2, entry_only_headers,
+         "red-first · 첨자 사슬 뒤 변경 메서드"),
+        ("error-module-constant-other-name-mutated-clean",
+         with_docs('{"responses": {409: CONFLICT_409}}', conflict_const + "OTHER_DOC = {}\n") + 'OTHER_DOC["description"] = "x"\n', 0, "",
+         "guard · 다른 이름을 고친 것은 세지 않는다"),
+        ("error-module-constant-read-call-clean",
+         with_docs('{"responses": {409: CONFLICT_409}}', conflict_const) + 'RETRY_DOC = CONFLICT_409.get("headers")\n', 0, "",
+         "guard · 읽기 메서드는 고치기가 아니다"),
+        ("extra-module-constant-mutated",
+         extra_const('{"responses": {409: ' + header_409 + '}}') + 'EXTRA["responses"][409] = {"description": "again"}\n', 2,
+         "`openapi_extra` 가 글자 Dict 가 아니다", "red-first · 통째 상수를 뒤에서 고침(2.42.0 exit 0)"),
+        *(
+            (f"headers-module-constant-{label}", headers_const + statement, 0, unread_retry_after,
+             f"red-first · `headers` 상수를 뒤에서 고침 — {label}(2.42.0 exit 0 · ⓓ 0)")
+            for label, statement in (
+                ("pop", 'HEADERS.pop("Retry-After")\n'),
+                ("del", 'del HEADERS["Retry-After"]\n'),
+                ("subscript-assigned", 'HEADERS["Retry-After"] = {"schema": {"type": "string"}}\n'),
+                ("nested-subscript-assigned", 'HEADERS["Retry-After"]["schema"]["type"] = "string"\n'),
+                ("update", "HEADERS.update({})\n"),
+                ("setdefault", 'HEADERS.setdefault("ETag", {})\n'),
+                ("clear", "HEADERS.clear()\n"),
+                ("popitem", "HEADERS.popitem()\n"),
+                ("in-function", "\n\ndef reset_docs():\n    HEADERS.clear()\n"),
+            )
+        ),
+    )
     mw_helper_assigned = mw_helper.replace(
         "            return self._closed()\n", "            response = self._closed()\n            return response\n"
     )
@@ -7223,6 +7309,12 @@ class MaintenanceMiddleware:
         Case("pre-route-f-inner-returning-header-stays", with_files(("application/lesson/driving_layer/controller.py", inner_returns_then_outer), base=base), openapi, auto, 0, "", note="대조군 — return 으로 끝나는 안쪽 블록의 머리는 뒤로 새지 않는다"),
         Case("pre-route-f-headers-module-constant-missing", with_files(("application/lesson/driving_layer/controller.py", headers_const_missing), base=base), openapi, auto, 2, "머리 `Retry-After` 가 그 뒤 반환하는 409 의 머리 보충에 없다", note="4차 M4 ② — 3차 판 exit 0(ⓓ 뿐)"),
         Case("pre-route-f-headers-module-constant-clean", with_files(("application/lesson/driving_layer/controller.py", headers_const), base=base), openapi, auto, 0, "", note="대조군"),
+        *(
+            Case(f"pre-route-f4198-{label}-{profile}", with_files(docs_module, ("application/lesson/driving_layer/controller.py", source), base=base),
+                 openapi, args, code, fragment, note=f"F4-198 · {note}")
+            for label, source, code, fragment, note in supplement_cases
+            for profile, args in (("auto", auto), ("code", openapi_args()))
+        ),
         Case("pre-route-d-helper-assigned-then-returned", with_files(("framework/django/maintenance_middleware.py", mw_helper_assigned), ("framework/ninja/pre_route_response_table.py", no_503), base=mw), openapi, auto, 2, "maintenance_middleware.py:15: 미들웨어 `framework.django.maintenance_middleware.MaintenanceMiddleware` 가 내는 503", note="4차 N2 — 3차 판 exit 0"),
         Case("pre-route-d-helper-raises", with_files(("framework/django/maintenance_middleware.py", mw_helper_raises), base=mw), openapi, auto, 2, "가 내는 403 응답이 경로 앞 응답 표에 없다", note="4차 N2 — 3차 판 exit 0"),
         Case("pre-route-d-helper-in-conditional-return", with_files(("framework/django/maintenance_middleware.py", mw_helper_ifexp), ("framework/ninja/pre_route_response_table.py", no_503), base=mw), openapi, auto, 2, "가 내는 503 응답이 경로 앞 응답 표에 없다", note="4차 N2 — 3차 판 exit 0"),
@@ -7564,6 +7656,54 @@ def lookup(lesson_id: int):
     return _get_lesson(lesson_id)
 """
 F496_OPENAPI_MISMATCH: Final = "직접 반환 BC 오류와 response= 선언 계약 불일치"
+# F4-192 — 인증 틀 뒤 인증 실패: slot 10 «인증 실패(Ninja 401)» 행의 예외(`--auth-failure`)를 잡은 catch 의 본문 한 문장
+# `raise AuthenticationError()` 만 #125 · 계약 줄을 비켜 간다.
+F4192_AUTH_FAILURE: Final = "application.lesson.domain_layer.lesson.exception.lesson_login_required.LessonLoginRequired"
+F4192_CATCH_RAISE: Final = "raise inside managed catch"
+F4192_CONTRACT: Final = "managed catch must directly construct FrameworkErrorSchema and return Status"
+F4192_LOGIN_REQUIRED: Final = "class LessonLoginRequired(Exception):\n    pass\n"
+F4192_CONTROLLER: Final = """from ninja import Router, Status
+from ninja.errors import AuthenticationError, HttpError
+from ninja_extra.exceptions import NotAuthenticated
+from application.lesson.application_layer.use_cases import LessonMissing, get_lesson
+from application.lesson.domain_layer.lesson.exception.lesson_login_required import LessonLoginRequired
+from application.lesson.driving_layer.api.bc_error_schema import LessonNotFoundError
+
+router = Router()
+
+
+@router.get("/{lesson_id}", response={200: dict, 404: LessonNotFoundError})
+def get_lesson_controller(request, lesson_id: int):
+    try:
+        lesson = get_lesson(lesson_id)
+    except LessonMissing:
+        error = LessonNotFoundError()
+        return Status(error.status, error)
+    except LessonLoginRequired:
+        raise AuthenticationError()
+    return lesson
+"""
+F4192_CLASS_CONTROLLER: Final = """from ninja import Status
+from ninja.errors import AuthenticationError
+from ninja_extra import api_controller, route
+from application.lesson.application_layer.use_cases import LessonMissing, get_lesson
+from application.lesson.domain_layer.lesson.exception.lesson_login_required import LessonLoginRequired
+from application.lesson.driving_layer.api.bc_error_schema import LessonNotFoundError
+
+
+@api_controller("/lessons")
+class LessonController:
+    @route.get("/{lesson_id}", response={200: dict, 404: LessonNotFoundError})
+    def read_lesson(self, lesson_id: int):
+        try:
+            lesson = get_lesson(lesson_id)
+        except LessonMissing:
+            error = LessonNotFoundError()
+            return Status(error.status, error)
+        except LessonLoginRequired:
+            raise AuthenticationError()
+        return lesson
+"""
 
 
 def f496_cases() -> list[Case]:
@@ -7712,6 +7852,76 @@ return result""", 1, F496_PREDICATE, "guard · 호출 뒤 다른 이름")
     pre("f4130-raise-http-406-path-ok", 'if not kind:\n    raise ninja.errors.HttpError(406, "Not acceptable")' + call_after, 0, "", "표준 길 전체 경로")
     pre("f4130-after-call-unread-stays", "readiness = inspect_lesson(lesson_id)\nmissing = readiness.missing\nif missing:\n"
         "    return Status(400, LessonIncompleteError())\nreturn {}", 2, F496_RESULT_BRANCH, "guard · F4-34 현장 꼴은 호출 뒤 #571 그대로")
+    # F4-192 — 인증 틀 뒤 인증 실패(`--auth-failure`). 2.42.0 은 이 인자를 모르고, 인자 없는 실행은 모든 꼴이 #125 + 계약 줄이다.
+    auth_arm = "    except LessonLoginRequired:\n        raise AuthenticationError()\n"
+    auth_flags = ("--auth-failure", F4192_AUTH_FAILURE)
+
+    def auth(name: str, source: str, flags: tuple[str, ...], code: int, fragment: str, note: str,
+             rules: tuple[str, ...] | None = None, profile_args: tuple[str, ...] | None = None,
+             arg_issues: frozenset[str] = frozenset()) -> None:
+        files = with_files(
+            ("application/lesson/domain_layer/lesson/exception/lesson_login_required.py", F4192_LOGIN_REQUIRED),
+            ("application/lesson/driving_layer/controller.py", source),
+            base=CONTROLLER_FILES,
+        )
+        args = (*(controller_args() if profile_args is None else profile_args), *flags)
+        cases.append(Case(name, files, controller, args, code, fragment, note=note, expected_rules=rules,
+                          allowed_arg_issues=arg_issues))
+
+    def arm(text: str) -> str:
+        if auth_arm not in F4192_CONTROLLER:
+            raise ValueError("arm(): 인증 실패 catch 가 없다")
+        return F4192_CONTROLLER.replace(auth_arm, text, 1)
+
+    auth("f4192-auth-failure-call-ok", F4192_CONTROLLER, auth_flags, 0, "", "red-first · `raise AuthenticationError()`(2.42.0 #125 + 계약 줄)")
+    auth("f4192-auth-failure-name-ok", arm("    except LessonLoginRequired:\n        raise AuthenticationError\n"), auth_flags, 0, "",
+         "red-first · 이름만")
+    auth("f4192-auth-failure-from-none-ok", arm("    except LessonLoginRequired:\n        raise AuthenticationError() from None\n"), auth_flags, 0, "",
+         "red-first · `from None`")
+    auth("f4192-auth-failure-module-path-ok", arm("    except LessonLoginRequired:\n        raise ninja.errors.AuthenticationError()\n").replace(
+        "from ninja import Router, Status\n", "import ninja.errors\nfrom ninja import Router, Status\n", 1), auth_flags, 0, "", "red-first · 전체 경로")
+    auth("f4192-auth-failure-class-controller-ok", F4192_CLASS_CONTROLLER, auth_flags, 0, "", "red-first · ninja_extra 컨트롤러 메서드")
+    auth("f4192-auth-failure-no-flag", F4192_CONTROLLER, (), 2, F4192_CATCH_RAISE, "guard · `--auth-failure` 없으면 그대로", rules=("#125",))
+    auth("f4192-auth-failure-no-flag-contract", F4192_CONTROLLER, (), 2, F4192_CONTRACT, "guard · 계약 줄도 그대로")
+    auth("f4192-auth-failure-other-exception", arm("").replace(
+        "    except LessonMissing:\n        error = LessonNotFoundError()\n        return Status(error.status, error)\n",
+        "    except LessonMissing:\n        raise AuthenticationError()\n", 1), auth_flags, 2, F4192_CATCH_RAISE,
+        "아는 BC 오류(404)를 401 로 바꾸는 catch 는 승인 예외가 아니다", rules=("#125",))
+    auth("f4192-auth-failure-tuple", arm("    except (LessonLoginRequired, LessonMissing):\n        raise AuthenticationError()\n").replace(
+        "    except LessonMissing:\n        error = LessonNotFoundError()\n        return Status(error.status, error)\n", "", 1),
+        auth_flags, 2, F4192_CATCH_RAISE, "튜플 catch", rules=("#125",))
+    auth("f4192-auth-failure-as", arm("    except LessonLoginRequired as exc:\n        raise AuthenticationError()\n"), auth_flags, 2,
+         F4192_CATCH_RAISE, "`as` 로 묶은 catch", rules=("#125",))
+    auth("f4192-auth-failure-from-exc", arm("    except LessonLoginRequired as exc:\n        raise AuthenticationError() from exc\n"), auth_flags, 2,
+         F4192_CATCH_RAISE, "`from exc`", rules=("#125",))
+    auth("f4192-auth-failure-from-other-cause", arm("    except LessonLoginRequired:\n        raise AuthenticationError() from ValueError()\n"),
+         auth_flags, 2, F4192_CATCH_RAISE, "`as` 없이 `from` 에 None 아닌 값", rules=("#125",))
+    auth("f4192-auth-failure-argument", arm('    except LessonLoginRequired:\n        raise AuthenticationError("login required")\n'), auth_flags, 2,
+         F4192_CATCH_RAISE, "인자를 주면 몸통이 Ninja 기본 401 과 달라진다", rules=("#125",))
+    auth("f4192-auth-failure-http-error-401", arm('    except LessonLoginRequired:\n        raise HttpError(401, "Unauthorized")\n'), auth_flags, 2,
+         F4192_CATCH_RAISE, "`HttpError(401)`", rules=("#125",))
+    auth("f4192-auth-failure-not-authenticated", arm("    except LessonLoginRequired:\n        raise NotAuthenticated()\n"), auth_flags, 2,
+         F4192_CATCH_RAISE, "ninja_extra `NotAuthenticated`(몸통이 다르다)", rules=("#125",))
+    auth("f4192-auth-failure-mixed", arm('    except LessonLoginRequired:\n        request.session.flush()\n        raise AuthenticationError()\n'),
+         auth_flags, 2, F4192_CATCH_RAISE, "다른 문장과 섞임", rules=("#125",))
+    auth("f4192-auth-failure-other-flag", F4192_CONTROLLER,
+         ("--auth-failure", "application.lesson.domain_layer.lesson.exception.lesson_gone.LessonGone"), 2, F4192_CATCH_RAISE,
+         "승인 목록의 다른 예외", rules=("#125",))
+    auth("f4192-auth-failure-shadowed-name", F4192_CONTROLLER.replace(
+        "\nrouter = Router()\n", "\nAuthenticationError = LessonLoginRequired\n\nrouter = Router()\n", 1), auth_flags, 2, F4192_CATCH_RAISE,
+         "이름 가림 — 모듈 수준 다시 묶기", rules=("#125",))
+    auth("f4192-auth-failure-auto-usage", F4192_CONTROLLER, auth_flags, 1, "auto profile에는 selector를 전달하지 않음",
+         "auto 는 selector 를 받지 않는다", profile_args=(TARGET_DIR, "--error-profile", "auto"),
+         arg_issues=frozenset({"auto-selector:--auth-failure"}))
+    auth("f4192-auth-failure-preserve-usage", F4192_CONTROLLER, auth_flags, 1, "preserve-established profile에는 --auth-failure 를 전달하지 않음",
+         "preserve-established 는 판정 0", profile_args=controller_args()[:2] + ("preserve-established",) + controller_args()[3:])
+    auth("f4192-auth-failure-bad-form", F4192_CONTROLLER, ("--auth-failure", "application.lesson.LessonLoginRequired"), 1,
+         "잘못된 --auth-failure: application.lesson.LessonLoginRequired", "꼴 밖 값")
+    auth("f4192-auth-failure-other-bc", F4192_CONTROLLER,
+         ("--auth-failure", "application.billing.domain_layer.invoice.exception.login_required.LoginRequired"), 1,
+         "--auth-failure 의 BC 가 --error-bc 밖", "BC 소속")
+    auth("f4192-auth-failure-duplicate", F4192_CONTROLLER, (*auth_flags, *auth_flags), 1, "반복 인자 중복: --auth-failure", "중복",
+         arg_issues=frozenset({"duplicate:--auth-failure"}))
     # C-8 — 차분 없는 code 프로필 선점 실행의 안내 한 줄(auto 는 무변 — C-7 바이트 비교가 박는다).
     preempt_files = with_files(("application/lesson/driving_layer/api/legacy/__init__.py", ""),
                                ("application/lesson/driving_layer/api/legacy/legacy_controller.py", F496_LEGACY_TREE_FINDING),
@@ -7825,6 +8035,8 @@ def controller_invariant_failures(cases: list[Case]) -> list[str]:
                 continue
             if case.name.startswith(F4130_CASE_PREFIX):
                 continue  # F4-130 호출 앞 입력 검사 — 옛 exit 2 · exit 0 · 분석 불능 없는 꼴까지 뜻이 바뀐다
+            if "--auth-failure" in case.checker_args:
+                continue  # F4-192 인증 틀 뒤 인증 실패 — 옛 판(2.23.0)은 이 인자를 모른다(사용 오류)
             failures.append(f"[C-7 {case.name}] 2.23.0 과 출력이 다른데 옛 출력에 분석 불능 글이 없다\n"
                             f"old exit={old.returncode}\n{old.stdout}{old.stderr}\nnew exit={new.returncode}\n{new.stdout}{new.stderr}")
     return failures

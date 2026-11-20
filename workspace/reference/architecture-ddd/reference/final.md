@@ -1536,7 +1536,8 @@ class CalculateDiscountService:
 
 **포트 작성 기준:**
 - 포트 이름은 기술이 아니라 역할을 표현한다(예: `PaymentGateway`, `InventoryReservationPort`).
-- 포트 메서드는 좁고 유스케이스 언어를 따른다. 입출력은 도메인/응용 DTO, 값 객체, 식별자를 사용한다.
+- 포트 메서드는 좁고 유스케이스 언어를 따른다. 입출력은 원시값 · 포트 자료(`<data>_in` · `<data>_out`) · 자기 BC 도메인 값 객체 · enum · 식별자(`value_object/` · `shared_value_object/` 칸의 것 — 칸 `__init__` 이 다시 내보낸 이름으로 가져오지 않는다: `from …value_object import <클래스>` 는 안 되고, 하위 모듈 import(`from …shared_value_object import money`)나 모듈 경로(`from …value_object.<모듈> import <클래스>`)는 된다)다 — 유스케이스 입출력(command · query · result) · 애그리거트 · 엔티티는 싣지 않는다.
+- `port/<capability>/` 의 포트 자료가 도메인 값을 실으면 바깥 값 → 그 값 번역 · 검증은 어댑터가 한다 — 모르는 바깥 값은 포트 실패(포트 `exception.py`)로 알리고 유스케이스에 `ValueError` 로 새게 하지 않는다(도메인 우회 조회 자료는 그대로 도메인을 싣지 않는다 — #236 · #356).
 - Python에서는 구조적 협력이면 `Protocol`을 우선 고려하고, 명시적 상속이나 런타임 등록이 필요할 때 ABC를 고려한다. 모든 클래스에 인터페이스를 만들지 않는다.
 
 **어댑터 배치 기준:**
