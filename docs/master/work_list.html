@@ -146,7 +146,7 @@
       <ul class="items">
         <li><span class="num">F4-190 · 192</span><span class="what">로그인 필요를 401 로 낼 승인된 길이 모자라다(401 헤더 · 인증 뒤에 알게 된 인증 실패) — 방향 정함: 401 은 Ninja 가 내고 <code>WWW-Authenticate</code> 는 붙이지 않음(한계로 인정) · 인증 뒤 실패도 Ninja 401 · 로그인 필요 403 은 위반</span><span class="st left">그대로</span></li>
         <li><span class="num">F4-191</span><span class="what">스트리밍(<code>text/event-stream</code>) 응답의 설명서 규칙이 없어 JSON 용 «이름 + 판별 키» 규칙이 걸린다 — 방향 정함: OpenAPI 3.2 표준대로 스트리밍 설명서 규칙을 새로 두고(<code>oneOf</code> + <code>event</code> 고정값 · 판별 키 요구 안 함) JSON 용 규칙은 JSON 에만</span><span class="st left">그대로</span></li>
-        <li><span class="num">F4-193</span><span class="what">같은 BC 의 두 유스케이스가 함께 부르는 응용 층 흐름(포트를 부름)을 둘 자리가 표준 트리에 없어 복제가 남는다</span><span class="st left">그대로</span></li>
+        <li><span class="num">F4-193</span><span class="what">중복 금지 규칙(«모아라»)과 유스케이스 공유 금지(«모을 자리 없음»)가 부딪혀 두 유스케이스의 같은 흐름을 정리할 수 없다 — 방향 정함: 유스케이스 독립성 유지(서로 공유하지 않음 · 비슷한 흐름도 각자 안 · 업무 판정은 도메인 한 곳 · 중복 금지는 유스케이스 사이 흐름에 걸지 않음)</span><span class="st left">그대로</span></li>
         <li><span class="num">F4-194</span><span class="what">동작 보존 장치가 시험 케이스를 이름 · 몸통 그대로 다른 파일로 옮기는 시험 파일 나누기를 새 케이스 · 삭제로 잡는다</span><span class="st left">그대로</span></li>
       </ul>
     </section>
