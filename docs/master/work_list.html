@@ -118,19 +118,19 @@
 <div class="wrap">
   <p class="kicker">05 · dddjango · dddjango-web</p>
   <h1>작업 리스트</h1>
-  <p class="lead">현장 보고 가운데 아직 고치지 않은 일 <b>21개</b>다(dddjango 15 · dddjango-web 6). 새 보고는 판을 정해 넣고, web 은 맨 뒤다. 기준 판 dddjango 2.42.0 · dddjango-web 2.9.1(2026-11-20).</p>
+  <p class="lead">현장 보고 가운데 아직 고치지 않은 일 <b>20개</b>다(dddjango 14 · dddjango-web 6). 새 보고는 판을 정해 넣고, web 은 맨 뒤다. 기준 판 dddjango 2.42.0 · dddjango-web 2.9.1(2026-11-20).</p>
 
   <div class="index">
     <div class="tabs" role="tablist" aria-label="플러그인">
       <button type="button" role="tab" id="tab-core" aria-controls="panel-core" aria-selected="true" data-key="dddjango">
-        <span class="t">dddjango</span><span class="s">15개 · 리팩토링 막힘 · 새 보고 · 보류</span>
+        <span class="t">dddjango</span><span class="s">14개 · 리팩토링 막힘 · 새 보고 · 보류</span>
       </button>
       <button type="button" role="tab" id="tab-web" aria-controls="panel-web" aria-selected="false" tabindex="-1" data-key="web">
         <span class="t">dddjango-web</span><span class="s">6개 · 5판(맨 뒤)</span>
       </button>
     </div>
     <ul class="jump" id="jump-core" aria-label="dddjango 차례">
-      <li><a href="#core-refactor">리팩토링 막힘<span class="n">5</span></a></li>
+      <li><a href="#core-refactor">리팩토링 막힘<span class="n">4</span></a></li>
       <li><a href="#core-new">새 보고<span class="n">4</span></a></li>
       <li><a href="#core-hold">보류<span class="n">6</span></a></li>
     </ul>
@@ -141,12 +141,11 @@
 
   <div role="tabpanel" id="panel-core" aria-labelledby="tab-core">
     <section id="core-refactor">
-      <h2><span class="no">1</span>리팩토링 막힘 — 표준 안에서 정리할 길이 없음<span class="cnt">5개</span></h2>
+      <h2><span class="no">1</span>리팩토링 막힘 — 표준 안에서 정리할 길이 없음<span class="cnt">4개</span></h2>
       <p class="why">사용자가 짚은 일(2026-11-20): 2.42.0 으로도 리팩토링을 빚 없이 끝낼 수 없다. 비동기 서버 BC 의 리팩토링 실행은 2.42.0 으로 시작(G0)을 지나 설계(G1)까지 갔다. 그러나 감사가 고르게 한 위반 가운데 다섯은 표준 안에서 정리할 길이 없어 이번 실행에서 뺐다. 넷은 한 규칙이 고치라 하는데 그 고칠 자리를 다른 규칙이 막는 꼴이다. 하나는 시험 규칙이 허용하는 시험 파일 나누기를 동작 보존 장치가 받지 못하는 꼴이다. G0 는 이 가운데 셋(F4-190 · 192 · 193)을 «규칙 둘이 반대 방향» 으로 알고도 사용자에게 «정리» 를 고르게 했고, G1 에서 «불가» 로 다시 올라왔다.</p>
       <ul class="items">
-        <li><span class="num">F4-190</span><span class="what">로그인 필요 401 에 <code>WWW-Authenticate</code>(Bearer) 머리를 붙일 승인된 자리가 없다 — 붙일 곳은 전역 오류 처리기뿐인데 규칙이 막는다</span><span class="st left">그대로</span></li>
+        <li><span class="num">F4-190 · 192</span><span class="what">로그인 필요를 401 로 낼 승인된 길이 모자라다(401 헤더 · 인증 뒤에 알게 된 인증 실패) — 방향 정함: 401 은 Ninja 가 내고 <code>WWW-Authenticate</code> 는 붙이지 않음(한계로 인정) · 인증 뒤 실패도 Ninja 401 · 로그인 필요 403 은 위반</span><span class="st left">그대로</span></li>
         <li><span class="num">F4-191</span><span class="what">JSON 이 아닌 성공 답(<code>text/event-stream</code>)의 문서에 이름 붙은 프레임 · 판별 키를 더할 길이 문서 재정의뿐인데 규칙이 막는다</span><span class="st left">그대로</span></li>
-        <li><span class="num">F4-192</span><span class="what">인증 뒤에 하위 서버가 «인증 실패» 를 알려도 401 로 낼 승인된 길이 없어 503 으로 남는다</span><span class="st left">그대로</span></li>
         <li><span class="num">F4-193</span><span class="what">같은 BC 의 두 유스케이스가 함께 부르는 응용 층 흐름(포트를 부름)을 둘 자리가 표준 트리에 없어 복제가 남는다</span><span class="st left">그대로</span></li>
         <li><span class="num">F4-194</span><span class="what">동작 보존 장치가 시험 케이스를 이름 · 몸통 그대로 다른 파일로 옮기는 시험 파일 나누기를 새 케이스 · 삭제로 잡는다</span><span class="st left">그대로</span></li>
       </ul>
@@ -196,7 +195,7 @@
     <p>상태 — <b>그대로</b>: 아직 손대지 않음 · <b>일부</b>: 앞 판에서 일부만 고쳐짐.</p>
     <p>뺀 것 — 배포로 끝난 51개(dddjango 2.34.0 ~ 2.42.0 · 2.42.0 에서 F4-183 · 184 · 185) · 사용자가 고치지 않기로 정한 2개(F4-33 · F4-83 · 135 — 시험 본문 타입은 현행 유지).</p>
     <p>현장 보고 밖 후보 — #188 입구 짝을 손님 API 없는 BC 로 넓힘(기동 전용 영역 자리 먼저) · 리팩토링 deps 의 빨리 감기 경고 · #473 꼴 ② «옮김 함수» 면제 · 기존 시험 장난감에 대상 저장소 BC 와 같은 이름 둘 — 지은 이름으로 바꿈 · 기준선 도구의 «그 판에 그 경로가 있나» 가 git 뿌리 아래 하위 폴더 대상에서 늘 «없음»(2.39.0 부터) · ⓓ#485 목록 밖 동사 소음 · ⓓ#191 바꾸는 동사 머리 + 명사 접미 · ⓓ#257 덧셈 대입만 하는 메서드 · 끝 <code>if</code> · 이 실행과 main 이 같은 시험 쪽 파일을 고친 자동 머지(pre-gate · arrange 점검 같은 사각) · 같은 프로세스의 시험 코드가 동작 보존 탐침의 셈 자체를 고쳐 쓰는 꼴(2.41.0 부터 · 2.42.0 설계 검토가 찾음).</p>
-    <p>대상 코드 몫(플러그인 일 아님) — 위 리팩토링 막힘과 같은 실행의 여섯째 «불가»(Valkey 접속 도우미를 BC 밖 <code>framework/valkey/</code> 로 모으는 일 — 실행의 편집 범위 밖 · 발주자 별도 요청) · 여러 BC 값을 보이는 admin 화면(정지 · 판촉)을 <code>cross_context/backoffice/</code> 로 옮기는 기능 · 수정 실행 → 순환이 풀린 BC 리팩토링 → 나머지 BC admin 은 그 BC 리팩토링이 새 admin 빚(#668)으로 갚는다.</p>
+    <p>대상 코드 몫(플러그인 일 아님) — 로그인 필요를 403 으로 답하는 API 서버 BC 를 그 BC 리팩토링 때 401 로(F4-190 · 192 방향 · 손님 web · 앱 맞춤 동반) · 위 리팩토링 막힘과 같은 실행의 여섯째 «불가»(Valkey 접속 도우미를 BC 밖 <code>framework/valkey/</code> 로 모으는 일 — 실행의 편집 범위 밖 · 발주자 별도 요청) · 여러 BC 값을 보이는 admin 화면(정지 · 판촉)을 <code>cross_context/backoffice/</code> 로 옮기는 기능 · 수정 실행 → 순환이 풀린 BC 리팩토링 → 나머지 BC admin 은 그 BC 리팩토링이 새 admin 빚(#668)으로 갚는다.</p>
     <p>판마다 배포가 끝나면 끝난 항목을 이 목록에서 지운다.</p>
   </div>
 </div>
