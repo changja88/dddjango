@@ -145,7 +145,7 @@
       <p class="why">사용자가 짚은 일(2026-11-20): 2.42.0 으로도 리팩토링을 빚 없이 끝낼 수 없다. 비동기 서버 BC 의 리팩토링 실행은 2.42.0 으로 시작(G0)을 지나 설계(G1)까지 갔다. 그러나 감사가 고르게 한 위반 가운데 다섯은 표준 안에서 정리할 길이 없어 이번 실행에서 뺐다. 넷은 한 규칙이 고치라 하는데 그 고칠 자리를 다른 규칙이 막는 꼴이다. 하나는 시험 규칙이 허용하는 시험 파일 나누기를 동작 보존 장치가 받지 못하는 꼴이다. G0 는 이 가운데 셋(F4-190 · 192 · 193)을 «규칙 둘이 반대 방향» 으로 알고도 사용자에게 «정리» 를 고르게 했고, G1 에서 «불가» 로 다시 올라왔다.</p>
       <ul class="items">
         <li><span class="num">F4-190 · 192</span><span class="what">로그인 필요를 401 로 낼 승인된 길이 모자라다(401 헤더 · 인증 뒤에 알게 된 인증 실패) — 방향 정함: 401 은 Ninja 가 내고 <code>WWW-Authenticate</code> 는 붙이지 않음(한계로 인정) · 인증 뒤 실패도 Ninja 401 · 로그인 필요 403 은 위반</span><span class="st left">그대로</span></li>
-        <li><span class="num">F4-191</span><span class="what">JSON 이 아닌 성공 답(<code>text/event-stream</code>)의 문서에 이름 붙은 프레임 · 판별 키를 더할 길이 문서 재정의뿐인데 규칙이 막는다</span><span class="st left">그대로</span></li>
+        <li><span class="num">F4-191</span><span class="what">스트리밍(<code>text/event-stream</code>) 응답의 설명서 규칙이 없어 JSON 용 «이름 + 판별 키» 규칙이 걸린다 — 방향 정함: OpenAPI 3.2 표준대로 스트리밍 설명서 규칙을 새로 두고(<code>oneOf</code> + <code>event</code> 고정값 · 판별 키 요구 안 함) JSON 용 규칙은 JSON 에만</span><span class="st left">그대로</span></li>
         <li><span class="num">F4-193</span><span class="what">같은 BC 의 두 유스케이스가 함께 부르는 응용 층 흐름(포트를 부름)을 둘 자리가 표준 트리에 없어 복제가 남는다</span><span class="st left">그대로</span></li>
         <li><span class="num">F4-194</span><span class="what">동작 보존 장치가 시험 케이스를 이름 · 몸통 그대로 다른 파일로 옮기는 시험 파일 나누기를 새 케이스 · 삭제로 잡는다</span><span class="st left">그대로</span></li>
       </ul>
