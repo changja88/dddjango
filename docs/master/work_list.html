@@ -148,10 +148,10 @@
         <li><span class="num">F4-191</span><span class="what">스트리밍(<code>text/event-stream</code>) 응답의 설명서 규칙이 없어 JSON 용 «이름 + 판별 키» 규칙이 걸린다 — 방향 정함: OpenAPI 3.2 표준대로 스트리밍 설명서 규칙을 새로 두고(<code>oneOf</code> + <code>event</code> 고정값 · 판별 키 요구 안 함) JSON 용 규칙은 JSON 에만</span><span class="st left">그대로</span></li>
         <li><span class="num">F4-193</span><span class="what">중복 금지 규칙(«모아라»)과 유스케이스 공유 금지(«모을 자리 없음»)가 부딪혀 두 유스케이스의 같은 흐름을 정리할 수 없다 — 방향 정함: 유스케이스 독립성 유지(서로 공유하지 않음 · 비슷한 흐름도 각자 안 · 업무 판정은 도메인 한 곳 · 중복 금지는 유스케이스 사이 흐름에 걸지 않음)</span><span class="st left">그대로</span></li>
         <li><span class="num">F4-194</span><span class="what">동작 보존 장치가 시험 케이스를 이름 · 내용 그대로 다른 파일로 옮기는 시험 파일 나누기를 삭제 · 추가로 잡는다 — 방향 정함: 장치는 그대로 두고 G1 승인 «케이스 옮김» 행(개명 행과 같은 꼴)을 더한다</span><span class="st left">그대로</span></li>
-        <li><span class="num">F4-195</span><span class="what">동작 보존 장치가 단언이 든 시험 도움 함수를 한 곳(<code>conftest.py</code>)으로 모으는 옮김을 삭제 · 추가로 잡는다 — F4-194 와 같은 장치 · 같이 고칠 수 있음</span><span class="st left">그대로</span></li>
+        <li><span class="num">F4-195</span><span class="what">동작 보존 장치가 단언이 든 시험 도움 함수를 한 곳(<code>conftest.py</code>)으로 모으는 옮김을 삭제 · 추가로 잡는다 — 방향(운영자 처리): F4-194 의 G1 승인 옮김 행이 도움 함수 옮김도 받게</span><span class="st left">그대로</span></li>
         <li><span class="num">F4-196</span><span class="what">동작 보존 장치가 본문이 서로 같은 예외 클래스 여럿의 이름 바꾸기를 짝짓지 못해, 이름만 바꾼 시험 쪽 파일을 붉게 잡는다</span><span class="st left">그대로</span></li>
-        <li><span class="num">F4-35 · 133 · 188 · 197</span><span class="what">포트 자료에 도메인 값 객체 · enum 을 쓰는 것을 규칙(R-0589)은 허용하고 검사기(#228)는 막는다 — 보류에서 다시 엶(보류 조건 «새 사례가 쌓이면 다시 연다» · 이번엔 리팩토링을 막음)</span><span class="st left">그대로</span></li>
-        <li><span class="num">F4-198</span><span class="what">200 스트림 설명서를 다른 파일의 상수로 옮기자 문서 검사기가 그 경로의 <code>openapi_extra</code> 를 통째로 읽지 못해 기계 확인이 사람 확인으로 바뀐다 — F4-191 스트리밍 설명서 규칙과 함께 정함</span><span class="st left">그대로</span></li>
+        <li><span class="num">F4-35 · 133 · 188 · 197</span><span class="what">포트 자료에 도메인 값 객체 · enum 을 쓰는 것을 규칙(R-0589)은 허용하고 검사기(#228)는 막는다(보류에서 다시 엶) — 방향 정함: 검사기를 규칙 글에 맞춤(포트 자료는 도메인 값 객체 · enum · 식별자 허용 · 번역은 어댑터 · 유스케이스 DTO 금지는 유지)</span><span class="st left">그대로</span></li>
+        <li><span class="num">F4-198</span><span class="what">200 스트림 설명서를 다른 파일의 상수로 옮기자 문서 검사기가 그 경로의 <code>openapi_extra</code> 를 통째로 읽지 못한다 — 방향(운영자 처리): F4-191 스트리밍 설명서 규칙에 «두 경로가 함께 쓰는 설명서는 같은 컨트롤러 파일 맨 위 상수» 를 넣음</span><span class="st left">그대로</span></li>
       </ul>
     </section>
 
