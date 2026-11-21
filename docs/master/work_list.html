@@ -118,7 +118,7 @@
 <div class="wrap">
   <p class="kicker">05 · dddjango · dddjango-web</p>
   <h1>작업 리스트</h1>
-  <p class="lead">현장 보고 가운데 아직 고치지 않은 일 <b>17개</b>다(dddjango 11 · dddjango-web 6). 새 보고는 판을 정해 넣고, web 은 맨 뒤다. 기준 판 dddjango 2.44.0 · dddjango-web 2.9.1(2026-11-21).</p>
+  <p class="lead">현장 보고 가운데 아직 고치지 않은 일 <b>15개</b>다(dddjango 9 · dddjango-web 6). 새 보고는 판을 정해 넣고, web 은 맨 뒤다. 기준 판 dddjango 2.44.1 · dddjango-web 2.9.1(2026-11-22).</p>
 
   <div class="index">
     <div class="tabs" role="tablist" aria-label="플러그인">
@@ -130,7 +130,7 @@
       </button>
     </div>
     <ul class="jump" id="jump-core" aria-label="dddjango 차례">
-      <li><a href="#core-new">새 보고<span class="n">6</span></a></li>
+      <li><a href="#core-new">새 보고<span class="n">4</span></a></li>
       <li><a href="#core-hold">보류<span class="n">5</span></a></li>
     </ul>
     <ul class="jump" id="jump-web" aria-label="dddjango-web 차례" hidden>
@@ -140,15 +140,13 @@
 
   <div role="tabpanel" id="panel-core" aria-labelledby="tab-core">
     <section id="core-new">
-      <h2><span class="no">1</span>새 보고 — 판 아직 안 정함<span class="cnt">6개</span></h2>
-      <p class="why">F4-181 ~ 189 는 막힘 없는 작은 결함이고 레인은 기다리지 않고 간다. F4-201 은 플러그인 정본 문서의 판정 결함이다(동작은 맞고 문서만 틀림). F4-202 는 F4-187 과 같은 검사기 #473 의 오탐이다 — 레인은 try 를 좁혀 빚 없이 갔다(2026-11-21).</p>
+      <h2><span class="no">1</span>새 보고 — 판 아직 안 정함<span class="cnt">4개</span></h2>
+      <p class="why">F4-181 ~ 189 는 막힘 없는 작은 결함이고 레인은 기다리지 않고 간다. F4-201 은 플러그인 정본 문서의 판정 결함이다(동작은 맞고 문서만 틀림).</p>
       <ul class="items">
         <li><span class="num">F4-181</span><span class="what">게이트의 ⓓ 신규 후보 셈이 승인된 main 들임으로 들어온 다른 레인 파일을 가르지 않아 감사 입력이 늘어난다</span><span class="st left">그대로</span></li>
         <li><span class="num">F4-182</span><span class="what">업무 어휘 검사기가 git 이 무시하는 <code>application/__pycache__</code> 폴더를 BC 이름으로 센다</span><span class="st left">그대로</span></li>
-        <li><span class="num">F4-187</span><span class="what">검사기 #473 이 <code>try</code> 몸통 안 지역 이름의 타입 주석을 위반으로 잡아, 모든 이름에 타입을 다는 하우스룰과 부딪친다</span><span class="st left">그대로</span></li>
         <li><span class="num">F4-189</span><span class="what">scope 렌더 검사기가 격리 모드(<code>python3 -I</code>)에서 자기 도움 모듈을 찾지 못해 돌지 않는다</span><span class="st left">그대로</span></li>
         <li><span class="num">F4-201</span><span class="what">경로 앞 응답 문서가 점검 제외 경로 설정을 글자 그대로 비교해, 정규식으로 적은 제외 경로의 생성 문서에 실제로 나지 않는 503 이 붙는다</span><span class="st left">그대로</span></li>
-        <li><span class="num">F4-202</span><span class="what">검사기 #473 이 ACL <code>try</code> 몸통 안 지역 이름의 타입 주석(실행 때 평가되지 않음)에 나온 짝 ACL import 이름을 «상대 창구가 돌 수 있음» 으로 센다</span><span class="st left">그대로</span></li>
       </ul>
     </section>
 
@@ -182,8 +180,8 @@
 
   <div class="foot">
     <p>상태 — <b>그대로</b>: 아직 손대지 않음 · <b>일부</b>: 앞 판에서 일부만 고쳐짐.</p>
-    <p>뺀 것 — 배포로 끝난 61개(dddjango 2.34.0 ~ 2.44.0 · 2.44.0 에서 리팩토링 도구 한계 두 줄 F4-199 · 200) · 사용자가 고치지 않기로 정한 2개(F4-33 · F4-83 · 135 — 시험 본문 타입은 현행 유지).</p>
-    <p>현장 보고 밖 후보 — 동작 보존 장치의 «기대 그대로» 넓힘 남은 꼴(2.44.0 받아들인 한계 — import · 열거형 상수 펼침 · <code>200 == r</code> ↔ <code>r == 200</code> 좌우 바꿈 · <code>pytest.raises(E, f).match(…)</code> 이어 부른 꼴 · pytest-django 픽스처 <code>django_assert_num_queries</code> · unittest 둘째 자리를 <code>second=</code> 밖 키워드로 준 꼴) · #188 입구 짝을 손님 API 없는 BC 로 넓힘(기동 전용 영역 자리 먼저) · 리팩토링 deps 의 빨리 감기 경고 · #473 꼴 ② «옮김 함수» 면제 · 기존 시험 장난감에 대상 저장소 BC 와 같은 이름 둘 — 지은 이름으로 바꿈 · 기준선 도구의 «그 판에 그 경로가 있나» 가 git 뿌리 아래 하위 폴더 대상에서 늘 «없음»(2.39.0 부터) · ⓓ#485 목록 밖 동사 소음 · ⓓ#191 바꾸는 동사 머리 + 명사 접미 · ⓓ#257 덧셈 대입만 하는 메서드 · 끝 <code>if</code> · 이 실행과 main 이 같은 시험 쪽 파일을 고친 자동 머지(pre-gate · arrange 점검 같은 사각) · 같은 프로세스의 시험 코드가 동작 보존 탐침의 셈 자체를 고쳐 쓰는 꼴(2.41.0 부터 · 2.42.0 설계 검토가 찾음) · G0 가 «규칙 둘이 반대 방향» 인 위반을 고칠 길이 있는지 보지 않고 «정리» 를 고르게 묻는 꼴(리팩토링 막힘 셋이 G1 에서 «불가» 로 다시 올라옴 · 2026-11-20) · 2.43.0 이 판 밖으로 둔 다섯(«401 은 Ninja 몫» 의 기계 집행 빈자리 · #228 에 남은 유스케이스 DTO 옛 구멍 · 0C «제품만 개명 · 시험 그대로» 녹색 · 성공 칸 <code>{**import}</code> 조용히 통과 · «인증 틀 있는 operation 에서만» 의 기계 판정) · 2.43.0 이 받아들인 한계 가운데 다시 볼 것(옮김 행 묶임 대조의 드문 두 꼴 — 서로 다른 외부 모듈의 같은 이름 픽스처 · conftest 와 같은 이름의 외부 import / 옮김 행마다 사슬 다시 읽기 / 진단 문구 둘 — 원 경로가 달라 비켜 주지 못함 · 뒤 고침으로 못 읽음 · 골든 갱신 동반 / #227 물음의 «펴서» 문구).</p>
+    <p>뺀 것 — 배포로 끝난 63개(dddjango 2.34.0 ~ 2.44.1 · 2.44.1 에서 검사기 #473 오탐 두 줄 F4-187 · 202) · 사용자가 고치지 않기로 정한 2개(F4-33 · F4-83 · 135 — 시험 본문 타입은 현행 유지).</p>
+    <p>현장 보고 밖 후보 — 동작 보존 장치의 «기대 그대로» 넓힘 남은 꼴(2.44.0 받아들인 한계 — import · 열거형 상수 펼침 · <code>200 == r</code> ↔ <code>r == 200</code> 좌우 바꿈 · <code>pytest.raises(E, f).match(…)</code> 이어 부른 꼴 · pytest-django 픽스처 <code>django_assert_num_queries</code> · unittest 둘째 자리를 <code>second=</code> 밖 키워드로 준 꼴) · #188 입구 짝을 손님 API 없는 BC 로 넓힘(기동 전용 영역 자리 먼저) · 리팩토링 deps 의 빨리 감기 경고 · 2.44.1 이 판 밖으로 둔 넷(check-broker-contract #520 이 <code>x: T = ….publish(…)</code> 주석 대입을 못 봄 — 추정 · 재현부터 / #473 이 구문 오류 슬롯 파일을 조용히 건너뜀 / #473 try 안 창구 모듈 import / <code>except*</code>) · 기존 시험 장난감에 대상 저장소 BC 와 같은 이름 둘 — 지은 이름으로 바꿈 · 기준선 도구의 «그 판에 그 경로가 있나» 가 git 뿌리 아래 하위 폴더 대상에서 늘 «없음»(2.39.0 부터) · ⓓ#485 목록 밖 동사 소음 · ⓓ#191 바꾸는 동사 머리 + 명사 접미 · ⓓ#257 덧셈 대입만 하는 메서드 · 끝 <code>if</code> · 이 실행과 main 이 같은 시험 쪽 파일을 고친 자동 머지(pre-gate · arrange 점검 같은 사각) · 같은 프로세스의 시험 코드가 동작 보존 탐침의 셈 자체를 고쳐 쓰는 꼴(2.41.0 부터 · 2.42.0 설계 검토가 찾음) · G0 가 «규칙 둘이 반대 방향» 인 위반을 고칠 길이 있는지 보지 않고 «정리» 를 고르게 묻는 꼴(리팩토링 막힘 셋이 G1 에서 «불가» 로 다시 올라옴 · 2026-11-20) · 2.43.0 이 판 밖으로 둔 다섯(«401 은 Ninja 몫» 의 기계 집행 빈자리 · #228 에 남은 유스케이스 DTO 옛 구멍 · 0C «제품만 개명 · 시험 그대로» 녹색 · 성공 칸 <code>{**import}</code> 조용히 통과 · «인증 틀 있는 operation 에서만» 의 기계 판정) · 2.43.0 이 받아들인 한계 가운데 다시 볼 것(옮김 행 묶임 대조의 드문 두 꼴 — 서로 다른 외부 모듈의 같은 이름 픽스처 · conftest 와 같은 이름의 외부 import / 옮김 행마다 사슬 다시 읽기 / 진단 문구 둘 — 원 경로가 달라 비켜 주지 못함 · 뒤 고침으로 못 읽음 · 골든 갱신 동반 / #227 물음의 «펴서» 문구).</p>
     <p>대상 코드 몫(플러그인 일 아님) — 로그인 필요를 403 으로 답하는 API 서버 BC 를 그 BC 리팩토링 때 401 로(F4-190 · 192 방향 · 손님 web · 앱 맞춤 동반) · 위 리팩토링 막힘과 같은 실행의 여섯째 «불가»(Valkey 접속 도우미를 BC 밖 <code>framework/valkey/</code> 로 모으는 일 — 실행의 편집 범위 밖 · 발주자 별도 요청) · 여러 BC 값을 보이는 admin 화면(정지 · 판촉)을 <code>cross_context/backoffice/</code> 로 옮기는 기능 · 수정 실행 → 순환이 풀린 BC 리팩토링 → 나머지 BC admin 은 그 BC 리팩토링이 새 admin 빚(#668)으로 갚는다.</p>
     <p>판마다 배포가 끝나면 끝난 항목을 이 목록에서 지운다.</p>
   </div>
