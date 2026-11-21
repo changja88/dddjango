@@ -103,6 +103,7 @@ import sys
 import tokenize
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
+import copy
 from typing import Callable, Iterator, NamedTuple
 
 EXCLUDED_PREFIXES: "tuple[str, ...]" = (".dddjango/", ".git/", ".venv/", "venv/", "node_modules/")
@@ -1429,7 +1430,8 @@ def _removed_cases(folder: Path) -> "collections.Counter[str]":
 # ── 리팩토링 모드: 분류 · 감사 단위 · D · 처분(설계 v15.2 §4-1 ~ §4-4) ──────────────────────────
 #
 # 리팩토링 모드의 모든 창(test · code · follow · change)에서 시험 쪽 바이트 변화는 감사 키를 내거나 red 다(자동 초록 없음).
-# 처분은 창마다 우선순위 하나(§4-3) · 감사 키는 원문 줄 분할과 배치 결속(§4-4) · D 는 원문 AST 만(§4-2).
+# 처분은 창마다 우선순위 하나(§4-3) · 감사 키는 원문 줄 분할과 배치 결속(§4-4) · D 는 원문 AST 의 기대 원소를 그 파일
+# 안에서만 정규화해 견준다(§4-2 — 대응표 치환 없음 · 같은 뜻 고쳐 쓰기 ①~④ 만 «기대 그대로»).
 # 아래 공개 함수(audit_split · audit_join · audit_keys · d_changes · dispose_test_file · judge_test_side)는 바이트 · 경로 ·
 # 읽기 함수만 받는다 — 저장소 밖(과거 커밋 재생 · 역변환 속성 시험)에서도 그대로 부른다.
 
@@ -1455,7 +1457,125 @@ D_FIXED: "frozenset[str]" = frozenset({"확정 변화", "확정 변화(지역 �
 D_KINDS: "tuple[str, ...]" = ("기대식", "맥락만", "지역 정의", "추가", "삭제", "공유 정의 변화")
 SPOT_LIMIT: int = 300
 _MOCK_ASSERT: "re.Pattern[str]" = re.compile(r"^assert_(called|not_called|has_calls|any_call|awaited|not_awaited)")
-_EXPR_PART: "re.Pattern[str]" = re.compile(r"^(.*?)#?((?:cmp|bare|raises|except|mock|param):.*)$", re.S)
+# 기대식 몫 — 맨 앞(parametrize) 또는 맥락 뒤 첫 `#` 다음의 종류부터(맥락 글자 안의 `output:` 같은 글을 종류로 읽지 않는다)
+_EXPR_PART: "re.Pattern[str]" = re.compile(r"^(|.*?#)((?:cmp|bare|raises|except|mock|param|ut|utx):.*)$", re.S)
+# unittest · Django 단언 메서드(2.44.0) — 자리 역할: s 주어(열쇠 밖 · 비교 assert 의 왼쪽과 같은 몫) · e 기대(열쇠) · m 메시지(밖) ·
+# c 부를 것과 그 인자(밖 — 이 자리부터 뒤 위치 인자 모두 · 부르는 꼴만). 표 끝 뒤 위치 인자는 e. 키워드는 이름으로 — msg ·
+# msg_prefix 는 m · c 를 가진 메서드의 표 밖 키워드는 c(부를 것에 넘긴다) · 그 밖 표 밖 키워드는 e. 컨텍스트 꼴(`with …:`)은 s 를 e 로
+# 본다(주어는 몸이다). 같은 뜻 별칭은 한 이름으로(assertEquals → assertEqual 등).
+_UT_SPEC: "dict[str, tuple[str, tuple[str, ...]]]" = {}
+for _names, _roles, _kw in (
+        (("assertEqual", "assertNotEqual", "assertCountEqual", "assertListEqual", "assertTupleEqual", "assertSetEqual",
+          "assertDictEqual", "assertMultiLineEqual", "assertGreater", "assertGreaterEqual", "assertLess", "assertLessEqual",
+          "assertIs", "assertIsNot", "assertIsInstance", "assertNotIsInstance", "assertRegex", "assertNotRegex",
+          "assertURLEqual", "assertHTMLEqual", "assertHTMLNotEqual", "assertXMLEqual", "assertXMLNotEqual", "assertJSONEqual",
+          "assertJSONNotEqual"), "sem", ()),
+        (("assertSequenceEqual",), "seme", ()),
+        (("assertAlmostEqual", "assertNotAlmostEqual"), "seeme", ()),
+        (("assertTrue", "assertFalse"), "em", ()),
+        (("assertIsNone", "assertIsNotNone"), "sm", ()),
+        (("assertIn", "assertNotIn"), "eem", ()),
+        (("assertDictContainsSubset",), "esm", ()),
+        (("assertRaises", "assertWarns"), "ec", ()),
+        (("assertRaisesRegex", "assertWarnsRegex", "assertRaisesMessage", "assertWarnsMessage"), "eec", ()),
+        (("assertLogs", "assertNoLogs"), "ee", ()),
+        (("assertNumQueries",), "ec", ("using",)),
+        (("assertContains", "assertRedirects"), "seeeme", ()),
+        (("assertNotContains",), "seeme", ()),
+        (("assertTemplateUsed",), "seme", ()),
+        (("assertTemplateNotUsed",), "sem", ()),
+        (("assertFormError",), "seee", ()),
+        (("assertFormSetError", "assertFormsetError"), "seeee", ()),
+        (("assertInHTML",), "esem", ()),
+        (("assertNotInHTML",), "esm", ()),
+        (("assertQuerySetEqual", "assertQuerysetEqual"), "seeem", ()),
+        (("assertFieldOutput",), "eeeeee", ()),
+        (("assertMessages",), "see", ())):
+    for _n in _names:
+        _UT_SPEC[_n] = (_roles, _kw)
+# 첫 두 자리가 맞대는 값인 차례 비교 메서드(기대를 먼저 쓴 `assertEqual(200, r.status_code)` · `assertGreater(10, elapsed)` 를
+# assert 비교와 같은 쪽 가름으로) — 형(IsInstance) · 정규식(Regex) · 응답(Django 단언)을 받는 메서드는 첫 자리가 늘 주어라 뺀다.
+_UT_ORDERED: "frozenset[str]" = frozenset((
+    "assertEqual", "assertNotEqual", "assertCountEqual", "assertListEqual", "assertTupleEqual", "assertSetEqual",
+    "assertDictEqual", "assertMultiLineEqual", "assertSequenceEqual", "assertGreater", "assertGreaterEqual", "assertLess",
+    "assertLessEqual", "assertIs", "assertIsNot", "assertAlmostEqual", "assertNotAlmostEqual", "assertURLEqual",
+    "assertHTMLEqual", "assertHTMLNotEqual", "assertXMLEqual", "assertXMLNotEqual", "assertJSONEqual", "assertJSONNotEqual"))
+_UT_ALIAS: "dict[str, str]" = {"assertEquals": "assertEqual", "assertNotEquals": "assertNotEqual",
+                               "assertAlmostEquals": "assertAlmostEqual", "assertNotAlmostEquals": "assertNotAlmostEqual",
+                               "assertItemsEqual": "assertCountEqual", "assertRegexpMatches": "assertRegex",
+                               "assertNotRegexpMatches": "assertNotRegex", "assertRaisesRegexp": "assertRaisesRegex",
+                               "assertQuerysetEqual": "assertQuerySetEqual", "assertFormsetError": "assertFormSetError"}
+for _a, _t in _UT_ALIAS.items():
+    _UT_SPEC.setdefault(_a, _UT_SPEC[_t])
+# 같음을 보는 메서드 — 기대 인자 안 집합 · 사전 표시의 차례는 뜻이 없다(④) · 그 인자 자리는 값을 바꾸지 않는 자리(③ 지킴).
+_UT_EQUAL: "frozenset[str]" = frozenset({"assertEqual", "assertNotEqual", "assertCountEqual", "assertListEqual", "assertTupleEqual",
+                                        "assertSetEqual", "assertDictEqual", "assertSequenceEqual", "assertIn", "assertNotIn",
+                                        "assertJSONEqual", "assertJSONNotEqual", "assertDictContainsSubset"})
+_UT_RECEIVERS: "frozenset[str]" = frozenset({"self", "cls"})
+_UT_ASSERT: "re.Pattern[str]" = re.compile(r"^assert[A-Z_]")
+_UT_MODULE: str = "pytest_django.asserts"
+
+
+def _ut_aliases(tree: ast.AST) -> "tuple[dict[str, str], set[str]]":
+    """pytest_django.asserts 의 함수 꼴 — (지역 이름 → 메서드 이름, 그 모듈을 가리키는 글(이름 · 별칭 없는 import 면 점 사슬)).
+    받는 꼴: `from pytest_django.asserts import X [as Y]` · `import pytest_django.asserts [as M]` · `from pytest_django import asserts [as M]`."""
+    names: "dict[str, str]" = {}
+    mods: "set[str]" = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module == _UT_MODULE and not node.level:
+            names.update({(a.asname or a.name): a.name for a in node.names if a.name != "*"})
+        elif isinstance(node, ast.ImportFrom) and node.module == _UT_MODULE.rpartition(".")[0] and not node.level:
+            mods.update((a.asname or a.name) for a in node.names if a.name == _UT_MODULE.rpartition(".")[2])
+        elif isinstance(node, ast.Import):
+            mods.update((a.asname or a.name) for a in node.names if a.name == _UT_MODULE)
+    return names, mods
+
+
+def _ut_method(func: ast.AST, aliases: "tuple[dict[str, str], set[str]]") -> "tuple[str, bool] | None":
+    """부르는 식이 unittest · Django 단언이면 (메서드 이름 · 표 안인가) — `self.` · `cls.` · pytest_django.asserts 함수 꼴만."""
+    names, mods = aliases
+    if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
+        if func.value.id in _UT_RECEIVERS and _UT_ASSERT.match(func.attr):
+            return func.attr, func.attr in _UT_SPEC
+        if func.value.id in mods and func.attr in _UT_SPEC:
+            return func.attr, True
+    elif isinstance(func, ast.Attribute) and _dotted_text(func.value) in mods and func.attr in _UT_SPEC:
+        return func.attr, True                              # 별칭 없는 `import pytest_django.asserts` 의 사슬 부름
+    elif isinstance(func, ast.Name) and func.id in names and names[func.id] in _UT_SPEC:
+        return names[func.id], True
+    return None
+
+
+def _ut_parts(call: ast.Call, method: str, known: bool, context: bool,
+              first: "tuple[str, str] | None" = None) -> "list[tuple[str, ast.AST]]":
+    """열쇠에 넣을 (자리 이름, 식) — 표 안이면 역할 표대로(주어 · 메시지 · 부를 것 뺌) · 표 밖이면 모든 위치 · 키워드 인자.
+    first = 차례 비교 메서드 첫 두 자리의 바꾼 역할(첫 자리만 글자 값이면 (e, s) · 흔들리는 이름 덕에 쪽이 갈리거나 위치 인자
+    하나에 `second=` 를 준 꼴이면 (e, e))."""
+    if not known:
+        return [(str(i), a) for i, a in enumerate(call.args)] + [(k.arg or "**", k.value) for k in call.keywords]
+    roles, expected_kw = _UT_SPEC[method]
+    out: "list[tuple[str, ast.AST]]" = []
+    calling: bool = False
+    for i, a in enumerate(call.args):
+        role: str = first[i] if first is not None and i < 2 else roles[i] if i < len(roles) else ("c" if calling else "e")
+        if role == "c" and not context:
+            calling = True
+            continue
+        if role == "s" and context:
+            role = "e"
+        if role in ("e", "c"):                              # 컨텍스트 꼴에는 부를 것이 없다 — 남은 위치 인자는 기대
+            out.append((str(i), a))
+    has_call: bool = "c" in roles
+    for k in call.keywords:
+        if k.arg in ("msg", "msg_prefix"):
+            continue
+        if k.arg is not None and k.arg in expected_kw:
+            out.append((k.arg, k.value))
+        elif has_call and not context:
+            continue                                        # 부를 것에 넘기는 키워드 — 주어 몫
+        else:
+            out.append((k.arg or "**", k.value))
+    return out
 _LINE_BYTES: "re.Pattern[bytes]" = re.compile(rb"[^\r\n]*(?:\r\n|\r|\n)|[^\r\n]+\Z")   # ast 와 같은 줄 끝만
 _LINE_TEXT: "re.Pattern[str]" = re.compile(r"[^\r\n]*(?:\r\n|\r|\n)|[^\r\n]+\Z")
 
@@ -1604,7 +1724,9 @@ def audit_keys(a: "bytes | None", b: "bytes | None", py: bool) -> "tuple[list[tu
     return [(k, _digest(units_a.get(k)), _digest(units_b.get(k))) for k in names], ""
 
 
-# D — 확정 기대 변화와 공유 정의 변화(§4-2 · 원문 AST 만 · 정규화 · 대응표 없음)
+# D — 확정 기대 변화와 공유 정의 변화(§4-2 · 원문 AST · 대응표 치환 없음). 원소의 기대 쪽만 열쇠로 보고(비교 assert 의 글자
+# 값 쪽 · mock 단언 키워드 이름 포함 · unittest · Django 단언의 기대 인자 · 문장 자리 raises 부르는 꼴의 예외) · 짝짓기는 글자 열쇠로,
+# 짝의 «기대 그대로» 는 같은 파일 안 정규화 열쇠(아래 «D 정규화»)로 가른다.
 
 def _dump_node(node: "ast.AST | None") -> str:
     return "" if node is None else ast.dump(node, annotate_fields=False, include_attributes=False)
@@ -1626,6 +1748,9 @@ class DElement(NamedTuple):
     shared: str
     node: ast.AST
     func: str
+    nkey: str = ""                             # 정규화 열쇠(같은 뜻 고쳐 쓰기 ①~④ — 펼친 이름 · 순서 없는 묶음 정렬)
+    nfixed: str = ""                           # 정규화 열쇠에 남은 이름의 확정(지역) 정의
+    nshared: str = ""                          # 정규화 열쇠에 남은 이름의 공유 정의
 
 
 class DChange(NamedTuple):
@@ -1642,6 +1767,7 @@ class _DModule:
     `이름#k` 로 둔다(§4-2 같은 이름 정의 · «시험 쪽 모든 함수 — 중첩»). 함수 안 중첩 함수 · 클래스는 그 함수의 원소다."""
 
     def __init__(self, tree: ast.Module) -> None:
+        self.norm: "_DNorm" = _DNorm(tree)
         self.mod_defs: "dict[str, list[str]]" = {}
         self.funcs: "dict[str, tuple[str, ast.AST]]" = {}
         seen: "collections.Counter[str]" = collections.Counter()
@@ -1723,6 +1849,270 @@ def _d_assigns(scope: ast.AST) -> "list[tuple[int, str, str, bool]]":
     return out
 
 
+# D 정규화(F4-200) — 시험에 실제 영향 없는 고쳐 쓰기를 «기대 그대로» 로 본다: ① 값 → 이름 상수 ② 식 → 이름 상수 ③ 기대값 →
+# 시험 안 지역 이름(앞선 단일 대입) ④ 순서 없는 묶음(집합 · 사전 표시)의 순서 · 그 이름 바꾸기. 펼치는 이름은 한 번만 정하고
+# 고쳐 쓰지 않는 이름(모듈 맨 위 단일 대입 · 시험 함수 몸 맨 위의 앞선 단일 대입)이고 값이 리터럴 식으로 끝까지 풀릴 때만이다.
+# 펼친 이름은 열쇠에서 사라지고(정의 칸에도 안 남는다) · 펼치지 못한 이름과 그 밖 꼴은 지금 그대로(바뀜).
+_NORM_DEPTH: int = 16
+_NORM_NODES: int = 1000
+_LITERAL_NODES: "tuple[type, ...]" = (ast.Constant, ast.Tuple, ast.List, ast.Set, ast.Dict, ast.UnaryOp, ast.BinOp, ast.BoolOp,
+                                      ast.expr_context, ast.operator, ast.unaryop, ast.boolop)
+_MUTABLE_NODES: "tuple[type, ...]" = (ast.List, ast.Set, ast.Dict)
+_OWN_SCOPE: "tuple[type, ...]" = (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp, ast.Lambda)
+
+
+def _plain_target(st: ast.stmt) -> "str | None":
+    """`이름 = 값` · `이름: 타입 = 값`(대상 하나 · 이름) 문장의 이름."""
+    if isinstance(st, ast.Assign) and len(st.targets) == 1 and isinstance(st.targets[0], ast.Name):
+        return st.targets[0].id
+    if isinstance(st, ast.AnnAssign) and st.value is not None and st.simple and isinstance(st.target, ast.Name):
+        return st.target.id
+    return None
+
+
+def _scope_binds(roots: "list[ast.AST]") -> "tuple[collections.Counter[str], set[str], set[str]]":
+    """한 이름 공간의 묶기 — (이름별 묶기 수, global 선언, 안쪽 함수의 nonlocal 선언). 안쪽 함수 · 클래스는 이름 · 데코레이터 ·
+    기본값 · 바탕만 이 공간이고 몸은 들어가지 않는다(그 안 global · nonlocal 은 모은다) · 내포 식 · 람다는 := 대상만 이 공간."""
+    count: "collections.Counter[str]" = collections.Counter()
+    glob: "set[str]" = set()
+    nonloc: "set[str]" = set()
+    stack: "list[ast.AST]" = list(roots)
+    while stack:
+        node = stack.pop()
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            count[node.name] += 1
+            stack += node.decorator_list
+            if isinstance(node, ast.ClassDef):
+                stack += node.bases + [k.value for k in node.keywords]
+            else:
+                stack += [d for d in node.args.defaults + node.args.kw_defaults if d is not None]
+            for inner in ast.walk(node):
+                if isinstance(inner, ast.Global):
+                    glob.update(inner.names)
+                elif isinstance(inner, ast.Nonlocal):
+                    nonloc.update(inner.names)
+            continue
+        if isinstance(node, _OWN_SCOPE):
+            count.update(t.target.id for t in ast.walk(node) if isinstance(t, ast.NamedExpr) and isinstance(t.target, ast.Name))
+            continue
+        if isinstance(node, ast.Global):
+            glob.update(node.names)
+        elif isinstance(node, ast.Nonlocal):
+            nonloc.update(node.names)
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, (ast.Store, ast.Del)):
+            count[node.id] += 1
+        elif isinstance(node, ast.ExceptHandler) and node.name:
+            count[node.name] += 1
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            count.update((a.asname or a.name).split(".")[0] for a in node.names)
+        elif isinstance(node, (ast.MatchAs, ast.MatchStar)) and node.name:
+            count[node.name] += 1
+        elif isinstance(node, ast.MatchMapping) and node.rest:
+            count[node.rest] += 1
+        stack += list(ast.iter_child_nodes(node))
+    return count, glob, nonloc
+
+
+def _safe_names(tree: ast.AST, aliases: "tuple[dict[str, str], set[str]] | None" = None) -> "set[int]":
+    """값을 바꿀 수 없는 자리의 이름 노드 — 비교 assert(is · is not 없는)의 양쪽 · mock 단언 인자에서 표시(튜플 · 목록 · 집합 ·
+    사전)만 거쳐 닿는 이름. 바뀔 수 있는 값(목록 · 집합 · 사전)을 펼칠 때 그 이름의 다른 쓰임이 모두 이 자리여야 한다."""
+    safe: "set[int]" = set()
+
+    def down(node: "ast.AST | None") -> None:
+        if isinstance(node, ast.Name):
+            safe.add(id(node))
+        elif isinstance(node, (ast.Tuple, ast.List, ast.Set)):
+            for e in node.elts:
+                down(e)
+        elif isinstance(node, ast.Dict):
+            for e in [*node.keys, *node.values]:
+                down(e)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assert) and isinstance(node.test, ast.Compare) \
+                and not any(isinstance(o, (ast.Is, ast.IsNot)) for o in node.test.ops):
+            for e in [node.test.left, *node.test.comparators]:
+                down(e)
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and _MOCK_ASSERT.match(node.func.attr):
+            for e in [*node.args, *(k.value for k in node.keywords)]:
+                down(e)
+        elif isinstance(node, ast.Call) and aliases is not None:
+            hit = _ut_method(node.func, aliases)
+            if hit is not None and _UT_ALIAS.get(hit[0], hit[0]) in _UT_EQUAL:
+                for e in [*node.args, *(k.value for k in node.keywords)]:
+                    down(e)
+    return safe
+
+
+def _is_literal(node: ast.AST) -> bool:
+    return all(isinstance(n, _LITERAL_NODES) for n in ast.walk(node)) and \
+        not any(isinstance(n, ast.Dict) and None in n.keys for n in ast.walk(node))
+
+
+class _DScope:
+    """시험 함수 하나의 이름 공간 — 묶기 수(매개변수 포함) · global · nonlocal · 몸 맨 위 단일 대입(차례 · 값 · 대상 노드)."""
+
+    def __init__(self, fn: ast.AST) -> None:
+        self.fn: ast.AST = fn
+        self.count, self.glob, self.nonloc = _scope_binds(list(getattr(fn, "body", [])))
+        args = getattr(fn, "args", None)
+        if args is not None:
+            self.count.update(a.arg for a in [*args.posonlyargs, *args.args, *args.kwonlyargs,
+                                              *([args.vararg] if args.vararg else []), *([args.kwarg] if args.kwarg else [])])
+        self.count.update(tp.name for tp in getattr(fn, "type_params", None) or [])   # 형식 매개변수(def f[T]())
+        self.defs: "dict[str, tuple[int, ast.stmt]]" = {}
+        for i, st in enumerate(getattr(fn, "body", [])):
+            name = _plain_target(st)
+            if name is not None:
+                self.defs.setdefault(name, (i, st))
+
+
+class _DNorm:
+    """모듈의 정규화 재료 — 모듈 묶기 · global · 문자열 상수(setattr · patch 글자) · 안전한 이름 자리 · 맨 위 단일 대입."""
+
+    def __init__(self, tree: ast.Module) -> None:
+        self.tree: ast.Module = tree
+        self.count, self.glob, _n = _scope_binds(list(tree.body))
+        self.strings: "set[str]" = {n.value for n in ast.walk(tree) if isinstance(n, ast.Constant) and isinstance(n.value, str)}
+        self.ut: "tuple[dict[str, str], set[str]]" = _ut_aliases(tree)
+        self.safe: "set[int]" = _safe_names(tree, self.ut)
+        self.typeparams: "set[str]" = {tp.name for n in ast.walk(tree) for tp in getattr(n, "type_params", None) or []}
+        self.attr_kw: "set[str]" = ({n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)
+                                     and isinstance(n.ctx, (ast.Store, ast.Del))}
+                                    | {n.arg for n in ast.walk(tree) if isinstance(n, ast.keyword) and n.arg})
+        self.attr_store: "set[str]" = {n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)
+                                       and isinstance(n.ctx, (ast.Store, ast.Del))}
+        self.defs: "dict[str, ast.stmt]" = {}
+        for st in tree.body:
+            name = _plain_target(st)
+            if name is not None:
+                self.defs.setdefault(name, st)
+        self.memo: "dict[tuple, ast.AST | None]" = {}
+
+    def _module_bound_once(self, name: str) -> bool:
+        """쪽 가름용 — 모듈 최상위 단일 대입 하나로만 묶이고 다시 묶이지 않는 이름(묶기 수 1 · global 없음 · 같은 파일
+        속성 대입/지움 없음). 문자열 · 키워드 이름 · 별표 import · 형식 매개변수 지킴은 보지 않는다."""
+        return (name in self.defs and self.count[name] == 1 and name not in self.glob
+                and name not in self.attr_store)
+
+    def _module_stable(self, name: str) -> bool:
+        return (self.count[name] == 1 and name in self.defs and name not in self.glob and not self.count["*"]
+                and name not in self.attr_kw and name not in self.typeparams
+                and not any(s == name or s.endswith("." + name) for s in self.strings))
+
+    def _guard(self, scope_root: ast.AST, name: str, target: ast.AST) -> bool:
+        """바뀔 수 있는 값 — 그 이름의 다른 쓰임이 모두 값을 바꿀 수 없는 자리인가."""
+        return all(n is target or id(n) in self.safe for n in ast.walk(scope_root) if isinstance(n, ast.Name) and n.id == name)
+
+    def expand(self, name: str, scope: "_DScope | None", before: int, stack: "tuple[str, ...]",
+               shape: bool = False) -> "ast.AST | None":
+        """이름 하나를 리터럴 식으로 끝까지 펼친 값(복사본) — 못 펼치면 None(그 이름은 열쇠에 그대로 남는다).
+        shape = 기대 쪽 가름용 — 모듈 이름은 다시 묶이지 않음(`_module_bound_once`)만 보고 문자열 · 키워드 이름 · 별표 import ·
+        형식 매개변수 지킴은 보지 않는다(그 덕에만 글자 값이면 쪽 가름이 두 쪽으로 — `slit`). 지역 이름 지킴 · 바뀔 수 있는 값 지킴은 그대로."""
+        if name in stack or len(stack) >= _NORM_DEPTH:
+            return None
+        memo_key: tuple = (id(scope.fn) if scope is not None else 0, name, before, shape)
+        if memo_key in self.memo:
+            return self.memo[memo_key]
+        self.memo[memo_key] = None                      # 순환 지킴
+        got: "ast.AST | None" = None
+        if scope is not None and scope.count[name]:
+            hit = scope.defs.get(name)
+            if (hit is not None and scope.count[name] == 1 and hit[0] < before and name not in scope.glob
+                    and name not in scope.nonloc):
+                got = self._value(hit[1], scope, hit[0], stack + (name,), scope.fn, shape)
+        elif self._module_bound_once(name) if shape else self._module_stable(name):
+            got = self._value(self.defs[name], None, 0, stack + (name,), self.tree, shape)
+        self.memo[memo_key] = got
+        return got
+
+    def _value(self, st: ast.stmt, scope: "_DScope | None", before: int, stack: "tuple[str, ...]",
+               root: ast.AST, shape: bool = False) -> "ast.AST | None":
+        value: ast.AST = self.substitute(copy.deepcopy(st.value), scope, before, stack, shape)  # type: ignore[attr-defined]
+        if not _is_literal(value) or sum(1 for _n in ast.walk(value)) > _NORM_NODES:
+            return None
+        if any(isinstance(n, _MUTABLE_NODES) for n in ast.walk(value)):
+            target: ast.AST = st.targets[0] if isinstance(st, ast.Assign) else st.target  # type: ignore[attr-defined]
+            if not self._guard(root, target.id, target):  # type: ignore[attr-defined]
+                return None
+        return value
+
+    def substitute(self, node: ast.AST, scope: "_DScope | None", before: int, stack: "tuple[str, ...]" = (),
+                   shape: bool = False) -> ast.AST:
+        """식 안 펼칠 수 있는 이름을 값으로 바꾼 식(제자리) — 내포 식 · 람다 안은 그대로."""
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+            got = self.expand(node.id, scope, before, stack, shape)
+            return copy.deepcopy(got) if got is not None else node
+        if isinstance(node, _OWN_SCOPE):
+            return node
+        for field, value in ast.iter_fields(node):
+            if isinstance(value, list):
+                setattr(node, field, [self.substitute(v, scope, before, stack, shape) if isinstance(v, ast.AST) else v
+                                      for v in value])
+            elif isinstance(value, ast.AST):
+                setattr(node, field, self.substitute(value, scope, before, stack, shape))
+        return node
+
+
+def _side_free(node: "ast.AST | None") -> bool:
+    return node is not None and (isinstance(node, ast.Name) or _is_literal(node))
+
+
+def _literal_key(node: ast.AST) -> object:
+    try:
+        value = ast.literal_eval(node)
+        hash(value)
+        return value
+    except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+        return _UNSORTABLE
+
+
+_UNSORTABLE: object = object()
+
+
+def _d_order(node: ast.AST, insensitive: bool) -> ast.AST:
+    """④ — 순서 없는 자리(비교 · mock 단언 인자에서 표시만 거친 자리)의 집합 · 사전 표시를 원소 덤프 차례로 정렬(제자리)."""
+    if isinstance(node, (ast.Tuple, ast.List)):
+        node.elts = [_d_order(e, insensitive) for e in node.elts]
+        return node
+    if isinstance(node, ast.Set):
+        node.elts = [_d_order(e, insensitive) for e in node.elts]
+        if insensitive and all(_side_free(e) for e in node.elts):
+            node.elts.sort(key=_dump_node)
+        return node
+    if isinstance(node, ast.Dict):
+        node.keys = [_d_order(k, insensitive) if k is not None else None for k in node.keys]
+        node.values = [_d_order(v, insensitive) for v in node.values]
+        keys: "list[object]" = [_literal_key(k) if k is not None else _UNSORTABLE for k in node.keys]
+        if insensitive and all(k is not _UNSORTABLE for k in keys) and len(set(keys)) == len(keys) \
+                and all(_side_free(v) for v in node.values):
+            pairs = sorted(zip(node.keys, node.values), key=lambda kv: _dump_node(kv[0]))
+            node.keys, node.values = [k for k, _v in pairs], [v for _k, v in pairs]
+        return node
+    if isinstance(node, _OWN_SCOPE):
+        return node
+    for field, value in ast.iter_fields(node):
+        if isinstance(value, list):
+            setattr(node, field, [_d_order(v, False) if isinstance(v, ast.AST) else v for v in value])
+        elif isinstance(value, ast.AST):
+            setattr(node, field, _d_order(value, False))
+    return node
+
+
+def _d_site(node: ast.AST, parents: "dict[int, ast.AST]", fn: ast.AST) -> "int | None":
+    """원소가 든 시험 함수 몸 맨 위 문장의 차례(지역 이름은 그 앞 대입만) · 데코레이터면 -1 · 안쪽 함수 · 람다 안이면 None(펼치지 않음)."""
+    cur: ast.AST = node
+    while True:
+        parent = parents.get(id(cur))
+        if parent is None:
+            return None
+        if parent is fn:
+            body: list = getattr(fn, "body", [])
+            return next((i for i, st in enumerate(body) if st is cur), -1)
+        if isinstance(parent, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef)):
+            return None
+        cur = parent
+
+
 def _d_elements(func: str, fn: ast.AST, mod: _DModule) -> "list[DElement]":
     parents = _d_parents(fn)
     params: "set[str]" = {a.arg for a in fn.args.args} if isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)) else set()
@@ -1732,6 +2122,27 @@ def _d_elements(func: str, fn: ast.AST, mod: _DModule) -> "list[DElement]":
             declared.update(node.names)
     assigns = _d_assigns(fn)
     out: "list[DElement]" = []
+    scope: _DScope = _DScope(fn)
+
+    def nlit(expr: ast.AST, site: "int | None") -> bool:
+        """기대 쪽 가름 — 이름을 앞선 대입 값으로 펼친 뒤(안쪽 함수 안이면 그대로) 글자 값과 그 묶음 · 연산만 남는가.
+        모듈 이름은 다시 묶이지 않음만 본다(shape) — 모아 담는 목록(append 받는 이름)은 바뀔 수 있는 값 지킴으로 주어 쪽."""
+        if site is None:
+            return _is_literal(expr)
+        return _is_literal(mod.norm.substitute(copy.deepcopy(expr), scope if site >= 0 else None, site, shape=True))
+
+    def slit(expr: ast.AST, site: "int | None") -> bool:
+        """지킴을 모두 본 글자 값 — nlit 이 참인데 이것이 거짓이면 흔들리는 모듈 이름 덕에만 글자 값이다."""
+        if site is None:
+            return _is_literal(expr)
+        return _is_literal(mod.norm.substitute(copy.deepcopy(expr), scope if site >= 0 else None, site))
+
+    def norm(expr: ast.AST, site: "int | None", insensitive: bool) -> "tuple[str, set[str]]":
+        """정규화 덤프 · 남은 이름 — 안쪽 함수 안(site None)은 펼치지 않는다(지금 그대로)."""
+        if site is None:
+            return _dump_node(expr), _names_in(expr)
+        done = _d_order(mod.norm.substitute(copy.deepcopy(expr), scope if site >= 0 else None, site), insensitive)
+        return _dump_node(done), _names_in(done)
 
     def defs(names: "set[str]", line: int, loops: "list[ast.AST]") -> "tuple[str, str]":
         fixed: "list[str]" = []
@@ -1758,32 +2169,136 @@ def _d_elements(func: str, fn: ast.AST, mod: _DModule) -> "list[DElement]":
     for dec in getattr(fn, "decorator_list", []):
         if isinstance(dec, ast.Call) and isinstance(dec.func, ast.Attribute) and dec.func.attr == "parametrize":
             fixed, shared = defs(_names_in(dec), getattr(fn, "lineno", 0), [])
-            out.append(DElement("param:" + _dump_node(dec), fixed, shared, dec, func))
+            ndump, nused = norm(dec, -1 if "." not in func else None, False)   # 클래스 몸 안 데코레이터는 클래스 이름 공간
+            nfixed, nshared = defs(nused, getattr(fn, "lineno", 0), [])
+            out.append(DElement("param:" + _dump_node(dec), fixed, shared, dec, func, "param:" + ndump, nfixed, nshared))
+    ut_ctx: "dict[int, tuple[str, bool]]" = {}            # 컨텍스트 꼴 unittest 단언의 부르는 식(원소는 with)
+    for node in ast.walk(fn):
+        if isinstance(node, (ast.With, ast.AsyncWith)):
+            for item in node.items:
+                if isinstance(item.context_expr, ast.Call):
+                    hit = _ut_method(item.context_expr.func, mod.norm.ut)
+                    if hit is not None:
+                        ut_ctx[id(item.context_expr)] = hit
+
+    def ut_key(call: ast.Call, method: str, known: bool, context: bool, site: "int | None") -> "tuple[str, set[str], str, set[str]]":
+        name: str = _UT_ALIAS.get(method, method)
+        first: "tuple[str, str] | None" = None             # 차례 비교의 첫 두 자리(`s e`) 쪽 가름 — assert 비교와 같은 결
+        if known and not context and name in _UT_ORDERED:
+            if len(call.args) >= 2 and nlit(call.args[0], site):
+                if not nlit(call.args[1], site):
+                    first = ("e", "s") if slit(call.args[0], site) else ("e", "e")
+                elif not slit(call.args[1], site):
+                    first = ("e", "e")                      # 둘 다 글자 값인데 둘째가 흔들리는 이름 덕에만 — 두 자리
+            elif len(call.args) == 1 and any(k.arg == "second" for k in call.keywords):
+                first = ("e", "e")                          # 위치 인자 하나 + `second=` — 첫 인자도 기대
+        parts = _ut_parts(call, method, known, context, first)
+        tag: str = ("ut:" if known else "utx:") + name + ("@with" if context else "")
+        ins: bool = known and name in _UT_EQUAL
+        raw = tag + "|" + "|".join(f"{p}={_dump_node(e)}" for p, e in parts)
+        normed = [(p, norm(e, site, ins)) for p, e in parts]
+        pos = [f"{p}={d}" for p, (d, _u) in normed if p.isdigit()]
+        kws = [f"{p}={d}" for p, (d, _u) in normed if not p.isdigit()]
+        if all(p != "**" for p, _e in parts):
+            kws.sort()                                      # 키워드 차례는 뜻이 없다(④ 와 같은 결) — ** 가 있으면 그대로
+        return (raw, set().union(*(_names_in(e) for _p, e in parts)) if parts else set(),
+                tag + "|" + "|".join(pos + kws), set().union(*(u for _p, (_d, u) in normed)) if normed else set())
+
     for node in ast.walk(fn):
         key: "str | None" = None
+        nkey: str = ""
         used: "set[str]" = set()
+        nused: "set[str]" = set()
+        site: "int | None" = _d_site(node, parents, fn)
         if isinstance(node, ast.Assert):
             test = node.test
             if isinstance(test, ast.Compare):
-                key = "cmp:" + repr([type(o).__name__ for o in test.ops]) + "|" + "|".join(
-                    _dump_node(c) for c in test.comparators)
-                used = set().union(*(_names_in(c) for c in test.comparators))
+                # 기대 쪽(2.44.0): 이어진 비교는 모든 쪽 · in/not in 은 글자 쪽(둘 다 글자거나 둘 다 아니면 두 쪽) · 그 밖은
+                # 왼쪽만 글자이고 오른쪽이 글자가 아니면 왼쪽(`assert 200 == r`) · 아니면 오른쪽(지금 판 열쇠 그대로). 쪽을 가른
+                # 글자 값이 흔들리는 모듈 이름(setattr · patch 글자 · 키워드 이름 · 별표 import) 덕에만이면 두 쪽(멈추는 쪽) —
+                # 왼쪽만 글자인데 왼쪽이 그 덕이거나, 두 쪽 다 글자인데 오른쪽이 그 덕일 때.
+                ops: str = repr([type(o).__name__ for o in test.ops])
+                ins0: bool = not isinstance(test.ops[0], (ast.Is, ast.IsNot))
+                if len(test.ops) > 1:
+                    side = "B"
+                else:
+                    left_lit, right_lit = nlit(test.left, site), nlit(test.comparators[0], site)
+                    left_shaky: bool = left_lit and not right_lit and not slit(test.left, site)
+                    right_shaky: bool = left_lit and right_lit and not slit(test.comparators[0], site)
+                    if left_shaky or right_shaky:
+                        side = "B"
+                    elif isinstance(test.ops[0], (ast.In, ast.NotIn)):
+                        side = "L" if left_lit and not right_lit else "R" if right_lit and not left_lit else "B"
+                    else:
+                        side = "L" if left_lit and not right_lit else "R"
+                if side == "R":
+                    key = "cmp:" + ops + "|" + "|".join(_dump_node(c) for c in test.comparators)
+                    used = set().union(*(_names_in(c) for c in test.comparators))
+                    parts = [norm(c, site, not isinstance(o, (ast.Is, ast.IsNot))) for o, c in zip(test.ops, test.comparators)]
+                    nkey = "cmp:" + ops + "|" + "|".join(d for d, _u in parts)
+                elif side == "L":
+                    key, used = "cmp:" + ops + "|<L>" + _dump_node(test.left), _names_in(test.left)
+                    parts = [norm(test.left, site, ins0)]
+                    nkey = "cmp:" + ops + "|<L>" + parts[0][0]
+                else:
+                    key = "cmp:" + ops + "|<B>" + "|".join(_dump_node(c) for c in [test.left, *test.comparators])
+                    used = set().union(*(_names_in(c) for c in [test.left, *test.comparators]))
+                    parts = [norm(test.left, site, ins0)] + [norm(c, site, not isinstance(o, (ast.Is, ast.IsNot)))
+                                                             for o, c in zip(test.ops, test.comparators)]
+                    nkey = "cmp:" + ops + "|<B>" + "|".join(d for d, _u in parts)
+                nused = set().union(*(u for _d, u in parts))
             else:
                 key, used = "bare:" + _dump_node(test), _names_in(test)
+                ndump, nused = norm(test, site, False)
+                nkey = "bare:" + ndump
         elif isinstance(node, (ast.With, ast.AsyncWith)):
+            # 한 머리에 단언 컨텍스트가 여럿이면 모두가 기대(2.44.0) — 열쇠를 `&` 로 잇는다(하나면 지금 판 글자 그대로)
+            heads: "list[tuple[str, set[str], str, set[str]]]" = []
             for item in node.items:
                 if _is_raises(item.context_expr):
-                    key, used = "raises:" + _dump_node(item.context_expr), _names_in(item.context_expr)
+                    ndump, nu = norm(item.context_expr, site, False)
+                    heads.append(("raises:" + _dump_node(item.context_expr), _names_in(item.context_expr), "raises:" + ndump, nu))
+                elif id(item.context_expr) in ut_ctx:
+                    method, known = ut_ctx[id(item.context_expr)]
+                    heads.append(ut_key(item.context_expr, method, known, True, site))  # type: ignore[arg-type]
+            if heads:
+                key, nkey = "&".join(h[0] for h in heads), "&".join(h[2] for h in heads)
+                used, nused = set().union(*(h[1] for h in heads)), set().union(*(h[3] for h in heads))
         elif isinstance(node, ast.ExceptHandler):
             key, used = "except:" + _dump_node(node.type), _names_in(node.type)
+            ndump, nused = norm(node.type, site, False) if node.type is not None else ("", set())
+            nkey = "except:" + ndump
         elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and _MOCK_ASSERT.match(node.func.attr):
             args = list(node.args) + [k.value for k in node.keywords]
-            key = f"mock:{node.func.attr}|" + "|".join(_dump_node(a) for a in args)
+            key = (f"mock:{node.func.attr}|" + "|".join(_dump_node(a) for a in node.args) + "||"
+                   + "|".join(f"{k.arg or '**'}={_dump_node(k.value)}" for k in node.keywords))   # 키워드 이름도 기대(①)
             used = set().union(*(_names_in(a) for a in args)) if args else set()
+            pos = [norm(a, site, True) for a in node.args]
+            kws = [(k.arg or "**", norm(k.value, site, True)) for k in node.keywords]
+            kw_text = [f"{n}={d}" for n, (d, _u) in kws]
+            if all(k.arg is not None for k in node.keywords):
+                kw_text.sort()                              # 키워드 차례는 뜻이 없다(mock 은 키워드를 사전으로 견준다)
+            nkey = f"mock:{node.func.attr}|" + "|".join(d for d, _u in pos) + "||" + "|".join(kw_text)
+            nused = set().union(*(u for _d, u in pos), *(u for _n, (_d, u) in kws)) if args else set()
+        elif (isinstance(node, ast.Call) and _is_raises(node)
+              and isinstance(parents.get(id(node)), (ast.Expr, ast.Assign, ast.AnnAssign))):
+            # 문장 자리의 부르는 꼴 pytest.raises/warns(E, f, *a, **kw) — 예외 · 경고만 기대 · 부를 것과 그 인자(키워드 포함)는
+            # 주어(2.44.0). 부를 것이 없으면(`cm = pytest.raises(E, match=...)`) with 꼴과 같이 식 전체가 기대. with 머리 ·
+            # parametrize · 단언 인자 안의 것은 그 원소 몫이라 따로 세지 않는다.
+            exc: "list[ast.AST]" = node.args[:1] if len(node.args) >= 2 else [node]
+            key = "raises:call|" + "|".join(_dump_node(e) for e in exc)
+            used = set().union(*(_names_in(e) for e in exc))
+            parts = [norm(e, site, False) for e in exc]
+            nkey = "raises:call|" + "|".join(d for d, _u in parts)
+            nused = set().union(*(u for _d, u in parts))
+        elif isinstance(node, ast.Call) and id(node) not in ut_ctx and _ut_method(node.func, mod.norm.ut) is not None:
+            method, known = _ut_method(node.func, mod.norm.ut)  # type: ignore[misc]
+            key, used, nkey, nused = ut_key(node, method, known, False, site)
         if key is not None:
             ctx, loops = _d_context(node, parents, fn)
             fixed, shared = defs(used, getattr(node, "lineno", 0), loops)
-            out.append(DElement(ctx + "#" + key, fixed, shared, node, func))
+            nfixed, nshared = defs(nused, getattr(node, "lineno", 0), loops)
+            out.append(DElement(ctx + "#" + key, fixed, shared, node, func, ctx + "#" + nkey, nfixed, nshared))
     return out
 
 
@@ -1792,7 +2307,8 @@ def _expr_part(key: str) -> str:
     return m.group(2) if m else key
 
 
-def d_changes(old_text: "str | None", new_text: "str | None") -> "list[DChange] | None":
+def d_changes(old_text: "str | None", new_text: "str | None",
+              pinned: "dict[str, set[str]] | None" = None) -> "list[DChange] | None":
     """D(§4-2) — 함수마다 옛 · 새 원소 순서열을 가장 긴 공통 부분열로 짝짓는다. 함수는 발생 순번(`이름#k`)으로 짝짓는다.
     원문이 없거나(None) 파싱 못 하면 None(빈 파일 · 없는 파일은 빈 글 `""` 로 넘긴다)."""
     old_tree, new_tree = _parse(old_text), _parse(new_text)
@@ -1805,7 +2321,7 @@ def d_changes(old_text: "str | None", new_text: "str | None") -> "list[DChange] 
         new_els = _d_elements(*new_mod.funcs[key], new_mod) if key in new_mod.funcs else []
         matcher = difflib.SequenceMatcher(a=[e.key for e in old_els], b=[e.key for e in new_els], autojunk=False)
         for op, i1, i2, j1, j2 in matcher.get_opcodes():
-            if op == "equal":
+            if op == "equal":                               # 정규화 열쇠가 같다 — 남은 이름의 정의 칸만 본다
                 for k in range(i2 - i1):
                     x, y = old_els[i1 + k], new_els[j1 + k]
                     if x.fixed != y.fixed:
@@ -1816,6 +2332,13 @@ def d_changes(old_text: "str | None", new_text: "str | None") -> "list[DChange] 
                 for k in range(i2 - i1):
                     x = old_els[i1 + k]
                     y = new_els[j1 + k] if j1 + k < j2 else None
+                    held: bool = bool(pinned) and x.func in pinned and bool(element_texts(old_text or "", x) & pinned[x.func])  # type: ignore[operator]
+                    if y is not None and x.nkey == y.nkey and not held:  # 같은 자리 짝 · 정규화 열쇠 같음 — 남은 이름 정의 칸만(V 원소 빼고)
+                        if x.nfixed != y.nfixed:
+                            out.append(DChange(x.func, "확정 변화(지역 정의)", "지역 정의", x, y))
+                        elif x.nshared != y.nshared:
+                            out.append(DChange(x.func, "공유 정의 변화", "공유 정의 변화", x, y))
+                        continue
                     kind = "삭제" if y is None else ("맥락만" if _expr_part(x.key) == _expr_part(y.key) else "기대식")
                     out.append(DChange(x.func, "확정 변화", kind, x, y))
                 out += [DChange(y.func, "추가", "추가", None, y) for y in new_els[j1 + (i2 - i1):j2]]
@@ -1840,13 +2363,16 @@ def _d_note(changes: "list[DChange] | None") -> str:
 
 def element_texts(text: str, element: DElement) -> "set[str]":
     """승인 원소 대조용 옛 문장 원문(앞뒤 공백 걷음 · k0 §4-4) — assert · mock 단언 = 그 문장 · raises · except = 머리(`:` 까지) ·
-    parametrize = 데코레이터 식(`@` 붙인 꼴도)."""
+    parametrize = 데코레이터 식(`@` 붙인 꼴도) · 부르는 꼴 pytest.raises/warns = 부르는 식(대입 꼴은 그 줄 전체도)."""
     node = element.node
     if isinstance(node, (ast.With, ast.AsyncWith, ast.ExceptHandler)) and node.body:
         first = node.body[0]
         return {_span(text, node.lineno, node.col_offset, first.lineno, first.col_offset).strip()}
     segment: str = _span(text, node.lineno, node.col_offset, node.end_lineno or node.lineno,  # type: ignore[attr-defined]
                          node.end_col_offset or 0).strip()  # type: ignore[attr-defined]
+    if "#raises:call|" in element.key or element.key.startswith("raises:call|"):    # 대입 꼴은 그 줄 전체도(2.44.0)
+        lines: "list[str]" = text.splitlines()
+        return {segment, "\n".join(lines[node.lineno - 1:node.end_lineno]).strip()}  # type: ignore[attr-defined]
     return {segment, "@" + segment} if element.key.startswith("param:") else {segment}
 
 
@@ -3376,7 +3902,7 @@ def bundle_rules(touched: "tuple[str, ...]") -> "tuple[str, ...]":
 
 
 def _text_only(old_text: "str | None", new_text: "str | None") -> bool:
-    """글 묶음 — 원문 AST(정규화 · 대응표 없음)가 docstring 을 걷으면 같다(docstring · `#` 주석 · 빈 줄만 바뀜)."""
+    """글 묶음 — 원문 AST(대응표 치환 · D 정규화 없이)가 docstring 을 걷으면 같다(docstring · `#` 주석 · 빈 줄만 바뀜)."""
     old_tree, new_tree = _parse(old_text), _parse(new_text)
     if old_tree is None or new_tree is None:
         return False
@@ -3419,7 +3945,7 @@ def dispose_test_file(kind: str, path: str, target: str, a: "bytes | None", b: "
                       exports_then: "_Exports | None", allowed: "set[str]", approved: "dict[str, dict]",
                       update_rows: "dict[str, list[str]] | None" = None, renames: "list[dict] | None" = None,
                       rename_reds: "list[str] | None" = None, moves: "list[dict] | None" = None,
-                      retain_hint: str = "") -> "Disposition | None":
+                      retain_hint: str = "", pinned_cases: "dict[str, dict] | None" = None) -> "Disposition | None":
     """창 하나의 시험 쪽 파일 처분 — 우선순위 하나(§4-3). 바이트가 같고 자리도 같으면 None.
 
     새 파일 · 짝 없는 삭제는 표보다 먼저(케이스 규칙은 close 가 따로 본다) `<file>` 개별 감사 · 바이트 그대로 옮긴 파일은 `<file>`
@@ -3436,6 +3962,11 @@ def dispose_test_file(kind: str, path: str, target: str, a: "bytes | None", b: "
     없음 · 후 X»)를 새 파일의 감사 키 `옮김 …`(전 · 후 = 옛 · 새 단위 digest)로 갈음하고 그 단위의 D(옛 «삭제» · 새 «추가»)를 뺀다.
     `retain_hint` 는 허용 파일 밖 red 사유에 붙이는 길(옮김 행이 있는 승인판 — retain 행은 옮긴 뒤 경로로)."""
     py: bool = target.endswith(".py")
+    pinned: "dict[str, set[str]]" = {}
+    for case, entry in (pinned_cases or {}).items():      # 확정판 V «바뀌는 기대» — 이 파일의 케이스 → 함수 이름
+        c_path, _sep, rest = case.partition("::")
+        if c_path in (path, target) and entry.get("expect_old"):
+            pinned.setdefault(rest.replace("::", "."), set()).update(entry["expect_old"])
     keys, file_reason = audit_keys(a, b, py)
     if not keys and path != target:
         keys, file_reason = [("<file>", _digest(a), _digest(b))], "바이트 그대로 옮긴 파일"
@@ -3491,7 +4022,7 @@ def dispose_test_file(kind: str, path: str, target: str, a: "bytes | None", b: "
             return made(SINGLE_AUDIT, "허용 파일")
         return made(RED, _join_reason("비 .py 시험 쪽 파일 변경 — 대응표 치환으로 설명되지 않음", not_allowed))
     old_text, new_text = _py_source(a), _py_source(b)
-    changes: "list[DChange] | None" = d_changes(old_text, new_text)
+    changes: "list[DChange] | None" = d_changes(old_text, new_text, pinned if kind in ("test", "follow") else None)
     if changes is not None and moves:
         changes = [c for c in changes if not _moved_unit(c, out_names, in_names)]
     d_counts.update(d_reason_counts(changes))
@@ -3677,7 +4208,8 @@ def judge_test_side(kind: str, changed: "dict[str, tuple[bytes | None, bytes | N
         mine_moves: "list[dict]" = [u for u in moved if p in (u["from"], u["to"]) or target == u["to"]]
         disposition = dispose_test_file(kind, p, target, old_b, new_b, maps, old_canon, new_canon, exports_then, allowed,
                                         approved, update_rows, uses_of.get(p),
-                                        (reds_of.get(p, []) + move_reds.get(p, [])) or None, mine_moves, retain_hint)
+                                        (reds_of.get(p, []) + move_reds.get(p, [])) or None, mine_moves, retain_hint,
+                                        (allow or {}).get("pinned_cases") if kind in ("test", "follow") else None)
         if disposition is not None:
             out.append(disposition)
     return Judgement(out, maps, is_test, tuple(dict(u, path=p) for p, uses in sorted(uses_of.items()) for u in uses),
@@ -4181,6 +4713,8 @@ def _close_refactor(folder: Path, repo: Path, run_dir: Path, n: int, opened: dic
             g1_of.setdefault(forward_key(case, prior), []).append(case)
         judge_allow = dict(allow, retain_files=_retain_alias(allow, prior),
                            approved_cases={now: _merged_cases(approved_g1, cases) for now, cases in g1_of.items()})
+        if kind == "follow":                              # 0F — 확정판 V «바뀌는 기대» 원소는 정규화로 지우지 않는다(T4)
+            judge_allow["pinned_cases"] = judge_allow["approved_cases"]
     else:
         snap: dict = _confirmed_snapshot(folder, repo, label)
         listed, group_listed = _outside_allowed(kind, list(snap.get("other_bc_edits", [])))
@@ -4190,6 +4724,9 @@ def _close_refactor(folder: Path, repo: Path, run_dir: Path, n: int, opened: dic
         update_rows += [dict(row, case=forward_key(str(row["case"]), prior)) for row in update_rows
                         if forward_key(str(row["case"]), prior) != row["case"]]
         judge_allow = {"remove_cases": sorted(removable), "update_rows": update_rows} if kind == "test" else None
+        if kind == "test":                                # 0T — 확정판 V «바뀌는 기대» 원소는 정규화로 지우지 않는다(T4)
+            judge_allow["pinned_cases"] = {forward_key(c, prior): e
+                                           for c, e in allow_table(snap).get("approved_cases", {}).items()}  # type: ignore[index]
         rename_items = snap_renames(snap)
         move_items = snap_moves(snap)
         g1_of = {}

@@ -3788,3 +3788,4 @@ R-3787	2026-11-20	rules/implementation-django-ninja-final.ttl
 R-3788	2026-11-20	rules/architecture-ddd-final.ttl
 R-3789	2026-11-20	rules/discipline-cleancode-final.ttl
 R-3790	2026-11-20	rules/command-dddjango.ttl
+R-3791	2026-11-21	rules/command-dddjango.ttl

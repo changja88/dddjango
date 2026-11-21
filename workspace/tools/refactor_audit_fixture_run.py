@@ -2141,6 +2141,139 @@ def closed_window_cases(fails: "list[str]", td: Path) -> None:
           cw.ch("--baseline", str(w6)), 2, lines=(v1_red, v2_red))
 
 
+def closed_window_shared_cases(fails: "list[str]", td: Path) -> None:
+    """F4-199 — 닫힌 변경 창에서 V 여럿이 같은 원소를 적었을 때의 결속(RD-W16 ~ W26). 옛 원문 · add · remove 는 그 창 마지막 close 가
+    소비했으면 적은 V 모두 · 기대 추가는 그 V 들 덧값 합을 그 창이 다 채울 때만 · 적은 V 의 슬라이스가 갈리면 가장 앞 슬라이스 V 만
+    (뒤 슬라이스 V 의 그 인용은 아직 집행하지 않은 원소 — red 줄 꼬리에 고칠 길). 단언은 원인 줄(red 한 줄의 V id · 문구) 직접."""
+    def red_line(got: "tuple[int, str]", *parts: str) -> bool:
+        return any(all(p in ln for p in parts) for ln in got[1].splitlines() if ln.strip().startswith(("red:", "실행 불능")))
+
+    def check(label: str, got: "tuple[int, str]", code: int, must: "tuple[str, ...]" = (),
+              lines: "tuple[tuple[str, ...], ...]" = (), not_lines: "tuple[tuple[str, ...], ...]" = ()) -> None:
+        bad: "list[tuple[str, ...]]" = [g for g in lines if not red_line(got, *g)] + [g for g in not_lines if red_line(got, *g)]
+        expect(fails, label, (got[0] if not bad else 9, got[1] + (f"\n줄 단언 어긋남: {bad}" if bad else "")), code, *must)
+
+    def vtext(vid: str, expect_: str, slice_: str = "S1") -> str:
+        return (f"- {vid} · 내부 약속 · 근거 M1 #1 · 슬라이스 {slice_}\n  - 전 → 후: rule_0 이 바뀐다({vid})\n"
+                f"  - 시험: 규칙 함수 반환 기대 update(coder) application/demo/test/test_policy.py::test_rule\n"
+                f"    - 바뀌는 기대: {expect_}\n")
+
+    def res(m1: str) -> str:
+        return CH_ROW_M1.replace("| V1 |", f"| {m1} |") + CH_ROW_M2
+    s1_files: "dict[str, str]" = {CW_POLICY: "def test_rule() -> None:\n    assert 1 == 1\n",
+                                  CW_API: "def test_gone() -> None:\n    assert 410\n"}
+    v1, v3 = vtext("V1", "«assert True»"), vtext("V3", "«assert True»")
+    p1, p3 = vtext("V1", "기대 추가 1"), vtext("V3", "기대 추가 2")
+
+    def two(name: str, vs: str = v1 + V2_TEXT + v3, m1: str = "V1 · V3", s1: "dict[str, str] | None" = None,
+            hits: "dict | None" = None) -> "tuple[CwLane, str]":
+        """V1 · V3 가 같은 원소를 적은 명세로 G1 확정 → w5 집행 · 커밋 · close audit → (CwLane, S1 뒤 head)."""
+        cw = CwLane(td, name)
+        cw.lane.spec(vs, EDIT_LINE, res(m1))
+        cw.confirm()
+        head_a: str = cw.head()
+        head_b: str = cw.commit(s1 or s1_files, "S1")
+        cw.window(5, head_a, [_cw_close(hits=hits or {CW_RULE: {"old": ["assert True"], "add": 0}}, added=[CW_GONE])])
+        return cw, head_b
+
+    def respec(cw: CwLane, vs: str, m1: str) -> None:
+        cw.lane.spec(vs, EDIT_LINE, res(m1))
+
+    def kept(vid: str, what: str) -> "tuple[str, ...]":
+        return (f"닫힌 창 w5 에서 집행된 {vid} 원소", CW_RULE, what, "지금 명세에 없다")
+
+    def old_red(vid: str, old: str = "assert True") -> "tuple[str, ...]":
+        return (f"{vid} 시험 {CW_RULE} 바뀌는 기대 «{old}» 원문이 기준 판 케이스에 없다",)
+    # W16 — F4-199 그대로: 창 사이 · 다음 창 열린 채 G1′ 관문
+    cw, head_b = two("cwm16")
+    check("RD-W16 V1 · V3 가 같은 «assert True» · w5 소비 · 창 사이 changes → 둘 다 w5 기준선 → green",
+          cw.ch(), 0, ("red 0", "닫힌 창 기준선 3(w5)"))
+    w6: Path = cw.window(6, head_b)
+    check("RD-W16b 같은 꼴 · w6 열린 채 changes --gate --baseline w6 → green", cw.ch("--gate", "--baseline", str(w6)), 0,
+          ("red 0 · gate", "닫힌 창 기준선 3(w5)"))
+    # W17 — 한 V 가 같은 원소를 시험 줄 둘에(owner 를 V id 로 셈)
+    twice: str = (v1 + "  - 시험: 규칙 함수 반환 기대 update(coder) application/demo/test/test_policy.py::test_rule\n"
+                  "    - 바뀌는 기대: «assert True»\n")
+    cw, _h = two("cwm17", vs=twice + V2_TEXT, m1="V1")
+    check("RD-W17 V1 이 같은 «assert True» 를 시험 줄 둘에 · w5 소비 → w5 기준선 → green", cw.ch(), 0, ("red 0",),
+          not_lines=(old_red("V1"),))
+    # W18 — 집행된 다중 owner 원소를 지금 글로 다시 씀(RD-W2 의 다중 owner 꼴)
+    cw, _h = two("cwm18")
+    respec(cw, v1.replace("«assert True»", "«assert 1 == 1»") + V2_TEXT + v3.replace("«assert True»", "«assert 1 == 1»"), "V1 · V3")
+    check("RD-W18 G1′ 이 집행된 V1 · V3 옛 원문을 지금 글로 다시 씀 → red(보존 줄 V1 · V3)", cw.ch(), 2,
+          lines=(kept("V1", "«assert True»"), kept("V3", "«assert True»")))
+    # W19 — 함께 적은 V 하나만 지움
+    cw, _h = two("cwm19")
+    respec(cw, v1 + V2_TEXT, "V1")
+    check("RD-W19 G1′ 이 V3 만 지움 → red(보존 줄 V3) · V1 은 w5 기준선", cw.ch(), 2,
+          lines=(kept("V3", "«assert True»"),), not_lines=(old_red("V1"),))
+    # W20 — 새 V9 가 소비된 원문을 다시 적음(RD-W3 의 다중 owner 꼴 — 결속은 그 창 결속 판의 owner 만)
+    cw, _h = two("cwm20")
+    respec(cw, v1 + V2_TEXT + v3 + vtext("V9", "«assert True»", "S2"), "V1 · V3 · V9")
+    check("RD-W20 G1′ 새 V9 가 소비된 «assert True» 를 다시 적음 → red(V9 만)", cw.ch(), 2,
+          lines=(old_red("V9"),), not_lines=(old_red("V1"), old_red("V3"), kept("V1", "«assert True»")))
+    # W21 — 기대 추가가 V 마다 다름 · w5 가 합(3)을 못 채움 → 결속 안 함 · 아직 안 한 V3 의 덧값을 고칠 수 있다
+    plus_s1: "dict[str, str]" = {CW_POLICY: "def test_rule() -> None:\n    assert True\n    assert 2 == 2\n", CW_API: s1_files[CW_API]}
+    cw, _h = two("cwm21", vs=p1 + V2_TEXT + p3, s1=plus_s1, hits={CW_RULE: {"old": [], "add": 1}})
+    respec(cw, p1 + V2_TEXT + p3.replace("기대 추가 2", "기대 추가 3"), "V1 · V3")
+    check("RD-W21 기대 추가 V1(1) · V3(2) · w5 추가 1 · G1′ 이 V3 를 3 으로 → green(합 못 채움 — 결속 안 함)", cw.ch(), 0, ("red 0",),
+          not_lines=(kept("V3", "기대 추가 2"),))
+    # W22 — 합을 다 채움 → 모두 결속 · 뒤에 케이스가 지워져도 ④ 는 w5 기준선(RD-W13 의 다중 owner 꼴)
+    gone_s1: "dict[str, str]" = {CW_POLICY: "X: int = 1\n", CW_API: s1_files[CW_API]}
+    cw, _h = two("cwm22", vs=p1 + V2_TEXT + p3, s1=gone_s1, hits={CW_RULE: {"old": [], "add": 3}})
+    check("RD-W22 기대 추가 V1(1) · V3(2) · w5 추가 3(합) · 뒤에 케이스 지워짐 → w5 기준선 → green", cw.ch(), 0,
+          ("red 0", "닫힌 창 기준선 3(w5)"))
+    cw, _h = two("cwm22b", vs=p1 + V2_TEXT + p3, s1=gone_s1, hits={CW_RULE: {"old": [], "add": 2}})
+    check("RD-W22b 같은 꼴 · w5 추가 2(합 3 못 채움) → 결속 안 함 → red(V1 · V3 케이스 없음 · 지금 시험)", cw.ch(), 2,
+          lines=((f"V1 시험 {CW_RULE} 케이스가 기준 판에 없다(지금 시험)",), (f"V3 시험 {CW_RULE} 케이스가 기준 판에 없다(지금 시험)",)))
+    # W23 — 닫힌 변경 창 둘이 각각 다중 owner 원소를 소비(w5: V1 · V3 «assert True» · w7: G1′ 이 더한 V4 · V5 «assert 1 == 1»)
+    cw, head_b = two("cwm23")
+    respec(cw, v1 + V2_TEXT + v3 + vtext("V4", "«assert 1 == 1»", "S2") + vtext("V5", "«assert 1 == 1»", "S2"), "V1 · V3 · V4 · V5")
+    before: "set[Path]" = set((cw.f / "g1").glob("*-candidate.json"))
+    got = cw.lane.ch("--candidate")
+    new: "list[Path]" = sorted(set((cw.f / "g1").glob("*-candidate.json")) - before)
+    if got[0] != 0 or len(new) != 1:                         # 변이가 여기서 막아도 러너를 깨지 않게 — 불일치로 적는다
+        fails.append(f"RD-W23 준비 — G1′ changes --candidate exit {got[0]}\n{got[1][-600:]}")
+        print("  ✗ RD-W23 준비 — G1′ 후보")
+    else:
+        c: str = ra.snapshot_digest(json.loads(new[0].read_text(encoding="utf-8")))
+        snap: dict = ra.changes_snapshot(cw.f, cw.repo)
+        cw.d, cw.allow = ra.snapshot_digest(snap), _cw_guard().allow_table(snap)
+        scope: Path = cw.f / "refactor-scope.md"
+        scope.write_text(scope.read_text(encoding="utf-8") + f"\n## G1 변경 결정 2026-10-06 11:30 · 후보 digest {c}\n\n"
+                         "- V2 · 결정 = 바꾼다 · 출처 = 본인 직접(1130)\n"
+                         f"- G1 변경판 확정 2026-10-06 11:35 · digest {cw.d} · 후보 {c}\n", encoding="utf-8")
+        cw.commit({CW_POLICY: "def test_rule() -> None:\n    assert 2 == 2\n"}, "S2")
+        w7: Path = cw.window(7, head_b, [_cw_close(hits={CW_RULE: {"old": ["assert 1 == 1"], "add": 0}}, at="2026-10-06T12:00:00Z")])
+        check("RD-W23 닫힌 변경 창 둘(w5 V1 · V3 · w7 V4 · V5) · 창 사이 changes → 각 창 기준선 → green", cw.ch(), 0,
+              ("red 0", "닫힌 창 기준선 5(w5, w7)"))
+        check("RD-W23b 같은 꼴 · changes --baseline w7-open(그 창을 열린 창으로 봄) → green", cw.ch("--baseline", str(w7)), 0,
+              ("red 0", "닫힌 창 기준선 3(w5)"))
+    # W24 ~ W26 — 슬라이스가 갈린 owner · 같은 슬라이스 대조
+    v3s2: str = vtext("V3", "«assert True»", "S2")
+    cw, head_b = two("cwm24", vs=v1 + V2_TEXT + v3s2)
+    check("RD-W24 V1(S1) · V3(S2) 같은 «assert True» · w5 소비 · 명세 그대로 → V1 만 w5 결속 · V3 낡은 인용 red + 고칠 길 한 구", cw.ch(), 2,
+          lines=(old_red("V3") + ("(앞 슬라이스 V1 이 닫힌 창 w5 에서 소비 — 이 V 인용은 지금 시험 원문으로)",),), not_lines=(old_red("V1"),))
+    respec(cw, v1 + V2_TEXT + v3s2.replace("«assert True»", "«assert 1 == 1»"), "V1 · V3")
+    check("RD-W24b G1′ 이 아직 안 한 V3(S2) 의 바뀌는 기대를 창 기준선 글로 고침 → green", cw.ch(), 0, ("red 0", "닫힌 창 기준선 2(w5)"))
+    w6 = cw.window(6, head_b)
+    check("RD-W24c 같은 꼴 · w6(S2 창) 연 채 --baseline w6 → green", cw.ch("--baseline", str(w6)), 0, ("red 0",))
+    respec(cw, v1 + V2_TEXT + v3s2, "V1 · V3")
+    check("RD-W24d 낡은 V3(S2) 인용 그대로 · w6 연 채 --baseline w6 → V3 red + 고칠 길은 열린 창 기준선 원문", cw.ch("--baseline", str(w6)), 2,
+          lines=(old_red("V3") + ("(앞 슬라이스 V1 이 닫힌 창 w5 에서 소비 — 이 V 인용은 열린 창 기준선 원문으로)",),), not_lines=(old_red("V1"),))
+    p3s2: str = vtext("V3", "기대 추가 2", "S2")
+    plus3: "dict[str, str]" = {CW_POLICY: "def test_rule() -> None:\n    assert True\n    assert 2 == 2\n    assert 3 == 3\n"
+                                          "    assert 4 == 4\n", CW_API: s1_files[CW_API]}
+    cw, _h = two("cwm25", vs=p1 + V2_TEXT + p3s2, s1=plus3, hits={CW_RULE: {"old": [], "add": 3}})
+    respec(cw, p1 + V2_TEXT + p3s2.replace("기대 추가 2", "기대 추가 1"), "V1 · V3")
+    check("RD-W25 기대 추가 V1(S1 · 1) · V3(S2 · 2) · w5 추가 3 · G1′ 이 아직 안 한 V3 덧값 2 → 1 → green(V1 만 결속 · 합은 V1 몫)", cw.ch(), 0,
+          ("red 0",), not_lines=(kept("V3", "기대 추가 2"),))
+    cw, _h = two("cwm26")
+    respec(cw, v1 + V2_TEXT + v3.replace("«assert True»", "«assert 1 == 1»"), "V1 · V3")
+    check("RD-W26 같은 슬라이스(S1) V1 · V3 · G1′ 이 V3 만 지금 글로 → red(보존 줄 V3 · 현장 꼴)", cw.ch(), 2,
+          lines=(kept("V3", "«assert True»"),), not_lines=(old_red("V1"),))
+
+
 GP_ADM_KEPT: str = "".join(ln for ln in V_SPEC_ROWS.splitlines(keepends=True) if "컨트롤러 404 응답" not in ln)
 GP_V3: str = ("- V3 · 내부 약속 · 근거 M2 #2 · 슬라이스 S3\n"
               "  - 전 → 후: 예외 번역 함수 이름 x → y\n"
@@ -7104,6 +7237,26 @@ _S1_MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...], str], ...]" = (
     ("F4-159 cross_context 보류 예외 지움(BC 없는 cross_context 실행이 보류로 돌아감)",
      (('    if not run.bcs and not any(p.startswith("cross_context/") for p in run.paths):', "    if not run.bcs:"),),
      "deps_cross_context_cases"),
+    # F4-199 — 닫힌 변경 창에서 V 여럿이 같은 원소를 적은 꼴의 결속(`_closed_windows`) · 앞 슬라이스 소비 꼬리(`_semantic_reds`).
+    ("F4-199 다중 owner 원소를 결속하지 않음(되돌림)",
+     (("            hit: dict = hits.get(case) or {}",
+       "            if len(owners) != 1:\n                continue\n            hit: dict = hits.get(case) or {}"),),
+     "closed_window_shared_cases"),
+    ("F4-199 기대 추가 V 여럿도 그 창 추가 ≥ 1 이면 결속(덧값 합 안 봄)",
+     (("                need: int = 1 if len(owners) == 1 else sum(int(e) for _v, e in owners)", "                need: int = 1"),),
+     "closed_window_shared_cases"),
+    ("F4-199 기대 추가 V 여럿은 결속하지 않음",
+     (('                done: bool = int(hit.get("add", 0)) >= need',
+       '                done: bool = len(owners) == 1 and int(hit.get("add", 0)) >= need'),), "closed_window_shared_cases"),
+    ("F4-199 첫 owner 만 결속", (("                for vid, extra in owners:", "                for vid, extra in owners[:1]:"),),
+     "closed_window_shared_cases"),
+    ("F4-199 슬라이스로 owner 를 좁히지 않음",
+     (("                owners = [ow for ow, s in zip(owners, nums) if s == min(nums)]", "                owners = owners"),),
+     "closed_window_shared_cases"),
+    ("F4-199 가장 뒤 슬라이스 V 를 owner 로", (("if s == min(nums)]", "if s == max(nums)]"),), "closed_window_shared_cases"),
+    ("F4-199 앞 슬라이스 소비 꼬리 지움", (("consumed_by(v.vid, t.case, t.verb, old)))", '""))'),), "closed_window_shared_cases"),
+    ("F4-199 소비 꼬리 기준 판 늘 지금 시험", (('fix_from: str = "열린 창 기준선" if baseline else "지금 시험"', 'fix_from: str = "지금 시험"'),),
+     "closed_window_shared_cases"),
 )
 MUTATION_WORKERS: int = min(8, os.cpu_count() or 2)
 
@@ -7203,6 +7356,7 @@ def main() -> int:
         remove_rows_cases(fails, td)
         g1_partial_cases(fails, td)
         closed_window_cases(fails, td)
+        closed_window_shared_cases(fails, td)
         resolution_change_cases(fails, td)
         c_basis_cases(fails, td)
         c_basis_flow_cases(fails, td)

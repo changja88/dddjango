@@ -7,12 +7,13 @@
 처분 · r4 · r5 · 보충 · 감사 단위 · 묶음 자료 · D · 감사 키 · DB · 창 · 개명 · 옮김(시험 파일 나누기 · 모으기) · 정규화 지도를 보고, 모든 사례에서 «바이트가 바뀐 시험 쪽 파일 수 = 감사 키 낸 파일 + red 파일»
 (자동 초록 0)을 따로 센다. G1 스냅숏(refactor_audit.changes_snapshot)은 사례가 정한 값을 돌려주는 대역으로 바꿔 끼운다(명세
 판형은 refactor_audit 픽스처 몫) — `--stub-support` 면 behavior_support 도 k0 서명 그대로의 대역을 쓴다.
-`--only-group`(묶음 창 사례) · `--only-new`(2.43.0 새 갈래 사례)는 `--mutation-test` 가 변이 scripts 사본에 대고 돈다.
+`--only-group`(묶음 창 사례) · `--only-new`(2.43.0 · 2.44.0 새 갈래 사례)는 `--mutation-test` 가 변이 scripts 사본에 대고 돈다.
 exit 0 = 전건 기대 일치 · 1 = 불일치.
 """
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import os
 import shutil
@@ -1168,13 +1169,21 @@ def rcases() -> "list[dict]":
               chat.replace("ai_chat", "chat_relay")),
         {TP: ("묶음 감사", ["<module>"], {"rules": ["ai_chat → chat_relay"]})},
         post=_in_request("## 대응표 묶음 B1 — ai_chat → chat_relay"))
-    # D — 원문 AST(별칭 개명 → 기대식 · 주석만 → D 없음 + 키)
-    alias = "import application.core.price_catalog_adapter as price_catalog_adapter\n\n\ndef test_check():\n    assert 1 == price_catalog_adapter.X\n"
+    # D — 원문 AST(별칭 개명 → 기대식 · 주석만 → D 없음 + 키) · 별칭이 기대 쪽이면 «기대식» · 주어 쪽(글자 값 왼쪽의 오른쪽)이면 D 없음
+    alias = ("import pytest\n\nimport application.core.price_catalog_adapter as price_catalog_adapter\n\n\ndef test_check():\n"
+             "    with pytest.raises(price_catalog_adapter.PriceError):\n        price_catalog_adapter.fail()\n")
+    price = "X = 1\n\n\nclass PriceError(Exception):\n    pass\n\n\ndef fail():\n    raise PriceError()\n"
     add("D 원문 AST: 별칭 개명 → «기대식» 사유(0C 합격 · 묶음 감사)", "code",
-        {TP: alias, "application/core/price_catalog_adapter.py": "X = 1\n"},
-        _edit({"application/core/price_catalog_adapter.py": None, "application/core/product_price_catalog_adapter.py": "X = 1\n"},
+        {TP: alias, "application/core/price_catalog_adapter.py": price},
+        _edit({"application/core/price_catalog_adapter.py": None, "application/core/product_price_catalog_adapter.py": price},
               alias.replace("price_catalog_adapter", "product_price_catalog_adapter")),
         {TP: ("묶음 감사", ["<module>", "test_check"], {"reason": "D 기대식 1"})})
+    subject = "import application.core.price_catalog_adapter as price_catalog_adapter\n\n\ndef test_check():\n    assert 1 == price_catalog_adapter.X\n"
+    add("D 원문 AST: 별칭 개명이 주어 쪽(assert 1 == 별칭.X) → D 없음(0C 합격 · 묶음 감사)", "code",
+        {TP: subject, "application/core/price_catalog_adapter.py": "X = 1\n"},
+        _edit({"application/core/price_catalog_adapter.py": None, "application/core/product_price_catalog_adapter.py": "X = 1\n"},
+              subject.replace("price_catalog_adapter", "product_price_catalog_adapter")),
+        {TP: ("묶음 감사", ["<module>", "test_check"], {"no_reason": "D "})})
     ann = "def test_check():\n    x: int = 1\n    assert x == 1\n"
     add("D 원문 AST: 변수 주석만 바뀜 → D 없음 + 감사 키", "follow", {TP: ann},
         _edit({}, ann.replace("x: int", "x: str")), {TP: ("개별 감사", ["test_check"], {"no_reason": "D "})}, snap=_retain())
@@ -1424,6 +1433,7 @@ def rcases() -> "list[dict]":
         _edit({}, "def test_check(:\n"), {TP: ("개별 감사", ["<file>"], {"file_reason": "파싱 불가", "reason": "D 계산 불가"})},
         snap=_retain(), exit=2, needles=("수집 테스트 케이스 변화",))
     out += rename_rcases()
+    out += norm_rcases()
     return out
 
 
@@ -2216,10 +2226,14 @@ def field_rename_rcases() -> "list[dict]":
     add("같은 이름 칸의 다른 클래스(Deck.card_id — 주석으로 가름 · 안 바꿈) · 매개변수 주석 → 개별 감사", "follow",
         {CARD_P: CARD, deck_p: CARD.replace("class Card", "class Deck"), TP: two}, _edit(prod, two_new),
         {TP: ("개별 감사", [FIELD_UNIT], clean)}, snap=snap, post=_renamed(FIELD_LABEL, notes=("바꾼 자리 3(줄 6 · 8 · 10)",)))
-    comp: str = CT.replace("    assert got.card_id == \"a\"\n", "    assert [\"a\"] == [c.card_id for c in [got]]\n")
+    comp: str = CT.replace("    assert got.card_id == \"a\"\n", "    assert got.card_id == [c.card_id for c in [got]][0]\n")
     add("받는 쪽을 못 풂(내포 대상 c)인 기대식 자리 → 안 바꿈 → red(D 확정 — 보수)", "follow", {CARD_P: CARD, TP: comp},
         _edit(prod, comp.replace("card_id", "card_key")), {TP: ("red", None, {"reason": "D 확정"})}, snap=snap,
         post=_renamed(FIELD_LABEL))
+    comp_subject: str = CT.replace("    assert got.card_id == \"a\"\n", "    assert [\"a\"] == [c.card_id for c in [got]]\n")
+    add("받는 쪽을 못 풂(내포 대상 c)인 주어 쪽 자리(글자 값 왼쪽의 오른쪽) → 안 바꿈 → 개별 감사(못 푼 자리 = 케이스 키)", "follow",
+        {CARD_P: CARD, TP: comp_subject}, _edit(prod, comp_subject.replace("card_id", "card_key")),
+        {TP: ("개별 감사", ["test_card", FIELD_UNIT], {"reason": "허용 파일"})}, snap=snap, post=_renamed(FIELD_LABEL))
     for what, cls in (("ninja Schema", "from ninja import Schema\n\n\nclass Card(Schema):\n    card_id: str\n"),
                       ("pydantic 모델", "import pydantic\n\n\nclass Card(pydantic.BaseModel):\n    card_id: str\n"),
                       ("Django Model", "from django.db import models\n\n\nclass Card(models.Model):\n"
@@ -2437,6 +2451,521 @@ def d_checks() -> "list[str]":
     if bg.d_changes("", "def test_n():\n    assert 1\n")[0].state != "추가":  # type: ignore[attr-defined]
         fails.append("빈 판 → 새 함수의 원소는 «추가»")
     return fails
+
+
+# ── D 정규화 · 기대 쪽(2.44.0 — F4-200) ──────────────────────────────────────────────────────────────────────
+# 같은 뜻 고쳐 쓰기 ①~④(값 · 식 → 같은 파일 이름 상수 · 시험 안 지역 이름 · 집합 · 사전 · 키워드 차례 · 그 이름 바꾸기)는 «기대 그대로» ·
+# mock 단언 키워드 이름 · unittest · Django 단언의 기대 인자 · assert 문 비교의 글자 값 쪽 · 문장 자리 raises 부르는 꼴의 예외는 기대.
+# 단위 판정(d_changes · dispose_test_file · element_texts 를 직접 — 대역 준비 없이)과 창 처분 사례(norm_rcases — 리팩토링 창 절차)로 본다.
+NP: str = "app/test/test_x.py"
+FX: str = "확정 변화/기대식"
+NONE: str = "변화 없음"
+N_OLD: str = 'T = 1\n\n\ndef test_a():\n    got = run()\n    assert got < T * 5\n    assert codes == {"200", "400"}\n'
+N_CODES: str = '    assert codes == {"200", "400"}\n'
+# 호출 한도 여유 배수 상수화 꼴(F4-200 처방과 같은 꼴의 장난감) — 둘째 배수(5)만 단언 기대 · 첫째(10)는 몸 안 호출 인자
+N_LIMIT: str = ("import asyncio\nimport time\n\nimport pytest\n\nfrom app.calls import CALLS, Busy, adapter\n\nLIMIT_SECONDS: float = 0.2\n"
+                + "".join(f"\n\n@pytest.mark.parametrize(\"call\", CALLS)\nasync def test_held_{k}_call_is_cut(call) -> None:\n"
+                          "    started: float = time.monotonic()\n\n    with pytest.raises(Busy):\n"
+                          "        await asyncio.wait_for(call(adapter()), timeout=LIMIT_SECONDS * 10)\n\n"
+                          "    assert time.monotonic() - started < LIMIT_SECONDS * 5\n" for k in ("a", "b")))
+N_LIMIT_FIX: str = (N_LIMIT.replace("LIMIT_SECONDS: float = 0.2\n", "LIMIT_SECONDS: float = 0.2\nWATCHDOG_FACTOR: int = 10  # 끊는 감시 한도 배수\n"
+                                    "SLACK_FACTOR: int = 5  # 제한 시간 단언의 허용 여유 배수\n")
+                    .replace("timeout=LIMIT_SECONDS * 10", "timeout=LIMIT_SECONDS * WATCHDOG_FACTOR")
+                    .replace("< LIMIT_SECONDS * 5", "< LIMIT_SECONDS * SLACK_FACTOR"))
+N_LIMIT_BAD: str = N_LIMIT_FIX.replace("SLACK_FACTOR: int = 5", "SLACK_FACTOR: int = 6")
+N_CAP: str = ("import sys\n\nfrom app.events import Event, bus\n\nLAST = None\n\n\ndef _record(evt):\n{rebind}\n\n\n"
+              "def test_a():\n    bus.subscribe(_record)\n    bus.emit()\n    assert LAST {op} {exp}\n")
+N_GLOBAL: str = "    global LAST\n    LAST = evt"
+N_ATTR: str = "    sys.modules[__name__].LAST = evt"
+N_SETATTR: str = "    setattr(sys.modules[__name__], 'LAST', evt)"
+N_SHAKY: str = "import sys\n\nC = None\n\n\ndef test_z():\n    setattr(sys.modules[__name__], 'C', 1)\n\n\n"
+N_SETATTR_MOD: str = "C = 5\n\n\ndef test_z(monkeypatch):\n    monkeypatch.setattr('m.C', 9)\n"
+
+
+def _nbg():
+    """단위 판정용 behavior_guard — 대역 · support 준비 없이 스크립트 폴더의 파일을 바로 적재(프로세스에 한 번)."""
+    if "nbg" not in STATE:
+        sys.dont_write_bytecode = True
+        spec = importlib.util.spec_from_file_location("behavior_guard_norm", GUARD)
+        mod = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
+        spec.loader.exec_module(mod)  # type: ignore[union-attr]
+        STATE["nbg"] = mod
+    return STATE["nbg"]
+
+
+def _nd(old: str, new: str, pinned: "dict[str, set[str]] | None" = None) -> str:
+    """d_changes 를 «상태/갈래» 줄로(함수마다 ` ; `) — 변화가 없으면 «변화 없음»."""
+    got = _nbg().d_changes(old, new, pinned)  # type: ignore[attr-defined]
+    return "None" if got is None else " ; ".join(f"{c.state}/{c.kind}" for c in got) or NONE
+
+
+def _ndisp(kind: str, old: str, new: str, approved: "dict | None" = None, pinned: "dict | None" = None) -> str:
+    """창 처분(dispose_test_file 직접 · 허용 파일 = 그 파일 · update 행 없음) — «처분 · 사유»."""
+    bg = _nbg()
+    maps = bg.Maps()  # type: ignore[attr-defined]
+    d = bg.dispose_test_file(kind, NP, NP, old.encode(), new.encode(), maps,  # type: ignore[attr-defined]
+                             {NP: bg.canonical(old, NP, maps, None)}, {NP: bg.canonical(new, NP, maps, None)},  # type: ignore[attr-defined]
+                             None, {NP}, approved or {}, update_rows={}, pinned_cases=pinned)
+    return "None" if d is None else f"{d.disposition} · {d.reason}"
+
+
+def _ntexts(old: str, new: str) -> str:
+    """첫 D 변화의 승인 대조 옛 원문(element_texts) — 변화가 없으면 «변화 없음»."""
+    bg = _nbg()
+    got = bg.d_changes(old, new) or []  # type: ignore[attr-defined]
+    return repr(sorted(bg.element_texts(old, got[0].old))) if got and got[0].old is not None else NONE  # type: ignore[attr-defined]
+
+
+def _nt(body: str, head: str = "") -> str:
+    return head + "import pytest\n\n\ndef test_a():\n    r = run()\n    " + body.replace("\n", "\n    ") + "\n"
+
+
+def _nm(body: str, head: str = "") -> str:
+    return head + "def test_a(m):\n    run(m)\n    " + body + "\n"
+
+
+def _nu(body: str, head: str = "") -> str:
+    return head + "class TestX:\n    def test_a(self):\n        r = run()\n        " + body.replace("\n", "\n        ") + "\n"
+
+
+def _norm_d_cases() -> "list[tuple[str, str, str, str]]":
+    """(이름, 옛 글, 새 글, 기대 d_changes 줄) — 같은 뜻 ①~④ · 그 밖 반례 · 값 바뀜 분류 · 검토 반례 · mock · unittest · 기대 쪽."""
+    o: str = N_OLD
+    slack: str = o.replace("T = 1\n", "T = 1\nSLACK = 5\n").replace("T * 5", "T * SLACK")
+    loc: str = o.replace(N_CODES, '    expected = {"200", "400"}\n    assert codes == expected\n')
+    dct: str = o.replace('{"200", "400"}', '{"a": 1, "b": 2}')
+    lst: str = o.replace('{"200", "400"}', '["200", "400"]')
+    mck: str = 'def test_m(m):\n    run(m)\n    m.assert_called_once_with({"a": 1, "b": 2}, 3)\n'
+    rai: str = 'import pytest\n\n\ndef test_r():\n    with pytest.raises(ValueError, match="boom"):\n        run()\n'
+    par: str = 'import pytest\n\n\n@pytest.mark.parametrize("a", (1, 2))\ndef test_p(a):\n    assert a\n'
+    cls: str = "T = 1\n\n\nclass TestX:\n    def test_a(self):\n        assert run() < T * 5\n"
+    one: str = "T = 1\n\n\ndef test_i():\n    assert run() < T * 5\n"
+    slk: "Callable[[str], str]" = lambda head: o.replace("T = 1\n", "T = 1\n" + head).replace("T * 5", "T * SLACK")  # noqa: E731
+    codes: "Callable[[str], str]" = lambda tail: o.replace(N_CODES, tail)  # noqa: E731
+    out: "list[tuple[str, str, str, str]]" = [
+        ("같은 뜻 0 줄바꿈 · 괄호 · 주석", o, o.replace("T * 5", "(T *\n        5)  # 여유"), NONE),
+        ("같은 뜻 ① 값 → 이름 상수", o, slack, NONE),
+        ("같은 뜻 ① 값 → 이름 상수(주석 · 타입)", o, slk("SLACK: int = 5  # 여유 배수\n"), NONE),
+        ("같은 뜻 ② 식 → 이름 상수", o, o.replace("T * 5", "LIMIT").replace("T = 1\n", "T = 1\nLIMIT = T * 5\n"), NONE),
+        ("같은 뜻 ② 식 → 이름 상수(시험 뒤 정의)", o, o.replace("T * 5", "LIMIT") + "\n\nLIMIT = T * 5\n", NONE),
+        ("같은 뜻 ③ 기대값 → 시험 안 지역 이름", o, loc, NONE),
+        ("같은 뜻 ③ 지역 이름(몸 맨 위)", o, o.replace("    got = run()\n", '    expected = {"200", "400"}\n    got = run()\n')
+         .replace('codes == {"200", "400"}', "codes == expected"), NONE),
+        ("같은 뜻 ④ 집합 차례", o, o.replace('{"200", "400"}', '{"400", "200"}'), NONE),
+        ("같은 뜻 ④ 사전 차례", dct, dct.replace('{"a": 1, "b": 2}', '{"b": 2, "a": 1}'), NONE),
+        ("같은 뜻 ③④ mock 단언 인자 → 지역 이름(사전 차례)", mck,
+         mck.replace("    run(m)\n", '    want = {"b": 2, "a": 1}\n    run(m)\n').replace('{"a": 1, "b": 2}, 3', "want, 3"), NONE),
+        ("같은 뜻 ① raises match → 이름 상수", rai,
+         rai.replace("import pytest\n", 'import pytest\n\nMSG = "boom"\n').replace('match="boom"', "match=MSG"), NONE),
+        ("같은 뜻 ① parametrize 튜플 → 이름 상수", par,
+         par.replace("import pytest\n", "import pytest\n\nCASES = (1, 2)\n").replace("(1, 2))", "CASES)"), NONE),
+        ("같은 뜻 ① 클래스 메서드 시험", cls, cls.replace("T = 1\n", "T = 1\nSLACK = 5\n").replace("T * 5", "T * SLACK"), NONE),
+        ("같은 뜻 ③④ 지역 이름 + 차례", o, codes('    want = {"400", "200"}\n    assert codes == want\n'), NONE),
+        ("같은 뜻 ④ 들인 이름 바꾸기", slack, slack.replace("SLACK", "SLACK_FACTOR"), NONE),
+        ("반례 값이 다른 상수", o, slk("SLACK = 6\n"), FX),
+        ("반례 모듈 상수 다시 대입", o, slk("SLACK = 5\nSLACK = 5\n"), FX),
+        ("반례 덧셈 대입", o, slk("SLACK = 5\nSLACK += 0\n"), FX),
+        ("반례 global 고쳐 쓰기", o, slack + "\n\ndef bump():\n    global SLACK\n    SLACK = 9\n", FX),
+        ("반례 monkeypatch 글자", o, slack + '\n\ndef test_b(monkeypatch):\n    monkeypatch.setattr("mod.SLACK", 9)\n', FX),
+        ("반례 모듈 if 안 대입", o, slk("if X:\n    SLACK = 5\n"), FX),
+        ("반례 import 한 상수", o, slk("from consts import SLACK\n"), FX),
+        ("반례 지역 이름 다시 대입", o, codes('    expected = {"200", "400"}\n    expected = {"200", "400"}\n    assert codes == expected\n'), FX),
+        ("반례 지역 이름 뒤에 고쳐 씀(add)", o, codes('    expected = {"200"}\n    expected.add("400")\n    assert codes == expected\n'), FX),
+        ("반례 지역 이름 첨자 대입", o, o.replace('{"200", "400"}', "expected")
+         .replace("    got = run()\n", '    expected = {"a": 1}\n    expected["a"] = 1\n    got = run()\n'), FX),
+        ("반례 지역 이름을 함수에 넘김", o, codes('    expected = {"200", "400"}\n    run(expected)\n    assert codes == expected\n'), FX),
+        ("반례 루프 안 대입", o, codes('    for _ in range(1):\n        expected = {"200", "400"}\n    assert codes == expected\n'), FX),
+        ("반례 같은 이름 매개변수(그림자)", o, slack.replace("def test_a():", "def test_a(SLACK):"), FX),
+        ("반례 지역 이름 정의가 원소 뒤", o, codes('    assert codes == expected\n    expected = {"200", "400"}\n'), FX),
+        ("반례 도움 함수로 기대값", o, o.replace('{"200", "400"}', "make_codes()"), FX),
+        ("반례 비교 좌우 바꾸기", o, o.replace('assert codes == {"200", "400"}', 'assert {"200", "400"} == codes'), FX),
+        ("반례 순서 있는 목록으로", o, lst, FX),
+        ("반례 목록 차례", lst, lst.replace('["200", "400"]', '["400", "200"]'), FX),
+        ("반례 사전 같은 값 키(1 · True)", o.replace('{"200", "400"}', '{1: "a", True: "b"}'),
+         o.replace('{"200", "400"}', '{True: "b", 1: "a"}'), FX),
+        ("반례 호출 인자 안 사전 차례", o.replace('{"200", "400"}', 'list({"a": 1, "b": 2})'),
+         o.replace('{"200", "400"}', 'list({"b": 2, "a": 1})'), FX),
+        ("반례 속성 값 지역 이름(시각 민감)", "def test_u(user):\n    rename(user)\n    assert codes == user.name\n",
+         "def test_u(user):\n    expected = user.name\n    rename(user)\n    assert codes == expected\n", FX),
+        ("반례 지역 상수 다시 대입", one, one.replace("    assert run() < T * 5\n", "    limit = 5\n    limit = 6\n    assert run() < T * limit\n"), FX),
+        ("반례 is 비교 안 차례", o.replace('codes == {"200", "400"}', 'codes is {"200", "400"}'),
+         o.replace('codes == {"200", "400"}', 'codes is {"400", "200"}'), FX),
+        ("반례 parametrize 목록 → 이름 상수(바뀔 수 있는 값)", par.replace("(1, 2)", "[1, 2]"),
+         par.replace("(1, 2)", "[1, 2]").replace("import pytest\n", "import pytest\n\nCASES = [1, 2]\n").replace("[1, 2])", "CASES)"), FX),
+        ("반례 안쪽 함수 안 원소", "T = 1\n\n\ndef test_n():\n    def inner():\n        assert run() < T * 5\n    inner()\n",
+         "T = 1\nSLACK = 5\n\n\ndef test_n():\n    def inner():\n        assert run() < T * SLACK\n    inner()\n", FX),
+        ("반례 with 안 지역 이름", o, codes('    with ctx():\n        expected = {"200", "400"}\n    assert codes == expected\n'), FX),
+        ("반례 내포 식 안 이름", "def test_c():\n    assert xs == [i * 3 for i in range(2)]\n",
+         "N = 3\n\n\ndef test_c():\n    assert xs == [i * N for i in range(2)]\n", FX),
+        ("반례 순환(A = B · B = A)", o, o.replace("T = 1\n", "T = 1\nA = B\nB = A\n").replace("T * 5", "A"), FX),
+        ("반례 nonlocal 로 고쳐 쓰는 지역 이름", "def test_a():\n    expected = 5\n    def bump():\n        nonlocal expected\n"
+         "        expected = 6\n    bump()\n    assert run() == 5\n",
+         "def test_a():\n    expected = 5\n    def bump():\n        nonlocal expected\n        expected = 6\n    bump()\n"
+         "    assert run() == expected\n", FX),
+        ("반례 집합 차례 · 부르는 원소(부수 효과)", o.replace('{"200", "400"}', "{a(), b()}"), o.replace('{"200", "400"}', "{b(), a()}"), FX),
+        ("반례 사전 차례 · 부르는 값(부수 효과)", o.replace('{"200", "400"}', '{"a": f(), "b": g()}'),
+         o.replace('{"200", "400"}', '{"b": g(), "a": f()}'), FX),
+        ("반례 is 비교 안 지역 이름(바뀔 수 있는 값)", "def test_a():\n    got = run()\n    assert got is not [1]\n",
+         "def test_a():\n    got = run()\n    expected = [1]\n    assert got is not expected\n", FX),
+        ("값 바뀜 펼친 상수의 값", slack, slack.replace("SLACK = 5", "SLACK = 6"), "공유 정의 변화/공유 정의 변화"),
+        ("값 바뀜 펼친 지역 이름의 값", loc, loc.replace('expected = {"200", "400"}', 'expected = {"200"}'),
+         "확정 변화(지역 정의)/지역 정의"),
+        ("값 바뀜 펼치지 않는 상수(부른 값)", o.replace("T = 1", "T = f(1)"), o.replace("T = 1", "T = f(2)"),
+         "공유 정의 변화/공유 정의 변화"),
+        ("값 바뀜 기대식", o, o.replace("T * 5", "T * 6"), FX),
+        ("맥락만 · if 글자에 'output:' 든 문자열", "def test_a(mode):\n    if mode == 'output:x':\n        assert r == 1\n",
+         "def test_a(mode):\n    if mode == 'output:y':\n        assert r == 1\n", "확정 변화/맥락만"),
+        ("값 바뀜 ① + 남은 모듈 이름 정의 f(1) → f(2)", "T = f(1)\n\n\ndef test_a():\n    assert run() < T * 5\n",
+         "T = f(2)\nSLACK = 5\n\n\ndef test_a():\n    assert run() < T * SLACK\n", "공유 정의 변화/공유 정의 변화"),
+        ("값 바뀜 ① + 남은 지역 이름 정의 f(1) → f(2)", "def test_a():\n    t = f(1)\n    assert run() < t * 5\n",
+         "SLACK = 5\n\n\ndef test_a():\n    t = f(2)\n    assert run() < t * SLACK\n", "확정 변화(지역 정의)/지역 정의"),
+        ("여유 배수 상수화(F4-200 꼴)", N_LIMIT, N_LIMIT_FIX, NONE),
+        ("여유 배수 상수화 + 값 5 → 6", N_LIMIT, N_LIMIT_BAD, f"{FX} ; {FX}"),
+        # 검토 반례 — 이름이 실행 시각에 다른 값을 가리킬 수 있는 꼴(펼치지 않음)
+        ("검토 별표 import 가 뒤에서 덮음", "from helpers import *\n\n\ndef test_a():\n    assert run() < 5\n",
+         "LIMIT = 5\nfrom helpers import *  # noqa: F403\n\n\ndef test_a():\n    assert run() < LIMIT\n", FX),
+        ("검토 클래스 메서드 parametrize · 클래스 속성 그림자",
+         'import pytest\nLIMIT = 5\n\n\nclass TestX:\n    LIMIT = 6\n\n    @pytest.mark.parametrize("v", (5,))\n    def test_a(self, v):\n        assert run(v)\n',
+         'import pytest\nLIMIT = 5\n\n\nclass TestX:\n    LIMIT = 6\n\n    @pytest.mark.parametrize("v", (LIMIT,))\n    def test_a(self, v):\n        assert run(v)\n', FX),
+        ("검토 patch.multiple(__name__, LIMIT=6)",
+         "from unittest import mock\nLIMIT = 5\n\n\n@mock.patch.multiple(__name__, LIMIT=6)\ndef test_a():\n    assert run() < 5\n",
+         "from unittest import mock\nLIMIT = 5\n\n\n@mock.patch.multiple(__name__, LIMIT=6)\ndef test_a():\n    assert run() < LIMIT\n", FX),
+        ("검토 request.module.LIMIT = 6(속성 대입)",
+         "import pytest\nLIMIT = 5\n\n\n@pytest.fixture\ndef tight(request):\n    request.module.LIMIT = 6\n    yield\n"
+         "    request.module.LIMIT = 5\n\n\ndef test_a(tight):\n    assert run() < 5\n",
+         "import pytest\nLIMIT = 5\n\n\n@pytest.fixture\ndef tight(request):\n    request.module.LIMIT = 6\n    yield\n"
+         "    request.module.LIMIT = 5\n\n\ndef test_a(tight):\n    assert run() < LIMIT\n", FX),
+        ("검토 globals().update(LIMIT=6)", "LIMIT = 5\nglobals().update(LIMIT=6)\n\n\ndef test_a():\n    assert run() < 5\n",
+         "LIMIT = 5\nglobals().update(LIMIT=6)\n\n\ndef test_a():\n    assert run() < LIMIT\n", FX),
+        ("검토 sys.modules[__name__].LIMIT = 6", "import sys\nLIMIT = 5\nsys.modules[__name__].LIMIT = 6\n\n\ndef test_a():\n    assert run() < 5\n",
+         "import sys\nLIMIT = 5\nsys.modules[__name__].LIMIT = 6\n\n\ndef test_a():\n    assert run() < LIMIT\n", FX),
+        ("검토 함수 형식 매개변수", "LIMIT = 5\n\n\ndef test_a[LIMIT]():\n    assert run() < 5\n",
+         "LIMIT = 5\n\n\ndef test_a[LIMIT]():\n    assert run() < LIMIT\n", FX),
+        ("검토 클래스 형식 매개변수(메서드)", "class TestX[LIMIT]:\n    def test_a(self):\n        assert run() < 5\n",
+         "LIMIT = 5\n\n\nclass TestX[LIMIT]:\n    def test_a(self):\n        assert run() < LIMIT\n", FX),
+        # 짝 상태(글자 열쇠 짝 — 지금 판과 같음)
+        ("짝 상수 값 5 → 6 · 옆 원소 == 6", "N = 5\n\n\ndef test_a():\n    assert a == N\n    assert b == 6\n",
+         "N = 6\n\n\ndef test_a():\n    assert a == N\n    assert b == 6\n", "공유 정의 변화/공유 정의 변화"),
+        ("짝 상수 값 5 → 6 · 앞 원소 == 6", "N = 5\n\n\ndef test_a():\n    assert b == 6\n    assert a == N\n",
+         "N = 6\n\n\ndef test_a():\n    assert b == 6\n    assert a == N\n", "공유 정의 변화/공유 정의 변화"),
+        ("짝 지역 값 5 → 6 · 옆 원소 == 6", "def test_a():\n    e = 5\n    assert a == e\n    assert b == 6\n",
+         "def test_a():\n    e = 6\n    assert a == e\n    assert b == 6\n", "확정 변화(지역 정의)/지역 정의"),
+        ("짝 상수 안정 → 흔들림 · 옆 원소 == 5", "N = 5\n\n\ndef test_a():\n    assert a == N\n    assert b == 5\n",
+         "N = 5\n\n\ndef test_a():\n    assert a == N\n    assert b == 5\n\n\ndef test_b(monkeypatch):\n    monkeypatch.setattr(\"m.N\", 9)\n", NONE),
+    ]
+    mock: "list[tuple[str, str, str, str]]" = [
+        ("mock 키워드 이름 x → y", "m.assert_called_once_with(x=1)", "m.assert_called_once_with(y=1)", FX),
+        ("mock 키워드 값 맞바꿈", "m.assert_called_once_with(a=1, b=2)", "m.assert_called_once_with(b=1, a=2)", FX),
+        ("mock 위치 → 키워드", "m.assert_called_once_with(1)", "m.assert_called_once_with(x=1)", FX),
+        ("mock 키워드 차례만", "m.assert_called_once_with(a=1, b=2)", "m.assert_called_once_with(b=2, a=1)", NONE),
+        ("mock 키워드 값 1 → 2", "m.assert_called_once_with(x=1)", "m.assert_called_once_with(x=2)", FX),
+        ("mock ** 앞뒤 차례", "m.assert_called_once_with(a=1, **d)", "m.assert_called_once_with(**d, a=1)", FX),
+        ("mock has_calls 안 call 키워드 이름", "m.assert_has_calls([call(x=1)])", "m.assert_has_calls([call(y=1)])", FX),
+    ]
+    out += [(f"D8 {n}", _nm(a), _nm(b), w) for n, a, b, w in mock]
+    out.append(("D8 mock 키워드 값 → 이름 상수", _nm("m.assert_called_once_with(x=5)"),
+                _nm("m.assert_called_once_with(x=FIVE)", "FIVE = 5\n\n\n"), NONE))
+    unit: "list[tuple[str, str, str, str]]" = [
+        ("assertEqual 기대 1 → 2", "self.assertEqual(r, 1)", "self.assertEqual(r, 2)", FX),
+        ("assertEqual 주어만", "self.assertEqual(r, 1)", "self.assertEqual(r2, 1)", NONE),
+        ("assertEqual 메시지만", "self.assertEqual(r, 1, 'a')", "self.assertEqual(r, 1, msg='b')", NONE),
+        ("assertEqual → assertNotEqual", "self.assertEqual(r, 1)", "self.assertNotEqual(r, 1)", FX),
+        ("③ 기대 → 지역 이름(집합)", "self.assertEqual(r, {'a', 'b'})", "expected = {'a', 'b'}\nself.assertEqual(r, expected)", NONE),
+        ("④ 사전 차례", "self.assertEqual(r, {'a': 1, 'b': 2})", "self.assertEqual(r, {'b': 2, 'a': 1})", NONE),
+        ("assertIn 기대 'x' → 'y'", "self.assertIn('x', r)", "self.assertIn('y', r)", FX),
+        ("assertIn 두 쪽 다 열쇠(r → r2)", "self.assertIn('x', r)", "self.assertIn('x', r2)", FX),
+        ("assertTrue 식", "self.assertTrue(r > 1)", "self.assertTrue(r > 2)", FX),
+        ("assertIsNone 주어만", "self.assertIsNone(r)", "self.assertIsNone(r2)", NONE),
+        ("with assertRaises 예외", "with self.assertRaises(ValueError):\n    f()", "with self.assertRaises(TypeError):\n    f()", FX),
+        ("with assertRaises 몸만", "with self.assertRaises(ValueError):\n    f()", "with self.assertRaises(ValueError):\n    g()", NONE),
+        ("assertRaises 부르는 꼴 인자만", "self.assertRaises(ValueError, f, 1)", "self.assertRaises(ValueError, f, 2)", NONE),
+        ("assertRaises 부르는 꼴 예외", "self.assertRaises(ValueError, f, 1)", "self.assertRaises(KeyError, f, 1)", FX),
+        ("assertAlmostEqual places", "self.assertAlmostEqual(r, 1.0, places=2)", "self.assertAlmostEqual(r, 1.0, places=3)", FX),
+        ("with assertNumQueries 3 → 4", "with self.assertNumQueries(3):\n    f()", "with self.assertNumQueries(4):\n    f()", FX),
+        ("assertNumQueries 부르는 꼴 인자만", "self.assertNumQueries(3, f, 1)", "self.assertNumQueries(3, f, 2)", NONE),
+        ("assertContains 기대 글", "self.assertContains(r, 'x')", "self.assertContains(r, 'y')", FX),
+        ("assertContains status_code", "self.assertContains(r, 'x', status_code=200)", "self.assertContains(r, 'x', status_code=201)", FX),
+        ("assertContains msg_prefix 만", "self.assertContains(r, 'x', msg_prefix='a')", "self.assertContains(r, 'x', msg_prefix='b')", NONE),
+        ("with assertTemplateUsed", "with self.assertTemplateUsed('a.html'):\n    f()", "with self.assertTemplateUsed('b.html'):\n    f()", FX),
+        ("assertTemplateUsed 부르는 꼴 주어만", "self.assertTemplateUsed(r, 'a.html')", "self.assertTemplateUsed(r2, 'a.html')", NONE),
+        ("assertRedirects 기대 url", "self.assertRedirects(r, '/a/')", "self.assertRedirects(r, '/b/')", FX),
+        ("assertQuerySetEqual 값", "self.assertQuerySetEqual(qs, [1, 2])", "self.assertQuerySetEqual(qs, [1, 3])", FX),
+        ("assertJSONEqual 기대", "self.assertJSONEqual(r, {'a': 1})", "self.assertJSONEqual(r, {'a': 2})", FX),
+        ("assertLogs 수준", "with self.assertLogs('app', 'INFO'):\n    f()", "with self.assertLogs('app', 'WARNING'):\n    f()", FX),
+        ("with 머리 둘 · 앞 assertNumQueries 3 → 4", "with self.assertNumQueries(3), self.assertLogs('x', 'INFO'):\n    f()",
+         "with self.assertNumQueries(4), self.assertLogs('x', 'INFO'):\n    f()", FX),
+        ("with 머리 둘 · 앞 assertRaises 예외", "with self.assertRaises(ValueError), self.assertNumQueries(1):\n    f()",
+         "with self.assertRaises(KeyError), self.assertNumQueries(1):\n    f()", FX),
+        ("with 머리 둘 · 뒤 assertLogs 수준", "with self.assertNumQueries(3), self.assertLogs('x', 'INFO'):\n    f()",
+         "with self.assertNumQueries(3), self.assertLogs('x', 'ERROR'):\n    f()", FX),
+        ("with 머리 둘 · 몸만", "with self.assertNumQueries(3), self.assertLogs('x', 'INFO'):\n    f()",
+         "with self.assertNumQueries(3), self.assertLogs('x', 'INFO'):\n    g()", NONE),
+        ("with assertRaisesMessage 글", "with self.assertRaisesMessage(ValueError, 'boom'):\n    f()",
+         "with self.assertRaisesMessage(ValueError, 'bang'):\n    f()", FX),
+        ("표 밖 self.assert 도움 단언(모든 인자)", "self.assertValidOrder(o, 3)", "self.assertValidOrder(o2, 3)", FX),
+        ("self 아닌 받는 자(helper.assertEqual — 한계)", "helper.assertEqual(r, 1)", "helper.assertEqual(r, 2)", NONE),
+        ("별칭 assertEquals → assertEqual", "self.assertEquals(r, 1)", "self.assertEqual(r, 1)", NONE),
+        ("cls.assertEqual 기대", "cls.assertEqual(r, 1)", "cls.assertEqual(r, 2)", FX),
+        ("assertCountEqual 집합 차례", "self.assertCountEqual(r, {1, 2})", "self.assertCountEqual(r, {2, 1})", NONE),
+        ("assertEqual 목록 차례", "self.assertEqual(r, [1, 2])", "self.assertEqual(r, [2, 1])", FX),
+        ("③ 지역 이름을 넘겨 고쳐 씀(지킴)", "self.assertEqual(r, {'a'})", "expected = {'a'}\nrun(expected)\nself.assertEqual(r, expected)", FX),
+        ("assertGreater 기대", "self.assertGreater(r, 1)", "self.assertGreater(r, 2)", FX),
+        ("기대 먼저 assertEqual(200, r.status_code) → 201", "self.assertEqual(200, r.status_code)", "self.assertEqual(201, r.status_code)", FX),
+        ("기대 나중 assertEqual(r.status_code, 200) → 201", "self.assertEqual(r.status_code, 200)", "self.assertEqual(r.status_code, 201)", FX),
+        ("기대 먼저 · 주어만", "self.assertEqual(200, r.status_code)", "self.assertEqual(200, r.code)", NONE),
+        ("기대 먼저 assertGreater(10, …) → 20", "self.assertGreater(10, r.elapsed)", "self.assertGreater(20, r.elapsed)", FX),
+        ("형 메서드 assertIsInstance('x', str) → int(첫 자리 늘 주어)", "self.assertIsInstance('x', str)", "self.assertIsInstance('x', int)", FX),
+        ("좌우 바꿈 assertEqual(200, r) → (r, 200)", "self.assertEqual(200, r)", "self.assertEqual(r, 200)", FX),
+        ("위치 하나 + second= · 기대 200 → 201", "self.assertEqual(200, second=r.status_code)", "self.assertEqual(201, second=r.status_code)", FX),
+        ("위치 하나 + second= · 메시지만", "self.assertEqual(200, second=r.status_code)", "self.assertEqual(200, second=r.status_code, msg='m')", NONE),
+    ]
+    out += [(f"D8 unittest {n}", _nu(a), _nu(b), w) for n, a, b, w in unit]
+    out += [
+        ("D8 unittest ① 기대 → 이름 상수", _nu("self.assertEqual(r, T * 5)", "T = 1\n"), _nu("self.assertEqual(r, T * SLACK)", "T = 1\nSLACK = 5\n"), NONE),
+        ("D8 unittest 기대 먼저 ① OK = 200 · 주어만", _nu("self.assertEqual(OK, r)", "OK = 200\n\n\n"), _nu("self.assertEqual(OK, r2)", "OK = 200\n\n\n"), NONE),
+        ("D8 unittest 첫 자리 흔들리는 이름(두 자리)", _nu("self.assertEqual(C, Event.A)", N_SHAKY), _nu("self.assertEqual(C, Event.B)", N_SHAKY), FX),
+        ("D8 pytest_django.asserts 함수 꼴", "from pytest_django.asserts import assertContains\n\n\ndef test_a(r):\n    assertContains(r, 'x')\n",
+         "from pytest_django.asserts import assertContains\n\n\ndef test_a(r):\n    assertContains(r, 'y')\n", FX),
+        ("D8 unittest with 머리 pytest.raises + assertNumQueries · 예외(2.43.0 도 확정)",
+         _nu("with pytest.raises(ValueError), self.assertNumQueries(1):\n    f()", "import pytest\n\n\n"),
+         _nu("with pytest.raises(KeyError), self.assertNumQueries(1):\n    f()", "import pytest\n\n\n"), FX),
+        ("D8 unittest with 머리 assertNumQueries + pytest.raises · 1 → 2",
+         _nu("with self.assertNumQueries(1), pytest.raises(ValueError):\n    f()", "import pytest\n\n\n"),
+         _nu("with self.assertNumQueries(2), pytest.raises(ValueError):\n    f()", "import pytest\n\n\n"), FX),
+        ("D8 pytest_django 에서 asserts 모듈 import", "from pytest_django import asserts\n\n\ndef test_a(r):\n    asserts.assertContains(r, 'x')\n",
+         "from pytest_django import asserts\n\n\ndef test_a(r):\n    asserts.assertContains(r, 'y')\n", FX),
+        ("D8 pytest_django.asserts 점 사슬(별칭 없는 import)",
+         "import pytest_django.asserts\n\n\ndef test_a(r):\n    pytest_django.asserts.assertContains(r, 'x')\n",
+         "import pytest_django.asserts\n\n\ndef test_a(r):\n    pytest_django.asserts.assertContains(r, 'y')\n", FX),
+        ("D8 pytest_django.asserts 점 사슬 · 주어만",
+         "import pytest_django.asserts\n\n\ndef test_a(r, r2):\n    pytest_django.asserts.assertContains(r, 'x')\n",
+         "import pytest_django.asserts\n\n\ndef test_a(r, r2):\n    pytest_django.asserts.assertContains(r2, 'x')\n", NONE),
+        ("D8 pytest_django.asserts 별칭(as)", "from pytest_django.asserts import assertContains as ac\n\n\ndef test_a(r):\n    ac(r, 'x')\n",
+         "from pytest_django.asserts import assertContains as ac\n\n\ndef test_a(r):\n    ac(r, 'y')\n", FX),
+    ]
+    side: "list[tuple[str, str, str, str]]" = [
+        ("'x' in r → 'y' in r(왼쪽 글자 기대)", "assert 'x' in r", "assert 'y' in r", FX),
+        ("'x' in r → 'x' in r2(주어만)", "assert 'x' in r", "assert 'x' in r2", NONE),
+        ("s in (200, 201) → (200, 202)", "assert s in (200, 201)", "assert s in (200, 202)", FX),
+        ("s in (200, 201) → s2 in …(주어만)", "assert s in (200, 201)", "assert s2 in (200, 201)", NONE),
+        ("x in y → x2 in y(둘 다 이름 — 두 쪽)", "assert x in y", "assert x2 in y", FX),
+        ("x in y → x in y2", "assert x in y", "assert x in y2", FX),
+        ("'x' not in r → 'y' not in r", "assert 'x' not in r", "assert 'y' not in r", FX),
+        ("'a' in {'a', 'b'} 차례(둘 다 글자)", "assert 'a' in {'a', 'b'}", "assert 'a' in {'b', 'a'}", NONE),
+        ("200 == r → 201 == r(거꾸로 · 기대)", "assert 200 == r", "assert 201 == r", FX),
+        ("200 == r → 200 == r2(거꾸로 · 주어만)", "assert 200 == r", "assert 200 == r2", NONE),
+        ("r == 200 → r == 201", "assert r == 200", "assert r == 201", FX),
+        ("r == 200 → r2 == 200", "assert r == 200", "assert r2 == 200", NONE),
+        ("200 == r → r == 200(좌우 바꿈 — 멈춤)", "assert 200 == r", "assert r == 200", FX),
+        ("a == b → a2 == b(둘 다 이름 — 오른쪽)", "assert a == b", "assert a2 == b", NONE),
+        ("a == b → a == b2", "assert a == b", "assert a == b2", FX),
+        ("0 < x < 10 → 1 < x < 10(이어진 비교)", "assert 0 < x < 10", "assert 1 < x < 10", FX),
+        ("0 < x < 10 → 0 < x2 < 10", "assert 0 < x < 10", "assert 0 < x2 < 10", FX),
+        ("None is r → None is not r", "assert None is r", "assert None is not r", FX),
+        ("-1 == r → -2 == r", "assert -1 == r", "assert -2 == r", FX),
+        ("f() == 3 → g() == 3(오른쪽 글자 — 주어만)", "assert f() == 3", "assert g() == 3", NONE),
+        ("raises 부르는 꼴 예외", "pytest.raises(ValueError, f, 1)", "pytest.raises(KeyError, f, 1)", FX),
+        ("raises 부르는 꼴 인자만(주어)", "pytest.raises(ValueError, f, 1)", "pytest.raises(ValueError, f, 2)", NONE),
+        ("warns 부르는 꼴 경고", "pytest.warns(UserWarning, f)", "pytest.warns(DeprecationWarning, f)", FX),
+        ("raises 대입 꼴", "excinfo = pytest.raises(ValueError, f)", "excinfo = pytest.raises(TypeError, f)", FX),
+        ("with raises 예외", "with pytest.raises(ValueError):\n    f()", "with pytest.raises(TypeError):\n    f()", FX),
+        ("with raises 몸만", "with pytest.raises(ValueError):\n    f()", "with pytest.raises(ValueError):\n    g()", NONE),
+        ("with raises + warns 한 머리 · 앞 예외", "with pytest.raises(ValueError), pytest.warns(UserWarning):\n    f()",
+         "with pytest.raises(KeyError), pytest.warns(UserWarning):\n    f()", FX),
+        ("raises 부를 것 없음 · match", "cm = pytest.raises(ValueError, match='a')", "cm = pytest.raises(ValueError, match='b')", FX),
+        ("raises 부르는 꼴 키워드 인자(부를 것 몫)", "pytest.raises(ValueError, f, x=1)", "pytest.raises(ValueError, f, x=2)", NONE),
+        ("return pytest.raises(E)(문장 자리 밖)", "return pytest.raises(ValueError)", "return pytest.raises(KeyError)", NONE),
+        ("모아 담는 목록 calls == [build(1)] → [build(2)]", "calls = []\ndef fake(x):\n    calls.append(x)\nrun(fake)\nassert calls == [build(1)]",
+         "calls = []\ndef fake(x):\n    calls.append(x)\nrun(fake)\nassert calls == [build(2)]", FX),
+        ("두 번 묶인 지역 result == make(1) → make(2)", "result = None\nresult = run2()\nassert result == make(1)",
+         "result = None\nresult = run2()\nassert result == make(2)", FX),
+    ]
+    out += [(f"D9 {n}", _nt(a), _nt(b), w) for n, a, b, w in side]
+    pin: str = "import pytest\n\n\n@pytest.mark.parametrize('x, ctx', [pytest.param(1, pytest.raises({e}))])\ndef test_a(x, ctx):\n    with ctx:\n        f(x)\n"
+    out += [
+        ("D9 ① 'x' in r → X in r(X = 'x')", _nt("assert 'x' in r"), _nt("assert X in r", "X = 'x'\n"), NONE),
+        ("D9 ① 200 == r → OK == r(OK = 200)", _nt("assert 200 == r"), _nt("assert OK == r", "OK = 200\n"), NONE),
+        ("D9 EXPECTED == r · 상수 값 5 → 6", _nt("assert EXPECTED == r", "EXPECTED = 5\n"), _nt("assert EXPECTED == r", "EXPECTED = 6\n"),
+         "공유 정의 변화/공유 정의 변화"),
+        ("D9 parametrize 안 raises 예외(param 원소 몫)", pin.format(e="ValueError"), pin.format(e="KeyError"), FX),
+        ("D9 왼쪽 상수 · 다른 시험에 setattr 글자 더함(두 쪽 — 멈춤)", _nt("assert C == r", "C = 5\n"),
+         _nt("assert C == r", N_SETATTR_MOD), FX),
+        ("D9 s in (C, 1) · 다른 시험에 setattr 글자 더함(오른쪽 그대로)", _nt("assert s in (C, 1)", "C = 5\n"),
+         _nt("assert s in (C, 1)", N_SETATTR_MOD), NONE),
+        ("D9 C == r → C == r2 · C 가 setattr 받음(두 쪽 — 멈춤)", _nt("assert C == r", N_SETATTR_MOD), _nt("assert C == r2", N_SETATTR_MOD), FX),
+    ]
+    cap: "Callable[[str, str, str], str]" = lambda rebind, op, exp: N_CAP.format(rebind=rebind, op=op, exp=exp)  # noqa: E731
+    counter: str = ("CALLS = 0\n\n\ndef fake():\n    global CALLS\n    CALLS += 1\n\n\ndef test_a():\n    fake()\n    fake()\n"
+                    "    assert {exp} == CALLS\n")
+    twice: str = "from app.events import Event, load\n\nSTATE = None\nSTATE = load()\n\n\ndef test_a():\n    assert STATE == {exp}\n"
+    x6r: str = ('import sys\n\nLAST = None\n\n\ndef _record(evt):\n    setattr(sys.modules[__name__], "LAST", evt)\n\n\n'
+                'def test_a():\n    _record(run())\n    assert "created" == LAST\n')
+    x6u: str = ('import sys\n\nLAST = None\n\n\ndef _record(evt):\n    setattr(sys.modules[__name__], "LAST", evt)\n\n\n'
+                'class TestA:\n    def test_a(self):\n        _record(run())\n        self.assertEqual("created", LAST)\n')
+    out += [
+        ("D9 global 로 다시 묶는 LAST == Event.CREATED → DELETED", cap(N_GLOBAL, "==", "Event.CREATED"), cap(N_GLOBAL, "==", "Event.DELETED"), FX),
+        ("D9 global 로 다시 묶는 LAST is …", cap(N_GLOBAL, "is", "Event.CREATED"), cap(N_GLOBAL, "is", "Event.DELETED"), FX),
+        ("D9 global 로 다시 묶는 LAST == 부른 값", cap(N_GLOBAL, "==", "expected_state()"), cap(N_GLOBAL, "==", "other_state()"), FX),
+        ("D9 거꾸로 · 주어 = global 세는 CALLS · 2 → 3", counter.format(exp="2"), counter.format(exp="3"), FX),
+        ("D9 sys.modules[__name__].LAST = evt 로 받는 꼴", cap(N_ATTR, "==", "Event.CREATED"), cap(N_ATTR, "==", "Event.DELETED"), FX),
+        ("D9 setattr 글자로 받는 꼴(두 쪽)", cap(N_SETATTR, "==", "Event.CREATED"), cap(N_SETATTR, "==", "Event.DELETED"), FX),
+        ("D9 모듈에서 두 번 묶는 STATE", twice.format(exp="Event.CREATED"), twice.format(exp="Event.DELETED"), FX),
+        ("D9 global 로 다시 묶는 LAST · 주어만(오른쪽 그대로)", cap(N_GLOBAL, "==", "Event.CREATED"),
+         cap(N_GLOBAL, "==", "Event.CREATED").replace("assert LAST ==", "assert LAST.kind =="), NONE),
+        ("D9 속성 대입으로 받는 LAST · 주어만(오른쪽 그대로)", cap(N_ATTR, "==", "Event.CREATED"),
+         cap(N_ATTR, "==", "Event.CREATED").replace("assert LAST ==", "assert LAST.kind =="), NONE),
+        ("D9 두 번 묶는 STATE · 주어만", twice.format(exp="Event.CREATED"),
+         twice.format(exp="Event.CREATED").replace("assert STATE ==", "assert STATE.value =="), NONE),
+        ("D9 모아 담는 목록 · 주어 이름만", "def test_a():\n    calls = []\n    def fake(x):\n        calls.append(x)\n    run(fake)\n    assert calls == [build(1)]\n",
+         "def test_a():\n    seen = []\n    def fake(x):\n        seen.append(x)\n    run(fake)\n    assert seen == [build(1)]\n", NONE),
+        ("D9 두 번 묶인 지역 · 주어 이름만", "def test_a():\n    result = None\n    result = run2()\n    assert result == make(1)\n",
+         "def test_a():\n    res = None\n    res = run2()\n    assert res == make(1)\n", NONE),
+        ("D9 두 쪽 다 글자 · 오른쪽이 setattr 글자 덕 'created' == LAST → 'deleted'", x6r,
+         x6r.replace('"created" == LAST', '"deleted" == LAST'), FX),
+        ("D9 unittest 두 자리 다 글자 · 둘째가 setattr 글자 덕 → 'deleted'", x6u, x6u.replace('("created", LAST)', '("deleted", LAST)'), FX),
+    ]
+    return out
+
+
+def _norm_other_cases() -> "list[tuple[str, Callable[[], str], str]]":
+    """(이름, 잴 것, 기대) — 창 처분(dispose_test_file) · V 원소 고정 · 승인 대조 옛 원문. 기대 끝 `…` = 앞부분 일치."""
+    g1: str = "T = 1\n\n\ndef test_a():\n    assert run() < T * 5\n\n\ndef test_b():\n    assert run() < T * 5\n"
+    after: str = g1.replace("T = 1\n", "T = 1\nSLACK = 5\n").replace("T * 5", "T * SLACK")
+    pin: dict = {f"{NP}::test_a": {"expect_old": ["assert run() < T * 5"], "expect_add": 0, "V": ["V1"]}}
+    one: str = "T = 1\n\n\ndef test_a():\n    assert run() < T * 5\n"
+    one_0t: str = "T = 1\nSLACK = 5\n\n\ndef test_a():\n    assert run() < T * SLACK\n"
+    appr: dict = {f"{NP}::test_a": {"expect_old": ["assert run() < T * 5"], "expect_add": 0, "V": ["V1"]}}
+    lcs: str = "N = 5\n\n\ndef test_a():\n    assert a == N\n    assert b == 6\n"
+    lcs_local: str = "def test_a():\n    e = 5\n    assert a == e\n    assert b == 6\n"
+    lcs_shaky: str = "N = 5\n\n\ndef test_a():\n    assert a == N\n    assert b == 5\n"
+    out_0t: str = "red · D 확정 — 0T 는 V 에 딸리지 않은 입장 표 update 행의 케이스와 remove 행이 승인한 케이스 삭제만 감사한다 · 밖: …"
+    cases: "list[tuple[str, Callable[[], str], str]]" = []
+    for name, old, new in (("여유 배수 상수화(F4-200 꼴)", N_LIMIT, N_LIMIT_FIX),):
+        cases += [(f"0T {name} → 개별 감사", lambda o=old, n=new: _ndisp("test", o, n), "개별 감사 · 0T"),
+                  (f"0F {name} → 개별 감사", lambda o=old, n=new: _ndisp("follow", o, n), "개별 감사 · 허용 파일")]
+    cases += [
+        ("0F 여유 배수 상수화 + 값 5 → 6 → red", lambda: _ndisp("follow", N_LIMIT, N_LIMIT_BAD), "red · D 확정(D 기대식 2)"),
+        ("0T V 없음 · ① → 개별 감사", lambda: _ndisp("test", g1, after), "개별 감사 · 0T"),
+        ("0T V 가 인용한 원소를 ① → red", lambda: _ndisp("test", g1, after, pinned=pin), out_0t),
+        ("0F V 없음 · ① → 개별 감사", lambda: _ndisp("follow", g1, after), "개별 감사 · 허용 파일"),
+        ("0F V 가 인용한 원소를 ① → red", lambda: _ndisp("follow", g1, after, pinned=pin), "red · D 확정(D 기대식 1)"),
+        ("d_changes V 고정 · 인용 원소만 확정", lambda: _nd(g1, after, {"test_a": {"assert run() < T * 5"}}), FX),
+        ("0T 앞 창 ① 고쳐 씀 → 개별 감사", lambda: _ndisp("test", one, one_0t), "개별 감사 · 0T"),
+        ("변경 창 0T 뒤 상수 값 6(V 는 옛 원문 인용) → 승인 변경 미검출",
+         lambda: _ndisp("change", one_0t, one_0t.replace("SLACK = 5", "SLACK = 6"), appr),
+         "개별 감사 · 허용 파일 · D 공유 정의 변화 1 · 승인 변경 미검출 `app/test/test_x.py::test_a`"),
+        ("변경 창 0T 뒤 단언 T * 6(V 는 옛 원문 인용) → red(«바뀌는 기대» 밖)",
+         lambda: _ndisp("change", one_0t, one_0t.replace("T * SLACK", "T * 6"), appr),
+         "red · D 확정(D 기대식 1) · `app/test/test_x.py::test_a` 의 바뀐 옛 원소가 «바뀌는 기대» 밖 — «assert run() < T * SLACK»"),
+        ("변경 창 ① 만(V 승인 케이스) → 승인 변경 미검출", lambda: _ndisp("change", one, one_0t, appr),
+         "개별 감사 · 허용 파일 · 승인 변경 미검출 `app/test/test_x.py::test_a`"),
+        ("짝 상수 값 5 → 6 · 0T", lambda: _ndisp("test", lcs, lcs.replace("N = 5", "N = 6")), "개별 감사 · 0T · D 공유 정의 변화 1"),
+        ("짝 상수 값 5 → 6 · 0F", lambda: _ndisp("follow", lcs, lcs.replace("N = 5", "N = 6")), "개별 감사 · 허용 파일 · D 공유 정의 변화 1"),
+        ("짝 지역 값 5 → 6 · 0T", lambda: _ndisp("test", lcs_local, lcs_local.replace("e = 5", "e = 6")),
+         "red · D 확정 — 0T 는 V 에 딸리지 않은 입장 표 update 행의 케이스와 remove 행이 승인한 케이스 삭제만 감사한다 · 밖: "
+         "`app/test/test_x.py::test_a`(지역 정의) · D 지역 정의 1"),
+        ("짝 지역 값 5 → 6 · 0F", lambda: _ndisp("follow", lcs_local, lcs_local.replace("e = 5", "e = 6")), "red · D 확정(D 지역 정의 1)"),
+        ("짝 상수 안정 → 흔들림 · 0F", lambda: _ndisp("follow", lcs_shaky, lcs_shaky + "\n\ndef test_b(monkeypatch):\n    monkeypatch.setattr(\"m.N\", 9)\n"),
+         "개별 감사 · 허용 파일"),
+        ("짝 상수 값 바꿈 · 변경 창 V 승인 → 승인 변경 미검출",
+         lambda: _ndisp("change", lcs, lcs.replace("N = 5", "N = 6"), {f"{NP}::test_a": {"expect_old": ["assert a == N"], "expect_add": 0}}),
+         "개별 감사 · 허용 파일 · D 공유 정의 변화 1 · 승인 변경 미검출 `app/test/test_x.py::test_a`"),
+        ("승인 대조 옛 원문 · unittest 부르는 꼴", lambda: _ntexts(_nu("self.assertEqual(r, 1)"), _nu("self.assertEqual(r, 2)")),
+         "['self.assertEqual(r, 1)']"),
+        ("승인 대조 옛 원문 · unittest 컨텍스트 꼴",
+         lambda: _ntexts(_nu("with self.assertRaises(ValueError):\n    f()"), _nu("with self.assertRaises(TypeError):\n    f()")),
+         "['with self.assertRaises(ValueError):']"),
+        ("승인 대조 옛 원문 · raises 부르는 꼴", lambda: _ntexts(_nt("pytest.raises(ValueError, f, 1)"), _nt("pytest.raises(KeyError, f, 1)")),
+         "['pytest.raises(ValueError, f, 1)']"),
+        ("승인 대조 옛 원문 · raises 대입 꼴(줄 전체도)",
+         lambda: _ntexts(_nt("excinfo = pytest.raises(ValueError, f)"), _nt("excinfo = pytest.raises(KeyError, f)")),
+         "['excinfo = pytest.raises(ValueError, f)', 'pytest.raises(ValueError, f)']"),
+        ("V 고정 · «assert 200 == r» 을 OK == r 로", lambda: _nd(_nt("assert 200 == r"), _nt("assert OK == r", "OK = 200\n"),
+                                                           {"test_a": {"assert 200 == r"}}), FX),
+    ]
+    review: "list[tuple[str, str, str]]" = [
+        ("별표 import", "from helpers import *\n\n\ndef test_a():\n    assert run() < 5\n",
+         "LIMIT = 5\nfrom helpers import *  # noqa: F403\n\n\ndef test_a():\n    assert run() < LIMIT\n"),
+        ("globals().update", "LIMIT = 5\nglobals().update(LIMIT=6)\n\n\ndef test_a():\n    assert run() < 5\n",
+         "LIMIT = 5\nglobals().update(LIMIT=6)\n\n\ndef test_a():\n    assert run() < LIMIT\n"),
+        ("global 로 다시 묶는 LAST", N_CAP.format(rebind=N_GLOBAL, op="==", exp="Event.CREATED"),
+         N_CAP.format(rebind=N_GLOBAL, op="==", exp="Event.DELETED")),
+        ("setattr 글자로 받는 LAST", N_CAP.format(rebind=N_SETATTR, op="==", exp="Event.CREATED"),
+         N_CAP.format(rebind=N_SETATTR, op="==", exp="Event.DELETED")),
+        ("unittest 기대 먼저 200 → 201", _nu("self.assertEqual(200, r.status_code)"), _nu("self.assertEqual(201, r.status_code)")),
+    ]
+    for name, old, new in review:
+        cases += [(f"0T {name} → red", lambda o=old, n=new: _ndisp("test", o, n), out_0t),
+                  (f"0F {name} → red", lambda o=old, n=new: _ndisp("follow", o, n), "red · D 확정(D 기대식 1)")]
+    return cases
+
+
+def norm_checks() -> "list[str]":
+    """D 정규화 · 기대 쪽 단위 판정 — 대역 준비 없이 behavior_guard 함수를 바로 부른다."""
+    fails: "list[str]" = []
+    for label, old, new, want in _norm_d_cases():
+        got: str = _nd(old, new)
+        if got != want:
+            fails.append(f"D 정규화 «{label}»: {got} (기대 {want})")
+    for label, measure, want in _norm_other_cases():
+        got = measure()
+        if not (got == want or want.endswith("…") and got.startswith(want[:-1])):
+            fails.append(f"D 정규화 «{label}»: {got} (기대 {want})")
+    return fails
+
+
+def norm_rcases() -> "list[dict]":
+    """D 정규화 · 기대 쪽 창 처분 — 리팩토링 모드 창 절차(0T · 0F close 의 V 원소 고정 · 변경 창 승인 대조 · 0F 기대 쪽)."""
+    out: "list[dict]" = []
+
+    def add(label: str, kind: str, before: str, after: str, expect: tuple, **kw: object) -> None:
+        out.append({"label": f"D 정규화 창: {label}", "kind": kind, "files": {TP: before}, "edit": _edit({}, after),
+                    "expect": {TP: expect}, **kw})
+
+    limit_units: "list[str]" = ["<module>", "test_held_a_call_is_cut", "test_held_b_call_is_cut"]
+    add("0T 여유 배수 상수화(같은 뜻) · update 행 없음 → 개별 감사", "test", N_LIMIT, N_LIMIT_FIX,
+        ("개별 감사", limit_units, {"reason": "0T", "no_reason": "D "}))
+    add("0F 여유 배수 상수화(같은 뜻) → 개별 감사", "follow", N_LIMIT, N_LIMIT_FIX,
+        ("개별 감사", limit_units, {"reason": "허용 파일", "no_reason": "D "}), snap=_retain())
+    add("0F 여유 배수 상수화 + 값 5 → 6 → red", "follow", N_LIMIT, N_LIMIT_BAD, ("red", None, {"reason": "D 확정"}), snap=_retain())
+    one: str = DHEAD + "T = 1\n\n\ndef test_check():\n    assert product() < T * 5\n"
+    one_c: str = one.replace("T = 1\n", "T = 1\nSLACK = 5\n").replace("T * 5", "T * SLACK")
+    v1: dict = _v("V1", f"{TP}::test_check", ["assert product() < T * 5"])
+    add("0T V 가 인용한 원소를 ① 로 → red(V 원소 고정)", "test", one, one_c, ("red", None, {"reason": "D 확정"}), snap=_snap(v1))
+    add("0F V 가 인용한 원소를 ① 로 → red(V 원소 고정)", "follow", one, one_c, ("red", None, {"reason": "D 확정"}),
+        snap=_snap(v1, retain=(TP,)))
+    add("변경 창 V 승인 케이스 편집이 ① 뿐 → 승인 변경 미검출", "change", one, one_c,
+        ("개별 감사", None, {"reason": "승인 변경 미검출"}), snap=_snap(v1), needles=("보고:", "승인 변경 미검출"))
+    mk: str = DHEAD + "def test_check():\n    m = Mock()\n    product(m)\n    m.assert_called_once_with(x=1)\n"
+    add("0F mock 단언 키워드 이름 x → y → red", "follow", mk, mk.replace("(x=1)", "(y=1)"), ("red", None, {"reason": "D 확정"}),
+        snap=_retain())
+    ut: str = DHEAD + "class TestBox:\n    def test_check(self):\n        self.assertEqual(product(), 9)\n"
+    add("0T unittest 기대 9 → 8 · update 행 없음 → red", "test", ut, ut.replace("9)", "8)"), ("red", None, {"reason": "D 확정"}))
+    add("변경 창 V 가 self.assertEqual(…) 인용 · 기대 9 → 8 → 승인 변경 감사", "change", ut, ut.replace("9)", "8)"),
+        ("승인 변경 감사", None, {"reason": "D 확정 전부 승인 원소"}),
+        snap=_snap(_v("V1", f"{TP}::TestBox::test_check", ["self.assertEqual(product(), 9)"])))
+    page: str = DHEAD + "def test_check():\n    page = str(product())\n    assert 'x' in page\n"
+    rev: str = DHEAD + "def test_check():\n    r = product()\n    assert 200 == r\n"
+    call: str = DHEAD + "def test_check():\n    pytest.raises(ValueError, product, 1)\n"
+    audit: tuple = ("개별 감사", ["test_check"], {"no_reason": "D "})
+    red: tuple = ("red", None, {"reason": "D 확정"})
+    for label, before, after, expect in (
+            ("'x' in page → 'x' in body(주어만) → 개별 감사", page, page.replace("page", "body"), audit),
+            ("'x' in page → 'y' in page(기대) → red", page, page.replace("'x'", "'y'"), red),
+            ("200 == r → 201 == r(거꾸로 · 기대) → red", rev, rev.replace("200", "201"), red),
+            ("200 == r → 200 == res(거꾸로 · 주어만) → 개별 감사", rev, rev.replace("r = ", "res = ").replace("== r", "== res"), audit),
+            ("pytest.raises(ValueError, product, 1) → KeyError → red", call, call.replace("ValueError", "KeyError"), red),
+            ("pytest.raises(ValueError, product, 1) → (…, 2)(부를 것 인자만) → 개별 감사", call, call.replace(", 1)", ", 2)"), audit),
+            ("global 로 다시 묶는 LAST == Event.CREATED → DELETED → red", N_CAP.format(rebind=N_GLOBAL, op="==", exp="Event.CREATED"),
+             N_CAP.format(rebind=N_GLOBAL, op="==", exp="Event.DELETED"), red),
+            ("setattr 글자로 받는 LAST == Event.CREATED → DELETED → red", N_CAP.format(rebind=N_SETATTR, op="==", exp="Event.CREATED"),
+             N_CAP.format(rebind=N_SETATTR, op="==", exp="Event.DELETED"), red),
+            ("unittest assertEqual(200, r.status_code) → 201 → red", _nu("self.assertEqual(200, r.status_code)"),
+             _nu("self.assertEqual(201, r.status_code)"), red),
+            ("unittest assertEqual(200, r.status_code) → (200, r.code)(주어만) → 개별 감사", _nu("self.assertEqual(200, r.status_code)"),
+             _nu("self.assertEqual(200, r.code)"), ("개별 감사", ["TestX"], {"no_reason": "D "}))):
+        add(f"0F {label}", "follow", before, after, expect, snap=_retain())
+    return out
 
 
 def property_checks() -> "list[str]":
@@ -3423,15 +3952,18 @@ def _only_group(stub_support: bool) -> int:
     return 0
 
 
-NEW_GROUPS: "tuple[str, ...]" = ("move", "ctx", "clue", "map", "g2")
+NEW_GROUPS: "tuple[str, ...]" = ("move", "ctx", "clue", "map", "g2", "norm")
 
 
 def _only_new(stub_support: bool, groups: "tuple[str, ...]" = NEW_GROUPS) -> int:
-    """2.43.0 새 갈래 사례만 — move(옮김 행 0T 꼴 확인 · 몫) · ctx(옮김 행 묶임 맥락 — 픽스처 풀이 · 모듈 이름 · 사슬 모듈) · clue(이름
-    단서 짝 — 기능 0C · 리팩토링 0C 묶음) · map(정규화 지도) · g2(옮김 verify · G2 접기). 변이 시험이 scripts 사본에 대고 그 변이의
-    묶음만 돈다."""
+    """새 갈래 사례만 — 2.43.0: move(옮김 행 0T 꼴 확인 · 몫) · ctx(옮김 행 묶임 맥락 — 픽스처 풀이 · 모듈 이름 · 사슬 모듈) · clue(이름
+    단서 짝 — 기능 0C · 리팩토링 0C 묶음) · map(정규화 지도) · g2(옮김 verify · G2 접기) / 2.44.0: norm(D 정규화 · 기대 쪽 — 단위
+    판정은 대역 준비 없이 · 창 처분 사례만 창 절차로). 변이 시험이 scripts 사본에 대고 그 변이의 묶음만 돈다."""
     fails: "list[str]" = []
     ran: int = 0
+    if "norm" in groups:
+        ran += len(_norm_d_cases()) + len(_norm_other_cases())
+        fails += norm_checks()
     if "clue" in groups:
         cases_ = name_clue_cases()
         ran += len(cases_)
@@ -3439,7 +3971,8 @@ def _only_new(stub_support: bool, groups: "tuple[str, ...]" = NEW_GROUPS) -> int
     with tempfile.TemporaryDirectory(prefix="bg-stub-") as stub:
         _setup_refactor(Path(stub), stub_support)
         group: "list[dict]" = [case for case in move_rcases() if ("ctx" if case.get("ctx") else "move") in groups] + (
-            [case for case in rename_rcases() if "이름 단서 짝" in case["label"]] if "clue" in groups else [])
+            [case for case in rename_rcases() if "이름 단서 짝" in case["label"]] if "clue" in groups else []) + (
+            norm_rcases() if "norm" in groups else [])
         ran += len(group)
         for case in group:
             msg, _counts = run_rcase(case)
@@ -3482,7 +4015,7 @@ _MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...]], ...]" = (
 )
 
 
-# 2.43.0 새 갈래 변이(새 갈래 사례 `--only-new <묶음>` 이 잡아야 한다) — (이름, 파일, 묶음, ((옛 글, 새 글), …)) · 갈래마다 핵심 하나
+# 새 갈래 변이(2.43.0 · 2.44.0 — 새 갈래 사례 `--only-new <묶음>` 이 잡아야 한다) — (이름, 파일, 묶음, ((옛 글, 새 글), …)) · 갈래마다 핵심 하나
 _NEW_MUTATIONS: "tuple[tuple[str, str, str, tuple[tuple[str, str], ...]], ...]" = (
     ("옮김 꼴 2 단위 원문 대조 끔", "behavior_guard.py", "move", (('    if info["before"] != info["after"]:', "    if False:"),)),
     ("0T 아닌 창의 옮김 몫 허용", "behavior_guard.py", "move", (('        if kind != "test":\n            why = f"옮김 행은 0T 창 몫',
@@ -3534,6 +4067,107 @@ _NEW_MUTATIONS: "tuple[tuple[str, str, str, tuple[tuple[str, str], ...]], ...]" 
         ("approved_cases={now: _merged_cases(approved_g1, cases) for now, cases in g1_of.items()})",
          "approved_cases={now: approved_g1[cases[-1]] for now, cases in g1_of.items()})"),)),
     ("G2 케이스 옮김 접기 끔", "behavior_support.py", "g2", (('        rel = _case_moved(rel, cls, func, w.get("case_moved", []))\n', ""),)),
+    # 2.44.0 D 정규화 · 기대 쪽(`--only-new norm` — 단위 판정은 대역 준비 없이 · 창 처분 사례만 창 절차)
+    ("D 정규화 V 원소 고정 끔", "behavior_guard.py", "norm", (("and not held:", ":"),)),
+    ("D 정규화 0T close 의 V 원소 고정 넘김 끔", "behavior_guard.py", "norm", (
+        ('            judge_allow["pinned_cases"] = {forward_key(c, prior): e\n', '            judge_allow["unpinned"] = {forward_key(c, prior): e\n'),)),
+    ("D 정규화 0F close 의 V 원소 고정 넘김 끔", "behavior_guard.py", "norm", (
+        ('            judge_allow["pinned_cases"] = judge_allow["approved_cases"]\n', "            pass\n"),)),
+    ("D 정규화 mock 키워드 이름 끔", "behavior_guard.py", "norm", (
+        ('+ "|".join(f"{k.arg or \'**\'}={_dump_node(k.value)}" for k in node.keywords))',
+         '+ "|".join(_dump_node(k.value) for k in node.keywords))'),)),
+    ("D 정규화 mock 키워드 차례 정렬 끔", "behavior_guard.py", "norm", (
+        ("                kw_text.sort()                              # 키워드 차례는 뜻이 없다(mock 은 키워드를 사전으로 견준다)\n",
+         "                pass\n"),)),
+    ("D 정규화 unittest 주어 빼기 끔", "behavior_guard.py", "norm", (('        if role in ("e", "c"):', '        if role in ("e", "c", "s"):'),)),
+    ("D 정규화 unittest 메시지 빼기 끔", "behavior_guard.py", "norm", (('        if k.arg in ("msg", "msg_prefix"):\n            continue\n', ""),)),
+    ("D 정규화 unittest 컨텍스트 꼴 주어 → 기대 끔", "behavior_guard.py", "norm", (('        if role == "s" and context:\n            role = "e"\n', ""),)),
+    ("D 정규화 unittest 부를 것 빼기 끔", "behavior_guard.py", "norm", (
+        ('        if role == "c" and not context:\n            calling = True\n            continue\n', ""),)),
+    ("D 정규화 표 밖 self.assert 도움 단언 끔", "behavior_guard.py", "norm", (
+        ("            return func.attr, func.attr in _UT_SPEC", "            return (func.attr, True) if func.attr in _UT_SPEC else None"),)),
+    ("D 정규화 unittest 같음 메서드 안전 자리 끔", "behavior_guard.py", "norm", (
+        ("            if hit is not None and _UT_ALIAS.get(hit[0], hit[0]) in _UT_EQUAL:", "            if False:"),)),
+    ("D 정규화 unittest 같음 메서드 차례 없음 끔", "behavior_guard.py", "norm", (
+        ("        ins: bool = known and name in _UT_EQUAL", "        ins: bool = False"),)),
+    ("D 정규화 형식 매개변수 지킴 끔", "behavior_guard.py", "norm", (
+        ("and name not in self.attr_kw and name not in self.typeparams", "and name not in self.attr_kw"),)),
+    ("D 정규화 별표 import 지킴 끔", "behavior_guard.py", "norm", (('and not self.count["*"]', ""),)),
+    ("D 정규화 with 머리 마지막 item 만", "behavior_guard.py", "norm", (
+        ('key, nkey = "&".join(h[0] for h in heads), "&".join(h[2] for h in heads)', "key, nkey = heads[-1][0], heads[-1][2]"),)),
+    ("D 정규화 짝 남은 지역 정의 칸 비교 끔", "behavior_guard.py", "norm", (
+        ("                        if x.nfixed != y.nfixed:\n", "                        if False:\n"),)),
+    ("D 정규화 짝 남은 공유 정의 칸 비교 끔", "behavior_guard.py", "norm", (
+        ("                        elif x.nshared != y.nshared:\n", "                        elif False:\n"),)),
+    ("D 정규화 nonlocal 지킴 끔", "behavior_guard.py", "norm", (("and name not in scope.nonloc):", "):"),)),
+    ("D 정규화 집합 차례 부수 효과 지킴 끔", "behavior_guard.py", "norm", (
+        ("if insensitive and all(_side_free(e) for e in node.elts):", "if insensitive:"),)),
+    ("D 정규화 사전 값 부수 효과 지킴 끔", "behavior_guard.py", "norm", (
+        (" \\\n                and all(_side_free(v) for v in node.values):", ":"),)),
+    ("D 정규화 is 비교도 안전 자리", "behavior_guard.py", "norm", (
+        ("and not any(isinstance(o, (ast.Is, ast.IsNot)) for o in node.test.ops):", ":"),)),
+    ("D 정규화 pytest_django 에서 asserts 모듈 import 끔", "behavior_guard.py", "norm", (
+        ('node.module == _UT_MODULE.rpartition(".")[0] and not node.level:', "False:"),)),
+    ("D 정규화 pytest_django.asserts 점 사슬 끔", "behavior_guard.py", "norm", (
+        ("    elif isinstance(func, ast.Attribute) and _dotted_text(func.value) in mods and func.attr in _UT_SPEC:",
+         "    elif False:"),)),
+    ("D 사유 맥락 글자 안 종류 글자를 종류로", "behavior_guard.py", "norm", (('re.compile(r"^(|.*?#)((?:cmp', 're.compile(r"^(.*?)#?((?:cmp'),)),
+    ("D 정규화 속성 대입 · 키워드 이름 지킴 끔", "behavior_guard.py", "norm", (
+        ("                and name not in self.attr_kw and name not in self.typeparams", "                and name not in self.typeparams"),)),
+    ("D 정규화 클래스 몸 parametrize 안 펼침 끔", "behavior_guard.py", "norm", (
+        ('ndump, nused = norm(dec, -1 if "." not in func else None, False)', "ndump, nused = norm(dec, -1, False)"),)),
+    ("D 정규화 짝짓기를 정규화 열쇠로", "behavior_guard.py", "norm", (
+        ("matcher = difflib.SequenceMatcher(a=[e.key for e in old_els], b=[e.key for e in new_els], autojunk=False)",
+         "matcher = difflib.SequenceMatcher(a=[e.nkey for e in old_els], b=[e.nkey for e in new_els], autojunk=False)"),)),
+    ("D 정규화 왼쪽 글자 기대 끔(== 늘 오른쪽)", "behavior_guard.py", "norm", (
+        ('                        side = "L" if left_lit and not right_lit else "R"\n', '                        side = "R"\n'),)),
+    ("D 정규화 in 글자 쪽 끔(in 도 == 처럼)", "behavior_guard.py", "norm", (('"R" if right_lit and not left_lit else "B"', '"R"'),)),
+    ("D 정규화 in 늘 두 쪽", "behavior_guard.py", "norm", (
+        ('side = "L" if left_lit and not right_lit else "R" if right_lit and not left_lit else "B"', 'side = "B"'),)),
+    ("D 정규화 이어진 비교 모든 쪽 끔", "behavior_guard.py", "norm", (
+        ('                if len(test.ops) > 1:\n                    side = "B"\n', '                if len(test.ops) > 1:\n                    side = "R"\n'),)),
+    ("D 정규화 쪽 가름 펼침 끔(원문 글자만)", "behavior_guard.py", "norm", (
+        ("        return _is_literal(mod.norm.substitute(copy.deepcopy(expr), scope if site >= 0 else None, site, shape=True))",
+         "        return _is_literal(expr)"),)),
+    ("D 정규화 쪽 가름 펼침을 지킴 펼침으로", "behavior_guard.py", "norm", (("site, shape=True))", "site))"),)),
+    ("D 정규화 raises 부르는 꼴 끔", "behavior_guard.py", "norm", (
+        ("elif (isinstance(node, ast.Call) and _is_raises(node)", "elif (False and _is_raises(node)"),)),
+    ("D 정규화 raises 부르는 꼴 문장 자리 가름 끔", "behavior_guard.py", "norm", (
+        ("\n              and isinstance(parents.get(id(node)), (ast.Expr, ast.Assign, ast.AnnAssign))):", "):"),)),
+    ("D 정규화 raises 부를 것 빼기 끔", "behavior_guard.py", "norm", (("node.args[:1] if len(node.args) >= 2 else [node]", "[node]"),)),
+    ("D 정규화 raises 부를 것 없는 꼴 식 전체 끔", "behavior_guard.py", "norm", (
+        ("node.args[:1] if len(node.args) >= 2 else [node]", "node.args[:1]"),)),
+    ("D 정규화 쪽 가름 바뀔 수 있는 값 지킴 끔", "behavior_guard.py", "norm", (
+        ("        if any(isinstance(n, _MUTABLE_NODES) for n in ast.walk(value)):",
+         "        if not shape and any(isinstance(n, _MUTABLE_NODES) for n in ast.walk(value)):"),)),
+    ("D 정규화 쪽 가름 지역 묶기 수 지킴 끔", "behavior_guard.py", "norm", (
+        ("if (hit is not None and scope.count[name] == 1 and hit[0] < before",
+         "if (hit is not None and (shape or scope.count[name] == 1) and hit[0] < before"),)),
+    ("D 정규화 raises 대입 꼴 줄 전체 끔", "behavior_guard.py", "norm", (
+        ('        return {segment, "\\n".join(lines[node.lineno - 1:node.end_lineno]).strip()}', "        return {segment}"),)),
+    ("D 정규화 쪽 가름 모듈 묶기 수 지킴 끔", "behavior_guard.py", "norm", (
+        ("return (name in self.defs and self.count[name] == 1 and name not in self.glob",
+         "return (name in self.defs and name not in self.glob"),)),
+    ("D 정규화 쪽 가름 global 지킴 끔", "behavior_guard.py", "norm", (
+        ("and self.count[name] == 1 and name not in self.glob\n                and name not in self.attr_store)",
+         "and self.count[name] == 1\n                and name not in self.attr_store)"),)),
+    ("D 정규화 쪽 가름 속성 대입 지킴 끔", "behavior_guard.py", "norm", (("\n                and name not in self.attr_store)", ")"),)),
+    ("D 정규화 왼쪽 흔들리는 이름 두 쪽 끔", "behavior_guard.py", "norm", (
+        ("left_shaky: bool = left_lit and not right_lit and not slit(test.left, site)", "left_shaky: bool = False"),)),
+    ("D 정규화 오른쪽 흔들리는 이름 두 쪽 끔", "behavior_guard.py", "norm", (
+        ("right_shaky: bool = left_lit and right_lit and not slit(test.comparators[0], site)", "right_shaky: bool = False"),)),
+    ("D 정규화 unittest 첫 두 자리 쪽 가름 끔", "behavior_guard.py", "norm", (
+        ('first = ("e", "s") if slit(call.args[0], site) else ("e", "e")', "first = None"),)),
+    ("D 정규화 unittest 흔들리는 첫 자리 두 자리 끔", "behavior_guard.py", "norm", (
+        ('if slit(call.args[0], site) else ("e", "e")', 'if slit(call.args[0], site) else ("e", "s")'),)),
+    ("D 정규화 unittest 흔들리는 둘째 자리 두 자리 끔", "behavior_guard.py", "norm", (
+        ("                elif not slit(call.args[1], site):\n", "                elif False:\n"),)),
+    ("D 정규화 unittest 위치 하나 + second= 끔", "behavior_guard.py", "norm", (
+        ('            elif len(call.args) == 1 and any(k.arg == "second" for k in call.keywords):\n',
+         "            elif False:\n"),)),
+    ("D 정규화 unittest 쪽 가름 대상 넓힘(형 · 정규식 · 응답 메서드도)", "behavior_guard.py", "norm", (
+        ("if known and not context and name in _UT_ORDERED:", 'if known and not context and _UT_SPEC[method][0][:2] == "se":'),)),
+    ("D 정규화 _ut_parts 첫 두 자리 역할 바꿈 끔", "behavior_guard.py", "norm", (("first[i] if first is not None and i < 2 else ", ""),)),
 )
 
 
@@ -3559,7 +4193,7 @@ def _mutant_dies(fname: str, edits: "tuple[tuple[str, str], ...]", flags: "tuple
 
 
 def _mutation_test() -> int:
-    """변이를 scripts 사본에 하나씩 넣고 묶음 창 사례(`--only-group`) · 2.43.0 새 갈래 사례(`--only-new` — 병렬)를 돈다 — 모두
+    """변이를 scripts 사본에 하나씩 넣고 묶음 창 사례(`--only-group`) · 새 갈래 사례(`--only-new <묶음>` — 병렬)를 돈다 — 모두
     붉어야 green."""
     src: str = GUARD.read_text(encoding="utf-8")
     survived: "list[str]" = []
@@ -3641,6 +4275,8 @@ def main() -> int:
                 fails.append(f"{case['label']}: {msg}")
         for label, check in (("배치 결속 속성(역변환 · 키 집합 = 바이트)", property_checks),
                              ("D 함수 수준(발생 순번 짝 · 옛 문장 원문 · 파싱 불가)", d_checks),
+                             ("D 정규화 · 기대 쪽 단위 판정(같은 뜻 ①~④ · mock 키워드 이름 · unittest 단언 · assert 기대 쪽 · "
+                              "raises 부르는 꼴 · V 원소 고정)", norm_checks),
                              ("창 절차(모드 동결 · digest · rebind · 옛 기록 · support/suite 위임)", window_checks),
                              ("verify(세 줄 · 감사 키 일대일 · r5 · 보충 · 승인 V 흔적 · suite 대조)", verify_checks)):
             got = check()

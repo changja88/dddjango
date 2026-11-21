@@ -18,7 +18,7 @@ Coordinator «리팩토링 모드» 절이 이 도구를 부른다. 리뷰어·a
   refactor_audit.py resolution <산출물 폴더> [--gate]    명세 «슬라이스 0 해소 판정» 표 검사(커버 · 판정 값 해소·변경·불가 ·
                                                         불가 범주 · 막는 것 · 처방 앵커 · 인용 밖 반대 규칙 증거) + 렌즈별
                                                         M 목록 — --gate 는 부분·불가의 재상정 결정 줄 · 요지 축소 번호 일치까지
-  refactor_audit.py changes <산출물 폴더> [--candidate | --applied <후보 스냅숏> | --gate] [--baseline <창 open 기록>]
+  refactor_audit.py changes <산출물 폴더> [--candidate | --applied <후보 스냅숏> | --gate] [--baseline <열린 창 open 기록>]
                                                         명세 «바뀌는 것 목록» · «다른 BC 편집 목록» 검사 — --candidate 는
                                                         g1/<UTC>-candidate.json + 후보 digest · --applied 는 반영 대조 ·
                                                         --gate 는 G1 결정 줄 정합 + 최종 digest
@@ -3226,8 +3226,12 @@ def _closed_windows(folder: Path, upto: "int | None") -> "list[_PastWindow]":
 
     닫힌 창 = 마지막 close 판정 green · audit · 그 마지막 close 가 마지막 rebind 보다 엄격히 뒤(시각을 못 읽으면 안 씀). 그 창
     `g1_digest` 의 `G1 변경판 확정` 줄 → 후보 → `_expected_applied` 로 결속 판을 되살려 `allow_table` 이 open allow 와 같을 때만
-    쓴다(다르면 · 못 찾으면 안 씀 · open 기록에 없는 2.43.0 칸은 대조 밖 — `_same_allow`). 증거로 쓰려던 open · close 가 JSON 이
-    아니거나 필수 칸 자료형이 틀리면 실행 불능이다."""
+    쓴다(다르면 · 못 찾으면 안 씀 · open 기록에 없는 2.43.0 칸은 대조 밖 — `_same_allow`). 집행 결속은 그 결속 판의 원소마다 —
+    옛 원문 · add · remove 는 그 창 마지막 close 가 소비했으면 그 원소를 적은 V 모두(V 여럿이 적어도 원소 하나 · 한 번 집행 — 허용
+    표 · G2 verify 와 같은 셈) · 기대 추가는 적은 V 가 하나면 그 창 추가 ≥ 1 · 여럿이면 그 창 추가 ≥ 덧값 합일 때 모두(못 채우거나
+    한 V 가 두 줄로 적었으면 결속하지 않는다). 적은 V 의 슬라이스가 갈리면 가장 앞 슬라이스의 V 만 owner 로 본다(그 창이 먼저 집행한
+    몫 — 뒤 슬라이스 V 의 같은 원소는 아직 안 한 원소로 남아 G1′ 에서 고친다 · 덧값 합도 그 V 들의 합) · 슬라이스를 못 읽는 V 가 끼면
+    결속하지 않는다. 증거로 쓰려던 open · close 가 JSON 이 아니거나 필수 칸 자료형이 틀리면 실행 불능이다."""
     m = re.search(r"실행 · G0 승인 (\S+)", _read(Path(folder) / "refactor-scope.md"))
     if not m:
         return []
@@ -3302,16 +3306,28 @@ def _closed_windows(folder: Path, upto: "int | None") -> "list[_PastWindow]":
             continue                                         # 결속 판을 되살리지 못함 — 증거로 쓰지 않는다
         hits: dict = last["approved_hits"]
         executed: "dict[tuple, object]" = {}
+        slice_no: "dict[str, int | None]" = {}
+        for v in snap.get("V", []):
+            sm = re.fullmatch(r"S(\d+)", _slice_id(str(v.get("slice", ""))))
+            slice_no[v["id"]] = int(sm.group(1)) if sm else None
         for (kind, case, verb, o), owners in _window_elements(snap).items():
-            if len(owners) != 1:
-                continue                                     # 같은 원소를 둘 이상 V 가 적음 — 모호 · 결속하지 않는다
-            vid, extra = owners[0]
+            if len({vid for vid, _e in owners}) > 1:
+                nums: "list[int | None]" = [slice_no.get(vid) for vid, _e in owners]
+                if None in nums:
+                    continue                                 # 슬라이스를 못 읽는 V 가 낌 — 가를 수 없다 · 결속하지 않는다
+                owners = [ow for ow, s in zip(owners, nums) if s == min(nums)]   # 슬라이스가 갈리면 가장 앞 슬라이스 V 만
             hit: dict = hits.get(case) or {}
-            done: bool = ((kind == "old" and o in hit.get("old", [])) or (kind == "add" and case in last["cases_added"])
-                          or (kind == "remove" and case in last["cases_removed"])
-                          or (kind == "plus" and int(hit.get("add", 0)) >= 1))
+            if kind == "plus":
+                if len({vid for vid, _e in owners}) != len(owners):
+                    continue                                 # 한 V 가 같은 케이스 기대 추가를 두 줄에 — 덧값을 V 하나에 둘 수 없다
+                need: int = 1 if len(owners) == 1 else sum(int(e) for _v, e in owners)   # V 여럿 = 그 창이 덧값 합을 다 채움
+                done: bool = int(hit.get("add", 0)) >= need
+            else:                                            # 옛 원문 · add · remove — 적은 V 가 여럿이어도 원소 하나 · 한 번 집행
+                done = ((kind == "old" and o in hit.get("old", [])) or (kind == "add" and case in last["cases_added"])
+                        or (kind == "remove" and case in last["cases_removed"]))
             if done:
-                executed[(vid, kind, case, verb, o)] = extra
+                for vid, extra in owners:
+                    executed[(vid, kind, case, verb, o)] = extra
         out.append(_PastWindow(n, opened, open_path.name, executed))
     return out
 
@@ -3389,7 +3405,7 @@ def _semantic_reds(project: Path, folder: Path, spec: SpecChanges,
     다른 BC 편집 목록 ⊆ deps(앞 다섯 갈래) · 대상 BC 밖 → (red, 닫힌 창 기준선으로 본 원소의 창 번호 목록).
 
     기준 판은 원소마다 고른다(F-B1R-5 · 설계 v2 §1-3): 닫힌 변경 창에서 집행이 결속된 원소(같은 V id · 케이스 · 동사 · 옛 원문 —
-    그 창 결속 판에서 모호하지 않고 그 창 마지막 close 가 소비함)는 번호가 가장 큰 그 창의 기준선 — ① 옛 원문 실재 ② add 케이스
+    그 창 결속 판에 있고 그 창 마지막 close 가 소비함 — `_closed_windows`)는 번호가 가장 큰 그 창의 기준선 — ① 옛 원문 실재 ② add 케이스
     없음 ③ remove 케이스 있음 ④ 기대 추가의 케이스 있음. 그 밖은 `--baseline`(열린 창 open 기록 — 없으면 지금 시험). 쓸 수 있는
     닫힌 창에서 집행된 원소는 지금 명세에 같은 꼴로 남아 있어야 한다(§1-4). 기준 판의 케이스는 시험 줄 철자 그대로 · 앞 창 기록으로
     접은 키 · 명세 옮김 · 개명 행으로 되짚은 옛 키 가운데 그 판에 있는 것으로 읽는다(`_key_spellings`)."""
@@ -3410,6 +3426,17 @@ def _semantic_reds(project: Path, folder: Path, spec: SpecChanges,
             if key in w.executed and (kind != "plus" or w.executed[key] == extra):
                 return w
         return None
+
+    order: "dict[str, int]" = {v.vid: int(v.slice[1:]) for v in spec.v}
+    fix_from: str = "열린 창 기준선" if baseline else "지금 시험"    # 결속 밖 원소의 기준 판 — 고칠 글은 이 판의 원문
+
+    def consumed_by(vid: str, case: str, verb: str, o: str) -> str:
+        """이 V 인용이 결속 밖일 때 같은 원소를 앞 슬라이스 V 가 닫힌 창에서 소비했으면 고칠 길 한 구."""
+        for w in reversed(past):
+            for other in order:
+                if order[other] < order[vid] and (other, "old", case, verb, o) in w.executed:
+                    return f"(앞 슬라이스 {other} 이 닫힌 창 w{w.n} 에서 소비 — 이 V 인용은 {fix_from} 원문으로)"
+        return ""
 
     def past_read(w: _PastWindow) -> "Callable[[str], bytes | None]":
         if w.n not in readers:
@@ -3460,14 +3487,15 @@ def _semantic_reds(project: Path, folder: Path, spec: SpecChanges,
                             else _case_source(read(s_path), s_name))
                     if body is not None:
                         break
-                where: str = f"닫힌 창 w{key} 기준선" if key else "창 기준선" if baseline else "지금 시험"
+                where: str = f"닫힌 창 w{key} 기준선" if key else "열린 창 기준선" if baseline else "지금 시험"
                 if body is None:
                     reds.append(f"{tag} 케이스가 기준 판에 없다({where})")
                     continue
                 flat: str = _SPACE.sub("", body)
                 for old in olds:
                     if old is not None and _SPACE.sub("", old) not in flat:
-                        reds.append(f"{tag} 바뀌는 기대 «{old[:60]}» 원문이 기준 판 케이스에 없다" + (f"({where})" if key else ""))
+                        reds.append(f"{tag} 바뀌는 기대 «{old[:60]}» 원문이 기준 판 케이스에 없다"
+                                    + (f"({where})" if key else consumed_by(v.vid, t.case, t.verb, old)))
     for w in past:                                           # §1-4 집행된 원소의 보존
         for (vid, kind, case, verb, o), extra in sorted(w.executed.items(), key=lambda kv: str(kv[0])):
             if (vid, kind, case, verb, o, extra) not in now_elements:
@@ -3961,7 +3989,7 @@ def _collect_notes(project: Path, folder: Path, spec: SpecChanges) -> "list[str]
 
 
 def cmd_changes(project: Path, folder: Path, mode: str, applied: "Path | None", baseline: "Path | None") -> int:
-    """`changes <폴더> [--candidate | --applied <후보> | --gate] [--baseline <창 open 기록>]`.
+    """`changes <폴더> [--candidate | --applied <후보> | --gate] [--baseline <열린 창 open 기록>]`.
 
     `--candidate` 의 후보 스냅숏 = 지금 스냅숏 + 결속 칸 `resolution_rows_digest`(곁 자료 해소 판정 표 `rows` 의 정규 JSON sha256 —
     도구의 무결성 칸 · 승인 후보의 내용 목록 아님) · 후보 digest 는 그 후보 스냅숏 전체로 센다. 지금 스냅숏 · `--gate` 최종 digest ·
@@ -7133,7 +7161,8 @@ def main(argv: "list[str]") -> int:
     group.add_argument("--candidate", action="store_true")
     group.add_argument("--applied")
     group.add_argument("--gate", action="store_true")
-    p.add_argument("--baseline", help="창 open 기록(w<n>-open.json) — «바뀌는 기대» 실재를 창 기준선에서 본다")
+    p.add_argument("--baseline", help="열린 창의 open 기록(w<n>-open.json) — «바뀌는 기대» 실재를 그 창 기준선에서 본다(닫힌 창 "
+                                       "기준선은 changes 가 창 기록으로 고른다)")
     try:
         ns = ap.parse_args(argv)
     except SystemExit as exc:
