@@ -5244,6 +5244,22 @@ class AclConstructorPortRegression(unittest.TestCase):
     def test_plain_assignment_is_constructor_only(self) -> None:
         self.assertEqual(self.ports(summary_adapter=self.FIELD.replace("self._clock: ClockPort = clock", "self._clock = clock")), {"SummaryPort"})
 
+    def test_function_local_annotation_is_not_an_implementation(self) -> None:
+        # F4-202 같은 결 — 메서드 · 그 안 중첩 함수의 지역 이름 주석은 실행되지 않는 주석이다(포트를 구현한 증거가 아니다).
+        local = self.FIELD + ("\n    def stamp(self) -> str:\n        clock: ClockPort = self._clock\n\n"
+                              "        def inner() -> str:\n            later: ClockPort\n            later = clock\n"
+                              "            return later.now()\n\n        return inner()\n")
+        self.assertEqual(self.ports(summary_adapter=local), {"SummaryPort"})
+
+    def test_annotation_outside_function_locals_keeps_the_port(self) -> None:
+        for label, tail in (
+                ("클래스 몸통 칸 주석", "\n    default_clock: ClockPort | None = None\n"),
+                ("메서드 안 속성 대상 주석", "\n    def keep(self) -> None:\n        self._other: ClockPort = self._clock\n"),
+                ("지역 주석 + 반환 주석", "\n    def clock(self) -> ClockPort:\n        clock: ClockPort = self._clock\n"
+                                         "        return clock\n")):
+            with self.subTest(label):
+                self.assertEqual(self.ports(summary_adapter=self.FIELD + tail), {"ClockPort", "SummaryPort"})
+
     def test_other_uses_keep_the_port(self) -> None:
         returns = self.FIELD + "\n    def clock(self) -> ClockPort:\n        return self._clock\n"
         self.assertEqual(self.ports(summary_adapter=returns), {"ClockPort", "SummaryPort"})
@@ -8403,6 +8419,337 @@ class AclValidationTryRegression(unittest.TestCase):
                                  got)
 
 
+# F4-202 · F4-187 #473 주석 행렬 — 사례 꼴은 `F4_167_CASES` 와 같다. 앞 9 = 함수 몸통 자리 지역 주석 · 대입 · 지움 대상 이름
+# (F202-0 · T1 · T7 ~ T10 · 꼴 ② 곧은 꼴 · S1 · S2 — 배포판 붉음, 고친 판 0) · 그다음 10 = 그대로 붉은 대조(꼴 ② 둘 · 주석이
+# 평가되는 자리 넷 · 주석 대입의 대상 식 둘 · 읽는 이름 둘) · 끝 5 = 구현 검토 사례(안쪽 기저 try 갈래 B17 · async B1 · 첨자 대상
+# 주석 X2 — 배포판 붉음, 고친 판 0 · 덧셈 대입 바깥 이름 X1 — 둘 다 0 · 모듈 자리 안쪽 기저 try 갈래 A9 — 그대로 붉음).
+_F4_202_WIRE: dict[str, str] = {'schema/__init__.py': "", 'schema/part_wire.py': """\
+            from pydantic import BaseModel
+
+            class PartWire(BaseModel):
+                text: str
+"""}
+F4_202_CASES: tuple[tuple[str, int, int, dict], ...] = (
+    ('F202-0 try 안 지역 주석 = 짝 ACL wire(`wire: PartWire = 검증`)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text: str):
+            try:
+                wire: PartWire = PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+            return wire.text
+""", "files": _F4_202_WIRE}),
+    ('T1 지역 주석 = wire 꾸밈(`PartWire | None`)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text: str):
+            try:
+                wire: PartWire | None = PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+            return wire
+""", "files": _F4_202_WIRE}),
+    ('T7 지역 주석 = 같은 파일 클래스', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        class _Judged:
+            pass
+
+        def read(text: str):
+            try:
+                wire: _Judged = PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+            return wire
+""", "files": _F4_202_WIRE}),
+    ('T8 지역 주석 = 창구 import 이름', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text: str):
+            try:
+                wire: get_order_query = PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+            return wire
+""", "files": _F4_202_WIRE}),
+    ('T9 값 없는 지역 주석이 try 안(`wire: PartWire` 뒤 대입)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text: str):
+            try:
+                wire: PartWire
+                wire = PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+            return wire.text
+""", "files": _F4_202_WIRE}),
+    ('T10 메서드 안 검증 try(창구 try 뒤 따로)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        class OrdersOrderLookupAdapter:
+            def read(self, order_id: int):
+                try:
+                    response = get_order_query(GetOrderRequest(order_id=order_id))
+                except OrderLookupPublishedError:
+                    return None
+                try:
+                    wire: PartWire = PartWire.model_validate_json(response.body)
+                except ValidationError:
+                    return None
+                return wire.text
+""", "files": _F4_202_WIRE}),
+    ('꼴 ② 곧은 꼴 — 검증만 try · 주석 지역 · 변환은 try 밖', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _answer_in(wire: PartWire) -> str:
+            return wire.text
+
+        def read(text: str):
+            try:
+                wire: PartWire = PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+            return _answer_in(wire)
+""", "files": _F4_202_WIRE}),
+    ('S1 대입 대상 이름 = 같은 파일 메서드 이름(`read = 검증`)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        class OrdersOrderLookupAdapter:
+            def read(self, text: str):
+                return _judged(text)
+
+        def _judged(text: str):
+            try:
+                read = PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+            return read.text
+""", "files": _F4_202_WIRE}),
+    ('S2 지움 대상 이름 = 같은 파일 함수 이름(`del _answer_in`)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _answer_in(wire: PartWire) -> str:
+            return wire.text
+
+        def read(text: str):
+            _answer_in = None
+            try:
+                del _answer_in
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": _F4_202_WIRE}),
+    ('대조 꼴 ② F2-0 — 검증 + 같은 파일 변환이 한 try', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _answer_in(wire: PartWire) -> str:
+            return wire.text
+
+        def read(text: str):
+            try:
+                return _answer_in(PartWire.model_validate_json(text))
+            except ValidationError:
+                return None
+""", "files": _F4_202_WIRE}),
+    ('대조 꼴 ② 지역 주석 뒤 같은 try 에서 변환 부름', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _answer_in(wire: PartWire) -> str:
+            return wire.text
+
+        def read(text: str):
+            try:
+                wire: PartWire = PartWire.model_validate_json(text)
+                return _answer_in(wire)
+            except ValidationError:
+                return None
+""", "files": _F4_202_WIRE}),
+    ('대조 try 안 중첩 class 몸통 주석이 창구를 부름(클래스 자리 — 평가됨)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text: str):
+            try:
+                class _Seen:
+                    got: get_order_query(GetOrderRequest(order_id=1)) = None
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": _F4_202_WIRE}),
+    ('대조 모듈 자리 try 의 주석 = 창구 이름(모듈 자리 — 평가됨)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        try:
+            _FIRST: get_order_query = PartWire.model_validate_json("{}")
+        except ValidationError:
+            _FIRST = None
+""", "files": _F4_202_WIRE}),
+    ('대조 함수 안 class 몸통 자리 try 의 주석 = 창구 이름(클래스 자리 — 평가됨)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text: str):
+            class _Reader:
+                try:
+                    got: get_order_query = PartWire.model_validate_json(text)
+                except ValidationError:
+                    got = None
+            return _Reader.got
+""", "files": _F4_202_WIRE}),
+    ('대조 try 안 중첩 def 매개변수 주석이 창구를 부름(def 때 평가)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text: str):
+            try:
+                def _parse(raw: get_order_query(GetOrderRequest(order_id=1))) -> str:
+                    return raw
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": _F4_202_WIRE}),
+    ('대조 주석 대입의 속성 대상 식이 같은 파일 함수 부름(`_sink().last: str = …` · 검증 없는 try)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def _sink():
+            return get_order_query
+
+        def read(text: str):
+            try:
+                _sink().last: str = text
+                return json.loads(text)
+            except ValueError:
+                return None
+""", "files": _F4_202_WIRE}),
+    ('대조 주석 대입의 첨자 대상 식이 같은 파일 함수 부름(`_slot()["last"]: str = …`)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        _SEEN = {}
+
+        def _slot():
+            return _SEEN
+
+        def read(text: str):
+            try:
+                _slot()["last"]: str = text
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": _F4_202_WIRE}),
+    ('대조 같은 파일 메서드 이름을 읽음(`handler = read`)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        class OrdersOrderLookupAdapter:
+            def read(self, text: str):
+                return _judged(text)
+
+        def _judged(text: str):
+            try:
+                wire = PartWire.model_validate_json(text)
+                handler = read
+            except ValidationError:
+                return None
+            return handler, wire
+""", "files": _F4_202_WIRE}),
+    ('대조 덧셈 대입 대상 이름 = 같은 파일 메서드 이름(`read += …` — 읽는다)', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        class OrdersOrderLookupAdapter:
+            def read(self, text: str):
+                return _judged(text)
+
+        def _judged(text: str):
+            read = ""
+            try:
+                read += PartWire.model_validate_json(text).text
+            except ValidationError:
+                return None
+            return read
+""", "files": _F4_202_WIRE}),
+    ('B17 바깥 try 몸통 안 기저 잡는 안쪽 try 의 else 지역 주석', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(order_id: int, text: str):
+            try:
+                try:
+                    response = get_order_query(GetOrderRequest(order_id=order_id))
+                except OrderLookupPublishedError:
+                    return None
+                else:
+                    wire: PartWire = PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+            return wire
+""", "files": _F4_202_WIRE}),
+    ('B1 async 메서드 안 검증 try + 지역 주석', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        class OrdersOrderLookupAdapter:
+            async def read(self, order_id: int, text: str):
+                try:
+                    wire: PartWire = PartWire.model_validate_json(text)
+                except ValidationError:
+                    return None
+                return wire.text
+""", "files": _F4_202_WIRE}),
+    ('X2 함수 안 try 첨자 대상 주석 = 창구 이름(`seen["k"]: get_order_query = text` · 검증 없는 try)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text: str):
+            seen = {}
+            try:
+                seen["k"]: get_order_query = text
+                return json.loads(text)
+            except ValueError:
+                return None
+""", "files": _F4_202_WIRE}),
+    ('대조 X1 덧셈 대입 대상 = 바깥 이름(`count += 1`)', 0, 0, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        def read(text: str):
+            count = 0
+            try:
+                count += 1
+                return PartWire.model_validate_json(text)
+            except ValidationError:
+                return None
+""", "files": _F4_202_WIRE}),
+    ('대조 A9 모듈 자리 try 안 기저 잡는 안쪽 try 의 else 주석 = 창구 부름', 1, 1, {"slot": """\
+        from .schema.part_wire import PartWire
+
+        try:
+            try:
+                pass
+            except OrderLookupPublishedError:
+                pass
+            else:
+                _LAST: get_order_query(GetOrderRequest(order_id=1)) = None
+            _FIRST = PartWire.model_validate_json("{}")
+        except ValidationError:
+            _FIRST = None
+""", "files": _F4_202_WIRE}),
+)
+
+
+class AclLocalAnnotationTryRegression(unittest.TestCase):
+    """F4-202 · F4-187 — #473 은 함수 몸통 자리 변수 주석의 주석 식(`x: T = …` · `d[k]: T = …` 의 T — 대상 꼴 무관)과 이름 대입 · 지움
+    대상을 «돈다» 로 세지 않는다(파이썬은 함수 안 변수 주석을 평가하지 않고, 이름에 대입 · 지움은 코드를 부르지 않는다). 클래스 몸통 ·
+    모듈 자리 주석(안쪽 기저 try 갈래 안 포함), 중첩 def 의 매개변수
+    주석, 주석 대입의 속성 · 첨자 대상 식, 읽는 이름(덧셈 대입 대상 포함)은 그대로 센다. 행렬 24(`F4_202_CASES` 머리 주석) — 기대 수는
+    2.44.0 배포판으로 잰 (슬롯 try 줄 · #473 줄 전체) 값이고, 앞 9 와 검토 사례 B17 · B1 · X2 만 0 으로 바꿨다. 사례 짓기는
+    `AclValidationTryRegression` 과 같다.
+    """
+
+    HEAD: str = AclValidationTryRegression.HEAD
+    lines = AclValidationTryRegression.lines
+
+    def test_matrix_skips_unevaluated_local_annotations_and_store_names(self) -> None:
+        self.assertEqual(len(F4_202_CASES), 24)
+        for name, slot_lines, all_lines, case in F4_202_CASES:
+            with self.subTest(name):
+                got: list[str] = self.lines(case)
+                self.assertEqual((sum("order_lookup_adapter.py:" in line for line in got), len(got)), (slot_lines, all_lines),
+                                 got)
+
+
 class PydanticAdapterNameRegression(unittest.TestCase):
     """F4-170 — #134 는 모듈 수준 `from pydantic import` 로만 한 번 묶인 이름(검증 도구 `TypeAdapter`)을 «어댑터 직접 생성» 으로
     세지 않는다. 바깥 인프라 어댑터(`requests` · allauth · 루트 모듈 · 같은 파일 클래스) · 다시 묶인 이름(지역 import ·
@@ -9903,6 +10250,7 @@ class PreRouteFixedFileRegression(unittest.TestCase):
 # 고침을 옛 코드로 되돌린 것 하나씩과, 설계 검토 · 구현 검토가 짚은 조건을 하나씩 무른 것.
 _CI_FILE: str = "check-context-isolation.py"
 _ACL_TRY: tuple[str, ...] = ("AclValidationTryRegression", "AclWindowTryRegression")
+_ACL_ANN: tuple[str, ...] = ("AclLocalAnnotationTryRegression",)
 _CC_FILE: str = "check-api-error-controller-contract.py"
 _BV_FILE: str = "check-business-vocabulary.py"
 _CC_CLASS: tuple[str, ...] = ("CrossScopeControllerHelperRegression",)
@@ -10022,7 +10370,7 @@ _MUTATIONS: tuple[tuple[str, str, tuple[tuple[str, str], ...], tuple[str, ...]],
     ("F4-167 locals 장치 안 봄", _CI_FILE, (
         ('    "globals", "locals", "vars", "setattr",', '    "globals", "vars", "setattr",'),), _ACL_TRY),
     ("F4-167 받은 검증 부르기의 인자 안 봄", _CI_FILE, (
-        ("                    stack.extend([*n.args, *(k.value for k in n.keywords)])\n", ""),), _ACL_TRY),
+        ("                    stack.extend((x, local) for x in [*n.args, *(k.value for k in n.keywords)])\n", ""),), _ACL_TRY),
     ("F4-167 클래스 실음에서 type 이름 뺌", _CI_FILE, (
         ('if x.id == "type" or x.id in self.pydantic:', "if x.id in self.pydantic:"),), _ACL_TRY),
     ("F4-167 꼴 B 부르는 자리 ** 펼치기 받음", _CI_FILE, (
@@ -10114,6 +10462,38 @@ _MUTATIONS: tuple[tuple[str, str, tuple[tuple[str, str], ...], tuple[str, ...]],
     ("F4-167 다른 모듈 바탕도 받음", _CI_FILE, (
         ('                    elif not (isinstance(b, ast.Name) and (b.id in enum_bases or b.id in ("str", "int", "object"))):\n'
          "                        return False", "                    elif False:\n                        return False"),), _ACL_TRY),
+    ("F4-202 함수 안 변수 주석 건너뛰기 끔", _CI_FILE, (
+        ("n.annotation if local and isinstance(n, ast.AnnAssign) else None", "None"),), _ACL_ANN),
+    ("F4-202 주석 건너뛰기를 자리 무관으로 넓힘(클래스 몸통 · 모듈 자리도)", _CI_FILE, (
+        ("n.annotation if local and isinstance(n, ast.AnnAssign) else None",
+         "n.annotation if isinstance(n, ast.AnnAssign) else None"),), _ACL_ANN),
+    ("F4-202 이름을 읽을 때만 셈 끔(대입 · 지움 대상도 셈)", _CI_FILE, (
+        ("            return isinstance(n.ctx, ast.Load) and n.id in self.inside",
+         "            return n.id in self.inside"),), _ACL_ANN),
+    ("F4-202 덧셈 대입 대상 이름 읽음 안 셈", _CI_FILE, (
+        ("        if isinstance(n, ast.AugAssign) and isinstance(n.target, ast.Name) and n.target.id in self.inside:",
+         "        if False:"),), _ACL_ANN),
+    ("F4-202 함수 자리 주석 대입의 속성 대상 식 건너뜀", _CI_FILE, (
+        ("stack.extend((x, inner) for x in ast.iter_child_nodes(n) if x is not unrun)",
+         "stack.extend((x, inner) for x in ast.iter_child_nodes(n) if x is not unrun\n"
+         "                         and not (unrun is not None and x is n.target and isinstance(x, ast.Attribute)))"),), _ACL_ANN),
+    ("F4-202 안쪽 기저 try 갈래 자리 늘 함수", _CI_FILE, (
+        ("stack.extend((x, local) for x in [*n.handlers, *n.orelse, *n.finalbody])",
+         "stack.extend((x, True) for x in [*n.handlers, *n.orelse, *n.finalbody])"),), _ACL_ANN),
+    ("F4-202 안쪽 기저 try 갈래 자리 늘 함수 아님", _CI_FILE, (
+        ("stack.extend((x, local) for x in [*n.handlers, *n.orelse, *n.finalbody])",
+         "stack.extend((x, False) for x in [*n.handlers, *n.orelse, *n.finalbody])"),), _ACL_ANN),
+    ("F4-202 async def 를 함수 자리로 안 봄", _CI_FILE, (
+        ("(ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):\n        return True",
+         "(ast.FunctionDef, ast.Lambda)):\n        return True"),), _ACL_ANN),
+    ("F4-202 덧셈 대입 대상 이름 아무거나 셈", _CI_FILE, (
+        ("isinstance(n.target, ast.Name) and n.target.id in self.inside:", "isinstance(n.target, ast.Name):"),), _ACL_ANN),
+    ("F4-202 주석 건너뛰기를 단순 이름 대상만", _CI_FILE, (
+        ("n.annotation if local and isinstance(n, ast.AnnAssign) else None",
+         "n.annotation if local and isinstance(n, ast.AnnAssign) and isinstance(n.target, ast.Name) else None"),), _ACL_ANN),
+    ("F4-202 #14 함수 안 지역 이름 주석 빼기 끔", _CI_FILE, (
+        ("_scoped_nodes(mod) if local and isinstance(n, ast.AnnAssign)", "_scoped_nodes(mod) if False and isinstance(n, ast.AnnAssign)"),),
+     ("AclConstructorPortRegression",)),
     ("F4-170 pydantic 이름 면제 걷음", "check-port-adapter-pairing.py", (
         ("validators: set[str] = _pydantic_only_names(mod) if mod else set()", "validators: set[str] = set()"),),
      ("PydanticAdapterNameRegression",)),

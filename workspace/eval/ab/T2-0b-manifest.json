@@ -343,6 +343,8 @@
         "dddjango/agents/discipline-reviewer.md",
         "dddjango/commands/dddjango.md",
         "dddjango/scripts/behavior_guard.py",
+        "dddjango/scripts/check-context-isolation.py",
+        "dddjango/scripts/pregate_symbol_kinds.json",
         "dddjango/scripts/refactor_audit.py",
         "dddjango/scripts/rulepack.json"
       ],
@@ -643,7 +645,7 @@
         "workspace/eval/fixtures/bounce_counter/expected.json": "2de2acde68dd4a255db02dc5316e1263bbb5fbb93b39b86e3b458007626189b9",
         "workspace/tools/collect_violations.py": "b1376af5cab3714a89f4a0b464e8d7c7d3b78ad42b1bfbd1dc74cfce0eff93de",
         "workspace/tools/construct_drift_report.py": "8eb6d580801423308ae6594c1b2352ff903ce21b2d1f021d2cb85f5d3e836602",
-        "workspace/tools/field_report_checker_smoke.py": "1368530db141dd26beda57071214cbb397401380cf34dc0384413045e48d8e50",
+        "workspace/tools/field_report_checker_smoke.py": "7bb5a425bdcbc7bd3c76190a15a0e8aefdcecea081c0e08932644fea42de9431",
         "workspace/tools/findings_count_matrix.py": "c421b5262ecf61cf655eaff354e17048cd1f948603b858d636a53ba74862a4b3",
         "workspace/tools/firing_probe.py": "09994ac306dbb06dfce46429bdd8701cdd39bf6964f515e596dbae3dbd918003",
         "workspace/tools/manifest_seal.py": "ef438f1cacc2191176dd2cc5ac5a675a4ea8036047c3185b9ee0c4d13970bd46",
@@ -680,7 +682,7 @@
         "workspace/tools/probe-fixture-requirements.txt"
       ],
       "n_files": 36,
-      "tree_sha256": "78c13a74ec2e03ba509a105497b37f03e71c6cc56f98a16bb4e005780936890d",
+      "tree_sha256": "8130bfd5b72d3ca33117286428518fd61eec1b93ee88972d004f7eb3f02f4e52",
       "why": "측정기. 실런 중 측정기가 바뀌면 앞뒤 런의 수치가 같은 자를 안 쓴 것이 된다(D11)."
     },
     "orders": {
@@ -704,7 +706,7 @@
     },
     "packs": {
       "files": {
-        "dddjango/scripts/pregate_symbol_kinds.json": "1ed2ba1955a0abd1c7b4f940d1f58cedfdf5ac849dfb99747bc21ed6384c6f72",
+        "dddjango/scripts/pregate_symbol_kinds.json": "839f1eb2c1e1be02b302253d51499e2f0dcd1e5b49d331ff88ebc7e7d5171b82",
         "dddjango/scripts/rulepack.json": "a69de10b71c2fd65fca53ea0fc26796e091575c322f005a5155a1fd9e2034570",
         "workspace/eval/ab/T0-rule-owner-map-snapshot.md": "d3e75311118630d4c30bea1d69e7a1b31dc40dc3416f920a0f77ccfc37ad13ae"
       },
@@ -714,7 +716,7 @@
         "workspace/eval/ab/T0-rule-owner-map-snapshot.md"
       ],
       "n_files": 3,
-      "tree_sha256": "06fac97e27933c9051c36db9bff24e9970273006bbc5d6865bbf75a4d76cb737",
+      "tree_sha256": "a391b6a6c74d05064a7e0ead2d520e657aa08d4d8a3389ee0efd0585d63931ae",
       "why": "C암 규칙 팩과 B암 재료. 팩이 바뀌면 처치 자체가 바뀐다."
     },
     "pipeline": {
@@ -896,7 +898,7 @@
         "dddjango/scripts/check-choices-literal-consumption.py": "da25193ef0ba72937a4c2b29a239e046fcec578eb7b68fa5d0586be6aa20c2b6",
         "dddjango/scripts/check-common-container.py": "084c6681a3015c27d5cb17cb86599e00e9e4d9ada09392ca77a830f980ce8641",
         "dddjango/scripts/check-composition-root.py": "2749460d8d4c541ac8a96565bf68b5e60ea231fbb904b77072cba456061dec75",
-        "dddjango/scripts/check-context-isolation.py": "4d78593d3319c799e456f24f455bf4a58252efbef9a614d5856b46b1a1ec7822",
+        "dddjango/scripts/check-context-isolation.py": "eb248dfc31c0dafc0c2c31bbbb85cbe33097b269d9f6cf057e76d2bbffbb6857",
         "dddjango/scripts/check-db-table.py": "1dd2d367261f0fa708ea0d271bd7a3298baf2577d9f922c0c01ec46aef1cd7f8",
         "dddjango/scripts/check-domain-model.py": "7a0c51c816bed7852b050c004ef5f5d04931664582943166c69403bfae222f3c",
         "dddjango/scripts/check-error-centralization.py": "81f415a602393f3b948ec85aa587620b6599422a9986979cc38e233db726ee1b",
@@ -945,7 +947,7 @@
         "workspace/tools/ab_score.py"
       ],
       "n_files": 41,
-      "tree_sha256": "acac2c62278752b9cc29e2363c6ebad25e76d7db99a7c3b7eef6595455962efe",
+      "tree_sha256": "129a59db38b3faed7b6272cbf8378b85678c36619c13186d92be37a9b9f87de1",
       "why": "판정 스칼라(결정적 검사기 위반 수)를 만드는 전부. 발주·암 산출물을 보기 전에 동결한다 — 산출물을 본 뒤 채점기를 만지면 판정 교락(L-M #4)."
     }
   },
@@ -993,11 +995,11 @@
     "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.43.0/scripts",
     "cache-codex": "a2b30f64321d01a4ab9fb1d4ebd82c017d1bf24d1f17eee5200374c977cd1316",
     "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.43.0/skills/dddjango/scripts",
-    "source-claude": "6ca64c9359a992eb8847a199ec5996568075ee28e74557841d44863ea19f8f6c",
-    "source-codex": "6ca64c9359a992eb8847a199ec5996568075ee28e74557841d44863ea19f8f6c"
+    "source-claude": "093468bf58185918964a2df67a6a633520089d5e8299d3f87bc36a3bc3dba0b1",
+    "source-codex": "093468bf58185918964a2df67a6a633520089d5e8299d3f87bc36a3bc3dba0b1"
   },
-  "sealed_commit": "507a5d5021eb2fc13888298ba25b58e5c11db6f2",
-  "self_sha256": "1210b1c0017ccc3313f6c7da7d30652528f6efdb30e282f5a73667b731697b10",
+  "sealed_commit": "c9e29ffcd6a7d2d2649c779c9030feb496197b0a",
+  "self_sha256": "f059b6d0f812cce67da6501f01fcec982f9a346a2cde2f208232443ee09f7eb7",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [

@@ -1625,11 +1625,34 @@ def _enclosing_functions(mod: ast.Module) -> dict[int, ast.FunctionDef | ast.Asy
     return out
 
 
+def _inner_local(node: ast.AST, local: bool) -> bool:
+    """`node` 의 아이들이 함수 몸통 자리에 놓이나 — def · 람다 안은 함수 자리, class 몸통은 아니다(그 밖은 `local` 그대로).
+    def · class 의 식 아이(데코레이터 · 매개변수 주석 · 기본값 · 바탕)에는 문장이 없어 이 판정이 닿지 않는다."""
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+        return True
+    return False if isinstance(node, ast.ClassDef) else local
+
+
+def _scoped_nodes(mod: ast.Module) -> "list[tuple[ast.AST, bool]]":
+    """모든 마디와 그 마디가 함수 몸통 자리(클래스 몸통 · 모듈 아님)에 놓였나 — 그 자리의 변수 주석은 실행되지 않는다."""
+    out: list[tuple[ast.AST, bool]] = []
+    stack: list[tuple[ast.AST, bool]] = [(mod, False)]
+    while stack:
+        node, local = stack.pop()
+        out.append((node, local))
+        inner: bool = _inner_local(node, local)
+        stack.extend((child, inner) for child in ast.iter_child_nodes(node))
+    return out
+
+
 class _WindowTry:
     """기저를 안 잡는 try 에서 상대 창구 코드가 돌 수 있나(#473) — 모르면 돈다고 본다.
 
     안 돈다 = 몸통(기저를 잡고 다시 던지지 않는 안쪽 try 의 몸통은 뺀다)에서
-      ① 창구 · ACL 안 import 이름 · 같은 파일 함수/클래스 이름이 글자로 없고(인자 · 람다 안 포함 — 콜백이 잡힌다)
+      ① 창구 · ACL 안 import 이름 · 같은 파일 함수/클래스 이름이 글자로 없고(인자 · 람다 안 포함 — 콜백이 잡힌다). 함수 몸통
+         자리 변수 주석의 주석 식(`x: T = …` · `o.a: T = …` · `d[k]: T = …` 의 T — 대상 꼴 무관 · 파이썬은 함수 안 변수 주석을
+         평가하지 않는다)과 어느 자리든 이름 대입 · 지움 대상(코드를 부르지 않는다)은 세지 않는다 — 클래스 몸통 · 모듈 자리 주석,
+         매개변수 · 반환 주석, 주석 대입의 속성 · 첨자 대상 식, 덧셈 대입 대상 이름(읽는다)은 센다
       ② 모든 호출 · with · 반복 · await · yield from 대상의 뿌리가 «알려진 바깥» 이고
          (내장 · 창구 밖 import · 그것으로만 지은 모듈 상수 — 파일 안에서 다시 묶이지 않은 이름)
       ③ self · cls 의 속성 · 같은 파일 함수 이름의 속성 · 같은 파일에서 값을 담는 속성을 읽지 않고
@@ -1637,7 +1660,8 @@ class _WindowTry:
     알려진 바깥 함수는 넘겨받은 맨 이름(지역 · 매개변수)과 그 칸을 자료로 쓴다고 본다 — 이 판정의 한계다.
 
     받은 글 검증(2026-11-14 F4-167): 몸통의 `model_validate_json` 부르기는 받는 쪽이 아래 셋 가운데 하나일 때만 그 부르기와
-    받는 쪽 마디를 «안 돈다» 로 본다. 인자와 몸통의 다른 마디는 위 판정 그대로다(검증 말고 같은 파일 함수를 함께 부르면 붉다).
+    받는 쪽 마디를 «안 돈다» 로 본다. 인자와 몸통의 다른 마디는 위 판정 그대로다(검증 말고 같은 파일 함수를 함께 부르면 붉다 —
+    곧은 꼴 = 검증 부름만 try 에 두고 변환은 try 밖에서, 받은 값은 주석 단 지역 변수로).
       A 선언만 있는 wire 클래스 — 같은 파일 클래스, 또는 짝 ACL 폴더 안 상대 import(그 import 말고 묶기 0). 바탕은 같은 파일
         wire 면 pydantic 모델 · 다른 wire, 상대 wire 모듈이면 거기에 enum 도. 데코레이터 · 메서드 · 검증기 0 · 클래스 키워드는 글자만,
         몸통은 칸 · 글자 · 글자만 받는 `Field(...)` · `ConfigDict(...)` 뿐, 칸 주석은 맨 타입 · 계약 · 표준 값 이름 · 같은 조건
@@ -1672,6 +1696,7 @@ class _WindowTry:
                  bc_imports: _BcImports | None = None) -> None:
         self.base_names: set[str] = base_names
         self._bc_imports: _BcImports | None = bc_imports
+        self._local_tries: set[int] = {id(n) for n, local in _scoped_nodes(mod) if local and isinstance(n, ast.Try)}
         self.defs: set[str] = set()
         self.holders: set[str] = set()  # 파일 안에서 값을 담는 속성 이름(`x.a = …` · 클래스 몸통 `a = …`) — 창구를 담았을 수 있다
         self.inside: set[str] = set()
@@ -2386,27 +2411,32 @@ class _WindowTry:
 
     def may_run_window(self, node: ast.Try, encl: ast.FunctionDef | ast.AsyncFunctionDef | None = None) -> bool:
         approved: set[int] = self._validation_nodes(node, encl)
-        stack: list[ast.AST] = list(node.body)
+        start_local: bool = id(node) in self._local_tries  # try 가 함수 몸통 자리(클래스 몸통 · 모듈 아님)에 놓였나
+        stack: list[tuple[ast.AST, bool]] = [(n, start_local) for n in node.body]
         while stack:
-            n: ast.AST = stack.pop()
+            n, local = stack.pop()
             if isinstance(n, ast.Try) and _covers_base(n, self.base_names) and not _reraises(n):
-                stack.extend([*n.handlers, *n.orelse, *n.finalbody])  # 몸통의 창구 예외는 안쪽 try 에서 끝난다
+                stack.extend((x, local) for x in [*n.handlers, *n.orelse, *n.finalbody])  # 몸통의 창구 예외는 안쪽 try 에서 끝난다
                 continue
             if id(n) in approved:  # 받은 글 검증 부르기 · 그 받는 쪽 — 인자와 받는 쪽 안만 더 본다
                 if isinstance(n, ast.Call):
-                    stack.extend([*n.args, *(k.value for k in n.keywords)])
+                    stack.extend((x, local) for x in [*n.args, *(k.value for k in n.keywords)])
                     if isinstance(n.func, ast.Attribute):
-                        stack.append(n.func.value)
+                        stack.append((n.func.value, local))
                 continue
             if self._runs(n):
                 return True
-            stack.extend(ast.iter_child_nodes(n))
+            unrun: ast.AST | None = n.annotation if local and isinstance(n, ast.AnnAssign) else None  # 함수 안 변수 주석
+            inner: bool = _inner_local(n, local)
+            stack.extend((x, inner) for x in ast.iter_child_nodes(n) if x is not unrun)
         return False
 
     def _runs(self, n: ast.AST) -> bool:
-        """이 마디에서 «알려진 바깥» 밖의 코드가 돌 수 있나."""
+        """이 마디에서 «알려진 바깥» 밖의 코드가 돌 수 있나 — 이름은 읽을 때만(대입 · 지움 대상 이름은 코드를 부르지 않는다)."""
         if isinstance(n, ast.Name):
-            return n.id in self.inside
+            return isinstance(n.ctx, ast.Load) and n.id in self.inside
+        if isinstance(n, ast.AugAssign) and isinstance(n.target, ast.Name) and n.target.id in self.inside:
+            return True  # `x += …` 는 대상 이름을 읽는다
         if isinstance(n, ast.Attribute):  # 메서드 · property · 담아 둔 창구(콜백) — 매개변수 · 지역 · 받은 값의 칸은 자료로 본다
             return n.attr in self.defs or n.attr in self.holders or _root(n) in ("self", "cls")
         if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in _CONSUMING_BUILTINS and any(
@@ -2511,8 +2541,11 @@ def _cross_bc_port_names(acl: Path | None) -> set[str]:
 
 def _constructor_only_port_names(mod: ast.Module) -> set[str]:
     """`__init__` 매개변수 주석과 그 `self.<칸>: <포트> = <매개변수>` 대입 주석 안에서만 쓰인 이름 — 어댑터가 구현하는 포트가 아니라
-    주입받은 의존이다(파일마다 판정 — 다른 어댑터가 상속하거나 `returns` 로 쓰면 그 파일에서 #14 로 살아난다)."""
-    allowed: set[int] = set()
+    주입받은 의존이다(파일마다 판정 — 다른 어댑터가 상속하거나 `returns` 로 쓰면 그 파일에서 #14 로 살아난다). 함수 몸통 자리의 지역
+    이름 주석(`clock: <포트> = self._clock`)도 지역 값의 타입 표기일 뿐이라 구현 증거로 세지 않는다(클래스 몸통 · 모듈 자리 주석과
+    속성 대상 주석은 센다)."""
+    allowed: set[int] = {id(sub) for n, local in _scoped_nodes(mod) if local and isinstance(n, ast.AnnAssign)
+                         and isinstance(n.target, ast.Name) for sub in ast.walk(n.annotation)}
     for fn in ast.walk(mod):
         if not (isinstance(fn, ast.FunctionDef) and fn.name == "__init__" and fn.args.args):
             continue
