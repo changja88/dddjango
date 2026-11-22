@@ -18,10 +18,16 @@ import re
 import sys
 from pathlib import Path
 
+import checker_target
+
 SKIP_DIRS = {
     ".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango",
     "build", "dist", ".tox", ".mypy_cache", ".pytest_cache", ".eggs",
 }
+# BC 자리가 될 수 없는 `application/` 직계 이름(`bc_folder`) — `build` · `dist` 는 BC 이름일 수 있어 `SKIP_DIRS` 와 다르다.
+_BC_SKIP_NAMES: frozenset[str] = frozenset({
+    ".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango",
+})
 
 # 불용어 — 어느 BC 에나 나오는 낱말(#628 축자 여섯 + 같은 부류). 닫지 않는다.
 STOPWORDS = frozenset({
@@ -85,6 +91,15 @@ def bc_vocab(bc_dir: Path) -> set[str]:
     return out
 
 
+def bc_folder(p: Path) -> bool:
+    """`application/` 직계 `p` 가 BC 자리인가 — 점 이름 · `_BC_SKIP_NAMES` · 캐시만 남은 폴더(`cache_only_instance`)는 아니다.
+
+    빈 폴더 · 링크 · 읽기 불능 · 실파일이 하나라도 있는 폴더는 BC 다."""
+    if not p.is_dir() or p.name.startswith(".") or p.name in _BC_SKIP_NAMES:
+        return False
+    return not checker_target.cache_only_instance(p)
+
+
 def server_bc_dirs(root: Path) -> list[Path]:
     """뿌리 `application/` 컨테이너의 BC — BC 마다 도는 검사의 대상이자 «어느 BC 든» 을 묻는 framework · `<project>/` 쪽 검사의 재료.
 
@@ -95,7 +110,7 @@ def server_bc_dirs(root: Path) -> list[Path]:
     c: Path = root / "application"
     if not c.is_dir() or set(c.parts) & SKIP_DIRS:
         return []
-    return [p for p in sorted(c.iterdir()) if p.is_dir() and not p.name.startswith(".")]
+    return [p for p in sorted(c.iterdir()) if bc_folder(p)]
 
 
 # framework 쪽 동음 낱말 — BC 이름에도 나오지만 framework 능력 · 순수 계산이 기술 뜻으로 쓰는 낱말(#628 · predicates ⓑ — 저장소가
@@ -180,7 +195,7 @@ def container_bc_names(bc: Path) -> set[str]:
     다른 컨테이너(자매 플러그인 dddjango-web 의 `web/application/<단위>` 등)의 폴더 이름은 이 BC 의
     공급자가 아니다 — 저장소 전체 이름(`bc_names`)으로 세면 화면 구역 이름이 서버 포트 이름을 붉게 잡는다.
     """
-    return {p.name for p in bc.parent.iterdir() if p.is_dir() and not p.name.startswith(".")}
+    return {p.name for p in bc.parent.iterdir() if bc_folder(p)}
 
 
 # python3.9 에는 sys.stdlib_module_names 가 없다 — 기본 목록으로 메운다.

@@ -55,10 +55,12 @@ import re
 import subprocess
 import sys
 import tokenize
+from pathlib import Path
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 import checker_target
 from findings import Candidates, Findings, emit_all
-from pathlib import Path
 
 try:
     import standard_tree as tree

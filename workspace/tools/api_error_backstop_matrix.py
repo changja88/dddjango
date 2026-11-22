@@ -5355,7 +5355,9 @@ def get_lesson(request, lesson_id: int):
 # 경로 앞 응답 꼴(F4-173 · #63 a · b · c) — 루트 API 의 정해진 클래스 하나 + framework/ninja/ 정본 · 표.
 # 정본 글은 검사기 옆 자산에서 읽는다(이 행렬은 글과 하위 프로세스만 쓴다 — Django · Ninja 를 import 하지 않는다).
 PRE_ROUTE_CANONICAL: Final = (CHECKER_DIR / "pre_route_responses_canonical.py").read_text(encoding="utf-8")
-# 옛 판(2.37.0) 정본 — #63 b 가 함께 받는다(F4-178 · 2.38.0 — 이미 옮긴 프로젝트는 바꾸지 않아도 된다).
+# 옛 판(2.38.0 · 2.37.0) 정본 — #63 b 가 함께 받는다(F4-178 · F4-201 — 이미 옮긴 프로젝트는 바꾸지 않아도 된다 ·
+# 표 칸은 그 판의 칸만).
+PRE_ROUTE_CANONICAL_2_38_0: Final = (CHECKER_DIR / "pre_route_responses_canonical_2_38_0.py").read_text(encoding="utf-8")
 PRE_ROUTE_CANONICAL_2_37_0: Final = (CHECKER_DIR / "pre_route_responses_canonical_2_37_0.py").read_text(encoding="utf-8")
 DOCUMENTED_API: Final = """from ninja.openapi.schema import OpenAPISchema
 from ninja_extra import NinjaExtraAPI
@@ -6847,6 +6849,7 @@ def pre_route_cases() -> list[Case]:
         ("""f'{existing.get("description", "")} · {entry["description"]}'""", """f"{existing.get('description', '')} · {entry['description']}\""""),
     )
     old_edit = canonical_with(PRE_ROUTE_CANONICAL_2_37_0, one_char)
+    old_2_38_edit = canonical_with(PRE_ROUTE_CANONICAL_2_38_0, one_char)
     mw_status_var = PRE_ROUTE_MIDDLEWARE.replace("status=503)", "status=MAINTENANCE_STATUS)").replace(
         "from django.http import JsonResponse\n", "from django.http import JsonResponse\n\nfrom framework.django.codes import MAINTENANCE_STATUS\n"
     )
@@ -6981,6 +6984,22 @@ class MaintenanceMiddleware:
         "config/settings/base.py": exempt_base["config/settings/base.py"] + 'MAINTENANCE_MODE_EXEMPT_PATHS: tuple[str, ...] = ("/api/health",)\n',
         "config/settings/production.py": "from config.settings.base import *  # noqa: F403\n",
     }
+    # F4-201 — 새 칸 `exempt_pattern`(꼴 · 설정 실존 · 좁힌 행 = `exempt` 와 같음) · 옛 사본은 옛 칸만.
+    pattern_cell = '        "exempt_pattern": (None, "MAINTENANCE_MODE_EXEMPT_PATTERNS"),\n'
+    pattern_anchor = '        "namespaces": ("api",),\n'
+    pattern_table = table_with(pattern_anchor, pattern_anchor + pattern_cell)
+    both_exempt_table = exempt_table.replace(pattern_anchor, pattern_anchor + pattern_cell, 1)
+    pattern_settings = {
+        "config/settings.py": PRE_ROUTE_SETTINGS
+        + 'MAINTENANCE_MODE_EXEMPT_PATHS: tuple[str, ...] = ("/api/health",)\n'
+        + 'MAINTENANCE_MODE_EXEMPT_PATTERNS: tuple[str, ...] = (r"/api/status/.+",)\n',
+    }
+    pattern_mw = mw | pattern_settings
+    pattern_503 = no_503.replace(
+        '    {"status": 413',
+        '    {"status": 503, "when": "all", "exempt_pattern": (None, "MAINTENANCE_MODE_EXEMPT_PATTERNS"), "description": "점검", "media_type": "text/html", "headers": {"Service-Maintenance-Ends-At": {"schema": {"type": "string"}}}},\n    {"status": 413',
+    )
+    old_copies = (("2-38-0", PRE_ROUTE_CANONICAL_2_38_0), ("2-37-0", PRE_ROUTE_CANONICAL_2_37_0))
     internal_imports = 'from config.api import DocumentedAPI\n\ninternal_api: DocumentedAPI = DocumentedAPI(urls_namespace="internal")\n'
     internal_plain = 'from ninja_extra import NinjaExtraAPI\n\ninternal_api: NinjaExtraAPI = NinjaExtraAPI(urls_namespace="internal")\n'
     ctor = 'api: DocumentedAPI = DocumentedAPI(urls_namespace="api")\n'
@@ -7218,11 +7237,36 @@ class MaintenanceMiddleware:
         # F4-178 — 서식 · 주석은 대조 밖 · 옛 판(2.37.0) 정본도 받는다 · 코드(함수 안 docstring · import 자리)는 대조 안.
         Case("pre-route-b-canonical-reformatted-clean", with_files(("framework/ninja/pre_route_responses.py", canonical_reformatted), base=base), openapi, auto, 0, "", note="F4-178 — 줄 묶음 · 홑따옴표 · import 한 줄씩"),
         Case("pre-route-b-canonical-noqa-clean", with_files(("framework/ninja/pre_route_responses.py", canonical_noqa), base=base), openapi, auto, 0, "", note="F4-178 — 린트는 `# noqa`"),
-        Case("pre-route-b-canonical-function-docstring", with_files(("framework/ninja/pre_route_responses.py", canonical_function_docstring), base=base), openapi, auto, 2, "(`pre_route_responses_canonical.py` 와 견줘 33번째 정의(`_plain`)부터 다름)", note="F4-178 — 함수 안 docstring 은 코드"),
+        Case("pre-route-b-canonical-function-docstring", with_files(("framework/ninja/pre_route_responses.py", canonical_function_docstring), base=base), openapi, auto, 2, "(`pre_route_responses_canonical.py` 와 견줘 34번째 정의(`_plain`)부터 다름)", note="F4-178 — 함수 안 docstring 은 코드"),
         Case("pre-route-b-canonical-type-checking", with_files(("framework/ninja/pre_route_responses.py", canonical_type_checking), base=base), openapi, auto, 2, "(`pre_route_responses_canonical.py` 와 견줘 빠진 import 1 · 더한 import 1 · 1번째 정의(`If`)부터 다름)", note="F4-178 — import 를 `TYPE_CHECKING` 으로 옮기면 코드가 바뀐다"),
         Case("pre-route-b-canonical-2-37-0-clean", with_files(("framework/ninja/pre_route_responses.py", PRE_ROUTE_CANONICAL_2_37_0), base=base), openapi, auto, 0, "", note="F4-178 — 2.38.0 정본만 받으면 exit 2(이미 옮긴 프로젝트)"),
         Case("pre-route-b-canonical-2-37-0-field-form-clean", with_files(("framework/ninja/pre_route_responses.py", old_field_form), base=base), openapi, auto, 0, "", note="F4-178 — 현장 꼴(포매터 고침 두 곳 + `# noqa: C901`)"),
         Case("pre-route-b-canonical-2-37-0-edited", with_files(("framework/ninja/pre_route_responses.py", old_edit), base=base), openapi, auto, 2, "(`pre_route_responses_canonical_2_37_0.py` 와 견줘 17번째 정의(`NINJA_RESPONSES`)부터 다름)", note="F4-178 — 옛 판 사본은 그 판과 견준 자리를 댄다(검토 m4)"),
+        Case("pre-route-b-canonical-2-38-0-edited", with_files(("framework/ninja/pre_route_responses.py", old_2_38_edit), base=base), openapi, auto, 2, "(`pre_route_responses_canonical_2_38_0.py` 와 견줘 17번째 정의(`NINJA_RESPONSES`)부터 다름)", note="F4-201 — 옛 판 사본은 그 판과 견준 자리를 댄다"),
+        Case("pre-route-b-table-exempt-pattern-clean", with_files(("framework/ninja/pre_route_response_table.py", pattern_table), base=pattern_mw), openapi, auto, 0, "", note="F4-201 — 2.44.1 exit 2(모르는 칸)"),
+        Case("pre-route-b-table-exempt-pattern-method-clean", with_files(("framework/ninja/pre_route_response_table.py", pattern_table.replace('(None, "MAINTENANCE_MODE_EXEMPT_PATTERNS")', '("GET", "MAINTENANCE_MODE_EXEMPT_PATTERNS")')), base=pattern_mw), openapi, auto, 0, "", note="F4-201"),
+        Case("pre-route-b-table-exempt-both-cells-clean", with_files(("framework/ninja/pre_route_response_table.py", both_exempt_table), base=pattern_mw), openapi, auto, 0, "", note="F4-201 — 두 칸을 함께"),
+        *(
+            Case(f"pre-route-b-table-exempt-pattern-shape-{label}", with_files(("framework/ninja/pre_route_response_table.py", pattern_table.replace('(None, "MAINTENANCE_MODE_EXEMPT_PATTERNS")', value)), base=pattern_mw),
+                 openapi, auto, 2, "`exempt_pattern` 는 `(메서드 | None, \"<settings 이름>\")` 글자 튜플", note="F4-201")
+            for label, value in (
+                ("method-case", '("get", "MAINTENANCE_MODE_EXEMPT_PATTERNS")'),
+                ("inline-pattern", '(r"/api/status/.+",)'),
+                ("not-string", "(None, 1)"),
+            )
+        ),
+        Case("pre-route-b-table-exempt-pattern-setting-missing", with_files(("framework/ninja/pre_route_response_table.py", pattern_table), base=mw), openapi, auto, 2, "`exempt_pattern` 의 settings 이름 `MAINTENANCE_MODE_EXEMPT_PATTERNS` 가 settings 에 없다", note="F4-201"),
+        Case("pre-route-d-exempt-pattern-row-candidate", with_files(("framework/ninja/pre_route_response_table.py", pattern_503), base=pattern_mw), openapi, auto, 0, "가 내는 503 응답 — 표의 같은 status 행이 좁힌 행(표 11행)뿐이다", note="F4-201 — `exempt` 와 같은 좁힘", expected_rules=()),
+        *(
+            case
+            for label, copy_text in old_copies
+            for case in (
+                Case(f"pre-route-b-canonical-{label}-exempt-clean", with_files(("framework/ninja/pre_route_responses.py", copy_text), ("framework/ninja/pre_route_response_table.py", exempt_table), base=pattern_mw), openapi, auto, 0, "", note="F4-201 대조군 — 옛 사본 + 옛 칸 무변"),
+                Case(f"pre-route-b-canonical-{label}-exempt-pattern", with_files(("framework/ninja/pre_route_responses.py", copy_text), ("framework/ninja/pre_route_response_table.py", pattern_table), base=pattern_mw), openapi, auto, 2, "`exempt_pattern` 칸은 지금 판 정본이라야", note="F4-201 — 옛 사본은 새 칸에서 문서 생성이 실패한다", expected_rules=("#63",)),
+                Case(f"pre-route-b-canonical-{label}-unknown-key", with_files(("framework/ninja/pre_route_responses.py", copy_text), ("framework/ninja/pre_route_response_table.py", table_with('"when": "all",\n        "namespaces"', '"when": "all",\n        "namespace": ("api",),\n        "namespaces"')), base=base), openapi, auto, 2, "모르는 칸 `namespace`", note="F4-201 대조군"),
+            )
+        ),
+        Case("pre-route-b-canonical-edited-exempt-pattern", with_files(("framework/ninja/pre_route_responses.py", canonical_edit), ("framework/ninja/pre_route_response_table.py", pattern_table), base=pattern_mw), openapi, auto, 2, "정본의 코드가 플러그인 정본과 다르다", note="F4-201 — 어느 판과도 다른 사본이면 칸은 지금 판으로 잰다", expected_rules=("#63",)),
         Case("pre-route-b-table-unknown-key", with_files(("framework/ninja/pre_route_response_table.py", table_with('"when": "all",\n        "namespaces"', '"when": "all",\n        "namespace": ("api",),\n        "namespaces"')), base=base), openapi, auto, 2, "모르는 칸 `namespace`", note="2.36.0 exit 0"),
         Case("pre-route-b-table-status-range", with_files(("framework/ninja/pre_route_response_table.py", table_with('"status": 503', '"status": 200')), base=base), openapi, auto, 2, "`status` 200 — 400–599 밖"),
         Case("pre-route-b-table-when", with_files(("framework/ninja/pre_route_response_table.py", table_with('"when": "all"', '"when": "always"')), base=base), openapi, auto, 2, "`when` 은"),

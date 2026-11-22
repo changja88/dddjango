@@ -36,10 +36,12 @@ rule=null + contract_ref 로 나간다. 위반 라인은 공용 포매터의 계
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 import checker_target
 from findings import ContractFindings, emit_all
-from pathlib import Path
 
 try:
     import standard_tree as tree

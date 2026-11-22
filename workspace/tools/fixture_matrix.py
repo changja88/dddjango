@@ -6,8 +6,8 @@ fixture 에서 exit 2 가 나는지를 전수로 실측하고 표로 남긴다. 
 FROZEN 이므로 실측은 이 fixture 결정 레인만 쓴다.
 
 케이스: skeleton 9 + 기존 15종×2 + API-error 3종×2(--error-profile auto)
-       + 신설 8종×2 + checker_lint 2 + 호출 계약 27 + 수정 사이클 레인 3×2 + 음성 · 양성 단독 레인
-       = exit 대조 128 + 줄 대조 44(GROUP_CASES — 아래) = 172(실행 표 끝 «케이스» 줄이 실측이다).
+       + 신설 8종×2 + checker_lint 3 + 호출 계약 27 + 수정 사이클 레인 3×2 + 음성 · 양성 단독 레인
+       = exit 대조 129 + 줄 대조 44(GROUP_CASES — 아래) = 173(실행 표 끝 «케이스» 줄이 실측이다).
 
 의미 묶음 줄 대조(2.28.0 · #654~#656 · 설계 7.4): exit 만 보는 레인은 ⓓ 후보 줄(exit 불산입)과
 줄 글자(#656 주어)를 못 본다 — 이 레인은 거름 규칙의 줄 전부를 글자 그대로 기대와 대조한다.
@@ -157,6 +157,8 @@ RUNTIME_CACHE: "dict[str, tuple[str, ...]]" = {
         "application/orders/domain_layer/domain_service/pricing/old/__pycache__/gone.cpython-39.pyc",
         # F4-147 — application/ 에 __init__.py 가 있으면 생기는 캐시 폴더(BC 가 아니다).
         "application/__pycache__/__init__.cpython-39.pyc",
+        # F4-182 — 쓰다 끊긴 캐시 파일: «캐시만 남음» 이 아니라 이름으로만 BC 에서 빠진다.
+        "application/__pycache__/__init__.cpython-39.pyc.4321",
     ),
     "composition_root/bad_rules": (
         "application/orders/domain_layer/order/value_object/stale/__pycache__/stale_amount.cpython-39.pyc",
@@ -1275,7 +1277,7 @@ MUTATIONS: "list[tuple[str, str, str, str, str]]" = [
     ("F4-49 쓰기 bool·int 후보 물음 되살림", "check-transaction-boundary.py",
      'elif not core and names & {"bool", "int"} and first not in ("save", "remove"):',
      'elif not core and names & {"bool", "int"}:', "check-transaction-boundary.py"),
-    ("F4-147 BC 열거에서 캐시 폴더 거름 걷음", _SK, " and p.name not in SKIP_DIRS)", ")", _SK),
+    ("F4-147 · F4-182 BC 자리 이름 거름 걷음", "business_vocab.py", " or p.name in _BC_SKIP_NAMES", "", _SK),
     ("F4-152 파이썬이 정한 이름 빼기 걷음", "check-business-vocabulary.py",
      "        if id(node) in python_defined:\n            continue\n", "", "check-business-vocabulary.py"),
     ("F4-138 test/ 직계 conftest 면제 걷음", _SK, 'if row.r == _BC_TEST_ROW and f.name == "conftest.py":', "if False:", _SK),
@@ -1464,7 +1466,7 @@ def build_cases() -> "list[tuple[str, list[str], str, int]]":
         for sub, want in (("good", 0), ("bad_rules", 2)):
             fx = F / fixture / sub
             cases.append((f"{fixture}/{sub}", [sys.executable, str(S / script), str(fx)], f"{fixture}/{sub}", want))
-    for sub, want in (("good", 0), ("bad_rules", 2)):
+    for sub, want in (("good", 0), ("bad_rules", 2), ("bad_self_path", 2)):
         fx = F / "checker_lint" / sub
         cases.append(
             (f"checker_lint/{sub}",

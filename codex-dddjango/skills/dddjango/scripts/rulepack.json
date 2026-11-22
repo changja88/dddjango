@@ -1504,7 +1504,7 @@
       ]
     },
     "dddjango/agents/design-review-api.md/s006/b13": {
-      "h": "e022bd85f08c134f",
+      "h": "45e094992021c826",
       "n": 2,
       "works": [
         "R-2686",
@@ -2555,7 +2555,7 @@
       ]
     },
     "dddjango/agents/discipline-reviewer.md/s007/b19": {
-      "h": "b40e9b49ce8f859d",
+      "h": "72c84f94fabb7bb4",
       "n": 1,
       "works": [
         "R-1010",
@@ -2700,7 +2700,7 @@
       ]
     },
     "dddjango/agents/discipline-reviewer.md/s007/b30": {
-      "h": "1b55555608b30239",
+      "h": "c058201ba8fe055f",
       "n": 2,
       "works": [
         "R-1072",
@@ -4012,7 +4012,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s007/b57": {
-      "h": "07e8f3d8b4356ac9",
+      "h": "b1591951c72e5c55",
       "n": 4,
       "works": [
         "R-0406",
@@ -4031,7 +4031,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s007/b58": {
-      "h": "43bd25a7754ccbb8",
+      "h": "e84034a8ca87066d",
       "n": 2,
       "works": [
         "R-3440",
@@ -4046,7 +4046,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s007/b6": {
-      "h": "5e8cb3965391072e",
+      "h": "bb50a14a6a8bd446",
       "n": 1,
       "works": [
         "R-0283",
@@ -4100,7 +4100,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s007/b9": {
-      "h": "dbd31e4a2d768bc1",
+      "h": "7c6a8a9a5ba09bf4",
       "n": 1,
       "works": [
         "R-0293",
@@ -4169,7 +4169,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s009/b6": {
-      "h": "5f11f9938489eacc",
+      "h": "d8be373d6059c4d1",
       "n": 2,
       "works": [
         "R-0429",
@@ -8617,7 +8617,7 @@
       ]
     },
     "dddjango/skills/discipline-houserules/SKILL.md/s007-4/b1": {
-      "h": "664a058fb00cf221",
+      "h": "da06a757d056018c",
       "n": 3,
       "works": [
         "R-3148",
@@ -11194,7 +11194,7 @@
       ]
     },
     "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b37": {
-      "h": "a725dd7f7e80f217",
+      "h": "831e9f285d6a7a4e",
       "n": 28,
       "works": [
         "R-3749"
@@ -11209,8 +11209,8 @@
       ]
     },
     "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b40": {
-      "h": "e62bf1f08b0c5703",
-      "n": 27,
+      "h": "9ecb75ac06e918ba",
+      "n": 32,
       "works": [
         "R-3750"
       ]
@@ -14908,8 +14908,8 @@
       ]
     },
     "dddjango/skills/implementation-test/references/final.md/s095-19.2.1/b4": {
-      "h": "372f09d2632bbffe",
-      "n": 12,
+      "h": "4b93756b4c5bc500",
+      "n": 14,
       "works": [
         "R-3752"
       ]
@@ -15100,7 +15100,7 @@
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
-      "sha256": "e5c3a5c70ae259a04512d5a48f7fbdf65bc65813460e2c9fbbb6418d0b714a21"
+      "sha256": "76bc830e8d0488f067e2a254f5f83fdc65319405bbaa00b263b00914f6f1c550"
     },
     {
       "path": "ontology/rules/agent-design-review-db.ttl",
@@ -15112,7 +15112,7 @@
     },
     {
       "path": "ontology/rules/agent-discipline-reviewer.ttl",
-      "sha256": "9a446b1aefb0903f5275ab12212534a7e0dd62c06f31919ef594f0bd5627d4dd"
+      "sha256": "f89493eab121ce13960ad45d8039a1ad3d1ab243e3872cf8675bb8217e636089"
     },
     {
       "path": "ontology/rules/architecture-api-final.ttl",
@@ -15140,7 +15140,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "73e4e5c58617650421516e9f1a46143ba4752a6fdc52afe025ba464b8ff94906"
+      "sha256": "38313ee7dd84a8fc7b1af2712a102a7d4804335304ffa965ba63abacd4bb8d71"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -15156,7 +15156,7 @@
     },
     {
       "path": "ontology/rules/discipline-houserules-skill.ttl",
-      "sha256": "42a7186a89f0ab675a53eacee7c3dfc24ab987c29d04529e08f2c05546a96e4a"
+      "sha256": "26969e8fa0847a836853552c09b10e89ab0340d7b8d2c26c650d507f2c674801"
     },
     {
       "path": "ontology/rules/discipline-tdd-final.ttl",
@@ -15172,7 +15172,7 @@
     },
     {
       "path": "ontology/rules/implementation-django-ninja-final.ttl",
-      "sha256": "f62d96db930536cfbc8b972d5ee0466643baf78330be3a65fd050558a1ce8044"
+      "sha256": "a7a3f4833d48dfc267f0148f03b840d8db37fca65c9927655deb7e5a4fee3450"
     },
     {
       "path": "ontology/rules/implementation-django-ninja-skill.ttl",
@@ -15200,7 +15200,7 @@
     },
     {
       "path": "ontology/rules/implementation-test-final.ttl",
-      "sha256": "d5feb2cdb23180b7bafb558d6f510b0fc799db3207f52a3366cd9382d807b8e1"
+      "sha256": "e47f8e18e4d50965f3bb57ac9bc12b91f2f4b05e7c8b4e6ea4db5607b9cd62fd"
     },
     {
       "path": "ontology/rules/implementation-test-skill.ttl",
@@ -28081,8 +28081,8 @@
       "block_order": 7,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-0284@2026-11-13",
-      "label": "필수 입력 5종(코드+테스트·승인 입장 표·역할별 최소 조정 보고·test diff·실행 결과·슬라이스 목록) + ⓓ 후보 동봉(registry #4 200행 신호 · #11 #645/#647/#650 · #5 #63 전부(예: 좁힌 행·못 읽은 미들웨어 답·handler400·주입 응답 머리·머리 보충·흐름 못 가른 머리)) — 동봉 범위는 registry_gate 앵커 차분 ⓓ 신규분",
+      "expression": "https://numchida.com/ns/djr#R-0284@2026-11-22",
+      "label": "필수 입력 5종(코드+테스트·승인 입장 표·역할별 최소 조정 보고·test diff·실행 결과·슬라이스 목록) + ⓓ 후보 동봉(registry #4 200행 신호 · #11 #645/#647/#650 · #5 #63 전부(예: 좁힌 행·못 읽은 미들웨어 답·handler400·주입 응답 머리·머리 보충·흐름 못 가른 머리)) — 동봉 범위는 registry_gate 앵커 차분 ⓓ 신규분 + (있으면) ⓓ 승인 유입 절과 이 실행이 바꾼 경로 목록",
       "norm_kind": "Obligation",
       "order_rank": 1270,
       "overrides": [],
@@ -40790,8 +40790,8 @@
         "check-openapi-error-declaration.py"
       ],
       "document": "dddjango/agents/discipline-reviewer.md",
-      "expression": "https://numchida.com/ns/djr#R-1011@2026-11-14",
-      "label": "mapping tuple·runtime 반환·generated OpenAPI 3자의 완전·동일 · 경로 앞 응답은 정본과 코드가 같음(서식·주석은 대조 밖)·루트 API 클래스 꼴·표 = 승인 행 · 붙는 행마다 행 시험 · G2 의 #63 ⓓ 후보 전부(예: 좁힌 행·못 읽은 미들웨어 답·handler400·주입 응답 머리·머리 보충·흐름 못 가른 머리)는 감수자가 닫음(없으면 important)",
+      "expression": "https://numchida.com/ns/djr#R-1011@2026-11-22",
+      "label": "mapping tuple·runtime 반환·generated OpenAPI 3자의 완전·동일 · 경로 앞 응답은 정본과 코드가 같음(서식·주석은 대조 밖)·루트 API 클래스 꼴·표 = 승인 행 · 붙는 행마다 행 시험 · G2 의 #63 ⓓ 후보 전부(예: 좁힌 행·못 읽은 미들웨어 답·handler400·주입 응답 머리·머리 보충·흐름 못 가른 머리)는 감수자가 닫음(ⓓ 신규는 줄마다 · ⓓ 승인 유입은 묶음 물음 · 없으면 important)",
       "norm_kind": "Obligation",
       "order_rank": 899,
       "overrides": [],
@@ -41920,8 +41920,8 @@
       "block_order": 30,
       "checkers": [],
       "document": "dddjango/agents/discipline-reviewer.md",
-      "expression": "https://numchida.com/ns/djr#R-1074@2026-08-22",
-      "label": "후보별 답변·발견(심각도·근거·규칙 번호) 또는 기각 사유 1줄 기재",
+      "expression": "https://numchida.com/ns/djr#R-1074@2026-11-22",
+      "label": "후보별 답변·발견(심각도·근거·규칙 번호) 또는 기각 사유 1줄 기재 · ⓓ 승인 유입은 묶음 한 물음(이 실행의 변경이 답을 바꿀 수 있는 줄만 신규처럼 · 나머지는 k건 기각 1줄 + 확인한 변경 범위)",
       "norm_kind": "Obligation",
       "order_rank": 963,
       "overrides": [],
@@ -41937,8 +41937,8 @@
       "block_order": 30,
       "checkers": [],
       "document": "dddjango/agents/discipline-reviewer.md",
-      "expression": "https://numchida.com/ns/djr#R-1075@2026-08-22",
-      "label": "ⓓ 후보 무응답 금지",
+      "expression": "https://numchida.com/ns/djr#R-1075@2026-11-22",
+      "label": "ⓓ 후보 무응답 금지(승인 유입 묶음 물음 포함)",
       "norm_kind": "Prohibition",
       "order_rank": 964,
       "overrides": [],
@@ -70082,8 +70082,8 @@
         "check-openapi-error-declaration.py"
       ],
       "document": "dddjango/agents/design-review-api.md",
-      "expression": "https://numchida.com/ns/djr#R-2686@2026-11-13",
-      "label": "slot 12 — 승인 status/body/header·mounted runtime·공개 generated OpenAPI 후보의 입장 표 행 연결 확인 · 경로 앞 응답 행·머리 보충 기록(캐시 지시 머리 셋은 빼도 됨) · 프로젝트 행 근거 대조 · 빠진 미들웨어(서드파티 행 포함)·빼는 줄 없는 NOT_API_MIDDLEWARE·operations 행 빠짐(preserve 경로 코드의 HttpError 포함) blocker · 서드파티·앞단·검사기가 못 읽는 답(좁힌 행 — all 밖 when 포함 — 뿐인 미들웨어 답은 G1 근거 확인 · G2 ⓓ 줄은 감수자)은 리뷰 몫",
+      "expression": "https://numchida.com/ns/djr#R-2686@2026-11-22",
+      "label": "slot 12 — 승인 status/body/header·mounted runtime·공개 generated OpenAPI 후보의 입장 표 행 연결 확인 · 경로 앞 응답 행·머리 보충 기록(캐시 지시 머리 셋은 빼도 됨) · 프로젝트 행 근거 대조 · 빠진 미들웨어(서드파티 행 포함)·빼는 줄 없는 NOT_API_MIDDLEWARE·operations 행 빠짐(preserve 경로 코드의 HttpError 포함) blocker · 서드파티·앞단·검사기가 못 읽는 답(좁힌 행 — exempt_pattern · all 밖 when 포함 — 뿐인 미들웨어 답은 G1 근거 확인 · G2 ⓓ 줄은 감수자)은 리뷰 몫",
       "norm_kind": "Obligation",
       "order_rank": 569,
       "overrides": [],
@@ -78099,8 +78099,8 @@
         "check-public-surface-annotation.py"
       ],
       "document": "dddjango/skills/discipline-houserules/SKILL.md",
-      "expression": "https://numchida.com/ns/djr#R-3148@2026-08-22",
-      "label": "모든 이름은 «첫 대입»에 타입을 적는다 — 예외 0",
+      "expression": "https://numchida.com/ns/djr#R-3148@2026-11-22",
+      "label": "모든 이름은 «첫 대입»에 타입을 적는다 — 예외 0(e2e 의 factory 행은 파일 안 Protocol + .create() 로 달 수 있음)",
       "norm_kind": "Obligation",
       "order_rank": 2387,
       "overrides": [],
@@ -83301,8 +83301,8 @@
       "block_order": 60,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3440@2026-10-13",
-      "label": "approved-merges.txt 가 있으면 registry_gate 와 --anchor scope 렌더(registry #2·#5·#6·#15·#16)에 --approved-merge-file 동반 · G2 배너 «승인 유입 N건(검사기별 건수 · 머지 SHA 열거)» 별도 항목 · registry_gate `안내:` 줄은 배너(멈추면 STOP 문서)에 글자 그대로(곁가지 의심 SHA 를 등재 후보로 내밀지 않음) · `기준선 오류:` 줄은 그 검사기 신규분 옆에 인용",
+      "expression": "https://numchida.com/ns/djr#R-3440@2026-11-22",
+      "label": "approved-merges.txt 가 있으면 registry_gate 와 --anchor scope 렌더(registry #2·#5·#6·#15·#16)에 --approved-merge-file 동반 · G2 배너 «승인 유입 N건(검사기별 건수 · 머지 SHA 열거)» 별도 항목 · (있으면) «ⓓ 승인 유입 k건(머지 SHA 열거)» 항목 · registry_gate `안내:` 줄은 배너(멈추면 STOP 문서)에 글자 그대로(곁가지 의심 SHA 를 등재 후보로 내밀지 않음) · `기준선 오류:` 줄은 그 검사기 신규분 옆에 인용",
       "norm_kind": "Obligation",
       "order_rank": 1413,
       "overrides": [],
@@ -87335,8 +87335,8 @@
       "block_order": 10,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3664@2026-10-20",
-      "label": "전체 suite 의 때 — G2 로 가는 마지막 슬라이스 보고(경량 감사 반영 포함) 뒤 홀리스틱(수정 모드 focused) 감사 앞 한 번(결과는 감사 입력 · ⓓ 용 registry_gate 도 이때) · 슬라이스 끝(슬라이스 0 포함 — 그 관련 테스트가 전역이면 G2 앞으로) · 경량 감사 뒤 실행 없음 · 첫 실패에서 멈추지 않는 꼴(멈춘 실행은 셈 밖) · 도는 동안 쓰기 역할 파견 없음 · 파견 입력에 싣지 않음 · 까닭 없는 옛 지시의 전체 항목은 이 한 번이 채움(게이트 답이 때를 정하면 따름) · 코드가 그대로면 G2 증거(설치 · git 밖 시험 자원 바꿈이면 다시) · G1′ · G2 답으로 코드가 바뀌면 다시 · 수정 모드 같음 · 기준선 실측 · 흔들림 판정 재실행은 셈 밖 · 리팩토링 모드는 그 절",
+      "expression": "https://numchida.com/ns/djr#R-3664@2026-11-22",
+      "label": "전체 suite 의 때 — G2 로 가는 마지막 슬라이스 보고(경량 감사 반영 포함) 뒤 홀리스틱(수정 모드 focused) 감사 앞 한 번(결과는 감사 입력 · ⓓ 용 registry_gate 도 이때 6번과 같은 인자(승인 목록 동반)) · 슬라이스 끝(슬라이스 0 포함 — 그 관련 테스트가 전역이면 G2 앞으로) · 경량 감사 뒤 실행 없음 · 첫 실패에서 멈추지 않는 꼴(멈춘 실행은 셈 밖) · 도는 동안 쓰기 역할 파견 없음 · 파견 입력에 싣지 않음 · 까닭 없는 옛 지시의 전체 항목은 이 한 번이 채움(게이트 답이 때를 정하면 따름) · 코드가 그대로면 G2 증거(설치 · git 밖 시험 자원 바꿈이면 다시) · G1′ · G2 답으로 코드가 바뀌면 다시 · 수정 모드 같음 · 기준선 실측 · 흔들림 판정 재실행은 셈 밖 · 리팩토링 모드는 그 절",
       "norm_kind": "Obligation",
       "order_rank": 1282,
       "overrides": [],
@@ -88421,8 +88421,8 @@
       "block_order": 59,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3725@2026-11-07",
-      "label": "이름 nit 빠른 길(Phase 2) — 이번 실행 안쪽 이름 · 시험 쪽 도움 이름만 · G1′ · 감사 없음 · 전 · 후 트리 스냅숏 · owner 치환(시험 쪽은 0T 창) → code-nit diff 판정 1인 → 경량 감사면 다음 슬라이스 · 그 밖은 끝 맞춤 → 시험 → 게이트 → G2 · 새 ⓓ 줄만 집중 감사 · 막히면 diff 되돌림 철회 후 지금 길 · 배너 1행",
+      "expression": "https://numchida.com/ns/djr#R-3725@2026-11-22",
+      "label": "이름 nit 빠른 길(Phase 2) — 이번 실행 안쪽 이름 · 시험 쪽 도움 이름만 · G1′ · 감사 없음 · 전 · 후 트리 스냅숏 · owner 치환(시험 쪽은 0T 창) → code-nit diff 판정 1인 → 경량 감사면 다음 슬라이스 · 그 밖은 끝 맞춤 → 시험 → 게이트 → G2 · ⓓ 신규 · ⓓ 승인 유입에 새로 선 줄(유입 → 신규 포함)만 집중 감사 · 막히면 diff 되돌림 철회 후 지금 길 · 배너 1행",
       "norm_kind": "Obligation",
       "order_rank": 1412,
       "overrides": [],
@@ -88455,8 +88455,8 @@
       "block_order": 6,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3727@2026-11-07",
-      "label": "수정 모드 focused 감사 — test diff 가 이름 nit 빠른 길 치환뿐이면 판정 기록이 갈음(새 ⓓ 줄은 집중 감사 1회)",
+      "expression": "https://numchida.com/ns/djr#R-3727@2026-11-22",
+      "label": "수정 모드 focused 감사 — test diff 가 이름 nit 빠른 길 치환뿐이면 판정 기록이 갈음(ⓓ 신규 · ⓓ 승인 유입의 새 줄 · 유입 → 신규는 집중 감사 1회)",
       "norm_kind": "Obligation",
       "order_rank": 1440,
       "overrides": [],
@@ -88846,8 +88846,8 @@
         "check-openapi-error-declaration.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-3749@2026-11-18",
-      "label": "경로 앞 응답 꼴 — 파일 넷(정본 pre_route_responses.py 코드 그대로(서식·주석·import 차례·모듈 docstring 은 프로젝트 도구 몫 · 린트는 # noqa · 옛 판 2.37.0 정본도 받음) · 프로젝트 표 pre_route_response_table.py · api.py 의 정해진 루트 API 클래스 — 서명·몸통 코드 그대로 · internal_api.py 는 그 클래스를 들여 지음) · Ninja 기본 행(정본 · 뺄 수 없음 · 날 수 있다 쪽) · 그 밖 문서 재정의·후처리 금지 · 받는 판 Ninja 1.6 · Python 3.12 · pydantic 2.5 이상(낮으면 G1 판 올림) · 기본 몸통을 바꾸는 프레임워크 오류 핸들러(api.py · internal_api.py)면 G1 STOP · 붙는 행마다 시험",
+      "expression": "https://numchida.com/ns/djr#R-3749@2026-11-22",
+      "label": "경로 앞 응답 꼴 — 파일 넷(정본 pre_route_responses.py 코드 그대로(서식·주석·import 차례·모듈 docstring 은 프로젝트 도구 몫 · 린트는 # noqa · 옛 판 2.37.0 · 2.38.0 정본도 받음 — exempt_pattern 칸은 지금 판만) · 프로젝트 표 pre_route_response_table.py · api.py 의 정해진 루트 API 클래스 — 서명·몸통 코드 그대로 · internal_api.py 는 그 클래스를 들여 지음) · Ninja 기본 행(정본 · 뺄 수 없음 · 날 수 있다 쪽) · 그 밖 문서 재정의·후처리 금지 · 받는 판 Ninja 1.6 · Python 3.12 · pydantic 2.5 이상(낮으면 G1 판 올림) · 기본 몸통을 바꾸는 프레임워크 오류 핸들러(api.py · internal_api.py)면 G1 STOP · 붙는 행마다 시험",
       "norm_kind": "Obligation",
       "order_rank": 3005,
       "overrides": [],
@@ -88866,8 +88866,8 @@
         "check-openapi-error-declaration.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-3750@2026-11-18",
-      "label": "경로 앞 응답 프로젝트 행(미들웨어 — 서드파티 포함 — 와 앞단) — 칸(status 400–599 · when · description · body|media_type · headers(캐시 지시 머리 셋은 빼도 됨) · methods · namespaces(내부 창구는 internal_api) · exempt · operations) · 빈 좁히는 칸 금지 · 행마다 G1 근거(미들웨어 코드 줄 · 설정 · 앞단) · NOT_API_MIDDLEWARE 근거 = API 경로(공개 주소와 /internal/ 둘 다)를 빼는 코드 줄 · 표 검증(문서 생성 때 엄격 · 뒤 열쇠가 이김) · operations 는 경로 객체로 못 가르는 답(406·415·인증 안 HttpError·preserve 경로 코드의 HttpError) · 적는 것의 경계(의도된 답만) · 검사기는 프로젝트 미들웨어만 대조(좁힌 행 — all 밖 when 포함 — 뿐이거나 못 읽으면 ⓓ 후보 · G1 근거는 api 리뷰어 · G2 ⓓ 줄은 감수자 · 서드파티·앞단은 리뷰어)",
+      "expression": "https://numchida.com/ns/djr#R-3750@2026-11-22",
+      "label": "경로 앞 응답 프로젝트 행(미들웨어 — 서드파티 포함 — 와 앞단) — 칸(status 400–599 · when · description · body|media_type · headers(캐시 지시 머리 셋은 빼도 됨) · methods · namespaces(내부 창구는 internal_api) · exempt(글자 같음) · exempt_pattern(fullmatch · 지금 판 정본만 · 문서 때문에 설정 값 안 바꿈) · operations) · 빈 좁히는 칸 금지 · 행마다 G1 근거(미들웨어 코드 줄 · 설정 · 앞단) · NOT_API_MIDDLEWARE 근거 = API 경로(공개 주소와 /internal/ 둘 다)를 빼는 코드 줄 · 표 검증(문서 생성 때 엄격 · 뒤 열쇠가 이김) · operations 는 경로 객체로 못 가르는 답(406·415·인증 안 HttpError·preserve 경로 코드의 HttpError) · 적는 것의 경계(의도된 답만) · 검사기는 프로젝트 미들웨어만 대조(좁힌 행 — all 밖 when 포함 — 뿐이거나 못 읽으면 ⓓ 후보 · G1 근거는 api 리뷰어 · G2 ⓓ 줄은 감수자 · 서드파티·앞단은 리뷰어)",
       "norm_kind": "Obligation",
       "order_rank": 3006,
       "overrides": [],
@@ -88902,8 +88902,8 @@
       "block_order": 4,
       "checkers": [],
       "document": "dddjango/skills/implementation-test/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-3752@2026-11-13",
-      "label": "경로 앞 응답 표 행 시험 — 붙는 행마다(기본 행 포함) 별도 입장 행 · 답을 일으켜 표 Schema 로 본문 꼴 엄격 검증 · 붙는 쪽 단언(mounted 생성 문서) · 좁힘 반대쪽 · NOT_API_MIDDLEWARE 줄 · 대상 BC 시험 폴더(자리 없으면 G2 배너) · 예외로 일어나는 미들웨어는 RequestFactory",
+      "expression": "https://numchida.com/ns/djr#R-3752@2026-11-22",
+      "label": "경로 앞 응답 표 행 시험 — 붙는 행마다(기본 행 포함) 별도 입장 행 · 답을 일으켜 표 Schema 로 본문 꼴 엄격 검증 · 붙는 쪽 단언(mounted 생성 문서) · 좁힘 반대쪽(exempt_pattern 은 문서 경로 글이 설정 글자와 다르면서 정규식과 전체로 맞는 operation 이 있으면 그 하나) · NOT_API_MIDDLEWARE 줄 · 대상 BC 시험 폴더(자리 없으면 G2 배너) · 예외로 일어나는 미들웨어는 RequestFactory",
       "norm_kind": "Obligation",
       "order_rank": 3746,
       "overrides": [],

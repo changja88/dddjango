@@ -14,14 +14,15 @@ pre_route_responses_canonical.py` 를 그 사본의 `framework/ninja/pre_route_r
   ② 실제 — 요청마다(Django 시험 클라이언트) status = 기대 · 그 status 가 문서에 있으면 몸통이 문서 꼴(media · JSON Schema 부분 집합)이고
      실제가 싣는 머리(Retry-After · Service-Maintenance-Ends-At)가 문서 머리에 있다 · 문서에 없는 status 는 operation 답이 아닌 것(404)뿐.
   ③ Django 400 처리기를 JSON 으로 둔 표(`BAD_REQUEST_RESPONSE`)와 URLconf — 몸통 상한 · 쿼리 칸 상한 400 이 그 꼴로 문서 = 실제.
-  ④ 표가 틀린 꼴 — `manage.py check` · 보통 경로 요청은 서고 문서를 만들 때만 정해진 ValueError(마운트 문서 500).
+  ④ 표가 틀린 꼴 — `manage.py check` · 보통 경로 요청은 서고 문서를 만들 때만 정해진 예외(ValueError · 깨진 정규식은
+     PatternError — 마운트 문서 500).
   ⑤ mypy strict 0 — 정본 · 표 · 3.2 `api.py` 둘(`--strict` · django-stubs).
   ⑥ ruff 0(F4-178) — 플러그인 정본 자산이 흔한 ruff 기본을 지난다: `.venv-probe` 의 ruff(고정 판) `--isolated` 로 기본 규칙 +
      복잡도(C90 · 10) · `format --check` 줄 88 · 130. 정본은 코드를 못 고치는 파일이라 프로젝트 린트에 막히면 안 된다.
 exit 0 = 전 단언 통과 · 1 = 불일치 · 실행 불능.
 
   --canonical <파일>  ①~⑤ 를 정본 대신 그 파일을 붙여 돈다(옛 시제품 정본이 붉은지 보는 대조용). ⑥ 은 늘 플러그인 정본 자산을
-                      본다 — 함께 받는 옛 판(2.37.0) 자산은 동작만 같고 ruff 는 못 지난다.
+                      본다 — 함께 받는 옛 판 자산에는 `exempt_pattern` 칸이 없다(2.37.0 판은 ruff 도 못 지난다).
 """
 from __future__ import annotations
 
@@ -91,6 +92,16 @@ DOCS: "dict[str, dict[str, list[int]]]" = {
         "GET /api/conv/positive/{book_id}": [200, 422, 503],         # {int:x} + 값 제약
         "GET /api/conv/slug-int/{code}": [200, 422, 503],            # {slug:x} 인데 int
         "POST /api/conv/session-exempt": [200, 401, 403, 503],       # 쿠키 인증 + csrf_exempt — 403 은 다른 사이트 거절뿐
+        "GET /api/gate/open/{name}/status": [200],                   # exempt_pattern — 변수 자리 `.+`
+        "GET /api/gate/ping": [200],                                 # exempt_pattern — 글자 묶음
+        "GET /api/gate/pong": [200],
+        "GET /api/gate/slot/{slot}": [200],                          # 변환기 뺀 템플릿 글과 맞춘다
+        "GET /api/gate/number/{number}": [200, 503],                 # `\d+` 는 템플릿 글에 안 맞음 — 문서에 남는다
+        "GET /api/gate/head/tail": [200, 503],                       # 정규식은 경로 전체 — 앞머리 · 뒷부분만은 안 뺀다
+        "GET /api/gate/list.csv": [200],                             # exempt 글자 `.`
+        "GET /api/gate/list-csv": [200, 503],                        # exempt 의 `.` 는 글자 그대로
+        "POST /api/gate/hook/{kind}": [200, 503],                    # exempt_pattern POST
+        "PUT /api/gate/hook/{kind}": [200, 403, 503],                # 같은 경로 PUT — 403 그대로
     },
     "api2": {                                                        # API 단위 쿠키 인증 · 점검 503 은 이름공간 밖
         "GET /api2/api-auth": [200, 401],
@@ -203,6 +214,16 @@ REQUESTS: "list[dict]" = [
     _req("slug 변환기 int", "api", "GET /api/conv/slug-int/{code}", 422, "/api/conv/slug-int/abc"),
     _req("csrf_exempt CSRF 강제", "api", "POST /api/conv/session-exempt", 401, client="csrf"),
     _req("csrf_exempt 다른 사이트", "api", "POST /api/conv/session-exempt", 403, client="csrf", headers=CROSS),
+    _req("정규식 변수 자리 점검 중(뺌)", "api", "GET /api/gate/open/{name}/status", 200, "/api/gate/open/a/status", settings=MAINT),
+    _req("정규식 묶음 하나 점검 중(뺌)", "api", "GET /api/gate/ping", 200, settings=MAINT),
+    _req("정규식 묶음 둘 점검 중(뺌)", "api", "GET /api/gate/pong", 200, settings=MAINT),
+    _req("정규식 변환기 자리 점검 중(뺌)", "api", "GET /api/gate/slot/{slot}", 200, "/api/gate/slot/7", settings=MAINT),
+    _req("정규식 숫자 자리 점검 중(문서에는 남음)", "api", "GET /api/gate/number/{number}", 200, "/api/gate/number/7", settings=MAINT),
+    _req("정규식 앞머리만 점검 중", "api", "GET /api/gate/head/tail", 503, settings=MAINT),
+    _req("글자 점 점검 중(뺌)", "api", "GET /api/gate/list.csv", 200, settings=MAINT),
+    _req("글자 점 자리 다른 글자 점검 중", "api", "GET /api/gate/list-csv", 503, settings=MAINT),
+    _req("정규식 POST 다른 사이트(뺌)", "api", "POST /api/gate/hook/{kind}", 200, "/api/gate/hook/a", headers=CROSS),
+    _req("정규식 PUT 다른 사이트(POST 만)", "api", "PUT /api/gate/hook/{kind}", 403, "/api/gate/hook/a", headers=CROSS),
     _req("API 쿠키 인증 로그인 없음", "api2", "GET /api2/api-auth", 401),
     _req("API 쿠키 인증 끈 경로 · 점검 중(이름공간 밖)", "api2", "GET /api2/api-auth-off", 200, settings=MAINT),
     _req("API 쿠키 인증 POST CSRF", "api2", "POST /api2/api-auth-post", 403, client="csrf"),
@@ -234,17 +255,18 @@ JSON400_REQUESTS: "list[dict]" = [
     _req("JSON 처리기 · Form 몸통 상한", "api", "POST /api/x/form", 400, data={"name": "a" * 50}, settings=SMALL),
     _req("JSON 처리기 · 쿼리 칸 1001", "api", "GET /api/search", 400, query="q=a&" + MANY_FIELDS),
 ]
-# ④ 표가 틀린 꼴 → (표 파일, 실패하는 이름공간, ValueError 글)
+# ④ 표가 틀린 꼴 → (표 파일, 실패하는 이름공간, 예외 줄)
 ALL_NS: "tuple[str, ...]" = ("api", "api2", "api3", "apib")
 FAILS: "list[tuple[str, tuple[str, ...], str]]" = [
-    ("bad_unknown_key", ALL_NS, "unknown pre-route row keys: ['namespace']"),
-    ("bad_empty_tuple", ALL_NS, "empty narrowing tuple in pre-route row 403"),
-    ("bad_operations_form", ALL_NS, "pre-route operation must be 'METHOD /path': pub_list"),
-    ("bad_operations_target", ("api3",), "pre-route operation not in this document: GET /api3/pub/lists"),
-    ("bad_operations_namespace", ALL_NS, "pre-route row 406 with operations needs exactly one namespace"),
-    ("bad_status", ALL_NS, "pre-route status out of 400-599: 302"),
-    ("bad_methods", ALL_NS, "pre-route methods must be upper-case HTTP methods: ('post',)"),
-    ("bad_component_collision", ("api",), "component name collision: BookOut"),
+    ("bad_unknown_key", ALL_NS, "ValueError: unknown pre-route row keys: ['namespace']"),
+    ("bad_empty_tuple", ALL_NS, "ValueError: empty narrowing tuple in pre-route row 403"),
+    ("bad_operations_form", ALL_NS, "ValueError: pre-route operation must be 'METHOD /path': pub_list"),
+    ("bad_operations_target", ("api3",), "ValueError: pre-route operation not in this document: GET /api3/pub/lists"),
+    ("bad_operations_namespace", ALL_NS, "ValueError: pre-route row 406 with operations needs exactly one namespace"),
+    ("bad_status", ALL_NS, "ValueError: pre-route status out of 400-599: 302"),
+    ("bad_methods", ALL_NS, "ValueError: pre-route methods must be upper-case HTTP methods: ('post',)"),
+    ("bad_component_collision", ("api",), "ValueError: component name collision: BookOut"),
+    ("bad_exempt_pattern", ("api",), "PatternError: missing ), unterminated subpattern at position 10"),
 ]
 
 
@@ -416,7 +438,7 @@ def _fail_checks(td: Path, canonical: Path) -> "list[str]":
         if got["plain_request"] != 200:
             fails.append(f"{tag} 보통 경로 요청(GET /api/health)이 서야 한다 — 지금 {got['plain_request']}")
         for ns in ALL_NS:
-            want: str = f"ValueError: {message}" if ns in failing else "ok"
+            want: str = message if ns in failing else "ok"
             if got["schema"].get(ns) != want:
                 fails.append(f"{tag} {ns} 문서 생성 {got['schema'].get(ns)!r} ≠ 기대 {want!r}")
             want_status: int = 500 if ns in failing else 200

@@ -125,11 +125,13 @@ from __future__ import annotations
 import ast
 import re
 import sys
+from pathlib import Path
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 import checker_target
 import folder_group
 from findings import Candidates, Findings, emit_all, zero_target_guard
-from pathlib import Path
 
 try:
     import standard_tree as tree

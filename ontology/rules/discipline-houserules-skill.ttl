@@ -503,12 +503,18 @@ djr:R-3147 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-3148 a djr:Obligation ;
-    skos:prefLabel "모든 이름은 «첫 대입»에 타입을 적는다 — 예외 0"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3148@2026-08-22> .
+    skos:prefLabel "모든 이름은 «첫 대입»에 타입을 적는다 — 예외 0(e2e 의 factory 행은 파일 안 Protocol + .create() 로 달 수 있음)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3148@2026-11-22> .
 
 <https://numchida.com/ns/djr#R-3148@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3148 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3148@2026-11-22> a djr:Expression ;
+    prov:specializationOf djr:R-3148 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3148@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3149 a djr:Obligation ;
     skos:prefLabel "타입 부착 범위는 시그니처·모듈/클래스 변수·함수 지역 변수·테스트와 테스트 재료 전부"@ko ;
@@ -1247,7 +1253,7 @@ djr:R-3717 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:statesNorm djr:R-3148, djr:R-3149, djr:R-3150 ;
-    djr:text "\n**모든 이름은 «첫 대입»에 타입을 적는다 — 예외 0.** 함수·메서드 시그니처(인자·반환), 모듈 변수, 클래스 변수, **함수 지역 변수**, 테스트와 테스트 재료(`test/fake/`·`factories/`)까지 전부다. 「자명하니까 면제」를 두지 않는다 — 조건부 면제는 매 실행 흔들리는 암묵 판단으로 돌아온다.\n\n"@ko .
+    djr:text "\n**모든 이름은 «첫 대입»에 타입을 적는다 — 예외 0.** 함수·메서드 시그니처(인자·반환), 모듈 변수, 클래스 변수, **함수 지역 변수**, 테스트와 테스트 재료(`test/fake/`·`factories/`)까지 전부다. 「자명하니까 면제」를 두지 않는다 — 조건부 면제는 매 실행 흔들리는 암묵 판단으로 돌아온다. e2e 시험은 자기 BC 모델을 import 하지 않으므로(#390), `factories/` 로 만든 행의 타입은 그 파일 안에 읽는 칸만 적은 `Protocol` 로 달 수 있다 — `row: _Row = XModelFactory.create()`(호출 꼴 `XModelFactory()` 는 mypy 가 factory 로 읽는다 · property · 관계 칸은 Protocol 에 `@property` 로 적는다 · 칸까지 검사되는 것은 모델을 첨자로 단 factory 일 때다).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4/b10> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4> ;

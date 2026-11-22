@@ -84,13 +84,15 @@ import re
 import stat
 import subprocess
 import sys
+from pathlib import Path
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 import anchor_diff
 import checker_target
 from findings import Candidates, ContractFindings, Findings, emit_all, lines, zero_target_guard
 from dataclasses import dataclass
 from http import HTTPStatus
-from pathlib import Path
 from typing import Iterator
 
 
@@ -8575,8 +8577,9 @@ import ast as _ast
 
 try:
     import standard_tree as _stree
+    import business_vocab as vocab
 except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
-    print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    print("분석 오류: standard_tree.py/business_vocab.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
     sys.exit(1)
 
 _TREE_DRIVING = ("driving_layer",)
@@ -8594,7 +8597,7 @@ def _tree_bcs2(root: Path) -> list[Path]:
     for c in (root / "application",):
         if not c.is_dir() or set(c.parts) & CODE_SKIP_DIRS:
             continue
-        out.extend(p for p in sorted(c.iterdir()) if p.is_dir() and not p.name.startswith("."))
+        out.extend(p for p in sorted(c.iterdir()) if vocab.bc_folder(p))
     return out
 
 

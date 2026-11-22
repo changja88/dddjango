@@ -112,15 +112,18 @@ from __future__ import annotations
 import ast
 import re
 import sys
+from pathlib import Path
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 import checker_target
 from findings import Candidates, Findings, emit_all, zero_target_guard
-from pathlib import Path
 
 try:
     import standard_tree as tree
+    import business_vocab as vocab
 except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
-    print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    print("분석 오류: standard_tree.py/business_vocab.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
     sys.exit(1)
 
 SKIP_DIRS = {
@@ -211,7 +214,7 @@ def _adopted(target: Path) -> bool:
         if not c.is_dir() or set(c.parts) & SKIP_DIRS:
             continue
         for bc in sorted(c.iterdir()):
-            if bc.is_dir() and not bc.name.startswith(".") and _has_adoption_signal(bc):
+            if vocab.bc_folder(bc) and _has_adoption_signal(bc):
                 return True
     return False
 

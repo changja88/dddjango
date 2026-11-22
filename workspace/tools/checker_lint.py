@@ -28,6 +28,8 @@ spec_lint.py·corpus_mirror_sync.py 와 같은 부류(메인테이너/빌드타�
   선행게이트 #487 제1원칙 게이트 표식 — rule-owner-map 의 「제1원칙 선행 게이트」 비고.
   파이프라인 #495 mypy 가 registry 문서에 «항상» 있다 · #496 그 호출에 tests 면제가 없다.
   관측    #602 broker 검사기가 실패 리스너 관측(#525·#602) 슬라이스를 가진다(앵커).
+  호출    F4-189 같은 폴더 모듈을 import 하는 검사기는 첫 import 앞에서 제 폴더를 sys.path 앞에 넣는다
+             (`-I` · `-P` · `PYTHONSAFEPATH` 는 스크립트 폴더를 빼므로).
   후보    #54[ⓓ] 검사기 안 «주소 목록» 후보 — 경로꼴 문자열 상수가 트리 고정 이름 밖이면
              ⓓ 출력(「이 목록이 규칙인가 주소인가」 · exit 불산입).
   이관    #67 은 대상이 «타깃 코드»(DTO 의 raise)라 check-usecase-dto-placement 로 정정
@@ -81,6 +83,11 @@ TREE_FIXED_HINTS = {
     "external_system", "models", "admin", "templates", "form", "feature", "settings",
     "migrations", "application", "internal", "external",
 }
+
+
+_SELF_PATH: str = ast.dump(ast.parse(
+    "if str(Path(__file__).resolve().parent) not in sys.path:\n"
+    "    sys.path.insert(0, str(Path(__file__).resolve().parent))\n").body[0])
 
 
 class Findings(list):
@@ -222,6 +229,19 @@ def _check_one(py: Path, text: str, mod: ast.Module, f: Findings, cand: Candidat
                              "이 목록이 «규칙»인가 «주소»인가")
 
 
+def _check_self_path(py: Path, mod: ast.Module, siblings: "frozenset[str]", f: Findings) -> None:
+    imported: "list[int]" = [
+        n.lineno for n in ast.walk(mod)
+        if (isinstance(n, ast.Import) and any(a.name.split(".")[0] in siblings for a in n.names))
+        or (isinstance(n, ast.ImportFrom) and n.level == 0 and (n.module or "").split(".")[0] in siblings)]
+    if not imported:
+        return
+    first: int = min(imported)
+    if not any(n.lineno < first and ast.dump(n) == _SELF_PATH for n in mod.body):
+        f.add("F4-189", f"{py.name}:{first}",
+              "같은 폴더 모듈 import 앞에 제 폴더를 sys.path 에 넣는 줄이 없다 — `-I` · `-P` · `PYTHONSAFEPATH` 에서 죽는다")
+
+
 def _check_anchors(scripts: Path, f: Findings) -> None:
     def text_of(fname: str) -> str | None:
         p = scripts / fname
@@ -314,6 +334,7 @@ def main(argv: list[str]) -> int:
     if not checkers:
         print("사용 오류: check-*.py 가 0건 — 스크립트 디렉터리가 맞나", file=sys.stderr)
         return 1
+    siblings: "frozenset[str]" = frozenset(p.stem for p in scripts.glob("*.py"))
     for py in checkers:
         text = py.read_text(encoding="utf-8")
         mod = _parse(py)
@@ -321,6 +342,7 @@ def main(argv: list[str]) -> int:
             findings.add("#74", py.name, "파싱 실패 — 검사기 자신이 깨져 있다")
             continue
         _check_one(py, text, mod, findings, cand)
+        _check_self_path(py, mod, siblings, findings)
     if scripts == DEFAULT_SCRIPTS:
         _check_anchors(scripts, findings)
 

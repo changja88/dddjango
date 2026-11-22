@@ -64,6 +64,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Iterable
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 _QUOTE_HEAD: "re.Pattern[str]" = re.compile(r"^[ \t]*>[ \t]?", re.M)
 _SPACE: "re.Pattern[str]" = re.compile(r"\s+")
 
@@ -7050,7 +7053,6 @@ def _opsafe_binding(corpus: Corpus, rid: str, overrides: "set[str]") -> "tuple[l
 def cmd_self_test(corpus: Corpus) -> int:
     reds: "list[str]" = []
     try:
-        sys.path.insert(0, str(Path(__file__).resolve().parent))
         import standard_tree  # noqa: PLC0415
         bc_children = {r.name.rstrip("/") for r in standard_tree.children(standard_tree.bc_root())}
         stray = [l for l in LAYER_ORDER if l not in bc_children]

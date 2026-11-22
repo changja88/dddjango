@@ -77,11 +77,13 @@ from __future__ import annotations
 import ast
 import re
 import sys
+from pathlib import Path
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 import checker_target
 import folder_group
 from findings import Candidates, Findings, emit_all, zero_target_guard
-from pathlib import Path
 
 try:
     import standard_tree as tree
@@ -535,11 +537,12 @@ def _check_bypass(root: Path, bc: Path, bypass: Path, f: Findings, cand: Candida
     for p in sorted(bypass.iterdir()):
         if p.is_file() and p.suffix == ".py" and p.name != "__init__.py":
             f.add("#232", _rel(root, p), "domain_bypass_query/ 직계 파일 — 능력 하나 = 폴더 하나다")
+    container_bcs: set[str] = vocab.container_bc_names(bc)
     for cap in sorted(p for p in bypass.iterdir() if p.is_dir() and p.name != "__pycache__"):
         if checker_target.cache_only_instance(cap):
             continue
         toks = set(cap.name.split("_"))
-        if toks & (TECH_EXACT | vocab.container_bc_names(bc)):
+        if toks & (TECH_EXACT | container_bcs):
             f.add("#233", _rel(root, cap),
                   f"`{cap.name}/` — 「무엇을 알고 싶은가」로 짓고 «누가 주는지»는 이름에 넣지 않는다")
         elif "_" not in cap.name:

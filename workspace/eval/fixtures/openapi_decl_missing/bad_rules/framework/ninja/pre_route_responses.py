@@ -47,6 +47,7 @@ class PreRouteResponse(TypedDict):
     namespaces: NotRequired[tuple[str, ...]]
     operations: NotRequired[tuple[str, ...]]
     exempt: NotRequired[tuple[str | None, str]]
+    exempt_pattern: NotRequired[tuple[str | None, str]]
     headers: NotRequired[dict[str, JsonValue]]
 
 
@@ -342,14 +343,25 @@ def _when_holds(
 
 
 def _exempted(entry: PreRouteResponse, path: str, method: str) -> bool:
-    exempt: tuple[str | None, str] | None = entry.get("exempt")
+    if path in _exempt_values(entry.get("exempt"), method):
+        return True
+    cell: tuple[str | None, str] | None = entry.get("exempt_pattern")
+    values: tuple[JsonValue, ...] = _exempt_values(cell, method)
+    patterns: list[str] = [value for value in values if isinstance(value, str)]
+    return any(re.fullmatch(pattern, path) is not None for pattern in patterns)
+
+
+def _exempt_values(
+    exempt: tuple[str | None, str] | None,
+    method: str,
+) -> tuple[JsonValue, ...]:
     if exempt is None:
-        return False
+        return ()
     only_method, setting_name = exempt
-    exempt_paths: object = getattr(settings, setting_name)
+    values: object = getattr(settings, setting_name)
     if only_method is not None and only_method != method:
-        return False
-    return isinstance(exempt_paths, (list, tuple)) and path in exempt_paths
+        return ()
+    return tuple(values) if isinstance(values, (list, tuple)) else ()
 
 
 def _can_fail(parameter: dict[str, JsonValue], converters: dict[str, str]) -> bool:

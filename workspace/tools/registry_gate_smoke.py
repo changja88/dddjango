@@ -640,13 +640,17 @@ class CacheSnapshotRegression(unittest.TestCase):
             _write(repo, "application/orders/domain_layer/hidden/.real", "hidden source")
             (repo / "application/orders/domain_layer/empty").mkdir()
             _write(repo, "application/cache_bc/domain_layer/__pycache__/old.pyc", "cache")
+            (repo / "application/empty_bc").mkdir()
+            _write(repo, "application/__init__.py", "")
             snapshot = td / "snapshot"
             gate._snapshot_current(repo, snapshot)
             for relative in (str(fixed.relative_to(repo)), "other/domain_layer/vanished",
                              "application/orders/domain_layer/hidden", "application/orders/domain_layer/empty",
-                             "application/cache_bc/domain_layer",
+                             "application/empty_bc",
                              "application/orders/driving_layer/api/order/order_controller"):
                 self.assertTrue((snapshot / relative).is_dir(), relative)
+            self.assertFalse((snapshot / "application/cache_bc").exists())   # 캐시만 남은 BC 자리(F4-182)
+            self.assertTrue((snapshot / "application/__init__.py").is_file())
             proc = subprocess.run([sys.executable, "-B", str(GATE.parent / "check-layer-skeleton.py"),
                                    str(snapshot)], capture_output=True, text=True, env=_scrubbed_env())
             self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
@@ -3118,6 +3122,416 @@ class GroupEndMatchingScenario(unittest.TestCase):
             self.assertEqual(legacy.read_bytes(), written)
 
 
+_VO: str = "application/orders/domain_layer/order/value_object/"
+_AUDIT_ONLY_NEW: str = "감수자 입력은 신규분만(R-0284)"
+_AUDIT_BUNDLE: str = "감수자 입력은 신규분 + 승인 유입 묶음(R-0284)"
+
+
+def _landed(repo: Path) -> None:
+    """다른 레인의 착륙 — ⓓ 줄 넷(값 객체 둘 #268 · #268 + #259 · 긴 유스케이스 #644)과 위반 파일 하나."""
+    head: str = "from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\n"
+    _write(repo, _VO + "order_badge.py", f"{head}class OrderBadge:\n    text: str\n")
+    _write(repo, _VO + "order_receipt.py", f"{head}class OrderReceipt:\n    receipt_id: str\n    text: str\n")
+    _write(repo, "application/orders/application_layer/order/place_order/place_order_use_case.py",
+           "class PlaceOrderUseCase:\n    def execute(self) -> int:\n        total: int = 0\n"
+           + "        total += 1\n" * 215 + "        return total\n")
+    _plant_violation(repo)
+
+
+def _lane_value(repo: Path) -> None:
+    _write(repo, _VO + "order_note.py",
+           "from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass OrderNote:\n    text: str\n")
+
+
+def _without_candidates(out: str) -> str:
+    """ⓓ 절(신규 · 승인 유입)을 뺀 게이트 출력."""
+    return re.sub(r"^== ⓓ .*?(?=^== (?!ⓓ )|^귀속 레코드|^판정:)", "", _mask(out), flags=re.S | re.M)
+
+
+class ApprovedCandidateRegression(unittest.TestCase):
+    """F4-181 — 짝짓기 · 이동 따라가기 뒤 남은 ⓓ 신규를 위반 줄과 같은 식으로 «ⓓ 승인 유입» 으로 가른다. 위반 쪽 결과 · 진단 ·
+    exit 는 가름이 없을 때와 같고, 목록이 없거나 ⓓ 유입 0 이면 출력 · sidecar 도 같다(대조 판 = 지금 scripts 에서 ⓓ 가름만
+    끈 사본 — 검사기 글 · 규칙이 바뀌어도 이 시험은 그대로다). 수 · 절은 절대 기대로도 본다."""
+
+    def setUp(self) -> None:
+        self.temp: tempfile.TemporaryDirectory[str] = tempfile.TemporaryDirectory(prefix="gate-cand-inflow-")
+        self.addCleanup(self.temp.cleanup)
+        self.td: Path = Path(self.temp.name)
+        scripts: Path = self.td / "without-split"
+        shutil.copytree(GATE.parent, scripts, ignore=shutil.ignore_patterns("__pycache__"))
+        self.old: Path = scripts / "registry_gate.py"
+        text: str = self.old.read_text(encoding="utf-8")
+        split: str = "if approved_path is not None and cand_new:"
+        self.assertEqual(text.count(split), 1, "ⓓ 가름 줄을 못 찾음")
+        self.old.write_text(text.replace(split, "if False:"), encoding="utf-8")
+
+    def both(self, repo: Path, anchor: str, *extra: str) -> "tuple[int, str, dict, int, str, dict]":
+        new_side: Path = self.td / f"{repo.name}-new.json"
+        old_side: Path = self.td / f"{repo.name}-old.json"
+        code, out = _gate(repo, anchor, [*extra, "--introduced-json", str(new_side)])
+        old_code, old_out = _gate(repo, anchor, [*extra, "--introduced-json", str(old_side)], gate=self.old)
+        self.assertNotIn("Traceback", out + old_out)
+        return code, out, _mask_sidecar(new_side) or {}, old_code, old_out, _mask_sidecar(old_side) or {}
+
+    def assert_same(self, got: "tuple[int, str, dict, int, str, dict]") -> None:
+        code, out, data, old_code, old_out, old_data = got
+        self.assertEqual((code, _mask(out), data), (old_code, _mask(old_out), old_data))
+
+    def assert_split(self, got: "tuple[int, str, dict, int, str, dict]", merge: str, new: int, inflow: int) -> None:
+        """신규 `new` · 유입 `inflow` · 합은 옛 신규 · ⓓ 밖(위반 쪽 승인 유입 · 머지 표 · 진단 · 꼬리 · exit)은 옛 판 그대로."""
+        code, out, data, old_code, old_out, old_data = got
+        self.assertEqual(code, old_code, out)
+        fresh: "list[str]" = _top_lines(_section(out, "ⓓ 신규"))
+        carried: "list[str]" = _top_lines(_section(out, "ⓓ 승인 유입"))
+        self.assertEqual((len(fresh), len(carried)), (new, inflow), out)
+        self.assertEqual(sorted(fresh + carried), sorted(_top_lines(_section(old_out, "ⓓ 신규"))), out)
+        self.assertRegex(out, rf"== ⓓ 신규\(N′∖L′\) {new}건 · legacy \d+건 · 해소 \d+건 — exit 불산입 · "
+                              rf"{re.escape(_AUDIT_BUNDLE)} ==")
+        self.assertNotIn(_AUDIT_ONLY_NEW, out)
+        self.assertIn(f"== ⓓ 승인 유입 {inflow}건 — 감수자 묶음 물음 ==", out)
+        self.assertEqual(_section(out, "ⓓ 승인 유입").count(f"↳ 유입: {merge[:12]}(L 증명)"), inflow, out)
+        self.assertEqual(data["candidate_lines"], fresh, data)
+        self.assertEqual(len(data["candidate_records"]), new, data)
+        self.assertEqual([x["line"] for x in data["candidate_inflow"]], carried, data)
+        self.assertEqual({x["merge"] for x in data["candidate_inflow"]}, {merge}, data)
+        self.assertEqual(_without_candidates(out), _without_candidates(old_out))
+        apart: "tuple[str, ...]" = ("candidate_lines", "candidate_records", "candidate_inflow")
+        self.assertEqual({k: v for k, v in data.items() if k not in apart},
+                         {k: v for k, v in old_data.items() if k not in apart})
+
+    def test_c1_inflow_is_a_separate_bundle(self) -> None:
+        repo, anchor, merge = _lane_merge_repo(self.td, "c1", _landed, _lane_value)
+        got = self.both(repo, anchor, "--approved-merge-file", str(_approved(self.td, "c1", merge)))
+        self.assert_split(got, merge, new=1, inflow=4)
+        self.assertEqual(got[0], 0, got[1])
+        self.assertIn("order_note.py", got[2]["candidate_lines"][0])
+
+    def test_c2_inflow_file_edited_by_the_lane_stays_new(self) -> None:
+        repo, anchor, merge = _lane_merge_repo(self.td, "c2", _landed, _lane_value)
+        edited: str = (repo / _VO / "order_badge.py").read_text(encoding="utf-8") + "    rank: int\n"
+        _write(repo, _VO + "order_badge.py", edited)
+        _commit_all(repo, "lane edits the landed file")
+        got = self.both(repo, anchor, "--approved-merge-file", str(_approved(self.td, "c2", merge)))
+        self.assert_split(got, merge, new=2, inflow=3)
+        self.assertTrue(any("order_badge.py" in line for line in got[2]["candidate_lines"]), got[1])
+
+    def test_c3_lane_caused_line_stays_new_and_byte_equal(self) -> None:
+        def anchor_step(r: Path) -> None:
+            _write(r, "framework/__init__.py", "")
+            _write(r, "framework/text/__init__.py", "")
+
+        def lane_step(r: Path) -> None:
+            _write(r, _VO + "parcel_code.py",
+                   "from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass ParcelCode:\n    text: str\n\n"
+                   "    def __post_init__(self) -> None:\n        if not self.text:\n            raise ValueError(\"빈 글\")\n")
+
+        def main_step(r: Path) -> None:
+            _write(r, "framework/text/parcel_format.py", "def parcel_label(text: str) -> str:\n    return text.strip()\n")
+        repo, anchor, merge = _lane_merge_repo(self.td, "c3", main_step, lane_step, anchor_step)
+        got = self.both(repo, anchor, "--approved-merge-file", str(_approved(self.td, "c3", merge)))
+        self.assertTrue(any("[ⓓ#448]" in line for line in got[2]["candidate_lines"]), got[1])
+        self.assertIn(_AUDIT_ONLY_NEW, got[1])
+        self.assertNotIn("candidate_inflow", got[2])
+        self.assert_same(got)
+
+    def test_unmeasured_candidate_lines_stay_new(self) -> None:
+        def lane_step(r: Path) -> None:
+            _write(r, "scripts/broken.py", "def broken(:\n")
+        repo, anchor, merge = _lane_merge_repo(self.td, "invalid", _landed, lane_step)
+        got = self.both(repo, anchor, "--approved-merge-file", str(_approved(self.td, "invalid", merge)))
+        self.assertEqual(len(got[2]["candidate_lines"]), 4, got[1])
+        self.assert_same(got)
+
+    def test_without_the_list_or_without_candidate_inflow_is_byte_equal(self) -> None:
+        repo, anchor, merge = _lane_merge_repo(self.td, "nolist", _landed, _lane_value)
+        plain = self.both(repo, anchor)
+        self.assert_same(plain)
+        self.assertEqual(len(plain[2]["candidate_lines"]), 5, plain[1])
+        self.assertIn(_AUDIT_ONLY_NEW, plain[1])
+        self.assertNotIn("candidate_inflow", plain[2])
+        self.assert_same(self.both(repo, anchor, "--approved-merge-file", str(_approved(self.td, "nolist"))))
+        repo, anchor, merge = _lane_merge_repo(self.td, "zero", _plant_violation, _lane_value)
+        self.assert_same(self.both(repo, anchor, "--approved-merge-file", str(_approved(self.td, "zero", merge))))
+
+    def test_g_cross_line_answered_outside_its_subject_stays_in_the_bundle(self) -> None:
+        import api_error_backstop_matrix  # noqa: PLC0415 — 표 · 미들웨어 재료(저장소 픽스처)
+        land: "dict[str, str]" = dict(next(c.files for c in api_error_backstop_matrix.pre_route_cases()
+                                           if c.name == "pre-route-d-operations-row-candidate"))
+        middleware: str = "framework/django/maintenance_middleware.py"
+        table: str = "framework/ninja/pre_route_response_table.py"
+        settings: str = "config/settings.py"
+        repo: Path = self.td / "cross"
+        repo.mkdir()
+        for rel, text in land.items():
+            if rel != middleware and text != "<REMOVE>":
+                _write(repo, rel, text)
+        _write(repo, settings, "".join(
+            line for line in land[settings].splitlines(True) if "MaintenanceMiddleware" not in line))
+        _write(repo, table, re.sub(r'    \{"status": 503.*\n', "", land[table]))
+        _git(repo, "init", "-q", "-b", "main")
+        anchor: str = _commit_all(repo, "anchor")
+        _git(repo, "checkout", "-q", "-b", "lane")
+        _write(repo, "lane_note.md", "lane work\n")
+        _commit_all(repo, "lane work")
+        _git(repo, "checkout", "-q", "main")
+        for rel in (middleware, table, settings):
+            _write(repo, rel, land[rel])
+        _commit_all(repo, "main landed middleware and row")
+        _git(repo, "checkout", "-q", "lane")
+        _git(repo, "merge", "-q", "--no-ff", "-m", "M merge main", "main")
+        merge: str = _head(repo)
+        old_ops: str = '"operations": ("GET /api/lessons/{lesson_id}",)'
+        self.assertIn(old_ops, land[table])
+        _write(repo, table, land[table].replace(old_ops, '"operations": ("DELETE /api/nowhere",)'))
+        _commit_all(repo, "lane edits only the table")
+        _code, out, data, _old_code, old_out, _old_data = self.both(
+            repo, anchor, "--approved-merge-file", str(_approved(self.td, "cross", merge)))
+        self.assertTrue(any("[ⓓ#63]" in line for line in _top_lines(_section(old_out, "ⓓ 신규"))), old_out)
+        self.assertTrue(any("[ⓓ#63]" in line and middleware in line
+                            for line in _top_lines(_section(out, "ⓓ 승인 유입"))), out)
+        self.assertTrue(any(middleware in x["line"] for x in data["candidate_inflow"]), data)
+
+    def test_g_moves_follow_the_pair_before_the_split(self) -> None:
+        repo, anchor, merge = _void_inflow_repo(self.td, "moves", conflict=False)
+        folder: Path = _fg_folder(repo, "moves", anchor, merges=(merge,))
+        got = self.both(repo, anchor, "--group-moves", str(folder),
+                        "--approved-merge-file", str(folder / "approved-merges.txt"))
+        self.assertIn("== ⓓ 신규(N′∖L′) 0건 · legacy 3건 · 해소 0건", got[1])
+        self.assert_split(got, merge, new=0, inflow=1)
+
+
+class BcFolderGateRegression(unittest.TestCase):
+    """F4-182 — 게이트 지금 사본은 `application/` 직계의 «캐시만 남은 BC 자리» 만 더 뺀다(부산물을 지운 트리와 같은 판정) ·
+    pre-gate 기준선 BC 도 같은 뜻. 빈 폴더 · 실파일이 있는 자리는 «캐시만 남음» 조건이 없을 때와 같다."""
+
+    def setUp(self) -> None:
+        self.temp: tempfile.TemporaryDirectory[str] = tempfile.TemporaryDirectory(prefix="gate-bc-folder-")
+        self.addCleanup(self.temp.cleanup)
+        self.td: Path = Path(self.temp.name)
+
+    def without_cache_rule(self) -> Path:
+        """지금 scripts 사본에서 그 조건만(BC 자리 술어 · 지금 사본 거름) 뺀 대조 판의 게이트."""
+        dest: Path = self.td / "without-cache-rule"
+        if not dest.exists():
+            shutil.copytree(GATE.parent, dest, ignore=shutil.ignore_patterns("__pycache__"))
+            with (dest / "business_vocab.py").open("a", encoding="utf-8") as fh:
+                fh.write("\n\ndef bc_folder(p: Path) -> bool:\n"
+                         "    return p.is_dir() and not p.name.startswith(\".\") and p.name not in {\n"
+                         "        \".venv\", \"venv\", \"site-packages\", \"node_modules\", \".git\", \"__pycache__\", \".dddjango\"}\n")
+            text, count = re.subn(r"if application == [^\n]*cache_only_instance\(bc\):", "if False:",
+                                  (dest / "registry_gate.py").read_text(encoding="utf-8"))
+            self.assertEqual(count, 1, "지금 사본의 BC 자리 거름 줄을 못 찾음")
+            (dest / "registry_gate.py").write_text(text, encoding="utf-8")
+        return dest / "registry_gate.py"
+
+    @staticmethod
+    def acl_to_email(repo: Path) -> None:
+        base: str = "application/orders/driven_layer/adapter/anticorruption_layer/email/"
+        _write(repo, base + "__init__.py", "")
+        _write(repo, base + "email_sender_adapter.py", "import requests\n\n\nclass EmailSenderAdapter:\n    pass\n")
+
+    def test_cache_left_bc_place_reads_like_the_tree_without_it(self) -> None:
+        for name in ("untracked", "deleted", "moved", "cache-name"):
+            with self.subTest(toy=name):
+                repo, _pre = _make_repo(self.td, name)
+                _write(repo, ".gitignore", "__pycache__/\n")
+                left: "list[str]" = ["application/email/domain_layer", "application/email"]
+                if name == "deleted":
+                    self.acl_to_email(repo)
+                if name in ("deleted", "moved"):
+                    shutil.copytree(repo / "application/orders", repo / "application/email",
+                                    ignore=shutil.ignore_patterns("email", "__pycache__"))
+                    left = [str(p.relative_to(repo)) for p in (repo / "application/email").rglob("*") if p.is_dir()]
+                anchor: str = _commit_all(repo, "anchor")
+                if name == "deleted":
+                    _git(repo, "rm", "-rq", "application/email")
+                    _commit_all(repo, "lane removes the BC")
+                elif name == "moved":
+                    _git(repo, "mv", "application/email", "application/postal")
+                    _commit_all(repo, "lane moves the BC")
+                elif name == "cache-name":
+                    left = ["application"]
+                _write(repo, "lane_note.md", "lane work\n")
+                truth_code, truth = _gate(repo, anchor)
+                for rel in left:
+                    _write(repo, f"{rel}/__pycache__/gone.cpython-314.pyc", "cache")
+                code, out = _gate(repo, anchor)
+                self.assertEqual((code, _mask(out)), (truth_code, _mask(truth)))
+                if name == "deleted":   # 캐시가 가리던 #365 가 다시 선다
+                    self.assertTrue(any("[#365]" in line for line in _lines_of(out, "귀속(N∖L)")), out)
+
+    def test_nested_application_folder_is_not_a_bc_place(self) -> None:
+        """이름만 `application` 인 자리(애그리거트 · BC)의 칸은 BC 자리가 아니다 — 캐시만 남아도 지금 사본에서 빠지지 않는다."""
+        agg: str = "application/orders/domain_layer/application"
+        for name in ("untouched-slot", "committed-stray", "untracked-stray", "bc-named-application"):
+            with self.subTest(toy=name):
+                repo, _pre = _make_repo(self.td, name)
+                base: str = "application/application" if name == "bc-named-application" else agg
+                _write(repo, f"{base}/__init__.py", "")
+                if base == agg:
+                    _write(repo, f"{agg}/application.py", "class Application:\n    pass\n")
+                    for slot in ("entity", "event", "exception", "value_object"):
+                        if name != "untouched-slot" or slot != "entity":
+                            _write(repo, f"{agg}/{slot}/__init__.py", "")
+                slot_dir: str = f"{base}/{'entity' if name == 'untouched-slot' else 'stray_bucket'}"
+                cache: str = f"{slot_dir}/__pycache__/gone.cpython-314.pyc"
+                if name == "untouched-slot":
+                    _write(repo, cache, "cache")
+                _git(repo, "add", "-A", "-f", ".")
+                _git(repo, "commit", "-q", "--allow-empty", "-m", "anchor")
+                anchor: str = _head(repo)
+                if name != "untouched-slot":
+                    _write(repo, cache, "cache")
+                    if name != "untracked-stray":
+                        _git(repo, "add", "-A", "-f", ".")
+                        _git(repo, "commit", "-q", "-m", "lane: stray")
+                _write(repo, "lane_note.md", "lane work\n")
+                code, out = _gate(repo, anchor)
+                if name == "untouched-slot":
+                    self.assertEqual(code, 0, out)   # 앵커부터 있던 옛 칸 — 새 red 를 만들지 않는다
+                else:
+                    self.assertEqual(code, 2, out)   # 표준 밖 칸 — 숨기지 않는다
+                    rule: str = "[#81]" if base != agg else "[#490]"   # BC 직계는 #81 · 그 아래는 #490
+                    self.assertTrue(any(rule in line and slot_dir in line
+                                        for line in _lines_of(out, "귀속(N∖L)")), out)
+
+    def test_places_with_real_files_or_empty_read_like_without_the_cache_rule(self) -> None:
+        tracked: "dict[str, tuple[str, ...]]" = {
+            "anchor-gitkeep": (".gitkeep",), "ruff": (".ruff_cache/CACHEDIR.TAG",), "pytest": (".pytest_cache/README.md",),
+            "build": ("__init__.py", "domain_layer/__init__.py"), "dist": ("__init__.py", "domain_layer/__init__.py"),
+            "gitlink": (), "lane-gitkeep": (), "empty": (), "ds-store": ()}
+        for name, files in tracked.items():
+            with self.subTest(toy=name):
+                repo, _pre = _make_repo(self.td, name)
+                self.acl_to_email(repo)
+                place: str = f"application/{name if name in ('build', 'dist') else 'email'}"
+                for rel in files:
+                    _write(repo, f"{place}/{rel}", "")
+                _git(repo, "add", "-A", "-f", ".")
+                if name == "gitlink":
+                    (repo / place).mkdir()
+                    _git(repo, "update-index", "--add", "--cacheinfo", f"160000,{'1' * 40},{place}")
+                _git(repo, "commit", "-q", "-m", "anchor")
+                anchor: str = _head(repo)
+                if name == "lane-gitkeep":
+                    for layer in ("driving_layer", "application_layer", "domain_layer", "driven_layer", "stray_bucket"):
+                        _write(repo, f"application/newbc/{layer}/.gitkeep", "")
+                    _commit_all(repo, "lane: new BC skeleton")
+                elif name == "empty":
+                    (repo / place).mkdir()
+                elif name == "ds-store":
+                    _write(repo, f"{place}/__pycache__/gone.cpython-314.pyc", "cache")
+                    _write(repo, f"{place}/.DS_Store", "junk")
+                _write(repo, "lane_note.md", "lane work\n")
+                code, out = _gate(repo, anchor)
+                old_code, old_out = _gate(repo, anchor, gate=self.without_cache_rule())
+                self.assertEqual((code, _mask(out)), (old_code, _mask(old_out)))
+                if name in ("empty", "ds-store"):   # 절대 기대 — 새로 선 빈 자리 · 캐시 + 잡파일 자리는 BC 다
+                    self.assertEqual(code, 2, out)
+                    self.assertTrue(any("[#488]" in line and f"{place}" in line
+                                        for line in _lines_of(out, "귀속(N∖L)")), out)
+                if name == "lane-gitkeep":
+                    self.assertIn("판정: 귀속 17건 → red", out)
+                elif name == "anchor-gitkeep":
+                    self.assertEqual(code, 0, out)
+
+    def forecast(self, name: str, planted: "str | None", gate: Path) -> "tuple[int, set[str], str]":
+        repo: Path = self.td / name
+        if not repo.exists():
+            shutil.copytree(_PREGATE_MINI, repo)
+            if planted is not None:
+                _write(repo, planted, "x\n")
+            _git(repo, "init", "-q")
+            _git(repo, "add", "-A", "-f", ".")
+            _git(repo, "commit", "-q", "-m", "anchor")
+        proc: "subprocess.CompletedProcess[str]" = subprocess.run(
+            [sys.executable, "-B", str(gate.parent / "design_pregate.py"), str(_PREGATE_MINI.parent / "green-spec.md"),
+             str(repo), "--report", str(self.td / f"{name}-report.md")],
+            capture_output=True, text=True, env=_scrubbed_env())
+        out: str = proc.stdout + proc.stderr
+        return proc.returncode, _lines_of(out, "귀속(N∖L)"), out
+
+    def test_pregate_baseline_bc_is_not_a_cache_only_place(self) -> None:
+        clean = self.forecast("plan-clean", None, GATE)
+        cached = self.forecast("plan-cache", "application/billing/__pycache__/gone.cpython-314.pyc", GATE)
+        self.assertEqual(clean[0], 0, clean[2])
+        self.assertEqual(cached[:2], clean[:2], cached[2])
+        # P8 — 숨김 실파일만 있는 자리는 이미 있는 BC 그대로(«캐시만 남음» 조건이 없을 때와 같은 예보).
+        hidden: str = "application/billing/.cache/x"
+        self.assertEqual(self.forecast("plan-hidden", hidden, GATE)[:2],
+                         self.forecast("plan-hidden", hidden, self.without_cache_rule())[:2])
+
+
+_ISOLATED_MODES: "tuple[tuple[str, tuple[str, ...], dict[str, str]], ...]" = (
+    ("-I", ("-I",), {"PYTHONPATH": "."}), ("-P", ("-P",), {}), ("PYTHONSAFEPATH", (), {"PYTHONSAFEPATH": "1"}))
+_LOAD_TOOL: str = ("import importlib.util, sys\n"
+                   "spec = importlib.util.spec_from_file_location(sys.argv[1], sys.argv[2])\n"
+                   "tool = sys.modules[sys.argv[1]] = importlib.util.module_from_spec(spec)\n"
+                   "spec.loader.exec_module(tool)\n")
+
+
+class IsolatedToolRegression(unittest.TestCase):
+    """F4-189 — 세 도구의 함수 안 import 와 게이트의 자식 검사기가 `-I` · `-P` · `PYTHONSAFEPATH=1` 에서 돈다 · 실행 자리의
+    심은 모듈은 읽지 않는다."""
+
+    def setUp(self) -> None:
+        self.temp: tempfile.TemporaryDirectory[str] = tempfile.TemporaryDirectory(prefix="gate-isolated-")
+        self.addCleanup(self.temp.cleanup)
+        self.td: Path = Path(self.temp.name)
+        self.cwd: Path = self.td / "target"
+        self.cwd.mkdir()
+        _git(self.cwd, "init", "-q")
+        for name in ("json", "rulepack", "folder_group", "behavior_support"):
+            (self.cwd / f"{name}.py").write_text("raise SystemExit('PLANTED')\n", encoding="utf-8")
+
+    def run_py(self, flags: "tuple[str, ...]", env: "dict[str, str]", *args: str) -> "tuple[int, str, str]":
+        proc: "subprocess.CompletedProcess[str]" = subprocess.run(
+            [sys.executable, "-B", *flags, *args], cwd=self.cwd, capture_output=True, text=True,
+            env={**_scrubbed_env(), **env})
+        self.assertNotIn("PLANTED", proc.stdout + proc.stderr)
+        return proc.returncode, proc.stdout, proc.stderr
+
+    def test_regen_core_sparql_selector_loads_the_rulepack(self) -> None:
+        sidecar: Path = self.td / "introduced.json"
+        sidecar.write_text(json.dumps({"records": [{
+            "checker": "check-context-isolation.py", "rule": "#95", "severity": "violation",
+            "file": "application/orders/driving_layer/api/order/schema/schema_smoke.py", "message": "진단"}]}),
+            encoding="utf-8")
+        argv: "tuple[str, ...]" = (str(GATE.parent / "regen_core.py"), "--introduced-json", str(sidecar), "--selector", "sparql")
+        normal = self.run_py((), {}, *argv)
+        self.assertEqual(normal[0], 0, normal[2])
+        for mode, flags, env in _ISOLATED_MODES:
+            with self.subTest(mode=mode):
+                self.assertEqual(self.run_py(flags, env, *argv), normal)
+
+    def test_behavior_guard_support_and_function_imports_load(self) -> None:
+        tool: str = str(GATE.parent / "behavior_guard.py")
+        (self.cwd / ".dddjango/run").mkdir(parents=True)
+        argv: "tuple[str, ...]" = (tool, "support", ".dddjango/run", "--collect", "--repo", ".")
+        normal = self.run_py((), {}, *argv)
+        self.assertNotIn("불러오지 못했다", normal[1] + normal[2])
+        load: str = _LOAD_TOOL + "tool._support_module()\ntool._audit_module()\nimport folder_group\n"
+        for mode, flags, env in _ISOLATED_MODES:
+            with self.subTest(mode=mode):
+                self.assertEqual(self.run_py(flags, env, *argv), normal)
+                self.assertEqual(self.run_py(flags, env, "-c", load, "behavior_guard", tool), (0, "", ""))
+
+    def test_refactor_audit_function_imports_load(self) -> None:
+        load: str = _LOAD_TOOL + "tool._folder_group_module()\ntool._guard_module()\nimport business_vocab\n"
+        for mode, flags, env in _ISOLATED_MODES:
+            with self.subTest(mode=mode):
+                self.assertEqual(self.run_py(flags, env, "-c", load, "refactor_audit", str(GATE.parent / "refactor_audit.py")),
+                                 (0, "", ""))
+
+    def test_safepath_gate_still_sees_the_violations(self) -> None:
+        repo, anchor, _merge = _lane_merge_repo(self.td, "safepath", _landed, _lane_value)
+        normal = self.run_py((), {}, str(GATE), str(repo), "--anchor", anchor)
+        safe = self.run_py((), {"PYTHONSAFEPATH": "1"}, str(GATE), str(repo), "--anchor", anchor)
+        self.assertEqual(safe[0], 2, safe[1] + safe[2])
+        self.assertIn("판정: 귀속 5건 → red", safe[1])
+        self.assertEqual(_mask(safe[1]), _mask(normal[1]))
+
+
 _GROUP_CASES: "tuple[type, ...]" = (GroupMoveGateRegression, GroupEndMatchingScenario)
 
 
@@ -3194,6 +3608,18 @@ _SUB: str = "SubfolderProjectRegression."
 _CONTRACT_STABLE: str = 'return _CONTENT_RE.sub("(내용: …)", _AT_LINE_RE.sub("@N", _CONTRACT_NTH_RE.sub("", line)))'
 _LANE_FILES: str = 'lane: "list[str]" = sorted(q for q in added if not any(q in facts.blobs(m.parent2) for m in active))'
 _COUNT_FOLDER: str = "folder=any(rule in line for rule in _FOLDER_COUNT_RULES)))"
+_CAND: str = "ApprovedCandidateRegression."
+_BC_GATE: str = "BcFolderGateRegression."
+_ISOLATED: str = "IsolatedToolRegression."
+_SELF_PATH_LINES: str = ("if str(Path(__file__).resolve().parent) not in sys.path:\n"
+                         "    sys.path.insert(0, str(Path(__file__).resolve().parent))\n")
+_CAND_SPLIT: str = (
+    "        if approved_path is not None and cand_new:\n"
+    "            # ⓓ 순서: 짝짓기 → 이동 따라가기 → 승인 유입 증명 — 결과 · 진단은 위반 쪽과 따로, 사본 · 실행 캐시만 같이.\n"
+    "            cand_prov: _ProvenanceResult = _provenance_split(root, anchor_sha, head, merges, chain,\n"
+    "                                                             cand_new, n_records, cur_prefixes, Path(td), cache=samples)\n"
+    "            cand_inflow = cand_prov.inflow\n"
+    "            cand_new = [line for line in cand_new if line not in cand_prov.inflow_lines]\n")
 # 기준선 · 귀속 변이(F4-160 · F4-162 · F4-166 · 2.40.0 F4-27 · F4-28 · F4-46) — (이름, scripts 파일, ((옛 글, 새 글) …), 시험
 # 파일, 붉어야 할 시험 이름).
 # 옛 글은 그 파일에 정확히 한 번 있어야 한다. 고침을 옛 코드로 되돌린 것과 고침의 조건을 하나씩 무른 것.
@@ -3358,6 +3784,54 @@ _BASELINE_MUTATIONS: "tuple[tuple[str, str, tuple[tuple[str, str], ...], str, tu
     ("빚 대조에서 계약 줄 순번 꼬리를 걷지 않음", "registry_gate.py", (
         ('anchor_diff.debt_match(_CONTRACT_NTH_RE.sub("", line), debt_rules)', "anchor_diff.debt_match(line, debt_rules)"),),
      "registry_gate_smoke.py", (_UNIT + "test_debt_line_matches_every_same_text_contract_line",)),
+    ("F4-181 ⓓ 표본 안 실음", "registry_gate.py", (("{line_map(l) for l in lines | cands}", "{line_map(l) for l in lines}"),),
+     "registry_gate_smoke.py", (_CAND + "test_c1_inflow_is_a_separate_bundle",)),
+    ("F4-181 F1 건너뜀", "registry_gate.py", (
+        ("classify_additions(added) if added else facts.classify(p))", 'classify_additions(added) if added else ("파일", None))'),),
+     "registry_gate_smoke.py", (_CAND + "test_c2_inflow_file_edited_by_the_lane_stays_new",)),
+    ("F4-181 L 건너뜀", "registry_gate.py", (("            if key in r2 and key not in r1:\n", "            if True:\n"),),
+     "registry_gate_smoke.py", (_CAND + "test_c3_lane_caused_line_stays_new_and_byte_equal",)),
+    ("F4-181 가름을 따라가기 앞에", "registry_gate.py", (
+        ('        cand_inflow: "list[tuple[str, str, str]]" = []\n' + _CAND_SPLIT, ""),
+        ('        moved: "dict[str, str]" = {}\n        cand_moved: "dict[str, str]" = {}\n',
+         '        cand_inflow: "list[tuple[str, str, str]]" = []\n' + _CAND_SPLIT
+         + '        moved: "dict[str, str]" = {}\n        cand_moved: "dict[str, str]" = {}\n')),
+     "registry_gate_smoke.py", (_CAND + "test_g_moves_follow_the_pair_before_the_split",)),
+    ("F4-181 위반 쪽 결과에 섞음", "registry_gate.py", (
+        ("            cand_inflow = cand_prov.inflow\n",
+         "            cand_inflow = cand_prov.inflow\n            provenance.absorb(cand_prov)\n"),),
+     "registry_gate_smoke.py", (_CAND + "test_c1_inflow_is_a_separate_bundle",)),
+    ("F4-181 유입 절 안 찍음", "registry_gate.py", (("            _print_candidate_inflow(cand_inflow)\n", "            pass\n"),),
+     "registry_gate_smoke.py", (_CAND + "test_c1_inflow_is_a_separate_bundle",)),
+    ("F4-182 지금 사본의 BC 자리 거름 뺌", "registry_gate.py", (
+        ('            if application == root / "application" and checker_target.cache_only_instance(bc):\n',
+         "            if False:\n"),),
+     "registry_gate_smoke.py", (_BC_GATE + "test_cache_left_bc_place_reads_like_the_tree_without_it",)),
+    ("F4-182 지금 사본 거름의 뿌리 한정 걷음", "registry_gate.py", (
+        ('            if application == root / "application" and checker_target.cache_only_instance(bc):\n',
+         "            if checker_target.cache_only_instance(bc):\n"),),
+     "registry_gate_smoke.py", (_BC_GATE + "test_nested_application_folder_is_not_a_bc_place",)),
+    ("F4-182 지금 사본에 bc_folder 거름(파일까지 뺌)", "registry_gate.py", (
+        ('            if application == root / "application" and checker_target.cache_only_instance(bc):\n',
+         "            if not __import__('business_vocab').bc_folder(bc):\n"),),
+     "registry_gate_smoke.py",
+     ("CacheSnapshotRegression.test_snapshot_keeps_fixed_parents_hidden_files_empty_instances_and_other_parents",)),
+    ("F4-182 지금 사본이 .DS_Store 동반 BC 자리를 뺌", "registry_gate.py", (
+        ('            walk(bc, tree.ROWS[0], {"bounded_context": bc.name})\n',
+         '            if application == root / "application" and bc.is_dir() and {f.suffix or f.name for f in bc.rglob("*")'
+         ' if f.is_file()} == {".pyc", ".DS_Store"}:\n                omitted.add(bc.relative_to(root))\n                continue\n'
+         '            walk(bc, tree.ROWS[0], {"bounded_context": bc.name})\n'),),
+     "registry_gate_smoke.py",
+     (_BC_GATE + "test_places_with_real_files_or_empty_read_like_without_the_cache_rule",)),
+    ("F4-182 pre-gate 기준선 BC 되돌림", "design_pregate.py", (
+        ("d.name for d in app_root.iterdir() if vocab.bc_folder(d))", "d.name for d in app_root.iterdir() if d.is_dir())"),),
+     "registry_gate_smoke.py", (_BC_GATE + "test_pregate_baseline_bc_is_not_a_cache_only_place",)),
+    ("F4-189 behavior_guard 제 폴더 줄 걷음", "behavior_guard.py", ((_SELF_PATH_LINES, ""),),
+     "registry_gate_smoke.py", (_ISOLATED + "test_behavior_guard_support_and_function_imports_load",)),
+    ("F4-189 regen_core 제 폴더 줄 걷음", "regen_core.py", ((_SELF_PATH_LINES, ""),),
+     "registry_gate_smoke.py", (_ISOLATED + "test_regen_core_sparql_selector_loads_the_rulepack",)),
+    ("F4-189 refactor_audit 제 폴더 줄 걷음", "refactor_audit.py", ((_SELF_PATH_LINES, ""),),
+     "registry_gate_smoke.py", (_ISOLATED + "test_refactor_audit_function_imports_load",)),
 )
 
 
@@ -3451,7 +3925,8 @@ def _main() -> int:
                                             HiddenAnchorGateRegression, TempRootRegression, AnchorTouchGateRegression,
                                             ContractLineGateRegression, ContractLineUnitRegression,
                                             ApprovedDomainFileRegression, CountShrinkRegression,
-                                            SubfolderProjectRegression) + _GROUP_CASES)
+                                            SubfolderProjectRegression, ApprovedCandidateRegression,
+                                            BcFolderGateRegression, IsolatedToolRegression) + _GROUP_CASES)
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     if not result.wasSuccessful():
         return 2

@@ -43,10 +43,12 @@ import ast
 import re
 import subprocess
 import sys
+from pathlib import Path
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 import checker_target
 from findings import ContractFindings, emit_all
-from pathlib import Path
 
 # rule-owner-map 규칙 0건 — 선행 계약 소유(reverse_coverage PRIOR_CONTRACT_SCRIPTS 등재).
 CONTRACT_REF = "선행 계약(2026-07-06 상수 승격) 소유"

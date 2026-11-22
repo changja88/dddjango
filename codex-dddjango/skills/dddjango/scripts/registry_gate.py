@@ -34,11 +34,13 @@ legacy 위반이 상존해 「루트 registry 전체 green」이 문자 그대�
   호출자가 그대로 넘긴다. 앵커=HEAD 이고 working tree 가 clean 이면 차분이 공허하므로
   사용 오류(exit 1)다 — 「커밋 뒤 게이트」로 판정을 비우는 우회를 막는다.
 - **귀속 0 ≠ 전체 clean** — legacy 잔존(L∩N)은 exit 에 안 들어가되 항상 보고한다
+  (침묵 금지). BC 하나가 clean 한지는 `bc_registry_run.py`(그림자 전수)가 답한다 —
+  두 도구는 같은 로스터(`checker_registry.py`)를 쓰되 묻는 것이 다르다.
 - **ⓓ 앵커 차분 채널**(2026-09-04 현장 보고 3 ⓔ2): `[ⓓ#N]` 후보 라인도 같은 정규화로 앵커 L′·현재 N′ 를 갈라
   «ⓓ 신규(N′∖L′)» 절(+검사기별 legacy 계수)에 인쇄하고 sidecar 에 `candidate_lines`·`candidate_records` 로
   싣는다 — exit 불산입 · `records`(위반)와 분리 · ⓓ 가 하나도 없는 저장소는 출력·sidecar byte 무변.
-  (침묵 금지). BC 하나가 clean 한지는 `bc_registry_run.py`(그림자 전수)가 답한다 —
-  두 도구는 같은 로스터(`checker_registry.py`)를 쓰되 묻는 것이 다르다.
+  승인 머지 목록이 있으면 짝짓기 · `--group-moves` 따라가기 뒤 남은 ⓓ 신규를 아래 승인 유입과 같은 식으로 갈라 증명된 줄을
+  «ⓓ 승인 유입» 절(감수자 묶음 물음)과 sidecar `candidate_inflow` 로 싣는다(`candidate_lines` 는 신규만 · 유입 0 이면 byte 무변).
 - **이관 빚 채널**: `--legacy-debt-file` 의 사용자 승인 목록(줄 형식: `#<규칙> <부분문자열>`)
   에 맞는 귀속은 exit 에서 빼되 «빚» 절로 반드시 보고한다 — 빚은 기록 근거이지 legacy
   모양을 «추가로» 복사할 근거가 아니다. 번호 없는 줄 `= <검사기 파일> :: <줄>`은
@@ -51,7 +53,8 @@ legacy 위반이 상존해 「루트 registry 전체 green」이 문자 그대�
   (exit ≠ 0 인데 계약 레코드가 성하지 않거나 레코드 채널이 끊겼으면) 그 검사기는 두 쪽 모두 합성 줄(exit 차분)이다.
 - **승인 유입 채널(provenance 차분 · 2026-09-03)**: `--approved-merge-file` 의 발주자 승인
   «main→레인 머지» 목록(줄 형식: `<SHA> [메모]`)이 주어지면, 빚 매칭 뒤 남은 귀속 라인 ℓ
-  (파일 p · 검사기 c)마다 다음을 결정적으로 증명한 것만 exit 에서 빼고 «승인 유입» 절로 보고한다:
+  (파일 p · 검사기 c)마다 다음을 결정적으로 증명한 것만 exit 에서 빼고 «승인 유입» 절로 보고한다(남은 ⓓ 신규 라인도
+  같은 식으로 가르되 결과 · 진단은 이 절 · provenance 진단 · sidecar `provenance` 와 따로 든다):
 
     승인 유입(ℓ) ⟺ (W(p) ∧ (F1(p) ∨ F2(p)) ∨ G(p)) ∧ ∃M: L(ℓ, M) ∧ P(ℓ, M)
     W  worktree 의 p 가 HEAD 와 동일(porcelain 공백)
@@ -150,7 +153,7 @@ import findings  # noqa: E402  — sink 환경변수 이름·라인 재구성 �
 from checker_registry import REGISTRY, checker_argv  # noqa: E402
 
 _FINDING_RE: "re.Pattern[str]" = re.compile(r"^\s*(\[#\d+\].*)$")
-_CANDIDATE_RE: "re.Pattern[str]" = re.compile(r"^\s*(\[ⓓ#\d+\].*)$")  # ⓓ 후보 — 앵커 차분만(exit 불산입)
+_CANDIDATE_RE: "re.Pattern[str]" = re.compile(r"^\s*(\[ⓓ#\d+\].*)$")  # ⓓ 후보 — 앵커 차분 · 승인 유입(exit 불산입)
 _LINENO_RE: "re.Pattern[str]" = re.compile(r":\d+")
 _IGNORE_COPY: "tuple[str, ...]" = (
     ".git", ".venv", "venv", "__pycache__", "*.pyc", "node_modules",
@@ -171,7 +174,7 @@ class _UsageParser(argparse.ArgumentParser):
 
 
 def _snapshot_cache_instances(root: Path) -> set[Path]:
-    """골격의 BC 내부 선택 폴더 칸만 원 작업 트리에서 수집한다."""
+    """원 작업 트리에서 캐시만 남은 BC 자리(`application/` 직계 — F4-182)와 골격의 BC 내부 선택 폴더 칸을 수집한다."""
     omitted: set[Path] = set()
     token = re.compile(r"<([a-z_]+)>")
 
@@ -215,8 +218,13 @@ def _snapshot_cache_instances(root: Path) -> set[Path]:
                 or ignore(str(root), list(application.relative_to(root).parts)):
             continue
         for bc in sorted(application.iterdir()):
-            if not bc.name.startswith("."):
-                walk(bc, tree.ROWS[0], {"bounded_context": bc.name})
+            if bc.name.startswith("."):
+                continue
+            # 빼는 것은 BC 자리(뿌리 `application/` 직계)뿐 — 같은 이름의 중첩 폴더(애그리거트 등)는 걷기만 한다.
+            if application == root / "application" and checker_target.cache_only_instance(bc):
+                omitted.add(bc.relative_to(root))
+                continue
+            walk(bc, tree.ROWS[0], {"bounded_context": bc.name})
     return omitted
 
 
@@ -932,7 +940,8 @@ def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
                       records: "list[dict]", prefixes: "tuple[str, ...]",
                       provenance: "_ProvenanceResult | None" = None,
                       candidates: "list[str] | None" = None,
-                      group_moves: "dict[str, object] | None" = None) -> None:
+                      group_moves: "dict[str, object] | None" = None,
+                      candidate_inflow: "list[tuple[str, str, str]] | None" = None) -> None:
     """귀속(N∖L) 라인에 대응하는 **현재 실행 레코드만** sidecar 로 쓴다(T2-3).
 
     왜 게이트가 쓰는가: 귀속은 «앵커 대비 차분»이라 게이트만 알 수 있다. 소비자가 raw
@@ -940,8 +949,9 @@ def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
     (`commands/dddjango.md` — legacy 잔존 red 는 보고 채널로만)을 깨뜨린다.
 
     매칭은 `findings.line_of_record` 로 레코드를 라인으로 되돌린 뒤 게이트와 **같은
-    정규화**를 적용해 키를 맞춘다. `candidates`(ⓓ 신규 라인 · N′∪L′≠∅ 일 때만 list)가 오면
-    `candidate_lines`·`candidate_records`(severity info · 신규분만) 를 `records` 와 분리해 싣는다. 대응 레코드가 없는 귀속 라인(합성 fail-closed 귀속·
+    정규화**를 적용해 키를 맞춘다. `candidates`(ⓓ 신규 라인 — 승인 유입 제외 · N′∪L′≠∅ 일 때만 list)가 오면
+    `candidate_lines`·`candidate_records`(severity info · 신규분만) 를 `records` 와 분리해 싣고, `candidate_inflow`(ⓓ 승인 유입)가
+    비지 않으면 줄 · 증명 머지 · 갈래를 따로 싣는다. 대응 레코드가 없는 귀속 라인(합성 fail-closed 귀속·
     레코드 채널 밖 진단)은 버리지 않고 `unmatched` 로 남긴다 — fail-closed.
     """
     want: "set[str]" = set(attributed)
@@ -975,6 +985,8 @@ def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
             dict(rec, file=_strip_snapshot(str(rec.get("file", "")), prefixes)) for rec in records
             if rec.get("severity") == "info"
             and f"{rec.get('checker')} :: {_normalize(findings.line_of_record(rec), prefixes)}" in want_c]
+    if candidate_inflow:  # ⓓ 승인 유입 ≥ 1 일 때만 키를 둔다
+        payload["candidate_inflow"] = [{"line": line, "merge": m, "kind": k} for line, m, k in candidate_inflow]
     if provenance is not None:
         # flag 시에만 키 추가 — 스키마 문자열은 유지(호환 확장 · flag 없으면 payload byte 동일).
         # `attributed_lines`·`records` 는 잔여(승인 유입 제외)만이다 — 재생성 루프 입력에 유입이 섞이지 않는다.
@@ -1202,12 +1214,24 @@ class _Unmove:
         return facts.retained_reason(b)
 
 
+@dataclass
+class _SampleCache:
+    """출처 재실행의 사본 · 실행 캐시(트리 단위) — 위반 줄과 ⓓ 줄의 증명이 이것만 같이 쓴다(결과 · 진단은 따로)."""
+
+    trees: "dict[str, str]" = field(default_factory=dict)                         # sha → tree
+    snaps: "dict[str, Path]" = field(default_factory=dict)                        # tree → 사본
+    failures: "dict[str, str]" = field(default_factory=dict)                      # tree → 측정 무효 사유
+    parse_fails: "dict[str, set[str]]" = field(default_factory=dict)              # tree → 파싱 불가 파일
+    runs: "dict[tuple[str, str], tuple[bool, set[str]]]" = field(default_factory=dict)  # (tree, checker) → (유효, 위반 · ⓓ 줄)
+
+
 def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
                       merges: "list[anchor_diff.ApprovedMerge]",
                       chain: "list[anchor_diff.ChainCommit]",
                       attributed: "list[str]", records: "list[dict]",
                       prefixes: "tuple[str, ...]", td: Path,
-                      unmove: "_Unmove | None" = None) -> _ProvenanceResult:
+                      unmove: "_Unmove | None" = None,
+                      cache: "_SampleCache | None" = None) -> _ProvenanceResult:
     """빚 매칭 뒤 남은 귀속을 «승인 유입 ⊔ 귀속(잔여)» 로 분할한다 — 어떤 라인도 버려지지 않는다.
 
     (i) 경로 (ii) 주어 판정 = `anchor_diff.PathFacts.classify`(scope 렌더와 같은 함수) — 파일·상호작용, 또는
@@ -1217,6 +1241,7 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
     사슬마다 있음)까지 통과해야 유입이다. 측정 무효는 그 머지의 증명 기회만 잃는다(∃M).
     `unmove`(검토 B1)면 줄은 이 실행이 옮긴 파일(지금 C)의 것이다 — 주어 판정은 `_Unmove.judge`(T₀′ 경로 B), L 탐색 · 사슬의
     줄은 모두 `unmove.back`(C 자리 → B 자리)으로 되돌린 글로 견준다(이동 뒤 커밋의 C 줄도 B 줄로 읽힌다).
+    ⓓ 신규 라인도 이 식 그대로 가른다(표본에 ⓓ 줄도 실린다). `cache` 는 `unmove` 없는 두 부름만 같이 쓴다(줄 되돌림이 없다).
     """
     res: _ProvenanceResult = _ProvenanceResult(merges=merges, chain=chain)
     line_map: "Callable[[str], str]" = unmove.back if unmove is not None else (lambda line: line)
@@ -1304,11 +1329,12 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
         return res
 
     # (iii) 스냅숏·검사기 캐시(트리 단위) — 스냅숏 실패·사본 밖 심링크는 그 sha 의 측정을 무효로 캐시한다(traceback 0).
-    tree_cache: "dict[str, str]" = {}
-    snap_cache: "dict[str, Path]" = {}
-    failure_cache: "dict[str, str]" = {}
-    parse_fail_cache: "dict[str, set[str]]" = {}
-    run_cache: "dict[tuple[str, str], tuple[bool, set[str]]]" = {}  # (tree, checker) → (유효, 라인)
+    samples: _SampleCache = cache if cache is not None else _SampleCache()
+    tree_cache: "dict[str, str]" = samples.trees
+    snap_cache: "dict[str, Path]" = samples.snaps
+    failure_cache: "dict[str, str]" = samples.failures
+    parse_fail_cache: "dict[str, set[str]]" = samples.parse_fails
+    run_cache: "dict[tuple[str, str], tuple[bool, set[str]]]" = samples.runs
     snapshot_lock: threading.Lock = threading.Lock()
     candidate_checkers: "frozenset[str]" = frozenset(row[2] for row in candidates)
 
@@ -1372,12 +1398,12 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
                     exits: "dict[str, int]"
                     lines: "set[str]"
                     _recs: "list[dict]"
-                    _cands: "set[str]"
-                    exits, lines, _recs, _cands = _run_registry(
+                    cands: "set[str]"
+                    exits, lines, _recs, cands = _run_registry(
                         snap, sink=td / f"prov-{t[:12]}-{checker}.jsonl", only=frozenset({checker}),
                         git_root=root, git_base=anchor_sha, git_tip=sha)  # 건드림 = 앵커..그 커밋(L 을 지금 사본과 같은 뜻으로)
                     valid: bool = exits.get(checker) in (0, 2) and not any(_SYNTHETIC_MARK in l for l in lines)
-                    result = (valid, {line_map(l) for l in lines})
+                    result = (valid, {line_map(l) for l in lines | cands})
                     with snapshot_lock:
                         res.checker_runs += 1
                 with snapshot_lock:
@@ -1792,10 +1818,11 @@ def main(argv: "list[str]") -> int:
                 (debt if hit else rest).append(line)
             attributed = rest
 
+        samples: _SampleCache = _SampleCache()
         if approved_path is not None:
             # 순서: attributed → 빚 분리 → provenance 분리(빚 우선) → 잔여 = exit 근거.
             provenance = _provenance_split(root, anchor_sha, head, merges, chain,
-                                           attributed, n_records, cur_prefixes, Path(td))
+                                           attributed, n_records, cur_prefixes, Path(td), cache=samples)
             inflow_lines: "set[str]" = provenance.inflow_lines
             attributed = [line for line in attributed if line not in inflow_lines]
 
@@ -1812,6 +1839,14 @@ def main(argv: "list[str]") -> int:
             if provenance is not None and group is not None and group.lane and attributed:
                 attributed = _moved_inflow(root, anchor_sha, head, merges, chain, attributed, n_records,
                                            cur_prefixes, Path(td), group, provenance)
+
+        cand_inflow: "list[tuple[str, str, str]]" = []
+        if approved_path is not None and cand_new:
+            # ⓓ 순서: 짝짓기 → 이동 따라가기 → 승인 유입 증명 — 결과 · 진단은 위반 쪽과 따로, 사본 · 실행 캐시만 같이.
+            cand_prov: _ProvenanceResult = _provenance_split(root, anchor_sha, head, merges, chain,
+                                                             cand_new, n_records, cur_prefixes, Path(td), cache=samples)
+            cand_inflow = cand_prov.inflow
+            cand_new = [line for line in cand_new if line not in cand_prov.inflow_lines]
 
         sister: "list[str]" = []
         if has_sister:
@@ -1890,7 +1925,8 @@ def main(argv: "list[str]") -> int:
     if group_pairs is not None:
         _print_group_moves(moved, group_pairs, group_dropped)
     if n_cands or l_cands:
-        print(f"\n== ⓓ 신규(N′∖L′) {len(cand_new)}건 · legacy {cand_legacy}건 · 해소 {cand_resolved}건 — exit 불산입 · 감수자 입력은 신규분만(R-0284) ==")
+        audit_input: str = "신규분 + 승인 유입 묶음" if cand_inflow else "신규분만"
+        print(f"\n== ⓓ 신규(N′∖L′) {len(cand_new)}건 · legacy {cand_legacy}건 · 해소 {cand_resolved}건 — exit 불산입 · 감수자 입력은 {audit_input}(R-0284) ==")
         for line in cand_new:
             print(f"  {line}")
         legacy_by: "dict[str, int]" = {}
@@ -1908,6 +1944,8 @@ def main(argv: "list[str]") -> int:
             for line, anchor_line in sorted(cand_moved.items()):
                 print(f"    {line}")
                 print(f"      ↳ 앵커: {anchor_line}")
+        if cand_inflow:
+            _print_candidate_inflow(cand_inflow)
     if provenance is not None:
         _print_provenance_diag(provenance, anchor_sha)
     if ns.introduced_json is not None:
@@ -1918,7 +1956,8 @@ def main(argv: "list[str]") -> int:
                               "pairs": group_pairs, "dropped": group_dropped,
                               "lines": [{"line": line, "anchor_line": moved[line]} for line in sorted(moved)],
                               "candidate_lines": [{"line": line, "anchor_line": cand_moved[line]}
-                                                  for line in sorted(cand_moved)]})
+                                                  for line in sorted(cand_moved)]},
+                          cand_inflow)
     if ns.contract_json is not None:
         sister_keys: "set[str]" = set(sister)
         server_records: "list[dict]" = [rec for rec in n_records
@@ -1973,6 +2012,14 @@ def _print_inflow(prov: _ProvenanceResult) -> None:
         labels: "dict[str, str]" = ({"파일": "폴더 verbatim", "부재": "부재(상류에도 없던 폴더)"} if line in prov.folders
                                      else {"파일": "파일 verbatim", "부재": "부재(상류에도 없던 파일)"})
         print(f"    ↳ 유입: {m[:12]}(L 증명) · " + labels.get(kind, "상호작용") + moved)
+
+
+def _print_candidate_inflow(inflow: "list[tuple[str, str, str]]") -> None:
+    """«ⓓ 승인 유입» 절 — 감수자가 줄마다가 아니라 묶음 한 물음으로 닫는 ⓓ 줄과 L 증명 머지."""
+    print(f"\n== ⓓ 승인 유입 {len(inflow)}건 — 감수자 묶음 물음 ==")
+    for line, m, _kind in inflow:
+        print(f"  {line}")
+        print(f"    ↳ 유입: {m[:12]}(L 증명)")
 
 
 def _print_provenance_diag(prov: _ProvenanceResult, anchor_sha: str) -> None:

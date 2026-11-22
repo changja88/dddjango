@@ -78,10 +78,12 @@ import builtins
 import os
 import re
 import sys
+from pathlib import Path
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 import checker_target
 from findings import Candidates, Findings, emit_all, zero_target_guard
-from pathlib import Path
 
 try:
     import anchor_diff
@@ -333,7 +335,7 @@ def _import_target_names(target: Path) -> set[str]:
         c: Path = Path(dirpath) / "application"
         if set(c.parts) & SKIP_DIRS:
             continue
-        names |= {p.name for p in c.iterdir() if p.is_dir() and not p.name.startswith(".")}
+        names |= {p.name for p in c.iterdir() if vocab.bc_folder(p)}
     return names
 
 
@@ -3301,7 +3303,7 @@ def main(argv: list[str]) -> int:
     ]
     bcs: list[Path] = []
     for c in containers:
-        bcs.extend(p for p in sorted(c.iterdir()) if p.is_dir() and not p.name.startswith("."))
+        bcs.extend(p for p in sorted(c.iterdir()) if vocab.bc_folder(p))
 
     if not any(_has_adoption_signal(b) for b in bcs):
         print("표준 레이아웃 미채택 — 검사 대상 없음 (clean)")

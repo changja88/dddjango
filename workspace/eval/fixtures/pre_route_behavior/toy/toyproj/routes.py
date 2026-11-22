@@ -1,6 +1,7 @@
 """루트 API 넷에 경로를 단다 — 클래스 · 함수 · API · Router 인증, 같은 Router 두 번(차례 둘), 중첩 Router, ninja_extra 컨트롤러."""
 from books.controller import router as books
 from extra.controller import TokenAuth, router as extra, secured
+from gate.controller import router as gate
 from joins.controllers import ClosedController, PermissionControllers, PublicController, ThrottleControllers
 from joins.routes import api_level, conv, dup, multi, parent, shared, shared_b
 from toyproj.api import api, api2, apib
@@ -14,6 +15,7 @@ api.add_router("/private", shared, auth=TokenAuth(), url_name_prefix="private")
 api.add_router("/p", parent)
 api.add_router("/dup", dup)
 api.add_router("/conv", conv)
+api.add_router("/gate", gate)
 
 api2.add_router("/", api_level)
 

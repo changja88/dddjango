@@ -2949,6 +2949,27 @@ class EventValueRegression(unittest.TestCase):
                     self.assertIn(phrase, text)
 
 
+class CandidateInflowTextContract(unittest.TestCase):
+    """F4-181 — 집중 감사 방아쇠 넷과 G2 배너가 «ⓓ 승인 유입» 을 부른다(Claude · Codex 조정자 문장 대조)."""
+
+    COORDINATORS: "tuple[str, ...]" = ("dddjango/commands/dddjango.md", "codex-dddjango/skills/dddjango/SKILL.md")
+    PHRASES: "tuple[str, ...]" = (
+        "치환 뒤 registry_gate 의 «ⓓ 신규» · «ⓓ 승인 유입» 에 앞선 감사 입력에 없던 줄이 서거나 유입이던 줄이 신규로 옮겨 서면",
+        "(«ⓓ 신규» · «ⓓ 승인 유입» 에 새 줄이 서거나 유입이던 줄이 신규로 옮겨 서면 그 줄만 집중 감사 1회)",
+        "유입 절이 있으면 이 실행이 바꾼 경로 목록도 동봉한다",
+        "승인 머지가 같은 경로를 들였거나 앵커와 같아졌어도 넣는다",
+        "승인 머지가 상류(`^2`) 판과 다르게 둔 경로(충돌 해소 · 머지 안 손질)",
+        "게이트가 «ⓓ 승인 유입» 절을 냈으면 «ⓓ 승인 유입 k건(머지 SHA 열거)» 항목도 따로 둔다",
+    )
+
+    def test_triggers_and_banner_name_candidate_inflow(self) -> None:
+        for rel in self.COORDINATORS:
+            text: str = (ROOT / rel).read_text(encoding="utf-8")
+            for phrase in self.PHRASES:
+                with self.subTest(path=rel, phrase=phrase):
+                    self.assertEqual(text.count(phrase), 1)
+
+
 class ApprovedMergeFlagRegression(unittest.TestCase):
     """설계 v3 §7-3와 Q42: 발견 0에서도 재료 오류를 먼저 거절한다."""
 
@@ -5422,6 +5443,7 @@ class JointCommitListRegression(unittest.TestCase):
                    'NOTE = "# joint-commit: 함께 order×2  잠금 order(order_id)  불변식 글자일 뿐"\n')
         self.write("application/billing/application_layer/port/clock/clock_port.py", "class ClockPort:\n    pass\n")
         self.write("application/__pycache__/gone.cpython-39.pyc", "")
+        self.write("application/ghost/domain_layer/__pycache__/gone.cpython-39.pyc", "")   # 캐시만 남은 BC 자리(F4-182)
 
     def write(self, rel: str, source: str) -> None:
         target = self.root / rel
@@ -5453,6 +5475,7 @@ class JointCommitListRegression(unittest.TestCase):
             "BC 폴더 TARGET": (self.root / "application/orders", ()),
             "application/ TARGET": (self.root / "application", ()),
             "없는 --bc": (self.root, ("orders", "shipping")),
+            "캐시만 남은 --bc": (self.root, ("ghost",)),
         }
         for label, (target, bcs) in cases.items():
             with self.subTest(label=label):
@@ -10246,6 +10269,237 @@ class PreRouteFixedFileRegression(unittest.TestCase):
                 self.assertEqual(self.lines(canonical, table, extra), expected)
 
 
+class _RosterToyCase(unittest.TestCase):
+    """골격 픽스처 사본에서 로스터 27종을 직접 실행한다."""
+
+    def setUp(self) -> None:
+        tmp: "tempfile.TemporaryDirectory[str]" = tempfile.TemporaryDirectory(prefix="field-roster-")
+        self.addCleanup(tmp.cleanup)
+        self.td: Path = Path(tmp.name)
+        self.root: Path = self.td / "project"
+        shutil.copytree(FIXTURES / "skeleton/good_bc", self.root, ignore=shutil.ignore_patterns("__pycache__"))
+        self.env: "dict[str, str]" = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+                                          DJR_FINDINGS_JSON=str(self.td / "records.jsonl"),
+                                          DJR_VIOLATIONS_DIR=str(self.td / "violations"))
+
+    def write(self, relative: str, text: str = "") -> None:
+        path: Path = self.root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def roster(self, scripts: Path, root: "Path | None" = None, flags: "tuple[str, ...]" = (),
+               env: "dict[str, str] | None" = None) -> "dict[str, tuple[int, str, str]]":
+        from checker_registry import REGISTRY, checker_argv  # noqa: PLC0415 — SCRIPTS 를 sys.path 에 넣은 뒤
+        from concurrent.futures import ThreadPoolExecutor
+        target: Path = root or self.root
+
+        def one(row: "tuple[str, bool]") -> "tuple[str, tuple[int, str, str]]":
+            argv: "list[str]" = checker_argv(sys.executable, row[0], str(target), row[1])
+            argv[1] = str(scripts / row[0])
+            done = subprocess.run([argv[0], "-B", *flags, *argv[1:]], cwd=target, capture_output=True, text=True,
+                                  env={**self.env, **(env or {})})
+            return row[0], (done.returncode, done.stdout, done.stderr)
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            return dict(pool.map(one, REGISTRY))
+
+
+class BcFolderRegression(_RosterToyCase):
+    """F4-182 — BC 자리는 `business_vocab.bc_folder` 하나: 점 이름 · 일곱 이름 · 캐시만 남은 폴더는 BC 가 아니고, 빈 폴더 ·
+    실파일이 있는 폴더 · `build` · `dist` 는 BC 다(«캐시만 남음» 조건이 없을 때와 같은 판정)."""
+
+    # 대조 판의 BC 자리 술어 — «캐시만 남음» 조건만 없다(이름 일곱은 글자로 박는다 — 변이가 대조 판까지 옮겨 가지 않게).
+    WITHOUT_CACHE_RULE: str = (
+        "\n\ndef bc_folder(p: Path) -> bool:\n"
+        "    return p.is_dir() and not p.name.startswith(\".\") and p.name not in {\n"
+        "        \".venv\", \"venv\", \"site-packages\", \"node_modules\", \".git\", \"__pycache__\", \".dddjango\"}\n")
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.write("framework/__init__.py")
+        self.write("framework/test/__init__.py")
+        self.write("framework/test/unit/__init__.py")
+        self.write("framework/test/unit/test_image_layout.py",
+                   'NAMES: tuple[str, ...] = ("__pycache__", "email", "venv")\n\n\n'
+                   "def test_names() -> None:\n    assert NAMES\n")
+        self.write("config/celery.py",
+                   'from pathlib import Path\n\nfrom celery import Celery\n\napp: Celery = Celery("config")\n'
+                   "app.autodiscover_tasks(\n"
+                   '    lambda: [f"application.{p.name}.driving_layer.cron_job" for p in Path("application").iterdir()\n'
+                   '             if p.name != "__pycache__"],\n'
+                   "    related_name=None,\n)\n")
+        self.pristine: Path = self.td / "pristine"
+        shutil.copytree(self.root, self.pristine)
+
+    def without_cache_rule(self) -> Path:
+        """지금 scripts 사본에서 그 조건만 뺀 대조 판 — 옛 배포판에 묶으면 무관한 글 · 규칙이 바뀌어도 이 시험이 붉다."""
+        dest: Path = self.td / "without-cache-rule"
+        if not dest.exists():
+            shutil.copytree(SCRIPTS, dest, ignore=shutil.ignore_patterns("__pycache__"))
+            with (dest / "business_vocab.py").open("a", encoding="utf-8") as fh:
+                fh.write(self.WITHOUT_CACHE_RULE)
+        return dest
+
+    def reset(self) -> None:
+        shutil.rmtree(self.root)
+        shutil.copytree(self.pristine, self.root)
+
+    @staticmethod
+    def judged(got: "dict[str, tuple[int, str, str]]") -> "dict[str, tuple[int, str, str]]":
+        """`migrations` 폴더 수 안내만 가린 결과 — 그 수는 BC 열거가 아니라 저장소 전체의 폴더 이름을 센다(캐시만 남아도 셈)."""
+        return {script: (code, re.sub(r"migrations 폴더 \d+개", "migrations 폴더 <n>개", out), err)
+                for script, (code, out, err) in got.items()}
+
+    def acl_to_email(self) -> None:
+        base: str = "application/orders/driven_layer/adapter/anticorruption_layer/email"
+        self.write(f"{base}/__init__.py")
+        self.write(f"{base}/email_sender_adapter.py", "import requests\n\n\nclass EmailSenderAdapter:\n    pass\n")
+
+    def test_predicate(self) -> None:
+        import business_vocab  # noqa: PLC0415
+        top: Path = self.td / "predicate"
+        cases: "dict[str, tuple[tuple[str, ...], bool]]" = {
+            "orders": (("__init__.py",), True), "build": (("__init__.py",), True), "dist": (("__init__.py",), True),
+            "empty": ((), True), "gitkeep": ((".gitkeep",), True), "ds_store": (("__pycache__/x.pyc", ".DS_Store"), True),
+            "ruff": ((".ruff_cache/CACHEDIR.TAG",), True), "loose_pyc": (("x.pyc",), True),
+            ".hidden": (("x.py",), False), ".venv": (("x.py",), False), ".git": (("x",), False),
+            ".dddjango": (("x",), False), "venv": (("x.py",), False), "site-packages": (("x.py",), False),
+            "node_modules": (("x.js",), False), "__pycache__": (("x.pyc.1234",), False),
+            "cache_only": (("__pycache__/x.pyc",), False), "deep_cache": (("domain_layer/__pycache__/x.pyo",), False),
+        }
+        for name, (files, want) in cases.items():
+            with self.subTest(name=name):
+                place: Path = top / name
+                place.mkdir(parents=True)
+                for rel in files:
+                    (place / rel).parent.mkdir(parents=True, exist_ok=True)
+                    (place / rel).write_bytes(b"x")
+                self.assertIs(business_vocab.bc_folder(place), want)
+        (top / "linked").symlink_to(top / "cache_only")
+        self.assertTrue(business_vocab.bc_folder(top / "linked"))
+        (top / "notes.txt").write_text("x", encoding="utf-8")
+        self.assertFalse(business_vocab.bc_folder(top / "notes.txt"))
+        with patch.object(Path, "iterdir", side_effect=PermissionError("denied")):
+            self.assertTrue(business_vocab.bc_folder(top / "cache_only"))
+
+    def test_cache_names_and_cache_only_places_read_like_the_tree_without_them(self) -> None:
+        self.acl_to_email()
+        clean: "dict[str, tuple[int, str, str]]" = self.roster(SCRIPTS)
+        self.assertIn("[#365]", clean["check-port-adapter-pairing.py"][1])   # 캐시가 가리던 줄(통신 import 를 든 ACL)
+        shutil.rmtree(self.pristine)
+        shutil.copytree(self.root, self.pristine)
+        every: "list[str]" = ["", *(str(p.relative_to(self.root / "application/orders")) + "/"
+                                    for p in (self.root / "application/orders").rglob("*") if p.is_dir())]
+        cases: "dict[str, list[str]]" = {
+            "V1": ["__pycache__/__init__.cpython-314.pyc"], "V1-partial": ["__pycache__/__init__.cpython-314.pyc.4321"],
+            "V2": ["email/__pycache__/x.pyc", "email/domain_layer/__pycache__/x.pyc"],
+            "full_cache": [f"email/{rel}__pycache__/x.cpython-314.pyc" for rel in every],
+            "cache_min_api": ["email/driving_layer/api/__pycache__/x.pyc"],
+            "venv": ["venv/domain_layer/x.py"],
+        }
+        for name, planted in cases.items():
+            with self.subTest(variant=name):
+                self.reset()
+                for rel in planted:
+                    self.write(f"application/{rel}")
+                self.assertEqual(self.judged(self.roster(SCRIPTS)), self.judged(clean))
+
+    def test_cache_only_place_gives_no_adoption_signal(self) -> None:
+        for bare in (False, True):   # bare = 다른 채택 재료 0 — 가짜 신호 하나로 #74 가드가 선다
+            with self.subTest(bare=bare):
+                self.reset()
+                shutil.rmtree(self.root / "application/orders")
+                (self.root / "application").mkdir(exist_ok=True)
+                if bare:
+                    for other in self.root.iterdir():
+                        if other.name != "application":
+                            shutil.rmtree(other) if other.is_dir() else other.unlink()
+                clean: "dict[str, tuple[int, str, str]]" = self.roster(SCRIPTS)
+                for rel in ("email/domain_layer", "email/driving_layer/api"):
+                    self.write(f"application/{rel}/__pycache__/x.pyc")
+                self.assertEqual(self.roster(SCRIPTS), clean)
+
+    def test_enumerations_return_only_bc_folders(self) -> None:
+        for rel in ("email/domain_layer/__pycache__/x.pyc", "venv/domain_layer/x.py", "__pycache__/x.pyc.1",
+                    "build/__init__.py", "dist/__init__.py", "junk/__pycache__/x.pyc", "junk/.DS_Store"):
+            self.write(f"application/{rel}")
+        (self.root / "application/empty").mkdir()
+        places: "list[str]" = ["build", "dist", "empty", "junk", "orders"]
+        enumerations: "tuple[tuple[str, str], ...]" = (
+            ("check-composition-root.py", "_find_bc_dirs"), ("check-event-publish.py", "_find_bcs"),
+            ("check-test-config.py", "_find_bcs"), ("check-transaction-boundary.py", "_find_bcs"),
+            ("check-api-error-controller-contract.py", "_tree_bcs2"), ("check-error-centralization.py", "_tree_bcs"),
+            ("check-openapi-error-declaration.py", "_tree_bcs63"))
+        for script, name in enumerations:
+            with self.subTest(script=script):
+                module = _load_module(SCRIPTS / script, "field_bc_" + script[:-3].replace("-", "_"))
+                self.assertEqual([p.name for p in getattr(module, name)(self.root)], places)
+        self.assertEqual(pairing.vocab.bc_names(self.root), set(places))
+        self.assertEqual(isolation._import_target_names(self.root), set(places))   # import 가 가리키는 «타 BC» 이름
+
+    def test_real_files_and_empty_places_read_like_without_the_cache_rule(self) -> None:
+        second: "tuple[str, ...]" = ("__init__.py", "domain_layer/__init__.py", "domain_layer/mail/mail.py")
+        cases: "dict[str, tuple[str, tuple[str, ...]]]" = {
+            "V0": ("email", ()), "V4": ("scratch_out", ("notes.txt",)), "V5": ("docs_assets", ("diagram.svg",)),
+            "V6": ("email", second), "build": ("build", second), "dist": ("dist", second),
+            "gitkeep": ("email", ("domain_layer/.gitkeep",)), "empty": ("email", ()),
+            "ds_store": ("email", ("domain_layer/__pycache__/x.pyc", ".DS_Store")),
+            "ruff": ("email", ("domain_layer/__pycache__/x.pyc", ".ruff_cache/CACHEDIR.TAG")),
+        }
+        for name, (place, planted) in cases.items():
+            with self.subTest(variant=name):
+                self.reset()
+                for rel in planted:
+                    self.write(f"application/{place}/{rel}")
+                if name == "empty":
+                    (self.root / "application/email/domain_layer").mkdir(parents=True)
+                got: "dict[str, tuple[int, str, str]]" = self.roster(SCRIPTS)
+                self.assertEqual(got, self.roster(self.without_cache_rule()))
+                if name != "V0":   # 절대 기대 — 대조 판은 술어 밖 코드를 나눠 가져 열거 쪽 되돌아옴을 못 본다
+                    self.assertIn(place, pairing.vocab.bc_names(self.root))
+                    self.assertRegex(got["check-layer-skeleton.py"][1], rf"\[#488\][^\n]*application/{place}[/:]")
+
+    def test_guard_zero_places_stay_targets(self) -> None:
+        for name in ("guard_zero_django", "guard_zero_domain"):
+            with self.subTest(fixture=name):
+                root: Path = self.td / name
+                shutil.copytree(FIXTURES / name, root)
+                got: "dict[str, tuple[int, str, str]]" = self.roster(SCRIPTS, root)
+                self.assertEqual(got["check-layer-skeleton.py"][0], 2)
+                self.assertEqual(got, self.roster(self.without_cache_rule(), root))
+
+    def test_port_adapter_lists_the_container_once_per_bc(self) -> None:
+        bypass: Path = self.root / "application/orders/application_layer/port/domain_bypass_query"
+        for name in ("order_total", "order_count", "order_state"):
+            self.write(f"{bypass.relative_to(self.root)}/{name}/{name}_query.py", "class Query:\n    pass\n")
+        vocab = pairing.vocab
+        with patch.object(vocab, "container_bc_names", wraps=vocab.container_bc_names) as listed:
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                pairing._check_bypass(self.root, self.root / "application/orders", bypass,
+                                      pairing.Findings(defer=True), pairing.Candidates(defer=True))
+        self.assertEqual(listed.call_count, 1)
+
+
+class IsolatedCheckerRegression(_RosterToyCase):
+    """F4-189 — 검사기 27종은 `-I` · `-P` · `PYTHONSAFEPATH=1` 에서도 보통 실행과 같은 결과다 · 실행 자리에 심은 모듈은 읽지 않는다."""
+
+    def test_every_checker_runs_without_the_script_folder_on_the_path(self) -> None:
+        normal: "dict[str, tuple[int, str, str]]" = self.roster(SCRIPTS)
+        self.assertEqual(len(normal), 27)
+        for name in ("json", "checker_target", "findings"):
+            self.write(f"{name}.py", "raise SystemExit('PLANTED')\n")
+        planted: "dict[str, tuple[int, str, str]]" = self.roster(SCRIPTS)
+        modes: "tuple[tuple[tuple[str, ...], dict[str, str]], ...]" = (
+            (("-I",), {"PYTHONPATH": "."}), (("-P",), {}), ((), {"PYTHONSAFEPATH": "1"}))
+        for script in normal:
+            self.assertNotIn("Traceback", normal[script][2], script)
+        for flags, env in modes:
+            got: "dict[str, tuple[int, str, str]]" = self.roster(SCRIPTS, flags=flags, env=env)
+            for script, (code, out, err) in got.items():
+                with self.subTest(script=script, flags=flags, env=env):
+                    self.assertNotIn("PLANTED", out + err)
+                    self.assertEqual((code, out, err), planted[script])
+
+
 # 변이 — (이름, 검사기 파일, ((옛 글, 새 글), …), 붉어야 할 시험 클래스). 옛 글은 그 파일에 정확히 한 번 있어야 한다.
 # 고침을 옛 코드로 되돌린 것 하나씩과, 설계 검토 · 구현 검토가 짚은 조건을 하나씩 무른 것.
 _CI_FILE: str = "check-context-isolation.py"
@@ -10267,6 +10521,36 @@ _PQ_VALUES: str = 'PLAIN_RETURN_VALUES = {"str", "int", "float", "bool", "bytes"
 _PQ_VALUE_TEST: str = "        if chain[-1] in PLAIN_RETURN_VALUES or _enum_class(root, py, mod, chain, 0):"
 _IT_TAIL: str = "ends_with_check = _is_check_word_call(m.body[-2]) and not _unchecked_exit(m.body, last)"
 _MUTATIONS: tuple[tuple[str, str, tuple[tuple[str, str], ...], tuple[str, ...]], ...] = (
+    ("F4-182 캐시만 남음 조건 뺌", "business_vocab.py", (
+        ("    return not checker_target.cache_only_instance(p)\n", "    return True\n"),),
+     ("BcFolderRegression.test_cache_names_and_cache_only_places_read_like_the_tree_without_them",)),
+    ("F4-182 build 를 이름 거름에", "business_vocab.py", (
+        (" or p.name in _BC_SKIP_NAMES:", " or p.name in SKIP_DIRS:"),),
+     ("BcFolderRegression.test_real_files_and_empty_places_read_like_without_the_cache_rule",)),
+    ("F4-182 빈 폴더를 거짓으로", "business_vocab.py", (
+        ("    return not checker_target.cache_only_instance(p)\n",
+         "    return any(f.is_file() for f in p.rglob(\"*\")) and not checker_target.cache_only_instance(p)\n"),),
+     ("BcFolderRegression.test_real_files_and_empty_places_read_like_without_the_cache_rule",)),
+    ("F4-182 layer-skeleton 열거가 빈 폴더를 뺌", "check-layer-skeleton.py", (
+        ("        bcs.extend(p for p in sorted(c.iterdir()) if vocab.bc_folder(p))",
+         '        bcs.extend(p for p in sorted(c.iterdir()) if vocab.bc_folder(p) and any(f.is_file() for f in p.rglob("*")))'),),
+     ("BcFolderRegression.test_real_files_and_empty_places_read_like_without_the_cache_rule",)),
+    ("F4-182 layer-skeleton 열거가 build · dist 를 뺌", "check-layer-skeleton.py", (
+        ("        bcs.extend(p for p in sorted(c.iterdir()) if vocab.bc_folder(p))",
+         '        bcs.extend(p for p in sorted(c.iterdir()) if vocab.bc_folder(p) and p.name not in {"build", "dist"})'),),
+     ("BcFolderRegression.test_real_files_and_empty_places_read_like_without_the_cache_rule",)),
+    ("F4-182 server_bc_dirs 가 빈 폴더를 뺌", "business_vocab.py", (
+        ("    return [p for p in sorted(c.iterdir()) if bc_folder(p)]",
+         '    return [p for p in sorted(c.iterdir()) if bc_folder(p) and any(f.is_file() for f in p.rglob("*"))]'),),
+     ("BcFolderRegression.test_enumerations_return_only_bc_folders",)),
+    ("F4-182 채택 신호 열거 하나 되돌림", "check-mechanism-ownership.py", (
+        ("            if vocab.bc_folder(bc) and _has_adoption_signal(bc):",
+         '            if bc.is_dir() and not bc.name.startswith(".") and _has_adoption_signal(bc):'),),
+     ("BcFolderRegression.test_cache_only_place_gives_no_adoption_signal",)),
+    ("F4-189 검사기 하나의 제 폴더 줄 걷음", "check-naming.py", (
+        ("if str(Path(__file__).resolve().parent) not in sys.path:\n"
+         "    sys.path.insert(0, str(Path(__file__).resolve().parent))\n", ""),),
+     ("IsolatedCheckerRegression",)),
     ("F4-167 받은 글 검증 허용 목록 걷음", _CI_FILE, (
         ("        self.allowlist: bool = partner is not None and not _uses_name_device(mod) and not _partner_altered(partner)",
          "        self.allowlist: bool = False"),), _ACL_TRY),

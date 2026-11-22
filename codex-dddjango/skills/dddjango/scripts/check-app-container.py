@@ -54,10 +54,12 @@ from __future__ import annotations
 
 import subprocess
 import sys
+from pathlib import Path
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 import checker_target
 from findings import ContractFindings, emit_all
-from pathlib import Path
 
 # rule-owner-map 규칙 0건 — 선행 규약 소유(reverse_coverage PRIOR_CONTRACT_SCRIPTS 등재).
 CONTRACT_REF = "선행 규약(표준 트리 전신 — application/ 컨테이너 위치) 소유"

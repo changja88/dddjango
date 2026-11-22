@@ -2472,9 +2472,11 @@ framework-owned 401/403/route 404/422/429/`HttpError`/500은 별도 입장 행�
 붙는 행마다(Ninja 기본 행 포함) 별도 입장 행을 둔다. 그 답을 실제로 일으켜 표의 Schema 로 본문 꼴을 엄격 검증하고
 (`<Schema>.model_validate_json(response.content, strict=True)` — 값을 고정하지 않는다 · 몸통 Schema 가 없는 행은
 status · media type 만), 붙는 쪽을 단언한다 — 그 operation 의 mounted 생성 문서에 그 status(· 머리)가 있다. `methods` ·
-`namespaces` · `exempt` · `operations` · `all` 이 아닌 `when` 으로 좁힌 프로젝트 행마다 빠진 쪽 operation 하나에서 그
+`namespaces` · `exempt` · `exempt_pattern` · `operations` · `all` 이 아닌 `when` 으로 좁힌 프로젝트 행마다 빠진 쪽 operation 하나에서 그
 미들웨어 조건을 일으켜 답하지 않음을, `NOT_API_MIDDLEWARE` 줄마다 API 경로에서 그 조건을 일으켜 답하지 않음을
-시험한다. 시험은 대상 BC
+시험한다. `exempt_pattern` 행은 생성 문서 경로 글이 설정 글자와 다르면서 그 정규식과 전체로 맞는 operation 이
+있으면 그 하나를 빠진 쪽으로 골라
+생성 문서에 그 status 가 없고 실제로도 답하지 않음을 단언한다. 시험은 대상 BC
 시험 폴더에 두고 그 BC 경로로 답을 일으킨다 — 대상 BC 경로로 일으킬 수 없는 행(다른 이름공간 · 그 BC 에 몸통
 경로가 없음)은 그 실행 시험에서 빼고 G2 배너에 «시험 자리 없음» 으로 적는다. 예외로 일어나는 미들웨어(서버렌더
 transient 등)는 `RequestFactory` 로 미들웨어를 직접 불러 시험한다. Ninja 판 올림으로 기본 몸통이 바뀌면 이 시험이

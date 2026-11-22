@@ -733,8 +733,8 @@ djr:R-2685 a djr:Exception ;
     djr:revision 1 .
 
 djr:R-2686 a djr:Obligation ;
-    skos:prefLabel "slot 12 — 승인 status/body/header·mounted runtime·공개 generated OpenAPI 후보의 입장 표 행 연결 확인 · 경로 앞 응답 행·머리 보충 기록(캐시 지시 머리 셋은 빼도 됨) · 프로젝트 행 근거 대조 · 빠진 미들웨어(서드파티 행 포함)·빼는 줄 없는 NOT_API_MIDDLEWARE·operations 행 빠짐(preserve 경로 코드의 HttpError 포함) blocker · 서드파티·앞단·검사기가 못 읽는 답(좁힌 행 — all 밖 when 포함 — 뿐인 미들웨어 답은 G1 근거 확인 · G2 ⓓ 줄은 감수자)은 리뷰 몫"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2686@2026-11-13> .
+    skos:prefLabel "slot 12 — 승인 status/body/header·mounted runtime·공개 generated OpenAPI 후보의 입장 표 행 연결 확인 · 경로 앞 응답 행·머리 보충 기록(캐시 지시 머리 셋은 빼도 됨) · 프로젝트 행 근거 대조 · 빠진 미들웨어(서드파티 행 포함)·빼는 줄 없는 NOT_API_MIDDLEWARE·operations 행 빠짐(preserve 경로 코드의 HttpError 포함) blocker · 서드파티·앞단·검사기가 못 읽는 답(좁힌 행 — exempt_pattern · all 밖 when 포함 — 뿐인 미들웨어 답은 G1 근거 확인 · G2 ⓓ 줄은 감수자)은 리뷰 몫"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2686@2026-11-22> .
 
 <https://numchida.com/ns/djr#R-2686@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2686 ;
@@ -744,6 +744,12 @@ djr:R-2686 a djr:Obligation ;
     prov:specializationOf djr:R-2686 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-2686@2026-08-22> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-2686@2026-11-22> a djr:Expression ;
+    prov:specializationOf djr:R-2686 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2686@2026-11-13> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-2687 a djr:Prohibition ;
@@ -1360,7 +1366,7 @@ djr:R-3780 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 13 ;
     djr:statesNorm djr:R-2686, djr:R-2687, djr:R-2688, djr:R-2689, djr:R-2690 ;
-    djr:text "12. **`response/OpenAPI/tests`**: 승인 HTTP status/body/header와 mounted runtime, 공개 generated OpenAPI의 관련 operation/status/schema 후보가 입장 표의 행과 연결됐는지 본다. 이 scope 경로에 붙는 경로 앞 응답 행(Ninja 기본 행 · 프로젝트 행 — `implementation-django-ninja` §6.2)과 머리 보충(캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)는 오류 문서에 적지 않아도 된다 — 모든 응답에 붙는 공통 지시라 오류 내용이 아니다)이 기록됐는지 보고, 프로젝트 행마다 근거(그 답을 내는 미들웨어 코드 줄 · 설정 · 앞단 설정)를 코드와 대조한다 — `settings.MIDDLEWARE`(settings 모든 모듈의 합)의 미들웨어 가운데 API 경로에 답을 내는데 행도 `NOT_API_MIDDLEWARE` 줄도 없는 것(빠진 미들웨어 — 서드파티 미들웨어 행 빠짐 포함) · API 경로를 빼는 코드 줄이 없는 `NOT_API_MIDDLEWARE` 줄 · 경로 객체로 못 가르는 답(승인 endpoint 의 406 · 415 · 인증 안 `HttpError` · 확립 표면(`preserve-established`) 경로 코드가 직접 raise 하는 `HttpError`)의 `operations` 행 빠짐은 blocker 다. 검사기는 프로젝트 미들웨어의 정해진 꼴 답만 대조하므로 서드파티 미들웨어 · 앞단 행 · 검사기가 못 읽는 답은 여기서 코드로 본다 — 프로젝트 미들웨어의 답에 같은 status 행이 좁힌 행(`methods` · `namespaces` · `exempt` · `operations` · `all` 이 아닌 `when`)뿐이면 그 행의 G1 근거가 그 미들웨어 줄인지 본다(G2 에서 검사기가 내는 이 자리의 ⓓ 후보 줄은 감수자가 닫는다). slot 6 shape와 별도 변경 승인은 유지하되 Pydantic private metadata·validator 위치·framework 기본 직렬화를 자동 제품 테스트로 바꾸면 blocker다. 공개 Python consumer 계약은 HTTP와 별도 행이어야 한다. `preserve-established`는 observed profile-native media type/fields/status-specific schema·handler와 test/OpenAPI evidence 또는 `none | not applicable`인지 본다. framework-owned 오류·auth/header smoke도 승인된 계약과 독자 failure가 있는 행만 허용하며 exact framework body snapshot을 요구하지 않는다 — 경로 앞 응답 표의 행은 예외라 붙는 행마다 행 시험 입장 행(본문 꼴 엄격 검증 · 붙는 쪽 · 좁힘 반대쪽 — `implementation-test` §19.2.1)이 있는지 본다.\n\n"@ko .
+    djr:text "12. **`response/OpenAPI/tests`**: 승인 HTTP status/body/header와 mounted runtime, 공개 generated OpenAPI의 관련 operation/status/schema 후보가 입장 표의 행과 연결됐는지 본다. 이 scope 경로에 붙는 경로 앞 응답 행(Ninja 기본 행 · 프로젝트 행 — `implementation-django-ninja` §6.2)과 머리 보충(캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)는 오류 문서에 적지 않아도 된다 — 모든 응답에 붙는 공통 지시라 오류 내용이 아니다)이 기록됐는지 보고, 프로젝트 행마다 근거(그 답을 내는 미들웨어 코드 줄 · 설정 · 앞단 설정)를 코드와 대조한다 — `settings.MIDDLEWARE`(settings 모든 모듈의 합)의 미들웨어 가운데 API 경로에 답을 내는데 행도 `NOT_API_MIDDLEWARE` 줄도 없는 것(빠진 미들웨어 — 서드파티 미들웨어 행 빠짐 포함) · API 경로를 빼는 코드 줄이 없는 `NOT_API_MIDDLEWARE` 줄 · 경로 객체로 못 가르는 답(승인 endpoint 의 406 · 415 · 인증 안 `HttpError` · 확립 표면(`preserve-established`) 경로 코드가 직접 raise 하는 `HttpError`)의 `operations` 행 빠짐은 blocker 다. 검사기는 프로젝트 미들웨어의 정해진 꼴 답만 대조하므로 서드파티 미들웨어 · 앞단 행 · 검사기가 못 읽는 답은 여기서 코드로 본다 — 프로젝트 미들웨어의 답에 같은 status 행이 좁힌 행(`methods` · `namespaces` · `exempt` · `exempt_pattern` · `operations` · `all` 이 아닌 `when`)뿐이면 그 행의 G1 근거가 그 미들웨어 줄인지 본다(G2 에서 검사기가 내는 이 자리의 ⓓ 후보 줄은 감수자가 닫는다). slot 6 shape와 별도 변경 승인은 유지하되 Pydantic private metadata·validator 위치·framework 기본 직렬화를 자동 제품 테스트로 바꾸면 blocker다. 공개 Python consumer 계약은 HTTP와 별도 행이어야 한다. `preserve-established`는 observed profile-native media type/fields/status-specific schema·handler와 test/OpenAPI evidence 또는 `none | not applicable`인지 본다. framework-owned 오류·auth/header smoke도 승인된 계약과 독자 failure가 있는 행만 허용하며 exact framework body snapshot을 요구하지 않는다 — 경로 앞 응답 표의 행은 예외라 붙는 행마다 행 시험 입장 행(본문 꼴 엄격 검증 · 붙는 쪽 · 좁힘 반대쪽 — `implementation-test` §19.2.1)이 있는지 본다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006/b14> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006> ;

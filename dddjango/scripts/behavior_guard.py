@@ -106,6 +106,9 @@ from pathlib import Path, PurePosixPath
 import copy
 from typing import Callable, Iterator, NamedTuple
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 EXCLUDED_PREFIXES: "tuple[str, ...]" = (".dddjango/", ".git/", ".venv/", "venv/", "node_modules/")
 TEST_SEGMENTS: "frozenset[str]" = frozenset({"test", "tests"})
 SUPPORT_SEGMENTS: "frozenset[str]" = frozenset({"factories", "fake", "fakes", "fixtures"})

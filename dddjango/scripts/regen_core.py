@@ -29,6 +29,11 @@ from __future__ import annotations
 
 import json
 import re
+import sys
+from pathlib import Path
+
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 SCHEMA: str = "regen-prompt/1"
 
@@ -295,7 +300,6 @@ def _write_arm_receipt(path: str, os_mod, sys_mod) -> int:
 def _main(argv: "list" = None) -> int:
     import argparse
     import os
-    import sys
 
     ap = argparse.ArgumentParser(description="재생성 주입 프롬프트 조립(셸 B 진입점)")
     ap.add_argument("--introduced-json", default="",

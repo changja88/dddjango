@@ -3,8 +3,11 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+from shared_rule import DJANGO_APP_MARKERS
+
 NEW_LAYERS = {"driving_layer", "application_layer", "domain_layer", "driven_layer"}
-DJANGO_APP_MARKERS = ("models.py", "apps.py")
 
 
 def _has_adoption_signal(bc_dir: Path) -> bool:

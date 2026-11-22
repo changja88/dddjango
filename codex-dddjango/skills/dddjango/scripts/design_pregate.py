@@ -6343,7 +6343,7 @@ def _main(argv: "list[str]") -> int:
             header_notes = header_notes + (link_note,)
         app_root: Path = copy / "application"
         baseline_bcs: "frozenset[str]" = frozenset(
-            d.name for d in app_root.iterdir() if d.is_dir()) if app_root.is_dir() else frozenset()
+            d.name for d in app_root.iterdir() if vocab.bc_folder(d)) if app_root.is_dir() else frozenset()
         # 계획↔기준선 모순 전건(차단 모드): add 충돌 · update/remove 대상 기준선 부재 — 오버레이 «전»·1회 일괄 반송.
         # «기준선 부재 ∧ HEAD 실존» 은 `--base` 명시 경로에서만 가능하다(기본 기준선 = HEAD 트리) — git 호출도 그때만.
         form_result: "tuple[list[str], frozenset[str]]" = baseline_form_errors(

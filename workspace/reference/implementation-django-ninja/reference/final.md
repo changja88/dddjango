@@ -991,8 +991,8 @@ framework status는 `response=`에 BC 오류로도 다른 Schema 로도 선언�
   않는다: 서식(줄 나눔 · 괄호 · 끝 쉼표 · 빈 줄 · 따옴표 꼴), import 의 차례 · 묶음 · 줄 나눔,
   `from __future__ import annotations`, 주석(`# noqa: …` · `# type: ignore[…]`), 맨 위 모듈 docstring. 정의 · 문장 ·
   값 · 이름 · 차례와 함수 · 클래스 안 docstring 은 코드다. 린트가 정본 코드를 짚으면 코드를 고치지 않고 그 줄
-  `# noqa: <규칙>` 이나 파일 단위 무시로 둔다(코드를 바꾸는 자동 고침은 검사기가 막는다). 옛 판(2.37.0) 정본도
-  받는다 — 동작이 같아 바꾸지 않아도 된다. 붙이는 함수 `add_pre_route_responses(api, schema)` 와 Ninja 기본 행
+  `# noqa: <규칙>` 이나 파일 단위 무시로 둔다(코드를 바꾸는 자동 고침은 검사기가 막는다). 옛 판(2.37.0 · 2.38.0) 정본도
+  받는다 — 표에 `exempt_pattern` 이 없으면 바꾸지 않아도 된다(그 칸은 지금 판 정본만 받는다). 붙이는 함수 `add_pre_route_responses(api, schema)` 와 Ninja 기본 행
   `NINJA_RESPONSES` · 그 몸통 Schema 가 여기 있다.
 - `framework/ninja/pre_route_response_table.py` — 프로젝트 표(설계 G1 승인). 프로젝트 행 `PRE_ROUTE_RESPONSES` 와
   그 몸통 Schema, `BAD_REQUEST_RESPONSE`(Django 상한 400 의 꼴 — 기본 `{"media_type": "text/html"}` · 루트 URLconf 가
@@ -1046,14 +1046,19 @@ api: DocumentedAPI = DocumentedAPI(...)
 **프로젝트 행.** 응답을 직접 만드는 미들웨어(서드파티 포함)와 앞단의 답을 행 하나에 하나씩 적는다. 칸은 `status`(400–599) ·
 `when`(`all` · `auth` · `body` · `input`) · `description` · 몸통 `body`(같은 파일의 Schema) 또는 `media_type` ·
 선택 `headers`(그 답이 싣는 머리 — 캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)는 적지 않아도 되고 검사기도 대조하지 않는다)와 좁히는 칸 `methods`(대문자 HTTP 메서드) · `namespaces`(루트 API
-`urls_namespace=` 이름 — 내부 창구 객체는 `"internal_api"`) · `exempt`(`(메서드 | None, "<settings 이름>")` — 그 설정 목록의 경로는 뺀다 · 목록은 base
-settings 에 둔다) · `operations`(`"GET /api/orders/{order_id}"` 꼴 — 메서드 + 생성 문서 경로 · `namespaces` 하나와
+`urls_namespace=` 이름 — 내부 창구 객체는 `"internal_api"`) · `exempt`(`(메서드 | None, "<settings 이름>")` — 그 설정 목록과 글자가 같은 경로는 뺀다 · 목록은 base
+settings 에 둔다) · `exempt_pattern`(같은 꼴 · 지금 판 정본만 — 그 설정 목록의 정규식 하나가 생성 문서 경로 글(변수는
+`{order_id}` 글자 그대로)과 전체로 맞으면(`re.fullmatch`) 뺀다) · `operations`(`"GET /api/orders/{order_id}"` 꼴 — 메서드 + 생성 문서 경로 · `namespaces` 하나와
 함께 · 승인 endpoint 의 406 · 415 · 인증 안 `HttpError(403)` · 확립 표면(`preserve-established`)의 경로 코드가
 직접 raise 하는 `HttpError` 처럼 경로 객체로 못 가르는 답만)다. 좁히는 칸은 빈 튜플로 두지 않는다. 행마다 G1
 근거를 단다 — 그 답을 내는 미들웨어 코드 줄 · 설정 · 앞단 설정.
+`exempt` 와 `exempt_pattern` 은 그 미들웨어가 설정을 보는 법(글자 같음 · `fullmatch`)을 그 근거로 골라 쓴다. 문서 때문에
+설정 값을 바꾸지 않는다 — 그 값은 실행 때의 제외 범위다. 경로 글에는 맞고 실제 값 일부에는 안 맞는 정규식(`[^0-9]+` ·
+path 변환기 자리 `[^/]+` · mount 앞머리(`SCRIPT_NAME`)에 기대는 앞 와일드카드)이 하나라도 든 설정에는 `exempt_pattern` 을
+쓰지 않는다(문서에 남는 쪽이 «날 수 있다» 쪽이다). `\d+` 처럼 경로 글에 안 맞는 꼴은 문서에 남을 뿐이라 써도 된다.
 `NOT_API_MIDDLEWARE` 줄은 그 미들웨어가 API 경로(공개 API 주소와 `/internal/` 둘 다)를 빼는 코드 줄을 근거로 단다 — 빼는 줄이 없는 미들웨어(서버렌더
 transient 미들웨어 등)는 API 경로에도 답하므로 이 목록에 넣지 않고 행으로 적는다. 검사기는 프로젝트 미들웨어의
-정해진 꼴 답만 표와 대조한다 — 그 답의 행이 좁힌 행(`methods` · `namespaces` · `exempt` · `operations` · `all` 이
+정해진 꼴 답만 표와 대조한다 — 그 답의 행이 좁힌 행(`methods` · `namespaces` · `exempt` · `exempt_pattern` · `operations` · `all` 이
 아닌 `when`)뿐이거나 그 답을 글자로 못 읽으면 위반이 아니라 ⓓ 후보 줄을 내고(G1 에서는 api 리뷰어가 그 행의
 근거가 그 미들웨어 줄인지 코드로 보고, G2 의 ⓓ 줄은 감수자가 닫는다), 서드파티 미들웨어 · 앞단 행은 대조하지
 않는다(api 리뷰어 몫).
@@ -1140,6 +1145,7 @@ class PreRouteResponse(TypedDict):
     namespaces: NotRequired[tuple[str, ...]]
     operations: NotRequired[tuple[str, ...]]
     exempt: NotRequired[tuple[str | None, str]]
+    exempt_pattern: NotRequired[tuple[str | None, str]]
     headers: NotRequired[dict[str, JsonValue]]
 
 
@@ -1435,14 +1441,25 @@ def _when_holds(
 
 
 def _exempted(entry: PreRouteResponse, path: str, method: str) -> bool:
-    exempt: tuple[str | None, str] | None = entry.get("exempt")
+    if path in _exempt_values(entry.get("exempt"), method):
+        return True
+    cell: tuple[str | None, str] | None = entry.get("exempt_pattern")
+    values: tuple[JsonValue, ...] = _exempt_values(cell, method)
+    patterns: list[str] = [value for value in values if isinstance(value, str)]
+    return any(re.fullmatch(pattern, path) is not None for pattern in patterns)
+
+
+def _exempt_values(
+    exempt: tuple[str | None, str] | None,
+    method: str,
+) -> tuple[JsonValue, ...]:
     if exempt is None:
-        return False
+        return ()
     only_method, setting_name = exempt
-    exempt_paths: object = getattr(settings, setting_name)
+    values: object = getattr(settings, setting_name)
     if only_method is not None and only_method != method:
-        return False
-    return isinstance(exempt_paths, (list, tuple)) and path in exempt_paths
+        return ()
+    return tuple(values) if isinstance(values, (list, tuple)) else ()
 
 
 def _can_fail(parameter: dict[str, JsonValue], converters: dict[str, str]) -> bool:

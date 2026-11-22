@@ -6,7 +6,7 @@
 implementation-django-ninja 참조 글의 정본 코드 블록에서 코드 그대로 옮긴다(서식 · 주석은 대조 밖). 둘이 어긋나면 글대로 짠
 프로젝트가 검사기에 막힌다. 이 시험이 지킨다.
 
-  ① #63 이 받는 자산마다(검사기 `PRE_ROUTE_CANONICAL_ASSETS` — 첫 이름 = 이 자산 · 둘째 = 옛 판 2.37.0 정본) Codex byte
+  ① #63 이 받는 자산마다(검사기 `PRE_ROUTE_CANONICAL_ASSETS` — 첫 이름 = 이 자산 · 그 뒤 = 옛 판 2.38.0 · 2.37.0 정본) Codex byte
      미러 · 픽스처(`workspace/eval/fixtures/openapi_*`)의 정본 사본은 첫 자산과 byte 동일.
   ② 참조 글(Claude · Codex)에서 `def add_pre_route_responses(` 를 담은 ```python 블록이 정확히 하나이고,
      그 블록 글(펜스 사이 줄 + 끝 줄바꿈)이 자산과 byte 동일.

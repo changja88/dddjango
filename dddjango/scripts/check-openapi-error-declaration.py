@@ -34,20 +34,23 @@ import re
 import stat
 import subprocess
 import sys
+from pathlib import Path
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 import checker_target
 from findings import Candidates, Findings, emit_all, lines, zero_target_guard
 from dataclasses import dataclass, field
 from http import HTTPStatus
-from pathlib import Path
 from typing import Callable
 
 
 try:
     import anchor_diff
     import standard_tree as _stree
+    import business_vocab as vocab
 except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
-    print("분석 오류: standard_tree.py/anchor_diff.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    print("분석 오류: standard_tree.py/business_vocab.py/anchor_diff.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
     sys.exit(1)
 
 ERROR_PROFILES = {"auto", "dddjango-code-json", "preserve-established"}
@@ -3495,7 +3498,7 @@ def _tree_bcs63(root: Path) -> list[Path]:
     for c in (root / "application",):
         if not c.is_dir() or set(c.parts) & CODE_SKIP_DIRS:
             continue
-        out.extend(p for p in sorted(c.iterdir()) if p.is_dir() and not p.name.startswith("."))
+        out.extend(p for p in sorted(c.iterdir()) if vocab.bc_folder(p))
     return out
 
 
@@ -3782,10 +3785,11 @@ PRE_ROUTE_FUNCTION: str = "framework.ninja.pre_route_responses.add_pre_route_res
 OPENAPI_SCHEMA_TYPE: str = "ninja.openapi.schema.OpenAPISchema"
 # 받는 정본 — 이 검사기와 같은 폴더의 자산 파일. 정본 판이 바뀌어 옛 판도 받을 때는 그 판 자산을
 # 파일로 더하고 여기 이름을 잇는다(지문 = 그 자산의 AST 대조 꼴 — 실행 Python 이 같은 꼴로 읽는다).
-# 첫 이름이 지금 판(참조 글 블록 = 이 자산)이고 표 칸 이름 · 메서드 낱말 · operation 꼴은 첫 자산에서만 읽는다 —
-# 2.37.0 판은 동작이 같아 함께 받는다(F4-178 · 2.38.0 · TypedDict 가 바뀌는 판에서 뺀다).
+# 첫 이름이 지금 판(참조 글 블록 = 이 자산)이고 메서드 낱말 · operation 꼴은 첫 자산에서만 읽는다 — 표 칸 이름은
+# 프로젝트 정본이 맞은 자산에서 읽는다(옛 판 사본은 그 판의 칸만 · F4-178 · F4-201).
 PRE_ROUTE_CANONICAL_ASSETS: tuple[str, ...] = (
     "pre_route_responses_canonical.py",
+    "pre_route_responses_canonical_2_38_0.py",
     "pre_route_responses_canonical_2_37_0.py",
 )
 DOCUMENTED_API_METHOD: str = (
@@ -3795,6 +3799,7 @@ DOCUMENTED_API_METHOD: str = (
     "    return add_pre_route_responses(self, super().get_openapi_schema(path_prefix=path_prefix, path_params=path_params))\n"
 )
 PRE_ROUTE_TABLE_NAMES: tuple[str, ...] = ("PRE_ROUTE_RESPONSES", "BAD_REQUEST_RESPONSE", "NOT_API_MIDDLEWARE")
+EXEMPT_CELLS: tuple[str, ...] = ("exempt", "exempt_pattern")
 PROJECT_ROW_WHEN: frozenset[str] = frozenset({"all", "auth", "body", "input"})
 DEFAULT_BAD_REQUEST: dict[str, str] = {"media_type": "text/html"}
 DOTTED_PATH_RE: re.Pattern[str] = re.compile(r"[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+")
@@ -4297,8 +4302,8 @@ def _root_api_lane(
 class _CanonicalSpec:
     forms: tuple[tuple[frozenset[str], tuple[str, ...]], ...]
     names: tuple[tuple[str, ...], ...]
+    row_keys: tuple[frozenset[str], ...]  # forms 와 같은 차례 — 그 판의 표 칸 이름
     row_required: frozenset[str]
-    row_optional: frozenset[str]
     bad_request_required: frozenset[str]
     bad_request_optional: frozenset[str]
     http_methods: frozenset[str]
@@ -4372,11 +4377,12 @@ def _typed_dict_keys(tree: ast.Module, name: str) -> tuple[frozenset[str], froze
 
 
 def _canonical_spec() -> _CanonicalSpec:
-    """이 검사기 옆 정본 자산 — 받는 꼴 · 표 칸 이름 · 메서드 낱말 · operation 꼴의 단일 출처."""
+    """이 검사기 옆 정본 자산 — 받는 꼴 · 판마다의 표 칸 이름 · 메서드 낱말 · operation 꼴의 단일 출처."""
     if _SPEC:
         return _SPEC[0]
     forms: list[tuple[frozenset[str], tuple[str, ...]]] = []
     names: list[tuple[str, ...]] = []
+    row_keys: list[frozenset[str]] = []
     current: ast.Module | None = None
     for asset in PRE_ROUTE_CANONICAL_ASSETS:
         path = Path(__file__).resolve().with_name(asset)
@@ -4387,10 +4393,12 @@ def _canonical_spec() -> _CanonicalSpec:
         imports, definitions, definition_names = _canonical_form(tree)
         forms.append((imports, definitions))
         names.append(definition_names)
+        required, optional = _typed_dict_keys(tree, "PreRouteResponse")
+        row_keys.append(required | optional)
         if current is None:
             current = tree
     assert current is not None
-    row_required, row_optional = _typed_dict_keys(current, "PreRouteResponse")
+    row_required, _ = _typed_dict_keys(current, "PreRouteResponse")
     bad_required, bad_optional = _typed_dict_keys(current, "BadRequestResponse")
     methods_node = _asset_constant(current, "HTTP_METHODS")
     methods = frozenset(
@@ -4407,8 +4415,8 @@ def _canonical_spec() -> _CanonicalSpec:
     spec = _CanonicalSpec(
         tuple(forms),
         tuple(names),
+        tuple(row_keys),
         row_required,
-        row_optional,
         bad_required,
         bad_optional,
         methods,
@@ -4424,6 +4432,17 @@ def _shared_prefix(left: tuple[str, ...], right: tuple[str, ...]) -> int:
         (index for index, (mine, theirs) in enumerate(zip(left, right)) if mine != theirs),
         min(len(left), len(right)),
     )
+
+
+def _project_row_keys(canonical: ast.Module | None) -> frozenset[str]:
+    """표에 쓸 수 있는 칸 — 프로젝트 정본이 맞은 판의 칸. 정본이 없거나 어느 판과도 다르면 지금 판의 칸."""
+    spec = _canonical_spec()
+    if canonical is not None:
+        imports, definitions, _ = _canonical_form(canonical)
+        for form, keys in zip(spec.forms, spec.row_keys):
+            if form == (imports, definitions):
+                return keys
+    return spec.row_keys[0]
 
 
 def _canonical_findings(relative: Path, tree: ast.Module) -> list[_PreRouteSite]:
@@ -4466,7 +4485,7 @@ class _TableRow:
     lineno: int
     status: int | None
     headers: frozenset[str]  # 소문자
-    narrowing: frozenset[str] = frozenset()  # 단 좁힘 칸(operations · methods · namespaces · exempt · `all` 밖 when)
+    narrowing: frozenset[str] = frozenset()  # 단 좁힘 칸(operations · methods · namespaces · exempt · exempt_pattern · `all` 밖 when)
     namespaces: tuple[str, ...] = ()
 
 
@@ -4722,6 +4741,7 @@ def _string_tuple(node: ast.AST) -> tuple[str, ...] | None:
 def _table_row_problems(
     row: ast.Dict,
     spec: _CanonicalSpec,
+    row_keys: frozenset[str],
     schemas: set[str],
     namespaces: set[str],
     settings: _ProjectSettings,
@@ -4738,9 +4758,14 @@ def _table_row_problems(
         if key.value in values:
             problems.append(f"칸 `{key.value}` 가 두 번")
         values[key.value] = value
-    allowed = spec.row_required | spec.row_optional
-    for name in sorted(set(values) - allowed):
-        problems.append(f"모르는 칸 `{name}`")
+    for name in sorted(set(values) - row_keys):
+        if name in spec.row_keys[0]:
+            problems.append(
+                f"`{name}` 칸은 지금 판 정본이라야 쓸 수 있다"
+                f"(`{PRE_ROUTE_PATH.as_posix()}` 를 참조 글의 정본 코드로 다시 옮긴다)"
+            )
+        else:
+            problems.append(f"모르는 칸 `{name}`")
     for name in sorted(spec.row_required - set(values)):
         problems.append(f"필수 칸 `{name}` 없음")
     status: int | None = None
@@ -4787,8 +4812,10 @@ def _table_row_problems(
                 problems.append(f"`operations` 의 `{target}` — `METHOD /경로` 꼴")
         if len(narrowing.get("namespaces", ())) != 1:
             problems.append("`operations` 행은 `namespaces` 하나가 필수")
-    if "exempt" in values:
-        exempt = values["exempt"]
+    for cell in EXEMPT_CELLS:
+        if cell not in values or cell not in row_keys:
+            continue
+        exempt = values[cell]
         shape = (
             isinstance(exempt, ast.Tuple)
             and len(exempt.elts) == 2
@@ -4798,10 +4825,10 @@ def _table_row_problems(
             and isinstance(exempt.elts[1].value, str)
         )
         if not shape:
-            problems.append("`exempt` 는 `(메서드 | None, \"<settings 이름>\")` 글자 튜플")
+            problems.append(f"`{cell}` 는 `(메서드 | None, \"<settings 이름>\")` 글자 튜플")
         elif settings.found and exempt.elts[1].value not in settings.names:
             problems.append(
-                f"`exempt` 의 settings 이름 `{exempt.elts[1].value}` 가 settings 에 없다"
+                f"`{cell}` 의 settings 이름 `{exempt.elts[1].value}` 가 settings 에 없다"
                 "(목록은 모든 settings 진입 모듈이 `*` import 로 받는 base settings 에 둔다)"
             )
     headers: set[str] = set()
@@ -4816,11 +4843,11 @@ def _table_row_problems(
                 else:
                     problems.append("`headers` 의 머리 이름이 글자가 아니다")
     for name, value in values.items():
-        if name in {"body", "headers"} or name not in allowed:
+        if name in {"body", "headers"} or name not in row_keys:
             continue
         if _literal_value(value) is _NO_STATIC_VALUE:
             problems.append(f"`{name}` 가 글자 값이 아니다")
-    present = frozenset(name for name in ("operations", "methods", "namespaces", "exempt") if name in values) | (
+    present = frozenset(name for name in ("operations", "methods", "namespaces", *EXEMPT_CELLS) if name in values) | (
         frozenset({"when"})
         if "when" in values and not (isinstance(values["when"], ast.Constant) and values["when"].value == "all")
         else frozenset()
@@ -4834,6 +4861,7 @@ def _table_findings(
     namespaces: set[str],
     settings: _ProjectSettings,
     handler400: tuple[bool | None, str | None],
+    row_keys: frozenset[str],
 ) -> tuple[list[_PreRouteSite], list[_TableRow], frozenset[str], list[tuple[_PreRouteSite, str]]]:
     """b — 표 파일 정적 검증(글자 값 · 닫힌 칸 · 값) → (위반, 행, `NOT_API_MIDDLEWARE`, ⓓ 후보)."""
     spec = _canonical_spec()
@@ -4886,7 +4914,7 @@ def _table_findings(
                 if not isinstance(element, ast.Dict):
                     add(getattr(element, "lineno", statement.lineno), "행이 글자 Dict 가 아니다")
                     continue
-                problems, row = _table_row_problems(element, spec, schemas, namespaces, settings)
+                problems, row = _table_row_problems(element, spec, row_keys, schemas, namespaces, settings)
                 rows.append(row)
                 if problems:
                     add(element.lineno, "행: " + " · ".join(problems))
@@ -5211,7 +5239,7 @@ def _middleware_findings(
     api_namespaces: "set[str] | frozenset[str] | None" = frozenset(),
 ) -> tuple[list[_PreRouteSite], list[tuple[_PreRouteSite, str]]]:
     """d — 프로젝트 미들웨어가 내는 오류 답 ↔ 표 행. hook(같은 클래스 · 프로젝트 기저 클래스 한 단계)과 그 hook 이 돌려주는
-    도움 메서드 · 같은 모듈 함수 한 단계까지 읽는다. 같은 status 행이 좁힌 행(`operations` · `methods` · `exempt` · `all` 밖
+    도움 메서드 · 같은 모듈 함수 한 단계까지 읽는다. 같은 status 행이 좁힌 행(`operations` · `methods` · `exempt` · `exempt_pattern` · `all` 밖
     `when` · 모든 루트 API 이름공간을 덮지 않는 `namespaces` — 이름공간을 글자로 못 읽은 루트가 있으면(`api_namespaces` 가
     None) `namespaces` 는 늘 좁힘)뿐이면 그 행이 이 미들웨어의 행인지 기계가 가를 수 없으므로 ⓓ 후보로 둔다."""
     sites: list[_PreRouteSite] = []
@@ -5219,7 +5247,7 @@ def _middleware_findings(
     counted = [row for row in rows if row.status is not None]
 
     def narrowed(row: _TableRow) -> bool:
-        if row.narrowing & {"operations", "methods", "exempt", "when"}:
+        if row.narrowing & {"operations", "methods", *EXEMPT_CELLS, "when"}:
             return True
         return "namespaces" in row.narrowing and (
             api_namespaces is None or not set(api_namespaces) <= set(row.namespaces)
@@ -5936,7 +5964,12 @@ def _pre_route_slice(
         settings = _project_settings(root, files)
         namespaces = {namespace for api in roots for namespace in api.namespaces if namespace is not None}
         table_sites, rows, not_api, table_candidates = _table_findings(
-            PRE_ROUTE_TABLE_PATH, table_tree, namespaces, settings, _handler400_view(root, settings)
+            PRE_ROUTE_TABLE_PATH,
+            table_tree,
+            namespaces,
+            settings,
+            _handler400_view(root, settings),
+            _project_row_keys(canonical_tree),
         )
         sites.extend(table_sites)
         candidate_sites.extend(table_candidates)

@@ -297,7 +297,8 @@ except OutOfStockException:
 그 가운데 경로 앞에서 나는 답(인증 · 권한 · throttle · 입력 오류)과 미들웨어 · 앞단이 경로 앞에서 보내는 오류까지 경로마다 적힌다 — 프로젝트에 한 번 `api.py`의 정해진 클래스와
 `framework/ninja/` 파일 둘(플러그인 정본 · 설계에서 승인한 미들웨어 · 앞단 답의 표)을 두면 그 답이 실제로 나는 경로에만
 생성 문서에 붙고, 표의 행마다 그 답을 실제로 일으키는 시험이 붙는다. 그 꼴이 없으면 검사기가 경로마다 그 빠짐을
-낸다(기존 경로는 빚 · 새 경로는 막힘). project `api.py`는
+낸다(기존 경로는 빚 · 새 경로는 막힘). 미들웨어가 설정 목록으로 빼는 경로는 표의 칸으로 문서에서도 뺀다
+(글자가 같은 경로 `exempt` · 정규식으로 맞는 경로 `exempt_pattern`). project `api.py`는
 API 인스턴스(경로 앞 응답을 붙이는 정해진 클래스)와 API 자체 설정만, BC `driving_layer/api/api_router.py`는 전달받은 API에 자기 controller 등록만,
 project `urls.py`는 모든 registrar 호출과 API mount만 소유한다. 앞단이 인터넷에 열지 않는 창구(같은 시스템의 다른 서버만
 부르는 창구)는 둘째 표준 객체 `internal_api`(project `internal_api.py` — `api.py` 의 그 클래스를 들여 짓고 `/internal/` 에 단다)에

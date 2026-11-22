@@ -58,19 +58,22 @@ import stat
 import subprocess
 import sys
 import warnings
+from pathlib import Path
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 import checker_target
 import folder_group
 from collections.abc import Callable
 from findings import Candidates, ContractFindings, Findings, emit_all, lines
 from dataclasses import dataclass
-from pathlib import Path
 
 try:
     import anchor_diff
     import standard_tree as _tree
+    import business_vocab as vocab
 except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
-    print("분석 오류: standard_tree.py/anchor_diff.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    print("분석 오류: standard_tree.py/business_vocab.py/anchor_diff.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
     sys.exit(1)
 
 # code-profile 레인(URLconf/registrar)의 category 는 귀속 매핑표 v2 §3.1 에 따라 소유
@@ -215,7 +218,7 @@ def _find_bc_dirs(root: Path) -> list[Path]:
     out: list[Path] = []
     for container in _find_application_containers(root):
         for child in sorted(container.iterdir()):
-            if not child.is_dir() or child.name in SKIP_DIRS:
+            if not vocab.bc_folder(child):
                 continue
             out.append(child)
     return out
