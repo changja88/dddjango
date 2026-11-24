@@ -118,12 +118,12 @@
 <div class="wrap">
   <p class="kicker">05 · dddjango · dddjango-web</p>
   <h1>작업 리스트</h1>
-  <p class="lead">현장 보고 가운데 아직 고치지 않은 일 <b>16개</b>다(dddjango 10 · dddjango-web 6). 새 보고는 판을 정해 넣고, web 은 맨 뒤다. 기준 판 dddjango 2.45.0 · dddjango-web 2.9.1(2026-11-23).</p>
+  <p class="lead">현장 보고 가운데 아직 고치지 않은 일 <b>25개</b>다(dddjango 19 · dddjango-web 6). 새 보고는 판을 정해 넣고, web 은 맨 뒤다. 기준 판 dddjango 2.45.1 · dddjango-web 2.9.1(2026-11-25).</p>
 
   <div class="index">
     <div class="tabs" role="tablist" aria-label="플러그인">
       <button type="button" role="tab" id="tab-core" aria-controls="panel-core" aria-selected="true" data-key="dddjango">
-        <span class="t">dddjango</span><span class="s">10개 · 리팩토링 · 새 보고 · 보류</span>
+        <span class="t">dddjango</span><span class="s">19개 · 리팩토링 · 새 보고 · 보류</span>
       </button>
       <button type="button" role="tab" id="tab-web" aria-controls="panel-web" aria-selected="false" tabindex="-1" data-key="web">
         <span class="t">dddjango-web</span><span class="s">6개 · 5판(맨 뒤)</span>
@@ -131,7 +131,7 @@
     </div>
     <ul class="jump" id="jump-core" aria-label="dddjango 차례">
       <li><a href="#core-refactor">리팩토링<span class="n">2</span></a></li>
-      <li><a href="#core-new">새 보고<span class="n">3</span></a></li>
+      <li><a href="#core-new">새 보고<span class="n">12</span></a></li>
       <li><a href="#core-hold">보류<span class="n">5</span></a></li>
     </ul>
     <ul class="jump" id="jump-web" aria-label="dddjango-web 차례" hidden>
@@ -150,12 +150,21 @@
     </section>
 
     <section id="core-new">
-      <h2><span class="no">2</span>새 보고 — 판 아직 안 정함<span class="cnt">3개</span></h2>
-      <p class="why">F4-204 · 205 는 리팩토링 실행의 동작 보존 장치와 G1 확정의 빈틈이다(레인은 명세 sha 로 따로 막고 간다). F4-206 은 한 BC 의 운영자 HTTP 창구가 다른 BC 값을 읽을 표준 길이 트리에 없는 문제다.</p>
+      <h2><span class="no">2</span>새 보고 — 판 아직 안 정함<span class="cnt">12개</span></h2>
+      <p class="why">F4-204 · 205 는 리팩토링 실행의 동작 보존 장치와 G1 확정의 빈틈이다(레인은 명세 sha 로 따로 막고 간다). F4-206 은 한 BC 의 운영자 HTTP 창구가 다른 BC 값을 읽을 표준 길이 트리에 없는 문제다. F4-207 ~ 215(11-23 ~ 11-24 장부)는 아직 재현 전이다 — 리팩토링 장치와 규칙 글의 어긋남 다섯(F4-208 ~ 212) · 검사기 셋(F4-213 ~ 215) · 역할 하나(F4-207).</p>
       <ul class="items">
         <li><span class="num">F4-204</span><span class="what">규칙대로 지원 확인을 다시 뜨면 앞 슬라이스가 옮긴 시험의 대조 원점이 바뀌어 G2 «옮긴 케이스» 대조가 빈다(보고보다 좁게 재현됨)</span><span class="st left">그대로</span></li>
         <li><span class="num">F4-205</span><span class="what">G1 변경판 확정 digest 가 처방 글 · 슬라이스 계획 · file-plan 을 덮지 않아, 승인 전 명세 개정에도 창이 열린다</span><span class="st left">그대로</span></li>
         <li><span class="num">F4-206</span><span class="what">운영자 HTTP 창구가 다른 BC 값을 읽어야 하는데 반대 방향 ACL 이 이미 있으면 #450 순환으로 막힌다 — <code>cross_context/backoffice</code> 는 Django admin 화면만 덮는다</span><span class="st left">그대로</span></li>
+        <li><span class="num">F4-207</span><span class="what">G1 arrange 점검 역할(acceptance-tester)이 닫힌 읽기 목록 밖 셸 명령(<code>find -prune</code> · <code>xargs</code> · <code>awk</code> 등)을 다섯 번 중 네 번 썼다 — 목록 안 명령으로 찾을 길 또는 목록 넓힘(낮음)</span><span class="st left">그대로</span></li>
+        <li><span class="num">F4-208</span><span class="what">변경 창 close 의 «승인 변경 미검출» 을 규칙 글은 red 로 적는데 behavior_guard close 는 «보고:» 줄만 내고 exit 0 으로 닫는다</span><span class="st left">그대로</span></li>
+        <li><span class="num">F4-209</span><span class="what">슬라이스 차례 0T → 0C → 0F → S 를 behavior_guard open · verify 가 보지 않아, 변경 슬라이스 뒤 follow(0F) 창이 열리고 닫힌다</span><span class="st left">그대로</span></li>
+        <li><span class="num">F4-210</span><span class="what">변경 창은 «승인 V 만» 인데 behavior_guard 가 승인 케이스 파일의 V 밖 편집을 «기대 의미 그대로» 감사로 받아 막지 않는다</span><span class="st left">그대로</span></li>
+        <li><span class="num">F4-211</span><span class="what">리팩토링 실행에서 변경 슬라이스 뒤에 찾은 ⓐ 밖 시험 글 nit 을 그 실행 안에서 고칠 길이 규칙 글에 없다(장치는 두 길 다 exit 0)</span><span class="st left">그대로</span></li>
+        <li><span class="num">F4-212</span><span class="what">residual 묶음 머리 · 리뷰어 지시는 결과 행을 앞 <code>|</code> 없이 적게 하는데 <code>refactor_audit residual --finalize</code> 는 <code>|</code> 로 시작하는 줄만 읽어 전부 «답 없음» 이 된다</span><span class="st left">그대로</span></li>
+        <li><span class="num">F4-213</span><span class="what"><code>folder_group.py draft --spec</code> 은 새 도메인 서비스 파일 자리를 이름 맞추기로, 검사기 #656 · <code>draft --run</code> 은 반환 값 객체 자리로 내 어느 자리에 적어도 다른 쪽 의무가 걸린다</span><span class="st left">그대로</span></li>
+        <li><span class="num">F4-214</span><span class="what"><code>check-public-surface-annotation</code> 의 시험 본문 갈래가 #647 만 내고 #645(변수 · 속성 <code>Any</code>) · ⓓ 를 버린다(낮음)</span><span class="st left">그대로</span></li>
+        <li><span class="num">F4-215</span><span class="what"><code>check-business-vocabulary</code> #47 이 framework 병렬 작업 인자 이름 <code>task</code> · <code>tasks</code> 를 업무 낱말로 잡는다(BC 고정 문구 키 <code>TASK</code> 와 합집합)</span><span class="st left">그대로</span></li>
       </ul>
     </section>
 
@@ -189,8 +198,8 @@
 
   <div class="foot">
     <p>상태 — <b>그대로</b>: 아직 손대지 않음 · <b>일부</b>: 앞 판에서 일부만 고쳐짐.</p>
-    <p>뺀 것 — 배포로 끝난 67개(dddjango 2.34.0 ~ 2.45.0 · 2.45.0 에서 F4-181 · 182 · 189 · 201 — 같은 판의 F4-203 은 목록에 없던 보고) · 사용자가 고치지 않기로 정한 2개(F4-33 · F4-83 · 135 — 시험 본문 타입은 현행 유지).</p>
-    <p>현장 보고 밖 후보 — 2.45.0 이 판 밖으로 둔 것(끝 <code>/</code> 폴더 주어 — #121 · #123 · ⓓ#511 — 는 승인 유입 증명이 안 돼 들인 빚이 레인 귀속 red · <code>application/</code> 끊어진 심링크면 게이트 exit 1 · pre-gate 기준선의 BC 이름 거름 · 게이트 «진단 미파싱» 줄끼리 상쇄 · BC 안 빈 폴더의 게이트 사본 비대칭 · dddjango-web 도구 셋의 격리 실행 실패 · web 쪽 캐시 BC(추정) · 빈 BC 폴더 · #390 기존 우회 · 봉인 매니페스트 기계 칸이 설치 경로를 공개 저장소에 실음) · 동작 보존 장치의 «기대 그대로» 넓힘 남은 꼴(2.44.0 받아들인 한계 — import · 열거형 상수 펼침 · <code>200 == r</code> ↔ <code>r == 200</code> 좌우 바꿈 · <code>pytest.raises(E, f).match(…)</code> 이어 부른 꼴 · pytest-django 픽스처 <code>django_assert_num_queries</code> · unittest 둘째 자리를 <code>second=</code> 밖 키워드로 준 꼴) · #188 입구 짝을 손님 API 없는 BC 로 넓힘(기동 전용 영역 자리 먼저) · 리팩토링 deps 의 빨리 감기 경고 · 2.44.1 이 판 밖으로 둔 넷(check-broker-contract #520 이 <code>x: T = ….publish(…)</code> 주석 대입을 못 봄 — 추정 · 재현부터 / #473 이 구문 오류 슬롯 파일을 조용히 건너뜀 / #473 try 안 창구 모듈 import / <code>except*</code>) · 기존 시험 장난감에 대상 저장소 BC 와 같은 이름 둘 — 지은 이름으로 바꿈 · 기준선 도구의 «그 판에 그 경로가 있나» 가 git 뿌리 아래 하위 폴더 대상에서 늘 «없음»(2.39.0 부터) · ⓓ#485 목록 밖 동사 소음 · ⓓ#191 바꾸는 동사 머리 + 명사 접미 · ⓓ#257 덧셈 대입만 하는 메서드 · 끝 <code>if</code> · 이 실행과 main 이 같은 시험 쪽 파일을 고친 자동 머지(pre-gate · arrange 점검 같은 사각) · 같은 프로세스의 시험 코드가 동작 보존 탐침의 셈 자체를 고쳐 쓰는 꼴(2.41.0 부터 · 2.42.0 설계 검토가 찾음) · G0 가 «규칙 둘이 반대 방향» 인 위반을 고칠 길이 있는지 보지 않고 «정리» 를 고르게 묻는 꼴(리팩토링 막힘 셋이 G1 에서 «불가» 로 다시 올라옴 · 2026-11-20) · 2.43.0 이 판 밖으로 둔 다섯(«401 은 Ninja 몫» 의 기계 집행 빈자리 · #228 에 남은 유스케이스 DTO 옛 구멍 · 0C «제품만 개명 · 시험 그대로» 녹색 · 성공 칸 <code>{**import}</code> 조용히 통과 · «인증 틀 있는 operation 에서만» 의 기계 판정) · 2.43.0 이 받아들인 한계 가운데 다시 볼 것(옮김 행 묶임 대조의 드문 두 꼴 — 서로 다른 외부 모듈의 같은 이름 픽스처 · conftest 와 같은 이름의 외부 import / 옮김 행마다 사슬 다시 읽기 / 진단 문구 둘 — 원 경로가 달라 비켜 주지 못함 · 뒤 고침으로 못 읽음 · 골든 갱신 동반 / #227 물음의 «펴서» 문구).</p>
+    <p>뺀 것 — 배포로 끝난 67개(dddjango 2.34.0 ~ 2.45.1 · 2.45.0 에서 F4-181 · 182 · 189 · 201 — 같은 판의 F4-203 과 2.45.1 의 F4-216 은 목록에 없던 보고) · 사용자가 고치지 않기로 정한 2개(F4-33 · F4-83 · 135 — 시험 본문 타입은 현행 유지).</p>
+    <p>현장 보고 밖 후보 — 2.45.1 이 판 밖으로 둔 것(Ninja <code>CursorPagination</code> 의 422 몸통 <code>{"detail": [{"cursor": …}]}</code> 이 정본 문서 꼴과 다름 — 2.37.0 부터) · 2.45.0 이 판 밖으로 둔 것(끝 <code>/</code> 폴더 주어 — #121 · #123 · ⓓ#511 — 는 승인 유입 증명이 안 돼 들인 빚이 레인 귀속 red · <code>application/</code> 끊어진 심링크면 게이트 exit 1 · pre-gate 기준선의 BC 이름 거름 · 게이트 «진단 미파싱» 줄끼리 상쇄 · BC 안 빈 폴더의 게이트 사본 비대칭 · dddjango-web 도구 셋의 격리 실행 실패 · web 쪽 캐시 BC(추정) · 빈 BC 폴더 · #390 기존 우회 · 봉인 매니페스트 기계 칸이 설치 경로를 공개 저장소에 실음) · 동작 보존 장치의 «기대 그대로» 넓힘 남은 꼴(2.44.0 받아들인 한계 — import · 열거형 상수 펼침 · <code>200 == r</code> ↔ <code>r == 200</code> 좌우 바꿈 · <code>pytest.raises(E, f).match(…)</code> 이어 부른 꼴 · pytest-django 픽스처 <code>django_assert_num_queries</code> · unittest 둘째 자리를 <code>second=</code> 밖 키워드로 준 꼴) · #188 입구 짝을 손님 API 없는 BC 로 넓힘(기동 전용 영역 자리 먼저) · 리팩토링 deps 의 빨리 감기 경고 · 2.44.1 이 판 밖으로 둔 넷(check-broker-contract #520 이 <code>x: T = ….publish(…)</code> 주석 대입을 못 봄 — 추정 · 재현부터 / #473 이 구문 오류 슬롯 파일을 조용히 건너뜀 / #473 try 안 창구 모듈 import / <code>except*</code>) · 기존 시험 장난감에 대상 저장소 BC 와 같은 이름 둘 — 지은 이름으로 바꿈 · 기준선 도구의 «그 판에 그 경로가 있나» 가 git 뿌리 아래 하위 폴더 대상에서 늘 «없음»(2.39.0 부터) · ⓓ#485 목록 밖 동사 소음 · ⓓ#191 바꾸는 동사 머리 + 명사 접미 · ⓓ#257 덧셈 대입만 하는 메서드 · 끝 <code>if</code> · 이 실행과 main 이 같은 시험 쪽 파일을 고친 자동 머지(pre-gate · arrange 점검 같은 사각) · 같은 프로세스의 시험 코드가 동작 보존 탐침의 셈 자체를 고쳐 쓰는 꼴(2.41.0 부터 · 2.42.0 설계 검토가 찾음) · G0 가 «규칙 둘이 반대 방향» 인 위반을 고칠 길이 있는지 보지 않고 «정리» 를 고르게 묻는 꼴(리팩토링 막힘 셋이 G1 에서 «불가» 로 다시 올라옴 · 2026-11-20) · 2.43.0 이 판 밖으로 둔 다섯(«401 은 Ninja 몫» 의 기계 집행 빈자리 · #228 에 남은 유스케이스 DTO 옛 구멍 · 0C «제품만 개명 · 시험 그대로» 녹색 · 성공 칸 <code>{**import}</code> 조용히 통과 · «인증 틀 있는 operation 에서만» 의 기계 판정) · 2.43.0 이 받아들인 한계 가운데 다시 볼 것(옮김 행 묶임 대조의 드문 두 꼴 — 서로 다른 외부 모듈의 같은 이름 픽스처 · conftest 와 같은 이름의 외부 import / 옮김 행마다 사슬 다시 읽기 / 진단 문구 둘 — 원 경로가 달라 비켜 주지 못함 · 뒤 고침으로 못 읽음 · 골든 갱신 동반 / #227 물음의 «펴서» 문구).</p>
     <p>대상 코드 몫(플러그인 일 아님) — 로그인 필요를 403 으로 답하는 API 서버 BC 를 그 BC 리팩토링 때 401 로(F4-190 · 192 방향 · 손님 web · 앱 맞춤 동반) · 여러 BC 값을 보이는 admin 화면(정지 · 판촉)을 <code>cross_context/backoffice/</code> 로 옮기는 기능 · 수정 실행 → 순환이 풀린 BC 리팩토링 → 나머지 BC admin 은 그 BC 리팩토링이 새 admin 빚(#668)으로 갚는다.</p>
     <p>판마다 배포가 끝나면 끝난 항목을 이 목록에서 지운다.</p>
   </div>
