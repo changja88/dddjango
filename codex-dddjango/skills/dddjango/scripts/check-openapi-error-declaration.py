@@ -3786,9 +3786,10 @@ OPENAPI_SCHEMA_TYPE: str = "ninja.openapi.schema.OpenAPISchema"
 # 받는 정본 — 이 검사기와 같은 폴더의 자산 파일. 정본 판이 바뀌어 옛 판도 받을 때는 그 판 자산을
 # 파일로 더하고 여기 이름을 잇는다(지문 = 그 자산의 AST 대조 꼴 — 실행 Python 이 같은 꼴로 읽는다).
 # 첫 이름이 지금 판(참조 글 블록 = 이 자산)이고 메서드 낱말 · operation 꼴은 첫 자산에서만 읽는다 — 표 칸 이름은
-# 프로젝트 정본이 맞은 자산에서 읽는다(옛 판 사본은 그 판의 칸만 · F4-178 · F4-201).
+# 프로젝트 정본이 맞은 자산에서 읽는다(옛 판 사본은 그 판의 칸만 · F4-178 · F4-201 · F4-216).
 PRE_ROUTE_CANONICAL_ASSETS: tuple[str, ...] = (
     "pre_route_responses_canonical.py",
+    "pre_route_responses_canonical_2_45_0.py",
     "pre_route_responses_canonical_2_38_0.py",
     "pre_route_responses_canonical_2_37_0.py",
 )

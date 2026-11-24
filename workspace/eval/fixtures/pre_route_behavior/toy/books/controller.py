@@ -1,3 +1,5 @@
+from collections.abc import Mapping, Sequence
+
 from django.http import HttpResponse
 from ninja import Router, Schema, Status
 from ninja.security import HttpBearer
@@ -8,8 +10,15 @@ class TokenAuth(HttpBearer):
         return "user" if token == "good" else None
 
 
+# 프로젝트 자기 `JsonValue` 별칭(implementation-python 규범 꼴) — 생성 문서에 같은 이름 component 가 선다.
+# 정본이 이 이름으로 다른 꼴을 붙이면 문서 만들기가 멈춘다(F4-216 검토 B1).
+type JsonScalar = bool | int | float | str | None
+type JsonValue = JsonScalar | Sequence[JsonValue] | Mapping[str, JsonValue]
+
+
 class BookIn(Schema):
     title: str
+    note: JsonValue = None
 
 
 class BookOut(Schema):

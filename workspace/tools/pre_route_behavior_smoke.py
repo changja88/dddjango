@@ -11,7 +11,8 @@ pre_route_responses_canonical.py` 를 그 사본의 `framework/ninja/pre_route_r
 단언:
   ① 문서 — 루트 API 넷의 마운트 문서(`/<ns>/openapi.json`)에서 operation 마다 status 집합 = 기대(빠짐 · 남는 operation 없음) ·
      고른 (operation, status) 의 몸통 꼴(`<media>:<component>`) · 머리 이름 = 기대.
-  ② 실제 — 요청마다(Django 시험 클라이언트) status = 기대 · 그 status 가 문서에 있으면 몸통이 문서 꼴(media · JSON Schema 부분 집합)이고
+  ② 실제 — 요청마다(Django 시험 클라이언트) status = 기대 · 그 status 가 문서에 있으면 몸통이 문서 꼴(media · JSON Schema 부분 집합 ·
+     문서에 없는 칸이 오면 불일치 — `additionalProperties` 를 열어 둔 꼴만 빼고(F4-216))이고
      실제가 싣는 머리(Retry-After · Service-Maintenance-Ends-At)가 문서 머리에 있다 · 문서에 없는 status 는 operation 답이 아닌 것(404)뿐.
   ③ Django 400 처리기를 JSON 으로 둔 표(`BAD_REQUEST_RESPONSE`)와 URLconf — 몸통 상한 · 쿼리 칸 상한 400 이 그 꼴로 문서 = 실제.
   ④ 표가 틀린 꼴 — `manage.py check` · 보통 경로 요청은 서고 문서를 만들 때만 정해진 예외(ValueError · 깨진 정규식은
@@ -19,9 +20,12 @@ pre_route_responses_canonical.py` 를 그 사본의 `framework/ninja/pre_route_r
   ⑤ mypy strict 0 — 정본 · 표 · 3.2 `api.py` 둘(`--strict` · django-stubs).
   ⑥ ruff 0(F4-178) — 플러그인 정본 자산이 흔한 ruff 기본을 지난다: `.venv-probe` 의 ruff(고정 판) `--isolated` 로 기본 규칙 +
      복잡도(C90 · 10) · `format --check` 줄 88 · 130. 정본은 코드를 못 고치는 파일이라 프로젝트 린트에 막히면 안 된다.
+  ⑦ 422 항목의 `ctx`(F4-216) — Ninja 가 오류 종류에 따라 싣거나 빼는 칸이다: 문서 `NinjaValidationItemOut.ctx` = 선택 칸 · 객체 ·
+     null 갈래 · 기본값 없음이고, 실제 422 답에 `ctx` 가 든 항목과 빠진 항목이 둘 다 있다(②의 칸 대조가 비지 않게). 장난감
+     `books` 는 프로젝트 자기 `JsonValue` 별칭을 Schema 에 써서 정본이 같은 이름 component 를 붙이면 ① 의 마운트 문서가 500 이 된다.
 exit 0 = 전 단언 통과 · 1 = 불일치 · 실행 불능.
 
-  --canonical <파일>  ①~⑤ 를 정본 대신 그 파일을 붙여 돈다(옛 시제품 정본이 붉은지 보는 대조용). ⑥ 은 늘 플러그인 정본 자산을
+  --canonical <파일>  ①~⑤ · ⑦ 을 정본 대신 그 파일을 붙여 돈다(옛 시제품 정본이 붉은지 보는 대조용). ⑥ 은 늘 플러그인 정본 자산을
                       본다 — 함께 받는 옛 판 자산에는 `exempt_pattern` 칸이 없다(2.37.0 판은 ruff 도 못 지난다).
 """
 from __future__ import annotations
@@ -345,13 +349,54 @@ def _conforms(value: object, schema: dict, components: dict, where: str = "$") -
     problems: "list[str]" = []
     if isinstance(value, dict):
         problems += [f"{where}: 필수 칸 `{k}` 없음" for k in schema.get("required", []) if k not in value]
-        for key, sub in (schema.get("properties") or {}).items():
+        properties: dict = schema.get("properties") or {}
+        for key, sub in properties.items():
             if key in value:
                 problems += _conforms(value[key], sub, components, f"{where}.{key}")
+        extra: object = schema.get("additionalProperties")
+        for key in (k for k in value if k not in properties):
+            if isinstance(extra, dict):
+                problems += _conforms(value[key], extra, components, f"{where}.{key}")
+            elif extra is not True and (properties or extra is False):
+                problems.append(f"{where}: 문서에 없는 칸 `{key}`")
     if isinstance(value, list) and isinstance(schema.get("items"), dict):
         for i, item in enumerate(value):
             problems += _conforms(item, schema["items"], components, f"{where}[{i}]")
     return problems
+
+
+def _validation_item_checks(docs: dict, responses: dict, tag: str) -> "list[str]":
+    """⑦ — 문서의 `ctx` 칸 꼴과, 실제 422 답이 `ctx` 가 든 항목 · 빠진 항목을 둘 다 내는지."""
+    fails: "list[str]" = []
+    seen: int = 0
+    for ns, entry in docs.items():
+        item: "dict | None" = (((entry.get("doc") or {}).get("components") or {}).get("schemas") or {}).get("NinjaValidationItemOut")
+        if item is None:
+            continue
+        seen += 1
+        ctx: "dict | None" = (item.get("properties") or {}).get("ctx")
+        if ctx is None:
+            fails.append(f"{tag} 문서 {ns} `NinjaValidationItemOut` 에 `ctx` 칸이 없다(Ninja 가 422 항목에 싣는 칸)")
+            continue
+        if "ctx" in (item.get("required") or []):
+            fails.append(f"{tag} 문서 {ns} `ctx` 가 필수 칸이다(오류 종류에 따라 빠진다)")
+        if ctx.get("type") != "object" or "anyOf" in ctx or "default" in ctx:
+            fails.append(f"{tag} 문서 {ns} `ctx` 꼴 {json.dumps(ctx, ensure_ascii=False)} ≠ 선택 객체(null 갈래 · 기본값 없음)")
+    if seen == 0:
+        fails.append(f"{tag} 마운트 문서 어디에도 `NinjaValidationItemOut` 이 없다")
+    items: "list[dict]" = []
+    for got in responses.values():
+        if got.get("status") == 422:
+            try:
+                body: object = json.loads(got["body"])
+            except ValueError:
+                continue
+            detail: object = body.get("detail") if isinstance(body, dict) else None
+            items += [i for i in detail if isinstance(i, dict)] if isinstance(detail, list) else []
+    with_ctx: int = sum(1 for i in items if "ctx" in i)
+    if with_ctx == 0 or with_ctx == len(items):
+        fails.append(f"{tag} 실제 422 항목 {len(items)} 중 `ctx` 든 것 {with_ctx} — 든 것 · 빠진 것이 둘 다 있어야 칸 대조가 빈 시험이 아니다")
+    return fails
 
 
 def _ops(doc: dict) -> "dict[str, dict]":
@@ -486,7 +531,8 @@ def main() -> int:
         def main_stage() -> "list[str]":
             run: dict = _probe(_toy(td / "main", canonical), {"mode": "full", "settings": {}, "requests": REQUESTS})
             return (_doc_checks(run["docs"], DOCS, PARTS, "[기본]")
-                    + _response_checks(run["docs"], run["responses"], REQUESTS, "[기본]"))
+                    + _response_checks(run["docs"], run["responses"], REQUESTS, "[기본]")
+                    + _validation_item_checks(run["docs"], run["responses"], "[기본]"))
 
         def json_stage() -> "list[str]":
             run: dict = _probe(_toy(td / "json400", canonical, FIXTURE / "tables" / "json_handler400.py"),
@@ -508,7 +554,7 @@ def main() -> int:
         for f in fails:
             print("  - " + f.replace("\n", "\n    "))
         return 1
-    print("PASS — 경로 앞 응답 정본 동작 스모크(생성 문서 = 실제 응답 · 표 검증 · mypy strict · ruff)")
+    print("PASS — 경로 앞 응답 정본 동작 스모크(생성 문서 = 실제 응답 · 422 ctx · 표 검증 · mypy strict · ruff)")
     return 0
 
 

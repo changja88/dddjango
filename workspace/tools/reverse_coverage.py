@@ -12,6 +12,7 @@
       · scripts/business_vocab.py    — #628 실체(업무 어휘 재료)
       · scripts/checker_target.py    — 호출 계약 공용 모듈(전 검사기 import · 라운드 1 P2)
       · scripts/pre_route_responses_canonical.py — 경로 앞 응답 정본 자산(#63 b 가 읽는 자료)
+      · scripts/pre_route_responses_canonical_2_45_0.py — 옛 판(2.45.0) 정본 자산(#63 b 가 함께 받는 꼴)
       · scripts/pre_route_responses_canonical_2_38_0.py — 옛 판(2.38.0) 정본 자산(#63 b 가 함께 받는 꼴)
       · scripts/pre_route_responses_canonical_2_37_0.py — 옛 판(2.37.0) 정본 자산(#63 b 가 함께 받는 꼴)
       · skills/discipline-houserules — ⓐ 정본(final.md)·ⓑ SKILL(값 0)
@@ -185,14 +186,19 @@ def main() -> int:
                        "`framework/ninja/pre_route_responses.py` 를 이 글과 AST 로 대조하고 표 칸 · 메서드 낱말 · operation 꼴을 "
                        "여기서 읽는다(검사기가 import 하지 않는 자료 · 실행 파일 아님) · pre_route_canonical_check 가 "
                        "참조 글 정본 코드 블록 = 이 자산을 고정")
+            elif rel.name == "pre_route_responses_canonical_2_45_0.py":
+                why = ("옛 판(2.45.0) 경로 앞 응답 정본 자산(F4-216 — #63 b) — 422 항목에 `ctx` 가 없는 이미 옮긴 프로젝트 정본도 받도록 "
+                       "check-openapi-error-declaration 의 `PRE_ROUTE_CANONICAL_ASSETS` 둘째 이름으로 AST 대조 꼴과 그 판의 "
+                       "표 칸 이름을 읽는다(메서드 낱말 · operation 꼴은 첫 자산 몫 · 실행 파일 아님) · "
+                       "pre_route_canonical_check 가 Codex byte 미러를 고정")
             elif rel.name == "pre_route_responses_canonical_2_38_0.py":
                 why = ("옛 판(2.38.0) 경로 앞 응답 정본 자산(F4-201 — #63 b) — 이미 옮긴 프로젝트 정본도 받도록 "
-                       "check-openapi-error-declaration 의 `PRE_ROUTE_CANONICAL_ASSETS` 둘째 이름으로 AST 대조 꼴과 그 판의 "
+                       "check-openapi-error-declaration 의 `PRE_ROUTE_CANONICAL_ASSETS` 셋째 이름으로 AST 대조 꼴과 그 판의 "
                        "표 칸 이름을 읽는다(메서드 낱말 · operation 꼴은 첫 자산 몫 · 실행 파일 아님) · "
                        "pre_route_canonical_check 가 Codex byte 미러를 고정")
             elif rel.name == "pre_route_responses_canonical_2_37_0.py":
                 why = ("옛 판(2.37.0) 경로 앞 응답 정본 자산(F4-178 · 2.38.0 — #63 b) — 이미 옮긴 프로젝트 "
-                       "정본도 받도록 check-openapi-error-declaration 의 `PRE_ROUTE_CANONICAL_ASSETS` 셋째 이름으로 AST 대조 꼴과 "
+                       "정본도 받도록 check-openapi-error-declaration 의 `PRE_ROUTE_CANONICAL_ASSETS` 넷째 이름으로 AST 대조 꼴과 "
                        "그 판의 표 칸 이름을 읽는다(메서드 낱말 · operation 꼴은 첫 자산 몫 · 실행 파일 아님) · "
                        "pre_route_canonical_check 가 Codex byte 미러를 고정")
             elif rel.name == "anchor_diff.py":

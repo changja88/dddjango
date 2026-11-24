@@ -16,7 +16,7 @@ from ninja import NinjaAPI, Schema
 from ninja.openapi.schema import OpenAPISchema
 from ninja.operation import Operation
 from ninja.utils import normalize_path
-from pydantic import JsonValue, TypeAdapter
+from pydantic import Field, JsonValue, TypeAdapter
 
 from framework.ninja.pre_route_response_table import (
     BAD_REQUEST_RESPONSE,
@@ -72,6 +72,10 @@ class NinjaValidationItemOut(Schema):
     type: str
     loc: list[str | int]
     msg: str
+    ctx: dict[str, JsonValue] = Field(
+        default_factory=dict,
+        json_schema_extra={"additionalProperties": True},
+    )
 
 
 class NinjaValidationOut(Schema):

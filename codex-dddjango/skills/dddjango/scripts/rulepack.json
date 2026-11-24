@@ -11194,8 +11194,8 @@
       ]
     },
     "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b37": {
-      "h": "831e9f285d6a7a4e",
-      "n": 28,
+      "h": "767777cf3241e85c",
+      "n": 29,
       "works": [
         "R-3749"
       ]
@@ -11209,7 +11209,7 @@
       ]
     },
     "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b40": {
-      "h": "9ecb75ac06e918ba",
+      "h": "c8fede4f1de5f6c3",
       "n": 32,
       "works": [
         "R-3750"
@@ -15172,7 +15172,7 @@
     },
     {
       "path": "ontology/rules/implementation-django-ninja-final.ttl",
-      "sha256": "a7a3f4833d48dfc267f0148f03b840d8db37fca65c9927655deb7e5a4fee3450"
+      "sha256": "0f915467fd99ccfadb816ea0bde9ae7026989b24550af1e4abe6d4cda18cd7df"
     },
     {
       "path": "ontology/rules/implementation-django-ninja-skill.ttl",
@@ -88846,8 +88846,8 @@
         "check-openapi-error-declaration.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-3749@2026-11-22",
-      "label": "경로 앞 응답 꼴 — 파일 넷(정본 pre_route_responses.py 코드 그대로(서식·주석·import 차례·모듈 docstring 은 프로젝트 도구 몫 · 린트는 # noqa · 옛 판 2.37.0 · 2.38.0 정본도 받음 — exempt_pattern 칸은 지금 판만) · 프로젝트 표 pre_route_response_table.py · api.py 의 정해진 루트 API 클래스 — 서명·몸통 코드 그대로 · internal_api.py 는 그 클래스를 들여 지음) · Ninja 기본 행(정본 · 뺄 수 없음 · 날 수 있다 쪽) · 그 밖 문서 재정의·후처리 금지 · 받는 판 Ninja 1.6 · Python 3.12 · pydantic 2.5 이상(낮으면 G1 판 올림) · 기본 몸통을 바꾸는 프레임워크 오류 핸들러(api.py · internal_api.py)면 G1 STOP · 붙는 행마다 시험",
+      "expression": "https://numchida.com/ns/djr#R-3749@2026-11-25",
+      "label": "경로 앞 응답 꼴 — 파일 넷(정본 pre_route_responses.py 코드 그대로(서식·주석·import 차례·모듈 docstring 은 프로젝트 도구 몫 · 린트는 # noqa · 옛 판 2.37.0 · 2.38.0 · 2.45.0 정본도 받음 — exempt_pattern 칸은 2.45.0 부터 · 422 항목 ctx 는 지금 판만) · 프로젝트 표 pre_route_response_table.py · api.py 의 정해진 루트 API 클래스 — 서명·몸통 코드 그대로 · internal_api.py 는 그 클래스를 들여 지음) · Ninja 기본 행(정본 · 뺄 수 없음 · 날 수 있다 쪽) · 그 밖 문서 재정의·후처리 금지 · 받는 판 Ninja 1.6 · Python 3.12 · pydantic 2.5 이상(낮으면 G1 판 올림) · 기본 몸통을 바꾸는 프레임워크 오류 핸들러(api.py · internal_api.py)면 G1 STOP · 붙는 행마다 시험",
       "norm_kind": "Obligation",
       "order_rank": 3005,
       "overrides": [],
@@ -88866,8 +88866,8 @@
         "check-openapi-error-declaration.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-3750@2026-11-22",
-      "label": "경로 앞 응답 프로젝트 행(미들웨어 — 서드파티 포함 — 와 앞단) — 칸(status 400–599 · when · description · body|media_type · headers(캐시 지시 머리 셋은 빼도 됨) · methods · namespaces(내부 창구는 internal_api) · exempt(글자 같음) · exempt_pattern(fullmatch · 지금 판 정본만 · 문서 때문에 설정 값 안 바꿈) · operations) · 빈 좁히는 칸 금지 · 행마다 G1 근거(미들웨어 코드 줄 · 설정 · 앞단) · NOT_API_MIDDLEWARE 근거 = API 경로(공개 주소와 /internal/ 둘 다)를 빼는 코드 줄 · 표 검증(문서 생성 때 엄격 · 뒤 열쇠가 이김) · operations 는 경로 객체로 못 가르는 답(406·415·인증 안 HttpError·preserve 경로 코드의 HttpError) · 적는 것의 경계(의도된 답만) · 검사기는 프로젝트 미들웨어만 대조(좁힌 행 — all 밖 when 포함 — 뿐이거나 못 읽으면 ⓓ 후보 · G1 근거는 api 리뷰어 · G2 ⓓ 줄은 감수자 · 서드파티·앞단은 리뷰어)",
+      "expression": "https://numchida.com/ns/djr#R-3750@2026-11-25",
+      "label": "경로 앞 응답 프로젝트 행(미들웨어 — 서드파티 포함 — 와 앞단) — 칸(status 400–599 · when · description · body|media_type · headers(캐시 지시 머리 셋은 빼도 됨) · methods · namespaces(내부 창구는 internal_api) · exempt(글자 같음) · exempt_pattern(fullmatch · 2.45.0 부터의 정본만 · 문서 때문에 설정 값 안 바꿈) · operations) · 빈 좁히는 칸 금지 · 행마다 G1 근거(미들웨어 코드 줄 · 설정 · 앞단) · NOT_API_MIDDLEWARE 근거 = API 경로(공개 주소와 /internal/ 둘 다)를 빼는 코드 줄 · 표 검증(문서 생성 때 엄격 · 뒤 열쇠가 이김) · operations 는 경로 객체로 못 가르는 답(406·415·인증 안 HttpError·preserve 경로 코드의 HttpError) · 적는 것의 경계(의도된 답만) · 검사기는 프로젝트 미들웨어만 대조(좁힌 행 — all 밖 when 포함 — 뿐이거나 못 읽으면 ⓓ 후보 · G1 근거는 api 리뷰어 · G2 ⓓ 줄은 감수자 · 서드파티·앞단은 리뷰어)",
       "norm_kind": "Obligation",
       "order_rank": 3006,
       "overrides": [],

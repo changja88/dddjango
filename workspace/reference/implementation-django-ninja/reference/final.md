@@ -991,8 +991,9 @@ framework status는 `response=`에 BC 오류로도 다른 Schema 로도 선언�
   않는다: 서식(줄 나눔 · 괄호 · 끝 쉼표 · 빈 줄 · 따옴표 꼴), import 의 차례 · 묶음 · 줄 나눔,
   `from __future__ import annotations`, 주석(`# noqa: …` · `# type: ignore[…]`), 맨 위 모듈 docstring. 정의 · 문장 ·
   값 · 이름 · 차례와 함수 · 클래스 안 docstring 은 코드다. 린트가 정본 코드를 짚으면 코드를 고치지 않고 그 줄
-  `# noqa: <규칙>` 이나 파일 단위 무시로 둔다(코드를 바꾸는 자동 고침은 검사기가 막는다). 옛 판(2.37.0 · 2.38.0) 정본도
-  받는다 — 표에 `exempt_pattern` 이 없으면 바꾸지 않아도 된다(그 칸은 지금 판 정본만 받는다). 붙이는 함수 `add_pre_route_responses(api, schema)` 와 Ninja 기본 행
+  `# noqa: <규칙>` 이나 파일 단위 무시로 둔다(코드를 바꾸는 자동 고침은 검사기가 막는다). 옛 판(2.37.0 · 2.38.0 · 2.45.0)
+  정본도 받는다 — 표에 `exempt_pattern` 이 없으면 바꾸지 않아도 된다(그 칸은 2.45.0 부터의 정본만 받는다 · 422 항목의
+  `ctx` 는 지금 판 정본만 문서에 적는다). 붙이는 함수 `add_pre_route_responses(api, schema)` 와 Ninja 기본 행
   `NINJA_RESPONSES` · 그 몸통 Schema 가 여기 있다.
 - `framework/ninja/pre_route_response_table.py` — 프로젝트 표(설계 G1 승인). 프로젝트 행 `PRE_ROUTE_RESPONSES` 와
   그 몸통 Schema, `BAD_REQUEST_RESPONSE`(Django 상한 400 의 꼴 — 기본 `{"media_type": "text/html"}` · 루트 URLconf 가
@@ -1037,7 +1038,8 @@ api: DocumentedAPI = DocumentedAPI(...)
 - 400 — 몸통 · 쿼리 parameter 가 있는 경로의 Django 상한(`DATA_UPLOAD_MAX_MEMORY_SIZE` ·
   `DATA_UPLOAD_MAX_NUMBER_FIELDS`) · `BAD_REQUEST_RESPONSE` 의 꼴
 - 422 — 입력이 틀릴 수 있는 경로(몸통이 있다 · 변환기와 생성 schema 가 맞지 않는 경로 변수 · 제약 없는 글자가 아닌
-  경로 parameter · 필수이거나 제약 없는 글자가 아닌 쿼리 · 머리 · 쿠키 parameter) · `{"detail": [{type, loc, msg}]}`
+  경로 parameter · 필수이거나 제약 없는 글자가 아닌 쿼리 · 머리 · 쿠키 parameter) · `{"detail": [{type, loc, msg, ctx?}]}`
+  (`ctx` 는 오류 종류에 따라 있고 없다 · 있으면 객체)
 
 기계로 가를 수 없는 답(선택 인증의 401 · 파일만 받는 경로의 Django 상한 400 · 읽기만 허용하는 권한의 GET 403 ·
 `A | AllowAny` 권한의 403 · 필수 인증 경로의 익명 throttle 429 · 기본 비율 없는 ninja_extra `@throttle` 의 429)은
@@ -1047,7 +1049,7 @@ api: DocumentedAPI = DocumentedAPI(...)
 `when`(`all` · `auth` · `body` · `input`) · `description` · 몸통 `body`(같은 파일의 Schema) 또는 `media_type` ·
 선택 `headers`(그 답이 싣는 머리 — 캐시 지시 머리(`Cache-Control` · `Pragma` · `Expires`)는 적지 않아도 되고 검사기도 대조하지 않는다)와 좁히는 칸 `methods`(대문자 HTTP 메서드) · `namespaces`(루트 API
 `urls_namespace=` 이름 — 내부 창구 객체는 `"internal_api"`) · `exempt`(`(메서드 | None, "<settings 이름>")` — 그 설정 목록과 글자가 같은 경로는 뺀다 · 목록은 base
-settings 에 둔다) · `exempt_pattern`(같은 꼴 · 지금 판 정본만 — 그 설정 목록의 정규식 하나가 생성 문서 경로 글(변수는
+settings 에 둔다) · `exempt_pattern`(같은 꼴 · 2.45.0 부터의 정본만 — 그 설정 목록의 정규식 하나가 생성 문서 경로 글(변수는
 `{order_id}` 글자 그대로)과 전체로 맞으면(`re.fullmatch`) 뺀다) · `operations`(`"GET /api/orders/{order_id}"` 꼴 — 메서드 + 생성 문서 경로 · `namespaces` 하나와
 함께 · 승인 endpoint 의 406 · 415 · 인증 안 `HttpError(403)` · 확립 표면(`preserve-established`)의 경로 코드가
 직접 raise 하는 `HttpError` 처럼 경로 객체로 못 가르는 답만)다. 좁히는 칸은 빈 튜플로 두지 않는다. 행마다 G1
@@ -1114,7 +1116,7 @@ from ninja import NinjaAPI, Schema
 from ninja.openapi.schema import OpenAPISchema
 from ninja.operation import Operation
 from ninja.utils import normalize_path
-from pydantic import JsonValue, TypeAdapter
+from pydantic import Field, JsonValue, TypeAdapter
 
 from framework.ninja.pre_route_response_table import (
     BAD_REQUEST_RESPONSE,
@@ -1170,6 +1172,10 @@ class NinjaValidationItemOut(Schema):
     type: str
     loc: list[str | int]
     msg: str
+    ctx: dict[str, JsonValue] = Field(
+        default_factory=dict,
+        json_schema_extra={"additionalProperties": True},
+    )
 
 
 class NinjaValidationOut(Schema):
