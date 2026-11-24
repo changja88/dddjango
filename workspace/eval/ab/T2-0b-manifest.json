@@ -391,6 +391,7 @@
     "codex": {
       "checked": 35,
       "mismatch": [
+        "codex-dddjango/.codex-plugin/plugin.json",
         "codex-dddjango/skills/implementation-django-ninja/references/final.md"
       ],
       "missing": [],
@@ -786,7 +787,7 @@
       "files": {
         ".agents/plugins/marketplace.json": "bc134ae724e1e23019506c756bc3d2a0e6dfdc25f7dbaf55881e7edf173457f9",
         ".claude-plugin/marketplace.json": "2ab8baa47e88eb8fd0b51644b7e1e422c6e3f194520476db4ee1b1a8a693c4c4",
-        "codex-dddjango/.codex-plugin/plugin.json": "b462af0708ed5819d18cd1373a55ca0bbf0065ee677ccc8bfd56be026916ebcb",
+        "codex-dddjango/.codex-plugin/plugin.json": "3a52046c10c820b4f995f87413097624aada65bb6e63a0439d6a0bf6f9a99156",
         "codex-dddjango/skills/architecture-api/SKILL.md": "9c84f2980580cf67385b1b3905693f0db364a6796903a67242698be27ac64c03",
         "codex-dddjango/skills/architecture-api/references/final.md": "dfd649ab8b4fe5b259908c302f40ffd1a574b532a65cfef365570fb7b869d650",
         "codex-dddjango/skills/architecture-db/SKILL.md": "b1560b89855acd55e0722ddd0ad7e808b4679adb899d1b75364bb4ffe8521e1d",
@@ -820,7 +821,7 @@
         "codex-dddjango/skills/implementation-django/references/final.md": "455118a85120830d2dc36bfe8f4d63efd398dca9ac711b42085767baa223f03d",
         "codex-dddjango/skills/implementation-python/SKILL.md": "0174757ef864c0072ea2dcce511ea15dc43525cd66466b656adfd4de9f0f159b",
         "codex-dddjango/skills/implementation-python/references/final.md": "1f4478a6524fee722042945a7954a997cbff78b31287cab9c098d5fe1385d004",
-        "dddjango/.claude-plugin/plugin.json": "60fb67f3588fc4315b6e532d1da4b6d6525105c82549de4ed4961e3da5c9a940",
+        "dddjango/.claude-plugin/plugin.json": "f229442de998cc2104d8ad5699d7353d48015c81be7a7dcb4173f7bb75a52de2",
         "dddjango/agents/acceptance-tester.md": "ab425495881f2116b623e2cc2fb59e1b0b04f7272bb683abcff5fdbb4fa0a6cc",
         "dddjango/agents/coder.md": "599037b40856b9d08645c7be3157c28ed1ad755dbea676574a9f4197781deab3",
         "dddjango/agents/design-architect.md": "07e1716643cacef56db81b7be4fbeaaee7f5f1dd97013f98745ab8db96caff1b",
@@ -862,7 +863,7 @@
         ".agents/plugins/marketplace.json"
       ],
       "n_files": 66,
-      "tree_sha256": "00a492dd84abccf9b0ebb212fb593228abdb7fe03d5df55e394415c580556ea3",
+      "tree_sha256": "1e9b7731851077cca163de9861c5eceb5cdca15eaccc89875636cde0ba317de8",
       "why": "절차서가 **부르는 것들**. 서브에이전트 정의와 규범 산문(`references/final.md`)이 여기 있다 — 그중 ninja §6.1·§6.2 와 ddd §3.2 는 파일럿 이관 대상 클러스터 그 자체다. 절차서만 동결하고 이것들을 두면 봉투만 봉인하고 내용물을 열어 둔 것이다. 산문이 런 사이에 바뀌면 세 암이 같은 규범을 상대한 것이 아니게 되고, `coder.md` 한 줄이 바뀌면 처치와 무관하게 산출물이 달라진다."
     },
     "preregistration": {
@@ -879,7 +880,7 @@
     "protocol": {
       "files": {
         "Makefile": "154397353c7db19abd7f811cc493960f486a8cf207805c10e8679f671a16c6fa",
-        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "9bd0222ea2c57f0fd5d77501fde6a16310628e89c7aa757993fc991eebb4a07f",
+        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "7d0014b59e417426e6898c92057c21aa11c4100ed9ae7dfb64437fdb81813b38",
         "workspace/plan/2026-08-12-bc-rebuild-protocol.md": "a39ba66e58cb8bde5ad8f84d630b6fd9b04300f7130d4bbc2d149751c2f6c492",
         "workspace/plan/templates/request-template.md": "531bb5c0e9b147d51665981bc3218aa027ddc4170101ea920ecc8a87f7018fe4",
         "workspace/tools/openapi_shape.py": "ea564e3b0ce0550352935b7a572f93dfae404f1a1d24f0fd9d4acf6dc4bc4932",
@@ -894,7 +895,7 @@
         "workspace/design/2026-08-20-ontology-t2-0b-design.md"
       ],
       "n_files": 6,
-      "tree_sha256": "d56e491089cd2f57dae875d9b8b7f3c25452d0a7f80077a65352ceab1fcc9db7",
+      "tree_sha256": "988ab894519fc7e6bce29fcb13a87087a2528fb090e90ba50393caf710deeab2",
       "why": "**전이 의존** — 발주문이 «그대로 따르라»고 가리키는 판형과, 인수 판정이 부르는 도구와, 게이트를 배선하는 Makefile. 이 중 하나만 바뀌어도 모델이 받는 요청문·허용 범위·STOP 규약·shape 합격 여부·실런 진입 조건이 바뀐다. 그런데 대조는 글롭에 든 것만 재전개하므로, 봉인 밖이면 그 변경은 드리프트가 아니었다(레인 AU 발견 4)."
     },
     "queries": {
@@ -1005,8 +1006,8 @@
     "n_files": 50
   },
   "plugin_versions": {
-    "claude": "2.45.0",
-    "codex": "2.45.0"
+    "claude": "2.45.1",
+    "codex": "2.45.1"
   },
   "schema": "t2-0b-manifest/1",
   "schemas": {
@@ -1034,8 +1035,8 @@
     "source-claude": "4203593ad7405dbbff61142c0321f3a4147a96ed5708d571650d171c0ddecb45",
     "source-codex": "4203593ad7405dbbff61142c0321f3a4147a96ed5708d571650d171c0ddecb45"
   },
-  "sealed_commit": "24313fd3f121734691a27586291c45ed8e120e3b",
-  "self_sha256": "c264450b21672fb4028207393fbc42fc21d8f0c3955d071321e4d48af2acef87",
+  "sealed_commit": "9c98c18e87d960501b66e21c3dfbff31cbd7c03d",
+  "self_sha256": "c5739748195572dbfd6316d0fe942361947089d55dabc1004f1480b7e87bd855",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [
