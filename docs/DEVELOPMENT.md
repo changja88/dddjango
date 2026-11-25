@@ -239,7 +239,7 @@ make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 �
 
 **문서 현행화**: 사용자에게 보이는 동작이 바뀐 판은 릴리즈 전에 `README.md` 와 `docs/master/master.html` 이 싣는 네 문서(work_flow.html · work_flow_web_guide.html(work_flow_web.html 포함) · file_tree.html · file_tree_web.html)를 그 판 기준으로 고치고, master.html 아래쪽 «기준 판» 줄도 함께 올린다. 배포가 끝나면 다섯째 문서 `work_list.html`(작업 리스트)에서 그 판이 끝낸 항목을 지우고, 새로 들어온 현장 보고는 «새 보고» 칸에 더한다. web 판은 work_flow_web_guide.html 의 «판마다 바뀐 것» 표에 한 줄을 더한다(§1 dddjango-web). docs/ 에는 이 개발 문서와 `master/` 폴더만 두고, master.html 이 싣는 문서와 그 원본(스펙 · 생성기)은 모두 `docs/master/` 에 둔다. **요청 가이드**(`dddjango/REQUEST_GUIDE.md` · `dddjango-web/REQUEST_GUIDE.md`)는 판마다 확인한다 — 사용자가 요청에 쓰는 칸 · 좋은 예 · 나쁜 예 · 플러그인이 스스로 하거나 묻는 일이 바뀌었으면 §1 «사람용 작업 요청 가이드» 규칙대로 고치고(Codex 짝은 byte 복사), 아니면 «바뀔 것 없음» 을 배포 보고에 적는다.
 
-봉인 ②(§4 «봉인은 두 번»): 판 올림은 마켓 매니페스트(봉인 대상)를 바꾸므로 배포 커밋 **뒤에** 별도 chore 커밋으로 재발행한다 — 변경 · 배포 커밋 안에 든 봉인(①)만으로는 `sealed_commit`이 그 커밋 이전을 가리켜 strict `--check`가 RED가 된다(`make verify`의 `--draft` 대조는 통과하므로 놓치기 쉽다).
+봉인 ②(§4 «봉인은 두 번»): 판 올림은 마켓 매니페스트(봉인 대상)를 바꾸므로 배포 커밋 **뒤에** 별도 chore 커밋으로 재발행한다 — 변경 · 배포 커밋 안에 든 봉인(①)만으로는 `sealed_commit`이 그 커밋 이전을 가리켜 strict `--check`가 RED가 된다(`make verify`의 `--draft` 대조는 통과하므로 놓치기 쉽다). 두 플러그인을 한 클론에서 이어 낼 때는 `make release` 뒤 이 chore 를 push 하고 클론을 pull 한 다음 `make release-web` 을 돈다 — release-web 안의 `make verify` 는 판 올림으로 바뀐 매니페스트를 «봉인 후 변경» 으로 막는다(2026-11-26 · 2.46.0 · 2.9.2). release-web 도 마켓 매니페스트를 바꾸므로 그 뒤에 chore 를 한 번 더 한다.
 
 
 ## 7. 작업 진행 관례 — 개발 · 현장 보고 수리
