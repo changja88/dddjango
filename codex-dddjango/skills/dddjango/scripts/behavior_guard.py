@@ -22,8 +22,10 @@
 
 사용: behavior_guard.py open <산출물 폴더> --kind test|code|follow|change --mode refactor|feature [--repo <저장소 루트, 기본 .>]
                                 [--python <인터프리터>]   — 모드는 open 기록에 동결 · 폴더 이름의 `-refactor-` 와 어긋나면 실행 불능
+                                [--slice <슬라이스> [--reason <까닭> [--ref <가리킴>]]]   — 리팩토링 모드(엄격 실행은 첫 확정 뒤 필수)
       behavior_guard.py close <산출물 폴더> [--repo …]     — 다음 파견 전까지 몇 번이든 다시 돌린다(마지막 판정이 유효)
-      behavior_guard.py rebind <산출물 폴더> [--repo …]    — 열린 follow · change 창의 허용 표만 새 G1 변경판으로(창 기준 그대로)
+      behavior_guard.py rebind <산출물 폴더> [--repo …]    — 열린(또는 마지막으로 닫은) follow · change 창의 허용 표만 새 G1 변경판으로
+                                                             (창 기준 · 슬라이스 그대로)
       behavior_guard.py verify <산출물 폴더> [--repo …]    — G2 배너 `동작 보존:` 행(리팩토링 모드는 `바뀐 것 실행:` · `suite:` 행도)의 기계 출처
       behavior_guard.py support <산출물 폴더> --collect [--repo …] — G0 지원 확인(behavior_support)
       behavior_guard.py suite <산출물 폴더> [--repo …]     — G2 증거 실행(behavior_support)
@@ -69,6 +71,17 @@ import · 저장소 안 모듈 파싱 불가 · 따라 읽기 한도 · 순환 �
 옮김 행은 verify red 다. 뒤 창 행(0T update · remove · 변경 창 V `시험:`)은 옛 키 · 새 키 어느 쪽으로 적어도 된다 — 앞 창 기록(끝난
 개명 · 옮김 · 통째 이동)으로 지은 정규화 지도로 읽고 실행 흔적은 G1 키로 남긴다. 0F 허용 파일을 주는 retain 행은 옮긴 뒤 경로로 적는다
 (앞 창 통째 이동은 옛 경로 retain 행도 그 새 파일로 잇되 `conftest.py` 로는 잇지 않는다).
+창 차례 · 까닭(엄격 실행 — refactor_audit `strict_run`: 첫 G1 후보를 이 장치 판 도구가 만든 실행): 창마다 명세 `## 슬라이스 계획` 의
+슬라이스(`--slice`)를 동결한다. 까닭 없는 창은 종류 = 슬라이스 갈래의 종류(0T test · 0C code · 0F follow · S change)이고 갈래 차례(0T → 0C →
+0F → S) · 0* 갈래 안 계획 줄 차례 · S 번호 차례로 앞 창들이 닿은 차례 이상이어야 열리고, 지난 차례 창은 까닭 여덟(`_REASONS`) 가운데 하나와
+`--ref`(판형 · 실재 대조)가 있어야 열린다. 변경 창은 그 슬라이스 V 로 좁힌 허용 표(`allow_table(snap, slice=, plan_row=, diff=)`)로
+판정한다: 시험 편집은 V 케이스 파일의 V 케이스 단위와 재료 · 그 슬라이스 계획 행이 산출로 적은 파일 · 그 슬라이스에 매인 retain 재조직 행 파일 ·
+rebind 미검출 처리 파일(`miss_retain`)만 받고, V 케이스 파일의 V 밖 케이스 단위 편집(글만 · 대응표 치환 빼고)은 red, close 때 이 창 · 앞 창들이
+집행하지 않은 승인 원소가 남으면 창 단위 «승인 변경 미검출» red 다. 다음 변경 창은 앞 변경 창의 감사 키 판정이 끝나야 열린다(그 밖 창은 막지
+않는다). `재승인반영` 창은 그 확정 ↔ 바로 앞 확정 차분의 더하거나 바꾼 몫만 받는다. 엄격이 아닌 실행(옛 꼴)은 슬라이스 · 까닭 없이 열리고
+판정은 지금 꼴 그대로다. 창 결속은 승인판 digest 와 (확정 줄에 있으면) 명세 sha 를 함께 본다. G2 suite 의 G0 유지 · 개명 · 옮김 대조 원점은 이
+실행 첫 확정이 결속한 지원 기록이다(behavior_support — 모든 실행). 0C 창은 다른 BC 편집 갈래 `framework 새 모듈` 줄의 경로를 받되 앵커 판에
+있는 경로면 red 다.
 기능 모드는 위 0T · 0C 판정 그대로다.
 
 알려진 사각(감수 hunk 대조 몫): 테스트만 import 하는 제품 분류 모듈(운영 CLI 와 구별 불가 — 테스트 settings·pytest 플러그인
@@ -104,7 +117,7 @@ import tokenize
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 import copy
-from typing import Callable, Iterator, NamedTuple
+from typing import Any, Callable, Iterator, NamedTuple
 
 if str(Path(__file__).resolve().parent) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -1086,13 +1099,16 @@ def _dump(path: Path, data: object) -> None:
 
 # ── open ─────────────────────────────────────────────────────────────────────
 
-def cmd_open(folder: Path, repo: Path, kind: str, mode: str) -> int:
+def cmd_open(folder: Path, repo: Path, kind: str, mode: str, slice_cell: "str | None" = None, reason: "str | None" = None,
+             ref: "str | None" = None) -> int:
     if mode not in MODES:
         raise RunError("open 은 --mode refactor|feature 가 필요하다(모드는 open 기록에 동결된다)")
     if (mode == "refactor") != _folder_is_refactor(folder):
         raise RunError(f"모드 {mode} 와 폴더 이름 `{folder.resolve().name}` 의 `{REFACTOR_MARK}` 표지가 어긋난다")
     if kind in ("follow", "change") and mode != "refactor":
         raise RunError(f"--kind {kind} 는 리팩토링 모드 창이다(--mode refactor)")
+    if mode != "refactor" and (slice_cell or reason or ref):
+        raise RunError("`--slice` · `--reason` · `--ref` 는 리팩토링 모드 창이다(--mode refactor)")
     anchor: str = _anchor(folder)
     run_dir: Path = _run_dir(folder)
     windows = _windows(run_dir)
@@ -1100,7 +1116,8 @@ def cmd_open(folder: Path, repo: Path, kind: str, mode: str) -> int:
         if _is_open(closes):
             raise RunError(f"열린 창 w{n} 이 있다 — close 가 green 이 된 뒤에 새 창을 연다")
     n = (windows[-1][0] + 1) if windows else 1
-    binding: "tuple[str, dict] | None" = _g1_binding(folder, repo) if kind in ("follow", "change") else None
+    binding: "_G1Binding | None" = _g1_binding(folder, repo) if kind in ("follow", "change") else None
+    slot: "_Slot | None" = _open_slot(folder, repo, kind, slice_cell, reason, ref, windows, binding) if mode == "refactor" else None
     head: str = _git(repo, "rev-parse", "--verify", "HEAD^{commit}").strip()
     dirty: "list[str]" = _dirty(repo)
     files: "list[str]" = _worktree_files(repo)
@@ -1124,8 +1141,10 @@ def cmd_open(folder: Path, repo: Path, kind: str, mode: str) -> int:
         "dirty": dirty_entries, "cases": cases, "pytest": config,
         "migrations_static": static, "migrations_dynamic": dynamic, "mode": mode,
     }
+    if slot is not None:
+        record.update(slot.record)
     if binding is not None:
-        record.update({"g1_digest": binding[0], "allow": binding[1], "rebinds": []})
+        record.update({"g1_digest": binding.confirmed.digest, "allow": _bound_allow(folder, record, binding), "rebinds": []})
     run_dir.mkdir(parents=True, exist_ok=True)
     _dump(run_dir / f"w{n}-open.json", record)
     dyn: str = (f"동적 기준 {len(dynamic['changes'])}건" if dynamic["status"] == "측정"  # type: ignore[arg-type]
@@ -1135,8 +1154,9 @@ def cmd_open(folder: Path, repo: Path, kind: str, mode: str) -> int:
         _is_test(p, test_dirs) and p.endswith(".py") for p in files) else ""
     tail: str = ""
     if mode == "refactor":
-        tail = " · 모드 리팩토링" + (f" · G1 digest {binding[0]}" if binding is not None else "") + \
+        tail = " · 모드 리팩토링" + (f" · G1 digest {binding.confirmed.digest}" if binding is not None else "") + \
             f" · open 기록 {run_dir / f'w{n}-open.json'}"   # 받은 폴더 인자에 이어 붙인 꼴(절대화 안 함 — `changes --baseline` 에 그대로)
+        tail += slot.tail if slot is not None else ""
     print(f"요약: 창 w{n} open · 종류 {KIND_LABELS[kind]} · HEAD {head[:12]} · dirty {len(dirty)} · "
           f"수집 테스트 {len(cases)}파일 · 케이스 {n_cases} · 마이그레이션 정적 {len(static)} · {dyn}{warn}{tail}")
     return 0
@@ -1456,6 +1476,7 @@ MIGRATION_OPS: "frozenset[str]" = frozenset({
     "AddConstraint", "RemoveConstraint", "AlterUniqueTogether", "AlterIndexTogether"})
 FOLLOW_OUTSIDE_KINDS: "frozenset[str]" = frozenset({"프로젝트 합성", "공유 표면", "묶음 import 치환"})
 GROUP_IMPORT_KIND: str = "묶음 import 치환"   # 0C 묶음 창에서만 · 그 창의 묶음 이동을 따른 import 치환만(설계 10절 · 검토 B8)
+FRAMEWORK_NEW_KIND: str = "framework 새 모듈"  # 0C 창만 · 이 실행이 만드는 새 framework/<technology>/ 모듈(앵커 판에 있으면 red)
 D_FIXED: "frozenset[str]" = frozenset({"확정 변화", "확정 변화(지역 정의)", "삭제", "추가"})
 D_KINDS: "tuple[str, ...]" = ("기대식", "맥락만", "지역 정의", "추가", "삭제", "공유 정의 변화")
 SPOT_LIMIT: int = 300
@@ -3943,12 +3964,31 @@ def _moved_unit(change: DChange, out_names: "set[str]", in_names: "set[str]") ->
     return (unit in out_names and change.state == "삭제") or (unit in in_names and change.state == "추가")
 
 
+def _foreign_units(a: bytes, b: bytes, changed: "list[str]", foreign: "set[str]", before: "dict | None",
+                   after: "dict | None") -> "list[str]":
+    """엄격 변경 창 — 바뀐 감사 단위 가운데 V 밖 케이스 단위(`foreign`)이고 글(docstring · `#` 주석 · 빈 줄)만도 대응표 치환만도 아닌 것
+    (`<file>` 통째 키면 단위를 못 가른다 — 빈 목록)."""
+    hit: "list[str]" = [u for u in changed if u in foreign]
+    split_a, split_b = audit_split(a)[0], audit_split(b)[0]
+    if not hit or split_a is None or split_b is None:
+        return []
+    units_a, units_b = _unit_bytes(split_a), _unit_bytes(split_b)
+
+    def plain(unit: str) -> bool:
+        old_text, new_text = _py_source(units_a.get(unit)), _py_source(units_b.get(unit))
+        canon: "tuple[str | None, str | None]" = ((before or {}).get("defs", {}).get(unit), (after or {}).get("defs", {}).get(unit))
+        return _text_only(old_text, new_text) or canon[0] is not None and canon[0] == canon[1]
+    return [u for u in hit if not plain(u)]
+
+
 def dispose_test_file(kind: str, path: str, target: str, a: "bytes | None", b: "bytes | None", maps: Maps,
                       old_canon: "dict[str, dict | None]", new_canon: "dict[str, dict | None]",
                       exports_then: "_Exports | None", allowed: "set[str]", approved: "dict[str, dict]",
                       update_rows: "dict[str, list[str]] | None" = None, renames: "list[dict] | None" = None,
                       rename_reds: "list[str] | None" = None, moves: "list[dict] | None" = None,
-                      retain_hint: str = "", pinned_cases: "dict[str, dict] | None" = None) -> "Disposition | None":
+                      retain_hint: str = "", pinned_cases: "dict[str, dict] | None" = None,
+                      case_units: "set[str] | None" = None, exempt: "dict[str, str] | None" = None,
+                      strict_change: str = "") -> "Disposition | None":
     """창 하나의 시험 쪽 파일 처분 — 우선순위 하나(§4-3). 바이트가 같고 자리도 같으면 None.
 
     새 파일 · 짝 없는 삭제는 표보다 먼저(케이스 규칙은 close 가 따로 본다) `<file>` 개별 감사 · 바이트 그대로 옮긴 파일은 `<file>`
@@ -3963,7 +4003,12 @@ def dispose_test_file(kind: str, path: str, target: str, a: "bytes | None", b: "
 
     옮김(`moves` — 이 창이 받은 옮김 가운데 이 파일이 옛 경로 · 새 경로인 것)은 옮긴 단위의 보통 키(옛 «전 X · 후 없음» · 새 «전
     없음 · 후 X»)를 새 파일의 감사 키 `옮김 …`(전 · 후 = 옛 · 새 단위 digest)로 갈음하고 그 단위의 D(옛 «삭제» · 새 «추가»)를 뺀다.
-    `retain_hint` 는 허용 파일 밖 red 사유에 붙이는 길(옮김 행이 있는 승인판 — retain 행은 옮긴 뒤 경로로)."""
+    `retain_hint` 는 허용 파일 밖 red 사유에 붙이는 길(옮김 행이 있는 승인판 — retain 행은 옮긴 뒤 경로로).
+
+    엄격 변경 창(`strict_change` = 창 슬라이스): 허용 파일은 이 슬라이스 몫(V 케이스 파일 · 계획 산출 · 매인 retain 행 · rebind 미검출 처리)
+    뿐이고 새 파일 · 짝 없는 삭제도 그 안이어야 한다. `exempt`(경로 → 사유 — V 케이스 파일이 아닌 몫 파일과 매인 retain 행 · 미검출 처리 파일)
+    밖 `.py` 는 바뀐 단위 가운데 케이스 단위(`case_units`)인데 이 슬라이스 승인 케이스의 단위가 아닌 것이 있으면 red 다(글만 · 대응표 치환은
+    받는다 — `_foreign_units`). 승인 변경 미검출은 파일이 아니라 close 가 창 단위로 본다(`_window_unseen`)."""
     py: bool = target.endswith(".py")
     pinned: "dict[str, set[str]]" = {}
     for case, entry in (pinned_cases or {}).items():      # 확정판 V «바뀌는 기대» — 이 파일의 케이스 → 함수 이름
@@ -4000,7 +4045,11 @@ def dispose_test_file(kind: str, path: str, target: str, a: "bytes | None", b: "
         return made(RED, _join_reason(*rename_reds))
     if renames and a == b:
         return made(SINGLE_AUDIT, "개명 행 — 이름 밖 편집 없음")
+    allowed_file: bool = path in allowed or target in allowed
     if a is None or b is None:
+        if strict_change and not allowed_file:
+            return made(RED, f"이 슬라이스({strict_change}) 몫 파일이 아니다(V 케이스 파일 · 계획 행 산출 · 매인 `retain` 행) — 새로 만들거나 지우는 "
+                             "시험 쪽 파일도 계획 행 산출로 적는다(새 시험 패키지 폴더의 빈 `__init__.py` 는 받는다)")
         if kind == "change" and py:
             old_text: "str | None" = "" if a is None else _py_source(a)
             new_text: "str | None" = "" if b is None else _py_source(b)
@@ -4010,8 +4059,10 @@ def dispose_test_file(kind: str, path: str, target: str, a: "bytes | None", b: "
         return made(SINGLE_AUDIT, "새 파일 — 케이스 규칙 먼저" if a is None else "짝 없는 삭제 — 케이스 규칙 먼저")
     if a == b:
         return made(BUNDLE_AUDIT, "바이트 그대로 옮김(conftest · 패키지 자리가 바뀐다)", (f"{path} → {target}",))
-    allowed_file: bool = path in allowed or target in allowed
+    own_file: str = next((exempt[p] for p in paths if p in exempt), "허용 파일") if exempt else "허용 파일"   # 허용 파일 사유
     not_allowed: str = "" if kind not in ("follow", "change") else \
+        (f"이 슬라이스({strict_change}) 몫 파일이 아니다(V 케이스 파일 · 계획 행 산출 · 매인 `retain` 행) — V 밖 시험 편집은 0F(`retain` 재조직 "
+         "행) 몫(설명 글 · 주석 · 빈 줄만 바꾼 편집과 대응표 치환은 받는다)") if strict_change else \
         ("승인 케이스 파일이 아니고 " if kind == "change" else "") + "`retain` 재조직 행(0F 허용 파일)에 없는 파일" \
         + (f"({retain_hint})" if retain_hint else "")
     if not py:
@@ -4022,7 +4073,7 @@ def dispose_test_file(kind: str, path: str, target: str, a: "bytes | None", b: "
         if kind == "test":
             return made(SINGLE_AUDIT, "0T 시험 자료 변경")
         if kind in ("follow", "change") and allowed_file:
-            return made(SINGLE_AUDIT, "허용 파일")
+            return made(SINGLE_AUDIT, own_file)
         return made(RED, _join_reason("비 .py 시험 쪽 파일 변경 — 대응표 치환으로 설명되지 않음", not_allowed))
     old_text, new_text = _py_source(a), _py_source(b)
     changes: "list[DChange] | None" = d_changes(old_text, new_text, pinned if kind in ("test", "follow") else None)
@@ -4031,7 +4082,13 @@ def dispose_test_file(kind: str, path: str, target: str, a: "bytes | None", b: "
     d_counts.update(d_reason_counts(changes))
     d_fixed: bool = bool(changes) and any(c.state in D_FIXED for c in changes or [])
     d_note: str = _d_note(changes)
-    unseen: "list[str]" = _approved_unseen(changes, paths, approved) if kind == "change" else []
+    unseen: "list[str]" = _approved_unseen(changes, paths, approved) if kind == "change" and not strict_change else []
+    foreign: "list[str]" = [] if not strict_change or own_file != "허용 파일" else _foreign_units(
+        a, b, [k[0] for k in keys], (case_units or set()) - {c.split("::")[1] for c in approved if c.partition("::")[0] in paths},
+        old_canon.get(path), new_canon.get(target))
+    foreign_red: str = (f"V 밖 케이스 단위 편집 `{' · '.join(foreign)}` — 변경 창은 이 슬라이스({strict_change}) V 케이스와 재료(모듈 수준 문장 · "
+                        "도움 함수 · 도움 클래스 · 픽스처)만 받는다(V 밖 케이스의 같은 뜻 고쳐 쓰기 · 몸 편집은 그 슬라이스에 매인 `retain` "
+                        "재조직 행이나 0F 몫 · 글만 바꾼 것은 받는다)") if foreign else ""
     if kind == "test":
         if not d_fixed:
             return made(SINGLE_AUDIT, _join_reason("0T", d_note))
@@ -4045,6 +4102,10 @@ def dispose_test_file(kind: str, path: str, target: str, a: "bytes | None", b: "
     problems: "list[str]" = []
     if kind == "change" and d_fixed:
         problems, found_hits = approved_change(changes or [], old_text or "", paths, approved)
+        if strict_change:                                 # red 파일이어도 이 창이 집행한 원소는 창 단위 미검출로 세지 않는다
+            hits.update(found_hits)
+        if not problems and foreign_red:
+            return made(RED, _join_reason(foreign_red, d_note))
         if not problems:
             hits.update(found_hits)
             return made(APPROVED_AUDIT, _join_reason("D 확정 전부 승인 원소", d_note))
@@ -4057,7 +4118,7 @@ def dispose_test_file(kind: str, path: str, target: str, a: "bytes | None", b: "
     if d_fixed:
         return made(RED, _join_reason(f"D 확정({d_note})", *problems))
     if kind in ("follow", "change") and allowed_file:
-        return made(SINGLE_AUDIT, _join_reason("허용 파일", d_note, *unseen))
+        return made(RED, _join_reason(foreign_red, d_note)) if foreign_red else made(SINGLE_AUDIT, _join_reason(own_file, d_note, *unseen))
     return made(RED, _join_reason("0C 검사 불합격 · " + why, not_allowed))
 
 
@@ -4127,6 +4188,19 @@ def _move_shares(kind: str, items: "list[dict]", changed: "dict[str, tuple[bytes
     return uses, reds
 
 
+def _package_skeletons(changed: "dict[str, tuple[bytes | None, bytes | None]]", files_then: "set[str]") -> "set[str]":
+    """기준 판에 파일이 하나도 없던 폴더에 새로 생긴 빈 `__init__.py`(0바이트 · docstring · 주석뿐) — 새 시험 패키지의 골격."""
+    out: "set[str]" = set()
+    for path, (a, b) in changed.items():
+        if a is not None or b is None or PurePosixPath(path).name != "__init__.py":
+            continue
+        tree: "ast.Module | None" = _parse(_py_source(b))
+        blank: bool = tree is not None and not (tree.body[1:] if ast.get_docstring(tree, clean=False) is not None else tree.body)
+        if blank and not any(p.startswith(path.removesuffix("__init__.py")) for p in files_then):
+            out.add(path)
+    return out
+
+
 def judge_test_side(kind: str, changed: "dict[str, tuple[bytes | None, bytes | None]]", files_then: "set[str]",
                     files_now: "set[str]", read_then: Reader, read_now: Reader, allow: "dict | None" = None,
                     pytest_config: "tuple[dict[str, str], dict[str, str]] | None" = None) -> Judgement:
@@ -4141,7 +4215,9 @@ def judge_test_side(kind: str, changed: "dict[str, tuple[bytes | None, bytes | N
     (옮긴 파일) · 제품 → 시험 이동은 새 시험 쪽 파일(`<file>` · 전 없음) · 시험 → 제품 이동은 짝 없는 삭제(`<file>` · 후 없음).
     개명 쌍은 제자리에서 바뀐 시험 쪽 `.py` 에만 적용한다 — 옛 → 새 를 기준 판에 먼저 적용한 원문으로 대응표 · 처분을 돈다.
     허용 표의 `moves`(스냅숏 옮김 행 항목 · `at` · `done`)는 0T 만 받는다(`_move_shares`) — 받은 옮김의 옛 파일은 통째 이동 짝에서
-    빼고 옮긴 단위의 키 · D 는 옮김 키로 갈음한다. 저장소 밖(과거 커밋 재생)에서도 그대로 부른다."""
+    빼고 옮긴 단위의 키 · D 는 옮김 키로 갈음한다. 허용 표에 `slice` 가 있으면(엄격 변경 창) 허용 파일 = 그 슬라이스 V 케이스 파일 ·
+    `slice_files`(계획 산출 · 매인 retain 행) · `miss_retain`(rebind 미검출 처리) · 새 시험 패키지 폴더의 빈 `__init__.py` 뿐이고
+    `case_units`(경로 → 케이스 최상위 단위)로 V 밖 케이스 단위를 가린다. 저장소 밖(과거 커밋 재생)에서도 그대로 부른다."""
     test_dirs: "set[str]" = _test_dirs(sorted(files_now)) | _test_dirs(sorted(files_then))
     is_test: "Callable[[str], bool]" = lambda p: _is_test_refactor(p, test_dirs)  # noqa: E731
     live_now: "set[str]" = {d for p in files_now for d in _ancestors(p)}
@@ -4176,11 +4252,21 @@ def judge_test_side(kind: str, changed: "dict[str, tuple[bytes | None, bytes | N
                                             keep_apart)
     allowed: "set[str]" = set()
     approved: "dict[str, dict]" = {}
+    exempt: "dict[str, str]" = {}                         # 엄격 변경 창 — 단위 red 를 걸지 않는 몫 파일 → 처분 사유
+    strict_change: str = (allow or {}).get("slice") or "" if kind == "change" else ""
     if allow is not None and kind in ("follow", "change"):
-        allowed = set(allow.get("retain_files", []))
+        allowed = set() if strict_change else set(allow.get("retain_files", []))
         if kind == "change":
             approved = allow.get("approved_cases", {})
-            allowed |= {case.partition("::")[0] for case in approved}
+            v_files: "set[str]" = {case.partition("::")[0] for case in approved}
+            allowed |= v_files
+        if strict_change:
+            exempt = {p: "허용 파일(이 슬라이스 계획 산출)" for p in set(allow["slice_files"]) - v_files}
+            exempt.update({p: "허용 파일(미검출 처리 — rebind 가 지운 V 의 케이스 파일 · G1′ 이 더한 `retain` 재조직 행)"
+                           for p in allow.get("miss_retain", [])})
+            exempt.update({p: "허용 파일(이 슬라이스에 매인 `retain` 재조직 행)" for p in allow["slice_retain"]})
+            allowed |= set(allow["slice_files"]) | set(allow.get("miss_retain", []))
+            allowed |= _package_skeletons(changed, files_then)
     update_rows: "dict[str, list[str]]" = {}
     if allow is not None and kind == "test":
         approved = {case: {} for case in allow.get("remove_cases", [])}   # 0T: G1 확정판 remove 행(v 없음 · k0 §4-4)
@@ -4212,7 +4298,9 @@ def judge_test_side(kind: str, changed: "dict[str, tuple[bytes | None, bytes | N
         disposition = dispose_test_file(kind, p, target, old_b, new_b, maps, old_canon, new_canon, exports_then, allowed,
                                         approved, update_rows, uses_of.get(p),
                                         (reds_of.get(p, []) + move_reds.get(p, [])) or None, mine_moves, retain_hint,
-                                        (allow or {}).get("pinned_cases") if kind in ("test", "follow") else None)
+                                        (allow or {}).get("pinned_cases") if kind in ("test", "follow") else None,
+                                        {u for q in (p, target) for u in (allow or {}).get("case_units", {}).get(q, [])},
+                                        exempt, strict_change)
         if disposition is not None:
             out.append(disposition)
     return Judgement(out, maps, is_test, tuple(dict(u, path=p) for p, uses in sorted(uses_of.items()) for u in uses),
@@ -4230,9 +4318,24 @@ def op_key(app: str, call: str) -> str:
     return f"{app} · " + ast.dump(body, annotate_fields=True, include_attributes=False)
 
 
-def allow_table(snap: dict) -> dict:
+def allow_table(snap: dict, slice: "str | None" = None, plan_row: "Any" = None, diff: "dict | None" = None) -> dict:
     """G1 후보 스냅숏(k0 §4-4) → 창 허용 표 — `retain` 재조직 파일 · 승인 케이스와 «바뀌는 기대» · V 연산 다중집합 · 다른 BC
-    편집 목록 · `add`/`remove` 케이스 · «개명» 행 항목(`renames` — 개명 행이 있을 때만 칸을 둔다: 개명 행 없는 승인판의 표는 그대로)."""
+    편집 목록 · `add`/`remove` 케이스 · «개명» 행 항목(`renames` — 개명 행이 있을 때만 칸을 둔다: 개명 행 없는 승인판의 표는 그대로).
+
+    표는 네 입력만으로 정해진다(refactor_audit 가 같은 입력으로 되살려 open 기록과 견준다 — 이 꼴을 바꾸면 그쪽과 함께 바꾼다).
+    `slice`(엄격 변경 창)가 있으면 그 슬라이스 V(`diff` 가 있으면 그 확정 차분의 더하거나 바뀐 V)와 그 V 에 딸린 다른 BC 편집 줄만 남기고
+    칸 `slice` · `slice_files`(그 계획 행 `plan_row` 에 매인 입장 행의 시험 쪽 파일) · `slice_retain`(그 가운데 retain 재조직 행 파일)을
+    더한다 — `diff` 가 있으면 `slice_retain` 은 차분 `retain` 파일만이고, `slice_files` 는 그 계획 행이 더하거나 바뀐 것이면 차분 밖 V 의
+    케이스 파일(차분 `retain` 파일 빼고)을 뺀 나머지 · 아니면 차분 `retain` 파일만. retain · 개명 · 옮김 행 칸은 전체 그대로."""
+    outside: "set[str]" = set()                           # 차분 밖 V 의 케이스 파일
+    if slice is not None:
+        outside = {test["case"].partition("::")[0] for v in snap.get("V", []) if diff is not None and v["id"] not in diff["v"]
+                   for test in v.get("tests", [])}
+        sid_of: "Callable[[str], str]" = _audit_module().slice_id
+        own: "list[dict]" = [v for v in snap.get("V", []) if sid_of(str(v.get("slice", ""))) == slice
+                             and (diff is None or v["id"] in diff["v"])]
+        ids: "set[str]" = {v["id"] for v in own}
+        snap = dict(snap, V=own, other_bc_edits=[e for e in snap.get("other_bc_edits", []) if e.get("ref") in ids])
     approved: "dict[str, dict]" = {}
     adds: "list[str]" = []
     removes: "list[str]" = []
@@ -4264,6 +4367,17 @@ def allow_table(snap: dict) -> dict:
     moves: "list[dict]" = snap_moves(snap)
     if moves:
         table["moves"] = moves
+    if slice is not None:
+        bound: "set[str]" = set(plan_row.retain_files) if plan_row is not None else set()
+        outputs: "set[str]" = bound | (set(plan_row.files) if plan_row is not None else set())
+        if diff is not None:
+            changed: "set[str]" = set(diff["retain"])
+            bound &= changed
+            if diff["plan_row"] in ("더함", "바뀜"):
+                outputs -= outside - {case.partition("::")[0] for case in approved} - changed
+            else:
+                outputs &= changed
+        table.update({"slice": slice, "slice_files": sorted(outputs), "slice_retain": sorted(bound)})
     return table
 
 
@@ -4327,58 +4441,421 @@ def _support_module():  # noqa: ANN202
     return behavior_support
 
 
-def _g1_state(folder: Path, repo: Path) -> "tuple[str, dict, tuple[str, str, str] | None]":
-    """(현재 명세 승인판 digest, 그 스냅숏, 마지막 `G1 변경판 확정` (시각, digest, 후보) — 없으면 None)."""
+STRICT_NO_SHA: str = "엄격 실행인데 마지막 `G1 변경판 확정` 줄에 명세 sha 가 없다 — `changes --gate` 요약의 명세 sha 를 그 줄에 적는다"
+
+
+def _strict_run(folder: Path) -> bool:
+    """엄격 실행(창 슬라이스 · 까닭 · 창 단위 미검출 · 허용 좁힘 · verify 슬라이스 대조) — 판별은 refactor_audit `strict_run` 하나."""
+    ra = _audit_module()
+    return bool(_external("refactor_audit.strict_run", ra.strict_run, folder))
+
+
+def _spec_sha_now(folder: Path, confirmed: "Any") -> "str | None":
+    """지금 명세 sha — 마지막 확정 줄에 명세 sha 칸이 있을 때만 잰다(옛 확정 줄은 digest 만 본다). 엄격 실행인데 그 칸이 없으면 실행 불능."""
+    if confirmed is None:
+        return None
+    if confirmed.spec_sha is None:
+        if _strict_run(folder):
+            raise RunError(STRICT_NO_SHA)
+        return None
+    ra = _audit_module()
+    return str(_external("refactor_audit.spec_sha", ra.spec_sha, folder))
+
+
+def _g1_state(folder: Path, repo: Path) -> "tuple[str, dict, Any, str | None]":
+    """(현재 명세 승인판 digest, 그 스냅숏, 마지막 `G1 변경판 확정`(refactor_audit `G1Confirmation` — at · digest · candidate · spec_sha ·
+    없으면 None), 지금 명세 sha — 확정 줄에 그 칸이 없으면 None)."""
     ra = _audit_module()
     snap = _external("refactor_audit.changes_snapshot", ra.changes_snapshot, folder, repo)
     digest: str = str(_external("refactor_audit.snapshot_digest", ra.snapshot_digest, snap))
     confirmed = _external("refactor_audit.g1_confirmed", ra.g1_confirmed, folder)
-    return digest, snap, confirmed  # type: ignore[return-value]
+    return digest, snap, confirmed, _spec_sha_now(folder, confirmed)  # type: ignore[return-value]
 
 
-def _g1_binding(folder: Path, repo: Path) -> "tuple[str, dict]":
-    """(현재 명세 승인판 digest, 허용 표) — 마지막 `G1 변경판 확정` digest 와 다르면 실행 불능(창을 열지 · 바꾸지 않는다)."""
-    digest, snap, confirmed = _g1_state(folder, repo)
+def _spec_mismatch(confirmed: "Any", digest: str, sha_now: "str | None") -> str:
+    """지금 명세가 그 확정과 다른 까닭 — 승인판 digest 와 (확정 줄에 있으면) 명세 sha 가 둘 다 같으면 빈 글."""
+    if confirmed.digest != digest:
+        return f"현재 명세 승인판 digest {digest} ≠ 마지막 `G1 변경판 확정` digest {confirmed.digest}"
+    if confirmed.spec_sha is not None and sha_now != confirmed.spec_sha:
+        return (f"지금 명세가 마지막 `G1 변경판 확정` 과 다르다 — 명세 sha {sha_now} ≠ 확정 명세 sha "
+                f"{confirmed.spec_sha}(확정 뒤 명세를 바꿨으면 "
+                "G1′(`ⓐ 재상정` 반영이면 그 길)로 G1 ⑥ 을 다시 돌려 새 확정 줄을 쓴다)")
+    return ""
+
+
+class _G1Binding(NamedTuple):
+    """창이 결속하는 마지막 확정과 지금 승인판 스냅숏 — 명세 = 확정 대조(`_spec_mismatch`)를 지난 것."""
+    confirmed: "Any"
+    snap: dict
+
+
+def _g1_binding(folder: Path, repo: Path) -> _G1Binding:
+    """follow · change 창 open · rebind(와 엄격 실행의 모든 open)의 결속 — 지금 명세가 마지막 `G1 변경판 확정` 과 다르면 실행 불능
+    (창을 열지 · 바꾸지 않는다)."""
+    digest, snap, confirmed, sha_now = _g1_state(folder, repo)
     if confirmed is None:
         raise RunError("`G1 변경판 확정` 줄이 없다 — follow · change 창은 G1 변경판 확정 뒤에 연다")
-    if confirmed[1] != digest:
-        raise RunError(f"현재 명세 승인판 digest {digest} ≠ 마지막 `G1 변경판 확정` digest {confirmed[1]} — "
-                       "창을 열지(허용 표를 바꾸지) 않는다")
-    return digest, allow_table(snap)
+    mismatch: str = _spec_mismatch(confirmed, digest, sha_now)
+    if mismatch:
+        raise RunError(f"{mismatch} — 창을 열지(허용 표를 바꾸지) 않는다")
+    return _G1Binding(confirmed, snap)
+
+
+def _slice_plan(folder: Path, at: "str | None" = None) -> "list":
+    """명세 `## 슬라이스 계획` 행(refactor_audit `SlicePlanRow`) — `at` 이 없으면 지금 명세 · 있으면 그 확정의 반영판 계획."""
+    ra = _audit_module()
+    return list(_external("refactor_audit.slice_plan", ra.slice_plan, folder, at))
+
+
+def _bound_allow(folder: Path, opened: dict, binding: _G1Binding) -> dict:
+    """follow · change 창의 허용 표 — 엄격 변경 창(open 기록에 슬라이스)이면 결속 확정 계획의 그 슬라이스 행과 창 차분으로 좁힌 표,
+    그 밖은 승인판 전체 표. open 뒤에 이 값에 더하는 칸은 `miss_retain`(rebind) 하나다(refactor_audit `ALLOW_RUNTIME_KEYS`)."""
+    sid: "str | None" = opened.get("slice")
+    if opened["kind"] != "change" or sid is None:
+        return allow_table(binding.snap)
+    row = next((r for r in _slice_plan(folder, binding.confirmed.at) if r.slice == sid), None)
+    return allow_table(binding.snap, slice=sid, plan_row=row, diff=opened.get("diff"))
 
 
 def _confirmed_snapshot(folder: Path, repo: Path, label: str) -> dict:
     """리팩토링 모드 0T · 0C close 가 읽는 G1 확정판 스냅숏(입장 표 update 행 · «다른 BC 편집 목록») — 이 두 창은 허용 표를 open 에
-    동결하지 않으므로 close 때 읽는다. `G1 변경판 확정` 이 없거나 승인판이 G1 확정과 다르면 실행 불능이다."""
-    digest, snap, confirmed = _g1_state(folder, repo)
+    동결하지 않으므로 close 때 읽는다. `G1 변경판 확정` 이 없거나 지금 명세가 G1 확정과 다르면 실행 불능이다."""
+    digest, snap, confirmed, sha_now = _g1_state(folder, repo)
     if confirmed is None:
         raise RunError(f"`G1 변경판 확정` 줄이 없다 — 리팩토링 모드 {label} close 는 G1 확정판(입장 표 update 행 · «다른 BC 편집 "
                        "목록»)을 읽는다")
-    if confirmed[1] != digest:
-        raise RunError(f"승인판이 G1 확정과 다르다 — 현재 명세 승인판 digest {digest} ≠ 마지막 `G1 변경판 확정` digest "
-                       f"{confirmed[1]}({label} close 는 G1 확정판에서만 읽는다)")
+    mismatch: str = _spec_mismatch(confirmed, digest, sha_now)
+    if mismatch:
+        raise RunError(f"승인판이 G1 확정과 다르다 — {mismatch}({label} close 는 G1 확정판에서만 읽는다)")
     return snap
 
 
-def _outside_kinds(kind: str) -> str:
-    """창 종류가 받는 «다른 BC 편집 목록» 갈래(보고 글) — 갈래 `묶음 import 치환` 은 0C 만 받는다(설계 10절 :478 · 검토 B8)."""
+# 창 차례 · 까닭(엄격 실행 — open 이 창에 슬라이스와 까닭을 동결한다)
+
+_BRANCHES: "tuple[str, ...]" = ("0T", "0C", "0F", "S")                       # 슬라이스 갈래 차례
+_BRANCH_KINDS: "dict[str, str]" = {"0T": "test", "0C": "code", "0F": "follow", "S": "change"}
+
+
+class _Reason(NamedTuple):
+    """지난 차례 창의 까닭 하나 — 받는 창 종류(빈 튜플 = 슬라이스 갈래의 종류) · 슬라이스 갈래(빈 글 = 가리지 않음) · `--ref` 판형(None =
+    `--ref` 를 적지 않는 까닭)과 그 글."""
+    kinds: "tuple[str, ...]"
+    branch: str
+    form: "re.Pattern[str] | None"
+    hint: str
+
+
+_ITEM_FORM: "re.Pattern[str]" = re.compile(r"[MBC]\d+(,[MBC]\d+)*")
+_REASONS: "dict[str, _Reason]" = {
+    "편집고침": _Reason(("test", "code", "follow"), "",
+                    re.compile(r"w\d+-\d+|감사:[^\s/][^\s]*(#\S+)?|(G2|설계|리뷰|코디):\S.*"),
+                    "`w<n>-<회차>` · `감사:<산출물 폴더 안 감사 기록 파일>[#<자리>]` · `G2:<한 구>` · `설계:<한 구>` · `리뷰:<한 구>` · `코디:<한 구>`"),
+    "검사반영": _Reason(("test", "code", "follow"), "", re.compile(r"suite-\S+|게이트:\S+"),
+                    "`suite-<시각>` · `게이트:<산출물 폴더 안 기록 파일>`"),
+    "잔존반송": _Reason(KINDS, "", _ITEM_FORM, "항목 `M<n>` · `C<n>` · `B<n>` — 쉼표로 여럿"),
+    "철회": _Reason(KINDS, "", _ITEM_FORM, "항목 `M<n>` · `C<n>` · `B<n>` — 쉼표로 여럿"),
+    "끝맞춤": _Reason(("code",), "0C", None, ""),
+    "정렬맞춤": _Reason(("code",), "0C", None, ""),
+    "재승인반영": _Reason((), "", re.compile(r"[^\s·][^·\n]*"), "그 `G1 변경판 확정` 줄의 시각"),
+    "보탬": _Reason((), "", re.compile(r"B\d+(,B\d+)*"), "보탬 항목 `B<n>` — 쉼표로 여럿"),
+}
+
+
+class _Slot(NamedTuple):
+    """open 이 남기는 창 자리 — 기록 칸과 `요약:` 꼬리."""
+    record: dict
+    tail: str
+
+
+def _open_slot(folder: Path, repo: Path, kind: str, slice_cell: "str | None", reason: "str | None", ref: "str | None",
+               windows: "list[tuple[int, dict, list[dict]]]", binding: "_G1Binding | None") -> _Slot:
+    """리팩토링 모드 open 의 슬라이스 · 까닭 — 엄격 실행의 첫 확정 뒤 창은 명세 · 슬라이스 · 차례 · 까닭을 대조해(어긋나면 실행 불능) 동결하고,
+    옛 꼴 실행과 첫 확정 전 창은 대조하지 않는다(적은 값은 `given` 칸에만 — 칸 `slice` 는 엄격 창의 표지다)."""
+    ra = _audit_module()
+    record: dict = {"g1_count": len(_external("refactor_audit.g1_confirmations", ra.g1_confirmations, folder))}
+    strict: bool = _strict_run(folder)
+    if not strict or not record["g1_count"]:
+        given: "dict[str, str]" = {k: v for k, v in (("slice", slice_cell), ("reason", reason), ("ref", ref)) if v}
+        record.update({"given": given} if given else {})
+        if binding is not None and binding.confirmed.spec_sha is not None:
+            record["g1_sha"] = binding.confirmed.spec_sha
+        if strict:
+            return _Slot({**record, "strict": True, "pre_g1": True}, " · 첫 확정 전(슬라이스 · 까닭 대조 없음)")
+        return _Slot(record, " · 옛 꼴 실행(슬라이스 · 까닭 대조 없음)")
+    if not slice_cell:
+        raise RunError("`--reason` 은 `--slice` 와 함께 적는다" if reason else
+                       "이 실행은 창마다 `--slice <슬라이스>` 를 적는다 — 명세 `## 슬라이스 계획` 의 슬라이스 칸")
+    if ref and not reason:
+        raise RunError("`--ref` 는 `--reason` 과 함께 적는다")
+    bound: _G1Binding = binding or _g1_binding(folder, repo)
+    sid: str = ra.slice_id(slice_cell)
+    branch: str = ra.slice_branch(sid)
+    if not branch:
+        raise RunError(f"슬라이스 `{sid}` 판형 밖 — `0T` · `0C` · `0F`(하위 이름을 붙인 `0T-a` 꼴도) 또는 `S<n>`")
+    plan: list = _slice_plan(folder)
+    names: "list[str]" = [r.slice for r in plan]
+    row: "Any" = next((r for r in plan if r.slice == sid), None)
+    if row is None:
+        shown: str = " · ".join(names) or "없음"
+        if reason in (None, "보탬"):
+            raise RunError(f"슬라이스 `{sid}` 가 명세 `## 슬라이스 계획` 에 없다(계획: {shown})")
+        if sid != _REASONS[reason].branch:                # 끝맞춤 · 정렬맞춤은 계획에 그 갈래 행이 없어도 갈래 글자(`0C`)로 연다
+            if sid not in _confirmed_slices(folder):
+                raise RunError(f"슬라이스 `{sid}` 가 명세 `## 슬라이스 계획` 에도 이 실행의 어느 확정 계획에도 없다(계획: {shown})")
+            row = _latest_plan_row(folder, sid)
+    diff: "dict | None" = None
+    note: str = ""
+    if reason is None:
+        _check_order(folder, kind, sid, branch, names, windows, bound.snap)
+    else:
+        note, diff = _check_reason(folder, kind, sid, branch, names, reason, ref, windows)
+    if kind == "change" and branch != "S":
+        raise RunError(f"변경 창의 슬라이스는 `S<n>` 이다(지금 `{sid}`)")
     if kind == "change":
-        return f"목록 전부({GROUP_IMPORT_KIND} 빼고)"
-    return " · ".join(sorted(FOLLOW_OUTSIDE_KINDS if kind == "code" else FOLLOW_OUTSIDE_KINDS - {GROUP_IMPORT_KIND}))
+        _check_audited(folder, windows)
+    record.update({"strict": True, "slice": sid, "reason": reason, "ref": ref, "plan": names,
+                   "purpose": row.purpose if row is not None else "",
+                   "g1_sha": bound.confirmed.spec_sha})
+    record.update({"ref_note": note} if note else {})
+    record.update({"diff": diff} if diff is not None else {})
+    return _Slot(record, f" · 슬라이스 {sid} · " + ("차례" if reason is None else f"까닭 {reason}" + (f"({ref})" if ref else "")))
+
+
+def _confirmed_slices(folder: Path) -> "list[str]":
+    ra = _audit_module()
+    return list(_external("refactor_audit.confirmed_slices", ra.confirmed_slices, folder))
+
+
+def _latest_plan(folder: Path, sid: str) -> "list":
+    """지금 계획에 없는 슬라이스를 품은 가장 늦은 확정의 계획 행들(어느 확정에도 없으면 빈 목록)."""
+    ra = _audit_module()
+    for confirmed in reversed(_external("refactor_audit.g1_confirmations", ra.g1_confirmations, folder)):
+        plan: list = _slice_plan(folder, confirmed.at)
+        if any(r.slice == sid for r in plan):
+            return plan
+    return []
+
+
+def _latest_plan_row(folder: Path, sid: str) -> "Any":
+    """지금 계획에 없는 슬라이스의 행 — 그 슬라이스를 품은 가장 늦은 확정의 계획 행."""
+    return next((r for r in _latest_plan(folder, sid) if r.slice == sid), None)
+
+
+def _plan_place(folder: Path, sid: str, inner: "list[str]") -> float:
+    """0* 슬라이스의 갈래 안 차례 자리 — 지금 계획 줄 차례(`inner` = 그 갈래의 지금 계획 슬라이스). 지금 계획에서 지운 슬라이스는 그것을 품은
+    가장 늦은 확정 계획에서 앞서던 지금 계획 슬라이스 바로 뒤(앞서던 것이 없으면 갈래 맨 앞)다."""
+    if sid in inner:
+        return inner.index(sid)
+    then: "list[str]" = [r.slice for r in _latest_plan(folder, sid)]
+    before: "list[str]" = then[:then.index(sid)] if sid in then else []
+    return max((inner.index(n) for n in before if n in inner), default=-1) + 0.5
+
+
+def _check_order(folder: Path, kind: str, sid: str, branch: str, names: "list[str]",
+                 windows: "list[tuple[int, dict, list[dict]]]", snap: dict) -> None:
+    """까닭 없는 창 — 종류 = 슬라이스 갈래의 종류 · 차례 자리(갈래 차례 · 0* 는 계획 줄 차례 · S 는 번호)가 앞 차례 창들이 닿은 자리 이상 ·
+    변경 창은 그 슬라이스 승인 V 가 하나 이상."""
+    ra = _audit_module()
+
+    def rank(x: str) -> "tuple[int, float]":
+        b: str = ra.slice_branch(x)
+        inner: "list[str]" = [n for n in names if ra.slice_branch(n) == b]
+        return _BRANCHES.index(b), int(x[1:]) if b == "S" else _plan_place(folder, x, inner)
+    if kind != _BRANCH_KINDS[branch]:
+        raise RunError(f"차례 창의 종류는 슬라이스 갈래와 같다 — `{sid}` 는 `--kind {_BRANCH_KINDS[branch]}`(지금 `--kind {kind}`)")
+    passed: "list[tuple[tuple[int, float], str, int]]" = [(rank(o["slice"]), o["slice"], n) for n, o, _c in windows
+                                                          if o.get("slice") and not o.get("reason")]
+    top = max(passed, key=lambda t: t[0], default=None)
+    if top is not None and rank(sid) < top[0]:
+        raise RunError(f"차례 밖 — 슬라이스 `{sid}` 는 지난 차례다(앞 창이 닿은 차례 `{top[1]}` · w{top[2]}) — 지난 차례 창은 까닭과 `--ref` 가 "
+                       "있어야 연다(" + " · ".join(f"`{r}`" for r in _REASONS) + ")")
+    if kind == "change" and not any(ra.slice_id(str(v.get("slice", ""))) == sid for v in snap.get("V", [])):
+        raise RunError(f"슬라이스 `{sid}` 에 승인 V 가 없다 — 변경 창은 V 가 있는 `S<n>` 에서 연다")
+
+
+def _check_reason(folder: Path, kind: str, sid: str, branch: str, names: "list[str]", reason: str, ref: "str | None",
+                  windows: "list[tuple[int, dict, list[dict]]]") -> "tuple[str, dict | None]":
+    """까닭 창 — 종류 · 슬라이스 갈래 · `--ref` 판형 · 실재 대조(어긋나면 실행 불능). (감사 요청 머리에 싣는 ref 한 구, `재승인반영` 이 동결하는
+    차분 몫). 그 편집이 까닭 · 가리킴에 닿는지는 리뷰어가 본다."""
+    rule: _Reason = _REASONS[reason]
+    kinds: "tuple[str, ...]" = rule.kinds or (_BRANCH_KINDS[branch],)
+    if kind not in kinds:
+        raise RunError(f"까닭 `{reason}` 은 `--kind {'|'.join(kinds)}` 창이다(지금 `--kind {kind}`)")
+    if rule.branch and branch != rule.branch:
+        raise RunError(f"까닭 `{reason}` 의 슬라이스는 {rule.branch} 갈래다(지금 `{sid}`)")
+    if rule.form is None:
+        if ref:
+            raise RunError("`--ref` 는 " + " · ".join(f"`{r}`" for r, x in _REASONS.items() if x.form is not None) + " 창만 적는다"
+                           f"(지금 까닭 `{reason}`)")
+        if reason == "정렬맞춤" and (not windows or windows[-1][1]["kind"] != "code"):
+            raise RunError("까닭 `정렬맞춤` 은 바로 앞 창이 0C(`code`) 창일 때만 연다")
+        return "", None
+    if not ref:
+        raise RunError(f"까닭 `{reason}` 은 `--ref` 가 있어야 한다({rule.hint})")
+    if not rule.form.fullmatch(ref):
+        raise RunError(f"`--ref {ref}` 판형 밖 — {rule.hint}")
+    if reason == "재승인반영":
+        return _check_reapproval(folder, sid, branch, names, ref)
+    return _check_ref(folder, reason, ref, sid), None
+
+
+def _in_folder(folder: Path, rel: str) -> bool:
+    """산출물 폴더 안에 실재하는 파일인가(절대 경로 · `..` 는 아니다)."""
+    return not rel.startswith("/") and ".." not in PurePosixPath(rel).parts and (folder / rel).is_file()
+
+
+def _check_ref(folder: Path, reason: str, ref: str, sid: str) -> str:
+    """`--ref` 실재 대조 — 감사 기록(이번 실행 몫) · 파일 · 붉은 suite 기록 · 항목. 없으면 실행 불능 · 있으면 감사 요청 머리에 싣는 한 구."""
+    ra = _audit_module()
+    if reason in ("잔존반송", "철회"):
+        items = _external("refactor_audit.scope_items", ra.scope_items, folder)
+        live: bool = reason == "잔존반송"
+        known: "frozenset[str]" = items.live if live else items.removed
+        what: str = "이번 실행 ⓐ · 보탬 항목" if live else "`ⓐ 재상정` · 보탬 `바꿈` 으로 뺀 항목"
+        lost: "list[str]" = [x for x in ref.split(",") if x not in known]
+        if lost:
+            raise RunError(f"`--ref {ref}` 가 가리키는 {what} 이 없다({', '.join(lost)})")
+        return what
+    if reason == "보탬":
+        boost: dict = _external("refactor_audit.boost_items", ra.boost_items, folder)
+        gone: "list[str]" = [b for b in ref.split(",") if b not in boost]
+        if gone:
+            raise RunError(f"`--ref {ref}` 가 가리키는 살아 있는 보탬 항목 이 없다({', '.join(gone)})")
+        for bid in ref.split(","):
+            places: "tuple[str, ...]" = tuple(boost[bid][1])   # 그 항목을 목적 칸에 적은 계획 행의 슬라이스 전부(없으면 빈 튜플)
+            if places and sid not in places:
+                raise RunError(f"보탬 항목 {bid} 의 자리는 슬라이스 " + " · ".join(f"`{p}`" for p in places) + f" 다(지금 `{sid}`)")
+        return "보탬 항목 " + " · ".join(f"{bid} «{boost[bid][0].gist}»" for bid in ref.split(","))
+    run, run_dir = _run_value(folder), _run_dir(folder)
+    if ref.startswith("w"):
+        n, _sep, _round = ref[1:].partition("-")
+        record: Path = folder / f"audit-tests-{ref}.md"
+        mine: bool = (run_dir / f"w{n}-open.json").is_file() and (run_dir / f"w{n}-audit-request.md").is_file() and record.is_file() \
+            and any(r.prefix == f"{run}/w{n}" for r in audit_rows(record.read_text(encoding="utf-8")))
+        if not mine:
+            raise RunError(f"`--ref {ref}` 은 이번 실행({run}) w{n} 창의 감사 기록이 아니다")
+        return f"감사 기록 {record.name}"
+    if ref.startswith("suite-"):
+        suite: Path = run_dir / f"{ref}.json"
+        if "/" in ref or not suite.is_file():
+            raise RunError(f"`--ref {ref}` 가 가리키는 이번 실행 suite 기록 이 없다")
+        verdict: object = json.loads(suite.read_text(encoding="utf-8")).get("verdict")
+        if verdict != "red":
+            raise RunError(f"`--ref {ref}` 가 가리키는 붉은 suite 기록 이 없다(판정 {verdict})")
+        return "붉은 suite 기록"
+    head, _sep, rest = ref.partition(":")
+    if head in ("감사", "게이트"):
+        rel: str = rest.partition("#")[0] if head == "감사" else rest
+        if not _in_folder(folder, rel):
+            raise RunError(f"`--ref {ref}` 가 가리키는 산출물 폴더 안 기록 파일 이 없다({rel})")
+        return f"{head} 기록 파일"
+    return "한 구 — 실재 대조 없음"
+
+
+def _delta_text(delta: "Any") -> str:
+    """확정 차분 한 슬라이스의 건드린 칸 한 구(`V 1 · 빠진 retain 1` 꼴)."""
+    row: str = delta.plan_row
+    parts: "list[str]" = [f"계획 행 {row}"] if row in ("더함", "바뀜") else []
+    parts += [f"{label} {len(getattr(delta, key))}" for key, label in (
+        ("v", "V"), ("retain", "retain"), ("rows", "입장 행"), ("edits", "다른 BC 줄"), ("retain_removed", "빠진 retain"),
+        ("rows_removed", "빠진 입장 행"), ("edits_removed", "빠진 다른 BC 줄")) if getattr(delta, key)]
+    return " · ".join(parts)
+
+
+def _check_reapproval(folder: Path, sid: str, branch: str, names: "list[str]", ref: str) -> "tuple[str, dict]":
+    """까닭 `재승인반영` — 가리킨 확정이 바로 앞 확정과 견줘 그 슬라이스(0* 하위 슬라이스면 계획 행 칸에 안 실린 입장 행을 담은 갈래 키
+    `0T` · `0F` 도)를 건드렸을 때만 연다. 동결하는 차분 = `SliceDelta` 칸 그대로(갈래 키 몫은 합침) — 받는 편집은 더함 · 바뀜 칸만이다."""
+    ra = _audit_module()
+    confs = _external("refactor_audit.g1_confirmations", ra.g1_confirmations, folder)
+    at: "int | None" = next((i for i, c in enumerate(confs) if c.at == ref), None)
+    if at is None:
+        raise RunError(f"`--ref {ref}` 가 가리키는 이번 실행 `G1 변경판 확정` 줄 이 없다")
+    diff: "dict | None" = None if at == 0 else _external("refactor_audit.confirmation_diff", ra.confirmation_diff, folder,
+                                                          ref)
+    if diff is None:
+        raise RunError(f"`--ref {ref}` — 까닭 `재승인반영` 의 가리킴은 이 실행의 첫 확정 줄이 아니다(견줄 앞 확정이 있는 줄을 가리킨다)")
+    if not diff:
+        raise RunError(f"확정 {ref} 의 차분이 없다(처방 글 · 파일 계획만 바꾼 확정은 이 창이 없다 — 열린 창은 rebind · 닫힌 마지막 창은 "
+                       "digest 가 같아 verify 가 선다)")
+    own: "Any" = diff.get(sid)
+    key: "Any" = diff.get(branch) if branch != sid and branch in diff and branch not in names \
+        and branch not in _confirmed_slices(folder) else None
+    deltas: list = [d for d in (own, key) if d is not None]
+    if not any(d.touched for d in deltas):
+        only: "list[str]" = []
+        for d in deltas:
+            only += ["지운 V"] if d.v_removed and "지운 V" not in only else []
+            only += ["지운 계획 행"] if d.plan_row == "빠짐" and "지운 계획 행" not in only else []
+            only += ["낱말"] if (d.reworded or d.plan_row == "낱말") and "낱말" not in only else []
+        raise RunError(f"확정 {ref} 은 슬라이스 `{sid}` 를 건드리지 않았다" + (f"({' · '.join(only)}만)" if only else ""))
+    first: dict = deltas[0]._asdict()
+    merged: dict = {k: (v if isinstance(v, str) else sorted({x for d in deltas for x in getattr(d, k)})) for k, v in first.items()}
+    merged["branch"] = branch
+    return "확정 차분 — " + " / ".join(x for x in (_delta_text(d) for d in deltas) if x), merged
+
+
+def _check_audited(folder: Path, windows: "list[tuple[int, dict, list[dict]]]") -> None:
+    """다음 변경 창은 가장 최근 변경 창의 감사 키 판정이 끝나야 연다(0T · 0C · 0F · 끝맞춤 · 정렬맞춤 · 다른 까닭 창은 막지 않는다)."""
+    last = next(((n, o, c[-1]) for n, o, c in reversed(windows) if o.get("kind") == "change" and c), None)
+    if last is None or not last[2].get("keys"):
+        return
+    n, opened, close = last
+    matched, counts, details = match_audit(close["keys"], _audit_rounds(folder, n), f"{opened['run']}/w{n}", _allowed_verdicts(close))
+    if not sum(counts.values()):
+        return
+    raise RunError(f"앞 변경 창 w{n} 의 감사 키 판정이 끝나지 않았다(일치 {matched}/{len(close['keys'])} · "
+                   + " · ".join(f"{k} {counts[k]}" for k in ("누락", "낡음", "다름", "추가", "중복")) + f" — {details[0]}) — 다음 변경 창은 그 "
+                   "판정 뒤에 연다(«승인 변경 미검출» · `다름` 은 그 창이 마지막이면 그 창에서 철회 · G1′ → rebind → close 다시 · 아니면 STOP)")
+
+
+def _allowed_verdicts(close: dict) -> "dict[str, tuple[str, ...]]":
+    """그 close 처분이 남긴 키 → 받는 판정(`요구 판정`)."""
+    return {key: tuple(wanted.split(" · ")) for d in close.get("dispositions", [])
+            for key, wanted in zip(d.get("keys") or [], d.get("요구 판정", []))}
+
+
+def _outside_kinds(kind: str) -> str:
+    """창 종류가 받는 «다른 BC 편집 목록» 갈래(보고 글) — 갈래 `묶음 import 치환` · `framework 새 모듈` 은 0C 만 받는다(설계 10절 :478 ·
+    검토 B8)."""
+    if kind == "change":
+        return f"목록 전부({GROUP_IMPORT_KIND} · {FRAMEWORK_NEW_KIND} 빼고)"
+    if kind == "code":
+        return " · ".join([*sorted(FOLLOW_OUTSIDE_KINDS), FRAMEWORK_NEW_KIND])
+    return " · ".join(sorted(FOLLOW_OUTSIDE_KINDS - {GROUP_IMPORT_KIND}))
 
 
 def _outside_allowed(kind: str, edits: "list[dict]") -> "tuple[set[str], set[str]]":
     """(대상 BC 밖에서 이 창이 고쳐도 되는 경로, 그 가운데 갈래 `묶음 import 치환` 줄로만 받은 경로)(§3-5 · §4-5 «창 종류가 허락한
     갈래만») — 0T 는 없음(루트 pytest 설정 절은 `_side_rules` 가 따로 받는다) · 0C 는 «다른 BC 편집 목록»의 프로젝트 합성 · 공유 표면 ·
-    묶음 import 치환 줄 · 0F 는 프로젝트 합성 · 공유 표면 줄 · 변경 창은 묶음 import 치환 밖 목록 전부. 묶음 import 치환 줄로만 받은
-    경로의 내용은 `_group_import_reds` 가 본다(그 창의 묶음 이동을 따른 import 치환만)."""
+    묶음 import 치환 · framework 새 모듈 줄 · 0F 는 프로젝트 합성 · 공유 표면 줄 · 변경 창은 묶음 import 치환 · framework 새 모듈 밖 목록
+    전부. 묶음 import 치환 줄로만 받은 경로의 내용은 `_group_import_reds` 가, framework 새 모듈 줄로만 받은 경로는 `_framework_new_reds` 가
+    본다(그 창의 묶음 이동을 따른 import 치환만 · 앵커 판에 없는 새 모듈만)."""
     if kind == "test":
         return set(), set()
+    fresh: "set[str]" = {e["path"] for e in edits if e.get("kind") == FRAMEWORK_NEW_KIND} if kind == "code" else set()
+    edits = [e for e in edits if e.get("kind") != FRAMEWORK_NEW_KIND]
     plain: "set[str]" = {e["path"] for e in edits if e.get("kind") != GROUP_IMPORT_KIND
                          and (kind == "change" or e.get("kind") in FOLLOW_OUTSIDE_KINDS)}
     group: "set[str]" = ({e["path"] for e in edits if e.get("kind") == GROUP_IMPORT_KIND and GROUP_IMPORT_KIND
                           in FOLLOW_OUTSIDE_KINDS} - plain) if kind == "code" else set()
-    return plain | group, group
+    return plain | group | fresh, group
+
+
+def _framework_only(kind: str, edits: "list[dict]") -> "set[str]":
+    """갈래 `framework 새 모듈` 줄로만 받은 경로(0C — 다른 갈래 줄로도 받는 경로는 뺀다)."""
+    rest: "list[dict]" = [e for e in edits if e.get("kind") != FRAMEWORK_NEW_KIND]
+    return _outside_allowed(kind, edits)[0] - _outside_allowed(kind, rest)[0]
+
+
+def _framework_new_reds(w: "_CloseWindow") -> "list[str]":
+    """갈래 `framework 새 모듈` 줄로만 받은 경로는 이 실행이 만드는 새 모듈만 — 이 실행 `build_anchor` 커밋에 있으면 red(앞 0C 창이 만든
+    그 파일을 뒤 창이 다시 고치는 것은 받는다)."""
+    touched: "list[str]" = sorted(p for p in w.framework_listed if p in w.changed)
+    if not touched:
+        return []
+    anchor: str = _git(w.repo, "rev-parse", "--verify", f"{_anchor(w.folder)}^{{commit}}").strip()
+    return [f"`{p}` — 갈래 `{FRAMEWORK_NEW_KIND}` 은 이 실행이 만드는 새 모듈만(앵커 판에 있는 framework 모듈 편집은 편집 범위 밖)"
+            for p in touched if _git_bytes(w.repo, anchor, p) is not None]
 
 
 def _group_import_reds(w: "_CloseWindow") -> "list[str]":
@@ -4445,6 +4922,7 @@ class _CloseWindow(NamedTuple):
     renamed: "tuple[dict, ...]" = ()          # 이 창이 적용한 개명 쌍(창 기준 케이스 이름을 옛 → 새 로 읽는다)
     rename_items: "tuple[dict, ...]" = ()     # 이 창이 받은 개명 행 항목(`at` · `done` — 같은 창 이동 + 개명 알림)
     group_listed: "frozenset[str]" = frozenset()  # 갈래 `묶음 import 치환` 줄로만 받은 대상 BC 밖 경로(0C — 내용 대조)
+    framework_listed: "frozenset[str]" = frozenset()  # 갈래 `framework 새 모듈` 줄로만 받은 경로(0C — 앵커 판에 있으면 red)
     moved: "tuple[dict, ...]" = ()            # 이 창이 받은 옮김(창 기준 케이스 `옛 경로::단위…` 를 새 경로로 읽는다)
 
 
@@ -4538,6 +5016,19 @@ def _retain_alias(allow: dict, prior: "list[tuple[dict, dict]]") -> "list[str]":
     return sorted(files)
 
 
+def _slice_paths(allow: dict, approved_now: "dict[str, dict]", prior: "list[tuple[dict, dict]]") -> "dict[str, list[str]]":
+    """엄격 변경 창의 몫 파일 세 칸(G1 경로)을 이 창 기준 판 경로로 — 앞 창 통째 이동을 따라가되 `conftest.py` 로는 잇지 않고(`_retain_alias`
+    와 같은 막음), 옮김 행이 V 케이스를 새 파일로 데려간 옛 파일은 계획 산출에서 뺀다(매인 `retain` 재조직 행의 파일이면 남긴다)."""
+    def fold(paths: "list[str]") -> "set[str]":
+        pairs: "list[tuple[str, str]]" = [(p, _moved_path(p, prior)) for p in paths]
+        return {now for p, now in pairs if now == p or PurePosixPath(now).name != "conftest.py"}
+    left: "set[str]" = fold([case.partition("::")[0] for case in allow.get("approved_cases", {})]) \
+        - {case.partition("::")[0] for case in approved_now}
+    retain: "set[str]" = fold(allow["slice_retain"])
+    return {"slice_files": sorted((fold(allow["slice_files"]) - left) | retain), "slice_retain": sorted(retain),
+            "miss_retain": sorted(fold(allow.get("miss_retain", [])))}
+
+
 def _prior_sum(w: _CloseWindow, key: str) -> "collections.Counter[str]":
     """앞 변경 창들의 마지막 close 가 남긴 누계(연산 · 케이스 증감)."""
     return collections.Counter(x for o, last in w.prior if o.get("kind") == "change" for x in last.get(key, []))
@@ -4617,6 +5108,7 @@ def _side_rules(w: _CloseWindow) -> "tuple[list[str], list[str], list[str], list
     allowed_kinds: str = _outside_kinds(kind)
     reds += [f"{p} — 대상 BC(`{w.inside}`) 밖 경로가 다른 BC 편집 목록 밖(창 {label} 허용 갈래: {allowed_kinds})" for p in outside]
     reds += _group_import_reds(w)
+    reds += _framework_new_reds(w)
     return reds, notes, removed_ok, added_g1, outside, removed_g1
 
 
@@ -4679,11 +5171,74 @@ def _migration_rules(w: _CloseWindow) -> "tuple[list[str], list[str], list[str],
     return reds, notes, generated, existing, f"{static} · 동적 {'무변' if not extra and not lost else 'red'}"
 
 
+def _case_units(*tables: "dict[str, list[str]]") -> "dict[str, list[str]]":
+    """시험 파일 → 케이스 최상위 단위 이름(수집 케이스 `[클래스::]케이스` 의 첫 조각) — 창 기준 판 ∪ 지금 판."""
+    out: "dict[str, set[str]]" = {}
+    for table in tables:
+        for path, names in table.items():
+            out.setdefault(path, set()).update(x.split("::")[0] for x in names)
+    return {path: sorted(units) for path, units in out.items()}
+
+
+def _row_candidate(row: str) -> str:
+    """스냅숏 입장 행 원문(`| <candidate> | … |`) → 정규화 candidate — 확정 차분 `rows` 가 쓰는 글자."""
+    ra = _audit_module()
+    cell: str = re.split(r"(?<!\\)\|", row.strip().removeprefix("|"), maxsplit=1)[0]
+    return ra.normalize(cell.strip().replace("\\|", "|"))
+
+
+def _window_unseen(sid: str, allow: dict, hits: "dict[str, dict]", generated: "list[str]",
+                   prior: "list[tuple[dict, dict]]") -> "list[str]":
+    """엄격 변경 창의 창 단위 «승인 변경 미검출» — 좁힌 표의 승인 원소(옛 원문 · 기대 추가 · 연산)에서 이 창과 앞 모든 창의 마지막 close 가
+    집행한 것을 뺀 나머지(슬라이스 무관 — 뒤 슬라이스로 옮긴 V 도 · 케이스 키는 양쪽을 정규화 지도로 접는다)."""
+    tail: str = " — 변경 창은 그 슬라이스 V 를 모두 집행한 뒤 닫는다(V 가 필요 없으면 V 를 지우는 G1′ → rebind → close 다시)"
+    old_done: "dict[str, set[str]]" = collections.defaultdict(set)
+    add_done: "collections.Counter[str]" = collections.Counter()
+    for table in [hits, *(last.get("approved_hits", {}) for _o, last in prior)]:
+        adds: "collections.Counter[str]" = collections.Counter()      # 한 창에서 같은 케이스의 옛 · 새 철자 G1 키는 같은 추가다
+        for case, hit in table.items():
+            here: str = forward_key(case, prior)
+            old_done[here].update(hit.get("old", []))
+            adds[here] = max(adds[here], int(hit.get("add", 0)))
+        add_done.update(adds)
+    out: "list[str]" = []
+    for case, entry in sorted(allow.get("approved_cases", {}).items()):
+        here = forward_key(case, prior)
+        head: str = f"승인 변경 미검출 — 슬라이스 {sid} {' · '.join(entry.get('V', []))} `{case}` "
+        out += [f"{head}«{text[:80]}»(이 창 · 앞 창 집행 없음){tail}" for text in entry.get("expect_old", []) if text not in old_done[here]]
+        want: int = int(entry.get("expect_add", 0) or 0)
+        if add_done[here] < want:
+            out.append(f"{head}기대 추가 {want} 중 {add_done[here]}(이 창 · 앞 창 집행){tail}")
+    ops_done: "collections.Counter[str]" = collections.Counter(generated)
+    for _o, last in prior:
+        ops_done.update(last.get("ops", []))
+    out += [f"승인 연산 미생성 — 슬라이스 {sid} ×{c} — {op[:160]}{tail}"
+            for op, c in (collections.Counter(allow.get("ops", [])) - ops_done).items()]
+    return out
+
+
+def _request_head(opened: dict, snap: dict) -> "list[str]":
+    """감사 요청 머리 두 줄(엄격 실행의 슬라이스 있는 창) — 창 슬라이스 · 목적 칸 · 그 슬라이스 V · 차례 또는 까닭 · 가리킴과 범위 대조 한 줄."""
+    sid: "str | None" = opened.get("slice")
+    if sid is None:
+        return []
+    ra = _audit_module()
+    vs: "list[str]" = list(opened["allow"].get("V", [])) if opened["kind"] == "change" else [
+        v["id"] for v in snap.get("V", []) if ra.slice_id(str(v.get("slice", ""))) == sid]
+    way: str = "차례" if opened.get("reason") is None else f"까닭 {opened['reason']}" + (
+        f" — {opened['ref']}({opened.get('ref_note', '')})" if opened.get("ref") else "")
+    return [f"- 창 슬라이스 {sid} · 목적 «{opened.get('purpose', '')}» · 그 슬라이스 V {' · '.join(vs) or '없음'} · {way}",
+            "- 이 창 몫(슬라이스 V · ⓐ · 보탬 · 편집고침 몫 — 이 실행이 내용을 고친 줄의 흠 · 이 실행 편집 때문에 틀리게 된 줄의 흠)에 닿지 않는 "
+            "키(손대지 않은 줄 · 옮기거나 이름만 바꾸거나 import 만 바꾼 줄에 따라온 앵커 판 흠을 고친 키)는 «다름»(범위 밖 — 보탬 문으로 · "
+            "까닭 창이면 까닭 밖)"]
+
+
 def _close_refactor(folder: Path, repo: Path, run_dir: Path, n: int, opened: dict, closes: "list[dict]") -> int:
     """리팩토링 모드 close(§4-3 · §4-5) — 시험 쪽 처분 · 감사 요청 · 케이스 · 설정 · 마이그레이션 · 대상 BC 밖 경로 · 끝 지문.
     대상 BC 를 못 읽으면 어느 창이든 실행 불능이다(창마다 대상 BC 밖 경로를 본다). 0T · 0C 는 허용 표를 동결하지 않아 close 때
     G1 확정판 스냅숏을 읽고(승인판이 G1 확정과 다르면 실행 불능 · 0T 의 remove · update 예외는 이 스냅숏에서만), 0F · 변경은
-    open · rebind 때 동결한 허용 표를 쓴다."""
+    open · rebind 때 동결한 허용 표를 쓴다. 엄격 변경 창(open 기록에 슬라이스)은 그 슬라이스 몫으로 좁힌 표로 판정하고 창 단위 «승인 변경
+    미검출» 을 red 로 낸다 · 까닭 `재승인반영` 창은 동결한 확정 차분(open 기록 `diff`)의 더함 · 바뀜 몫만 받는다."""
     kind: str = opened["kind"]
     label: str = KIND_LABELS[kind]
     head0: str = opened["head"]
@@ -4700,13 +5255,31 @@ def _close_refactor(folder: Path, repo: Path, run_dir: Path, n: int, opened: dic
     listed: "set[str]"
     group_listed: "set[str]"
     prior: "list[tuple[dict, dict]]" = [(o, c[-1]) for m, o, c in _windows(run_dir) if m < n and c]
+    sid: "str | None" = opened.get("slice")               # 엄격 실행의 창 슬라이스(옛 꼴 실행 · 첫 확정 전 창은 없음)
+    diff: "dict | None" = opened.get("diff")              # 까닭 `재승인반영` — 그 확정 차분의 이 슬라이스 몫(더함 · 바뀜 칸만 받는다)
+    snap: dict
+    edits: "list[dict]"                                   # 다른 BC 편집 줄
     if kind in ("follow", "change"):
-        current: str = _g1_state(folder, repo)[0]
+        current, snap, confirmed, sha_now = _g1_state(folder, repo)
         if current != opened.get("g1_digest"):
             raise RunError(f"명세 승인판 digest {current} ≠ 창 결속 {opened.get('g1_digest')} — 승인판이 바뀌었으면 "
                            "G1 변경판 확정 · rebind 뒤에 close 한다")
+        if confirmed is not None and confirmed.spec_sha is not None:   # 명세 sha 결속은 확정 줄 단위 — 옛 줄은 창 결속 digest 만
+            mismatch: str = _spec_mismatch(confirmed, current, sha_now)
+            if mismatch:
+                raise RunError(f"{mismatch}({label} close 는 명세가 마지막 확정과 같을 때만 판정한다)")
+        if kind == "change" and sid is not None and opened.get("g1_sha") != sha_now:   # 승인판은 같고 명세가 바뀐 확정(계획 매임)
+            again: dict = json.loads(json.dumps(_bound_allow(folder, opened, _G1Binding(confirmed, snap))))
+            stale: "list[str]" = [k for k in sorted(set(again) | set(opened["allow"])) if k != "miss_retain"
+                                  and again.get(k) != opened["allow"].get(k)]
+            if stale:
+                raise RunError(f"마지막 확정의 슬라이스 계획으로 다시 지은 허용 표가 이 창의 표와 다르다({' · '.join(f'`{k}`' for k in stale)}) — "
+                               "rebind 먼저(rebind 뒤에 close 한다)")
         allow = opened["allow"]
-        listed, group_listed = _outside_allowed(kind, list(opened["allow"].get("other_bc_edits", [])))
+        edits = list(allow.get("other_bc_edits", []))
+        if kind == "follow" and diff is not None:
+            edits = [e for e in edits if e["path"] in diff["edits"]]
+        listed, group_listed = _outside_allowed(kind, edits)
         removable: "collections.Counter[str]" = collections.Counter()
         rename_items: "list[dict]" = list(opened["allow"].get("renames", [])) if kind == "follow" else []
         move_items: "list[dict]" = list(opened["allow"].get("moves", []))
@@ -4714,16 +5287,24 @@ def _close_refactor(folder: Path, repo: Path, run_dir: Path, n: int, opened: dic
         g1_of: "dict[str, list[str]]" = {}                # 이 창 키 → G1 키들(정규화 지도 — 같은 케이스를 옛 · 새 철자로 적은 V 는 한 키)
         for case in approved_g1:
             g1_of.setdefault(forward_key(case, prior), []).append(case)
-        judge_allow = dict(allow, retain_files=_retain_alias(allow, prior),
+        retained: dict = allow
+        if kind == "follow" and diff is not None:         # 재승인반영 — 그 차분이 더하거나 바꾼 retain 재조직 행 파일만
+            retained = {k: [p for p in allow.get(k, allow.get("retain_files", [])) if p in diff["retain"]]
+                        for k in ("retain_files", "retain_alias")}
+        judge_allow = dict(allow, retain_files=_retain_alias(retained, prior),
                            approved_cases={now: _merged_cases(approved_g1, cases) for now, cases in g1_of.items()})
         if kind == "follow":                              # 0F — 확정판 V «바뀌는 기대» 원소는 정규화로 지우지 않는다(T4)
             judge_allow["pinned_cases"] = judge_allow["approved_cases"]
     else:
-        snap: dict = _confirmed_snapshot(folder, repo, label)
-        listed, group_listed = _outside_allowed(kind, list(snap.get("other_bc_edits", [])))
-        removable = _key_forms(collections.Counter(str(r["case"]) for r in snap.get("remove_rows", []) if r.get("v") is None),
+        snap = _confirmed_snapshot(folder, repo, label)
+        edits, remove_rows, update_rows = (list(snap.get(k, [])) for k in ("other_bc_edits", "remove_rows", "update_rows"))
+        if diff is not None:                              # 재승인반영 — 그 차분이 더하거나 바꾼 입장 행 · 다른 BC 편집 줄만
+            edits = [e for e in edits if e["path"] in diff["edits"]]
+            remove_rows, update_rows = ([r for r in rows if _row_candidate(str(r["row"])) in diff["rows"]]
+                                        for rows in (remove_rows, update_rows))
+        listed, group_listed = _outside_allowed(kind, edits)
+        removable = _key_forms(collections.Counter(str(r["case"]) for r in remove_rows if r.get("v") is None),
                                prior)                     # 0T remove · update 행은 옛 키 · 새 키 어느 쪽으로도(정규화 지도)
-        update_rows: "list[dict]" = list(snap.get("update_rows", []))
         update_rows += [dict(row, case=forward_key(str(row["case"]), prior)) for row in update_rows
                         if forward_key(str(row["case"]), prior) != row["case"]]
         judge_allow = {"remove_cases": sorted(removable), "update_rows": update_rows} if kind == "test" else None
@@ -4770,6 +5351,11 @@ def _close_refactor(folder: Path, repo: Path, run_dir: Path, n: int, opened: dic
         now: "bytes | None" = read_now(p)
         if _sha(now) != sha_then(p):
             changed[p] = (read_then(p), now)
+    if kind == "change" and sid is not None:              # 엄격 변경 창 — 몫 파일은 이 창 기준 판 경로로 · 케이스 단위 표(판정용 사본에만)
+        test_dirs: "set[str]" = _test_dirs(files_now) | _test_dirs(files_then)
+        cases_now: "dict[str, list[str]]" = _cases(files_now, read_now, config_now, lambda p: _is_test_refactor(p, test_dirs))
+        judge_allow = dict(judge_allow, case_units=_case_units(opened["cases"], cases_now),  # type: ignore[arg-type]
+                           **_slice_paths(allow, judge_allow["approved_cases"], prior))  # type: ignore[arg-type, index]
     judged: Judgement = judge_test_side(kind, changed, set(files_then), set(files_now), read_then, read_now, judge_allow,
                                         (opened["pytest"], config_now))
     maps, disps = judged.maps, judged.dispositions
@@ -4782,7 +5368,7 @@ def _close_refactor(folder: Path, repo: Path, run_dir: Path, n: int, opened: dic
     window = _CloseWindow(folder, repo, kind, opened, allow, inside, listed, removable, merged, changed, maps, judged.is_test,
                           files_now,
                           read_then, read_now, config_now, prior, judged.renamed, tuple(rename_items), frozenset(group_listed),
-                          judged.moved)
+                          frozenset(_framework_only(kind, edits)), judged.moved)
     reds: "list[str]" = [f"{d.path} — {d.reason}" for d in disps if d.disposition == RED]
     notes: "list[str]" = [f"미승인 머지 {s} — 들여온 경로를 레인 편집으로 판정(approved-merges.txt 밖)" for s in unapproved]
     side_reds, side_notes, removed_ok, cases_added, outside, removed_record = _side_rules(window)
@@ -4806,6 +5392,8 @@ def _close_refactor(folder: Path, repo: Path, run_dir: Path, n: int, opened: dic
                 entry = hits.setdefault(g1, {"old": [], "add": 0})
                 entry["old"] += [t for t in h["old"] if t not in entry["old"]]
                 entry["add"] += h["add"]
+    unseen: "list[str]" = _window_unseen(sid, allow or {}, hits, generated, prior) if kind == "change" and sid is not None else []
+    reds += unseen
     request: "str | None" = None
     for stale in run_dir.glob(f"w{n}-audit-spots-B*.txt") if run_dir.is_dir() else []:
         stale.unlink()                                    # 앞 close 의 곁 파일 — 이번 요청과 어긋나지 않게
@@ -4813,7 +5401,8 @@ def _close_refactor(folder: Path, repo: Path, run_dir: Path, n: int, opened: dic
         request = f"w{n}-audit-request.md"
         run_dir.mkdir(parents=True, exist_ok=True)
         text, side = _audit_request_text(run, n, label, len(closes) + 1, disps, key_of, read_then, read_now, files_now,
-                                         judged.is_test, (judge_allow or {}).get("approved_cases", {}) if allow else {})
+                                         judged.is_test, (judge_allow or {}).get("approved_cases", {}) if allow else {},
+                                         _request_head(opened, snap))
         (run_dir / request).write_text(text, encoding="utf-8")
         for name, body in side.items():
             (run_dir / name).write_text(body, encoding="utf-8")
@@ -4850,6 +5439,8 @@ def _close_refactor(folder: Path, repo: Path, run_dir: Path, n: int, opened: dic
                    "approved_hits": hits, "ops": generated, "cases_added": cases_added, "cases_removed": removed_record,
                    "outside_bc": outside, "existing_migrations": existing_changed,
                    "test_changed": sorted(p for p in changed if judged.is_test(p))})
+    if sid is not None:                                   # 엄격 실행 — 창 슬라이스 · 까닭 · 창 단위 미검출
+        closes[-1].update({"slice": sid, "reason": opened.get("reason"), "ref": opened.get("ref"), "unseen": unseen})
     if judged.moved:                                      # 이 창이 받은 옮김 행(verify «옮김 행인데 옮김 없음» · 다음 창 정규화 지도)
         closes[-1]["moves"] = [{"label": u["label"], "path": u["from"], "name": u["name"], "to": u["to"], "unit": u["unit"],
                                 "kind": u["kind"]} for u in judged.moved]
@@ -4862,7 +5453,7 @@ def _close_refactor(folder: Path, repo: Path, run_dir: Path, n: int, opened: dic
     for note in notes:
         print(f"  보고: {note}")
     state_text: str = f"red {len(reds)}건" if reds else f"감사 요청 키 {len(keys)}" if keys else "시험 쪽 무변"
-    print(f"요약: 창 w{n} close {state_text} · 종류 {label} · 모드 리팩토링 · 시험 쪽 바뀐 파일 {len(disps)}"
+    print(f"요약: 창 w{n} close {state_text} · 종류 {label} · 모드 리팩토링{f' · 슬라이스 {sid}' if sid else ''} · 시험 쪽 바뀐 파일 {len(disps)}"
           f"(묶음 감사 {count[BUNDLE_AUDIT]} · 개별 감사 {count[SINGLE_AUDIT]} · 승인 변경 감사 {count[APPROVED_AUDIT]} · "
           f"red {count[RED]}) · 자동 초록 0 · 바뀐 경로 {len(changed)} · 대응(쌍 {len(maps.pairs)} · 디렉터리 {len(maps.dirs)} · "
           f"모듈 {len(maps.mm)} · 정의 {len(maps.dm)} · 개명 {len(maps.rn)}) · "
@@ -4958,9 +5549,10 @@ def _old_name_spots(items: "tuple[str, ...]", constants: "list[tuple[str, int, s
 
 def _audit_request_text(run: str, n: int, label: str, round_no: int, disps: "list[Disposition]",
                         key_of: "Callable[[Disposition, tuple[str, str, str]], str]", read_then: Reader, read_now: Reader,
-                        files_now: "list[str]", is_test: "Callable[[str], bool]",
-                        approved: "dict[str, dict]") -> "tuple[str, dict[str, str]]":
-    """(감사 요청 본문, 곁 파일 {이름: 본문}) — 옛 이름 문자열 자리가 SPOT_LIMIT 를 넘으면 전체 목록을 곁 파일로."""
+                        files_now: "list[str]", is_test: "Callable[[str], bool]", approved: "dict[str, dict]",
+                        head_lines: "list[str]") -> "tuple[str, dict[str, str]]":
+    """(감사 요청 본문, 곁 파일 {이름: 본문}) — 옛 이름 문자열 자리가 SPOT_LIMIT 를 넘으면 전체 목록을 곁 파일로. `head_lines` = 창 슬라이스 ·
+    까닭 머리(엄격 실행 — `_request_head`)."""
     audited: "list[Disposition]" = [d for d in disps if d.disposition != RED]
     side: "dict[str, str]" = {}
     bundles: "dict[tuple[str, ...], list[Disposition]]" = collections.defaultdict(list)
@@ -4982,7 +5574,7 @@ def _audit_request_text(run: str, n: int, label: str, round_no: int, disps: "lis
     lines: "list[str]" = [
         f"# 감사 요청 w{n} · 실행 {run} · 창 {label} · close {round_no}회째(기계 기록 — behavior_guard.py close)", "",
         f"- 요구 키 {sum(len(d.keys) for d in audited)} · 파일 묶음 감사 {count[BUNDLE_AUDIT]} · 개별 감사 {count[SINGLE_AUDIT]} · "
-        f"승인 변경 감사 {count[APPROVED_AUDIT]} · red {count[RED]}",
+        f"승인 변경 감사 {count[APPROVED_AUDIT]} · red {count[RED]}", *head_lines,
         f"- 감사 기록 판형: `<산출물 폴더>/audit-tests-w{n}-<회차>.md` — 요구 키마다 정확히 한 행 "
         "`<키 그대로> | 판정 = <값> | <근거 한 구>` — `<값>` 은 그 키 줄의 «요구 판정» 가운데 하나 또는 `다름`, 판정 칸은 하나만"
         "(키 행 생략 불가 · 묶음 안 키 행은 근거 칸에 `묶음 B<k> 근거` 를 쓸 수 있다 · 다시 close 해 키가 바뀌면 그 키만 다시 감사한다)",
@@ -5050,8 +5642,8 @@ def _audit_request_text(run: str, n: int, label: str, round_no: int, disps: "lis
             lines += key_lines(d)
         lines.append("")
     if approved_files:
-        lines += ["## 승인 변경(승인 원소 단위는 «승인 후와 같음» 만 — «기대 의미 그대로»면 승인 변경 미검출(V 를 지우고 0F 로 · G1′) · "
-                  "그 밖 단위는 «기대 의미 그대로» 만)", ""]
+        lines += ["## 승인 변경(승인 원소 단위는 «승인 후와 같음» 만 — «기대 의미 그대로»면 승인 변경 미검출(그 변경 창에서 철회 — V 가 필요 없으면 "
+                  "V 를 지우는 G1′ → rebind) · 그 밖 단위는 «기대 의미 그대로» 만)", ""]
         for d in approved_files:
             lines += key_lines(d)
         lines.append("")
@@ -5191,7 +5783,8 @@ def match_audit(required: "list[str]", rounds: "list[list[AuditRow]]", prefix: s
         elif row.verdict not in allowed.get(key, (MEANING_SAME,)):
             counts["다름"] += 1
             wanted: "tuple[str, ...]" = allowed.get(key, (MEANING_SAME,))
-            details.append(f"다름 {f} · {u}(" + ("승인 변경 미검출 — 승인 원소 단위가 «기대 의미 그대로»: V 를 지우고 0F 로(G1′)"
+            details.append(f"다름 {f} · {u}(" + ("승인 변경 미검출 — 승인 원소 단위가 «기대 의미 그대로»: 그 편집은 V 가 아니다 — 그 변경 창에서 "
+                                               "철회(V 가 필요 없으면 V 를 지우는 G1′ → rebind · 그 창 뒤에 다른 창을 열었으면 STOP)"
                                                if wanted == (APPROVED_SAME,) and row.verdict == MEANING_SAME
                                                else f"판정 = {row.verdict} · 요구 판정 {' · '.join(wanted)}") + ")")
         else:
@@ -5239,9 +5832,10 @@ def cmd_verify(folder: Path, repo: Path) -> int:
     return 0
 
 
-def _suite_lines(record: "dict | None", confirmed: "tuple[str, str, str] | None", last_close_fp: "str | None",
-                 now_fp: str) -> "tuple[list[str], str]":
-    """(red 사유, `suite:` 행) — 마지막 suite 기록(behavior_support · k0 §4-4)의 판정 · exit · 양 확인 · G1 결속 · 지문 다섯."""
+def _suite_lines(record: "dict | None", confirmed: "Any", last_close_fp: "str | None", now_fp: str,
+                 origin: "tuple[str | None, str]") -> "tuple[list[str], str]":
+    """(red 사유, `suite:` 행) — 마지막 suite 기록(behavior_support · k0 §4-4)의 판정 · exit · 양 확인 · G1 결속 · 지문 다섯 · G0 원점.
+    `origin` = (이 실행 첫 확정이 결속한 지원 기록 이름 — 확정 줄이 없거나 못 읽으면 None, 못 읽은 까닭)."""
     if record is None:
         return ["suite 기록 없음 — `behavior_guard.py suite <폴더>` 를 마지막 close 뒤에 돈다"], "suite: 기록 없음"
     try:
@@ -5254,11 +5848,18 @@ def _suite_lines(record: "dict | None", confirmed: "tuple[str, str, str] | None"
         if record.get("verdict") != "green":
             reds.append(f"suite 판정 {record.get('verdict')}")
         reds += [f"suite 사유: {r}" for r in record.get("reasons", [])]
-        bound: bool = run_digest == g1.get("run_definition_digest") and (
-            confirmed is None or (g1.get("digest"), g1.get("candidate")) == (confirmed[1], confirmed[2]))
+        sha_ok: bool = confirmed is None or confirmed.spec_sha is None or g1.get("sha") == confirmed.spec_sha
+        bound: bool = run_digest == g1.get("run_definition_digest") and sha_ok and (
+            confirmed is None or (g1.get("digest"), g1.get("candidate")) == (confirmed.digest, confirmed.candidate))
         if not bound:
             reds.append(f"suite 의 실행 정의 {run_digest} · G1 {g1.get('digest')}/{g1.get('candidate')} 이 G1 결속"
-                        f"({confirmed[1] if confirmed else '없음'}/{confirmed[2] if confirmed else '없음'})과 다르다")
+                        f"({confirmed.digest if confirmed else '없음'}/{confirmed.candidate if confirmed else '없음'})과 다르다"
+                        + ("" if sha_ok else f"(명세 sha {g1.get('sha')} ≠ {confirmed.spec_sha})"))
+        origin_name: str = record.get("origin_record") or record["support_record"]   # 옛 기록은 원점 = 정의 기록
+        if origin[1]:
+            reds.append(origin[1])
+        elif origin[0] is not None and origin_name != origin[0]:
+            reds.append(f"suite 의 G0 원점 {origin_name} ≠ 이 실행 첫 `G1 변경판 확정` 의 지원 기록 {origin[0]} — suite 를 다시 돈다")
         exits_ok: bool = bool(commands) and all(c.get("exit") == 0 and c.get("probe_exit") == c.get("exit") for c in commands)
         if not exits_ok or counts["commands"] != len(commands):
             reds.append("suite 명령 exit · 탐침 exit · 명령 수가 맞지 않는다")
@@ -5315,12 +5916,124 @@ def _suite_lines(record: "dict | None", confirmed: "tuple[str, str, str] | None"
         + (f"개명 케이스 skip {counts['renamed_skip']}(보고 — 개명된 새 키가 G2 에서 skip · xfail) · " if "renamed_skip" in counts else "")
         + (f"옮긴 케이스 skip {counts['moved_skip']}(보고 — 옮긴 케이스의 새 자리가 G2 에서 skip · xfail) · "
            if "moved_skip" in counts else "")
-        + f"지문 마지막 close {eq(same)} 시작 = 명령 사이 = 끝 = 지금")
+        + f"지문 마지막 close {eq(same)} 시작 = 명령 사이 = 끝 = 지금 · G0 원점 {origin_name}")
     return reds, line
 
 
+def _g0_origin(folder: Path) -> "tuple[str | None, str]":
+    """(이 실행 첫 `G1 변경판 확정` 이 결속한 지원 기록 이름 — 확정 줄이 없으면 None, 첫 후보를 못 읽은 까닭 red)."""
+    ra = _audit_module()
+    confs = _external("refactor_audit.g1_confirmations", ra.g1_confirmations, folder)
+    if not confs:
+        return None, ""
+    first: str = confs[0].candidate
+    try:
+        snap = _external("refactor_audit.load_candidate", ra.load_candidate, folder, first)
+    except RunError as exc:
+        return None, f"첫 확정 후보 {first} 를 읽지 못했다 — {exc}"
+    return str(snap["support_record"]), ""
+
+
+def _late_binding(folder: Path, opened: dict, confirmed: "Any") -> str:
+    """엄격 실행 verify — 마지막 follow · change 창(`opened`)의 결속(digest · 명세 sha)이 마지막 확정이 아닐 때, 그 결속을 확정한 줄 뒤의
+    확정들이 0F · S 슬라이스를 하나도 건드리지 않았으면 통과(빈 글) · 아니면 건드린 확정 · 슬라이스와 처리 길."""
+    ra = _audit_module()
+    digest, sha = opened["g1_digest"], opened.get("g1_sha")
+    confs: list = list(_external("refactor_audit.g1_confirmations", ra.g1_confirmations, folder))
+    at: "int | None" = max((i for i, c in enumerate(confs) if c.digest == digest and sha in (None, c.spec_sha)), default=None)
+    gap: str = f"마지막 창 결속 {digest} ≠ G1 변경판 확정 {confirmed.digest}" if digest != confirmed.digest else \
+        f"마지막 창 결속 명세 sha {sha} ≠ G1 변경판 확정 명세 sha {confirmed.spec_sha}"
+    if at is None:
+        return f"{gap}(그 결속을 확정한 줄이 이 실행에 없다)"
+    hit: "list[str]" = []
+    parts: "list[str]" = []
+    for conf in confs[at + 1:]:
+        touched: "tuple[str, ...]" = _external("refactor_audit.touched_late_slices", ra.touched_late_slices, folder,
+                                               conf.at)
+        if not touched:
+            continue
+        diff: dict = _external("refactor_audit.confirmation_diff", ra.confirmation_diff, folder, conf.at)
+        why: "list[str]" = [_delta_text(diff[s]) if len(touched) == 1 else f"{s}: {_delta_text(diff[s])}" for s in touched]
+        hit.append(conf.at)
+        parts.append(f"확정 {conf.at} 이 슬라이스 {' · '.join(touched)} 를 건드렸다({' / '.join(why)})")
+    if not parts:
+        return ""
+    ref: str = hit[0] if len(hit) == 1 else "<그 확정 시각>"
+    return (f"{gap} — " + " · ".join(parts) + " — 마지막 창이 그 슬라이스의 창이면 rebind · "
+            f"아니면 그 슬라이스마다 `--reason 재승인반영 --ref {ref}` 창(지금 계획에서 지운 슬라이스여도 연다)")
+
+
+def _slice_execution(snap: dict, windows: "list[tuple[int, dict, list[dict]]]", planned: "list[str]") -> "tuple[list[str], str]":
+    """(red 사유, `슬라이스별 집행 …` 구) — 엄격 실행. 마지막 확정 스냅숏의 승인 원소(옛 원문 · 기대 추가 · 연산)마다 주인 슬라이스(그 원소를
+    적은 V 의 슬라이스 · 그 V 를 결속 표에 실었던 변경 창의 슬라이스)의 변경 창이 집행했나 · V 가 있는 `S<n>` 마다 변경 창이 있나 · 변경 창이
+    주인 아닌 슬라이스의 원소를 집행했나."""
+    ra = _audit_module()
+    reds: "list[str]" = []
+    changes: "list[tuple[int, dict, dict]]" = [(n, o, c[-1]) for n, o, c in windows if o["kind"] == "change" and o.get("slice") and c]
+    slice_of: "dict[str, str]" = {v["id"]: ra.slice_id(str(v.get("slice", ""))) for v in snap.get("V", [])}
+    homes: "dict[str, set[str]]" = {vid: {sid} | {o["slice"] for _n, o, _l in changes if vid in o["allow"].get("V", [])}
+                                    for vid, sid in slice_of.items()}
+    olds: "dict[tuple[str, str], list[str]]" = {}                 # (케이스, 옛 원문) → V 들
+    adds: "dict[tuple[str, str], int]" = {}                       # (케이스, V) → 기대 추가
+    ops: "dict[str, collections.Counter[str]]" = {}               # 연산 → V 별 수
+    for v in snap.get("V", []):
+        for test in v.get("tests", []):
+            for text in test.get("expect_old", []):
+                owners: "list[str]" = olds.setdefault((test["case"], text), [])
+                owners += [v["id"]] if v["id"] not in owners else []
+            extra: int = int(test.get("expect_add", 0) or 0)
+            if extra:
+                adds[(test["case"], v["id"])] = adds.get((test["case"], v["id"]), 0) + extra
+        for op in v.get("ops", []):
+            ops.setdefault(op_key(op["app"], op["call"]), collections.Counter())[v["id"]] += 1
+    at_home = lambda vids: set().union(*(homes[x] for x in vids))  # noqa: E731
+    want: "collections.Counter[str]" = collections.Counter()
+    done: "collections.Counter[str]" = collections.Counter()
+    for (case, text), vids in olds.items():
+        ran: bool = any(text in last.get("approved_hits", {}).get(case, {}).get("old", []) for _n, o, last in changes
+                        if o["slice"] in at_home(vids))
+        for sid in {slice_of[x] for x in vids}:
+            want[sid] += 1
+            done[sid] += ran
+    by_slice: "dict[tuple[str, str], list[str]]" = collections.defaultdict(list)
+    for case, vid in adds:
+        by_slice[(case, slice_of[vid])].append(vid)
+    for (case, sid), vids in by_slice.items():
+        need: int = sum(adds[(case, x)] for x in vids)
+        got: int = sum(int(last.get("approved_hits", {}).get(case, {}).get("add", 0)) for _n, o, last in changes
+                       if o["slice"] in at_home(vids))
+        want[sid] += need
+        done[sid] += min(need, got)
+    for key, owners_of in ops.items():
+        for sid in {slice_of[x] for x in owners_of}:
+            vids = [x for x in owners_of if slice_of[x] == sid]
+            need = sum(owners_of[x] for x in vids)
+            got = sum(last.get("ops", []).count(key) for _n, o, last in changes if o["slice"] in at_home(vids))
+            want[sid] += need
+            done[sid] += min(need, got)
+    number = lambda s: int(s[1:]) if s[1:].isdigit() else 0  # noqa: E731
+    slices: "list[str]" = sorted({s for s in planned if ra.slice_branch(s) == "S"} | set(slice_of.values()), key=number)
+    for sid in slices:
+        vids = [x for x, s in slice_of.items() if s == sid]
+        if vids and not any(o["slice"] == sid for _n, o, _l in changes):
+            reds.append(f"슬라이스 {sid} 의 변경 창이 없다 — 승인 V {' · '.join(vids)}")
+        if done[sid] < want[sid]:
+            reds.append(f"슬라이스 {sid} 승인 원소 {want[sid]} 중 집행 {done[sid]} — 주인 슬라이스의 변경 창이 집행하지 않았다")
+    for n, o, last in changes:
+        strays: "list[str]" = []
+        for case, hit in last.get("approved_hits", {}).items():
+            strays += [f"`{case}` «{text[:80]}»" for text in hit.get("old", [])
+                       if (case, text) in olds and o["slice"] not in at_home(olds[(case, text)])]
+            adders: "list[str]" = [vid for c, vid in adds if c == case]
+            strays += [f"`{case}` 기대 추가 {hit['add']}"] if int(hit.get("add", 0)) and adders and o["slice"] not in at_home(adders) else []
+        strays += [f"연산 {key[:160]}" for key in sorted(set(last.get("ops", []))) if key in ops and o["slice"] not in at_home(ops[key])]
+        reds += [f"슬라이스 밖 집행 — w{n}(슬라이스 {o['slice']}) {x}" for x in strays]
+    return reds, " · 슬라이스별 집행 " + (" · ".join(f"{s} {done[s]}/{want[s]}" for s in slices) or "없음")
+
+
 def _verify_refactor(folder: Path, repo: Path) -> int:
-    """리팩토링 모드 verify(§3-6 · §4-5) — `동작 보존:` · `바뀐 것 실행:` · `suite:` 세 줄과 `요약:`. 하나라도 어긋나면 red."""
+    """리팩토링 모드 verify(§3-6 · §4-5) — `동작 보존:` · `바뀐 것 실행:` · `suite:` 세 줄과 `요약:`. 하나라도 어긋나면 red. 엄격 실행은 창마다
+    슬라이스(첫 확정 전 창 빼고) · 슬라이스별 집행 · 마지막 창 결속 뒤 확정의 0F · S 차분을 더 보고 `동작 보존:` 끝에 창 차례 셈을 싣는다."""
     scope: Path = folder / "refactor-scope.md"
     text: str = scope.read_text(encoding="utf-8") if scope.is_file() else ""
     current: str = re.split(r"(?m)^#+\s*앞 실행", text)[0]
@@ -5329,6 +6042,7 @@ def _verify_refactor(folder: Path, repo: Path) -> int:
     windows = _windows(_run_dir(folder)) if scope.is_file() else []
     for _n, o, _c in windows:
         _window_mode(folder, o)
+    strict: bool = scope.is_file() and _strict_run(folder)
     reds: "list[str]" = []
     open_now: "list[int]" = [n for n, _o, c in windows if _is_open(c)]
     if open_now:
@@ -5350,7 +6064,7 @@ def _verify_refactor(folder: Path, repo: Path) -> int:
         last: dict = closes[-1]
         last_close_fp = last.get("fingerprint_end")
         red_items += len(last.get("reds", []))
-        allowed: "dict[str, tuple[str, ...]]" = {}
+        allowed: "dict[str, tuple[str, ...]]" = _allowed_verdicts(last)    # 키마다 받는 판정(close 가 남김)
         covered: "set[str]" = set()
         for d in last.get("dispositions", []):
             covered |= {d["path"], d.get("from") or d["path"]}
@@ -5362,8 +6076,6 @@ def _verify_refactor(folder: Path, repo: Path) -> int:
             units[d["처분"]] += len(d["keys"])
             if d["처분"] == BUNDLE_AUDIT and d.get("묶음"):
                 bundles.add((n, tuple(d["묶음"])))
-            for key, wanted in zip(d["keys"], d.get("요구 판정", [])):          # 키마다 받는 판정(close 가 남김)
-                allowed[key] = tuple(wanted.split(" · "))
         bare: "list[str]" = sorted(set(last.get("test_changed", [])) - covered)  # 처분 없이 지나간 바뀐 시험 쪽 경로
         auto_green += len(bare)
         reds += [f"w{n} 처분 없는 바뀐 시험 쪽 경로 {p}" for p in bare]
@@ -5375,12 +6087,19 @@ def _verify_refactor(folder: Path, repo: Path) -> int:
         reds += [f"감사 키 w{n} {x}" for x in details]
     if auto_green:
         reds.append(f"자동 초록 {auto_green} — 키 없이 처분됐거나 처분 없이 지나간 시험 쪽 파일")
+    order_text: str = " · 창 슬라이스 옛 꼴"
+    if strict:                                            # 첫 확정 전에 연 창(확정 줄 0)은 슬라이스 대조 밖
+        reds += [f"창 w{n} 에 슬라이스가 없다" for n, o, _c in windows if not o.get("slice") and o.get("g1_count")]
+        why = collections.Counter(str(o["reason"]) for _n, o, _c in windows if o.get("slice") and o.get("reason"))
+        plain: int = sum(1 for _n, o, _c in windows if o.get("slice") and not o.get("reason"))
+        order_text = f" · 창 차례 — 차례 {plain} · 까닭 {sum(why.values())}" + (
+            "(" + " · ".join(f"{r} {why[r]}" for r in _REASONS if why[r]) + ")" if why else "")
     line_keep: str = (
         f"동작 보존: 창 {len(windows)}(0T {kinds['test']} · 0C {kinds['code']} · 0F {kinds['follow']} · 변경 {kinds['change']}) · "
         f"열린 창 {len(open_now)} · 시험 쪽 바뀐 단위 — 묶음 감사 {units[BUNDLE_AUDIT]}(묶음 {len(bundles)}) · "
         f"개별 감사 {units[SINGLE_AUDIT]} · 승인 변경 {units[APPROVED_AUDIT]} · red {red_items} · 자동 초록 {auto_green} · "
         f"감사 키 일치 {matched_total}/{required_total}(" + " · ".join(f"{k} {mismatch[k]}" for k in ("중복", "누락", "추가", "낡음", "다름"))
-        + ")")
+        + ")" + order_text)
     ra = _audit_module()
     confirmed = _external("refactor_audit.g1_confirmed", ra.g1_confirmed, folder)
     if confirmed is None:
@@ -5389,10 +6108,24 @@ def _verify_refactor(folder: Path, repo: Path) -> int:
     else:
         snap = _external("refactor_audit.changes_snapshot", ra.changes_snapshot, folder, repo)
         digest: str = str(_external("refactor_audit.snapshot_digest", ra.snapshot_digest, snap))
-        bound = [o.get("g1_digest") for _n, o, _c in windows if o["kind"] in ("follow", "change")]
-        digest_ok: bool = digest == confirmed[1] and (not bound or bound[-1] == confirmed[1])
-        if not digest_ok:
-            reds.append(f"명세 승인판 digest {digest} · 마지막 창 결속 {bound[-1] if bound else '없음'} ≠ G1 변경판 확정 {confirmed[1]}")
+        if strict and confirmed.spec_sha is None:
+            reds.append(STRICT_NO_SHA)
+        sha_now: "str | None" = None if confirmed.spec_sha is None else _spec_sha_now(folder, confirmed)
+        bound = [o for _n, o, _c in windows if o["kind"] in ("follow", "change")]
+        late: str = ""                                    # 마지막 follow · change 창 결속 ≠ 마지막 확정(엄격 실행은 그 뒤 확정의 차분으로)
+        if bound and bound[-1].get("g1_digest") != confirmed.digest:
+            late = _late_binding(folder, bound[-1], confirmed) if strict else \
+                f"마지막 창 결속 {bound[-1].get('g1_digest')} ≠ G1 변경판 확정 {confirmed.digest}"
+        elif strict and bound and bound[-1].get("g1_sha") != confirmed.spec_sha:   # 승인판 digest 밖 슬라이스 계획만 바뀐 확정
+            late = _late_binding(folder, bound[-1], confirmed)
+        spec_ok: bool = digest == confirmed.digest and (confirmed.spec_sha is None or sha_now == confirmed.spec_sha)
+        digest_ok: bool = spec_ok and not late
+        if digest != confirmed.digest and not late:
+            late = f"마지막 창 결속 {bound[-1].get('g1_digest') if bound else '없음'} ≠ G1 변경판 확정 {confirmed.digest}"
+        if late:
+            reds.append(f"명세 승인판 digest {digest} · {late}")
+        if digest == confirmed.digest and not spec_ok:
+            reds.append(_spec_mismatch(confirmed, digest, sha_now))
         allow: dict = allow_table(snap)  # type: ignore[arg-type]
         approved_ops = collections.Counter(allow["ops"])
         generated: "collections.Counter[str]" = collections.Counter()
@@ -5434,16 +6167,24 @@ def _verify_refactor(folder: Path, repo: Path) -> int:
                                     for r in closes[-1].get("moves", [])}
         unmoved: "list[str]" = [move_label(it) for it in move_rows if move_label(it) not in moved_labels]
         reds += [f"옮김 행인데 옮김 없음 — {x}(어느 창의 마지막 close 에도 적용되지 않았다)" for x in unmoved]
+        slice_text: str = ""
+        if strict:
+            slice_reds, slice_text = _slice_execution(snap, windows, [r.slice for r in _slice_plan(folder)])  # type: ignore[arg-type]
+            reds += slice_reds
+        carry: str = str(_external("refactor_audit.carry_tail", ra.carry_tail, folder))
+        sha_text: str = f" · 명세 sha {confirmed.spec_sha}" if confirmed.spec_sha is not None else ""
         line_change = (f"바뀐 것 실행: 승인 V {len(allow['V'])}건 · 연산 승인 {sum(approved_ops.values())} "
                        f"{'=' if generated == approved_ops else '≠'} 생성 {sum(generated.values())}(다중집합) · "
                        f"기존 마이그레이션 변경 {existing} · 승인 기대 원소 {expected} 중 변경 {changed_count} · "
-                       f"목록 밖 다른 BC 파일 {outside} · digest {confirmed[1]} {'=' if digest_ok else '≠'} G1 변경판 확정"
+                       f"목록 밖 다른 BC 파일 {outside} · digest {confirmed.digest}{sha_text} {'=' if digest_ok else '≠'} G1 변경판 확정"
                        + (f" · 개명 행 {len(rename_rows)} 중 적용 {len(rename_rows) - len(unapplied)}" if rename_rows else "")
-                       + (f" · 옮김 행 {len(move_rows)} 중 적용 {len(move_rows) - len(unmoved)}" if move_rows else ""))
+                       + (f" · 옮김 행 {len(move_rows)} 중 적용 {len(move_rows) - len(unmoved)}" if move_rows else "")
+                       + slice_text + carry)
     bs = _support_module()
     record = _external("behavior_support.latest_suite_record", bs.latest_suite_record, folder)
     now_fp: str = str(_external("behavior_support.fingerprint", bs.fingerprint, repo))
-    suite_reds, line_suite = _suite_lines(record, confirmed, last_close_fp, now_fp)  # type: ignore[arg-type]
+    origin: "tuple[str | None, str]" = _g0_origin(folder) if confirmed is not None and record is not None else (None, "")
+    suite_reds, line_suite = _suite_lines(record, confirmed, last_close_fp, now_fp, origin)  # type: ignore[arg-type]
     reds += suite_reds
     for r in reds:
         print(f"  red: {r}")
@@ -5457,7 +6198,10 @@ def _verify_refactor(folder: Path, repo: Path) -> int:
 # ── rebind · support · suite ─────────────────────────────────────────────────
 
 def cmd_rebind(folder: Path, repo: Path) -> int:
-    """열린 follow · change 창의 허용 표만 새 G1 변경판으로 — 창 기준(head0 · dirty0 · 케이스 · 마이그레이션 측정)은 그대로."""
+    """열린(또는 다음 창을 열기 전의 마지막) follow · change 창의 허용 표만 새 G1 변경판으로 — 창 기준(head0 · dirty0 · 케이스 · 마이그레이션
+    측정 · 슬라이스 · 차분)은 그대로. 결속 digest · 명세 sha · 허용 표를 함께 바꾸고, 엄격 변경 창은 지운 V 의 케이스 파일 가운데 그 확정이
+    `retain` 재조직 행으로 더한 파일을 `miss_retain`(미검출 처리 허용 파일)에 싣는다 — rebind 마다 다시 셈해 그 V 가 되살아났거나 그 행이
+    없어진 파일은 남기지 않는다."""
     _anchor(folder)
     run_dir: Path = _run_dir(folder)
     windows = _closable(run_dir)
@@ -5466,17 +6210,47 @@ def cmd_rebind(folder: Path, repo: Path) -> int:
     n, opened, _closes = windows[-1]
     if _window_mode(folder, opened) != "refactor" or opened["kind"] not in ("follow", "change"):
         raise RunError(f"창 w{n} 은 follow · change 창이 아니다 — rebind 할 허용 표가 없다")
-    digest, allow = _g1_binding(folder, repo)
+    binding: _G1Binding = _g1_binding(folder, repo)
+    digest, sha = binding.confirmed.digest, binding.confirmed.spec_sha
     previous: str = opened["g1_digest"]
-    if digest == previous:
+    previous_sha: "str | None" = opened.get("g1_sha")
+    if digest == previous and (sha is None or sha == previous_sha):
         raise RunError(f"새 `G1 변경판 확정` 이 없다 — 창 결속 digest {previous} 와 같다")
-    opened.setdefault("rebinds", []).append({"at": _now(), "from": previous, "to": digest})
+    record: dict = {"at": _now(), "from": previous, "to": digest}
+    if sha is not None or previous_sha is not None:
+        record.update({"from_sha": previous_sha, "to_sha": sha})
+    allow: dict = _bound_allow(folder, opened, binding)
+    tail: str = f" · 슬라이스 {opened['slice']} · 명세 sha {previous_sha} → {sha}" if opened.get("slice") else ""
+    if opened["kind"] == "change" and opened.get("slice"):
+        prior: "list[tuple[dict, dict]]" = [(o, c[-1]) for m, o, c in _windows(run_dir) if m < n and c]
+        removed, missed = _miss_retain(opened["allow"], allow, prior)
+        retained: "set[str]" = {_moved_path(p, prior) for p in allow["retain_files"]}
+        kept: "list[str]" = sorted({p for r in [*opened.get("rebinds", []), {"miss_retain": missed}]
+                                    for p, gone in r.get("miss_retain", {}).items() if p in retained and set(gone) - set(allow["V"])})
+        allow.update({"miss_retain": kept} if kept else {})
+        record.update({"removed_v": removed, "miss_retain": missed})
+        tail += f" · 지운 V {len(removed)}" + (f"({' · '.join(removed)})" if removed else "") + f" · 미검출 처리 허용 파일 {len(kept)}"
+    opened.setdefault("rebinds", []).append(record)
     opened["g1_digest"] = digest
+    if sha is not None or previous_sha is not None:
+        opened["g1_sha"] = sha
     opened["allow"] = allow
     _dump(run_dir / f"w{n}-open.json", opened)
     print(f"요약: 창 w{n} rebind · 종류 {KIND_LABELS[opened['kind']]} · G1 digest {previous} → {digest} · 창 기준(HEAD "
-          f"{opened['head'][:12]} · dirty {len(opened['dirty'])}) 그대로 · rebind {len(opened['rebinds'])}회째")
+          f"{opened['head'][:12]} · dirty {len(opened['dirty'])}) 그대로 · rebind {len(opened['rebinds'])}회째{tail}")
     return 0
+
+
+def _miss_retain(old: dict, new: dict, prior: "list[tuple[dict, dict]]") -> "tuple[list[str], dict[str, list[str]]]":
+    """(새 확정이 지운 그 창 V, 그 V 만 적던 케이스의 파일 가운데 새 확정이 `retain` 재조직 행으로 더한 파일 → 그 케이스들의 지운 V) — 경로는
+    앞 창들의 이동 · 옮김 행을 따라간 이 창 기준 판 경로로 접어 견준다."""
+    removed: "set[str]" = set(old["V"]) - set(new["V"])
+    gone: "dict[str, set[str]]" = {}
+    for case, entry in old["approved_cases"].items():
+        if entry["V"] and set(entry["V"]) <= removed:
+            gone.setdefault(forward_key(case, prior).partition("::")[0], set()).update(entry["V"])
+    added: "set[str]" = {_moved_path(p, prior) for p in set(new["retain_files"]) - set(old["retain_files"])}
+    return sorted(removed), {p: sorted(gone[p]) for p in sorted(added & set(gone))}
 
 
 def cmd_support(folder: Path, repo: Path) -> int:
@@ -5497,6 +6271,9 @@ def main(argv: "list[str]") -> int:
     ap.add_argument("folder", help="산출물 폴더(.dddjango/<prefix>-<slug>)")
     ap.add_argument("--kind", choices=KINDS, help="open 전용 — 0T(test) | 0C(code) | 0F(follow) | 변경 슬라이스(change)")
     ap.add_argument("--mode", choices=MODES, help="open 전용 · 필수 — refactor | feature(open 기록에 동결)")
+    ap.add_argument("--slice", help="open 전용(리팩토링 모드) — 명세 `## 슬라이스 계획` 의 슬라이스 칸(엄격 실행은 첫 확정 뒤 필수)")
+    ap.add_argument("--reason", choices=tuple(_REASONS), help="open 전용 — 지난 차례 창의 까닭")
+    ap.add_argument("--ref", help="open 전용 — 까닭의 가리킴(끝맞춤 · 정렬맞춤 빼고 필수)")
     ap.add_argument("--collect", action="store_true", help="support 전용 — G0 수집 지원 확인")
     ap.add_argument("--repo", default=".", help="저장소 루트(기본 .)")
     ap.add_argument("--python", default=None, help="마이그레이션 동적 측정 인터프리터(기본: 저장소 .venv/venv)")
@@ -5515,7 +6292,7 @@ def main(argv: "list[str]") -> int:
         if ns.command == "open":
             if ns.kind is None:
                 raise RunError("open 은 --kind test|code|follow|change 가 필요하다")
-            return cmd_open(folder, repo, ns.kind, ns.mode or "")   # 모드가 빠지면 cmd_open 이 실행 불능으로 낸다(필수)
+            return cmd_open(folder, repo, ns.kind, ns.mode or "", ns.slice, ns.reason, ns.ref)   # 모드가 빠지면 cmd_open 이 실행 불능(필수)
         if ns.command == "close":
             return cmd_close(folder, repo)
         if ns.command == "rebind":

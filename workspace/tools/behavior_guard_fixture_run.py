@@ -4,22 +4,27 @@
 각 사례는 새 임시 저장소에서 «기준 커밋 → open → 편집(커밋 또는 작업 트리) → close» 를 돌려 exit 와 요약을 대조한다.
 현장 재생(spring_dream 5커밋 green · 계약 변경 7커밋 red)은 구현 리뷰 기록(scratch)이 맡고, 여기서는 규칙마다 양성·음성을 둔다.
 기능 모드 사례(`--mode feature`)는 지금 판정 그대로다(0C 이름 단서 짝 포함). 리팩토링 모드 사례(설계 v15.2 §4 · §8 B0 «+약 40»)는
-처분 · r4 · r5 · 보충 · 감사 단위 · 묶음 자료 · D · 감사 키 · DB · 창 · 개명 · 옮김(시험 파일 나누기 · 모으기) · 정규화 지도를 보고, 모든 사례에서 «바이트가 바뀐 시험 쪽 파일 수 = 감사 키 낸 파일 + red 파일»
+처분 · r4 · r5 · 보충 · 감사 단위 · 묶음 자료 · D · 감사 키 · DB · 창 · 개명 · 옮김(시험 파일 나누기 · 모으기) · 정규화 지도 · 엄격 실행(2.46.0 — 창
+차례 · 까닭 · 슬라이스 허용 · 창 단위 미검출 · 명세 sha 결속 · G2 원점)을 보고, 모든 사례에서 «바이트가 바뀐 시험 쪽 파일 수 = 감사 키 낸 파일 + red 파일»
 (자동 초록 0)을 따로 센다. G1 스냅숏(refactor_audit.changes_snapshot)은 사례가 정한 값을 돌려주는 대역으로 바꿔 끼운다(명세
 판형은 refactor_audit 픽스처 몫) — `--stub-support` 면 behavior_support 도 k0 서명 그대로의 대역을 쓴다.
-`--only-group`(묶음 창 사례) · `--only-new`(2.43.0 · 2.44.0 새 갈래 사례)는 `--mutation-test` 가 변이 scripts 사본에 대고 돈다.
+`--only-group`(묶음 창 사례) · `--only-new`(2.43.0 · 2.44.0 · 2.46.0 새 갈래 사례 — `slice#SW2+SW8` 꼴이면 그 묶음의 그 사례만)는 `--mutation-test` 가
+변이 scripts 사본에 대고 돈다.
 exit 0 = 전건 기대 일치 · 1 = 불일치.
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import importlib.util
+import io
 import json
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Callable
@@ -576,11 +581,67 @@ RENAME: "dict[str, str | None]" = {"application/core/product.py": "class New:\n 
 MOVE: "dict[str, str | None]" = {"application/core/old.py": None, "application/core/new.py": "def product():\n    return 9\n"}
 SIMPLE: str = "from application.core.product import product\n\n\ndef test_check():\n    assert product() == 9\n"
 
-STUB_AUDIT: str = r'''"""refactor_audit 대역(behavior_guard 픽스처 · k0 §4-4 서명) — 승인판 스냅숏은 사례가 `<폴더>/stub-snapshot.json` 에 둔다."""
+STUB_AUDIT: str = r'''"""refactor_audit 대역(behavior_guard 픽스처 · k0 §4-4 서명 · 2.46.0 노출 꼴) — 승인판 스냅숏은 사례가 `<폴더>/stub-snapshot.json` 에
+두고, 확정한 후보 · 계획 이력은 `stub-candidates/`(`<digest>.json` · `<확정 시각>.plan.json`), 엄격 실행 표지는 `stub-strict`, 지금 계획은
+`stub-plan.json`, 확정 차분은 `stub-diff/<확정 시각>.json`, 이번 실행 항목은 `stub-items.json`, 앞 결정 옮김 꼬리는 `stub-carry.txt` 다."""
 import hashlib
 import json
 import re
 from pathlib import Path
+from typing import NamedTuple
+
+
+class G1Confirmation(NamedTuple):
+    at: str
+    digest: str
+    candidate: str
+    spec_sha: "str | None"
+
+
+class SlicePlanRow(NamedTuple):
+    slice: str
+    purpose: str
+    rows: tuple
+    files: tuple
+    retain_files: tuple
+
+
+class SliceDelta(NamedTuple):
+    branch: str
+    plan_row: str
+    v: tuple
+    v_removed: tuple
+    retain: tuple
+    retain_removed: tuple
+    rows: tuple
+    rows_removed: tuple
+    reworded: tuple
+    edits: tuple
+    edits_removed: tuple
+
+    @property
+    def touched(self):
+        return bool(self.plan_row in ("더함", "바뀜") or self.v or self.retain or self.retain_removed or self.rows
+                    or self.rows_removed or self.edits or self.edits_removed)
+
+
+class ScopeItems(NamedTuple):
+    adopted: frozenset
+    boost: frozenset
+    removed: frozenset
+
+    @property
+    def live(self):
+        return (self.adopted | self.boost) - self.removed
+
+
+class AddedItem(NamedTuple):
+    bid: str
+    gist: str
+
+
+def _json(path, empty):
+    return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else empty
 
 
 def snapshot_digest(snap):
@@ -595,18 +656,87 @@ def changes_snapshot(folder, project):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def g1_confirmed(folder):
+def g1_confirmations(folder):
     scope = Path(folder) / "refactor-scope.md"
     text = re.split(r"(?m)^#+\s*앞 실행", scope.read_text(encoding="utf-8") if scope.is_file() else "")[0]
-    found = re.findall(r"G1 변경판 확정\s+(\S+)\s*·\s*digest\s+([0-9a-f]{12})\s*·\s*후보\s+([0-9a-f]{12})", text)
-    return tuple(found[-1]) if found else None
+    return [G1Confirmation(at, d, c, s or None) for at, d, c, s in re.findall(
+        r"G1 변경판 확정\s+(\S+)\s*·\s*digest\s+([0-9a-f]{12})\s*·\s*후보\s+([0-9a-f]{12})(?:\s*·\s*명세 sha\s+([0-9a-f]{12}))?", text)]
+
+
+def g1_confirmed(folder):
+    found = g1_confirmations(folder)
+    return found[-1] if found else None
+
+
+def strict_run(folder):
+    return (Path(folder) / "stub-strict").is_file()
+
+
+def spec_sha(folder):
+    return hashlib.sha256((Path(folder) / "design-spec.md").read_bytes()).hexdigest()[:12]
+
+
+def normalize(text):
+    return re.sub(r"\s+", "", text.replace("**", "").replace("*", "").replace("`", ""))
+
+
+def slice_id(cell):
+    return re.sub(r"[*`\s]", "", cell)
+
+
+def slice_branch(sid):
+    return sid[:2] if re.fullmatch(r"0[TCF]\S*", sid) else "S" if re.fullmatch(r"S\d+", sid) else ""
+
+
+def slice_plan(folder, at=None):
+    rows = _json(Path(folder) / "stub-plan.json" if at is None else Path(folder) / "stub-candidates" / f"{at}.plan.json", [])
+    return [SlicePlanRow(r["slice"], r.get("purpose", ""), tuple(r.get("rows", ())), tuple(r.get("files", ())),
+                         tuple(r.get("retain_files", ()))) for r in rows]
+
+
+def confirmed_slices(folder):
+    out = []
+    for conf in g1_confirmations(folder):
+        out += [r.slice for r in slice_plan(folder, conf.at) if r.slice not in out]
+    return out
+
+
+def confirmation_diff(folder, at=None):
+    confs = g1_confirmations(folder)
+    idx = len(confs) - 1 if at is None else next((i for i, c in enumerate(confs) if c.at == at), -1)
+    if idx < 0:
+        raise RuntimeError("대역: 확정 줄 없음")
+    if idx == 0:
+        return None
+    keys = SliceDelta._fields[2:]
+    return {sid: SliceDelta(slice_branch(sid), d.get("plan_row", ""), *(tuple(d.get(k, ())) for k in keys))
+            for sid, d in _json(Path(folder) / "stub-diff" / f"{confs[idx].at}.json", {}).items()}
+
+
+def touched_late_slices(folder, at=None):
+    return tuple(sid for sid, d in (confirmation_diff(folder, at) or {}).items() if d.touched and d.branch in ("0F", "S"))
+
+
+def carry_tail(folder):
+    path = Path(folder) / "stub-carry.txt"
+    return path.read_text(encoding="utf-8") if path.is_file() else ""
+
+
+def scope_items(folder):
+    got = _json(Path(folder) / "stub-items.json", {})
+    return ScopeItems(*(frozenset(got.get(k, ())) for k in ("adopted", "boost", "removed")))
+
+
+def boost_items(folder):
+    got = _json(Path(folder) / "stub-items.json", {})
+    return {bid: (AddedItem(bid, f"{bid} 요지"), tuple(where)) for bid, where in got.get("boost_items", {}).items()}
 
 
 def load_candidate(folder, candidate_digest):
-    snap = changes_snapshot(folder, None)
-    if snapshot_digest(snap) != candidate_digest:
+    path = Path(folder) / "stub-candidates" / f"{candidate_digest}.json"
+    if not path.is_file():
         raise RuntimeError("대역: 후보 없음")
-    return snap
+    return json.loads(path.read_text(encoding="utf-8"))
 '''
 
 STUB_SUPPORT: str = r'''"""behavior_support 대역(behavior_guard 픽스처 · k0 §4-5 서명 · --stub-support)."""
@@ -646,6 +776,7 @@ def cmd_suite(folder, repo):
 
 # 대역 폴더(사례 전체가 나눠 쓴다) · 이 프로세스에 적재한 behavior_guard(분류 · 불변식) · behavior_support(suite 기록 지문)
 STATE: "dict[str, object]" = {}
+_TOTALS_LOCK: threading.Lock = threading.Lock()              # 엄격 실행 사례는 병렬로 돈다
 WRAP: str = ("import runpy, sys; stub, scripts = sys.argv[1], sys.argv[2]; sys.argv = sys.argv[3:]; "
              "sys.path[:0] = [stub, scripts]; runpy.run_path(sys.argv[0], run_name='__main__')")
 
@@ -670,7 +801,8 @@ def _rguard(repo: Path, *args: str, folder: str = RFOLDER) -> "tuple[int, str]":
     if args[0] == "close" and folder == RFOLDER and proc.returncode in (0, 2):   # 판정한 close 마다 자동 초록 0 을 따로 센다
         problem, (files, keyed, reds) = _invariant(repo)
         totals: "list[int]" = STATE["totals"]  # type: ignore[assignment]
-        totals[:] = [totals[0] + 1, totals[1] + files, totals[2] + keyed, totals[3] + reds]
+        with _TOTALS_LOCK:
+            totals[:] = [totals[0] + 1, totals[1] + files, totals[2] + keyed, totals[3] + reds]
         if problem:
             STATE["invariant_fails"].append(f"{problem}\n{out}")  # type: ignore[attr-defined]
     return proc.returncode, out
@@ -728,16 +860,37 @@ def _snap(*vs: dict, retain: "tuple[str, ...]" = (), other: "tuple[tuple[str, st
 
 
 def _stage(repo: Path, snap: dict) -> str:
-    """명세 승인판만 바꾼다(G1 변경판 확정 줄은 쓰지 않는다)."""
-    (repo / RFOLDER / "stub-snapshot.json").write_text(json.dumps(snap, ensure_ascii=False), encoding="utf-8")
-    return _k0_digest(snap)
+    """명세 승인판만 바꾼다(G1 변경판 확정 줄은 쓰지 않는다 · 후보 이력은 남긴다)."""
+    digest: str = _k0_digest(snap)
+    text: str = json.dumps(snap, ensure_ascii=False)
+    history: Path = repo / RFOLDER / "stub-candidates"
+    history.mkdir(exist_ok=True)
+    (history / f"{digest}.json").write_text(text, encoding="utf-8")
+    (repo / RFOLDER / "stub-snapshot.json").write_text(text, encoding="utf-8")
+    return digest
 
 
-def _bind(repo: Path, snap: dict, stamp: str = "2026-10-04T03:10Z") -> str:
-    """명세 승인판 + `G1 변경판 확정` 줄(이번 실행 몫)."""
+def _spec_sha(repo: Path) -> str:
+    return hashlib.sha256((repo / RFOLDER / "design-spec.md").read_bytes()).hexdigest()[:12]
+
+
+def _bind(repo: Path, snap: dict, stamp: str = "2026-10-04T03:10Z", sha: bool = False, plan: "list[dict] | None" = None) -> str:
+    """명세 승인판 + `G1 변경판 확정` 줄(이번 실행 몫) — `sha` 면 명세 파일(`design-spec.md`)을 두고 확정 줄에 명세 sha 칸을 쓴다 ·
+    `plan` 은 지금 계획이 되고 그 확정의 계획 이력으로도 남는다(없으면 지금 계획을 이력으로)."""
     digest: str = _stage(repo, snap)
-    with (repo / RFOLDER / "refactor-scope.md").open("a", encoding="utf-8") as f:
-        f.write(f"\n## G1 변경 결정 {stamp} · 후보 digest {digest}\n\nG1 변경판 확정 {stamp} · digest {digest} · 후보 {digest}\n")
+    folder: Path = repo / RFOLDER
+    current: Path = folder / "stub-plan.json"
+    if plan is not None:
+        current.write_text(json.dumps(plan, ensure_ascii=False), encoding="utf-8")
+    if current.is_file():
+        (folder / "stub-candidates" / f"{stamp}.plan.json").write_text(current.read_text(encoding="utf-8"), encoding="utf-8")
+    tail: str = ""
+    if sha:
+        if not (folder / "design-spec.md").is_file():
+            (folder / "design-spec.md").write_text("# 명세\n\n처방 한 줄.\n", encoding="utf-8")
+        tail = f" · 명세 sha {_spec_sha(repo)}"
+    with (folder / "refactor-scope.md").open("a", encoding="utf-8") as f:
+        f.write(f"\n## G1 변경 결정 {stamp} · 후보 digest {digest}\n\nG1 변경판 확정 {stamp} · digest {digest} · 후보 {digest}{tail}\n")
     return digest
 
 
@@ -1254,7 +1407,7 @@ def rcases() -> "list[dict]":
     add("대상 BC 밖: 0C · 목록 밖 다른 BC 파일 → red", "code", {TP: SIMPLE, shared: "NAME = 'old'\n"},
         _edit({**billing, shared: "NAME = 'new'\n"}), {}, exit=2, snap=_snap(other=((shared, "공유 표면", "0C"),)),
         needles=("application/billing/api.py — 대상 BC(`application/core/`) 밖 경로가 다른 BC 편집 목록 밖(창 0C 허용 갈래: "
-                 "공유 표면 · 묶음 import 치환 · 프로젝트 합성)",),
+                 "공유 표면 · 묶음 import 치환 · 프로젝트 합성 · framework 새 모듈)",),
         post=lambda repo, rec, _o: [] if rec.get("outside_bc") == ["application/billing/api.py"] else [
             f"outside_bc {rec.get('outside_bc')}"])
     add("대상 BC 밖: 0C · 갈래가 허락 밖(받는 쪽 어댑터 줄)인 경로 → red", "code", {TP: SIMPLE}, _edit(billing), {}, exit=2,
@@ -1284,7 +1437,7 @@ def rcases() -> "list[dict]":
         _edit({**grp_move, grp_user: grp_follow(grp_src)}), {}, exit=2,
         snap=_snap(other=((grp_user, "받는 쪽 어댑터", "0C"),)),
         needles=(f"{grp_user} — 대상 BC(`application/core/`) 밖 경로가 다른 BC 편집 목록 밖(창 0C 허용 갈래: "
-                 "공유 표면 · 묶음 import 치환 · 프로젝트 합성)",),
+                 "공유 표면 · 묶음 import 치환 · 프로젝트 합성 · framework 새 모듈)",),
         post=lambda repo, rec, _o: [] if rec.get("outside_bc") == [grp_user] else [f"outside_bc {rec.get('outside_bc')}"], group=True)
     add("대상 BC 밖: 0C 묶음 창 · 같은 치환 줄이 목록에 없음 → red", "code", {**grp_base, grp_user: grp_src},
         _edit({**grp_move, grp_user: grp_follow(grp_src)}), {}, exit=2, needles=(f"{grp_user} — 대상 BC",), group=True)
@@ -1311,7 +1464,7 @@ def rcases() -> "list[dict]":
         {TP: SIMPLE, grp_user: grp_src}, _edit({grp_user: grp_src.replace("return VoidA()", "return VoidA() or 100")}), {},
         exit=2, snap=grp_row,
         needles=(f"{grp_user} — 대상 BC(`application/core/`) 밖 경로가 다른 BC 편집 목록 밖(창 변경 허용 갈래: 목록 전부(묶음 "
-                 "import 치환 빼고))",), group=True)
+                 "import 치환 · framework 새 모듈 빼고))",), group=True)
     # 케이스 증감 — change 는 add/remove 행 그대로
     add("케이스: change · 승인 add 행의 새 케이스 → 승인 변경 감사", "change", {TP: SIMPLE},
         _edit({}, SIMPLE + "\n\ndef test_new():\n    assert 1 == 1\n"), {TP: ("승인 변경 감사", ["<module>", "test_new"])},
@@ -1325,7 +1478,7 @@ def rcases() -> "list[dict]":
         snap=_snap(_v("V1", f"{TP}::test_old", ["assert 2 == 2"], verb="remove")),
         post=lambda repo, rec, _o: [] if rec["g0_keep_exceptions"]["removed"] == [f"{TP}::::test_old"] else [
             f"g0_keep_exceptions {rec['g0_keep_exceptions']}"])
-    add("승인 변경 미검출: 승인 케이스 파일인데 확정 변화 없음 → 개별 감사 + 보고", "change", {TP: SIMPLE},
+    add("승인 변경 미검출: 승인 케이스 파일인데 확정 변화 없음 → 개별 감사 + 보고(옛 꼴)", "change", {TP: SIMPLE},
         _edit({}, SIMPLE.replace("    assert", "    # 설명\n    assert")),
         {TP: ("개별 감사", ["test_check"], {"reason": "승인 변경 미검출"})},
         snap=_snap(_v("V1", f"{TP}::test_check", ["assert product() == 9"])), needles=("보고:", "승인 변경 미검출"))
@@ -2851,13 +3004,13 @@ def _norm_other_cases() -> "list[tuple[str, Callable[[], str], str]]":
         ("0F V 가 인용한 원소를 ① → red", lambda: _ndisp("follow", g1, after, pinned=pin), "red · D 확정(D 기대식 1)"),
         ("d_changes V 고정 · 인용 원소만 확정", lambda: _nd(g1, after, {"test_a": {"assert run() < T * 5"}}), FX),
         ("0T 앞 창 ① 고쳐 씀 → 개별 감사", lambda: _ndisp("test", one, one_0t), "개별 감사 · 0T"),
-        ("변경 창 0T 뒤 상수 값 6(V 는 옛 원문 인용) → 승인 변경 미검출",
+        ("변경 창 0T 뒤 상수 값 6(V 는 옛 원문 인용) → 승인 변경 미검출(옛 꼴)",
          lambda: _ndisp("change", one_0t, one_0t.replace("SLACK = 5", "SLACK = 6"), appr),
          "개별 감사 · 허용 파일 · D 공유 정의 변화 1 · 승인 변경 미검출 `app/test/test_x.py::test_a`"),
         ("변경 창 0T 뒤 단언 T * 6(V 는 옛 원문 인용) → red(«바뀌는 기대» 밖)",
          lambda: _ndisp("change", one_0t, one_0t.replace("T * SLACK", "T * 6"), appr),
          "red · D 확정(D 기대식 1) · `app/test/test_x.py::test_a` 의 바뀐 옛 원소가 «바뀌는 기대» 밖 — «assert run() < T * SLACK»"),
-        ("변경 창 ① 만(V 승인 케이스) → 승인 변경 미검출", lambda: _ndisp("change", one, one_0t, appr),
+        ("변경 창 ① 만(V 승인 케이스) → 승인 변경 미검출(옛 꼴)", lambda: _ndisp("change", one, one_0t, appr),
          "개별 감사 · 허용 파일 · 승인 변경 미검출 `app/test/test_x.py::test_a`"),
         ("짝 상수 값 5 → 6 · 0T", lambda: _ndisp("test", lcs, lcs.replace("N = 5", "N = 6")), "개별 감사 · 0T · D 공유 정의 변화 1"),
         ("짝 상수 값 5 → 6 · 0F", lambda: _ndisp("follow", lcs, lcs.replace("N = 5", "N = 6")), "개별 감사 · 허용 파일 · D 공유 정의 변화 1"),
@@ -2867,7 +3020,7 @@ def _norm_other_cases() -> "list[tuple[str, Callable[[], str], str]]":
         ("짝 지역 값 5 → 6 · 0F", lambda: _ndisp("follow", lcs_local, lcs_local.replace("e = 5", "e = 6")), "red · D 확정(D 지역 정의 1)"),
         ("짝 상수 안정 → 흔들림 · 0F", lambda: _ndisp("follow", lcs_shaky, lcs_shaky + "\n\ndef test_b(monkeypatch):\n    monkeypatch.setattr(\"m.N\", 9)\n"),
          "개별 감사 · 허용 파일"),
-        ("짝 상수 값 바꿈 · 변경 창 V 승인 → 승인 변경 미검출",
+        ("짝 상수 값 바꿈 · 변경 창 V 승인 → 승인 변경 미검출(옛 꼴)",
          lambda: _ndisp("change", lcs, lcs.replace("N = 5", "N = 6"), {f"{NP}::test_a": {"expect_old": ["assert a == N"], "expect_add": 0}}),
          "개별 감사 · 허용 파일 · D 공유 정의 변화 1 · 승인 변경 미검출 `app/test/test_x.py::test_a`"),
         ("승인 대조 옛 원문 · unittest 부르는 꼴", lambda: _ntexts(_nu("self.assertEqual(r, 1)"), _nu("self.assertEqual(r, 2)")),
@@ -2934,7 +3087,7 @@ def norm_rcases() -> "list[dict]":
     add("0T V 가 인용한 원소를 ① 로 → red(V 원소 고정)", "test", one, one_c, ("red", None, {"reason": "D 확정"}), snap=_snap(v1))
     add("0F V 가 인용한 원소를 ① 로 → red(V 원소 고정)", "follow", one, one_c, ("red", None, {"reason": "D 확정"}),
         snap=_snap(v1, retain=(TP,)))
-    add("변경 창 V 승인 케이스 편집이 ① 뿐 → 승인 변경 미검출", "change", one, one_c,
+    add("변경 창 V 승인 케이스 편집이 ① 뿐 → 승인 변경 미검출(옛 꼴)", "change", one, one_c,
         ("개별 감사", None, {"reason": "승인 변경 미검출"}), snap=_snap(v1), needles=("보고:", "승인 변경 미검출"))
     mk: str = DHEAD + "def test_check():\n    m = Mock()\n    product(m)\n    m.assert_called_once_with(x=1)\n"
     add("0F mock 단언 키워드 이름 x → y → red", "follow", mk, mk.replace("(x=1)", "(y=1)"), ("red", None, {"reason": "D 확정"}),
@@ -3303,7 +3456,7 @@ def verify_checks() -> "list[str]":
             fails.append("감사 요청에 승인 원소 단위의 요구 판정 줄이 없다")
         _audit(repo, 1, [f"{unit_of['test_raise']} | 판정 = 기대 의미 그대로 | x", f"{unit_of['<module>']} | 판정 = 기대 의미 그대로 | x"])
         expect("승인 원소 단위에 «기대 의미 그대로» → red(승인 변경 미검출 · G1′)", _rguard(repo, "verify"), 2, "다름 1",
-               "승인 변경 미검출 — 승인 원소 단위가 «기대 의미 그대로»: V 를 지우고 0F 로(G1′)")
+               "승인 변경 미검출 — 승인 원소 단위가 «기대 의미 그대로»: 그 편집은 V 가 아니다 — 그 변경 창에서 철회")
         _audit(repo, 1, [f"{unit_of['test_raise']} | 판정 = 승인 후와 같음 | x", f"{unit_of['<module>']} | 판정 = 승인 후와 같음 | x"])
         expect("승인 원소 밖 단위에 «승인 후와 같음» → red", _rguard(repo, "verify"), 2, "다름 1",
                "판정 = 승인 후와 같음 · 요구 판정 기대 의미 그대로")
@@ -3837,6 +3990,1584 @@ def field_rename_verify_checks() -> "list[str]":
     return fails
 
 
+# ── 엄격 실행(2.46.0) — 창 차례 · 까닭 · 슬라이스 허용 · 창 단위 미검출 · 결속(명세 sha) · G2 원점 ─────────────────────────────
+
+SL_OTHER: str = "application/core/test/test_other.py"        # V 밖 시험 파일(0F retain 재조직 행 파일로도 쓴다)
+SL_THIRD: str = "application/core/test/test_third.py"        # V 도 retain 행도 없는 시험 파일
+SL_FAKE: str = "application/core/test/fake/fake_port.py"     # 시험 재료(대역)
+SL_NEW: str = "application/core/test/factories/new_factory.py"
+SL_BASE: str = ("from application.core.product import product\n\n\ndef _expected():\n    return 9\n\n\n"
+                "def test_a():\n    \"\"\"가 확인.\"\"\"\n    assert product() == 9\n\n\n"
+                "def test_b():\n    \"\"\"나 확인.\"\"\"\n    assert product() + 0 == 9\n")
+SL_A: str = "assert product() == 9"
+SL_B: str = "assert product() + 0 == 9"
+SL_O: str = "from application.core.product import product\n\n\ndef test_o():\n    \"\"\"다 확인.\"\"\"\n    assert product() == 9\n"
+SL_T: str = SL_O.replace("test_o", "test_t")
+SL_FAKE_SRC: str = "class FakePort:\n    def call(self):\n        return 1\n"
+SL_FILES: "dict[str, str]" = {TP: SL_BASE, SL_OTHER: SL_O, SL_THIRD: SL_T, "application/core/test/fake/__init__.py": "",
+                              SL_FAKE: SL_FAKE_SRC}
+SL_AT: "tuple[str, ...]" = ("2026-10-04T03:10Z", "2026-10-04T04:10Z", "2026-10-04T05:10Z", "2026-10-04T06:10Z")     # 확정 시각들
+SL_BODY: "tuple[str, str]" = ("    assert product() == 9\n", "    got = product()\n    assert got == 9\n")   # D 없는 몸 편집
+_SUITE_LOCK: threading.Lock = threading.Lock()
+_LANES: threading.local = threading.local()                  # 사례 하나가 연 레인들 — 사례가 예외로 끝나도 그때까지의 어긋남을 싣는다
+
+
+def _vs(vid: str, case: "str | None" = None, old: "str | None" = None, slice_: str = "S1", **kw: object) -> dict:
+    return dict(_v(vid, case, [old] if old else [], **kw), slice=slice_)  # type: ignore[arg-type]
+
+
+SL_V1: dict = _vs("V1", f"{TP}::test_a", SL_A)
+SL_V2: dict = _vs("V2", f"{TP}::test_b", SL_B, "S2")
+
+
+def _plan(*slices: str, **cells: dict) -> "list[dict]":
+    """계획 표 대역 — 슬라이스 칸 차례대로 · `cells` 는 슬라이스(`-` 는 `_` 로) → 더 적을 칸(files · retain_files · purpose)."""
+    return [{"slice": s, "purpose": f"{s} 목적", **cells.get(s.replace("-", "_"), {})} for s in slices]
+
+
+SL_PLAN: "list[dict]" = _plan("0T", "0C", "0F", "S1", "S2")
+
+
+class _Lane:
+    """리팩토링 레인 장난감 하나 — 엄격 꼴(첫 후보에 곁 자료 결속 칸 · 확정 줄 명세 sha · 계획 표)로 창을 열고 닫는다. `fails` 에 어긋남을 모은다."""
+
+    def __init__(self, td: str, snap: dict, plan: "list[dict] | None" = None, files: "dict[str, str] | None" = None,
+                 strict: bool = True, bind: bool = True) -> None:
+        self.repo: Path = _rrepo(Path(td), {**SL_FILES, **(files or {})})
+        self.folder: Path = self.repo / RFOLDER
+        self.fails: "list[str]" = []
+        _LANES.__dict__.setdefault("open", []).append(self)
+        if strict:
+            (self.folder / "stub-strict").write_text("", encoding="utf-8")
+        self.digest: str = _bind(self.repo, snap, SL_AT[0], sha=strict, plan=SL_PLAN if plan is None else plan) if bind else ""
+
+    def check(self, label: str, got: "tuple[int, str]", code: int, *needles: str, absent: "tuple[str, ...]" = ()) -> str:
+        missing, extra = [n for n in needles if n not in got[1]], [n for n in absent if n in got[1]]
+        if got[0] != code or missing or extra:
+            self.fails.append(f"{label}: exit {got[0]} (기대 {code} · 없는 글 {missing} · 있으면 안 되는 글 {extra})\n{got[1]}")
+        return got[1]
+
+    def open(self, label: str, kind: str, slice_: "str | None", code: int, *needles: str, reason: "str | None" = None,
+             ref: "str | None" = None) -> str:
+        args: "list[str]" = ["--slice", slice_] if slice_ else []
+        args += (["--reason", reason] if reason else []) + (["--ref", ref] if ref else [])
+        return self.check(f"{label} open {kind} {' '.join(args)}", _rguard(self.repo, "open", "--kind", kind, "--mode", "refactor", *args),
+                          code, *needles)
+
+    def edit(self, path: str, old: str, new: str) -> None:
+        f: Path = self.repo / path
+        text: str = f.read_text(encoding="utf-8")
+        if old not in text:
+            self.fails.append(f"{path} 에 «{old}» 없음(사례 글)")
+        f.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+    def write(self, files: "dict[str, str | None]") -> None:
+        _write(self.repo, files)
+
+    def close(self, label: str, code: int, *needles: str, absent: "tuple[str, ...]" = ()) -> str:
+        if _git(self.repo, "status", "--porcelain", "--", ".", ":!.dddjango").strip():
+            _commit(self.repo)
+        return self.check(f"{label} close", _rguard(self.repo, "close"), code, *needles, absent=absent)
+
+    def audit(self, n: int, verdict: "str | None" = None, round_no: int = 1) -> None:
+        _audit(self.repo, n, _rows(_last_close(self.repo), verdict), round_no)
+
+    def win(self, label: str, n: int, kind: str, slice_: "str | None", *edits: "tuple[str, str, str]", reason: "str | None" = None,
+            ref: "str | None" = None) -> None:
+        """창 하나 — 열고 · 고치고 · 닫고(0 이어야 한다) · 요구대로 감사한다."""
+        self.open(label, kind, slice_, 0, reason=reason, ref=ref)
+        for path, old, new in edits:
+            self.edit(path, old, new)
+        self.close(label, 0)
+        self.audit(n)
+
+    def bind(self, snap: dict, k: int, plan: "list[dict] | None" = None, diff: "dict | None" = None, sha: bool = True) -> str:
+        """새 확정(G1′) — `diff` = 이 확정 ↔ 바로 앞 확정 차분 대역(슬라이스 → SliceDelta 칸)."""
+        self.digest = _bind(self.repo, snap, SL_AT[k], sha=sha, plan=plan)
+        if diff is not None:
+            (self.folder / "stub-diff").mkdir(exist_ok=True)
+            (self.folder / "stub-diff" / f"{SL_AT[k]}.json").write_text(json.dumps(diff, ensure_ascii=False), encoding="utf-8")
+        return self.digest
+
+    def items(self, **cells: object) -> None:
+        (self.folder / "stub-items.json").write_text(json.dumps(cells, ensure_ascii=False), encoding="utf-8")
+
+    def opened(self, n: int) -> dict:
+        return json.loads((_run_dir(self.repo) / f"w{n}-open.json").read_text(encoding="utf-8"))
+
+    def last(self) -> dict:
+        return _last_close(self.repo)
+
+    def suite(self, **over: object) -> None:
+        sha: "str | None" = _spec_sha(self.repo) if (self.folder / "design-spec.md").is_file() else None
+        g1: dict = {"at": SL_AT[0], "digest": self.digest, "candidate": self.digest, "run_definition_digest": RUN_DEF,
+                    "support_record": "20261004T020000Z", "sha": sha}
+        with _SUITE_LOCK:
+            _suite(self.repo, self.digest, **{"g1": g1, **over})
+
+    def verify(self, label: str, code: int, *needles: str, absent: "tuple[str, ...]" = ()) -> str:
+        self.suite()
+        return self.check(f"{label} verify", _rguard(self.repo, "verify"), code, *needles, absent=absent)
+
+    def need(self, label: str, ok: bool, shown: object = "") -> None:
+        if not ok:
+            self.fails.append(f"{label}: {shown}")
+
+
+def _disp(record: dict, path: str) -> dict:
+    return next((d for d in record.get("dispositions", []) if d["path"] == path), {"처분": "없음", "사유": "", "keys": [], "요구 판정": []})
+
+
+def sw1(td: str) -> "list[str]":
+    """0T → 0C → 0F → S1 차례대로 — open 넷 0 · 기록 슬라이스 · 명세 sha."""
+    x = _Lane(td, _snap(SL_V1))
+    for kind, sid in (("test", "0T"), ("code", "0C"), ("follow", "0F"), ("change", "S1")):
+        x.open("SW1", kind, sid, 0, f"슬라이스 {sid} · 차례")
+        if kind != "change":
+            x.close("SW1", 0, f"슬라이스 {sid}")
+    got = x.opened(4)
+    x.need("SW1 기록", (got["slice"], got["reason"], got["g1_sha"], got["g1_count"], got["plan"], got["purpose"], got["strict"])
+           == ("S1", None, _spec_sha(x.repo), 1, ["0T", "0C", "0F", "S1", "S2"], "S1 목적", True), got)
+    return x.fails
+
+
+def _s1_done(td: str, snap: "dict | None" = None, **kw: object) -> _Lane:
+    """S1 변경 창이 V1 을 집행하고 닫힌 레인(w1 · 감사 끝)."""
+    x = _Lane(td, snap or _snap(SL_V1, SL_V2), **kw)  # type: ignore[arg-type]
+    x.win("바탕", 1, "change", "S1", (TP, SL_A, "assert product() == 10"))
+    return x
+
+
+def sw2(td: str) -> "list[str]":
+    """S1 뒤 까닭 없는 0F → 차례 밖."""
+    x = _s1_done(td)
+    x.open("SW2", "follow", "0F", 1, "차례 밖 — 슬라이스 `0F` 는 지난 차례다(앞 창이 닿은 차례 `S1` · w1)", "까닭과 `--ref`", "`편집고침`")
+    return x.fails
+
+
+def sw3(td: str) -> "list[str]":
+    """S1 뒤 편집고침 까닭 창(감사 기록 있음) → 0 · 기록 까닭 · 가리킴."""
+    x = _s1_done(td)
+    x.open("SW3", "test", "S1", 0, "슬라이스 S1 · 까닭 편집고침(w1-1)", reason="편집고침", ref="w1-1")
+    got = x.opened(2)
+    x.need("SW3 기록", (got["slice"], got["reason"], got["ref"], got["ref_note"]) == ("S1", "편집고침", "w1-1", "감사 기록 audit-tests-w1-1.md"), got)
+    return x.fails
+
+
+def sw4(td: str) -> "list[str]":
+    """까닭 없는 창의 종류 ≠ 갈래 종류 → 1."""
+    x = _Lane(td, _snap(SL_V1))
+    x.open("SW4", "code", "0T", 1, "차례 창의 종류는 슬라이스 갈래와 같다 — `0T` 는 `--kind test`(지금 `--kind code`)")
+    return x.fails
+
+
+def sw5(td: str) -> "list[str]":
+    """계획 밖 · 판형 밖 슬라이스 → 1 · V 없는 변경 슬라이스 → 1."""
+    x = _Lane(td, _snap(SL_V1))
+    x.open("SW5 계획 밖", "test", "0T-z", 1, "슬라이스 `0T-z` 가 명세 `## 슬라이스 계획` 에 없다(계획: 0T · 0C · 0F · S1 · S2)")
+    x.open("SW5 판형 밖", "test", "X1", 1, "슬라이스 `X1` 판형 밖")
+    x.open("SW5 V 없음", "change", "S2", 1, "슬라이스 `S2` 에 승인 V 가 없다")
+    x.open("SW5 강조 칸", "test", "**`0T`**", 0, "슬라이스 0T · 차례")
+    return x.fails
+
+
+def sw6(td: str) -> "list[str]":
+    """엄격 · 첫 확정 뒤 `--slice` 없음 · 까닭만 · 가리킴만 → 1 · 기능 모드에 `--slice` → 1."""
+    x = _Lane(td, _snap(SL_V1))
+    x.open("SW6", "test", None, 1, "이 실행은 창마다 `--slice <슬라이스>` 를 적는다 — 명세 `## 슬라이스 계획` 의 슬라이스 칸")
+    x.open("SW6 까닭만", "test", None, 1, "`--reason` 은 `--slice` 와 함께 적는다", reason="편집고침")
+    x.open("SW6 가리킴만", "test", "0T", 1, "`--ref` 는 `--reason` 과 함께 적는다", ref="w1-1")
+    feature = Path(td) / "f"
+    feature.mkdir()
+    repo = _repo(feature)
+    x.check("SW6 기능 모드", _rguard(repo, "open", "--kind", "test", "--mode", "feature", "--slice", "0T", folder=FOLDER), 1,
+            "`--slice` · `--reason` · `--ref` 는 리팩토링 모드 창이다(--mode refactor)")
+    return x.fails
+
+
+def sw7(td: str) -> "list[str]":
+    """옛 꼴 실행 — `--slice` 없이 · 있어도 · S1 뒤 0F 도 열림 · 요약 «옛 꼴 실행» · 적은 값은 `given` 에만(칸 `slice` 는 엄격 창 표지)."""
+    x = _Lane(td, _snap(SL_V1, retain=(SL_OTHER,)), strict=False)
+    x.open("SW7 없음", "change", None, 0, "옛 꼴 실행(슬라이스 · 까닭 대조 없음)")
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.close("SW7", 0)
+    x.open("SW7 있음", "change", "S1", 0, "옛 꼴 실행")
+    got = x.opened(2)
+    x.need("SW7 기록", "slice" not in got and got["given"] == {"slice": "S1"} and "slice" not in got["allow"], got)
+    x.close("SW7", 0)
+    x.open("SW7 S1 뒤 0F", "follow", None, 0, "옛 꼴 실행")
+    return x.fails
+
+
+def sw8(td: str) -> "list[str]":
+    """0* 갈래 안 계획 줄 차례 — 0T-a → 0T-b → 0T-a 는 차례 밖."""
+    x = _Lane(td, _snap(SL_V1), _plan("0T-a", "0T-b", "S1"))
+    for sid in ("0T-a", "0T-b"):
+        x.open("SW8", "test", sid, 0)
+        x.close("SW8", 0)
+    x.open("SW8 되돌아감", "test", "0T-a", 1, "차례 밖 — 슬라이스 `0T-a` 는 지난 차례다(앞 창이 닿은 차례 `0T-b` · w2)")
+    x.open("SW8 같은 슬라이스 다시", "test", "0T-b", 0)
+    return x.fails
+
+
+def sw8b(td: str) -> "list[str]":
+    """S 는 번호 차례 — S2 → S1 · (계획 줄이 S10 · S9 여도) S10 → S9 는 차례 밖."""
+    v10, v9 = _vs("V1", f"{TP}::test_a", SL_A, "S10"), _vs("V2", f"{TP}::test_b", SL_B, "S9")
+    for k, (snap, plan, first, second, old, new) in enumerate((
+            (_snap(SL_V1, SL_V2), SL_PLAN, "S2", "S1", SL_B, "assert product() + 0 == 10"),
+            (_snap(v10, v9), _plan("S10", "S9"), "S10", "S9", SL_A, "assert product() == 10"))):
+        sub = Path(td) / str(k)
+        sub.mkdir()
+        x = _Lane(str(sub), snap, plan)
+        x.win("SW8b", 1, "change", first, (TP, old, new))
+        x.open("SW8b", "change", second, 1, f"차례 밖 — 슬라이스 `{second}` 는 지난 차례다(앞 창이 닿은 차례 `{first}` · w1)")
+        if x.fails:
+            return x.fails
+    return []
+
+
+def sw8c(td: str) -> "list[str]":
+    """G1′ 가 지운 0T 하위 슬라이스의 차례 창은 남은 하위 슬라이스의 차례를 막지 않는다(앞서던 자리) · 뒤에 있던 자리를 지웠으면 되돌아가는
+    차례 창은 여전히 차례 밖."""
+    x = _Lane(td, _snap(SL_V1), _plan("0T-a", "0T-b", "0T-c", "S1"))
+    x.win("SW8c", 1, "test", "0T-a")
+    x.bind(_snap(SL_V1), 1, _plan("0T-b", "0T-c", "S1"))
+    x.win("SW8c 앞을 지움", 2, "test", "0T-b")
+    x.win("SW8c", 3, "test", "0T-c")
+    x.bind(_snap(SL_V1), 2, _plan("0T-b", "0T-d", "S1"))
+    x.open("SW8c 되돌아감", "test", "0T-b", 1, "차례 밖 — 슬라이스 `0T-b` 는 지난 차례다(앞 창이 닿은 차례 `0T-c` · w3)")
+    x.open("SW8c 새 행", "test", "0T-d", 0, "슬라이스 0T-d · 차례")
+    return x.fails
+
+
+def sw9(td: str) -> "list[str]":
+    """보탬 까닭 — ref 없음 · 없는 B · 판형 밖 · 자리 다른 슬라이스 · 종류 다름 1 · 맞음 0."""
+    x = _s1_done(td, plan=_plan("0T", "0T-b", "0C", "0F", "S1", "S2"))
+    x.items(adopted=["M1"], boost=["B1", "B2"], boost_items={"B1": ["0T-b"], "B2": ["0C", "0T"]})
+    x.open("SW9 ref 없음", "test", "0T-b", 1, "까닭 `보탬` 은 `--ref` 가 있어야 한다", reason="보탬")
+    x.open("SW9 없는 B", "test", "0T-b", 1, "가리키는 살아 있는 보탬 항목 이 없다(B7)", reason="보탬", ref="B1,B7")
+    x.open("SW9 판형 밖", "test", "0T-b", 1, "`--ref M1` 판형 밖", reason="보탬", ref="M1")
+    x.open("SW9 다른 자리", "test", "0T", 1, "보탬 항목 B1 의 자리는 슬라이스 `0T-b` 다(지금 `0T`)", reason="보탬", ref="B1")
+    x.open("SW9 종류", "code", "0T-b", 1, "까닭 `보탬` 은 `--kind test` 창이다(지금 `--kind code`)", reason="보탬", ref="B1")
+    x.open("SW9 여러 자리 밖", "test", "0T-b", 1, "보탬 항목 B2 의 자리는 슬라이스 `0C` · `0T` 다(지금 `0T-b`)", reason="보탬", ref="B2")
+    for kind, sid, ref in (("test", "0T-b", "B1"), ("code", "0C", "B2"), ("test", "0T", "B2")):
+        x.open("SW9 맞음", kind, sid, 0, f"까닭 보탬({ref})", reason="보탬", ref=ref)
+        x.close("SW9 맞음", 0)
+    return x.fails
+
+
+def sw10a(td: str) -> "list[str]":
+    """재승인반영 — 첫 확정 시각 · 없는 시각 · 차분 {} 인 확정(처방 글 · 파일 계획만) → 1."""
+    x = _s1_done(td)
+    (x.folder / "design-spec.md").write_text("# 명세\n\n고친 처방.\n", encoding="utf-8")
+    x.bind(_snap(SL_V1, SL_V2), 1)
+    x.open("SW10a 첫 확정", "test", "0T", 1, "첫 확정 줄이 아니다", reason="재승인반영", ref=SL_AT[0])
+    x.open("SW10a 없는 시각", "test", "0T", 1, "가리키는 이번 실행 `G1 변경판 확정` 줄 이 없다", reason="재승인반영", ref="2026-10-04T09:99Z")
+    x.open("SW10a 차분 없음", "test", "0T", 1, f"확정 {SL_AT[1]} 의 차분이 없다(처방 글 · 파일 계획만 바꾼 확정은 이 창이 없다", reason="재승인반영",
+           ref=SL_AT[1])
+    return x.fails
+
+
+SL_PLAN_T: "list[dict]" = _plan("0T-a", "0T-b", "0C", "0F", "S1", "S2")
+SL_ROW_T: "tuple[str, None]" = (f"{SL_THIRD}::test_t", None)
+SL_ROW_O: "tuple[str, None]" = (f"{SL_OTHER}::test_o", None)
+
+
+def _reopened(td: str, diff: dict, snap: "dict | None" = None, plan: "list[dict] | None" = None) -> _Lane:
+    """S1 이 닫힌 뒤 G1′ — 새 update 행(SL_OTHER::test_o)이 더해진 확정(앞 update 행은 SL_THIRD::test_t)."""
+    x = _s1_done(td, _snap(SL_V1, SL_V2, update=(SL_ROW_T,)), plan=SL_PLAN_T)
+    x.bind(snap or _snap(SL_V1, SL_V2, update=(SL_ROW_T, SL_ROW_O)), 1, plan, diff)
+    return x
+
+
+def sw10b(td: str) -> "list[str]":
+    """재승인반영 test 창 — 그 확정이 더한 update 행 케이스의 D 확정만 개별 감사 · 다른 update 행 케이스는 red."""
+    x = _reopened(td, {"0T-a": {"plan_row": "바뀜", "rows": [SL_ROW_O[0]]}})
+    x.open("SW10b", "test", "0T-a", 0, f"까닭 재승인반영({SL_AT[1]})", reason="재승인반영", ref=SL_AT[1])
+    x.edit(SL_OTHER, "== 9", ">= 9")
+    x.close("SW10b 그 행", 0, "개별 감사 1")
+    x.edit(SL_THIRD, "== 9", ">= 9")
+    x.close("SW10b 다른 행", 2, "D 확정 — 0T 는 V 에 딸리지 않은 입장 표 update 행", f"{SL_THIRD}::test_t")
+    x.need("SW10b 동결 차분", x.opened(2)["diff"]["rows"] == [SL_ROW_O[0]], x.opened(2).get("diff"))
+    return x.fails
+
+
+def sw10c(td: str) -> "list[str]":
+    """재승인반영 — 차분 밖 슬라이스 · 낱말만 바뀐 슬라이스 → 1 «건드리지 않았다»."""
+    x = _reopened(td, {"0T-a": {"plan_row": "바뀜", "rows": [SL_ROW_O[0]]}, "S1": {"plan_row": "낱말", "reworded": ["r1"]}})
+    x.open("SW10c 차분 밖", "code", "0C", 1, f"확정 {SL_AT[1]} 은 슬라이스 `0C` 를 건드리지 않았다", reason="재승인반영", ref=SL_AT[1])
+    x.open("SW10c 낱말만", "change", "S1", 1, f"확정 {SL_AT[1]} 은 슬라이스 `S1` 를 건드리지 않았다(낱말만)", reason="재승인반영", ref=SL_AT[1])
+    x.open("SW10c 종류", "code", "0T-a", 1, "까닭 `재승인반영` 은 `--kind test` 창이다", reason="재승인반영", ref=SL_AT[1])
+    return x.fails
+
+
+def _cut_s3(td: str, diff: dict, retain: "tuple[str, ...]" = ()) -> _Lane:
+    """S1 · S2 변경 창 뒤 편집고침 창(w3)까지 닫힌 다음 새 확정이 집행 전 S3 의 V5 와 S3 행을 지운 레인."""
+    v5 = _vs("V5", f"{SL_THIRD}::test_t", SL_A, "S3")
+    plan = _plan("0T", "0C", "0F", "S1", "S2", "S3", S3={"files": [SL_OTHER], "retain_files": [SL_OTHER]} if retain else {})
+    x = _s1_done(td, _snap(SL_V1, SL_V2, v5, retain=retain), plan=plan)
+    x.win("바탕", 2, "change", "S2", (TP, SL_B, "assert product() + 0 == 10"))
+    x.win("바탕", 3, "test", "S2", (SL_THIRD, "다 확인.", "다 확인 — 고침."), reason="편집고침", ref="w2-1")
+    x.bind(_snap(SL_V1, SL_V2), 1, _plan("0T", "0C", "0F", "S1", "S2"), diff)
+    return x
+
+
+def sw10d(td: str) -> "list[str]":
+    """D-N2a — 지운 슬라이스가 v_removed · 계획 행 빠짐뿐이면 verify 는 창 없이 0 · 그 슬라이스 재승인반영 open 은 1."""
+    x = _cut_s3(td, {"S3": {"plan_row": "빠짐", "v_removed": ["V5"]}})
+    x.verify("SW10d", 0, "요약: 동작 보존 green", "창 차례 — 차례 2 · 까닭 1(편집고침 1)", "슬라이스별 집행 S1 1/1 · S2 1/1")
+    x.open("SW10d", "change", "S3", 1, f"확정 {SL_AT[1]} 은 슬라이스 `S3` 를 건드리지 않았다(지운 V · 지운 계획 행만)", reason="재승인반영", ref=SL_AT[1])
+    return x.fails
+
+
+def sw10e(td: str) -> "list[str]":
+    """지운 슬라이스에 매인 retain 행도 지움 — verify 2 → 지금 계획에 없는 S3 을 확정 계획 이력으로 재승인반영 open 0 · 옛 파일 편집 red · 편집 0
+    close · verify 0."""
+    x = _cut_s3(td, {"S3": {"plan_row": "빠짐", "v_removed": ["V5"], "retain_removed": [SL_OTHER], "rows_removed": ["r3"]}}, (SL_OTHER,))
+    x.verify("SW10e", 2, f"확정 {SL_AT[1]} 이 슬라이스 S3 를 건드렸다(빠진 retain 1 · 빠진 입장 행 1)",
+             f"`--reason 재승인반영 --ref {SL_AT[1]}` 창(지금 계획에서 지운 슬라이스여도 연다)")
+    x.open("SW10e", "change", "S3", 0, "슬라이스 S3 · 까닭 재승인반영", reason="재승인반영", ref=SL_AT[1])
+    x.need("SW10e 허용 파일", x.opened(4)["allow"]["slice_files"] == [] and x.opened(4)["purpose"] == "S3 목적", x.opened(4)["allow"])
+    x.edit(SL_OTHER, *SL_BODY)
+    x.close("SW10e 옛 파일", 2, "이 슬라이스(S3) 몫 파일이 아니다")
+    x.write({SL_OTHER: SL_O})
+    x.close("SW10e 편집 0", 0, "시험 쪽 무변")
+    x.verify("SW10e 뒤", 0, "요약: 동작 보존 green")
+    return x.fails
+
+
+def sw10f(td: str) -> "list[str]":
+    """L-B1 — 계획 행 칸에 안 실린 update 행(차분 갈래 키 `0T`)은 그 갈래 하위 슬라이스의 재승인반영 창이 받는다 · 갈래 키가 없거나 다른 갈래면 1."""
+    x = _reopened(td, {"0T": {"rows": [SL_ROW_O[0]]}})
+    x.open("SW10f 다른 갈래", "code", "0C", 1, "건드리지 않았다", reason="재승인반영", ref=SL_AT[1])
+    x.open("SW10f", "test", "0T-b", 0, reason="재승인반영", ref=SL_AT[1])
+    x.edit(SL_OTHER, "== 9", ">= 9")
+    x.close("SW10f", 0, "개별 감사 1")
+    sub = Path(td) / "no"
+    sub.mkdir()
+    y = _reopened(str(sub), {"0F": {"plan_row": "바뀜"}})
+    y.open("SW10f 갈래 키 없음", "test", "0T-b", 1, "건드리지 않았다", reason="재승인반영", ref=SL_AT[1])
+    fails: "list[str]" = x.fails + y.fails
+    named = _plan("0T", "0T-a", "0T-b", "0C", "0F", "S1", "S2")   # 그 이름의 계획 행(지금 · 앞 확정)이 있으면 차분의 `0T` 는 그 행의 것이다
+    for k, (before, after) in enumerate(((SL_PLAN_T, named), (named, SL_PLAN_T))):
+        third = Path(td) / f"named{k}"
+        third.mkdir()
+        z = _s1_done(str(third), _snap(SL_V1, SL_V2, update=(SL_ROW_T,)), plan=before)
+        z.bind(_snap(SL_V1, SL_V2, update=(SL_ROW_T, SL_ROW_O)), 1, after, {"0T": {"plan_row": "더함" if k == 0 else "빠짐", "rows": [SL_ROW_O[0]]}})
+        z.open(f"SW10f 갈래 이름 계획 행 {k}", "test", "0T-b", 1, f"확정 {SL_AT[1]} 은 슬라이스 `0T-b` 를 건드리지 않았다", reason="재승인반영",
+               ref=SL_AT[1])
+        fails += z.fails
+    return fails
+
+
+def sw10g(td: str) -> "list[str]":
+    """재승인반영 — 지금 계획 · 확정 계획 이력 어디에도 없는 슬라이스 → 1."""
+    x = _reopened(td, {"S9": {"plan_row": "더함", "v": ["V1"]}})
+    x.open("SW10g", "change", "S9", 1, "이 실행의 어느 확정 계획에도 없다", reason="재승인반영", ref=SL_AT[1])
+    return x.fails
+
+
+def sw10h(td: str) -> "list[str]":
+    """재승인반영 follow 창 — 그 확정이 더한 retain 재조직 행 파일만(앞 retain 행 파일 편집은 red)."""
+    x = _s1_done(td, _snap(SL_V1, SL_V2, retain=(SL_THIRD,)))
+    x.bind(_snap(SL_V1, SL_V2, retain=(SL_THIRD, SL_OTHER)), 1, None, {"0F": {"retain": [SL_OTHER], "rows": ["r"]}})
+    x.open("SW10h", "follow", "0F", 0, reason="재승인반영", ref=SL_AT[1])
+    x.edit(SL_OTHER, *SL_BODY)
+    x.close("SW10h 그 행", 0, "개별 감사 1")
+    x.edit(SL_THIRD, *SL_BODY)
+    x.close("SW10h 앞 행", 2, f"{SL_THIRD} — 0C 검사 불합격")
+    x.need("SW10h open 허용 표는 전체", x.opened(2)["allow"]["retain_files"] == [SL_OTHER, SL_THIRD], x.opened(2)["allow"]["retain_files"])
+    return x.fails
+
+
+def sw10i(td: str) -> "list[str]":
+    """재승인반영 code 창 — 대상 BC 밖 허용 경로는 그 확정이 더한 다른 BC 편집 줄만."""
+    shared, other = "application/shared/contracts.py", "application/shared/more.py"
+    files = {shared: "NAME = 'old'\n", other: "NAME = 'old'\n"}
+    x = _s1_done(td, _snap(SL_V1, SL_V2, other=((shared, "공유 표면", "0C"),)), files=files)
+    x.bind(_snap(SL_V1, SL_V2, other=((shared, "공유 표면", "0C"), (other, "공유 표면", "0C"))), 1, None, {"0C": {"edits": [other]}})
+    x.open("SW10i", "code", "0C", 0, reason="재승인반영", ref=SL_AT[1])
+    x.write({other: "NAME = 'new'\n"})
+    x.close("SW10i 그 줄", 0)
+    x.write({shared: "NAME = 'new'\n"})
+    x.close("SW10i 앞 줄", 2, f"{shared} — 대상 BC(`application/core/`) 밖 경로가 다른 BC 편집 목록 밖")
+    return x.fails
+
+
+def sw10k(td: str) -> "list[str]":
+    """재승인반영 follow 창 — 대상 BC 밖 허용 경로는 그 확정이 더한 다른 BC 편집 줄만."""
+    shared, other = "application/shared/contracts.py", "application/shared/more.py"
+    files = {shared: "NAME = 'old'\n", other: "NAME = 'old'\n"}
+    x = _s1_done(td, _snap(SL_V1, SL_V2, other=((shared, "공유 표면", "0F"),)), files=files)
+    x.bind(_snap(SL_V1, SL_V2, other=((shared, "공유 표면", "0F"), (other, "공유 표면", "0F"))), 1, None, {"0F": {"edits": [other]}})
+    x.open("SW10k", "follow", "0F", 0, reason="재승인반영", ref=SL_AT[1])
+    x.write({other: "NAME = 'new'\n"})
+    x.close("SW10k 그 줄", 0)
+    x.write({shared: "NAME = 'new'\n"})
+    x.close("SW10k 앞 줄", 2, f"{shared} — 대상 BC(`application/core/`) 밖 경로가 다른 BC 편집 목록 밖")
+    return x.fails
+
+
+def sw10l(td: str) -> "list[str]":
+    """재승인반영 follow 창 — 차분에 든 개명 행 파일은 앞 창 통째 이동의 새 파일로 잇지 않는다(명시 retain 행만 — 차분을 거른 표에서도)."""
+    to = "application/core/test/test_other_moved.py"
+    plan = _plan("0T", "0C", "0F", "S1")
+    x = _Lane(td, _snap(SL_V1), plan)
+    x.open("SW10l", "test", "0T", 0)
+    x.write({SL_OTHER: None, to: SL_O})
+    x.close("SW10l 옮김", 0)
+    x.audit(1)
+    x.win("SW10l", 2, "change", "S1", (TP, SL_A, "assert product() == 10"))
+    x.bind(_snap(SL_V1, retain=(SL_THIRD,), renames=(_rn("test_o", "test_o2", path=SL_OTHER),)), 1, plan,
+           {"0F": {"retain": [SL_OTHER, SL_THIRD], "rows": ["r"]}})
+    x.open("SW10l", "follow", "0F", 0, reason="재승인반영", ref=SL_AT[1])
+    x.edit(to, "    assert product() == 9\n", "    print(1)\n    assert product() == 9\n")
+    x.close("SW10l", 2, f"{to} — 0C 검사 불합격", "`retain` 재조직 행(0F 허용 파일)에 없는 파일")
+    return x.fails
+
+
+def sw10j(td: str) -> "list[str]":
+    """재승인반영 변경 창 — 계획 행이 바뀌었어도 차분 밖 V 의 케이스 파일은 몫이 아니다(그 차분이 더하거나 바꾼 retain 행 파일 · 시험 재료는 몫) ·
+    차분에 든 V 의 케이스 파일을 앞 확정의 retain 행이 덮어도 그 행은 단위 red 를 풀지 않는다."""
+    b_body = ("    " + SL_B + "\n", "    got = product() + 0\n    assert got == 9\n")
+    v3 = _vs("V3", f"{TP}::test_b", SL_B, "S1")
+    rows = {"files": [TP, SL_OTHER, SL_FAKE], "retain_files": [SL_OTHER]}
+    both = {"files": [TP, SL_OTHER, SL_FAKE], "retain_files": [TP, SL_OTHER]}
+    bound = {"plan_row": "바뀜", "retain": [SL_OTHER], "rows": ["r"]}
+    cases = (  # (이름, G1′ V 들, S1 계획 행, 차분, 허용 파일, retain 파일, 편집, close, 글)
+        ("차분 밖 V 파일", (SL_V1,), rows, bound, [SL_FAKE, SL_OTHER], [SL_OTHER], (TP, *b_body), 2, f"{TP} — 0C 검사 불합격"),
+        ("앞 retain 행이 덮은 차분 밖 V 파일", (SL_V1,), both, bound, [SL_FAKE, SL_OTHER], [SL_OTHER], (TP, *b_body), 2, "이 슬라이스(S1) 몫 파일이 아니다"),
+        ("차분 retain 행 파일", (SL_V1,), rows, bound, [SL_FAKE, SL_OTHER], [SL_OTHER], (SL_OTHER, *SL_BODY), 0, "개별 감사 1"),
+        ("재료", (SL_V1,), rows, bound, [SL_FAKE, SL_OTHER], [SL_OTHER], (SL_FAKE, "return 1", "return 0 + 1"), 0, "개별 감사 1"),
+        ("차분 retain 행이 덮은 차분 밖 V 파일", (SL_V1,), both, dict(bound, retain=[TP]), [TP, SL_FAKE, SL_OTHER], [TP], (TP, *b_body), 0,
+         "개별 감사 1"),
+        ("차분 V 파일 · 앞 retain 행", (SL_V1, v3), both, dict(bound, v=["V3"]), [TP, SL_FAKE, SL_OTHER], [SL_OTHER],
+         (TP, "    assert product() == 10\n", "    got = product()\n    assert got == 10\n"), 2, "V 밖 케이스 단위 편집 `test_a`"))
+    fails: "list[str]" = []
+    for k, (label, vs, row, diff, files, retain, edit, code, needle) in enumerate(cases):
+        sub = Path(td) / str(k)
+        sub.mkdir()
+        x = _s1_done(str(sub), _snap(SL_V1, retain=(TP,)))
+        x.bind(_snap(*vs, retain=(TP, SL_OTHER)), 1, _plan("0T", "0C", "0F", "S1", S1=row), {"S1": diff})
+        x.open(f"SW10j {label}", "change", "S1", 0, reason="재승인반영", ref=SL_AT[1])
+        allow = x.opened(2)["allow"]
+        x.need(f"SW10j {label} 표", (allow["slice_files"], allow["slice_retain"]) == (sorted(files), sorted(retain)), allow)
+        if len(vs) > 1:
+            x.edit(TP, SL_B, "assert product() + 0 == 10")
+        x.edit(*edit)
+        x.close(f"SW10j {label}", code, needle)
+        fails += x.fails
+    return fails
+
+
+def sw11(td: str) -> "list[str]":
+    """까닭 종류 · 갈래 · 가리킴 금지 — 끝맞춤 test · 정렬맞춤 앞 창 test · 끝맞춤 ref · 끝맞춤 0T 슬라이스 · 변경 창에 0T 슬라이스 → 1."""
+    x = _Lane(td, _snap(SL_V1))
+    x.items(adopted=["M1"])
+    x.open("SW11 종류", "test", "0C", 1, "까닭 `끝맞춤` 은 `--kind code` 창이다(지금 `--kind test`)", reason="끝맞춤")
+    x.open("SW11 갈래", "code", "0T", 1, "까닭 `끝맞춤` 의 슬라이스는 0C 갈래다(지금 `0T`)", reason="끝맞춤")
+    x.open("SW11 ref", "code", "0C", 1, "`--ref` 는 `편집고침`", "창만 적는다(지금 까닭 `끝맞춤`)", reason="끝맞춤", ref="x")
+    x.open("SW11 변경 0T", "change", "0T", 1, "변경 창의 슬라이스는 `S<n>` 이다(지금 `0T`)", reason="잔존반송", ref="M1")
+    x.win("SW11", 1, "test", "0T")
+    x.open("SW11 정렬", "code", "0C", 1, "까닭 `정렬맞춤` 은 바로 앞 창이 0C(`code`) 창일 때만 연다", reason="정렬맞춤")
+    x.win("SW11", 2, "code", "0C")
+    x.open("SW11 정렬 맞음", "code", "0C", 0, "까닭 정렬맞춤", reason="정렬맞춤")
+    return x.fails
+
+
+def sw11b(td: str) -> "list[str]":
+    """계획에 0C 행이 없어도 끝맞춤 · 정렬맞춤은 갈래 글자 `0C` 로 연다 — 다른 까닭 · 차례 창 · 다른 0C 하위 이름은 실행 불능."""
+    x = _s1_done(td, _snap(SL_V1), plan=_plan("0T", "S1"))
+    x.open("SW11b 차례", "code", "0C", 1, "슬라이스 `0C` 가 명세 `## 슬라이스 계획` 에 없다(계획: 0T · S1)")
+    x.open("SW11b 다른 까닭", "code", "0C", 1, "이 실행의 어느 확정 계획에도 없다(계획: 0T · S1)", reason="편집고침", ref="w1-1")
+    x.open("SW11b 하위 이름", "code", "0C-z", 1, "이 실행의 어느 확정 계획에도 없다(계획: 0T · S1)", reason="끝맞춤")
+    x.open("SW11b 다른 갈래", "code", "S1", 1, "까닭 `끝맞춤` 의 슬라이스는 0C 갈래다(지금 `S1`)", reason="끝맞춤")
+    for reason in ("끝맞춤", "정렬맞춤"):
+        x.open(f"SW11b {reason}", "code", "0C", 0, f"슬라이스 0C · 까닭 {reason}", reason=reason)
+        x.close(f"SW11b {reason}", 0)
+    x.verify("SW11b", 0, "창 차례 — 차례 1 · 까닭 2(끝맞춤 1 · 정렬맞춤 1)", "요약: 동작 보존 green")
+    return x.fails
+
+
+SL_UNSEEN: str = ("승인 변경 미검출 — 슬라이스 S1 {v} `{case}` «{old}»(이 창 · 앞 창 집행 없음) — 변경 창은 그 슬라이스 V 를 모두 집행한 뒤 닫는다"
+                  "(V 가 필요 없으면 V 를 지우는 G1′ → rebind → close 다시)")
+
+
+def sw12(td: str) -> "list[str]":
+    """208a — 승인 케이스 파일의 docstring 만 → close 2 창 단위 미검출 · 기록 unseen · 파일 단위 보고는 없음."""
+    x = _Lane(td, _snap(SL_V1))
+    x.open("SW12", "change", "S1", 0)
+    x.edit(TP, "가 확인.", "가 확인 — 고침.")
+    x.close("SW12", 2, SL_UNSEEN.format(v="V1", case=f"{TP}::test_a", old=SL_A), absent=(f"보고: {TP} — 승인 변경 미검출",))
+    x.need("SW12 기록", len(x.last()["unseen"]) == 1 and x.last()["slice"] == "S1", x.last().get("unseen"))
+    return x.fails
+
+
+def sw13(td: str) -> "list[str]":
+    """208b — V1 · V2 모두 S1 · test_a 만 집행 → close 2(V2 하나) · 기대 추가 · 연산도 창 단위로."""
+    v2 = _vs("V2", f"{TP}::test_b", SL_B, expect_add=1)
+    x = _Lane(td, _snap(SL_V1, v2, _vs("V3", ops=(("core", ADD_F),))))
+    x.open("SW13", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    out = x.close("SW13", 2, SL_UNSEEN.format(v="V2", case=f"{TP}::test_b", old=SL_B),
+                  f"승인 변경 미검출 — 슬라이스 S1 V2 `{TP}::test_b` 기대 추가 1 중 0(이 창 · 앞 창 집행)",
+                  "승인 연산 미생성 — 슬라이스 S1 ×1 — core · Call(")
+    x.need("SW13 red 셋", out.count("  red: ") == 3, out)
+    return x.fails
+
+
+def sw14(td: str) -> "list[str]":
+    """208c — 뒤 창의 미검출은 그 슬라이스 몫만(앞 창이 집행한 test_a 는 안 섬)."""
+    x = _s1_done(td)
+    x.open("SW14", "change", "S2", 0)
+    x.edit(TP, "나 확인.", "나 확인 — 고침.")
+    out = x.close("SW14", 2, "승인 변경 미검출 — 슬라이스 S2 V2 ", absent=("test_a` «",))
+    x.need("SW14 red 하나", out.count("  red: ") == 1, out)
+    return x.fails
+
+
+def sw14b(td: str) -> "list[str]":
+    """같은 원소를 적은 V 가 두 슬라이스에 — S1 이 집행했으면 S2 창의 미검출은 0."""
+    x = _s1_done(td, _snap(SL_V1, _vs("V3", f"{TP}::test_a", SL_A, "S2")))
+    x.open("SW14b", "change", "S2", 0)
+    x.edit(TP, "가 확인.", "가 확인 — 고침.")
+    x.close("SW14b", 0, "감사 요청 키 1")
+    return x.fails
+
+
+def sw15(td: str) -> "list[str]":
+    """208d · 209b — S1 창이 S2 몫 V2 를 함께 집행 → red."""
+    x = _Lane(td, _snap(SL_V1, SL_V2))
+    x.open("SW15", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.edit(TP, SL_B, "assert product() + 0 == 10")
+    out = x.close("SW15", 2, "승인 케이스 밖 확정 변화 `test_b`(기대식)")
+    x.need("SW15 red 하나(집행한 V1 은 미검출이 아니다)", out.count("  red: ") == 1, out)
+    return x.fails
+
+
+def sw16(td: str) -> "list[str]":
+    """208h — S1 창의 V1 집행 + 뒤 슬라이스 V 파일의 docstring → 0(뒤 슬라이스 V 는 안 섬 · 글 묶음 감사)."""
+    x = _Lane(td, _snap(SL_V1, _vs("V2", f"{SL_OTHER}::test_o", SL_A, "S2")))
+    x.open("SW16", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.edit(SL_OTHER, "다 확인.", "다 확인 — 고침.")
+    x.close("SW16", 0, "감사 요청 키 2", absent=("미검출",))
+    x.need("SW16 글 묶음", _disp(x.last(), SL_OTHER).get("text_only") is True, _disp(x.last(), SL_OTHER))
+    return x.fails
+
+
+def sw17(td: str) -> "list[str]":
+    """처리 길 ① — V1 을 지우고 그 파일을 retain 재조직 행으로 더한 G1′ → rebind → close 0(V 밖 케이스 단위 red 없음)."""
+    x = _Lane(td, _snap(SL_V1))
+    x.open("SW17", "change", "S1", 0)
+    x.edit(TP, "가 확인.", "가 확인 — 고침.")
+    x.edit(TP, "    " + SL_B + "\n", "    got = product() + 0\n    assert got == 9\n")
+    x.close("SW17", 2, "승인 변경 미검출")
+    x.bind(_snap(retain=(TP,)), 1, _plan("0T", "0C", "0F"))
+    x.check("SW17 rebind", _rguard(x.repo, "rebind"), 0, "슬라이스 S1", "지운 V 1(V1) · 미검출 처리 허용 파일 1")
+    x.close("SW17 뒤", 0, "개별 감사 1")
+    x.need("SW17 사유", "허용 파일(미검출 처리 — rebind 가 지운 V 의 케이스 파일" in _disp(x.last(), TP)["사유"], _disp(x.last(), TP))
+    got = x.opened(1)
+    x.need("SW17 기록", got["allow"]["miss_retain"] == [TP] and got["rebinds"][0]["removed_v"] == ["V1"]
+           and got["rebinds"][0]["miss_retain"] == {TP: ["V1"]}, got["rebinds"])
+    return x.fails
+
+
+def sw17b(td: str) -> "list[str]":
+    """같은 길 · V 케이스 파일이 앞 0T 창에서 통째로 옮겨짐(retain 행은 새 경로 · V 케이스는 옛 경로) → miss_retain = 새 경로 · close 0."""
+    to = "application/core/test/test_moved.py"
+    x = _Lane(td, _snap(SL_V1))
+    x.open("SW17b", "test", "0T", 0)
+    x.write({TP: None, to: SL_BASE})
+    x.close("SW17b 옮김", 0)
+    x.audit(1)
+    x.open("SW17b", "change", "S1", 0)
+    x.edit(to, "가 확인.", "가 확인 — 고침.")
+    x.edit(to, "    " + SL_B + "\n", "    got = product() + 0\n    assert got == 9\n")
+    x.close("SW17b", 2, "승인 변경 미검출")
+    x.bind(_snap(retain=(to,)), 1, _plan("0T", "0C", "0F"))
+    x.check("SW17b rebind", _rguard(x.repo, "rebind"), 0, "미검출 처리 허용 파일 1")
+    x.close("SW17b 뒤", 0, "개별 감사 1")
+    x.need("SW17b miss_retain", x.opened(2)["allow"].get("miss_retain") == [to], x.opened(2)["allow"])
+    return x.fails
+
+
+SL_MOVED: str = "application/core/test/test_b_moved.py"       # 0T 옮김 행이 test_b 를 데려간 새 파일
+SL_HEAD: str = "from application.core.product import product\n\n\n"
+
+
+def _split(td: str, v: dict, plan: "list[dict] | None" = None, retain: "tuple[str, ...]" = ()) -> _Lane:
+    """0T 옮김 행이 test_b 를 새 파일로 나눈 레인(w1 닫힘) — V(`v`)는 test_b 를 옛 경로로 적는다."""
+    x = _Lane(td, _snap(v, retain=retain, moves=(_mv(TP, "test_b", SL_MOVED),)), plan)
+    x.open("나누기", "test", "0T", 0)
+    body = (x.repo / TP).read_text(encoding="utf-8")
+    cut = body.index("def test_b")
+    x.write({TP: body[:cut].rstrip("\n") + "\n", SL_MOVED: SL_HEAD + body[cut:]})
+    x.close("나누기", 0)
+    x.audit(1)
+    return x
+
+
+def sw17c(td: str) -> "list[str]":
+    """같은 길 · V 케이스를 앞 0T 창의 옮김 행이 새 파일로 나눔(V 는 옛 경로 · retain 행은 새 경로) → miss_retain = 새 파일 · close 0."""
+    x = _split(td, _vs("V1", f"{TP}::test_b", SL_B))
+    x.open("SW17c", "change", "S1", 0)
+    x.edit(SL_MOVED, "    " + SL_B + "\n", "    got = product() + 0\n    assert got == 9\n")
+    x.close("SW17c", 2, "승인 변경 미검출")
+    x.bind(_snap(retain=(SL_MOVED,), moves=(_mv(TP, "test_b", SL_MOVED),)), 1, _plan("0T", "0C", "0F"))
+    x.check("SW17c rebind", _rguard(x.repo, "rebind"), 0, "지운 V 1(V1) · 미검출 처리 허용 파일 1")
+    x.close("SW17c 뒤", 0, "개별 감사 1")
+    x.need("SW17c miss_retain", x.opened(2)["allow"].get("miss_retain") == [SL_MOVED], x.opened(2)["allow"])
+    return x.fails
+
+
+def sw17d(td: str) -> "list[str]":
+    """rebind 두 번 — 미검출 처리 허용 파일을 다시 셈: 지운 V 를 되살린 G1″ · retain 행을 뺀 G1″ 는 남기지 않고 · 둘 다 그대로면 남긴다."""
+    v2 = _vs("V2", f"{TP}::test_b", SL_B, "S1")
+    fails: "list[str]" = []
+    for k, (label, snap, kept) in enumerate((("되살림 · retain 행 그대로", _snap(SL_V1, v2, retain=(TP,)), None),
+                                             ("retain 행 뺌", _snap(SL_V1), None),
+                                             ("둘 다 그대로", _snap(SL_V1, retain=(TP, SL_OTHER)), [TP]))):
+        sub = Path(td) / str(k)
+        sub.mkdir()
+        x = _Lane(str(sub), _snap(SL_V1, v2))
+        x.open("SW17d", "change", "S1", 0)
+        x.edit(TP, SL_A, "assert product() == 10")
+        x.edit(TP, "나 확인.", "나 확인 — 고침.")
+        x.close("SW17d", 2, SL_UNSEEN.format(v="V2", case=f"{TP}::test_b", old=SL_B))
+        x.bind(_snap(SL_V1, retain=(TP,)), 1)
+        x.check("SW17d rebind 1", _rguard(x.repo, "rebind"), 0, "미검출 처리 허용 파일 1")
+        x.need("SW17d 첫 칸", x.opened(1)["allow"].get("miss_retain") == [TP], x.opened(1)["allow"])
+        x.bind(snap, 2)
+        x.check(f"SW17d {label} rebind 2", _rguard(x.repo, "rebind"), 0, f"미검출 처리 허용 파일 {len(kept or [])}")
+        x.need(f"SW17d {label}", x.opened(1)["allow"].get("miss_retain") == kept, x.opened(1)["allow"])
+        fails += x.fails
+    return fails
+
+
+def sw18(td: str) -> "list[str]":
+    """처리 길 ① 음성 — G1′ 이 더한 retain 행이 지운 V 의 파일이 아니면 miss_retain 0 · close 2."""
+    x = _Lane(td, _snap(SL_V1))
+    x.open("SW18", "change", "S1", 0)
+    x.edit(TP, *SL_BODY)
+    x.close("SW18", 2, "승인 변경 미검출")
+    x.bind(_snap(retain=(SL_OTHER,)), 1, _plan("0T", "0C", "0F"))
+    x.check("SW18 rebind", _rguard(x.repo, "rebind"), 0, "지운 V 1(V1) · 미검출 처리 허용 파일 0")
+    x.close("SW18 뒤", 2, "이 슬라이스(S1) 몫 파일이 아니다")
+    return x.fails
+
+
+def sw19(td: str) -> "list[str]":
+    """감사 먼저 — 앞 변경 창 감사 없음 · 다름 → 다음 변경 창 1 · 요구대로(승인 후와 같음)면 0."""
+    x = _Lane(td, _snap(SL_V1, SL_V2))
+    x.open("SW19", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.close("SW19", 0)
+    x.open("SW19 감사 없음", "change", "S2", 1, "앞 변경 창 w1 의 감사 키 판정이 끝나지 않았다(일치 0/1 · 누락 1 · 낡음 0 · 다름 0 · 추가 0 · 중복 0 — 누락",
+           "다음 변경 창은 그 판정 뒤에 연다")
+    x.audit(1, "다름")
+    x.open("SW19 다름", "change", "S2", 1, "다름 1")
+    x.audit(1)
+    x.open("SW19 맞음", "change", "S2", 0)
+    return x.fails
+
+
+def sw19b(td: str) -> "list[str]":
+    """감사 먼저는 변경 창만 — 감사 없는 S1 뒤 끝맞춤 code 창 · 편집고침 test 창은 막지 않는다."""
+    x = _Lane(td, _snap(SL_V1, SL_V2))
+    x.open("SW19b", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.close("SW19b", 0)
+    x.open("SW19b 끝맞춤", "code", "0C", 0, "까닭 끝맞춤", reason="끝맞춤")
+    x.close("SW19b", 0)
+    x.open("SW19b 편집고침", "test", "S1", 0, reason="편집고침", ref="코디:글 바로잡음")
+    return x.fails
+
+
+def sw20(td: str) -> "list[str]":
+    """208g — 승인 원소를 값만 같은 식으로 · 감사 «기대 의미 그대로» → 다음 변경 창 1 → 그 창에서 철회 + V1 지움 G1′ + rebind + close → 0."""
+    x = _Lane(td, _snap(SL_V1, SL_V2))
+    x.open("SW20", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 3 * 3")
+    x.close("SW20", 0)
+    x.audit(1, "기대 의미 그대로")
+    x.open("SW20", "change", "S2", 1, "다름 1", "승인 변경 미검출 — 승인 원소 단위가 «기대 의미 그대로»: 그 편집은 V 가 아니다 — 그 변경 창에서 철회")
+    x.edit(TP, "assert product() == 3 * 3", SL_A)
+    x.bind(_snap(SL_V2), 1, _plan("0T", "0C", "0F", "S2"))
+    x.check("SW20 rebind", _rguard(x.repo, "rebind"), 0, "지운 V 1(V1)")
+    x.close("SW20 철회", 0, "시험 쪽 무변")
+    x.open("SW20 뒤", "change", "S2", 0)
+    return x.fails
+
+
+def sw20b(td: str) -> "list[str]":
+    """208g′ — 끝맞춤 창을 이미 연 뒤의 감사 «기대 의미 그대로» → verify 2(STOP 글) · rebind 는 마지막 창이 code 라 1."""
+    x = _Lane(td, _snap(SL_V1))
+    x.open("SW20b", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 3 * 3")
+    x.close("SW20b", 0)
+    keys = _rows(x.last(), "기대 의미 그대로")
+    x.open("SW20b", "code", "0C", 0, reason="끝맞춤")
+    x.close("SW20b", 0)
+    _audit(x.repo, 1, keys)
+    x.verify("SW20b", 2, "승인 변경 미검출 — 승인 원소 단위가 «기대 의미 그대로»", "그 창 뒤에 다른 창을 열었으면 STOP")
+    x.check("SW20b rebind", _rguard(x.repo, "rebind"), 1, "follow · change 창이 아니다")
+    return x.fails
+
+
+def sw21a(td: str) -> "list[str]":
+    """210b — retain 행 파일이 이 슬라이스에 매이지 않았으면 변경 창이 받지 않는다(글만 편집은 받는다)."""
+    x = _Lane(td, _snap(SL_V1, retain=(SL_OTHER,)))
+    x.open("SW21a", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.edit(SL_OTHER, *SL_BODY)
+    x.close("SW21a", 2, f"{SL_OTHER} — 0C 검사 불합격", "이 슬라이스(S1) 몫 파일이 아니다(V 케이스 파일 · 계획 행 산출 · 매인 `retain` 행) — V 밖 시험 "
+            "편집은 0F(`retain` 재조직 행) 몫(설명 글 · 주석 · 빈 줄만 바꾼 편집과 대응표 치환은 받는다)")
+    x.write({SL_OTHER: SL_O.replace("다 확인.", "다 확인 — 고침.")})
+    x.close("SW21a 글만", 0)
+    return x.fails
+
+
+SL_S1_RETAIN: "list[dict]" = _plan("0T", "0C", "0F", "S1", "S2", S1={"files": [SL_OTHER], "retain_files": [SL_OTHER]})
+
+
+def sw21b(td: str) -> "list[str]":
+    """210b — retain 행이 S1 계획 행에 매였으면 0(개별 감사 · 요구 판정 기대 의미 그대로 · 단위 red 없음) · D 확정이면 지금처럼 red."""
+    x = _Lane(td, _snap(SL_V1, retain=(SL_OTHER,)), SL_S1_RETAIN)
+    x.open("SW21b", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.edit(SL_OTHER, *SL_BODY)
+    x.close("SW21b", 0)
+    d = _disp(x.last(), SL_OTHER)
+    x.need("SW21b 처분", (d["처분"], d["요구 판정"]) == ("개별 감사", ["기대 의미 그대로"])
+           and "허용 파일(이 슬라이스에 매인 `retain` 재조직 행)" in d["사유"], d)
+    x.write({SL_OTHER: SL_O.replace("== 9", "== 8")})
+    x.close("SW21b D 확정", 2, f"{SL_OTHER} — D 확정")
+    return x.fails
+
+
+def sw22(td: str) -> "list[str]":
+    """210d · 210a — V 케이스 파일의 V 밖 케이스 같은 뜻 고쳐 쓰기 · 몸 편집 red · docstring · 재료(도움 함수) 0 · 매인 retain 행이면 0."""
+    b_line = "    " + SL_B + "\n"
+    cases = (("① 같은 뜻", (b_line, "    expected = 9\n    assert product() + 0 == expected\n"), 2, SL_PLAN),
+             ("② 몸", (b_line, "    got = product() + 0\n    assert got == 9\n"), 2, SL_PLAN),
+             ("docstring", ("나 확인.", "나 확인 — 고침."), 0, SL_PLAN),
+             ("재료", ("def _expected():\n    return 9\n", "def _expected():\n    return 4 + 5\n"), 0, SL_PLAN),
+             ("매인 retain 행", (b_line, "    got = product() + 0\n    assert got == 9\n"), 0,
+              _plan("0T", "0C", "0F", "S1", "S2", S1={"files": [TP], "retain_files": [TP]})))
+    fails: "list[str]" = []
+    for k, (label, (old, new), code, plan) in enumerate(cases):
+        for v1 in ((True, False) if code == 2 else (True,)):          # ① 승인 변경 감사 길 · ④ 허용 파일 길(V1 집행 없음 — 미검출 red 도)
+            sub = Path(td) / f"{k}{v1}"
+            sub.mkdir()
+            x = _Lane(str(sub), _snap(SL_V1, retain=(TP,)), plan)
+            x.open("SW22", "change", "S1", 0)
+            if v1:
+                x.edit(TP, SL_A, "assert product() == 10")
+            x.edit(TP, old, new)
+            out = x.close(f"SW22 {label}", code, *((f"{TP} — V 밖 케이스 단위 편집 `test_b` — 변경 창은 이 슬라이스(S1) V 케이스와 재료(모듈 수준 문장 · "
+                                                    "도움 함수 · 도움 클래스 · 픽스처)만 받는다",) if code else ()))
+            x.need(f"SW22 {label} red 수", out.count("  red: ") == (0 if not code else 1 if v1 else 2), out)
+            fails += x.fails
+    return fails
+
+
+def sw22b(td: str) -> "list[str]":
+    """V 케이스 파일의 V 밖 케이스라도 이 창의 개명을 따라간 치환뿐이면 받는다(관례 — 대응표 치환은 어느 창이든 감사 키) · 몸까지 고치면 red."""
+    old_t = ("from application.core.product import Old, product\n\n\ndef test_a():\n    assert product() == 9\n\n\n"
+             "def test_b():\n    Old()\n    assert product() + 0 == 9\n")
+    new_t = old_t.replace("import Old,", "import New,").replace("Old()", "New()").replace(SL_A, "assert product() == 10")
+    x = _Lane(td, _snap(_vs("V1", f"{TP}::test_a", SL_A)), files={TP: old_t})
+    x.open("SW22b", "change", "S1", 0)
+    x.write({**RENAME, TP: new_t})
+    x.close("SW22b 치환", 0, "승인 변경 감사 1")
+    x.write({TP: new_t.replace("    New()\n", "    New()\n    product()\n")})
+    x.close("SW22b 몸", 2, "V 밖 케이스 단위 편집 `test_b`")
+    return x.fails
+
+
+def sw22c(td: str) -> "list[str]":
+    """V 밖 케이스 단위는 기준 판 케이스(지운 · 이름 바꾼 것)와 지금 판 케이스(새로 만든 것) 둘 다로 가린다(기대 없는 케이스)."""
+    bare = "\n\ndef test_c():\n    product()\n"
+    for k, (label, old, new, unit) in enumerate((("기준 판에만", "def test_c():", "def check_c():", "test_c"),
+                                                 ("지금 판에만", "def test_c():", "def test_d():\n    product()\n\n\ndef test_c():", "test_d"))):
+        sub = Path(td) / str(k)
+        sub.mkdir()
+        x = _Lane(str(sub), _snap(SL_V1), files={TP: SL_BASE + bare})
+        x.open("SW22c", "change", "S1", 0)
+        x.edit(TP, SL_A, "assert product() == 10")
+        x.edit(TP, old, new)
+        x.close(f"SW22c {label}", 2, f"V 밖 케이스 단위 편집 `{unit}`")
+        if x.fails:
+            return x.fails
+    return []
+
+
+def sw23(td: str) -> "list[str]":
+    """다른 슬라이스 V 의 연산을 이 창이 만들면 red — verify 도 «슬라이스 밖 집행» 으로 본다."""
+    x = _Lane(td, _snap(SL_V1, _vs("V2", slice_="S2", ops=(("core", ADD_F),))))
+    x.open("SW23", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.write({MIG_PATH: MIG(ADD_F)})
+    x.close("SW23", 2, "승인 밖 연산 ×1")
+    x.verify("SW23", 2, "슬라이스 밖 집행 — w1(슬라이스 S1) 연산 core · Call(")
+    return x.fails
+
+
+def sw24(td: str) -> "list[str]":
+    """다른 슬라이스 V 의 add · remove 케이스를 이 창이 집행하면 red."""
+    x = _Lane(td, _snap(SL_V1, _vs("V2", f"{TP}::test_new", slice_="S2", expect_add=1, verb="add"),
+                        _vs("V3", f"{TP}::test_b", SL_B, "S2", verb="remove")))
+    x.open("SW24", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    (x.repo / TP).write_text((x.repo / TP).read_text(encoding="utf-8").partition("def test_b")[0]
+                             + "def test_new():\n    assert 1 == 1\n", encoding="utf-8")
+    x.close("SW24", 2, f"테스트 케이스 추가 `{TP}::test_new` ×1(승인판 add 행 밖)", f"테스트 케이스 감소 `{TP}::test_b` ×1(승인판 remove 행 밖)")
+    return x.fails
+
+
+def sw25(td: str) -> "list[str]":
+    """다른 슬라이스 V 의 다른 BC 편집 줄 경로는 이 창이 받지 않는다."""
+    api = "application/billing/api.py"
+    x = _Lane(td, _snap(SL_V1, SL_V2, other=((api, "받는 쪽 어댑터", "V2"),)))
+    x.open("SW25", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.write({api: "def charge():\n    return 2\n"})
+    x.close("SW25", 2, f"{api} — 대상 BC(`application/core/`) 밖 경로가 다른 BC 편집 목록 밖(창 변경 허용 갈래: 목록 전부(묶음 import 치환 · "
+            "framework 새 모듈 빼고))")
+    x.need("SW25 좁힌 줄", x.opened(1)["allow"]["other_bc_edits"] == [], x.opened(1)["allow"]["other_bc_edits"])
+    return x.fails
+
+
+def sw26(td: str) -> "list[str]":
+    """집행이 끝난 V2(연산 + 기대)를 G1′ 이 S2 로 옮김 — S2 창 편집 없음 close 0(대칭) · 연산을 다시 만들면 2 · verify 0(옮기기 전 슬라이스 창의
+    집행도 주인 집행)."""
+    v2 = _vs("V2", f"{TP}::test_b", SL_B, ops=(("core", ADD_F),), expect_add=1)
+    x = _Lane(td, _snap(SL_V1, v2))
+    x.open("SW26", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.edit(TP, "    " + SL_B + "\n", "    assert product() + 0 == 10\n    assert product() > 0\n")
+    x.write({MIG_PATH: MIG(ADD_F)})
+    x.close("SW26 S1", 0)
+    x.audit(1)
+    x.bind(_snap(SL_V1, dict(v2, slice="S2")), 1, SL_PLAN, {"S1": {"plan_row": "바뀜"}, "S2": {"plan_row": "바뀜", "v": ["V2"]}})
+    x.open("SW26 S2", "change", "S2", 0)
+    again = "application/core/migrations/0003_again.py"
+    x.write({again: MIG(ADD_F)})
+    x.close("SW26 다시 생성", 2, "승인 밖 연산 ×1")
+    x.write({again: None})
+    x.close("SW26 편집 없음", 0, "시험 쪽 무변")
+    x.verify("SW26", 0, "슬라이스별 집행 S1 1/1 · S2 3/3", "요약: 동작 보존 green")
+    return x.fails
+
+
+SL_S1_FAKE: "list[dict]" = _plan("0T", "0C", "0F", "S1", "S2", S1={"files": [SL_FAKE]})
+
+
+def sw27(td: str) -> "list[str]":
+    """X1 — S1 계획 행이 산출로 적은 시험 재료(대역) 몸 편집 → 0 사유 «계획 산출» · 안 적었으면 2."""
+    fails: "list[str]" = []
+    for code, plan in ((0, SL_S1_FAKE), (2, SL_PLAN)):
+        sub = Path(td) / str(code)
+        sub.mkdir()
+        x = _Lane(str(sub), _snap(SL_V1), plan)
+        x.open("SW27", "change", "S1", 0)
+        x.edit(TP, SL_A, "assert product() == 10")
+        x.edit(SL_FAKE, "def call(self):\n        return 1", "def call(self, key):\n        return key")
+        x.close("SW27", code)
+        d = _disp(x.last(), SL_FAKE)
+        x.need("SW27 처분", ("허용 파일(이 슬라이스 계획 산출)" in d["사유"] and d["요구 판정"] == ["기대 의미 그대로"]) if not code
+               else "이 슬라이스(S1) 몫 파일이 아니다" in d["사유"], d)
+        fails += x.fails
+    return fails
+
+
+def sw28(td: str) -> "list[str]":
+    """새 · 지운 시험 쪽 파일도 이 슬라이스 몫이어야 — 계획 산출에 있음 0 · 없음 2."""
+    fails: "list[str]" = []
+    for code, files in ((0, [SL_NEW, SL_FAKE]), (2, [])):
+        sub = Path(td) / str(code)
+        sub.mkdir()
+        x = _Lane(str(sub), _snap(SL_V1), _plan("0T", "0C", "0F", "S1", "S2", S1={"files": files}))
+        x.open("SW28", "change", "S1", 0)
+        x.edit(TP, SL_A, "assert product() == 10")
+        x.write({SL_NEW: "def make():\n    return 1\n", SL_FAKE: None})
+        x.close("SW28", code, *([] if not code else [f"{p} — 이 슬라이스(S1) 몫 파일이 아니다(V 케이스 파일 · 계획 행 산출 · 매인 `retain` 행) — 새로 "
+                                                     "만들거나 지우는 시험 쪽 파일도 계획 행 산출로 적는다" for p in (SL_NEW, SL_FAKE)]))
+        fails += x.fails
+    return fails
+
+
+def sw29(td: str) -> "list[str]":
+    """V 케이스 파일이 계획 산출에도 적혔을 뿐이면 V 밖 케이스 단위 red 는 그대로."""
+    x = _Lane(td, _snap(SL_V1), _plan("0T", "0C", "0F", "S1", "S2", S1={"files": [TP]}))
+    x.open("SW29", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.edit(TP, "    " + SL_B + "\n", "    got = product() + 0\n    assert got == 9\n")
+    x.close("SW29", 2, "V 밖 케이스 단위 편집 `test_b`")
+    return x.fails
+
+
+def sw30(td: str) -> "list[str]":
+    """`--ref` 판형 · 실재 — 없는 감사 기록 · 자유 글 · 초록 suite · 붉은 suite · 게이트 파일 · 살아 있지 않은 항목 · 빼지 않은 항목."""
+    x = _s1_done(td)
+    x.items(adopted=["M1", "M2"], boost=["B1"], removed=["M2"])
+    x.suite(verdict="green")
+    green = sorted(_run_dir(x.repo).glob("suite-*.json"))[-1].stem
+    x.suite(verdict="red")
+    red = sorted(_run_dir(x.repo).glob("suite-*.json"))[-1].stem
+    (x.folder / "gate").mkdir()
+    (x.folder / "gate" / "r1.md").write_text("게이트", encoding="utf-8")
+    for label, kind, sid, reason, ref, code, needle in (
+            ("기록 없음", "test", "S1", "편집고침", "w9-1", 1, f"`--ref w9-1` 은 이번 실행({RUN}) w9 창의 감사 기록이 아니다"),
+            ("회차 없음", "test", "S1", "편집고침", "w1-2", 1, "w1 창의 감사 기록이 아니다"),
+            ("판형 밖", "test", "S1", "편집고침", "그냥", 1, "`--ref 그냥` 판형 밖"),
+            ("감사 파일 밖", "test", "S1", "편집고침", "감사:../x.md", 1, "산출물 폴더 안 기록 파일 이 없다(../x.md)"),
+            ("감사 파일", "test", "S1", "편집고침", "감사:gate/r1.md#발견1", 0, "까닭 편집고침(감사:gate/r1.md#발견1)"),
+            ("자유 글", "test", "S1", "편집고침", "G2:안내 글 어긋남", 0, "까닭 편집고침(G2:안내 글 어긋남)"),
+            ("초록 suite", "code", "0C", "검사반영", green, 1, "붉은 suite 기록 이 없다(판정 green)"),
+            ("없는 suite", "code", "0C", "검사반영", "suite-x", 1, "이번 실행 suite 기록 이 없다"),
+            ("붉은 suite", "code", "0C", "검사반영", red, 0, f"까닭 검사반영({red})"),
+            ("게이트", "code", "0C", "검사반영", "게이트:gate/r1.md", 0, "까닭 검사반영"),
+            ("게이트 없음", "code", "0C", "검사반영", "게이트:gate/r2.md", 1, "산출물 폴더 안 기록 파일 이 없다(gate/r2.md)"),
+            ("잔존 밖", "test", "0T", "잔존반송", "M1,M99", 1, "가리키는 이번 실행 ⓐ · 보탬 항목 이 없다(M99)"),
+            ("잔존 재상정", "test", "0T", "잔존반송", "M2", 1, "보탬 항목 이 없다(M2)"),
+            ("잔존", "test", "0T", "잔존반송", "M1,B1", 0, "까닭 잔존반송(M1,B1)"),
+            ("철회 밖", "test", "0T", "철회", "M1", 1, "`ⓐ 재상정` · 보탬 `바꿈` 으로 뺀 항목 이 없다(M1)"),
+            ("철회", "test", "0T", "철회", "M2", 0, "까닭 철회(M2)"),
+            ("편집고침 변경 창", "change", "S1", "편집고침", "w1-1", 1, "까닭 `편집고침` 은 `--kind test|code|follow` 창이다(지금 `--kind change`)")):
+        x.open(f"SW30 {label}", kind, sid, code, needle, reason=reason, ref=ref)
+        if code == 0:
+            x.close(f"SW30 {label}", 0)
+    return x.fails
+
+
+def sw30b(td: str) -> "list[str]":
+    """L-N3 — `w<n>-<회차>` 는 이번 실행 몫 감사 기록만(앞 실행 키 머리 · 이번 실행에 없는 창 → 1)."""
+    x = _s1_done(td)
+    x.win("바탕", 2, "change", "S2", (TP, SL_B, "assert product() + 0 == 10"))
+    mine = _rows(x.last())
+    before = [r.replace(f"{RUN}/w2", "20261001-0100/w2") for r in mine]
+    _audit(x.repo, 2, before, 1)
+    _audit(x.repo, 9, [r.replace("/w2", "/w9") for r in before], 1)
+    x.open("SW30b 앞 실행", "test", "S2", 1, f"`--ref w2-1` 은 이번 실행({RUN}) w2 창의 감사 기록이 아니다", reason="편집고침", ref="w2-1")
+    x.open("SW30b 없는 창", "test", "S2", 1, "w9 창의 감사 기록이 아니다", reason="편집고침", ref="w9-1")
+    _audit(x.repo, 2, mine, 2)
+    x.open("SW30b 이번 실행", "test", "S2", 0, reason="편집고침", ref="w2-2")
+    return x.fails
+
+
+def sw31(td: str) -> "list[str]":
+    """까닭 창의 슬라이스 — 지금 계획에서 지웠어도 이 실행 확정 계획에 있었으면 0(지운 행의 산출은 변경 창 허용 파일이 아니다) · 어디에도 없으면 1."""
+    x = _s1_done(td, plan=_plan("0T-x", "0C", "0F", "S1", "S2", "S3", S3={"files": [SL_OTHER]}))
+    x.items(removed=["M1"])
+    x.bind(_snap(SL_V1, SL_V2), 1, SL_PLAN, {})
+    x.open("SW31 없음", "test", "0T-y", 1, "이 실행의 어느 확정 계획에도 없다", reason="철회", ref="M1")
+    x.open("SW31 지운 행", "test", "0T-x", 0, "슬라이스 0T-x · 까닭 철회(M1)", reason="철회", ref="M1")
+    x.need("SW31 목적", x.opened(2)["purpose"] == "0T-x 목적", x.opened(2)["purpose"])
+    x.close("SW31", 0)
+    x.open("SW31 변경 창", "change", "S3", 0, reason="철회", ref="M1")
+    x.need("SW31 지운 행의 산출", x.opened(3)["allow"]["slice_files"] == [], x.opened(3)["allow"])
+    return x.fails
+
+
+def sw32(td: str) -> "list[str]":
+    """엄격인데 마지막 확정 줄에 명세 sha 없음 → open · verify · 실행 불능 글 · 첫 확정 전에 연 창은 슬라이스 대조 밖(verify 에 «슬라이스가 없다» 없음)."""
+    x = _Lane(td, _snap(SL_V1), bind=False)
+    no_sha = "엄격 실행인데 마지막 `G1 변경판 확정` 줄에 명세 sha 가 없다"
+    x.open("SW32 첫 확정 전", "test", None, 0, "첫 확정 전(슬라이스 · 까닭 대조 없음)")
+    x.bind(_snap(), 0, SL_PLAN)
+    x.close("SW32 첫 확정 전", 0)
+    x.need("SW32 기록", x.opened(1)["pre_g1"] is True and x.opened(1)["g1_count"] == 0, x.opened(1))
+    x.verify("SW32", 0, "창 차례 — 차례 0 · 까닭 0", absent=("슬라이스가 없다",))
+    x.bind(_snap(SL_V1), 1, SL_PLAN, sha=False)
+    x.open("SW32 test", "test", "0T", 1, no_sha)
+    x.open("SW32 change", "change", "S1", 1, no_sha)
+    x.verify("SW32 sha 빠짐", 2, no_sha)
+    return x.fails
+
+
+def sw33(td: str) -> "list[str]":
+    """엄격 판별은 첫 후보의 곁 자료 결속 칸(대역 표지) 하나 — 확정 줄에 sha 만 있으면 옛 꼴(차례 대조 없음)이되 sha 결속은 선다."""
+    x = _Lane(td, _snap(SL_V1, retain=(SL_OTHER,)), strict=False, bind=False)
+    x.digest = _bind(x.repo, _snap(SL_V1, retain=(SL_OTHER,)), SL_AT[0], sha=True, plan=SL_PLAN)
+    x.open("SW33", "change", None, 0, "옛 꼴 실행")
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.close("SW33", 0)
+    x.open("SW33 S1 뒤 0F", "follow", None, 0, "옛 꼴 실행")
+    x.close("SW33", 0)
+    (x.folder / "design-spec.md").write_text("# 명세\n\n고친 처방.\n", encoding="utf-8")
+    x.open("SW33 sha", "follow", None, 1, "지금 명세가 마지막 `G1 변경판 확정` 과 다르다 — 명세 sha ")
+    x.need("SW33 기록", x.opened(2)["g1_sha"] and "slice" not in x.opened(2), x.opened(2))
+    return x.fails
+
+
+SL_FW: str = "framework/httpx/api_call.py"
+
+
+def sw34(td: str) -> "list[str]":
+    """framework 새 모듈(0C 갈래) — 0C 창이 세움 0 · S1 뒤 편집고침 code 창이 그 모듈을 고침 0 · 0F · 변경 창은 받지 않음 2."""
+    x = _Lane(td, _snap(SL_V1, other=((SL_FW, "framework 새 모듈", "0C"),)))
+    x.open("SW34", "code", "0C", 0)
+    x.write({SL_FW: "def call():\n    return 1\n"})
+    x.close("SW34 0C", 0)
+    x.open("SW34", "follow", "0F", 0)
+    x.write({SL_FW: "def call():\n    return 2\n"})
+    x.close("SW34 0F", 2, f"{SL_FW} — 대상 BC(`application/core/`) 밖 경로가 다른 BC 편집 목록 밖(창 0F 허용 갈래: 공유 표면 · 프로젝트 합성)")
+    x.write({SL_FW: "def call():\n    return 1\n"})
+    x.close("SW34 0F", 0)
+    x.open("SW34", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.write({SL_FW: "def call():\n    return 3\n"})
+    x.close("SW34 변경 창", 2, f"{SL_FW} — 대상 BC", "목록 전부(묶음 import 치환 · framework 새 모듈 빼고)")
+    x.write({SL_FW: "def call():\n    return 1\n"})
+    x.close("SW34 변경 창", 0)
+    x.audit(3)
+    x.open("SW34", "code", "0C", 0, reason="편집고침", ref="w3-1")
+    x.write({SL_FW: "def call():\n    return 4\n"})
+    x.close("SW34 편집고침", 0)
+    return x.fails
+
+
+def sw34b(td: str) -> "list[str]":
+    """framework 새 모듈 — 앵커 판에 이미 있는 모듈이면 0C close red(다른 갈래 줄로도 받는 경로면 그 갈래대로)."""
+    fails: "list[str]" = []
+    for code, lines in ((2, ((SL_FW, "framework 새 모듈", "0C"),)), (0, ((SL_FW, "framework 새 모듈", "0C"), (SL_FW, "공유 표면", "0C")))):
+        sub = Path(td) / str(code)
+        sub.mkdir()
+        x = _Lane(str(sub), _snap(SL_V1, other=lines), files={SL_FW: "def call():\n    return 1\n"})
+        x.open("SW34b", "code", "0C", 0)
+        x.write({SL_FW: "def call():\n    return 2\n"})
+        x.close("SW34b", code, *([f"`{SL_FW}` — 갈래 `framework 새 모듈` 은 이 실행이 만드는 새 모듈만(앵커 판에 있는 framework 모듈 편집은 편집 범위 "
+                                  "밖)"] if code else []))
+        fails += x.fails
+    sub = Path(td) / "old"
+    sub.mkdir()
+    x = _Lane(str(sub), _snap(SL_V1, other=((SL_FW, "framework 새 모듈", "V1"),)), strict=False)
+    x.open("SW34b 옛 꼴 변경 창", "change", None, 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.write({SL_FW: "def call():\n    return 1\n"})
+    x.close("SW34b 옛 꼴 변경 창", 2, f"{SL_FW} — 대상 BC")
+    return fails + x.fails
+
+
+def sw35(td: str) -> "list[str]":
+    """감사 요청 머리 — 창 슬라이스 · 목적 · 그 슬라이스 V · 차례 | 까닭 · 가리킴 · 범위 밖 안내(test · change 창) · 승인 변경 절 머리."""
+    x = _Lane(td, _snap(SL_V1, SL_V2))
+    x.open("SW35", "test", "0T", 0)
+    x.edit(SL_THIRD, "다 확인.", "다 확인 — 고침.")
+    x.close("SW35", 0)
+    x.audit(1)
+    scope = ("에 닿지 않는 키(손대지 않은 줄 · 옮기거나 이름만 바꾸거나 import 만 바꾼 줄에 따라온 앵커 판 흠을 고친 키)는 «다름»(범위 밖 — 보탬 문으로 · 까닭 "
+             "창이면 까닭 밖)", "이 실행이 내용을 고친 줄의 흠")
+    x.open("SW35", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.close("SW35", 0)
+    x.audit(2)
+    x.open("SW35", "test", "S1", 0, reason="편집고침", ref="w2-1")
+    x.edit(SL_THIRD, "다 확인 — 고침.", "다 확인 — 또 고침.")
+    x.close("SW35", 0)
+    for n, needles in ((1, ("- 창 슬라이스 0T · 목적 «0T 목적» · 그 슬라이스 V 없음 · 차례\n", *scope)),
+                       (2, ("- 창 슬라이스 S1 · 목적 «S1 목적» · 그 슬라이스 V V1 · 차례\n", *scope,
+                            "승인 변경 미검출(그 변경 창에서 철회 — V 가 필요 없으면 V 를 지우는 G1′ → rebind)")),
+                       (3, ("- 창 슬라이스 S1 · 목적 «S1 목적» · 그 슬라이스 V V1 · 까닭 편집고침 — w2-1(감사 기록 audit-tests-w2-1.md)\n", *scope))):
+        text = _request(x.repo, n)
+        x.need(f"SW35 w{n}", all(s in text for s in needles), text[:900])
+    return x.fails
+
+
+# 2.45.1 `allow_table(snap)`(9c98c18e) 이 아래 표본에서 낸 표 — `slice=None` 은 이 표와 byte 같아야 한다(연산 키는 파이썬 판마다 글자가 달라 자리표).
+SL_ALLOW_SNAP: dict = _snap(SL_V1, dict(SL_V2, tests=[dict(SL_V2["tests"][0], expect_add=2, verb="add")]),
+                            _vs("V3", ops=(("core", ADD_F),)), retain=(SL_OTHER,), other=(("application/billing/api.py", "공유 표면", "0C"),),
+                            renames=({"kind": "case", "path": TP, "class": None, "old": "test_x", "new": "test_y"},),
+                            moves=({"path": TP, "name": "test_m", "to": SL_OTHER},))
+SL_ALLOW_2451: str = ("{\"retain_files\": [\"application/core/test/test_check.py\", \"application/core/test/test_other.py\"],"
+                     " \"approved_cases\": {\"application/core/test/test_check.py::test_a\": {\"expect_old\": [\"assert produ"
+                     "ct() == 9\"], \"expect_add\": 0, \"V\": [\"V1\"]}, \"application/core/test/test_check.py::test_b\": {\"exp"
+                     "ect_old\": [\"assert product() + 0 == 9\"], \"expect_add\": 2, \"V\": [\"V2\"]}}, \"ops\": [\"@OP@\"], \"other"
+                     "_bc_edits\": [{\"path\": \"application/billing/api.py\", \"kind\": \"공유 표면\", \"ref\": \"0C\"}], \"add_cases\":"
+                     " [\"application/core/test/test_check.py::test_b\"], \"remove_cases\": [], \"V\": [\"V1\", \"V2\", \"V3\"], \""
+                     "retain_alias\": [\"application/core/test/test_other.py\"], \"renames\": [{\"kind\": \"case\", \"path\": \"ap"
+                     "plication/core/test/test_check.py\", \"class\": null, \"old\": \"test_x\", \"new\": \"test_y\"}], \"moves\": "
+                     "[{\"path\": \"application/core/test/test_check.py\", \"name\": \"test_m\", \"to\": \"application/core/test/"
+                     "test_other.py\"}]}")
+
+
+def sw36(td: str) -> "list[str]":
+    """R 이 되살리는 꼴 — 엄격 변경 창 open 기록 `allow` = 같은 입력으로 다시 부른 표(계획 행은 결속 확정 이력 · 차분 좁힘도 함수 안) · `slice=None`
+    은 2.45.1 과 같음 · rebind 는 digest · sha · allow 를 함께 · close 뒤 기록에 판정용 칸 없음."""
+    import refactor_audit as stub  # noqa: PLC0415 — 대역(이 프로세스의 sys.path 앞)
+    bg = STATE["bg"]
+    x = _Lane(td, _snap(SL_V1, SL_V2, retain=(SL_OTHER,)), _plan("0T", "0C", "0F", "S1", "S2", S1={"files": [SL_FAKE, SL_OTHER],
+                                                                                                   "retain_files": [SL_OTHER]}))
+
+    def again(opened: dict, at: str) -> dict:
+        row = next((r for r in stub.slice_plan(x.folder, at) if r.slice == opened["slice"]), None)
+        return bg.allow_table(stub.changes_snapshot(x.folder, x.repo), slice=opened["slice"], plan_row=row, diff=opened.get("diff"))  # type: ignore[attr-defined]
+    (x.folder / "stub-plan.json").write_text(json.dumps(SL_S1_FAKE), encoding="utf-8")   # 지금 계획 ≠ 결속 확정 계획(대역만의 꼴)
+    x.open("SW36", "change", "S1", 0)
+    got = x.opened(1)
+    x.need("SW36 open", got["allow"] == again(got, SL_AT[0]) and got["allow"]["slice_files"] == [SL_FAKE, SL_OTHER]
+           and got["allow"]["slice_retain"] == [SL_OTHER] and got["allow"]["V"] == ["V1"], got["allow"])
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.close("SW36", 0)
+    x.need("SW36 close 뒤", "case_units" not in x.opened(1)["allow"] and x.opened(1)["allow"] == got["allow"], x.opened(1)["allow"])
+    (x.folder / "design-spec.md").write_text("# 명세\n\n둘째.\n", encoding="utf-8")
+    v3 = _vs("V3", f"{TP}::test_b", SL_B, "S1")
+    x.bind(_snap(SL_V1, v3), 1, SL_S1_FAKE, {"S1": {"plan_row": "바뀜", "v": ["V3"], "retain_removed": [SL_OTHER]}})
+    x.check("SW36 rebind", _rguard(x.repo, "rebind"), 0, f"명세 sha {got['g1_sha']} → {_spec_sha(x.repo)}")
+    now = x.opened(1)
+    x.need("SW36 rebind 셋", now["g1_digest"] == x.digest and now["g1_sha"] == _spec_sha(x.repo) != got["g1_sha"]
+           and {k: v for k, v in now["allow"].items() if k != "miss_retain"} == again(now, SL_AT[1]) != got["allow"], now["allow"])
+    x.edit(TP, SL_B, "assert product() + 0 == 10")
+    x.close("SW36 뒤", 0)
+    x.audit(1)
+    diffs = (({"plan_row": "더함", "v": ["V4"], "retain": [SL_OTHER]}, [SL_FAKE, SL_OTHER], [SL_OTHER]),
+             ({"plan_row": "바뀜", "v": ["V4"], "retain": []}, [SL_FAKE, SL_OTHER], []),
+             ({"plan_row": "", "v": ["V4"], "retain": [SL_OTHER], "rows": ["r"]}, [SL_OTHER], [SL_OTHER]))
+    for k, (diff, files, retain) in enumerate(diffs):
+        sub = Path(td) / f"d{k}"
+        sub.mkdir()
+        y = _s1_done(str(sub), _snap(SL_V1))
+        v4 = _vs("V4", f"{TP}::test_b", SL_B, "S1")
+        y.bind(_snap(SL_V1, v4), 1, _plan("0T", "0C", "0F", "S1", S1={"files": [SL_FAKE], "retain_files": [SL_OTHER]}), {"S1": diff})
+        y.open("SW36 재승인반영", "change", "S1", 0, reason="재승인반영", ref=SL_AT[1])
+        rec = y.opened(2)
+        row = next(r for r in stub.slice_plan(y.folder, SL_AT[1]) if r.slice == "S1")
+        table = bg.allow_table(stub.changes_snapshot(y.folder, y.repo), slice="S1", plan_row=row, diff=rec["diff"])  # type: ignore[attr-defined]
+        y.need("SW36 재승인반영", rec["allow"] == table and table["V"] == ["V4"] and (table["slice_files"], table["slice_retain"])
+               == (files, retain) and set(rec["diff"]) == set(stub.SliceDelta._fields), rec)
+        x.fails += y.fails
+    was = SL_ALLOW_2451.replace('"@OP@"', json.dumps(bg.op_key("core", ADD_F), ensure_ascii=False))  # type: ignore[attr-defined]
+    now_table = json.dumps(bg.allow_table(SL_ALLOW_SNAP), ensure_ascii=False)  # type: ignore[attr-defined]
+    x.need("SW36 slice=None", now_table == was, now_table)
+    return x.fails
+
+
+def sw37(td: str) -> "list[str]":
+    """0T 옮김 행이 V 케이스를 새 파일로 나눴는데 V · 입장 행은 옛 경로 — 옛 파일의 V 밖 케이스 편집은 red(계획 산출에 옛 경로가 있어도) · 새
+    파일의 V 는 받음 · 옛 파일을 덮는 매인 retain 행이 있으면 받음."""
+    for k, (cells, code) in enumerate((({"files": [TP]}, 2), ({"files": [TP], "retain_files": [TP]}, 0))):
+        sub = Path(td) / str(k)
+        sub.mkdir()
+        x = _split(str(sub), _vs("V1", f"{TP}::test_b", SL_B), _plan("0T", "0C", "0F", "S1", S1=cells), (TP,))
+        x.open("SW37", "change", "S1", 0)
+        x.edit(SL_MOVED, SL_B, "assert product() + 0 == 10")
+        x.edit(TP, *SL_BODY)
+        x.close(f"SW37 {cells}", code, *((f"{TP} — 0C 검사 불합격", "이 슬라이스(S1) 몫 파일이 아니다") if code else
+                                         ("승인 변경 감사 1 · red 0", "개별 감사 1")))
+        if x.fails:
+            return x.fails
+    return []
+
+
+def sw38(td: str) -> "list[str]":
+    """변경 창 몫 파일(매인 retain 행 · 계획 산출)을 앞 0T 창이 `conftest.py` 로 통째 옮겼으면 그 conftest 는 몫이 아니다 · 다른 이름이면 잇는다."""
+    kit, body = "application/core/test/kit.py", "def make():\n    return 1\n"
+    for k, (to, cells, code) in enumerate((("application/core/test/conftest.py", {"files": [kit], "retain_files": [kit]}, 2),
+                                           ("application/core/test/conftest.py", {"files": [kit]}, 2),
+                                           ("application/core/test/kit_moved.py", {"files": [kit], "retain_files": [kit]}, 0))):
+        sub = Path(td) / str(k)
+        sub.mkdir()
+        x = _Lane(str(sub), _snap(SL_V1, retain=(kit,)), _plan("0T", "0C", "0F", "S1", S1=cells), files={kit: body})
+        x.open("SW38", "test", "0T", 0)
+        x.write({kit: None, to: body})
+        x.close("SW38 옮김", 0)
+        x.audit(1)
+        x.open("SW38", "change", "S1", 0)
+        x.edit(TP, SL_A, "assert product() == 10")
+        x.edit(to, "return 1", "return 0 + 1")
+        x.close(f"SW38 {to} {sorted(cells)}", code, *((f"{to} — 0C 검사 불합격", "이 슬라이스(S1) 몫 파일이 아니다") if code else ("개별 감사 1",)))
+        if x.fails:
+            return x.fails
+    return []
+
+
+def sw39(td: str) -> "list[str]":
+    """새 시험 패키지 폴더의 빈 `__init__.py`(0바이트 · docstring · 주석)는 변경 창이 받는다(개별 감사) · 내용이 있거나 이미 있던 폴더면 red."""
+    case, init = "application/core/test/unit/api/test_new.py", "application/core/test/unit/api/__init__.py"
+    outer = "application/core/test/unit/__init__.py"
+    fails: "list[str]" = []
+    for k, (label, text, there, code) in enumerate((("0바이트", "", False, 0), ("docstring", '"""골격."""\n', False, 0), ("주석", "# 골격\n", False, 0),
+                                                    ("내용", "NAME = 1\n", False, 2), ("이미 있던 폴더", "", True, 2))):
+        sub = Path(td) / str(k)
+        sub.mkdir()
+        x = _Lane(str(sub), _snap(_vs("V1", f"{case}::test_n", expect_add=1, verb="add")),
+                  files={"application/core/test/unit/api/helper.py": "def h():\n    return 1\n"} if there else None)
+        x.open("SW39", "change", "S1", 0)
+        x.write({case: "def test_n():\n    assert 1 == 1\n", init: text, **({} if there else {outer: ""})})
+        x.close(f"SW39 {label}", code, *((f"{init} — 이 슬라이스(S1) 몫 파일이 아니다", "(새 시험 패키지 폴더의 빈 `__init__.py` 는 받는다)") if code else
+                                         ("개별 감사 3 · 승인 변경 감사 0 · red 0",)))
+        fails += x.fails
+    return fails
+
+
+def sw40(td: str) -> "list[str]":
+    """계획 매임만 바뀐 G1′(승인판 digest 같음 · 명세 sha 다름) — 열린 변경 창 close 는 «rebind 먼저» 실행 불능 → rebind 뒤 새 매임으로 판정 ·
+    처방 글만 바뀐 확정(다시 지은 표 같음)은 rebind 없이 닫힌다."""
+    snap = _snap(SL_V1, retain=(SL_OTHER,))
+    for k, (label, plan) in enumerate((("매임", SL_PLAN), ("처방 글", SL_S1_RETAIN))):
+        sub = Path(td) / str(k)
+        sub.mkdir()
+        x = _Lane(str(sub), snap, SL_S1_RETAIN)
+        x.open("SW40", "change", "S1", 0)
+        x.edit(TP, SL_A, "assert product() == 10")
+        x.edit(SL_OTHER, *SL_BODY)
+        _respec(x, "# 명세\n\n둘째.\n")
+        x.bind(snap, 1, plan)
+        if label == "처방 글":
+            x.close("SW40 처방 글", 0, "개별 감사 1")
+        else:
+            x.close("SW40 매임", 1, "마지막 확정의 슬라이스 계획으로 다시 지은 허용 표가 이 창의 표와 다르다(`slice_files` · `slice_retain`) — rebind 먼저")
+            x.check("SW40 rebind", _rguard(x.repo, "rebind"), 0)
+            x.close("SW40 매임 rebind 뒤", 2, f"{SL_OTHER} — 0C 검사 불합격")
+        if x.fails:
+            return x.fails
+    return []
+
+
+def sw41(td: str) -> "list[str]":
+    """같은 케이스를 옛 · 새 철자로 적은 V 둘 — 기대 추가 흔적은 G1 키마다 남지만 미검출은 한 번으로 센다(승인 2 중 1 → red)."""
+    old, new = f"{TP}::test_a", f"{TP}::test_a2"
+    x = _Lane(td, _snap(_vs("V1", old, expect_add=2), _vs("V2", new, SL_A), renames=(_rn("test_a", "test_a2"),)))
+    x.win("SW41", 1, "test", "0T", (TP, "def test_a():", "def test_a2():"))
+    x.open("SW41", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 10\n    assert product() > 0")
+    x.close("SW41", 2, f"승인 변경 미검출 — 슬라이스 S1 V1 `{old}` 기대 추가 2 중 1(이 창 · 앞 창 집행)")
+    return x.fails
+
+
+def _two_done(td: str, snap: "dict | None" = None, **kw: object) -> _Lane:
+    """S1 · S2 변경 창이 닫힌 레인(w1 · w2 · 감사 끝)."""
+    x = _s1_done(td, snap, **kw)
+    x.win("바탕", 2, "change", "S2", (TP, SL_B, "assert product() + 0 == 10"))
+    return x
+
+
+def sv1(td: str) -> "list[str]":
+    """verify 슬라이스별 집행 — 초록 · S2 변경 창 없음 red · 슬라이스 밖 집행 red(기록을 손으로 옮김) · 집행 안 된 몫 red."""
+    x = _two_done(td)
+    x.verify("SV1", 0, "슬라이스별 집행 S1 1/1 · S2 1/1", f"digest {x.digest} · 명세 sha {_spec_sha(x.repo)} = G1 변경판 확정",
+             "창 차례 — 차례 2 · 까닭 0", "요약: 동작 보존 green")
+    run = _run_dir(x.repo)
+    one, two = (json.loads((run / f"w{n}-close.json").read_text(encoding="utf-8")) for n in (1, 2))
+    case = f"{TP}::test_b"
+    moved = json.loads(json.dumps(one))
+    moved[-1]["approved_hits"][case] = two[-1]["approved_hits"][case]
+    (run / "w1-close.json").write_text(json.dumps(moved, ensure_ascii=False), encoding="utf-8")
+    x.verify("SV1 슬라이스 밖", 2, f"슬라이스 밖 집행 — w1(슬라이스 S1) `{case}` «{SL_B}»")
+    (run / "w2-close.json").unlink()
+    (run / "w2-open.json").unlink()
+    (x.folder / "audit-tests-w2-1.md").unlink()
+    x.verify("SV1 창 없음", 2, "슬라이스 S2 의 변경 창이 없다 — 승인 V V2", "슬라이스 S2 승인 원소 1 중 집행 0", "슬라이스별 집행 S1 1/1 · S2 0/1")
+    return x.fails
+
+
+def sv2(td: str) -> "list[str]":
+    """verify — 확정 뒤 연 창에 슬라이스가 없으면 red."""
+    x = _s1_done(td, _snap(SL_V1))
+    f = _run_dir(x.repo) / "w1-open.json"
+    record = json.loads(f.read_text(encoding="utf-8"))
+    for key in ("slice", "reason", "ref"):
+        record.pop(key)
+    f.write_text(json.dumps(record, ensure_ascii=False), encoding="utf-8")
+    x.verify("SV2", 2, "창 w1 에 슬라이스가 없다")
+    return x.fails
+
+
+def sv3(td: str) -> "list[str]":
+    """verify 창 차례 줄 — 차례 · 까닭 수."""
+    x = _two_done(td)
+    x.win("SV3", 3, "test", "S2", (SL_THIRD, "다 확인.", "다 확인 — 고침."), reason="편집고침", ref="w2-1")
+    x.open("SV3", "code", "0C", 0, reason="끝맞춤")
+    x.close("SV3", 0)
+    x.verify("SV3", 0, "동작 보존: 창 4(", "창 차례 — 차례 2 · 까닭 2(편집고침 1 · 끝맞춤 1)", "요약: 동작 보존 green")
+    return x.fails
+
+
+def sv4(td: str) -> "list[str]":
+    """verify 옛 꼴 — «창 슬라이스 옛 꼴» · 슬라이스별 집행 없음 · 명세 sha 없는 줄."""
+    x = _Lane(td, _snap(SL_V1), strict=False)
+    x.open("SV4", "change", None, 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    x.close("SV4", 0)
+    x.audit(1)
+    x.verify("SV4", 0, " · 창 슬라이스 옛 꼴", f"digest {x.digest} = G1 변경판 확정", "G0 원점 20261004T020000Z",
+             absent=("슬라이스별 집행", "창 차례", "명세 sha"))
+    return x.fails
+
+
+def sv5(td: str) -> "list[str]":
+    """verify 마지막 창 결속 — 뒤 확정이 0T 만 바꿈 → 통과 · S1 V 를 더함 → red → 재승인반영 창 → green."""
+    x = _two_done(td)
+    x.win("SV5", 3, "test", "S2", reason="편집고침", ref="w2-1")
+    x.bind(_snap(SL_V1, SL_V2, update=(SL_ROW_T,)), 1, SL_PLAN, {"0T": {"plan_row": "바뀜", "rows": [SL_ROW_T[0]]}})
+    x.verify("SV5 0T 만", 0, "요약: 동작 보존 green")
+    v3 = _vs("V3", f"{SL_OTHER}::test_o", SL_A, "S1")
+    x.bind(_snap(SL_V1, SL_V2, v3, update=(SL_ROW_T,)), 2, SL_PLAN, {"S1": {"v": ["V3"], "plan_row": ""}})
+    x.verify("SV5 S1", 2, f"확정 {SL_AT[2]} 이 슬라이스 S1 를 건드렸다(V 1)", "슬라이스 S1 승인 원소 2 중 집행 1")
+    x.win("SV5", 4, "change", "S1", (SL_OTHER, SL_A, "assert product() == 10"), reason="재승인반영", ref=SL_AT[2])
+    x.verify("SV5 뒤", 0, "요약: 동작 보존 green", "까닭 2(편집고침 1 · 재승인반영 1)", "슬라이스별 집행 S1 2/2 · S2 1/1")
+    return x.fails
+
+
+def sv6(td: str) -> "list[str]":
+    """D-N2b — 마지막 follow 창 뒤 새 확정이 0F 의 매이지 않은 retain 행을 지움 → verify 2 → 편집 0 재승인반영 창 → 0."""
+    x = _Lane(td, _snap(retain=(SL_OTHER,)))
+    x.win("SV6", 1, "follow", "0F", (SL_OTHER, "다 확인.", "다 확인 — 고침."))
+    x.win("SV6", 2, "test", "0F", reason="편집고침", ref="w1-1")
+    x.bind(_snap(), 1, SL_PLAN, {"0F": {"retain_removed": [SL_OTHER], "rows_removed": ["r"]}})
+    x.verify("SV6", 2, f"확정 {SL_AT[1]} 이 슬라이스 0F 를 건드렸다(빠진 retain 1 · 빠진 입장 행 1)")
+    x.win("SV6", 3, "follow", "0F", reason="재승인반영", ref=SL_AT[1])
+    x.verify("SV6 뒤", 0, "요약: 동작 보존 green")
+    return x.fails
+
+
+def sv7(td: str) -> "list[str]":
+    """마지막 변경 창 뒤 확정이 ① 처방 글만(digest 같음) ② 낱말만(차분이 S1 낱말 · 0T reworded) → verify 0."""
+    x = _two_done(td)
+    x.win("SV7", 3, "test", "S2", reason="편집고침", ref="w2-1")
+    (x.folder / "design-spec.md").write_text("# 명세\n\n고친 처방.\n", encoding="utf-8")
+    x.bind(_snap(SL_V1, SL_V2), 1, SL_PLAN)
+    x.verify("SV7 ①", 0, "요약: 동작 보존 green")
+    x.bind(dict(_snap(SL_V1, SL_V2), linked_rows=["낱말"]), 2, SL_PLAN, {"S1": {"plan_row": "낱말"}, "0T": {"reworded": ["r"]}})
+    x.verify("SV7 ②", 0, "요약: 동작 보존 green")
+    return x.fails
+
+
+def sv8(td: str) -> "list[str]":
+    """verify `바뀐 것 실행:` 끝의 앞 결정 옮김 꼬리(있음 · 없음)."""
+    x = _s1_done(td, _snap(SL_V1), plan=_plan("0T", "0C", "0F", "S1"))
+    out = x.verify("SV8 없음", 0, absent=("앞 결정 옮김",))
+    tail = " · 앞 결정 옮김 2(G1 답 반영 1 · 재상정 반영 1)"
+    (x.folder / "stub-carry.txt").write_text(tail, encoding="utf-8")
+    x.verify("SV8 있음", 0, "슬라이스별 집행 S1 1/1" + tail + "\n")
+    x.need("SV8 없음 끝", "슬라이스별 집행 S1 1/1\n" in out, out)
+    return x.fails
+
+
+def sv9(td: str) -> "list[str]":
+    """verify 마지막 창 결속 — 같은 결속(digest · 명세 sha)을 확정한 줄이 여럿이면 마지막 것 뒤의 확정만 본다(사이에 되돌린 확정이 S2 를 건드렸어도)."""
+    x = _two_done(td)
+    x.win("SV9", 3, "test", "S2", reason="편집고침", ref="w2-1")
+    both = _snap(SL_V1, SL_V2)
+    x.bind(_snap(SL_V1, SL_V2, _vs("V3", f"{SL_OTHER}::test_o", SL_A, "S2")), 1, SL_PLAN, {"S2": {"v": ["V3"], "plan_row": ""}})
+    x.bind(both, 2, SL_PLAN, {"S2": {"v_removed": ["V3"], "plan_row": ""}})
+    x.bind(_snap(SL_V1, SL_V2, update=(SL_ROW_T,)), 3, SL_PLAN, {"0T": {"plan_row": "바뀜", "rows": [SL_ROW_T[0]]}})
+    x.verify("SV9", 0, "요약: 동작 보존 green")
+    return x.fails
+
+
+def sv10(td: str) -> "list[str]":
+    """verify — 마지막 변경 창 뒤 확정이 승인판 digest 를 안 바꾸고 슬라이스 계획 매임만 바꿔도(명세 sha 다름) 0F · S 를 건드렸으면 red → rebind 나
+    재승인반영 창 · 0T 만 건드렸거나 차분이 없으면 통과."""
+    snap = _snap(SL_V1, retain=(SL_OTHER,))
+    touched = {"0F": {"plan_row": "바뀜", "retain": [SL_OTHER], "rows": ["r"]}, "S1": {"plan_row": "바뀜", "rows_removed": ["r"]}}
+    for k, (label, diff, code) in enumerate((("0F · S1", touched, 2), ("0T 만", {"0T": {"plan_row": "바뀜", "rows": ["r"]}}, 0))):
+        sub = Path(td) / str(k)
+        sub.mkdir()
+        x = _s1_done(str(sub), snap, plan=SL_S1_RETAIN[:-1])
+        x.win("SV10", 2, "test", "S1", reason="편집고침", ref="w1-1")
+        was = _spec_sha(x.repo)
+        _respec(x, "# 명세\n\n둘째.\n")
+        x.bind(snap, 1, SL_PLAN[:-1], diff)
+        x.verify(f"SV10 {label}", code, *((f"마지막 창 결속 명세 sha {was} ≠ G1 변경판 확정 명세 sha {_spec_sha(x.repo)} — 확정 {SL_AT[1]} 이 슬라이스 0F · S1 "
+                                          "를 건드렸다", f"`--reason 재승인반영 --ref {SL_AT[1]}` 창") if code else ("요약: 동작 보존 green",)))
+        if code:
+            x.win("SV10", 3, "follow", "0F", reason="재승인반영", ref=SL_AT[1])
+            x.verify("SV10 재승인반영 뒤", 0, "요약: 동작 보존 green")
+        if x.fails:
+            return x.fails
+    return []
+
+
+def sv11(td: str) -> "list[str]":
+    """verify 슬라이스 밖 집행 — S1 창이 집행한 기대 추가의 V 를 지우고 같은 케이스의 기대 추가를 S2 V 로 다시 승인하면 w1 의 추가는 주인이 아니다."""
+    v1 = _vs("V1", f"{TP}::test_a", expect_add=1)
+    x = _Lane(td, _snap(v1, SL_V2))
+    x.win("SV11", 1, "change", "S1", (TP, SL_A, SL_A + "\n    assert product() > 0"))
+    x.bind(_snap(SL_V2, _vs("V3", f"{TP}::test_a", slice_="S2", expect_add=1)), 1, None, {"S2": {"plan_row": "", "v": ["V3"]}})
+    x.verify("SV11", 2, f"슬라이스 밖 집행 — w1(슬라이스 S1) `{TP}::test_a` 기대 추가 1")
+    return x.fails
+
+
+def _respec(x: _Lane, text: str) -> None:
+    (x.folder / "design-spec.md").write_text(text, encoding="utf-8")
+
+
+SL_SHA: str = "지금 명세가 마지막 `G1 변경판 확정` 과 다르다 — 명세 sha "
+
+
+def b1(td: str) -> "list[str]":
+    """F4-205 — 확정 뒤 명세 글이 바뀌면(승인판 digest 같음) 네 종류 open 과 test · code · follow · change close 가 실행 불능."""
+    fails: "list[str]" = []
+    for kind, sid in (("test", "0T"), ("code", "0C"), ("follow", "0F"), ("change", "S1")):
+        sub = Path(td) / kind
+        sub.mkdir()
+        x = _Lane(str(sub), _snap(SL_V1))
+        x.open("B1", kind, sid, 0)
+        _respec(x, "# 명세\n\n확정 뒤 고친 처방.\n")
+        x.close("B1", 1, SL_SHA)
+        _respec(x, "# 명세\n\n처방 한 줄.\n")
+        if kind == "change":
+            x.edit(TP, SL_A, "assert product() == 10")
+        x.close("B1 되돌림", 0)
+        x.audit(1)
+        _respec(x, "# 명세\n\n확정 뒤 고친 처방.\n")
+        x.open("B1", kind, sid, 1, SL_SHA, "확정 뒤 명세를 바꿨으면 G1′(`ⓐ 재상정` 반영이면 그 길)로 G1 ⑥ 을 다시 돌려 새 확정 줄을 쓴다")
+        fails += x.fails
+    return fails
+
+
+def b2(td: str) -> "list[str]":
+    """sha 만 바뀐 새 확정 — 열린 변경 창은 rebind 없이도 close 가 서고(결속 digest 같음) rebind 는 0 · 또 rebind 는 «새 확정이 없다»."""
+    x = _Lane(td, _snap(SL_V1))
+    x.open("B2", "change", "S1", 0)
+    x.edit(TP, SL_A, "assert product() == 10")
+    before = _spec_sha(x.repo)
+    _respec(x, "# 명세\n\n고친 처방.\n")
+    x.bind(_snap(SL_V1), 1)
+    x.close("B2 rebind 없이", 0)
+    x.check("B2 rebind", _rguard(x.repo, "rebind"), 0, f"명세 sha {before} → {_spec_sha(x.repo)}")
+    x.check("B2 또", _rguard(x.repo, "rebind"), 1, "새 `G1 변경판 확정` 이 없다")
+    x.close("B2 뒤", 0)
+    x.need("B2 기록", x.opened(1)["g1_sha"] == _spec_sha(x.repo) and x.opened(1)["rebinds"][0]["from_sha"] == before, x.opened(1)["rebinds"])
+    return x.fails
+
+
+def b3(td: str) -> "list[str]":
+    """옛 확정 줄(명세 sha 칸 없음) — 명세 글이 바뀌어도 digest 만 본다(호환)."""
+    x = _Lane(td, _snap(SL_V1, retain=(SL_OTHER,)), strict=False)
+    for kind in ("test", "code", "follow", "change"):
+        _respec(x, f"# 명세\n\n{kind} 앞에 고친 처방.\n")
+        x.open("B3", kind, None, 0, "옛 꼴 실행")
+        _respec(x, f"# 명세\n\n{kind} 안에서 고친 처방.\n")
+        x.close("B3", 0)
+    return x.fails
+
+
+def b4(td: str) -> "list[str]":
+    """verify — 명세가 마지막 확정의 명세 sha 와 다르면 red · 같으면 줄에 sha 가 실린다."""
+    x = _s1_done(td, _snap(SL_V1), plan=_plan("0T", "0C", "0F", "S1"))
+    x.verify("B4", 0, f"digest {x.digest} · 명세 sha {_spec_sha(x.repo)} = G1 변경판 확정")
+    _respec(x, "# 명세\n\n고친 처방.\n")
+    x.verify("B4 바뀜", 2, SL_SHA, " ≠ G1 변경판 확정")
+    return x.fails
+
+
+def b5(td: str) -> "list[str]":
+    """suite — 명세가 확정과 다르면 실행 불능 · 엄격인데 sha 없음도(진짜 behavior_support) · verify 는 suite 기록의 sha 가 확정과 같아야."""
+    x = _s1_done(td, _snap(SL_V1), plan=_plan("0T", "0C", "0F", "S1"))
+    x.suite(g1={"at": SL_AT[0], "digest": x.digest, "candidate": x.digest, "run_definition_digest": RUN_DEF,
+                "support_record": "20261004T020000Z", "sha": "0" * 12})
+    x.check("B5 기록 sha", _rguard(x.repo, "verify"), 2, "G1 결속", f"(명세 sha {'0' * 12} ≠ {_spec_sha(x.repo)})")
+    if hasattr(STATE["bs"], "g0_keep"):                        # 대역 behavior_support 면 suite 본체가 없다
+        _respec(x, "# 명세\n\n고친 처방.\n")
+        x.check("B5 명세 다름", _rguard(x.repo, "suite"), 1, SL_SHA)
+        x.bind(_snap(SL_V1), 1, sha=False)
+        x.check("B5 sha 없음", _rguard(x.repo, "suite"), 1, "엄격 실행인데 마지막 `G1 변경판 확정` 줄에 명세 sha 가 없다")
+    return x.fails
+
+
+def o1(td: str) -> "list[str]":
+    """F4-204 — verify 의 G0 원점: 이 실행 첫 확정의 지원 기록과 suite 기록 원점(옛 기록은 정의 기록)이 다르면 red · 같으면 줄에 이름."""
+    x = _Lane(td, _snap(SL_V1), plan=_plan("0T", "0C", "0F", "S1"))
+    x.win("O1", 1, "change", "S1", (TP, SL_A, "assert product() == 10"))
+    again = dict(_snap(SL_V1), support_record="20261004T050000Z")
+    x.bind(again, 1, None, {})
+    x.suite(support_record="20261004T050000Z")
+    x.check("O1 옛 기록", _rguard(x.repo, "verify"), 2,
+            "suite 의 G0 원점 20261004T050000Z ≠ 이 실행 첫 `G1 변경판 확정` 의 지원 기록 20261004T020000Z — suite 를 다시 돈다")
+    x.suite(support_record="20261004T050000Z", origin_record="20261004T020000Z")
+    x.check("O1 원점 기록", _rguard(x.repo, "verify"), 0, " · G0 원점 20261004T020000Z", "요약: 동작 보존 green")
+    first = sorted((x.folder / "stub-candidates").glob("*.json"))
+    for f in first:
+        if f.name == f"{x.opened(1)['g1_digest']}.json":
+            f.unlink()
+    x.check("O1 첫 후보 못 읽음", _rguard(x.repo, "verify"), 2, f"첫 확정 후보 {x.opened(1)['g1_digest']} 를 읽지 못했다 — ")
+    return x.fails
+
+
+def o2(td: str) -> "list[str]":
+    """suite 본체(엔진 run 만 대역) — 지원 확인을 다시 떠(명령을 보탠 다른 정의 · 옮긴 자리가 이미 빠진 수집) 새 확정이 결속해도 G0 유지 · 옮김
+    대조 원점은 첫 확정의 지원 기록 · 원점의 정의 digest 가 달라도 받는다 · 기록 `origin_record` · 요약 «G0 원점 … · 실행 정의 기록 …»."""
+    bs = STATE["bs"]
+    if not hasattr(bs, "g0_keep"):
+        return []
+    d0, d1 = "20261004T020000Z", "20261004T050000Z"
+    x = _Lane(td, _snap(), strict=False, bind=False, files={MV_BIG: MV_LEFT, MV_OTHER: MV_HEAD + MV_CASE})
+    key = lambda f, n: (f"{f}::{n}", [f, None, n, n])  # noqa: E731
+    for at, (stamp, argvs, names) in zip(SL_AT, ((d0, [["pytest"]], ("test_old_is_class", "test_product_is_nine")),
+                                                 (d1, [["pytest"], ["pytest", "x"]], ("test_product_is_nine",)))):
+        rec = x.folder / "behavior" / "support" / stamp
+        rec.mkdir(parents=True)
+        definition = {"version": 1, "argvs": argvs, "env": {}, "sources": [], "frozen_at": ""}
+        digest = bs._definition_digest(definition)  # type: ignore[attr-defined]
+        (rec / "run-definition.json").write_text(json.dumps(definition), encoding="utf-8")
+        (rec / "g0-collect.json").write_text(json.dumps({"verdict": "지원", "run_definition_digest": digest, "digests": {MV_BIG: "old"},
+                                                         "keys": dict(key(MV_BIG, n) for n in names)}), encoding="utf-8")
+        _bind(x.repo, dict(_snap(moves=(_mv(MV_BIG, "test_old_is_class", MV_OTHER),)), support_record=stamp, run_definition_digest=digest), at)
+    run_dir = _run_dir(x.repo)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "w1-open.json").write_text(json.dumps({"window": 1, "kind": "test", "mode": "refactor"}), encoding="utf-8")
+    (run_dir / "w1-close.json").write_text(json.dumps([{"verdict": "audit", "g0_keep_exceptions": {"moved": {}, "removed": [], "case_moved": [
+        {"path": MV_BIG, "class": None, "func": "test_old_is_class", "to": MV_OTHER}]}}]), encoding="utf-8")
+
+    def engine(*ran: "tuple[str, str]") -> "Callable[..., tuple[list[str], dict]]":
+        keys = dict(key(f, n) for f, n in ran)
+        info = {"keys": keys, "ok": set(keys), "selected_ids": set(keys), "skipped_ids": set(), "fp": ["a", "a"], "commands": [],
+                "counts": dict(GOOD_COUNTS), "digests": {}}
+        return lambda *_a, **_k: ([], info)
+    real = bs.run  # type: ignore[attr-defined]
+    for label, ran, code in (("옮긴 자리 돎", ((MV_OTHER, "test_old_is_class"), (MV_BIG, "test_product_is_nine")), 0),
+                             ("옮긴 자리 안 돎", ((MV_BIG, "test_product_is_nine"),), 2)):
+        said = io.StringIO()
+        try:
+            bs.run = engine(*ran)  # type: ignore[attr-defined]
+            with contextlib.redirect_stdout(said), contextlib.redirect_stderr(said):
+                got = bs.cmd_suite(x.folder, x.repo)  # type: ignore[attr-defined]
+        finally:
+            bs.run = real  # type: ignore[attr-defined]
+        x.check(f"O2 {label}", (got, said.getvalue()), code, f"G0 원점 {d0} · 실행 정의 기록 {d1}",
+                *((f"파일 단위: {MV_OTHER}", "옮긴 케이스가 G2 에서 선택되지 않았다") if code else ()))
+        files = sorted(run_dir.glob("suite-*.json"))
+        record = json.loads(files[-1].read_text(encoding="utf-8")) if files else {}
+        x.need(f"O2 {label} 기록", (record.get("origin_record"), record.get("support_record")) == (d0, d1), record)
+        for f in files:                                              # suite 기록 이름은 초 단위 — 다음 바퀴와 섞이지 않게
+            f.unlink()
+    return x.fails
+
+
+SLICE_CASES: "dict[str, Callable[[str], list[str]]]" = {
+    f.__name__.upper(): f for f in (
+        sw1, sw2, sw3, sw4, sw5, sw6, sw7, sw8, sw8b, sw8c, sw9, sw10a, sw10b, sw10c, sw10d, sw10e, sw10f, sw10g, sw10h, sw10i, sw10j,
+        sw10k, sw10l, sw11, sw11b, sw12, sw13, sw14, sw14b, sw15, sw16, sw17, sw17b, sw17c, sw17d, sw18, sw19, sw19b, sw20, sw20b, sw21a,
+        sw21b, sw22, sw22b, sw22c, sw23, sw24, sw25, sw26, sw27, sw28, sw29, sw30, sw30b, sw31, sw32, sw33, sw34, sw34b, sw35, sw36, sw37,
+        sw38, sw39, sw40, sw41, sv1, sv2, sv3, sv4, sv5, sv6, sv7, sv8, sv9, sv10, sv11)}
+BIND_CASES: "dict[str, Callable[[str], list[str]]]" = {f.__name__.upper(): f for f in (b1, b2, b3, b4, b5)}
+ORIGIN_CASES: "dict[str, Callable[[str], list[str]]]" = {f.__name__.upper(): f for f in (o1, o2)}
+STRICT_GROUPS: "dict[str, dict[str, Callable[[str], list[str]]]]" = {"slice": SLICE_CASES, "bind": BIND_CASES, "origin": ORIGIN_CASES}
+
+
+def strict_checks(group: str, names: "tuple[str, ...]" = ()) -> "list[str]":
+    """엄격 실행 사례 묶음(slice · bind · origin) — 사례마다 새 임시 저장소 · 병렬(O2 는 같은 프로세스의 엔진을 잠시 바꿔 차례로). `names` 면 그
+    사례만(변이 시험)."""
+    picked = {n: f for n, f in STRICT_GROUPS[group].items() if not names or n in names}
+    unknown: "list[str]" = [n for n in names if n not in STRICT_GROUPS[group]]
+
+    def run(item: "tuple[str, Callable[[str], list[str]]]") -> "list[str]":
+        name, case = item
+        _LANES.open = []
+        with tempfile.TemporaryDirectory(prefix=f"bg-{name}-") as td:
+            try:
+                return [f"{name}: {x}" for x in case(td)]
+            except Exception as exc:  # noqa: BLE001 — 사례 하나의 예외를 그 사례 실패로
+                return [f"{name}: {x}" for lane in _LANES.open for x in lane.fails] + [f"{name}: 예외 {type(exc).__name__}: {exc}"]
+    with ThreadPoolExecutor(max_workers=1 if group == "origin" else max(2, min(6, (os.cpu_count() or 2) // 2))) as pool:
+        return [f"{group} 묶음에 없는 사례 {n}" for n in unknown] + [x for got in pool.map(run, picked.items()) for x in got]
+
+
 _SUB_SV: str = "application/orbit/domain_layer/shared_value_object/"
 _SUB_ID: "list[str]" = ["-c", "user.email=t@t", "-c", "user.name=t", "-c", "commit.gpgsign=false", "-c", "init.defaultBranch=main"]
 
@@ -3952,15 +5683,18 @@ def _only_group(stub_support: bool) -> int:
     return 0
 
 
-NEW_GROUPS: "tuple[str, ...]" = ("move", "ctx", "clue", "map", "g2", "norm")
+NEW_GROUPS: "tuple[str, ...]" = ("move", "ctx", "clue", "map", "g2", "norm", "slice", "bind", "origin")
 
 
 def _only_new(stub_support: bool, groups: "tuple[str, ...]" = NEW_GROUPS) -> int:
     """새 갈래 사례만 — 2.43.0: move(옮김 행 0T 꼴 확인 · 몫) · ctx(옮김 행 묶임 맥락 — 픽스처 풀이 · 모듈 이름 · 사슬 모듈) · clue(이름
     단서 짝 — 기능 0C · 리팩토링 0C 묶음) · map(정규화 지도) · g2(옮김 verify · G2 접기) / 2.44.0: norm(D 정규화 · 기대 쪽 — 단위
-    판정은 대역 준비 없이 · 창 처분 사례만 창 절차로). 변이 시험이 scripts 사본에 대고 그 변이의 묶음만 돈다."""
+    판정은 대역 준비 없이 · 창 처분 사례만 창 절차로) / 2.46.0(엄격 실행): slice(창 차례 · 까닭 · 슬라이스 허용 · 미검출 · verify) · bind(명세 sha
+    결속) · origin(G2 원점). `slice#SW2+SW8` 꼴이면 그 묶음의 그 사례만. 변이 시험이 scripts 사본에 대고 그 변이의 묶음만 돈다."""
     fails: "list[str]" = []
     ran: int = 0
+    strict: "list[tuple[str, tuple[str, ...]]]" = [(g.partition("#")[0], tuple(x for x in g.partition("#")[2].split("+") if x))
+                                                   for g in groups if g.partition("#")[0] in STRICT_GROUPS]
     if "norm" in groups:
         ran += len(_norm_d_cases()) + len(_norm_other_cases())
         fails += norm_checks()
@@ -3979,6 +5713,9 @@ def _only_new(stub_support: bool, groups: "tuple[str, ...]" = NEW_GROUPS) -> int
             if msg:
                 fails.append(f"{case['label']}: {msg}")
         fails += (normalize_verify_checks() if "map" in groups else []) + (move_verify_checks() if "g2" in groups else [])
+        for name, picked in strict:
+            ran += len(picked or STRICT_GROUPS[name])
+            fails += strict_checks(name, picked)
         fails += [f"자동 초록 0: {b}" for b in STATE["invariant_fails"]]  # type: ignore[union-attr]
     if fails:
         print("\nFAIL — behavior_guard 새 갈래 사례 기대 불일치:")
@@ -4168,6 +5905,168 @@ _NEW_MUTATIONS: "tuple[tuple[str, str, str, tuple[tuple[str, str], ...]], ...]" 
     ("D 정규화 unittest 쪽 가름 대상 넓힘(형 · 정규식 · 응답 메서드도)", "behavior_guard.py", "norm", (
         ("if known and not context and name in _UT_ORDERED:", 'if known and not context and _UT_SPEC[method][0][:2] == "se":'),)),
     ("D 정규화 _ut_parts 첫 두 자리 역할 바꿈 끔", "behavior_guard.py", "norm", (("first[i] if first is not None and i < 2 else ", ""),)),
+    # 2.46.0 엄격 실행 — 창 차례 · 까닭 · 슬라이스 허용 · 미검출 · 결속 · 원점
+    ("차례 대조 끔", "behavior_guard.py", "slice#SW2+SW8", (("    if top is not None and rank(sid) < top[0]:", "    if False:"),)),
+    ("S 번호 차례 → 줄 차례", "behavior_guard.py", "slice#SW8B", (
+        ('int(x[1:]) if b == "S" else _plan_place(folder, x, inner)', "_plan_place(folder, x, inner)"),)),
+    ("지운 슬라이스의 차례를 갈래 끝으로", "behavior_guard.py", "slice#SW8C", (
+        ("    return max((inner.index(n) for n in before if n in inner), default=-1) + 0.5", "    return len(inner)"),)),
+    ("지운 슬라이스의 차례를 갈래 맨 앞으로", "behavior_guard.py", "slice#SW8C", (
+        ("    return max((inner.index(n) for n in before if n in inner), default=-1) + 0.5", "    return -1"),)),
+    ("재승인반영 계획 산출에 차분 밖 V 의 케이스 파일을 남김", "behavior_guard.py", "slice#SW10J", (
+        ('                outputs -= outside - {case.partition("::")[0] for case in approved} - changed', "                pass"),)),
+    ("재승인반영 계획 산출에서 차분 retain 행 파일까지 뺌", "behavior_guard.py", "slice#SW10J", (
+        ('for case in approved} - changed', "for case in approved}"),)),
+    ("재승인반영 매인 retain 을 차분으로 안 좁힘", "behavior_guard.py", "slice#SW10J", (("            bound &= changed\n", ""),)),
+    ("종류 ↔ 갈래 대조 끔", "behavior_guard.py", "slice#SW4", (("    if kind != _BRANCH_KINDS[branch]:", "    if False:"),)),
+    ("까닭 종류 표 끔", "behavior_guard.py", "slice#SW11", (("    if kind not in kinds:\n", "    if False:\n"),)),
+    ("allow_table 슬라이스 거름 끔", "behavior_guard.py", "slice#SW15+SW23+SW24+SW25", (
+        ('if sid_of(str(v.get("slice", ""))) == slice\n', "if True\n"),)),
+    ("창 단위 미검출 끔", "behavior_guard.py", "slice#SW12+SW13+SW14", (("    reds += unseen\n", ""),)),
+    ("미검출 앞 창 집행분 안 뺌", "behavior_guard.py", "slice#SW14B", (
+        ('for table in [hits, *(last.get("approved_hits", {}) for _o, last in prior)]:', "for table in [hits]:"),)),
+    ("미검출 대칭 끔(앞 창 연산을 같은 슬라이스만)", "behavior_guard.py", "slice#SW26", (
+        ('        ops_done.update(last.get("ops", []))\n', '        ops_done.update(last.get("ops", []) if _o.get("slice") == sid else [])\n'),)),
+    ("V 밖 케이스 단위 대조 끔", "behavior_guard.py", "slice#SW22", (("    return [u for u in hit if not plain(u)]", "    return []"),)),
+    ("V 밖 케이스 단위의 대응표 치환 받기 끔", "behavior_guard.py", "slice#SW22B", (
+        ("return _text_only(old_text, new_text) or canon[0] is not None and canon[0] == canon[1]", "return _text_only(old_text, new_text)"),)),
+    ("엄격 변경 창 allowed 에 retain_files 전체 되살림", "behavior_guard.py", "slice#SW21A+SW18", (
+        ('allowed = set() if strict_change else set(allow.get("retain_files", []))', 'allowed = set(allow.get("retain_files", []))'),)),
+    ("slice_files 거름 끔(계획 산출 안 받음)", "behavior_guard.py", "slice#SW27+SW21B", (
+        ('            allowed |= set(allow["slice_files"]) | set(allow.get("miss_retain", []))', '            allowed |= set(allow.get("miss_retain", []))'),)),
+    ("산출 · 매임 파일 단위 면제 끔", "behavior_guard.py", "slice#SW21B", (
+        ('[] if not strict_change or own_file != "허용 파일" else _foreign_units(', "[] if not strict_change else _foreign_units("),)),
+    ("V 케이스 파일 산출 겹침을 면제로", "behavior_guard.py", "slice#SW29", (('for p in set(allow["slice_files"]) - v_files}', 'for p in set(allow["slice_files"])}'),)),
+    ("새 파일 몫 대조 끔", "behavior_guard.py", "slice#SW28", (("        if strict_change and not allowed_file:", "        if False:"),)),
+    ("miss_retain 예외 끔", "behavior_guard.py", "slice#SW17", (
+        ('            allowed |= set(allow["slice_files"]) | set(allow.get("miss_retain", []))', '            allowed |= set(allow["slice_files"])'),)),
+    ("miss_retain 단위 면제 끔", "behavior_guard.py", "slice#SW17", (('                           for p in allow.get("miss_retain", [])})', "                           for p in []})"),)),
+    ("miss_retain 경로 접기 끔", "behavior_guard.py", "slice#SW17B", (
+        ('gone.setdefault(forward_key(case, prior).partition("::")[0], set())', 'gone.setdefault(case.partition("::")[0], set())'),)),
+    ("miss_retain 옮김 행 접기 끔", "behavior_guard.py", "slice#SW17C", (
+        ('gone.setdefault(forward_key(case, prior).partition("::")[0], set())',
+         'gone.setdefault(_moved_path(case.partition("::")[0], prior), set())'),)),
+    ("miss_retain 되살린 V 안 봄", "behavior_guard.py", "slice#SW17D", (
+        ('if p in retained and set(gone) - set(allow["V"])})', "if p in retained})"),)),
+    ("miss_retain 없어진 retain 행 안 봄", "behavior_guard.py", "slice#SW17D", (
+        ('if p in retained and set(gone) - set(allow["V"])})', 'if set(gone) - set(allow["V"])})'),)),
+    ("miss_retain 앞 rebind 몫 버림", "behavior_guard.py", "slice#SW17D", (
+        ('[*opened.get("rebinds", []), {"miss_retain": missed}]', '[{"miss_retain": missed}]'),)),
+    ("감사 먼저 끔", "behavior_guard.py", "slice#SW19+SW20", (('    if kind == "change":\n        _check_audited(folder, windows)\n', ""),)),
+    ("감사 먼저를 모든 창에", "behavior_guard.py", "slice#SW19B", (
+        ('    if kind == "change":\n        _check_audited(folder, windows)\n', "    _check_audited(folder, windows)\n"),)),
+    ("감사 먼저 allowed 빼기", "behavior_guard.py", "slice#SW19", (("""f"{opened['run']}/w{n}", _allowed_verdicts(close))""", """f"{opened['run']}/w{n}", {})"""),)),
+    ("재승인반영 차분 대조 끔", "behavior_guard.py", "slice#SW10C", (("    if not any(d.touched for d in deltas):", "    if False:"),)),
+    ("재승인반영 차분 좁힘 끔(0T · 0C)", "behavior_guard.py", "slice#SW10B+SW10I", (
+        ("        if diff is not None:                              # 재승인반영 — 그 차분이 더하거나 바꾼 입장 행", "        if False:                              # 재승인반영 — 그 차분이 더하거나 바꾼 입장 행"),)),
+    ("재승인반영 차분 좁힘 끔(0F)", "behavior_guard.py", "slice#SW10H", (
+        ('        if kind == "follow" and diff is not None:         # 재승인반영', "        if False:         # 재승인반영"),)),
+    ("verify 결속 넓힌 통과 끔(digest 같음만)", "behavior_guard.py", "slice#SV7+SW10D", (
+        ("_late_binding(folder, bound[-1], confirmed) if strict else", '"" if False else'),)),
+    ("verify 넓힌 통과를 차분 무시하고 늘 통과로", "behavior_guard.py", "slice#SV5+SV6+SW10E", (
+        ("_late_binding(folder, bound[-1], confirmed) if strict else", '"" if strict else'),)),
+    ("재승인반영 open 을 touched 대신 차분 키 있음으로", "behavior_guard.py", "slice#SW10C+SW10D", (
+        ("    if not any(d.touched for d in deltas):", "    if not deltas:"),)),
+    ("재승인반영 슬라이스 확정 계획 이력 끔", "behavior_guard.py", "slice#SW10E", (
+        ("        if sid not in _confirmed_slices(folder):", '        if reason == "재승인반영" or sid not in _confirmed_slices(folder):'),)),
+    ("까닭 슬라이스 확정 계획 이력 끔", "behavior_guard.py", "slice#SW31", (
+        ("        if sid not in _confirmed_slices(folder):", '        if reason != "재승인반영" or sid not in _confirmed_slices(folder):'),)),
+    ("갈래 키(매이지 않은 행) 몫 합침 끔", "behavior_guard.py", "slice#SW10F", (("for d in (own, key) if d is not None]", "for d in (own,) if d is not None]"),)),
+    ("지운 슬라이스의 이력 행 files 를 허용 파일로", "behavior_guard.py", "slice#SW10E+SW31", (
+        ("_slice_plan(folder, binding.confirmed.at) if r.slice == sid), None)", "_slice_plan(folder, binding.confirmed.at) if r.slice == sid), _latest_plan_row(folder, sid))"),)),
+    ("--ref w<n>-<회차> 실행 키 머리 대조 끔", "behavior_guard.py", "slice#SW30B", (
+        ('and any(r.prefix == f"{run}/w{n}" for r in audit_rows(record.read_text(encoding="utf-8")))', "and True"),)),
+    ("verify 옮김 꼬리 빠뜨림", "behavior_guard.py", "slice#SV8", (("                       + slice_text + carry)", "                       + slice_text)"),)),
+    ("open 이 allow_table 값 뒤에 재승인반영 좁힘을 따로 얹음", "behavior_guard.py", "slice#SW36", (
+        ('    return allow_table(binding.snap, slice=sid, plan_row=row, diff=opened.get("diff"))',
+         '    table = allow_table(binding.snap, slice=sid, plan_row=row, diff=opened.get("diff"))\n'
+         '    return dict(table, slice_files=[]) if opened.get("diff") else table'),)),
+    ("변경 창 plan_row 를 지금 계획 행으로", "behavior_guard.py", "slice#SW36", (
+        ("_slice_plan(folder, binding.confirmed.at) if r.slice == sid), None)", "_slice_plan(folder) if r.slice == sid), None)"),)),
+    ("close 가 case_units 를 기록 allow 에 씀", "behavior_guard.py", "slice#SW36", (
+        ("    if sid is not None:                                   # 엄격 실행 — 창 슬라이스 · 까닭 · 창 단위 미검출\n",
+         '    if sid is not None and kind == "change":\n        _dump(run_dir / f"w{n}-open.json", dict(opened, allow=dict(opened["allow"], '
+         'case_units=(judge_allow or {})["case_units"])))\n'
+         "    if sid is not None:\n"),)),
+    ("rebind 가 g1_sha 를 안 고침", "behavior_guard.py", "slice#SW36", (('        opened["g1_sha"] = sha\n', "        pass\n"),)),
+    ("ref 판형 대조 끔", "behavior_guard.py", "slice#SW30+SW9", (("    if not rule.form.fullmatch(ref):", "    if False:"),)),
+    ("ref 실재 대조 끔", "behavior_guard.py", "slice#SW30+SW9", (("    return _check_ref(folder, reason, ref, sid), None", '    return "", None'),)),
+    ("엄격 sha 빠짐 실행 불능 끔", "behavior_guard.py", "slice#SW32", (("        if _strict_run(folder):\n            raise RunError(STRICT_NO_SHA)\n", ""),)),
+    ("첫 확정 전 창 뺌 끔", "behavior_guard.py", "slice#SW32", (('if not o.get("slice") and o.get("g1_count")]', 'if not o.get("slice")]'),)),
+    ("엄격 판별을 확정 줄 sha 로(v1 꼴)", "behavior_guard.py", "slice#SW33", (
+        ('    return bool(_external("refactor_audit.strict_run", ra.strict_run, folder))',
+         "    return any(c.spec_sha for c in ra.g1_confirmations(folder)[:1])"),)),
+    ("옛 꼴이 적은 슬라이스를 칸 slice 로", "behavior_guard.py", "slice#SW7", (('record.update({"given": given} if given else {})', "record.update(given)"),)),
+    ("framework 새 모듈 앵커 판 대조 끔", "behavior_guard.py", "slice#SW34B", (("    reds += _framework_new_reds(w)\n", ""),)),
+    ("0F 도 framework 새 모듈 줄을 받음", "behavior_guard.py", "slice#SW34", (
+        ('if e.get("kind") == FRAMEWORK_NEW_KIND} if kind == "code" else set()', 'if e.get("kind") == FRAMEWORK_NEW_KIND} if kind in ("code", "follow") else set()'),)),
+    ("옛 꼴 변경 창이 framework 새 모듈 줄을 받음", "behavior_guard.py", "slice#SW34B", (
+        ('    edits = [e for e in edits if e.get("kind") != FRAMEWORK_NEW_KIND]\n', ""),)),
+    ("감사 요청 머리 빠뜨림", "behavior_guard.py", "slice#SW35", (("                                         _request_head(opened, snap))", "                                         [])"),)),
+    ("verify 슬라이스 집행 대조 끔", "behavior_guard.py", "slice#SV1", (("            reds += slice_reds\n", ""),)),
+    ("verify 슬라이스 없는 창 대조 끔", "behavior_guard.py", "slice#SV2", (('        reds += [f"창 w{n} 에 슬라이스가 없다"', '        _ = [f"창 w{n} 에 슬라이스가 없다"'),)),
+    ("verify 주인에서 앞 결속 슬라이스 뺌", "behavior_guard.py", "slice#SW26", (
+        ('{sid} | {o["slice"] for _n, o, _l in changes if vid in o["allow"].get("V", [])}', "{sid}"),)),
+    ("창 명세 sha 대조 끔", "behavior_guard.py", "bind#B1", (
+        ("    if confirmed.spec_sha is not None and sha_now != confirmed.spec_sha:", "    if False:"),)),
+    ("verify 명세 sha 대조 끔", "behavior_guard.py", "bind#B4", (("(confirmed.spec_sha is None or sha_now == confirmed.spec_sha)", "True"),)),
+    ("옛 확정 줄도 명세 sha 를 봄", "behavior_guard.py", "bind#B3", (
+        ("    if confirmed.spec_sha is None:\n        if _strict_run(folder):", "    if False:\n        if _strict_run(folder):"),
+        ("    if confirmed.spec_sha is not None and sha_now != confirmed.spec_sha:", "    if sha_now != confirmed.spec_sha:"))),
+    ("rebind sha 만 바뀜 허용 끔", "behavior_guard.py", "bind#B2", (
+        ("    if digest == previous and (sha is None or sha == previous_sha):", "    if digest == previous:"),)),
+    ("verify suite 명세 sha 대조 끔", "behavior_guard.py", "bind#B5", (
+        ('sha_ok: bool = confirmed is None or confirmed.spec_sha is None or g1.get("sha") == confirmed.spec_sha', "sha_ok: bool = True"),)),
+    ("suite 명세 sha 대조 끔", "behavior_support.py", "bind#B5", (("            if mismatch:\n                raise SupportError(mismatch)\n", ""),)),
+    ("suite 엄격 sha 빠짐 실행 불능 끔", "behavior_support.py", "bind#B5", (("        elif strict:\n            raise SupportError(bg.STRICT_NO_SHA)\n", ""),)),
+    ("verify 원점 대조 끔", "behavior_guard.py", "origin#O1", (("        elif origin[0] is not None and origin_name != origin[0]:", "        elif False:"),)),
+    ("suite 원점 = 마지막 확정", "behavior_support.py", "origin#O2", (
+        ("        first, g1 = confirmations[0], confirmations[-1]", "        first, g1 = confirmations[-1], confirmations[-1]"),)),
+    ("원점에 정의 digest 대조 넣음", "behavior_support.py", "origin#O2", (
+        ('        if g0.get("verdict") != "지원":', '        if g0.get("verdict") != "지원" or g0.get("run_definition_digest") != bound:'),)),
+    # 구현 검토 — 변경 창 몫 경로 · 패키지 골격 · 갈래 글자 · 보탬 자리 · 계획 매임만 바뀐 확정 · 재승인반영 0F · verify 슬라이스 밖
+    ("옮김 행이 데려간 옛 파일을 변경 창 몫에 남김", "behavior_guard.py", "slice#SW37", (
+        ('(fold(allow["slice_files"]) - left) | retain', 'fold(allow["slice_files"]) | retain'),)),
+    ("옮김 행 옛 파일을 매인 retain 행이 덮어도 뺌", "behavior_guard.py", "slice#SW37", (
+        ('(fold(allow["slice_files"]) - left) | retain', 'fold(allow["slice_files"]) - left'),)),
+    ("변경 창 몫 파일을 conftest.py 로 이음", "behavior_guard.py", "slice#SW38", (
+        ('return {now for p, now in pairs if now == p or PurePosixPath(now).name != "conftest.py"}', "return {now for _p, now in pairs}"),)),
+    ("변경 창 새 패키지 골격 안 받음", "behavior_guard.py", "slice#SW39", (
+        ("            allowed |= _package_skeletons(changed, files_then)\n", ""),)),
+    ("패키지 골격 내용 대조 끔", "behavior_guard.py", "slice#SW39", (
+        ('if blank and not any(p.startswith(path.removesuffix("__init__.py"))', 'if not any(p.startswith(path.removesuffix("__init__.py"))'),)),
+    ("패키지 골격 새 폴더 대조 끔", "behavior_guard.py", "slice#SW39", (
+        ('if blank and not any(p.startswith(path.removesuffix("__init__.py")) for p in files_then):', "if blank:"),)),
+    ("끝맞춤 · 정렬맞춤 갈래 글자 끔", "behavior_guard.py", "slice#SW11B", (("        if sid != _REASONS[reason].branch:", "        if True:"),)),
+    ("갈래 글자를 모든 까닭에", "behavior_guard.py", "slice#SW11B", (("        if sid != _REASONS[reason].branch:", "        if sid != branch:"),)),
+    ("보탬 자리 첫 행만", "behavior_guard.py", "slice#SW9", (("tuple(boost[bid][1])", "tuple(boost[bid][1])[:1]"),)),
+    ("변경 창 close 계획 매임 대조 끔", "behavior_guard.py", "slice#SW40", (
+        ('        if kind == "change" and sid is not None and opened.get("g1_sha") != sha_now:', "        if False:"),)),
+    ("verify 명세 sha 만 다른 결속 안 봄", "behavior_guard.py", "slice#SV10", (
+        ('        elif strict and bound and bound[-1].get("g1_sha") != confirmed.spec_sha:', "        elif False:"),)),
+    ("verify 결속 확정 줄을 digest 로만 찾음", "behavior_guard.py", "slice#SV10", (
+        ("if c.digest == digest and sha in (None, c.spec_sha)), default=None)", "if c.digest == digest), default=None)"),)),
+    ("verify 결속 확정 줄을 첫 줄로", "behavior_guard.py", "slice#SV9", (
+        ('    at: "int | None" = max((i for i, c in enumerate(confs) if c.digest == digest', '    at: "int | None" = min((i for i, c in enumerate(confs) if c.digest == digest'),)),
+    ("재승인반영 0F 다른 BC 편집 거름 끔", "behavior_guard.py", "slice#SW10K", (
+        ('        if kind == "follow" and diff is not None:\n            edits = ', '        if False:\n            edits = '),)),
+    ("재승인반영 0F retain 별칭 거름 끔", "behavior_guard.py", "slice#SW10L", (
+        ('for k in ("retain_files", "retain_alias")}', 'for k in ("retain_files",)}'),)),
+    ("갈래 키 — 그 이름의 계획 행 있음 대조 끔", "behavior_guard.py", "slice#SW10F", (
+        ("if branch != sid and branch in diff and branch not in names \\\n        and branch not in _confirmed_slices(folder) else None",
+         "if branch != sid and branch in diff else None"),)),
+    ("갈래 키 — 앞 확정 계획의 그 이름 안 봄", "behavior_guard.py", "slice#SW10F", (
+        ("branch not in names \\\n        and branch not in _confirmed_slices(folder) else None", "branch not in names else None"),)),
+    ("verify 슬라이스 밖 연산 안 봄", "behavior_guard.py", "slice#SW23", (
+        ('if key in ops and o["slice"] not in at_home(ops[key])]', "if False]"),)),
+    ("verify 슬라이스 밖 기대 추가 안 봄", "behavior_guard.py", "slice#SV11", (
+        ('if int(hit.get("add", 0)) and adders and o["slice"] not in at_home(adders) else []', "if False else []"),)),
+    ("미검출 셈 — 옛 · 새 철자 기대 추가를 더함", "behavior_guard.py", "slice#SW41", (
+        ('adds[here] = max(adds[here], int(hit.get("add", 0)))', 'adds[here] += int(hit.get("add", 0))'),)),
+    ("V 밖 케이스 단위 — 지금 판만", "behavior_guard.py", "slice#SW22C", (
+        ('case_units=_case_units(opened["cases"], cases_now)', "case_units=_case_units(cases_now)"),)),
+    ("V 밖 케이스 단위 — 기준 판만", "behavior_guard.py", "slice#SW22C", (
+        ('case_units=_case_units(opened["cases"], cases_now)', 'case_units=_case_units(opened["cases"])'),)),
 )
 
 
@@ -4278,7 +6177,11 @@ def main() -> int:
                              ("D 정규화 · 기대 쪽 단위 판정(같은 뜻 ①~④ · mock 키워드 이름 · unittest 단언 · assert 기대 쪽 · "
                               "raises 부르는 꼴 · V 원소 고정)", norm_checks),
                              ("창 절차(모드 동결 · digest · rebind · 옛 기록 · support/suite 위임)", window_checks),
-                             ("verify(세 줄 · 감사 키 일대일 · r5 · 보충 · 승인 V 흔적 · suite 대조)", verify_checks)):
+                             ("verify(세 줄 · 감사 키 일대일 · r5 · 보충 · 승인 V 흔적 · suite 대조)", verify_checks),
+                             (f"엄격 실행 — 창 차례 · 까닭 · 슬라이스 허용 · 창 단위 미검출 · verify({len(SLICE_CASES)}사례)",
+                              lambda: strict_checks("slice")),
+                             (f"엄격 실행 — 명세 sha 결속({len(BIND_CASES)}사례)", lambda: strict_checks("bind")),
+                             (f"G2 원점(F4-204 · {len(ORIGIN_CASES)}사례)", lambda: strict_checks("origin"))):
             got = check()
             print(("  ✗ " if got else "  ✓ ") + label)
             fails += [f"{label}: {g}" for g in got]

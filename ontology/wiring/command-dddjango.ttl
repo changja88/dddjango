@@ -1035,3 +1035,18 @@ djr:R-3790 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
 
 djr:R-3791 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/behavior_guard.py> .
+
+djr:R-3792 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/refactor_audit.py> .
+
+djr:R-3793 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/behavior_guard.py> .
+
+djr:R-3794 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/behavior_guard.py>, <https://numchida.com/ns/djr#c/refactor_audit.py> .
+
+djr:R-3795 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/behavior_guard.py> .
+
+djr:R-3796 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/behavior_guard.py> .

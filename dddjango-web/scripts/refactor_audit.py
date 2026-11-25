@@ -24,7 +24,8 @@ Coordinator 만 돌리고, 산출은 파일로 쓰고 경로만 넘긴다. 규�
   refactor_audit.py check-verdict <audit 폴더> [--feedback <파일>] [--final]
                                       verdict.md 검사 → verdict-log.md append · (exit 0) verdict-final.md · g0-lists.md
   refactor_audit.py residual <산출물 폴더> [--finalize <시각>]
-                                      G2 의미 항목 잔존(결정적 바닥 → 리뷰어 재확인 묶음)
+                                      G2 의미 항목 잔존(결정적 바닥 → 리뷰어 재확인 묶음 · 렌즈 답이 없으면
+                                      `답 없음` — 같은 시각 한 번 다시 받기)
   refactor_audit.py standing [<산출물 폴더> --gate]
                                       상시 답 인식(`.dddjango/standing-answer.md` — core 와 같은 파일) ·
                                       --gate: `refactor-scope.md` 상시 답 결정 줄 검사(마지막 `## G0` 뒤)
@@ -688,18 +689,20 @@ def _answer_state(cell: str) -> str:
     return "잔존" if text.startswith("잔존") else text if text in ("해소", "판단 불가") else "판단 불가"
 
 
-def _same_stamp(path: Path) -> "tuple[dict[str, str], list[str], dict[str, dict[str, str | None]]]":
-    """같은 시각 앞 확정 판(`result.json`) — (M → 판정, 판형 아님 이력 M, 해소 지문). 없으면 빈 값 · 모양이 틀리면 실행 불능."""
+def _same_stamp(path: Path) -> "tuple[dict[str, str], list[str], dict[str, dict[str, str | None]], list[str]]":
+    """같은 시각 앞 확정 판(`result.json`) — (M → 판정, 판형 아님 이력 M, 해소 지문, 답 없음 이력 M). 없으면 빈 값 · 모양이 틀리면
+    실행 불능(옛 판 result.json 에는 답 없음 이력 칸이 없다 — 빈 목록)."""
     if not path.is_file():
-        return {}, [], {}
+        return {}, [], {}, []
     try:                                                    # 문자열 아닌 값의 `.strip`·dict 아닌 값의 `.items`·목록 아닌 redo 의 `+` 가 실패한다
         data = json.loads(path.read_text(encoding="utf-8"))
         states: "dict[str, str]" = {k: v.strip() for k, v in data.get("states", {}).items()}
         redo: "list[str]" = [m.strip() for m in data.get("redo", []) + []]
+        noans: "list[str]" = [m.strip() for m in data.get("noans", []) + []]
         solved: "dict[str, dict[str, str | None]]" = {m: dict(v.items()) for m, v in data.get("solved", {}).items()}
     except (TypeError, AttributeError, ValueError):
-        raise ToolError(f"{path} 의 states·redo·solved 가 residual 확정 판 모양이 아니다 — 같은 시각 재확정 불가") from None
-    return states, redo, solved
+        raise ToolError(f"{path} 의 states·redo·solved·noans 가 residual 확정 판 모양이 아니다 — 같은 시각 재확정 불가") from None
+    return states, redo, solved, noans
 
 
 def _repo_path(project: Path, rel: str) -> str:
@@ -1183,16 +1186,95 @@ def _plan_names(project: Path, data: PlanData, debt: dict, names: Path, out: Pat
 
 # ── audit 폴더 읽기 ──────────────────────────────────────────────────────────
 
-def _table_rows(text: str) -> "list[list[str]]":
+def _cells(line: str) -> "list[str]":
     """표 행 → 칸. 칸 안의 `\\|`(키 문자열 `검사|경로`)는 구분자가 아니다."""
+    s: str = line.strip()
+    s = s[1:] if s.startswith("|") else s
+    s = s[:-1] if s.endswith("|") and not s.endswith("\\|") else s
+    return [c.strip().replace("\\|", "|") for c in re.split(r"(?<!\\)\|", s)]
+
+
+def _table_rows(text: str) -> "list[list[str]]":
     rows: "list[list[str]]" = []
     for ln in text.splitlines():
         s: str = ln.strip()
         if not s.startswith("|") or re.fullmatch(r"\|[\s:|-]*\|", s):
             continue
-        inner: str = s[1:-1] if s.endswith("|") and not s.endswith("\\|") else s[1:]
-        rows.append([c.strip().replace("\\|", "|") for c in re.split(r"(?<!\\)\|", inner)])
+        rows.append(_cells(s))
     return rows
+
+
+def _bare_line(ln: str) -> str:
+    """앞 `|` 없는 행 후보 — 줄머리 목록 표지(`- ` · `* ` · `+ `)와 줄 전체를 감싼 백틱 한 쌍을 벗긴 글."""
+    s: str = re.sub(r"^[-*+]\s+", "", ln.strip())
+    if len(s) >= 2 and s[0] == "`" and s[-1] == "`" and s.count("`") == 2:
+        s = s[1:-1].strip()
+    return s
+
+
+_FENCE_OPEN: "re.Pattern[str]" = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+_BARE_SEP: "re.Pattern[str]" = re.compile(r"^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$")   # GFM 구분 줄(앞뒤 `|` 있든 없든)
+
+
+def _unfenced(text: str) -> "list[str]":
+    """코드 펜스(``` · ~~~) 밖 줄 — 펜스 안 줄은 빈 줄로 둔다(행 번호 유지 · 예시는 행으로 읽지 않는다)."""
+    out: "list[str]" = []
+    fence: "str | None" = None
+    for ln in text.splitlines():
+        fm = _FENCE_OPEN.match(ln)
+        if fence is None:
+            if fm:
+                fence = fm.group(1)
+                out.append("")
+                continue
+            out.append(ln)
+            continue
+        if fm and fm.group(1)[0] == fence[0] and len(fm.group(1)) >= len(fence) and not ln.strip().strip(fence[0]):
+            fence = None
+        out.append("")
+    return out
+
+
+def _fenced(text: str) -> str:
+    """코드 펜스 안 줄만(펜스 표지 줄 · 펜스 밖 줄은 빈 줄)."""
+    return "\n".join("" if out or _FENCE_OPEN.match(ln) else ln for out, ln in zip(_unfenced(text), text.splitlines()))
+
+
+def _lead_rows(text: str, head: "re.Pattern[str]") -> "list[list[str]]":
+    """표 행 — `|` 로 시작하는 줄(구분 행 뺌)과, 앞 `|` 없이 `head` 로 시작하는 줄(`_bare_line` 으로 벗긴 뒤). 리뷰어가 지시 글의
+    `M<n> | 판정 | 근거` 꼴을 그대로 옮겨도 읽는다(F4-212). 코드 펜스 안 줄은 읽지 않는다."""
+    rows: "list[list[str]]" = []
+    for ln in _unfenced(text):
+        s: str = ln.strip()
+        if s.startswith("|"):
+            if not re.fullmatch(r"\|[\s:|-]*\|", s):
+                rows.append(_cells(s))
+            continue
+        b: str = _bare_line(s)
+        if head.match(b):
+            rows.append(_cells(b))
+    return rows
+
+
+_ITEM_ROW_HEAD: "re.Pattern[str]" = re.compile(r"[*`]*M\d+[*`]*\s*\|")       # residual 결과 행 머리(항목 칸 강조 · 백틱 허용)
+_M_ROW_HEAD: "re.Pattern[str]" = re.compile(r"M\d+\s*\|")                    # verdict.md 행 머리
+_R2_ROW_HEAD: "re.Pattern[str]" = re.compile(r"(?:\d+|행#?)\s*\|")             # R2 리뷰어 표 행 머리(번호 행 · 머리 행)
+
+
+def _unread_rows(text: str, head: "re.Pattern[str]") -> "list[str]":
+    """앞 `|` 없이 칸 구분 `|` 이 다섯 이상인데 `head` 로 시작하지 않아 행으로 읽지 않은 줄 — 소리 없는 누락을 막는 실행 불능 재료.
+    표 문법 줄(GFM 구분 줄 · 그 바로 앞 머리 줄) · 코드 펜스 안 · 인라인 코드(백틱 짝) 안의 `|` 는 세지 않는다."""
+    lines: "list[str]" = [ln.strip() for ln in _unfenced(text)]
+    out: "list[str]" = []
+    for k, s in enumerate(lines):
+        if not s or s.startswith("|") or _BARE_SEP.match(s):
+            continue
+        if k + 1 < len(lines) and _BARE_SEP.match(lines[k + 1]):
+            continue                                       # 표 머리 줄(다음 줄이 구분 줄)
+        b: str = _bare_line(s)
+        if not head.match(b) and len(re.findall(r"(?<!\\)\|", re.sub(r"`[^`]*`", "", b))) >= 5:
+            out.append(s)
+    return out
 
 
 class Plan:
@@ -1272,7 +1354,13 @@ def _load_rows(audit: Path, plan: Plan) -> "list[Row]":
         path: Path = audit / name
         if not path.is_file():
             raise ToolError(f"리뷰어 산출 누락 — {path}")
-        for k, cells in enumerate(_table_rows(path.read_text(encoding="utf-8")), 1):
+        text: str = path.read_text(encoding="utf-8")
+        unread: "list[str]" = _unread_rows(text, _R2_ROW_HEAD)
+        if unread:
+            raise ToolError(f"리뷰어 산출 {name} 에 표 행으로 읽지 못한 줄 {len(unread)}(앞 `|` 없음 · 번호 칸 없음) — 첫 줄 "
+                            f"«{unread[0][:80]}» · 그 리뷰어에게 앞뒤 `|` 표 꼴(행# 칸 포함)로 다시 받는다(코드 재점검 아님)")
+        before: int = len(rows)
+        for k, cells in enumerate(_lead_rows(text, _R2_ROW_HEAD), 1):
             if cells and (cells[0] in ("행#", "행") or cells[0].startswith("행#")):
                 continue
             numbered: bool = bool(re.fullmatch(r"\d+", cells[0])) if cells else False
@@ -1284,6 +1372,10 @@ def _load_rows(audit: Path, plan: Plan) -> "list[Row]":
                 cells.append("")
             no: str = cells[0] if numbered else str(k)
             rows.append(Row(f"{name[:-3]}#{no}", lens, cells, short))
+        boxed: int = sum(1 for c in _lead_rows(_fenced(text), _R2_ROW_HEAD) if re.fullmatch(r"\d+", c[0]))
+        if boxed and len(rows) == before:
+            raise ToolError(f"리뷰어 산출 {name} 의 번호 행 {boxed} 이 코드 상자(코드 펜스) 안에 있고 밖에는 행이 없다 — 코드 상자 안에 있는 "
+                            f"표는 읽지 않는다 · 그 리뷰어에게 코드 상자 없이 앞뒤 `|` 표 꼴로 다시 받는다(코드 재점검 아님)")
     return rows
 
 
@@ -1374,7 +1466,7 @@ VERDICT_FINAL: str = "verdict-final.md"
 
 
 def _load_verdicts(audit: Path, name: str = "verdict.md") -> "list[Verdict]":
-    return [Verdict(c) for c in _table_rows(_read(audit / name))
+    return [Verdict(c) for c in _lead_rows(_read(audit / name), _M_ROW_HEAD)
             if c and re.fullmatch(r"M\d+", c[0].strip()) and len(c) >= 3]
 
 
@@ -1965,13 +2057,16 @@ def cmd_residual(project: Path, folder: Path, finalize: "str | None") -> int:
     if finalize is None:
         for lens, mids in to_review.items():
             body: "list[str]" = [f"# 잔존 확인 — {lens} · {stamp}", "",
-                                 "결과 표(`result-<렌즈>.md`): `M<n> | 해소|잔존|판단 불가 | 근거`", "",
+                                 "결과 표(`result-<렌즈>.md`) — 아래 머리 두 줄을 그대로 두고 항목마다 한 행을 앞뒤 `|` 표 꼴로 쓴다. "
+                                 "판정 칸은 `해소` · `잔존` · `판단 불가` 가운데 하나다.", "",
+                                 "| 항목 | 판정 | 근거 |", "|---|---|---|", "",
                                  "해소의 근거 칸 판형: `<새 파일:행[-행]>[ · <새 파일:행[-행]>…] — <무엇이 어떻게 사라졌는지 한 구>`. "
                                  "` — ` 앞에는 저장소 루트 기준 새 위치만 적는다(조사·괄호·설명 없이 — 이 위치만 근거로 센다). "
                                  "위치마다 경로:행을 전부 적는다(`:16`·`15·16` 줄임 없이) · 구분은 ` · `. 남은 것·제외 범주·설계 근거 같은 "
                                  "맥락 위치는 ` — ` 뒤에만 적는다. 판형이 아니면 그 행을 다시 요청받는다.",
-                                 "예: `M3 | 해소 | web/application/<bc>/application_layer/view_model/<화면>_vm.py:15-16 — "
-                                 "탭 키 철자를 정의부 한 곳에만 둔다`",
+                                 "예(이 줄은 결과가 아니다 — 항목 칸 `M<n>` 은 자리표시라 행으로 읽지 않는다):", "",
+                                 "| M<n> | 해소 | web/application/<bc>/application_layer/view_model/<화면>_vm.py:15-16 — "
+                                 "탭 키 철자를 정의부 한 곳에만 둔다 |",
                                  "", "## 항목", ""]
             for mid in sorted(set(mids), key=lambda k: int(k[1:])):
                 body.append(f"### {mid}")
@@ -1993,16 +2088,23 @@ def cmd_residual(project: Path, folder: Path, finalize: "str | None") -> int:
             ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
         return EXIT_RED if floor else EXIT_OK
     results: "dict[str, list[tuple[str, str, str]]]" = {}     # M → (렌즈, 판정 칸, 근거 칸)
+    read_rows: "dict[str, int]" = {}                         # 렌즈 → 읽은 항목 행 수(결과 파일 없으면 키 없음)
     for lens in to_review:
         path: Path = out_dir / f"result-{lens}.md"
-        for cells in _table_rows(path.read_text(encoding="utf-8")) if path.is_file() else []:
-            if len(cells) >= 2 and re.fullmatch(r"M\d+", cells[0]):
-                results.setdefault(cells[0], []).append((lens, cells[1], cells[2] if len(cells) > 2 else ""))
+        if not path.is_file():
+            continue
+        read_rows[lens] = 0
+        for cells in _lead_rows(path.read_text(encoding="utf-8"), _ITEM_ROW_HEAD):
+            key: str = re.sub(r"[*`]", "", cells[0]).strip()
+            if len(cells) >= 2 and re.fullmatch(r"M\d+", key):
+                read_rows[lens] += 1
+                results.setdefault(key, []).append((lens, cells[1], cells[2] if len(cells) > 2 else ""))
     # 같은 시각 재확정 — 동결은 좋아지는 쪽만 막는다. 앞 판이 판형 아님·답 없음이면 다시 판정하고, 그 밖에는 이번 행이
     # 있으면 이번 판정을 쓰되 앞 판이 잔존·잔존(반복)·판단 불가면 해소·판형 아님·답 없음(다시 판정 쪽)으로 가지 않는다
     # (앞 판 해소의 강등은 모두 받는다 · 행이 없으면 앞 판 판정·지문 유지).
     # 판형 아님 이력(`redo`)은 판정과 따로 쌓는다 — 이력 있는 M 이 다시 판형 아님이면 잔존(반복)이다.
-    before_states, redo_before, kept = _same_stamp(out_dir / "result.json")
+    before_states, redo_before, kept, noans_before = _same_stamp(out_dir / "result.json")
+    noans_why: "dict[str, list[tuple[str, str]]]" = {}       # M → [(렌즈, 까닭)]
     for mid, when in readopted.items():
         if stamp[:13] <= _local_minute(when).strftime('%Y%m%d-%H%M'):
             before_states.pop(mid, None)
@@ -2019,7 +2121,12 @@ def cmd_residual(project: Path, folder: Path, finalize: "str | None") -> int:
             continue
         allowed: "set[str]" = code_changed | set(watched[mid])
         answered: "set[str]" = {lens for lens, _c, _g in answers}
-        got: "list[str]" = ["답 없음" for lens, ms in to_review.items() if mid in ms and lens not in answered]
+        got: "list[str]" = []
+        for lens, ms in to_review.items():
+            if mid in ms and lens not in answered:
+                got.append("답 없음")
+                noans_why.setdefault(mid, []).append((lens, "결과 파일 없음" if lens not in read_rows
+                                                      else "읽은 항목 행 0" if read_rows[lens] == 0 else "그 항목 행 없음"))
         for lens, cell, ground in answers:
             st: str = _answer_state(cell)
             if st == "해소":
@@ -2039,22 +2146,28 @@ def cmd_residual(project: Path, folder: Path, finalize: "str | None") -> int:
                 got.append(st)
         verdict: str = ("해소" if got and all(g == "해소" for g in got) else "잔존" if "잔존" in got
                         else "판형 아님" if "판형 아님" in got else "답 없음" if "답 없음" in got else "판단 불가")
-        now: str = "잔존(반복)" if verdict == "판형 아님" and mid in redo_before else verdict
+        now: str = ("잔존(반복)" if verdict == "판형 아님" and mid in redo_before
+                    else "판단 불가" if verdict == "답 없음" and mid in noans_before else verdict)
         held: bool = was in ("잔존", "잔존(반복)", "판단 불가") and now not in ("잔존", "잔존(반복)", "판단 불가")
         states[mid] = was if held else now
     redo: "list[str]" = sorted(set(redo_before) | {m for m, s in states.items() if s == "판형 아님"},
                                key=lambda k: int(k[1:]))
+    noans: "list[str]" = sorted(set(noans_before) | {m for m, s in states.items() if s == "답 없음"},
+                                key=lambda k: int(k[1:]))
     solved: "list[str]" = [m for m in pending_ids if states[m] == "해소"]
     reviewer_left: "list[str]" = [m for m in pending_ids if states[m] in ("잔존", "잔존(반복)")]
     unformed: "list[str]" = [m for m in pending_ids if states[m] == "판형 아님"]
-    unknown: "list[str]" = [m for m in pending_ids if states[m] in ("판단 불가", "답 없음")]
-    m_m: int = len(floor) + len(reviewer_left) + len(unformed) + len(unknown)
+    unknown: "list[str]" = [m for m in pending_ids if states[m] == "판단 불가"]
+    unanswered: "list[str]" = [m for m in pending_ids if states[m] == "답 없음"]
+    m_m: int = len(floor) + len(reviewer_left) + len(unformed) + len(unknown) + len(unanswered)
     lines = [f"# residual 결과 — {stamp}", "", "| M | 판정 |", "|---|---|"]
     lines += [f"| {m} | 잔존(결정적) |" for m in floor]
     lines += [f"| {m} | {'잔존(근거 판형 아님 반복)' if states[m] == '잔존(반복)' else '잔존(리뷰어 · 근거 없는 해소 포함)'} |"
               for m in reviewer_left]
     lines += [f"| {m} | 근거 판형 아님({'·'.join(sorted({lens for lens, _t in unformatted[m]}))}) |" for m in unformed]
-    lines += [f"| {m} | 판단 불가 |" for m in unknown] + [f"| {m} | 해소 |" for m in solved]
+    lines += [f"| {m} | 판단 불가 |" for m in unknown]
+    lines += [f"| {m} | 답 없음({' · '.join(f'{lens}: {why}' for lens, why in noans_why.get(m, []))}) |" for m in unanswered]
+    lines += [f"| {m} | 해소 |" for m in solved]
     lines += [f"| {m} | 해소(직전 {prev_stamp} 이월) |" for m in carried]
     (out_dir / "result.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     # 해소 지문 = 원 발견 경로(+ 개명 대응) ∪ 해소로 받은 근거 경로 — 근거 파일만 뒤에 바뀌어도 이월하지 않고 다시 묻는다.
@@ -2066,17 +2179,23 @@ def cmd_residual(project: Path, folder: Path, finalize: "str | None") -> int:
         snapshot[m] = {**{p: _file_sha(project, p) for p in sorted(paths - set(held_fp))}, **held_fp}
     snapshot.update({m: prev_solved[m] for m in carried})
     (out_dir / "result.json").write_text(json.dumps({"stamp": stamp, "audit": audit_ts, "snapshot": anchor,
-                                                     "solved": snapshot, "states": states, "redo": redo},
+                                                     "solved": snapshot, "states": states, "redo": redo, "noans": noans},
                                                     ensure_ascii=False,
                                                     sort_keys=True) + "\n", encoding="utf-8")
+    noans_tail: str = f" · 답 없음 {len(unanswered)}" if unanswered else ""
     print(f"요약: residual M_m={m_m}(결정적 잔존 {len(floor)} · 리뷰어 잔존 {len(reviewer_left)} · 근거 판형 아님 "
-          f"{len(unformed)} · 판단 불가 {len(unknown)}) · 해소 {len(solved) + len(carried)}"
+          f"{len(unformed)} · 판단 불가 {len(unknown)}{noans_tail}) · 해소 {len(solved) + len(carried)}"
           f"{f'(이월 {len(carried)})' if carried else ''}{legacy_tail} → {out_dir / 'result.md'}")
     if unformed:                                            # `요약:` 뒤 — 재기재 안내(슬라이스 0 재개봉·새 시각이 아니다)
         notes_redo: str = " · ".join(m + "(" + ", ".join(f"{lens}: `{tok}`" for lens, tok in unformatted[m]) + ")"
                                       for m in unformed)
         print(f"  근거 판형 아님: {notes_redo} — 그 행만 같은 렌즈 리뷰어에게 묶음 머리의 판형대로 다시 받아 result-<렌즈>.md 에 "
               f"고쳐 쓰고 --finalize {stamp} 한 번 더(코드 재개봉·새 시각 아님 · 다시 판형 아님이면 잔존)")
+    if unanswered:                                          # `요약:` 뒤 — 다시 받기 안내(슬라이스 0 재개봉·새 시각이 아니다)
+        notes_na: str = " · ".join(m + "(" + ", ".join(f"{lens}: {why}" for lens, why in noans_why.get(m, [])) + ")"
+                                   for m in unanswered)
+        print(f"  답 없음: {notes_na} — 그 렌즈 리뷰어에게 그 항목 행을 묶음 머리의 표 꼴로 다시 받아 result-<렌즈>.md 에 쓰고 "
+              f"--finalize {stamp} 한 번 더(코드 재개봉·새 시각 아님 · 다시 답 없음이면 판단 불가)")
     return EXIT_RED if m_m else EXIT_OK
 
 

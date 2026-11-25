@@ -17,11 +17,12 @@ Coordinator «리팩토링 모드» 절이 이 도구를 부른다. 리뷰어·a
                                                         verdict.md 검사 → verdict-log.md append · (exit 0) verdict-final.md · `요약:` 1행
   refactor_audit.py resolution <산출물 폴더> [--gate]    명세 «슬라이스 0 해소 판정» 표 검사(커버 · 판정 값 해소·변경·불가 ·
                                                         불가 범주 · 막는 것 · 처방 앵커 · 인용 밖 반대 규칙 증거) + 렌즈별
-                                                        M 목록 — --gate 는 부분·불가의 재상정 결정 줄 · 요지 축소 번호 일치까지
+                                                        항목 목록(G0 ⓐ `M<n>` · 보탬 `B<n>`) — --gate 는 부분·불가의 재상정
+                                                        결정 줄 · 요지 축소 번호 일치까지
   refactor_audit.py changes <산출물 폴더> [--candidate | --applied <후보 스냅숏> | --gate] [--baseline <열린 창 open 기록>]
                                                         명세 «바뀌는 것 목록» · «다른 BC 편집 목록» 검사 — --candidate 는
                                                         g1/<UTC>-candidate.json + 후보 digest · --applied 는 반영 대조 ·
-                                                        --gate 는 G1 결정 줄 정합 + 최종 digest
+                                                        --gate 는 G1 결정 줄 정합 · 반영 대조 다시 + 최종 digest · 명세 sha
   refactor_audit.py deps <bc> --out <산출물 폴더>/deps/<시각>/ --at <new|continue|dispatch>
                                                         BC 의존(SCC · 받는 쪽 · HTTP 소비 · 공유 표면 · 레인 겹침 · 보류) —
                                                         다른 작업 트리 옛 사본은 주 작업 트리 HEAD 판 기록으로 읽고(끝 판정은
@@ -40,8 +41,9 @@ Coordinator «리팩토링 모드» 절이 이 도구를 부른다. 리뷰어·a
   refactor_audit.py residual <산출물 폴더> [--candidates <검사기 출력>] [--finalize <시각>]
                                                         G2 의미 항목 잔존(결정적 바닥 → 리뷰어 재확인 묶음) — 리뷰어 확인
                                                         대상이 남은 첫 호출은 exit 0 + `M_m 미정`(판정은 --finalize) ·
-                                                        요지 축소 항목은 남긴 요지로 확인
-  refactor_audit.py --self-test                         점검 절 실재 · 경로 사상 · 적용 한정 어구·불가 범주·재상정 어휘
+                                                        요지 축소 항목은 남긴 요지로 확인 · 보탬 항목은 `보탬 k건 잔존 m` 으로
+                                                        따로 · 렌즈 답이 없으면 `답 없음`(같은 시각 한 번 다시 받기)
+  refactor_audit.py --self-test                         점검 절 실재 · 경로 사상 · 적용 한정 어구·불가 범주·재상정·보탬 어휘
                                                         상수 = 규범 문면 · 운영 전 예외 블록 결속(①~④)
 공통: --platform claude|codex(기본: 자기 위치로 판별) · --plugin-root <경로> · --rulepack <경로>
 exit 0 = 통과 · 2 = red(검사 실패·잔존) · 1 = 실행 불능. 모든 하위 명령이 `요약:` 1행을 낸다.
@@ -62,7 +64,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, Iterable
+from typing import Callable, Iterable, NamedTuple
 
 if str(Path(__file__).resolve().parent) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -165,8 +167,10 @@ SEPARATE_TYPES: "tuple[str, ...]" = ("타 BC",)
 # 리뷰어 표 6번 칸 «바뀌는 것» 닫힌 값(여럿이면 ` + ` · 뒤 `— 한 구`) — 형식 밖은 경고다(판정을 막지 않는다).
 CHANGE_COLUMN: str = "바뀌는 것"
 CHANGE_NONE: str = "없음"
-CHANGE_KINDS: "tuple[str, ...]" = (CHANGE_NONE, "내부 약속", "밖 동작", "DB 구조", "다른 BC 파일")
-CHANGE_SHORT: "dict[str, str]" = {"내부 약속": "안", "밖 동작": "밖", "DB 구조": "DB", "다른 BC 파일": "다른 BC"}
+FRAMEWORK_NEW: str = "framework 새 모듈"   # R2 «바뀌는 것» 값 · 다른 BC 편집 갈래(새 `framework/<technology>/<module>.py` · 0C 만)
+CHANGE_KINDS: "tuple[str, ...]" = (CHANGE_NONE, "내부 약속", "밖 동작", "DB 구조", "다른 BC 파일", FRAMEWORK_NEW)
+CHANGE_SHORT: "dict[str, str]" = {"내부 약속": "안", "밖 동작": "밖", "DB 구조": "DB", "다른 BC 파일": "다른 BC",
+                                  FRAMEWORK_NEW: "framework"}
 # 대상 있는 Override 의 역할 표(한 곳) — 팩의 «norm_kind == Override ∧ overrides ≠ ∅» 집합이 이 값들과 다르면 실행 불능.
 SCOPE_ROLE: str = "적용 범위"
 OPSAFE_ROLE: str = "운영 전 예외"
@@ -665,18 +669,20 @@ def _answer_state(cell: str) -> str:
     return "잔존" if text.startswith("잔존") else text if text in ("해소", "판단 불가") else "판단 불가"
 
 
-def _same_stamp(path: Path) -> "tuple[dict[str, str], list[str], dict[str, dict[str, str | None]]]":
-    """같은 시각 앞 확정 판(`result.json`) — (M → 판정, 판형 아님 이력 M, 해소 지문). 없으면 빈 값 · 모양이 틀리면 실행 불능."""
+def _same_stamp(path: Path) -> "tuple[dict[str, str], list[str], dict[str, dict[str, str | None]], list[str]]":
+    """같은 시각 앞 확정 판(`result.json`) — (M → 판정, 판형 아님 이력 M, 해소 지문, 답 없음 이력 M). 없으면 빈 값 · 모양이 틀리면
+    실행 불능(옛 판 result.json 에는 답 없음 이력 칸이 없다 — 빈 목록)."""
     if not path.is_file():
-        return {}, [], {}
+        return {}, [], {}, []
     try:                                                    # 문자열 아닌 값의 `.strip`·dict 아닌 값의 `.items`·목록 아닌 redo 의 `+` 가 실패한다
         data = json.loads(path.read_text(encoding="utf-8"))
         states: "dict[str, str]" = {k: v.strip() for k, v in data.get("states", {}).items()}
         redo: "list[str]" = [m.strip() for m in data.get("redo", []) + []]
+        noans: "list[str]" = [m.strip() for m in data.get("noans", []) + []]
         solved: "dict[str, dict[str, str | None]]" = {m: dict(v.items()) for m, v in data.get("solved", {}).items()}
     except (TypeError, AttributeError, ValueError):
-        raise ToolError(f"{path} 의 states·redo·solved 가 residual 확정 판 모양이 아니다 — 같은 시각 재확정 불가") from None
-    return states, redo, solved
+        raise ToolError(f"{path} 의 states·redo·solved·noans 가 residual 확정 판 모양이 아니다 — 같은 시각 재확정 불가") from None
+    return states, redo, solved, noans
 
 
 # ── plan ─────────────────────────────────────────────────────────────────────
@@ -843,6 +849,79 @@ def _table_rows(text: str) -> "list[list[str]]":
     return rows
 
 
+def _bare_line(ln: str) -> str:
+    """앞 `|` 없는 행 후보 — 줄머리 목록 표지(`- ` · `* ` · `+ `)와 줄 전체를 감싼 백틱 한 쌍을 벗긴 글."""
+    s: str = re.sub(r"^[-*+]\s+", "", ln.strip())
+    if len(s) >= 2 and s[0] == "`" and s[-1] == "`" and s.count("`") == 2:
+        s = s[1:-1].strip()
+    return s
+
+
+_FENCE_OPEN: "re.Pattern[str]" = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+_BARE_SEP: "re.Pattern[str]" = re.compile(r"^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$")   # GFM 구분 줄(앞뒤 `|` 있든 없든)
+
+
+def _unfenced(text: str) -> "list[str]":
+    """코드 펜스(``` · ~~~) 밖 줄 — 펜스 안 줄은 빈 줄로 둔다(행 번호 유지 · 예시는 행으로 읽지 않는다)."""
+    out: "list[str]" = []
+    fence: "str | None" = None
+    for ln in text.splitlines():
+        fm = _FENCE_OPEN.match(ln)
+        if fence is None:
+            if fm:
+                fence = fm.group(1)
+                out.append("")
+                continue
+            out.append(ln)
+            continue
+        if fm and fm.group(1)[0] == fence[0] and len(fm.group(1)) >= len(fence) and not ln.strip().strip(fence[0]):
+            fence = None
+        out.append("")
+    return out
+
+
+def _fenced(text: str) -> str:
+    """코드 펜스 안 줄만(펜스 표지 줄 · 펜스 밖 줄은 빈 줄)."""
+    return "\n".join("" if out or _FENCE_OPEN.match(ln) else ln for out, ln in zip(_unfenced(text), text.splitlines()))
+
+
+def _lead_rows(text: str, head: "re.Pattern[str]") -> "list[list[str]]":
+    """표 행 — `|` 로 시작하는 줄(구분 행 뺌)과, 앞 `|` 없이 `head` 로 시작하는 줄(`_bare_line` 으로 벗긴 뒤). 리뷰어 · architect 가
+    지시 글의 `M<n> | 판정 | 근거` 꼴을 그대로 옮겨도 읽는다(F4-212). 코드 펜스 안 줄은 읽지 않는다."""
+    rows: "list[list[str]]" = []
+    for ln in _unfenced(text):
+        s: str = ln.strip()
+        if s.startswith("|"):
+            if not re.fullmatch(r"\|[\s:|-]*\|", s):
+                rows.append(_cells(s))
+            continue
+        b: str = _bare_line(s)
+        if head.match(b):
+            rows.append(_cells(b))
+    return rows
+
+
+_ITEM_ROW_HEAD: "re.Pattern[str]" = re.compile(r"[*`]*[MB]\d+[*`]*\s*\|")   # residual 결과 행 머리(항목 칸 강조 · 백틱 허용)
+_M_ROW_HEAD: "re.Pattern[str]" = re.compile(r"M\d+\s*\|")                    # verdict.md 행 머리
+_R2_ROW_HEAD: "re.Pattern[str]" = re.compile(r"(?:\d+|행#?)\s*\|")             # R2 리뷰어 표 행 머리(번호 행 · 머리 행)
+
+
+def _unread_rows(text: str, head: "re.Pattern[str]") -> "list[str]":
+    """앞 `|` 없이 칸 구분 `|` 이 다섯 이상인데 `head` 로 시작하지 않아 행으로 읽지 않은 줄 — 소리 없는 누락을 막는 실행 불능 재료.
+    표 문법 줄(GFM 구분 줄 · 그 바로 앞 머리 줄) · 코드 펜스 안 · 인라인 코드(백틱 짝) 안의 `|` 는 세지 않는다."""
+    lines: "list[str]" = [ln.strip() for ln in _unfenced(text)]
+    out: "list[str]" = []
+    for k, s in enumerate(lines):
+        if not s or s.startswith("|") or _BARE_SEP.match(s):
+            continue
+        if k + 1 < len(lines) and _BARE_SEP.match(lines[k + 1]):
+            continue                                       # 표 머리 줄(다음 줄이 구분 줄)
+        b: str = _bare_line(s)
+        if not head.match(b) and len(re.findall(r"(?<!\\)\|", re.sub(r"`[^`]*`", "", b))) >= 5:
+            out.append(s)
+    return out
+
+
 class Plan:
     def __init__(self, audit: Path) -> None:
         text: str = _read(audit / "plan.md")
@@ -912,7 +991,13 @@ def _load_rows(audit: Path, plan: Plan) -> "list[Row]":
         path: Path = audit / name
         if not path.is_file():
             raise ToolError(f"리뷰어 산출 누락 — {path}")
-        for k, cells in enumerate(_table_rows(path.read_text(encoding="utf-8")), 1):
+        text: str = path.read_text(encoding="utf-8")
+        unread: "list[str]" = _unread_rows(text, _R2_ROW_HEAD)
+        if unread:
+            raise ToolError(f"리뷰어 산출 {name} 에 표 행으로 읽지 못한 줄 {len(unread)}(앞 `|` 없음 · 번호 칸 없음) — 첫 줄 "
+                            f"«{unread[0][:80]}» · 그 리뷰어에게 앞뒤 `|` 표 꼴(행# 칸 포함)로 다시 받는다(코드 재점검 아님)")
+        before: int = len(rows)
+        for k, cells in enumerate(_lead_rows(text, _R2_ROW_HEAD), 1):
             if cells and (cells[0] in ("행#", "행") or cells[0].startswith("행#")):
                 continue
             numbered: bool = bool(re.fullmatch(r"\d+", cells[0])) if cells else False
@@ -923,6 +1008,10 @@ def _load_rows(audit: Path, plan: Plan) -> "list[Row]":
                 cells.append("")
             no: str = cells[0] if numbered else str(k)
             rows.append(Row(f"{name[:-3]}#{no}", lens, cells, short))
+        boxed: int = sum(1 for c in _lead_rows(_fenced(text), _R2_ROW_HEAD) if re.fullmatch(r"\d+", c[0]))
+        if boxed and len(rows) == before:
+            raise ToolError(f"리뷰어 산출 {name} 의 번호 행 {boxed} 이 코드 상자(코드 펜스) 안에 있고 밖에는 행이 없다 — 코드 상자 안에 있는 "
+                            f"표는 읽지 않는다 · 그 리뷰어에게 코드 상자 없이 앞뒤 `|` 표 꼴로 다시 받는다(코드 재점검 아님)")
     return rows
 
 
@@ -1110,7 +1199,7 @@ VERDICT_FINAL: str = "verdict-final.md"
 
 def _load_verdicts(audit: Path, name: str = "verdict.md") -> "list[Verdict]":
     out: "list[Verdict]" = []
-    for cells in _table_rows(_read(audit / name)):
+    for cells in _lead_rows(_read(audit / name), _M_ROW_HEAD):
         if cells and re.fullmatch(r"M\d+", cells[0].strip()) and len(cells) >= 3:
             out.append(Verdict(cells))
     return out
@@ -1515,10 +1604,10 @@ def _reduction(head: str, line: str, stamp: str) -> Reduction:
 
     정형이 아니면 실행 불능이다(남긴 요지를 모르면 residual 이 무엇을 확인할지 모른다 — fail-closed).
     """
-    keys: "list[str]" = re.findall(r"\bM\d+\b", re.sub(r"\([^)]*\)", "", head))   # 괄호 안 = 병합 항목 표기
+    keys: "list[str]" = re.findall(r"\b[MB]\d+\b", re.sub(r"\([^)]*\)", "", head))   # 괄호 안 = 병합 항목 표기
     where: str = f"재상정 {stamp or '(시각 없음)'} 요지 축소 줄"
     if len(keys) != 1:
-        raise ToolError(f"{where}은 항목 하나(`M<n>`)여야 한다 — {line.strip()[:160]}")
+        raise ToolError(f"{where}은 항목 하나(`M<n>` · `B<n>`)여야 한다 — {line.strip()[:160]}")
     # 칸 값은 다음 칸 이름 앞까지다 — 번호 목록 안의 `·`(`#1·#3`·`#1 · #3`)를 칸 구분으로 읽지 않는다.
     nxt: str = r"(?=\s*·\s*(?:남긴 요지|뺀 요지|남김 근거|출처|사유)\s*=|$)"
     kept_m = re.search(r"남긴 요지\s*=\s*(.*?)" + nxt, line)
@@ -1563,7 +1652,7 @@ class DecisionLine:
 def _scope(folder: Path) -> "tuple[str, set[str], set[str], dict[str, Reduction], list[DecisionLine]]":
     """(audit 시각, 이번 실행 ⓐ M 키, 재상정으로 뺀 키, 요지 축소, 결정 줄) — `refactor-scope.md` 의 앞 실행 절 앞까지.
 
-    재상정 절의 `M<n>` 결정 줄은 첫 낱말이 닫힌 어휘여야 한다(밖이면 실행 불능). `요지` 줄은 빼지 않고
+    재상정 절의 `M<n>` · `B<n>` 결정 줄은 첫 낱말이 닫힌 어휘여야 한다(밖이면 실행 불능) · 보탬 절 줄은 여기서 읽지 않는다(`_added`). `요지` 줄은 빼지 않고
     요지 축소로 싣는다(같은 항목의 뒤 줄이 이긴다) — 같은 항목에 전체 제외 줄이 있으면 제외가 이긴다.
     재상정 절 제목보다 깊은 제목(하위 제목)은 절을 끊지 않는다.
     G0 확정 판정(`verdict-final.md`)의 병합 항목은 대상 항목을 따르므로 결정 줄 표기와 무관하게 ⓐ 키에서 뺀다 — 대상
@@ -1582,16 +1671,24 @@ def _scope(folder: Path) -> "tuple[str, set[str], set[str], dict[str, Reduction]
     level: int = 0
     heading: str = ""
     stamp: str = ""
+    in_added: bool = False
+    added_level: int = 0
     for no, ln in enumerate(text.splitlines(), 1):
         hm = re.match(r"^(#+)\s", ln)
         if hm:
             if in_reconsider and len(hm.group(1)) > level:
                 continue                                   # 재상정 절 안의 하위 제목
+            if in_added and len(hm.group(1)) > added_level:
+                continue                                   # 보탬 절 안의 하위 제목
+            in_added = ADDED_HEAD in ln
+            added_level = len(hm.group(1)) if in_added else 0
             in_reconsider = "ⓐ 재상정" in ln
             level, heading = len(hm.group(1)), ln.strip() if in_reconsider else ""
             sm = re.search(r"ⓐ 재상정\s+(\S+)", ln)
             stamp = sm.group(1) if sm else ""
             continue
+        if in_added:
+            continue                                       # 보탬 절 줄은 `_added` 가 읽는다(ⓐ 결정 줄이 아니다)
         # 결정 값이 빈 자리표시(`결정 = · …` — 답을 받기 전의 STOP 기록)면 결정이 아니다.
         dm = re.match(r"^\s*[-*]?\s*(.+?)\s*·\s*결정\s*=\s*([^\s·—-]\S*)", ln)
         if not dm:
@@ -1599,7 +1696,7 @@ def _scope(folder: Path) -> "tuple[str, set[str], set[str], dict[str, Reduction]
                 lines.append(DecisionLine(no, heading, in_reconsider, ln, "", ln.strip(), decision=False))
             continue
         lines.append(DecisionLine(no, heading, in_reconsider, dm.group(1), dm.group(2), ln.strip()))
-        keys: "set[str]" = set(re.findall(r"\bM\d+\b", dm.group(1)))
+        keys: "set[str]" = set(re.findall(r"\b[MB]\d+\b" if in_reconsider else r"\bM\d+\b", dm.group(1)))
         token: str = dm.group(2)
         if in_reconsider:
             if not keys:
@@ -1620,6 +1717,129 @@ def _scope(folder: Path) -> "tuple[str, set[str], set[str], dict[str, Reduction]
     return m.group(1), adopted - merged, removed, reductions, lines
 
 
+ADDED_HEAD: str = "ⓐ 보탬"
+# 보탬 결정 칸 첫 낱말 닫힌 어휘(Coordinator 리팩토링 모드 «보탬 문» 문면 — `--self-test`). 밖이면 실행 불능.
+ADDED_TOKENS: "tuple[str, ...]" = ("보탬", "별도", "미룸")
+ADDED_MARK: str = "보탬 결정 칸의 첫 낱말은"
+ADDED_FIELDS: "tuple[str, ...]" = ("렌즈", "위치", "규칙", "요지", "출처", "사유")
+
+
+class AddedItem(NamedTuple):
+    """`## ⓐ 보탬 <시각>` 절의 결정 줄 하나 — `B<n> · 결정 = 보탬|별도 요청|미룸 · 렌즈 = … · 위치 = … · 규칙 = … · 요지 = … · 출처 = …`."""
+    bid: str
+    token: str          # 보탬 · 별도 · 미룸
+    stamp: str          # 그 절 머리 시각
+    lens: str
+    where: str          # 위치 칸 원문(`파일:행[-행]` · ` · ` 구분)
+    rule: str           # 규칙 칸 원문(`<문서 키> §<절> «원문 인용»`)
+    gist: str
+    source: str
+    no: int             # refactor-scope.md 행(1 기준)
+    line: str
+    changed: str = ""   # `· 바꿈 <시각>` — 사용자가 답을 바꾼 줄(같은 번호의 앞 줄을 갈음)
+    undone: bool = False  # 보탬이던 항목을 바꿈으로 별도 요청 · 미룸으로 돌렸다(이미 든 몫은 `철회` 창이 되돌린다)
+
+    @property
+    def files(self) -> "list[str]":
+        return sorted({os.path.normpath(l[0]).replace(os.sep, "/")
+                       for l in (_parse_location(t) for t in _locations(self.where)) if l})
+
+
+def _added(folder: Path, bc: "str | None" = None) -> "dict[str, AddedItem]":
+    """이번 실행 몫(`# 앞 실행` 절 앞)의 `## ⓐ 보탬 <시각>` 절 결정 줄 → {B<n>: 항목}. 답을 받기 전 자리표시(`결정 = · …`)는 뺀다.
+
+    한 줄의 항목 칸은 쉼표 목록(`B1, B2`) · 강조를 읽고, 줄 끝 `· 바꿈 <시각>` 줄은 같은 번호의 앞 줄을 갈음한다(마지막 줄이 이긴다).
+    실행 불능(fail-closed — 보탬 항목이 조용히 빠지거나 늘지 않게): 절 머리에 시각 없음 · 항목 번호를 품은 판형 밖 줄 · `B` 아닌 번호 ·
+    첫 낱말 닫힌 어휘 밖 · 바꿈 표지 없는 같은 번호 두 줄 · 앞 줄 없는 바꿈 줄 · 출처(본인 직접 · 사용자 원문 — 대리 불가 · 세 답 모두) ·
+    `보탬` 줄의 렌즈(ddd · api · db · discipline) · 위치(저장소 상대 `파일:행` — `bc` 를 주면 대상 BC 안) · 규칙(`<문서 키> §<절>
+    «인용»`) · 요지 가운데 하나라도 빠지거나 판형 밖.
+    """
+    text: str = _current_scope(folder)[0]
+    out: "dict[str, AddedItem]" = {}
+    inside: bool = False
+    level: int = 0
+    stamp: str = ""
+    nxt: str = r"(?=\s*·\s*(?:(?:" + "|".join(ADDED_FIELDS) + r")\s*=|바꿈\s)|$)"   # 끝 칸 `· 바꿈 <시각>` 앞에서도 끊는다
+    for no, ln in enumerate(text.splitlines(), 1):
+        hm = re.match(r"^(#+)\s+(.*)$", ln)
+        if hm:
+            if inside and len(hm.group(1)) > level:
+                continue
+            inside = ADDED_HEAD in ln
+            if inside:
+                level = len(hm.group(1))
+                sm = re.search(ADDED_HEAD + r"\s+([^\s—]\S*)", ln)
+                if not sm:
+                    raise ToolError(f"refactor-scope.md {no}행 `## {ADDED_HEAD}` 절 머리에 시각이 없다(`## {ADDED_HEAD} <시각>`)")
+                stamp = sm.group(1)
+            continue
+        if not inside:
+            continue
+        where: str = f"refactor-scope.md {no}행 보탬 줄"
+        dm = re.match(r"^\s*[-+*]?\s*((?:[*`]*[A-Z]\d+[*`]*\s*,\s*)*[*`]*[A-Z]\d+[*`]*)\s*·\s*결정\s*=\s*([^\s·—-]\S*)?(.*)$", ln)
+        if not dm:
+            if re.search(r"\b[MBC]\d+\b", re.sub(r"[*`]", "", ln)):
+                raise ToolError(f"{where} — 항목 번호를 품은 줄이 결정 줄 판형(`B<n>[, B<m>] · 결정 = 보탬 | 별도 요청 | 미룸 · …`) 밖이다"
+                                f"(이 절에는 결정 줄 · 자리표시만 쓴다): {ln.strip()[:120]}")
+            continue
+        if dm.group(2) is None:
+            continue                                       # 답을 받기 전 자리표시(`결정 = · …`)
+        bids: "list[str]" = re.findall(r"[A-Z]\d+", dm.group(1))
+        token: str = dm.group(2)
+        for bid in bids:
+            if not bid.startswith("B"):
+                raise ToolError(f"{where} 항목 `{bid}` — 보탬 절 항목 번호는 `B<n>` 이다(G0 ⓐ `M` · `C` 번호를 다시 쓰지 않는다)")
+        if not token.startswith(ADDED_TOKENS):
+            raise ToolError(f"{where}({', '.join(bids)}) 결정 칸 첫 낱말 `{token}` 이 닫힌 어휘({' · '.join(ADDED_TOKENS)}) 밖")
+        fields: "dict[str, str]" = {}
+        for name in ADDED_FIELDS:
+            fm = re.search(r"·\s*" + name + r"\s*=\s*(.*?)" + nxt, ln)
+            fields[name] = fm.group(1).strip() if fm else ""
+        cm = re.search(rf"·\s*바꿈\s+({_G1_TIME})\s*$", ln)
+        changed: str = cm.group(1) if cm else ""
+        tok: str = next(k for k in ADDED_TOKENS if token.startswith(k))
+        problems: "list[str]" = []
+        if not fields["출처"].startswith(PROXY_FREE):
+            problems.append(f"출처 `{fields['출처'][:40]}` 가 본인 직접 · 사용자 원문이 아니다(보탬 문 답은 대리 불가)")
+        if tok == "보탬":
+            if fields["렌즈"] not in LENSES:
+                problems.append(f"렌즈 `{fields['렌즈']}` 가 {' · '.join(LENSES)} 밖")
+            locs = [_parse_location(x) for x in _locations(fields["위치"])]
+            if not locs or any(l is None for l in locs):
+                problems.append("위치가 `파일:행[-행]`( · 구분) 가 아니다")
+            else:
+                for l in locs:
+                    norm: str = os.path.normpath(l[0]).replace(os.sep, "/")  # type: ignore[index]
+                    if os.path.isabs(l[0]) or norm == ".." or norm.startswith("../"):  # type: ignore[index]
+                        problems.append(f"위치 `{l[0]}` 가 저장소 상대 경로가 아니다")  # type: ignore[index]
+                    elif bc is not None and not _in_bc(norm, bc):
+                        problems.append(f"위치 `{norm}` 가 대상 BC({bc}) 밖이다(보탬 문은 대상 BC 안 흠만 — 밖은 다른 BC 몫)")
+            if _cite(fields["규칙"]) is None:
+                problems.append("규칙이 `<문서 키> §<절> «원문 인용»` 이 아니다")
+            if fields["요지"] in _EMPTY:
+                problems.append("요지가 없다")
+        if problems:
+            raise ToolError(f"{where}({', '.join(bids)}) 이 정형이 아니다 — {' · '.join(problems)}: {ln.strip()[:160]}")
+        for bid in bids:
+            if bid in out and not changed:
+                raise ToolError(f"{where} {bid} 가 둘 이상이다(보탬 항목 번호는 이번 실행 몫에서 하나 — 사용자가 답을 바꾸면 새 줄 끝에 "
+                                f"`· 바꿈 <시각>`)")
+            if bid not in out and changed:
+                raise ToolError(f"{where} {bid} 바꿈 줄인데 앞 결정 줄이 없다")
+            prior: "AddedItem | None" = out.get(bid)
+            undone: bool = tok != "보탬" and prior is not None and (prior.token == "보탬" or prior.undone)
+            out[bid] = AddedItem(bid, tok, stamp, fields["렌즈"], fields["위치"], fields["규칙"], fields["요지"], fields["출처"], no,
+                                 ln.strip(), changed, undone)
+    return out
+
+
+def _adopted_and_added(folder: Path) -> "tuple[set[str], dict[str, AddedItem]]":
+    """(이번 실행 ⓐ 항목 키 = G0 ⓐ `M<n>` ∪ 보탬 `B<n>`(결정 = 보탬), 보탬 항목 전부) — 재상정으로 뺀 키는 부르는 쪽이 뺀다."""
+    adopted: "set[str]" = _scope(folder)[1]
+    added: "dict[str, AddedItem]" = _added(folder, _run_bc(folder))
+    return adopted | {b for b, it in added.items() if it.token == "보탬"}, added
+
+
 def _adopted_c(lines: "list[DecisionLine]") -> "set[str]":
     """이번 실행 G0 ⓐ 검사기 빚 `C<n>` — 재상정 절 밖 `… · 결정 = ⓐ` 줄의 키(괄호 안 · ⓐ′ 는 빼고)."""
     return {k for d in lines if d.decision and not d.reconsider and d.token.startswith("ⓐ") and not d.token.startswith("ⓐ′")
@@ -1634,7 +1854,7 @@ def _reconsidered_c(lines: "list[DecisionLine]") -> "set[str]":
 # ── resolution(명세 «슬라이스 0 해소 판정» 표) ──────────────────────────────
 
 class ResolutionRow:
-    """판정 표 한 행 — `M<n> | 요지# | 요지 | 판정 | 불가 범주 | 막는 것 | 처방 앵커 | 되돌리지 않는 이유`."""
+    """판정 표 한 행 — `M<n> | 요지# | 요지 | 판정 | 불가 범주 | 막는 것 | 처방 앵커 | 되돌리지 않는 이유`(보탬 항목은 `B<n>`)."""
 
     def __init__(self, mid: str, cells: "list[str]") -> None:
         self.mid: str = mid
@@ -1648,10 +1868,8 @@ class ResolutionRow:
         self.why: str = cells[7]
 
 
-def _resolution_table(spec: Path, need_rows: bool = True) -> "tuple[list[ResolutionRow], str, list[str]]":
-    """(판정 표 행, 표 밖 명세 본문(정규화), 형식 red) — `슬라이스 0 해소 판정` 제목 아래 표. `need_rows` 가 거짓(이번 실행 ⓐ
-    `M<n>` 이 없다 — 검사기 빚만의 실행)이면 제목 없음 · 행 없음은 red 가 아니다(제목이 둘이면 그대로 red)."""
-    lines: "list[str]" = _read(spec).split("\n")
+def _resolution_heads(lines: "list[str]") -> "tuple[list[tuple[int, int]], list[tuple[int, int]]]":
+    """(`슬라이스 0 해소 판정` 제목, 모든 제목) — 코드 펜스 밖 제목 줄의 (행, 수준)."""
     heads: "list[tuple[int, int]]" = []
     all_heads: "list[tuple[int, int]]" = []
     fence: "str | None" = None
@@ -1668,6 +1886,33 @@ def _resolution_table(spec: Path, need_rows: bool = True) -> "tuple[list[Resolut
             rm = _RESOLUTION_HEADING.match(ln.replace("*", "").replace("`", ""))   # 제목 강조 표기는 벗겨 대조한다
             if rm:
                 heads.append((i, len(rm.group(1))))
+    return heads, all_heads
+
+
+def _section_end(start: int, level: int, all_heads: "list[tuple[int, int]]", total: int) -> int:
+    """제목 행 `start`(수준 `level`) 절의 끝 행(안 든다) — 같거나 얕은 다음 제목 · 없으면 `total`."""
+    return next((i for i, lv in all_heads if i > start and lv <= level), total)
+
+
+def _bare_rows_tail(spec: Path) -> str:
+    """`슬라이스 0 해소 판정` 절에 앞 `|` 없이 쓴 항목 행(`M1 | …` · `B1 | …`)이 있으면 red 글 끝에 이을 구 — 없으면 빈 글. 그 줄은
+    행으로 읽지 않는다(판정 무변)."""
+    lines: "list[str]" = _read(spec).split("\n")
+    heads, all_heads = _resolution_heads(lines)
+    if len(heads) != 1:
+        return ""
+    start, level = heads[0]
+    body: "list[str]" = lines[start + 1:_section_end(start, level, all_heads, len(lines))]
+    bare: int = sum(1 for ln in _unfenced("\n".join(body))
+                    if not ln.strip().startswith("|") and _ITEM_ROW_HEAD.match(_bare_line(ln)))
+    return f" — 앞 `|` 없는 행 {bare}(표는 앞뒤 `|` 꼴로 쓴다)" if bare else ""
+
+
+def _resolution_table(spec: Path, need_rows: bool = True) -> "tuple[list[ResolutionRow], str, list[str]]":
+    """(판정 표 행, 표 밖 명세 본문(정규화), 형식 red) — `슬라이스 0 해소 판정` 제목 아래 표. `need_rows` 가 거짓(이번 실행 ⓐ
+    `M<n>` · 보탬 `B<n>` 이 없다 — 검사기 빚만의 실행)이면 제목 없음 · 행 없음은 red 가 아니다(제목이 둘이면 그대로 red)."""
+    lines: "list[str]" = _read(spec).split("\n")
+    heads, all_heads = _resolution_heads(lines)
     reds: "list[str]" = []
     if len(heads) != 1:
         if heads or need_rows:
@@ -1675,7 +1920,7 @@ def _resolution_table(spec: Path, need_rows: bool = True) -> "tuple[list[Resolut
                         else f"`슬라이스 0 해소 판정` 제목이 {len(heads)}개다(하나여야 한다)")
         return [], normalize("\n".join(lines)), reds
     start, level = heads[0]
-    end: int = next((i for i, lv in all_heads if i > start and lv <= level), len(lines))
+    end: int = _section_end(start, level, all_heads, len(lines))
     rows: "list[ResolutionRow]" = []
     table_lines: "set[int]" = set()
     for i in range(start + 1, end):
@@ -1686,7 +1931,7 @@ def _resolution_table(spec: Path, need_rows: bool = True) -> "tuple[list[Resolut
         if re.fullmatch(r"\|[\s:|-]*\|", s):
             continue
         cells: "list[str]" = _cells(s)
-        mm = re.match(r"(M\d+)(?!\d)", cells[0].strip("`* "))     # `M1(+M44)` 의 괄호 = 병합 항목 표기
+        mm = re.match(r"([MB]\d+)(?!\d)", cells[0].strip("`* "))     # `M1(+M44)` 의 괄호 = 병합 항목 표기
         if not mm:
             continue                                   # 머리 행
         if len(cells) < RESOLUTION_COLUMNS:
@@ -1694,7 +1939,7 @@ def _resolution_table(spec: Path, need_rows: bool = True) -> "tuple[list[Resolut
             continue
         rows.append(ResolutionRow(mm.group(1), cells))
     if not rows and not reds and need_rows:
-        reds.append("`슬라이스 0 해소 판정` 표에 행이 없다")
+        reds.append("`슬라이스 0 해소 판정` 표에 행이 없다" + _bare_rows_tail(spec))
     body: str = normalize("\n".join(ln for i, ln in enumerate(lines) if i not in table_lines))
     return rows, body, reds
 
@@ -1718,8 +1963,9 @@ def _origins(verdicts: "dict[str, Verdict]", mid: str) -> "list[tuple[str, str]]
     return [(o, "") for o in v.origin] + [(o, x.mid) for x in merged for o in x.origin]
 
 
-def _m_order(key: str) -> int:
-    return int(key[1:])
+def _m_order(key: str) -> "tuple[int, int]":
+    """항목 차례 — G0 ⓐ `M<n>` 먼저 · 보탬 `B<n>` 뒤 · 번호 차례."""
+    return (0 if key[0] == "M" else 1, int(key[1:]))
 
 
 def _no_standing(lines: "list[DecisionLine]", where: str) -> None:
@@ -1891,7 +2137,8 @@ def _gate_reds(by_m: "dict[str, list[ResolutionRow]]", classes: "dict[str, str]"
 
 
 def cmd_resolution(project: Path, folder: Path, gate: bool, corpus_fn: "Callable[[], Corpus]") -> int:
-    audit_ts, adopted, removed, reductions, lines = _scope(folder)
+    audit_ts, _m_adopted, removed, reductions, lines = _scope(folder)
+    adopted, added = _adopted_and_added(folder)
     if gate:
         _no_standing(lines, "resolution --gate")
     audit: Path = folder / "audit" / audit_ts
@@ -1904,14 +2151,22 @@ def cmd_resolution(project: Path, folder: Path, gate: bool, corpus_fn: "Callable
     for r in table:
         by_m.setdefault(r.mid, []).append(r)
     items: "set[str]" = adopted - removed
+    bare: str = _bare_rows_tail(spec)
     for mid in sorted(items - set(by_m), key=_m_order):
-        reds.append(f"{mid} 판정 없음 — 범위 안 ⓐ 항목에 판정 표 행이 없다")
+        reds.append(f"{mid} 판정 없음 — 범위 안 ⓐ 항목에 판정 표 행이 없다{bare}")
     for mid in sorted(set(by_m) - adopted, key=_m_order):
-        reds.append(f"{mid} 범위 밖 — G0 ⓐ 항목이 아니다(병합 항목은 병합 대상 `M<n>` 의 요지로 적는다)")
+        reds.append(f"{mid} 범위 밖 — G0 ⓐ 항목도 보탬 항목도 아니다(병합 항목은 병합 대상 `M<n>` 의 요지로 적는다)"
+                    if mid.startswith("M") else f"{mid} 범위 밖 — 이번 실행 몫 `## {ADDED_HEAD}` 절의 `결정 = 보탬` 항목이 아니다")
+    for bid in sorted(adopted & set(added) - removed, key=_m_order):
+        if not _cite_binds(corpus_fn(), added[bid].rule):
+            reds.append(f"{bid} 보탬 줄 규칙 «{added[bid].rule[:60]}» 이 그 절의 규범 블록에 결속되지 않는다(보탬 줄의 규칙 칸을 "
+                        f"원문 그대로 고친다 — 같은 답의 정형 교정)")
     cache: "dict[str, bool]" = {}
 
     def cited(mid: str) -> bool:
         """그 항목의 원 행(병합 행 포함) · verdict 근거 가운데 결속되는 반대 방향 규칙 인용이 있나(설계 :249 · :253)."""
+        if mid.startswith("B"):
+            return False                                   # 보탬 항목에는 반대 방향 규칙 칸이 없다 — 인용 밖 증거 꼴로만
         if mid not in cache:
             cells: "list[str]" = [rows[o].opposite for o, _v in _origins(verdicts, mid) if o in rows]
             cells.append(verdicts[mid].ground if mid in verdicts else "")
@@ -1926,13 +2181,17 @@ def cmd_resolution(project: Path, folder: Path, gate: bool, corpus_fn: "Callable
     changed: int = sum(1 for mid in classes for r in by_m[mid] if r.verdict == CHANGE_VERDICT)
     lens_of: "dict[str, list[str]]" = {}
     for mid in sorted(set(by_m) & items, key=_m_order):
-        for lens in sorted({rows[o].lens for o, _v in _origins(verdicts, mid) if o in rows}):
+        lenses: "set[str]" = ({added[mid].lens} if mid.startswith("B")
+                              else {rows[o].lens for o, _v in _origins(verdicts, mid) if o in rows})
+        for lens in sorted(lenses):
             lens_of.setdefault(lens, []).append(mid)
     for lens in (l for l in LENSES if l in lens_of):
         print(f"  렌즈 {lens}: {' · '.join(lens_of[lens])}")
     for w in reds:
         print(f"  red: {w}")
-    print(f"요약: 해소 판정: 해소 {counts['해소']} · 부분 {counts['부분']} · 불가 {counts['불가']} · 항목 {len(classes)} · "
+    n_added: int = sum(1 for k in classes if k.startswith("B"))
+    print(f"요약: 해소 판정: 해소 {counts['해소']} · 부분 {counts['부분']} · 불가 {counts['불가']} · 항목 {len(classes)}"
+          f"{f'(보탬 {n_added})' if n_added else ''} · "
           f"요지 행 {len(table)} · 변경 요지 {changed} · 인용 밖 반대 규칙 {outside} · red {len(reds)}{' · gate' if gate else ''}")
     return EXIT_RED if reds else EXIT_OK
 
@@ -2082,15 +2341,38 @@ def _rename_only(project: Path, anchor: str, rel: str, pairs: "dict[str, str]") 
         return False
 
 
+def _added_count(added: "dict[str, AddedItem]") -> int:
+    """`보탬 k건` 의 k — `결정 = 보탬` 항목 수(재상정으로 뺀 것도 센다 — G0 ⓐ 의 N 과 같은 셈)."""
+    return sum(1 for it in added.values() if it.token == "보탬")
+
+
+def _added_note(added: "dict[str, AddedItem]") -> str:
+    """보탬 문 처분 안내 한 줄(G2 배너 재료) — `보탬 문 — 별도 요청 B2(<위치>) · 미룸 B3(<위치>) · 바꿈으로 되돌린 보탬 1(B3)` · 그런 답이
+    없으면 빈 글."""
+    parts: "list[str]" = []
+    for token, label in (("별도", "별도 요청"), ("미룸", "미룸")):
+        hits: "list[AddedItem]" = [it for it in added.values() if it.token == token]
+        if hits:
+            hits.sort(key=lambda it: _m_order(it.bid))
+            parts.append(f"{label} " + " · ".join(f"{it.bid}({it.where or '—'})" for it in hits))
+    undone: "list[str]" = sorted((it.bid for it in added.values() if it.undone), key=_m_order)
+    if undone:
+        parts.append(f"바꿈으로 되돌린 보탬 {len(undone)}({' · '.join(undone)})")
+    return "  보탬 문 — " + " · ".join(parts) if parts else ""
+
+
 # ⓓ 겹침 바닥에서 빼는 크기 신호 — 크기는 트리거가 아니다(houserules SKILL §1). 그 항목은 리뷰어 잔존 확인으로 간다.
 RESIDUAL_SIZE_MARKS: "frozenset[str]" = frozenset({"ⓓ#644"})
 
 
 def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finalize: "str | None",
                  gate_json: "Path | None" = None) -> int:
-    audit_ts, adopted, removed, reductions, lines = _scope(folder)
+    audit_ts, _m_adopted, removed, reductions, lines = _scope(folder)
     _no_standing(lines, "residual")
+    adopted, added = _adopted_and_added(folder)
     items: "set[str]" = adopted - removed
+    n_b: int = _added_count(added)
+    added_note: str = _added_note(added)                     # `요약:` 뒤 한 줄 — G2 배너 «보탬 문 별도 요청 x · 미룸 y» 재료
     reduced: "dict[str, Reduction]" = {m: r for m, r in reductions.items() if m in items}
     notes: "dict[str, str]" = _reduction_notes(folder, reduced)
     red_tail: str = f" · 요지 축소 {len(reduced)}" if reduced else ""
@@ -2117,12 +2399,28 @@ def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finaliz
     to_review: "dict[str, list[str]]" = {}
     origins: "dict[str, list[tuple[str, str]]]" = {}      # M → (원 행, 병합해 온 M 또는 "")
     watched: "dict[str, list[str]]" = {}                    # M → 지문을 잴 경로(항목 파일 · 대응 새 경로)
-    for mid in sorted(items, key=lambda k: int(k[1:])):
+    for mid in sorted(items, key=_m_order):
+        if mid.startswith("B"):                            # 보탬 항목 — 원 행 대신 보탬 줄(렌즈 · 위치 · 규칙 · 요지)
+            origins[mid] = []
+            files: "list[str]" = added[mid].files
+            watched[mid] = sorted(set(files) | {_moved(f, mapping) for f in files})
+            before_b: "dict[str, str | None] | None" = prev_solved.get(mid)
+            if before_b is not None and before_b == {p: _file_sha(project, p) for p in before_b}:
+                carried.append(mid)
+                continue
+            if files and not any(f in changed for f in files):
+                floor[mid] = "파일 무변(build_anchor..작업 트리)"
+                continue
+            if files and pairs and all(_rename_only(project, anchor, f, pairs) for f in files if f in pairs or f in changed):
+                floor[mid] = "이름 바꿈 + import 치환뿐(build_anchor..작업 트리 · 게이트 묶음 이동 쌍)"
+                continue
+            to_review.setdefault(added[mid].lens, []).append(mid)
+            continue
         origins[mid] = _origins(verdicts, mid)
         v: Verdict = verdicts[mid]
         origin: "list[str]" = [o for o, _m in origins[mid]]
-        files: "list[str]" = sorted({os.path.normpath(l[0]) for o in origin if o in rows
-                                     for l in (_parse_location(t) for t in _locations(rows[o].where)) if l})
+        files = sorted({os.path.normpath(l[0]) for o in origin if o in rows
+                        for l in (_parse_location(t) for t in _locations(rows[o].where)) if l})
         watched[mid] = sorted(set(files) | {_moved(f, mapping) for f in files})
         before: "dict[str, str | None] | None" = prev_solved.get(mid)
         if before is not None and before == {p: _file_sha(project, p) for p in before}:
@@ -2157,11 +2455,13 @@ def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finaliz
     lines += [f"| {m} | 잔존 | {w} |" for m, w in floor.items()]
     lines += [f"| {m} | 해소 유지 | 직전 확정 {prev_stamp} 뒤 항목 파일·대응 경로 무변 |" for m in carried]
     (out_dir / "bottom.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    pending_ids: "list[str]" = sorted({m for ms in to_review.values() for m in ms}, key=lambda k: int(k[1:]))
+    pending_ids: "list[str]" = sorted({m for ms in to_review.values() for m in ms}, key=_m_order)
     if finalize is None:
         for lens, mids in to_review.items():
             body: "list[str]" = [f"# 잔존 확인 — {lens} · {stamp}", "",
-                                 "결과 표(`result-<렌즈>.md`): `M<n> | 해소|잔존|판단 불가 | 근거`", "",
+                                 "결과 표(`result-<렌즈>.md`) — 아래 머리 두 줄을 그대로 두고 항목마다 한 행을 앞뒤 `|` 표 꼴로 쓴다. "
+                                 "판정 칸은 `해소` · `잔존` · `판단 불가` 가운데 하나다.", "",
+                                 "| 항목 | 판정 | 근거 |", "|---|---|---|", "",
                                  "해소의 근거 칸 판형: `<새 파일:행[-행]>[ · <새 파일:행[-행]>…] — <무엇이 어떻게 사라졌는지 한 구>`. "
                                  "` — ` 앞에는 저장소 루트 기준 새 위치만 적는다(조사·괄호·설명 없이 — 이 위치만 근거로 센다). "
                                  "위치마다 경로:행을 전부 적는다(`:16`·`15·16` 줄임 없이) · 구분은 ` · `. 남은 것·제외 범주·설계 근거 같은 "
@@ -2169,14 +2469,19 @@ def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finaliz
                                  "` — ` 앞에는 `build_anchor` 이후 바뀐 파일(산출물 폴더 제외) 또는 이 항목의 원 발견 · 대응 경로에 속하는 "
                                  "지금 있는 `파일:행[-행]`만 적는다. 지워서 푼 항목도 같은 조건을 따르며, 삭제 사실과 허용 집합 밖 주변 위치는 "
                                  "` — ` 뒤에 적는다.",
-                                 "예: `M3 | 해소 | application/<bc>/domain_layer/x/x.py:12-18 · "
-                                 "application/<bc>/application_layer/y/y_use_case.py:40 — 판정을 루트 메서드 한 곳으로 옮겼다`", ""]
+                                 "예(이 줄은 결과가 아니다 — 항목 칸 `M<n>` 은 자리표시라 행으로 읽지 않는다):", "",
+                                 "| M<n> | 해소 | application/<bc>/domain_layer/x/x.py:12-18 · "
+                                 "application/<bc>/application_layer/y/y_use_case.py:40 — 판정을 루트 메서드 한 곳으로 옮겼다 |", ""]
             if any(m in notes for m in mids):
                 body += ["요지 축소 항목은 남긴 요지만 본다 — 뺀 요지는 재상정 처분 몫이라 잔존으로 세지 않는다. "
                          "원 규칙의 처방이 아닌 대체 형태는 해소가 아니다.", ""]
             body += ["## 항목", ""]
-            for mid in sorted(set(mids), key=lambda k: int(k[1:])):
+            for mid in sorted(set(mids), key=_m_order):
                 body.append(f"### {mid}")
+                if mid.startswith("B"):
+                    it: AddedItem = added[mid]
+                    body.append(f"- 보탬 항목({ADDED_HEAD} {it.stamp} · 렌즈 {it.lens}): 위치 {it.where} · 규칙 {it.rule} · "
+                                f"요지 {it.gist}")
                 for o, via in origins[mid]:
                     if o in rows:
                         tag: str = f" (병합 {via})" if via else ""
@@ -2191,23 +2496,36 @@ def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finaliz
         if pending_ids:
             print(f"요약: residual 결정적 잔존 {len(floor)}{tail} · 리뷰어 확인 대상 {len(pending_ids)}"
                   f"({'·'.join(sorted(to_review))}) · M_m 미정 — --finalize {stamp} → {out_dir}")
+            if added_note:
+                print(added_note)
             return EXIT_OK
-        print(f"요약: residual M_m={len(floor)}(결정적 잔존 {len(floor)}){tail} · 리뷰어 확인 대상 0 → {out_dir}")
+        floor_m: int = sum(1 for k in floor if k.startswith("M"))
+        b_tail: str = f" · 보탬 {n_b}건 잔존 {len(floor) - floor_m}(결정적 잔존 {len(floor) - floor_m})" if n_b else ""
+        print(f"요약: residual M_m={floor_m}(결정적 잔존 {floor_m}){b_tail}{carry_tail(folder)}{tail} · 리뷰어 확인 대상 0 → {out_dir}")
+        if added_note:
+            print(added_note)
         (out_dir / "result.json").write_text(json.dumps(
             {"stamp": stamp, "solved": {m: prev_solved[m] for m in carried}}, ensure_ascii=False, sort_keys=True)
             + "\n", encoding="utf-8")
         return EXIT_RED if floor or moved_c else EXIT_OK
-    results: "dict[str, list[tuple[str, str, str]]]" = {}     # M → (렌즈, 판정 칸, 근거 칸)
+    results: "dict[str, list[tuple[str, str, str]]]" = {}     # 항목 → (렌즈, 판정 칸, 근거 칸)
+    read_rows: "dict[str, int]" = {}                         # 렌즈 → 읽은 항목 행 수(결과 파일 없으면 키 없음)
     for lens in to_review:
         path: Path = out_dir / f"result-{lens}.md"
-        for cells in _table_rows(path.read_text(encoding="utf-8")) if path.is_file() else []:
-            if len(cells) >= 2 and re.fullmatch(r"M\d+", cells[0]):
-                results.setdefault(cells[0], []).append((lens, cells[1], cells[2] if len(cells) > 2 else ""))
+        if not path.is_file():
+            continue
+        read_rows[lens] = 0
+        for cells in _lead_rows(path.read_text(encoding="utf-8"), _ITEM_ROW_HEAD):
+            key: str = re.sub(r"[*`]", "", cells[0]).strip()
+            if len(cells) >= 2 and re.fullmatch(r"[MB]\d+", key):
+                read_rows[lens] += 1
+                results.setdefault(key, []).append((lens, cells[1], cells[2] if len(cells) > 2 else ""))
     # 같은 시각 재확정 — 동결은 좋아지는 쪽만 막는다. 앞 판이 판형 아님·답 없음이면 다시 판정하고, 그 밖에는 이번 행이
     # 있으면 이번 판정을 쓰되 앞 판이 잔존·잔존(반복)·판단 불가면 해소·판형 아님·답 없음(다시 판정 쪽)으로 가지 않는다
     # (앞 판 해소의 강등은 모두 받는다 · 행이 없으면 앞 판 판정·지문 유지).
     # 판형 아님 이력(`redo`)은 판정과 따로 쌓는다 — 이력 있는 M 이 다시 판형 아님이면 잔존(반복)이다.
-    before_states, redo_before, kept = _same_stamp(out_dir / "result.json")
+    before_states, redo_before, kept, noans_before = _same_stamp(out_dir / "result.json")
+    noans_why: "dict[str, list[tuple[str, str]]]" = {}       # 항목 → [(렌즈, 까닭)]
     code_changed: "set[str]" = {p for p in changed if not p.startswith(OUTPUT_ROOTS)}   # 산출물 파일은 해소 근거가 아니다
     states: "dict[str, str]" = {}
     unformatted: "dict[str, list[tuple[str, str]]]" = {}     # M → [(렌즈, 불량 토큰)]
@@ -2220,7 +2538,12 @@ def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finaliz
             continue
         allowed: "set[str]" = code_changed | set(watched[mid])   # 해소 근거 = 앵커 이후 바뀐 코드 파일 ∪ 대응 새 경로
         answered: "set[str]" = {lens for lens, _c, _g in answers}
-        got: "list[str]" = ["답 없음" for lens, ms in to_review.items() if mid in ms and lens not in answered]
+        got: "list[str]" = []
+        for lens, ms in to_review.items():
+            if mid in ms and lens not in answered:
+                got.append("답 없음")
+                noans_why.setdefault(mid, []).append((lens, "결과 파일 없음" if lens not in read_rows
+                                                      else "읽은 항목 행 0" if read_rows[lens] == 0 else "그 항목 행 없음"))
         for lens, cell, ground in answers:
             state: str = _answer_state(cell)
             if state == "해소":
@@ -2239,22 +2562,29 @@ def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finaliz
                 got.append(state)
         verdict: str = ("해소" if got and all(g == "해소" for g in got) else "잔존" if "잔존" in got
                         else "판형 아님" if "판형 아님" in got else "답 없음" if "답 없음" in got else "판단 불가")
-        now: str = "잔존(반복)" if verdict == "판형 아님" and mid in redo_before else verdict
+        now: str = ("잔존(반복)" if verdict == "판형 아님" and mid in redo_before
+                    else "판단 불가" if verdict == "답 없음" and mid in noans_before else verdict)
         held: bool = was in ("잔존", "잔존(반복)", "판단 불가") and now not in ("잔존", "잔존(반복)", "판단 불가")
         states[mid] = was if held else now
-    redo: "list[str]" = sorted(set(redo_before) | {m for m, s in states.items() if s == "판형 아님"},
-                               key=lambda k: int(k[1:]))
+    redo: "list[str]" = sorted(set(redo_before) | {m for m, s in states.items() if s == "판형 아님"}, key=_m_order)
+    noans: "list[str]" = sorted(set(noans_before) | {m for m, s in states.items() if s == "답 없음"}, key=_m_order)
     solved: "list[str]" = [m for m in pending_ids if states[m] == "해소"]
     reviewer_left: "list[str]" = [m for m in pending_ids if states[m] in ("잔존", "잔존(반복)")]
     unformed: "list[str]" = [m for m in pending_ids if states[m] == "판형 아님"]
-    unknown: "list[str]" = [m for m in pending_ids if states[m] in ("판단 불가", "답 없음")]
-    m_m: int = len(floor) + len(reviewer_left) + len(unformed) + len(unknown)
+    unknown: "list[str]" = [m for m in pending_ids if states[m] == "판단 불가"]
+    unanswered: "list[str]" = [m for m in pending_ids if states[m] == "답 없음"]
+
+    def _n(ids: "Iterable[str]", prefix: str) -> int:
+        return sum(1 for k in ids if k.startswith(prefix))
+    m_m: int = sum(_n(x, "M") for x in (floor, reviewer_left, unformed, unknown, unanswered))
+    b_m: int = sum(_n(x, "B") for x in (floor, reviewer_left, unformed, unknown, unanswered))
     lines = [f"# residual 결과 — {stamp}", "", "| M | 판정 |", "|---|---|"]
     lines += [f"| {m} | 잔존(결정적) |" for m in floor]
     lines += [f"| {m} | {'잔존(근거 판형 아님 반복)' if states[m] == '잔존(반복)' else '잔존(리뷰어 · 근거 없는 해소 포함)'} |"
               for m in reviewer_left]
     lines += [f"| {m} | 근거 판형 아님({'·'.join(sorted({lens for lens, _t in unformatted[m]}))}) |" for m in unformed]
     lines += [f"| {m} | 판단 불가 |" for m in unknown]
+    lines += [f"| {m} | 답 없음({' · '.join(f'{lens}: {why}' for lens, why in noans_why.get(m, []))}) |" for m in unanswered]
     lines += [f"| {m} | 해소{'(요지 축소 — 남긴 요지)' if m in reduced else ''} |" for m in solved]
     lines += [f"| {m} | 해소(직전 {prev_stamp} 이월) |" for m in carried]
     (out_dir / "result.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -2266,17 +2596,29 @@ def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finaliz
         paths: "set[str]" = (set() if held_fp else set(watched[m])) | grounds.get(m, set())
         snapshot[m] = {**{p: _file_sha(project, p) for p in sorted(paths - set(held_fp))}, **held_fp}
     snapshot.update({m: prev_solved[m] for m in carried})
-    (out_dir / "result.json").write_text(json.dumps({"stamp": stamp, "solved": snapshot, "states": states, "redo": redo},
-                                                    ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
-    print(f"요약: residual M_m={m_m}(결정적 잔존 {len(floor)} · 리뷰어 잔존 {len(reviewer_left)} · 근거 판형 아님 {len(unformed)} · "
-          f"판단 불가 {len(unknown)}) · 해소 {len(solved) + len(carried)}{f'(이월 {len(carried)})' if carried else ''}{red_tail} "
-          f"→ {out_dir / 'result.md'}")
+    (out_dir / "result.json").write_text(json.dumps({"stamp": stamp, "solved": snapshot, "states": states, "redo": redo,
+                                                     "noans": noans}, ensure_ascii=False, sort_keys=True) + "\n",
+                                         encoding="utf-8")
+    noans_tail: str = f" · 답 없음 {_n(unanswered, 'M')}" if _n(unanswered, "M") else ""
+    noans_b: str = f" · 답 없음 {_n(unanswered, 'B')}" if _n(unanswered, "B") else ""
+    b_tail: str = (f" · 보탬 {n_b}건 잔존 {b_m}(결정적 잔존 {_n(floor, 'B')} · 리뷰어 잔존 {_n(reviewer_left, 'B')} · 근거 판형 아님 "
+                   f"{_n(unformed, 'B')} · 판단 불가 {_n(unknown, 'B')}{noans_b})" if n_b else "")
+    print(f"요약: residual M_m={m_m}(결정적 잔존 {_n(floor, 'M')} · 리뷰어 잔존 {_n(reviewer_left, 'M')} · 근거 판형 아님 "
+          f"{_n(unformed, 'M')} · 판단 불가 {_n(unknown, 'M')}{noans_tail}) · 해소 {len(solved) + len(carried)}"
+          f"{f'(이월 {len(carried)})' if carried else ''}{b_tail}{carry_tail(folder)}{red_tail} → {out_dir / 'result.md'}")
     if unformed:                                            # `요약:` 뒤 — 재기재 안내(코드 재개봉·새 시각이 아니다)
         notes_redo: str = " · ".join(m + "(" + ", ".join(f"{lens}: `{tok}`" for lens, tok in unformatted[m]) + ")"
                                       for m in unformed)
         print(f"  근거 판형 아님: {notes_redo} — 그 행만 같은 렌즈 리뷰어에게 묶음 머리의 판형대로 다시 받아 result-<렌즈>.md 에 "
               f"고쳐 쓰고 --finalize {stamp} 한 번 더(코드 재개봉·새 시각 아님 · 다시 판형 아님이면 잔존)")
-    return EXIT_RED if m_m or moved_c else EXIT_OK
+    if unanswered:                                          # `요약:` 뒤 — 다시 받기 안내(코드 재개봉·새 시각이 아니다)
+        notes_na: str = " · ".join(m + "(" + ", ".join(f"{lens}: {why}" for lens, why in noans_why.get(m, [])) + ")"
+                                   for m in unanswered)
+        print(f"  답 없음: {notes_na} — 그 렌즈 리뷰어에게 그 항목 행을 묶음 머리의 표 꼴로 다시 받아 result-<렌즈>.md 에 쓰고 "
+              f"--finalize {stamp} 한 번 더(코드 재개봉·새 시각 아님 · 다시 답 없음이면 판단 불가)")
+    if added_note:
+        print(added_note)
+    return EXIT_RED if m_m or b_m or moved_c else EXIT_OK
 
 
 # ── changes(명세 «바뀌는 것 목록» · G1 후보/반영/확정 digest) ──────────────
@@ -2286,9 +2628,14 @@ TEST_VERBS: "tuple[str, ...]" = ("update", "add", "remove")
 TEST_OWNERS: "tuple[str, ...]" = ("coder", "acceptance-tester")
 OUTSIDE_OWNER: str = "acceptance-tester"           # 밖 동작 = acceptance-tester · 안(내부 약속 · DB 구조) = coder
 GROUP_IMPORT_KIND: str = "묶음 import 치환"           # 묶음 이동이 따라 고치는 다른 BC import 줄(0C 묶음 창 · ⊆ `draft`)
-OTHER_EDIT_KINDS: "tuple[str, ...]" = ("받는 쪽 어댑터", "받는 쪽 시험", "직접 import 자리", "HTTP 소비자", "공유 표면",
-                                       "프로젝트 합성", GROUP_IMPORT_KIND)
-DEPS_EDIT_KINDS: "tuple[str, ...]" = OTHER_EDIT_KINDS[:5]   # `deps` 출력과 대조하는 갈래(프로젝트 합성 · 묶음 import 치환 제외)
+COMPOSE_KIND: str = "프로젝트 합성"
+DEPS_EDIT_KINDS: "tuple[str, ...]" = ("받는 쪽 어댑터", "받는 쪽 시험", "직접 import 자리", "HTTP 소비자", "공유 표면")  # deps 대조
+OTHER_EDIT_KINDS: "tuple[str, ...]" = (*DEPS_EDIT_KINDS, COMPOSE_KIND, GROUP_IMPORT_KIND, FRAMEWORK_NEW)
+# 프로젝트 합성 닫힌 목록(Coordinator «다른 BC 편집 목록» 문면) — `<project>` = 저장소 뿌리 바로 아래 `settings.py` · `settings/` 를 가진 폴더
+COMPOSE_PROJECT_FILES: "tuple[str, ...]" = ("urls.py", "api.py", "internal_api.py")
+COMPOSE_FIXED: "tuple[str, ...]" = ("framework/ninja/pre_route_responses.py", "framework/ninja/pre_route_response_table.py")
+COMPOSE_NEW_PACKAGES: "tuple[str, ...]" = ("framework/__init__.py", "framework/ninja/__init__.py")   # 새 패키지일 때만
+FRAMEWORK_FIXED: "frozenset[str]" = frozenset({"broker", "pure", "test"})          # framework 고정 칸(트리) — <technology> 아님
 OTHER_EDIT_REFS: "tuple[str, ...]" = ("0C", "0F")
 MIGRATION_OPS: "tuple[str, ...]" = (
     "CreateModel", "DeleteModel", "RenameModel", "AlterModelTable", "AlterModelOptions", "AlterModelManagers",
@@ -2303,8 +2650,10 @@ G1_DECISION_HEAD: str = "G1 변경 결정"
 G1_CONFIRMED: str = "G1 변경판 확정"
 G1_DIR: str = "g1"
 CANDIDATE_SUFFIX: str = "-candidate.json"
-SIDECAR_SUFFIX: str = "-resolution.json"       # 후보 파일 줄기 뒤 — 후보 시점 해소 판정 표 · 입장 표 · 슬라이스 계획(digest 밖)
+SIDECAR_SUFFIX: str = "-resolution.json"       # 후보 파일 줄기 뒤 — 후보 시점 해소 판정 표 · 입장 표 · 슬라이스 계획(결속 칸으로 묶음)
 ROWS_BINDING: str = "resolution_rows_digest"    # 후보 스냅숏에만 — 곁 자료 해소 판정 표 `rows` 의 정규 JSON sha256(64자)
+# 후보 스냅숏에만 — 곁 자료 `{admission, slices}`(입장 표 · 슬라이스 계획)의 정규 JSON sha256(64자) · 2.46.0 도구가 쓴 후보의 표지(엄격 실행)
+SIDE_BINDING: str = "side_rows_digest"
 SUPPORT_VERDICT: str = "지원"
 # 승인 전 지원 확인 기록 폴더 이름(`%Y%m%dT%H%M%SZ`) — behavior_support.SUPPORT_STAMP_RE 와 같은 규칙(k0 §4-3 · 판형 밖은 무시).
 SUPPORT_STAMP: "re.Pattern[str]" = re.compile(r"^\d{8}T\d{6}Z$")
@@ -2312,8 +2661,8 @@ SUPPORT_STAMP: "re.Pattern[str]" = re.compile(r"^\d{8}T\d{6}Z$")
 _G1_TIME: str = r"[^\s·][^·\n]*?"
 _HEAD_V: "re.Pattern[str]" = re.compile(
     r"^[-*]\s+V(\d+)\s*·\s*(.+?)\s*·\s*근거\s+([^·]+?)\s*·\s*슬라이스\s+(S\d+)\s*$")
-# V 머리 근거 칸 — 의미 항목 요지 `M<k> #<j>` 또는 검사기 빚 `C<a>[~C<b>][, C<c>[~C<d>]…]`(범위 · 쉼표 목록 · 한 종류만).
-_BASIS_M: "re.Pattern[str]" = re.compile(r"(M\d+)\s*#\s*(\d+)")
+# V 머리 근거 칸 — 의미 항목 요지 `M<k> #<j>`(보탬 항목은 `B<k> #<j>`) 또는 검사기 빚 `C<a>[~C<b>][, C<c>[~C<d>]…]`(범위 · 쉼표 목록 · 한 종류만).
+_BASIS_M: "re.Pattern[str]" = re.compile(r"([MB]\d+)\s*#\s*(\d+)")
 _BASIS_C: "re.Pattern[str]" = re.compile(r"C([1-9]\d*)(?:\s*~\s*C([1-9]\d*))?")
 BASIS_FORMS: str = "`M<k> #<j>` 또는 `C<a>[~C<b>][, C<c>[~C<d>]…]`"
 _SUB_V: "re.Pattern[str]" = re.compile(r"^[-*]\s+[*`]*(전\s*(?:→|->)\s*후|시험|바뀌는 기대|연산|데이터|영향)[*`]*\s*:\s*(.*)$")
@@ -2464,7 +2813,7 @@ def _basis(raw: str) -> "tuple[str, str]":
     for part in text.split(","):
         cm = _BASIS_C.fullmatch(part.strip())
         if cm is None:
-            return text, f"근거 `{text}` 가 {BASIS_FORMS} 가 아니다"
+            return text, f"근거 `{text}` 가 {BASIS_FORMS} 가 아니다(보탬 항목은 `B<k> #<j>`)"
         a: int = int(cm.group(1))
         b: int = int(cm.group(2) or a)
         if cm.group(2) and b <= a:
@@ -2657,6 +3006,8 @@ def _other_edits(text: str, vids: "set[str]") -> "tuple[list[dict], list[str]]":
         elif kind == GROUP_IMPORT_KIND and ref != "0C":
             reds.append(f"{no}행 다른 BC 편집 갈래 `{GROUP_IMPORT_KIND}` 의 연결 `{ref}` 가 0C 가 아니다(0C 묶음 창에서만 — "
                         "설계 10절)")
+        elif kind == FRAMEWORK_NEW and ref != "0C":
+            reds.append(f"{no}행 다른 BC 편집 갈래 `{FRAMEWORK_NEW}` 의 연결 `{ref}` 가 0C 가 아니다(0C 창에서만 — 동작 불변 모음)")
         out.append({"path": norm, "kind": kind, "ref": ref})
     return out, reds
 
@@ -2996,7 +3347,25 @@ def _current_scope(folder: Path) -> "tuple[str, list[str]]":
 _G1_HEAD: "re.Pattern[str]" = re.compile(
     rf"^(#+)\s+{G1_DECISION_HEAD}\s+({_G1_TIME})\s*·\s*후보 digest\s+([0-9a-f]{{12}})\s*$")
 _G1_CONF: "re.Pattern[str]" = re.compile(
-    rf"^(?:[-*]\s+)?{G1_CONFIRMED}[ \t]+({_G1_TIME})[ \t]*·\s*digest\s+([0-9a-f]{{12}})\s*·\s*후보\s+([0-9a-f]{{12}})\s*$")
+    rf"^(?:[-*]\s+)?{G1_CONFIRMED}[ \t]+({_G1_TIME})[ \t]*·\s*digest\s+([0-9a-f]{{12}})\s*·\s*후보\s+([0-9a-f]{{12}})"
+    rf"(?:\s*·\s*명세 sha\s+([0-9a-f]{{12}}))?\s*$")
+
+
+class G1Confirmation(NamedTuple):
+    """`G1 변경판 확정` 줄 — 칸 차례는 옛 3칸(시각 · digest · 후보) 그대로 · 명세 sha 는 2.46.0 줄에만(옛 줄은 None)."""
+    at: str
+    digest: str
+    candidate: str
+    spec_sha: "str | None"
+
+
+def spec_sha(folder: Path) -> str:
+    """명세 `design-spec.md` 바이트 sha256 앞 12자 — 확정 줄 · 창 결속이 같은 자를 쓴다(없으면 실행 불능)."""
+    path: Path = Path(folder) / "design-spec.md"
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()[:12]
+    except OSError as exc:
+        raise ToolError(f"명세 {path} 를 읽지 못한다 — {type(exc).__name__}") from None
 
 
 _FENCE_LINE: "re.Pattern[str]" = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
@@ -3080,12 +3449,26 @@ def _g1_head_at(lines: "list[tuple[int, str]]", upto: "int | None" = None) -> "t
     return no, len(m.group(1)), m.group(2).strip(), m.group(3)
 
 
-def g1_confirmed(folder: Path) -> "tuple[str, str, str] | None":
-    """이번 실행 몫의 마지막 `G1 변경판 확정 <시각> · digest <d> · 후보 <c>` 줄 → (시각, d, c) · 그런 줄이 없으면 None.
+def g1_confirmed(folder: Path) -> "G1Confirmation | None":
+    """이번 실행 몫의 마지막 `G1 변경판 확정 <시각> · digest <d> · 후보 <c>[ · 명세 sha <s>]` 줄 → G1Confirmation · 없으면 None.
 
     실제 기록 줄만 본다(줄머리 · 코드 펜스 밖). 가장 최근 확정 줄이 판형 밖이거나, 그 줄 앞의 가장 최근 `## G1 변경 결정` 절이
     없거나 판형 밖이거나 그 절의 후보 digest 가 확정 줄의 `후보` 와 다르면 실행 불능(ToolError — RuntimeError 계열)이다.
     """
+    return _confirmation(Path(folder), -1)
+
+
+def g1_confirmations(folder: Path) -> "list[G1Confirmation]":
+    """이번 실행 몫의 `G1 변경판 확정` 줄 전부(파일 차례) — 줄마다 `g1_confirmed` 와 같은 판형 · 절 대조(하나라도 판형 밖이면 실행
+    불능). 첫 줄 = G2 원점(F4-204)."""
+    path: Path = Path(folder) / "refactor-scope.md"
+    if not path.is_file():
+        return []
+    n: int = sum(1 for _no, ln in _g1_lines(Path(folder)) if _is_g1_conf(ln))
+    return [c for c in (_confirmation(Path(folder), i) for i in range(n)) if c is not None]
+
+
+def _confirmation(folder: Path, index: int) -> "G1Confirmation | None":
     path: Path = Path(folder) / "refactor-scope.md"
     if not path.is_file():
         return None
@@ -3093,11 +3476,13 @@ def g1_confirmed(folder: Path) -> "tuple[str, str, str] | None":
     confs: "list[tuple[int, str]]" = [(no, ln) for no, ln in lines if _is_g1_conf(ln)]
     if not confs:
         return None
-    no, line = confs[-1]
+    no, line = confs[index]
     m = _G1_CONF.match(line)
     if not m:
-        raise ToolError(f"refactor-scope.md {no}행 최신 `{G1_CONFIRMED}` 줄이 판형(`{G1_CONFIRMED} <시각> · digest <12자> · 후보 "
-                        f"<12자>`) 밖이다 — 앞 확정 줄로 내려가지 않는다: {line[:120]}")
+        which: str = "최신" if index == -1 else f"{index + 1}번째"
+        raise ToolError(f"refactor-scope.md {no}행 {which} `{G1_CONFIRMED}` 줄이 판형(`{G1_CONFIRMED} <시각> · digest <12자> · 후보 "
+                        f"<12자> · 명세 sha <12자>` — 명세 sha 칸은 곁 자료 결속이 없는 옛 후보의 확정 줄에만 없다) 밖이다 — 다른 "
+                        f"확정 줄로 내려가지 않는다: {line[:120]}")
     head = _g1_head_at(lines, no)
     if head is None:
         raise ToolError(f"refactor-scope.md {no}행 `{G1_CONFIRMED}` 줄 앞에 `## {G1_DECISION_HEAD}` 절이 없다(결속할 후보가 없다)")
@@ -3109,11 +3494,20 @@ def g1_confirmed(folder: Path) -> "tuple[str, str, str] | None":
     if head[3] != m.group(3):
         raise ToolError(f"refactor-scope.md {no}행 `{G1_CONFIRMED}` 의 후보 {m.group(3)} ≠ 그 앞 `{G1_DECISION_HEAD}`({head[0]}행)의 "
                         f"후보 digest {head[3]}")
-    return m.group(1).strip(), m.group(2), m.group(3)
+    conf: G1Confirmation = G1Confirmation(m.group(1).strip(), m.group(2), m.group(3), m.group(4))
+    if conf.spec_sha is None:
+        try:
+            _cpath, csnap = _candidate_path(folder, conf.candidate)
+        except ToolError:
+            csnap = {}                                    # 후보 파일 없음은 그 후보를 읽는 쪽(창 · suite)이 실행 불능을 낸다
+        if SIDE_BINDING in csnap:
+            raise ToolError(f"refactor-scope.md {no}행 `{G1_CONFIRMED}` 줄에 명세 sha 칸이 없다 — 후보 {conf.candidate} 는 곁 자료 결속이 "
+                            f"있는 후보(엄격 실행)라 확정 줄은 `· 명세 sha <12자>`(`changes --gate` 요약의 명세 sha)를 쓴다")
+    return conf
 
 
-def load_candidate(folder: Path, candidate_digest: str) -> dict:
-    """`<폴더>/g1/*-candidate.json` 가운데 digest 가 같은 후보 스냅숏(가장 새 것) — 없으면 ToolError."""
+def _candidate_path(folder: Path, candidate_digest: str) -> "tuple[Path, dict]":
+    """`<폴더>/g1/*-candidate.json` 가운데 digest 가 같은 후보 스냅숏(가장 새 것) → (경로, 스냅숏) — 없으면 ToolError."""
     base: Path = Path(folder) / G1_DIR
     for path in sorted(base.glob(f"*{CANDIDATE_SUFFIX}"), reverse=True) if base.is_dir() else []:
         try:
@@ -3121,8 +3515,13 @@ def load_candidate(folder: Path, candidate_digest: str) -> dict:
         except (OSError, ValueError):
             continue
         if isinstance(snap, dict) and snapshot_digest(snap) == candidate_digest:
-            return snap
+            return path, snap
     raise ToolError(f"후보 digest {candidate_digest} 인 후보 스냅숏이 {base} 에 없다")
+
+
+def load_candidate(folder: Path, candidate_digest: str) -> dict:
+    """`<폴더>/g1/*-candidate.json` 가운데 digest 가 같은 후보 스냅숏(가장 새 것) — 없으면 ToolError."""
+    return _candidate_path(folder, candidate_digest)[1]
 
 
 def _baseline_reader(project: Path, record: "Path | None") -> "Callable[[str], bytes | None]":
@@ -3216,12 +3615,35 @@ def _window_elements(snap: dict) -> "dict[tuple, list[tuple[str, object]]]":
 
 
 ALLOW_ADDED_KEYS: "tuple[str, ...]" = ("retain_alias", "moves")   # 2.43.0 이 허용 표에 더한 칸
+ALLOW_RUNTIME_KEYS: "tuple[str, ...]" = ("miss_retain", "case_units")   # 창이 open 뒤(rebind · close)에 허용 표에 더하는 칸 — 2.46.0
 
 
 def _same_allow(rebuilt: dict, opened: dict) -> bool:
-    """되살린 허용 표가 창 open 의 허용 표와 같은가 — open 기록에 없는 2.43.0 칸(`ALLOW_ADDED_KEYS`)은 빼고 대조한다(그 칸 없이 연
-    옛 판 창 기록 — 옛 판은 그 칸 없이 더 좁게 판정했다)."""
-    return {k: v for k, v in rebuilt.items() if k in opened or k not in ALLOW_ADDED_KEYS} == opened
+    """되살린 허용 표가 창 open 의 허용 표와 같은가 — open 기록에 없는 2.43.0 칸(`ALLOW_ADDED_KEYS`)은 빼고, 창이 open 뒤에 더한 칸
+    (`ALLOW_RUNTIME_KEYS`)은 open 쪽에서 빼고 대조한다(그 칸 없이 연 옛 판 창 기록 — 옛 판은 그 칸 없이 더 좁게 판정했다)."""
+    return ({k: v for k, v in rebuilt.items() if k in opened or k not in ALLOW_ADDED_KEYS}
+            == {k: v for k, v in opened.items() if k not in ALLOW_RUNTIME_KEYS})
+
+
+def _strict_window_snap(folder: Path, opened: dict, guard: object) -> "dict | None":
+    """엄격 변경 창(open 기록에 `slice`)의 결속 판 — 그 창 `g1_digest`(· `g1_sha`)의 확정마다 반영판(`_applied_view` — ④ 로 뺀 V 몫을 뺀
+    스냅숏)과 그 확정 계획(`slice_plan(folder, at=)`)의 그 슬라이스 행으로 `allow_table(rebuilt, slice=…, plan_row=…, diff=…)` 을 되살려
+    open 허용 표와 같으면 그 반영판 · 없으면 None(증거로 쓰지 않는다)."""
+    for idx, (conf, _cno, _hno, _hlv) in enumerate(_conf_positions(folder)):
+        if conf.digest != opened.get("g1_digest"):
+            continue
+        if isinstance(opened.get("g1_sha"), str) and conf.spec_sha is not None and conf.spec_sha != opened["g1_sha"]:
+            continue
+        try:
+            rebuilt, _adm, _sl = _applied_view(Path(folder), idx)
+            row = next((r for r in slice_plan(folder, conf.at) if r.slice == opened["slice"]), None)
+        except ToolError:
+            continue
+        table: dict = guard.allow_table(rebuilt, slice=opened["slice"], plan_row=row,  # type: ignore[attr-defined]
+                                        diff=opened.get("diff") if isinstance(opened.get("diff"), dict) else None)
+        if _same_allow(table, opened["allow"]):
+            return rebuilt
+    return None
 
 
 def _closed_windows(folder: Path, upto: "int | None") -> "list[_PastWindow]":
@@ -3229,7 +3651,8 @@ def _closed_windows(folder: Path, upto: "int | None") -> "list[_PastWindow]":
 
     닫힌 창 = 마지막 close 판정 green · audit · 그 마지막 close 가 마지막 rebind 보다 엄격히 뒤(시각을 못 읽으면 안 씀). 그 창
     `g1_digest` 의 `G1 변경판 확정` 줄 → 후보 → `_expected_applied` 로 결속 판을 되살려 `allow_table` 이 open allow 와 같을 때만
-    쓴다(다르면 · 못 찾으면 안 씀 · open 기록에 없는 2.43.0 칸은 대조 밖 — `_same_allow`). 집행 결속은 그 결속 판의 원소마다 —
+    쓴다(다르면 · 못 찾으면 안 씀 · open 기록에 없는 2.43.0 칸은 대조 밖 — `_same_allow`) · 엄격 창(open 기록에 `slice`)은 그 확정의
+    반영판과 그 슬라이스 계획 행으로 되살린다(`_strict_window_snap`). 집행 결속은 그 결속 판의 원소마다 —
     옛 원문 · add · remove 는 그 창 마지막 close 가 소비했으면 그 원소를 적은 V 모두(V 여럿이 적어도 원소 하나 · 한 번 집행 — 허용
     표 · G2 verify 와 같은 셈) · 기대 추가는 적은 V 가 하나면 그 창 추가 ≥ 1 · 여럿이면 그 창 추가 ≥ 덧값 합일 때 모두(못 채우거나
     한 V 가 두 줄로 적었으면 결속하지 않는다). 적은 V 의 슬라이스가 갈리면 가장 앞 슬라이스의 V 만 owner 로 본다(그 창이 먼저 집행한
@@ -3292,7 +3715,10 @@ def _closed_windows(folder: Path, upto: "int | None") -> "list[_PastWindow]":
             confirmed = [(cm.group(2), cm.group(3)) for _no, ln in _g1_lines(Path(folder))
                          for cm in [_G1_CONF.match(ln)] if cm]
         snap: "dict | None" = None
-        for d, c in confirmed:
+        if isinstance(opened.get("slice"), str):                # 엄격 변경 창 — 슬라이스 · 계획 행으로 되살린다(2.46.0)
+            guard = guard or _guard_module()
+            snap = _strict_window_snap(Path(folder), opened, guard)
+        for d, c in ([] if isinstance(opened.get("slice"), str) else confirmed):
             if d != opened["g1_digest"]:
                 continue
             try:
@@ -3405,7 +3831,8 @@ def _key_spellings(folder: Path, spec: SpecChanges, case: str, upto: "int | None
 def _semantic_reds(project: Path, folder: Path, spec: SpecChanges,
                    baseline: "Path | None") -> "tuple[list[str], list[int]]":
     """시험 줄 입장 행 실재 · decision = 동사 · owner/path 파일 = 케이스 파일 · «바뀌는 기대» 원문 실재(기준 판) ·
-    다른 BC 편집 목록 ⊆ deps(앞 다섯 갈래) · 대상 BC 밖 → (red, 닫힌 창 기준선으로 본 원소의 창 번호 목록).
+    다른 BC 편집 목록 ⊆ deps(deps 갈래 다섯) · 프로젝트 합성 = 닫힌 목록 · framework 새 모듈 = 트리 칸 · 새 파일 · 밖 import 0 ·
+    대상 BC 밖 → (red, 닫힌 창 기준선으로 본 원소의 창 번호 목록).
 
     기준 판은 원소마다 고른다(F-B1R-5 · 설계 v2 §1-3): 닫힌 변경 창에서 집행이 결속된 원소(같은 V id · 케이스 · 동사 · 옛 원문 —
     그 창 결속 판에 있고 그 창 마지막 close 가 소비함 — `_closed_windows`)는 번호가 가장 큰 그 창의 기준선 — ① 옛 원문 실재 ② add 케이스
@@ -3510,9 +3937,17 @@ def _semantic_reds(project: Path, folder: Path, spec: SpecChanges,
                                            if any(e["kind"] in DEPS_EDIT_KINDS for e in spec.edits) else {})
     group_import: "set[str]" = (_group_import_files(project, folder, bc)
                                 if any(e["kind"] == GROUP_IMPORT_KIND for e in spec.edits) else set())
+    base_has: "Callable[[str], bool]" = _base_reader(project, folder)
     for e in spec.edits:
         if e["path"] == f"application/{bc}" or e["path"].startswith(f"application/{bc}/"):
             reds.append(f"다른 BC 편집 `{e['path']}` 가 대상 BC({bc}) 안이다")
+        elif e["kind"] == COMPOSE_KIND:
+            why: str = _compose_outside(project, e["path"], base_has)
+            if why:
+                reds.append(f"다른 BC 편집 `{e['path']} · {COMPOSE_KIND}` 가 닫힌 목록 밖 — {why}")
+        elif e["kind"] == FRAMEWORK_NEW:
+            reds += [f"다른 BC 편집 `{e['path']} · {FRAMEWORK_NEW}` — {w}"
+                     for w in _framework_new_reds(project, bc, e["path"], base_has)]
         elif e["kind"] in DEPS_EDIT_KINDS and e["kind"] not in owned.get(e["path"], ()):
             got: str = " · ".join(owned.get(e["path"], ())) or "deps 에 없음"
             reds.append(f"다른 BC 편집 `{e['path']} · {e['kind']}` 가 deps 출력과 다르다({got})")
@@ -3520,6 +3955,77 @@ def _semantic_reds(project: Path, folder: Path, spec: SpecChanges,
             reds.append(f"다른 BC 편집 `{e['path']} · {e['kind']}` 가 draft 다른 BC import 밖(묶음 이동이 따라 고칠 import 가 "
                         "없는 파일)")
     return reds, routed
+
+
+def _base_reader(project: Path, folder: Path) -> "Callable[[str], bool]":
+    """«새 파일» 판정의 기준 — 이 실행의 `build_anchor`(Phase 2 첫 파견 직전 커밋)가 있으면 그 커밋에 경로가 있는가 · 없으면(G1 전)
+    HEAD 커밋 또는 작업 트리에 있는가."""
+    anchor_file: Path = folder / "build_anchor"
+    anchor: str = anchor_file.read_text(encoding="utf-8").strip() if anchor_file.is_file() else ""
+    rev: str = anchor or "HEAD"
+
+    def has(rel: str) -> bool:
+        proc = subprocess.run(["git", "-C", str(project), "cat-file", "-e", f"{rev}:./{rel}"], capture_output=True,
+                              env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"})
+        return proc.returncode == 0 or (not anchor and (project / rel).exists())
+    return has
+
+
+def _compose_outside(project: Path, rel: str, base_has: "Callable[[str], bool]") -> str:
+    """«프로젝트 합성» 줄 경로가 닫힌 목록 밖이면 까닭 한 구(안이면 빈 글) — `<project>/urls.py` · `<project>/api.py` ·
+    `<project>/internal_api.py` · 경로 앞 응답 파일 둘 · 새 패키지일 때만 `framework/__init__.py` · `framework/ninja/__init__.py`."""
+    if rel in COMPOSE_FIXED:
+        return ""
+    if rel in COMPOSE_NEW_PACKAGES:
+        return "" if not base_has(rel) else "이미 있는 패키지 파일이다(새 패키지일 때만 이 갈래로 적는다)"
+    parts: "list[str]" = rel.split("/")
+    if len(parts) == 2 and parts[1] in COMPOSE_PROJECT_FILES:
+        pkg: Path = project / parts[0]
+        if (pkg / "settings.py").is_file() or (pkg / "settings").is_dir():
+            return ""
+        return f"`{parts[0]}/` 가 Django 프로젝트 패키지(`settings.py` · `settings/` 를 가진 저장소 뿌리 바로 아래 폴더)가 아니다"
+    return ("목록은 " + " · ".join(f"`<project>/{name}`" for name in COMPOSE_PROJECT_FILES) + " · "
+            + " · ".join(f"`{p}`" for p in COMPOSE_FIXED) + " · (새 패키지면) " + " · ".join(f"`{p}`" for p in COMPOSE_NEW_PACKAGES)
+            + f" 뿐이다 — 새 framework 모듈이면 갈래 `{FRAMEWORK_NEW}`")
+
+
+def _framework_new_reds(project: Path, bc: str, rel: str, base_has: "Callable[[str], bool]") -> "list[str]":
+    """«framework 새 모듈» 줄 — 트리 칸 `framework/<technology>/<module>.py`(또는 그 새 폴더의 `__init__.py`) · 새 파일 · 대상 BC 밖에서
+    import 0. 업무 어휘 · framework → application import 는 검사기(#46 · #416 · #448 후보)가 G2 게이트에서 본다."""
+    reds: "list[str]" = []
+    m = re.fullmatch(r"framework/([a-z][a-z0-9_]*)/([a-z_][a-z0-9_]*)\.py", rel)
+    if m is None:
+        return [f"트리 칸 `framework/<technology>/<module>.py` 꼴이 아니다(capability · 고정 칸 · 더 깊은 폴더는 이 갈래 밖)"]
+    tech, mod = m.group(1), m.group(2)
+    folder: Path = project / "framework" / tech
+    if tech in FRAMEWORK_FIXED:
+        reds.append(f"`framework/{tech}/` 는 고정 칸이다(<technology> 아님)")
+    elif folder.is_dir() and any(p.name.endswith("_port.py") for p in folder.glob("*.py")):
+        reds.append(f"`framework/{tech}/` 는 capability 폴더다(`*_port.py` 있음 — <technology> 아님)")
+    if mod != "__init__" and (mod == f"{tech}_port" or mod == "exception" or mod.endswith(("_out", "_in", "_adapter"))):
+        reds.append(f"모듈 이름 `{mod}.py` 가 capability 칸 꼴이다(<technology>/<module>.py 아님)")
+    if mod == "__init__" and base_has(f"framework/{tech}/__init__.py"):
+        reds.append("이미 있는 패키지 파일이다(새 폴더의 `__init__.py` 만 이 갈래)")
+    elif mod != "__init__" and base_has(rel):
+        reds.append("이미 있는 framework 모듈이다(있는 모듈 편집은 편집 범위 밖 — 이 갈래는 새 모듈만)")
+    if mod == "__init__":
+        return reds
+    dotted: str = rel[:-3].replace("/", ".")
+    users: "list[str]" = []
+    listed = subprocess.run(["git", "-C", str(project), "ls-files", "-co", "--exclude-standard", "--", "*.py"],
+                            capture_output=True, text=True, env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"}).stdout.split("\n")
+    for r in sorted(x for x in listed if x):
+        if r.startswith(f"application/{bc}/") or r == rel:
+            continue
+        try:
+            src: str = (project / r).read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if re.search(rf"(?m)^\s*(?:from\s+{re.escape(dotted)}(?:\s|\.)|import\s+{re.escape(dotted)}\b)", src):
+            users.append(r)
+    if users:
+        reds.append(f"대상 BC 밖이 import 한다({', '.join(users[:3])}) — 이 갈래는 대상 BC 안 import 바꿈만")
+    return reds
 
 
 def _folder_group_module():  # noqa: ANN202
@@ -3577,6 +4083,7 @@ def _g1_decisions(folder: Path) -> "tuple[str | None, dict[str, tuple[str, str, 
     start, level, _at, cand = head
     out: "dict[str, tuple[str, str, int]]" = {}
     reds: "list[str]" = []
+    carried: "dict[str, str]" = {}
     for no, ln in lines:
         if no <= start:
             continue
@@ -3592,9 +4099,161 @@ def _g1_decisions(folder: Path) -> "tuple[str | None, dict[str, tuple[str, str, 
         if m.group(1) in out:
             reds.append(f"refactor-scope.md {no}행 {m.group(1)} 결정 줄이 둘 이상이다")
         out[m.group(1)] = (m.group(2), m.group(3).strip(), no)
-        if not m.group(3).strip().startswith(PROXY_FREE):
+        if m.group(3).strip().startswith(CARRY_SOURCE):
+            carried[m.group(1)] = m.group(3).strip()
+        elif not m.group(3).strip().startswith(PROXY_FREE):
             reds.append(f"{m.group(1)} G1 결정 출처 `{m.group(3).strip()[:40]}` 가 본인 직접 · 사용자 원문이 아니다(밖 동작 V 는 대리 불가)")
+    if carried:
+        reds += _carry_reds(folder, lines, start, cand, out, carried)
     return cand, out, reds
+
+
+def _section_decisions(lines: "list[tuple[int, str]]", start: int, level: int) -> "dict[str, str]":
+    """`start` 행 결정 절의 `V<n> · 결정 = …` 답(판형 안 줄만) → {V: 결정}."""
+    out: "dict[str, str]" = {}
+    for no, ln in lines:
+        if no <= start:
+            continue
+        hm = re.match(r"^(#+)\s", ln)
+        if hm and len(hm.group(1)) <= level:
+            break
+        m = re.match(r"^[-*]?\s*(V\d+)\s*·\s*결정\s*=\s*(바꾼다|안 바꾼다)\s*·", ln)
+        if m:
+            out[m.group(1)] = m.group(2)
+    return out
+
+
+def _cut_only_reds(folder: Path, old_cand: str, new_cand: str, cut: "set[str]", gone_v: "set[str]") -> "list[str]":
+    """재상정 반영 = 그 재상정이 뺀 항목을 지우는 반영만 — 바로 앞 후보 ↔ 새 후보 곁 자료(해소 판정 표 · 슬라이스 계획 · 입장 표)의 바뀜이
+    뺀 항목(또는 그 항목 때문에 빠진 V)에 딸린 행의 빠짐 · 그 항목 언급을 지운 바뀜 · 해소 판정 표 매인 행의 `불가` · `재상정 제외`
+    (`변경 미승인`) 고침뿐이고, 그런 빠짐이 하나 이상 있어야 한다. 새 행 · 딸리지 않은 행의 바뀜은 red(G1′ 배너)."""
+    if not cut:
+        return []
+    try:
+        (osnap, oside), (_nsnap, nside) = _candidate_side(folder, old_cand), _candidate_side(folder, new_cand)
+    except ToolError as exc:
+        return [f"재상정 반영 대조 후보를 읽지 못한다 — {exc}"]
+    pat: "re.Pattern[str]" = re.compile(r"\b(?:" + "|".join(sorted(cut)) + r")\b")
+    gone_rows: "set[str]" = _only_removed_rows(osnap, gone_v)
+    v_slices: "dict[str, set[str]]" = {}
+    for v in osnap.get("V", []):
+        v_slices.setdefault(_slice_id(v["slice"]), set()).add(v["id"])
+
+    def res_tied(k: str, _txt: str) -> bool:
+        return re.sub(r"\s*#.*$", "", k) in cut
+
+    def res_dropped(k: str, old_txt: str, new_txt: str) -> bool:
+        """해소 판정 표 매인 행을 지우는 대신 `불가` · `재상정 제외`(V 를 뺀 몫이면 `변경 미승인`)로 고친 꼴(cmd:314 · `resolution --gate`
+        안내) — 항목 · 요지 번호 · 요지 원문 그대로 · 처방 앵커 · 되돌리지 않는 이유는 그대로이거나 `—` · 막는 것은 고쳐도 된다."""
+        o, n = json.loads(old_txt), json.loads(new_txt)
+        return (res_tied(k, old_txt) and len(o) == len(n) == 8 and n[:3] == o[:3] and n[3] == "불가"
+                and n[4] in (REMOVED_CATEGORY, UNAPPROVED_CATEGORY) and n[6] in (o[6], *_EMPTY) and n[7] in (o[7], *_EMPTY))
+
+    def slice_tied(k: str, txt: str) -> bool:
+        return bool(pat.search(txt)) or (k in v_slices and v_slices[k] <= gone_v)
+
+    def adm_tied(k: str, txt: str) -> bool:
+        return bool(pat.search(txt)) or k in gone_rows
+
+    def text_dropped(tied: "Callable[[str, str], bool]") -> "Callable[[str, str, str], bool]":
+        return lambda k, old_txt, new_txt: tied(k, old_txt) and not pat.search(new_txt)
+    tables: "list[tuple[str, dict[str, str], dict[str, str], Callable[[str, str], bool], Callable[[str, str, str], bool]]]" = [
+        ("해소 판정 표", {f"{c[0]} #{c[1]}": json.dumps(c, ensure_ascii=False) for c in oside.get("rows", [])},
+         {f"{c[0]} #{c[1]}": json.dumps(c, ensure_ascii=False) for c in nside.get("rows", [])}, res_tied, res_dropped),
+        ("슬라이스 계획", {_slice_id(c[0]): " | ".join(c) for c in oside.get("slices", []) if c},
+         {_slice_id(c[0]): " | ".join(c) for c in nside.get("slices", []) if c}, slice_tied, text_dropped(slice_tied)),
+        ("입장 표", {normalize(_cells(x)[0]): x for x in oside.get("admission", [])},
+         {normalize(_cells(x)[0]): x for x in nside.get("admission", [])}, adm_tied, text_dropped(adm_tied)),
+    ]
+    reds: "list[str]" = []
+    dropped: int = 0
+    for label, old, new, tied, was_dropped in tables:
+        for k, txt in new.items():
+            if k not in old:
+                reds.append(f"재상정 반영 — {label} `{k[:40]}` 가 새로 섰다(재상정 반영은 뺀 항목을 지우는 반영만 — 그 밖은 G1′ 배너)")
+            elif old[k] != txt:
+                if was_dropped(k, old[k], txt):
+                    dropped += 1
+                else:
+                    reds.append(f"재상정 반영 — {label} `{k[:40]}` 가 뺀 항목({' · '.join(sorted(cut))}) 몫 밖으로 바뀌었다(G1′ 배너)")
+        for k, txt in old.items():
+            if k not in new:
+                if tied(k, txt):
+                    dropped += 1
+                else:
+                    reds.append(f"재상정 반영 — {label} `{k[:40]}` 가 빠졌는데 뺀 항목({' · '.join(sorted(cut))})에 딸린 행이 아니다(G1′ 배너)")
+    if not dropped and not reds:
+        reds.append(f"재상정 반영 — 뺀 항목({' · '.join(sorted(cut))})이 바로 앞 후보의 해소 판정 표 · 슬라이스 계획 · 입장 표에서 빠지지 "
+                    f"않았다(그 밖 개정은 G1′ 배너)")
+    return reds
+
+
+def _carry_reds(folder: Path, lines: "list[tuple[int, str]]", start: int, cand: str,
+                out: "dict[str, tuple[str, str, int]]", carried: "dict[str, str]") -> "list[str]":
+    """앞 결정 옮김(`출처 = 앞 결정 <시각> · 길 = G1 답 반영 | 재상정 반영`) 대조 — 하나라도 어긋나면 red(G1′ 배너로 V 를 다시 묻는다).
+    줄: 바로 앞 결정 절 시각 · 길 닫힌 어휘 · 답은 앞 절 답 그대로 · 한 절에 길 하나. 후보: ⓐ 새 후보의 V 전부(모든 종류)가 바로 앞 절
+    후보 V 와 글자까지 같거나 거기서 빼기만 ⓑ 다른 BC 편집 줄 ⊆ 바로 앞 후보 ⓒ 재상정 반영 — 두 절 사이 `ⓐ 재상정` 결정 줄이 있고 빠진
+    V 의 근거 항목이 모두 그 줄들이 뺀 항목 ⓓ G1 답 반영 — 바로 앞 절에 확정 줄이 아직 없음."""
+    heads: "list[tuple[int, int, str, str]]" = [h for h in _decision_heads(folder) if h[0] < start]
+    if not heads:
+        return [f"앞 결정 옮김 — 이 절 앞 이번 실행 몫에 `## {G1_DECISION_HEAD}` 절이 없다"]
+    prev: "tuple[int, int, str, str]" = heads[-1]
+    prev_ans: "dict[str, str]" = _section_decisions(lines, prev[0], prev[1])
+    reds: "list[str]" = []
+    paths: "set[str]" = set()
+    for vid, src in sorted(carried.items()):
+        cm = re.fullmatch(re.escape(CARRY_SOURCE) + rf"\s+({_G1_TIME})\s*·\s*길\s*=\s*(.+?)\s*", src)
+        if not cm or cm.group(2) not in CARRY_PATHS:
+            reds.append(f"{vid} 앞 결정 옮김 줄이 `출처 = {CARRY_SOURCE} <시각> · 길 = {' | '.join(CARRY_PATHS)}` 가 아니다(길 칸은 닫힌 "
+                        f"어휘 — 반송 · 배너 G1′ 은 옮기지 않는다)")
+            continue
+        if cm.group(1) != prev[2]:
+            reds.append(f"{vid} 앞 결정 옮김은 바로 앞 결정 절({prev[2]})에서만 — 출처 시각 `{cm.group(1)}`")
+            continue
+        paths.add(cm.group(2))
+        if out[vid][0] != prev_ans.get(vid, "없음"):
+            reds.append(f"{vid} 앞 결정 옮김 — 앞 절 답 `{prev_ans.get(vid, '없음')}` · 이 줄 `{out[vid][0]}`(답은 옮길 뿐 바꾸지 않는다)")
+    if reds:
+        return reds
+    if len(paths) > 1:
+        return [f"한 결정 절에 앞 결정 옮김 길이 둘이다({' · '.join(sorted(paths))})"]
+    path: str = paths.pop()
+    try:
+        osnap: dict = _candidate_path(folder, prev[3])[1]
+        nsnap: dict = _candidate_path(folder, cand)[1]
+    except ToolError as exc:
+        return [f"앞 결정 옮김 대조 후보를 읽지 못한다 — {exc}"]
+    ov: "dict[str, dict]" = {v["id"]: v for v in osnap.get("V", [])}
+    nids: "set[str]" = {v["id"] for v in nsnap.get("V", [])}
+    for v in nsnap.get("V", []):                                                   # ⓐ
+        if v["id"] not in ov:
+            reds.append(f"앞 결정 옮김 — 새 후보에 앞 절 후보 {prev[3]} 에 없던 {v['id']} 가 있다(새 V 는 G1′ 배너로 묻는다)")
+        elif ov[v["id"]] != v:
+            reds.append(f"앞 결정 옮김 — 새 후보의 {v['id']} 가 앞 절 후보 {prev[3]} 의 {v['id']} 와 글자까지 같지 않다(바뀐 V 는 G1′ 배너로 "
+                        f"묻는다)")
+    old_edits: "set[str]" = {json.dumps(e, ensure_ascii=False, sort_keys=True) for e in osnap.get("other_bc_edits", [])}
+    extra: "list[str]" = [e["path"] for e in nsnap.get("other_bc_edits", [])
+                          if json.dumps(e, ensure_ascii=False, sort_keys=True) not in old_edits]          # ⓑ
+    if extra:
+        reds.append(f"앞 결정 옮김 — 다른 BC 편집 줄이 앞 절 후보보다 늘었거나 바뀌었다({', '.join(extra[:3])} — G1′ 배너로 묻는다)")
+    if path == CARRY_PATHS[1]:                                                     # ⓒ 재상정 반영
+        recs = [d for d in _scope(folder)[4] if d.decision and d.reconsider and prev[0] < d.no < start
+                and not d.token.startswith(REDUCE_TOKEN)]
+        if not recs:
+            reds.append(f"길 = {CARRY_PATHS[1]} 인데 두 결정 절 사이에 `ⓐ 재상정` 결정 줄(전체 제외)이 없다")
+        cut: "set[str]" = {k for d in recs for k in re.findall(r"\b[MBC]\d+\b", re.sub(r"\([^)]*\)", "", d.text.split("· 결정")[0]))}
+        reds += _cut_only_reds(folder, prev[3], cand, cut, set(ov) - nids)
+        for vid in sorted(set(ov) - nids):
+            items: "set[str]" = set(re.findall(r"\b[MBC]\d+\b", ov[vid].get("basis", "")))
+            for lo, hi in re.findall(r"C(\d+)\s*~\s*C(\d+)", ov[vid].get("basis", "")):
+                items |= {f"C{k}" for k in range(int(lo), int(hi) + 1)}
+            if not items or not items <= cut:
+                reds.append(f"길 = {CARRY_PATHS[1]} — 빠진 {vid} 의 근거 항목 {sorted(items) or '없음'} 이 두 결정 절 사이 `ⓐ 재상정` 이 뺀 항목"
+                            f"({sorted(cut) or '없음'}) 안이 아니다")
+    elif any(_is_g1_conf(ln) and prev[0] < no < start for no, ln in lines):        # ⓓ G1 답 반영
+        reds.append(f"길 = {CARRY_PATHS[0]} 인데 바로 앞 결정 절({prev[2]})에 이미 확정 줄이 있다(확정 뒤 바뀜은 {CARRY_PATHS[1]} 또는 "
+                    f"G1′ 배너)")
+    return reds
 
 
 def _resolution_cells(spec: Path) -> "list[list[str]]":
@@ -3602,23 +4261,443 @@ def _resolution_cells(spec: Path) -> "list[list[str]]":
     return [[r.mid, r.no_raw, r.gist, r.verdict, r.category, r.blocker, r.anchor, r.why] for r in table]
 
 
+_SLICE_ROW_HEAD: "re.Pattern[str]" = re.compile(r"[*`]*(?:0[TCF][^\s|*`]*|S\d+)[*`]*\s*\|")   # 앞 `|` 없는 계획 행 머리
+
+
 def _slice_rows(text: str) -> "list[list[str]]":
-    """명세 `## 슬라이스 계획` 표의 행(칸 목록 · 머리 행 뺌) — 절이 없으면 빈 목록."""
+    """명세 `## 슬라이스 계획` 표의 행(칸 목록 · 머리 행 뺌 · 앞 `|` 없는 `0T… | …` · `S<n> | …` 행도) — 절이 없으면 빈 목록."""
     body, _reds = _heading_section(text.split("\n"), "슬라이스 계획")
-    rows: "list[list[str]]" = []
-    for _no, ln in body or []:
-        s: str = ln.strip()
-        if not s.startswith("|") or re.fullmatch(r"\|[\s:|-]*\|", s):
+    return [cells for cells in _lead_rows("\n".join(ln for _no, ln in body or []), _SLICE_ROW_HEAD)
+            if not (cells and normalize(cells[0]) == "슬라이스")]
+
+
+def _table_rule(s: str) -> bool:
+    """표 구분 줄(`|---|---|` · 앞뒤 `|` 없는 GFM 꼴)인가."""
+    return bool(re.fullmatch(r"\|[\s:|-]*\|", s) or _BARE_SEP.match(s))
+
+
+def _plan_rows(text: str) -> "list[list[str]]":
+    """계획 행 — `## 슬라이스 계획` 절에서 머리 행 첫 칸이 `슬라이스` 인 표의 행(앞 `|` 없는 행 · 머리 없이 적은 슬라이스 꼴 행도). 그 절의
+    다른 표(바뀌는 서명 표 따위)의 행은 계획 행이 아니다. 후보 곁 자료 · 반영 대조는 절의 표 행 전부(`_slice_rows`)를 쓴다."""
+    body, _reds = _heading_section(text.split("\n"), "슬라이스 계획")
+    lines: "list[str]" = [ln.strip() for ln in _unfenced("\n".join(ln for _no, ln in body or []))]
+    out: "list[list[str]]" = []
+    in_plan: "bool | None" = None                          # 지금 표 — 계획 표 · 다른 표 · 머리를 아직 못 봄(None)
+    for k, s in enumerate(lines):
+        if not s:
+            in_plan = None
             continue
-        cells: "list[str]" = _cells(s)
-        if cells and normalize(cells[0]) == "슬라이스":
+        if _table_rule(s):
             continue
-        rows.append(cells)
-    return rows
+        b: str = s if s.startswith("|") else _bare_line(s)
+        cells: "list[str]" = _cells(b)
+        if len(cells) > 1 and normalize(cells[0]) == "슬라이스":
+            in_plan = True
+        elif "|" in s and k + 1 < len(lines) and _table_rule(lines[k + 1]):
+            in_plan = False
+        elif (s.startswith("|") or _SLICE_ROW_HEAD.match(b)) and (in_plan or in_plan is None and slice_branch(_slice_id(cells[0]))):
+            out.append(cells)
+    return out
 
 
 def _slice_id(cell: str) -> str:
     return re.sub(r"[*`\s]", "", cell)
+
+
+def slice_id(cell: str) -> str:
+    """슬라이스 칸 정규화(강조 · 백틱 · 공백 걷음) — behavior_guard `--slice` 와 명세 계획 · V 머리가 같은 자를 쓴다."""
+    return _slice_id(cell)
+
+
+CARRY_SOURCE: str = "앞 결정"   # G1 결정 줄 출처 — 바로 앞 결정 절의 같은 V 답을 옮김(`_carry_reds` 대조)
+CARRY_PATHS: "tuple[str, ...]" = ("G1 답 반영", "재상정 반영")   # 앞 결정 옮김 길 — 닫힌 어휘(반송 · 배너 G1′ 은 옮기지 않는다)
+
+
+def slice_branch(sid: str) -> str:
+    """슬라이스 갈래 — `0T` · `0C` · `0F` · `S`(꼴 밖이면 빈 글)."""
+    return sid[:2] if re.fullmatch(r"0[TCF]\S*", sid) else "S" if re.fullmatch(r"S\d+", sid) else ""
+
+
+def _decision_heads(folder: Path) -> "list[tuple[int, int, str, str]]":
+    """이번 실행 몫 `## G1 변경 결정` 절 머리 전부(파일 차례) → [(행, 제목 수준, 시각, 후보 digest)] — 판형 밖 머리는 실행 불능."""
+    lines: "list[tuple[int, str]]" = _g1_lines(Path(folder))
+    _g1_head_at(lines)                                    # 최신 머리 판형 — 그 실행 불능 글 그대로(앞 절로 내려가지 않는다)
+    out: "list[tuple[int, int, str, str]]" = []
+    for k, (no, ln) in enumerate([(no, ln) for no, ln in lines if _is_g1_head(ln)], 1):
+        m = _G1_HEAD.match(ln)
+        if not m:
+            raise ToolError(f"refactor-scope.md {no}행 {k}번째 `{G1_DECISION_HEAD}` 절 머리가 판형(`## {G1_DECISION_HEAD} <시각> · 후보 "
+                            f"digest <12자>`) 밖이다: {ln[:120]}")
+        out.append((no, len(m.group(1)), m.group(2).strip(), m.group(3)))
+    return out
+
+
+def strict_run(folder: Path) -> bool:
+    """엄격 실행(창 슬라이스 · 까닭 · 계획 red · 확정 줄 sha 필수) — 이번 실행 몫 첫 `G1 변경 결정` 절의 후보 스냅숏에 곁 자료 결속 칸
+    (`side_rows_digest` — 2.46.0 도구가 쓴 후보)이 있다. 결정 절이 아직 없으면 `g1/` 의 가장 새 후보에 그 칸이 있거나 후보가 없을 때
+    참(G1 전에 판을 받은 실행은 G1 부터 엄격). 옛 판 후보로 시작한 실행은 끝까지 거짓."""
+    heads: "list[tuple[int, int, str, str]]" = _decision_heads(folder)
+    if heads:
+        return SIDE_BINDING in _candidate_path(Path(folder), heads[0][3])[1]
+    base: Path = Path(folder) / G1_DIR
+    files: "list[Path]" = sorted(base.glob(f"*{CANDIDATE_SUFFIX}")) if base.is_dir() else []
+    if not files:
+        return True
+    try:
+        snap = json.loads(files[-1].read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        raise ToolError(f"후보 스냅숏 {files[-1]} 를 읽지 못한다") from None
+    return isinstance(snap, dict) and SIDE_BINDING in snap
+
+
+class ScopeItems(NamedTuple):
+    """이번 실행 항목 실재 — 창 `--ref` 대조 재료."""
+    adopted: "frozenset[str]"   # G0 ⓐ `M<n>` · ⓐ `C<n>`(재개 G0 포함) — 재상정으로 뺀 것 포함
+    boost: "frozenset[str]"     # 보탬 `B<n>`(결정 = 보탬) — 재상정으로 뺀 것 포함
+    removed: "frozenset[str]"   # `ⓐ 재상정` 절이 전체 제외로 뺀 항목(M · B · C) · 바꿈으로 되돌린 보탬 B — `철회` 창의 대상
+
+    @property
+    def live(self) -> "frozenset[str]":
+        """재상정 · 바꿈으로 빼지 않은 이번 실행 ⓐ 항목 — `잔존반송` 창의 대상(보탬 창은 `boost - removed`)."""
+        return (self.adopted | self.boost) - self.removed
+
+
+def scope_items(folder: Path) -> ScopeItems:
+    """이번 실행 몫의 항목 — G0 ⓐ(`M` · `C`) · 보탬(`B`) · 재상정 전체 제외와 바꿈으로 되돌린 보탬."""
+    _ts, adopted, removed, _red, lines = _scope(Path(folder))
+    added: "dict[str, AddedItem]" = _added(Path(folder), _run_bc(Path(folder)))
+    return ScopeItems(frozenset(adopted | _adopted_c(lines)), frozenset(b for b, it in added.items() if it.token == "보탬"),
+                      frozenset(removed | _reconsidered_c(lines) | {b for b, it in added.items() if it.undone}))
+
+
+class SlicePlanRow(NamedTuple):
+    """`## 슬라이스 계획` 한 행과 그 행에 매인 입장 행(인수 · 내부 행 칸에 입장 표 candidate 를 글자 그대로 실은 것)."""
+    slice: str                       # 정규화 슬라이스 칸
+    purpose: str                     # 목적 칸 원문
+    rows: "tuple[str, ...]"          # 매인 입장 행 candidate(정규화 · 입장 표에 있는 것만 · 표 차례)
+    files: "tuple[str, ...]"         # 매인 편집 행(`_edit_row` — 옮김 행 빼고) owner/path 의 시험 쪽 파일 전부 — 그 슬라이스의 시험 쪽 산출
+    retain_files: "tuple[str, ...]"  # 그 가운데 `retain` 재조직 행(옮김 행 빼고)의 파일 — 변경 슬라이스가 부른 시험 재료
+
+
+def _edit_row(row: AdmissionRow) -> bool:
+    """시험을 고치는 입장 행 — 결정 `update` · `add` · `remove` · 재조직 `retain`(`reuse` · 일반 `retain` · `reject` 는 무편집)."""
+    return row.decision in TEST_VERBS or _reorg(row)
+
+
+def _plan_binding(cells_rows: "list[list[str]]", adm: "list[AdmissionRow]") -> "list[SlicePlanRow]":
+    """계획 표 행마다 매인 입장 행 — 인수 · 내부 행 칸(`;` · `<br>` 로 나눈 글, 또는 `·` · `,` 까지 나눈 낱말)이 입장 표 candidate 와 글자까지
+    같은 것만 매인다. 산출(`files`)은 매인 행 가운데 편집 행의 파일만이다."""
+    by: "dict[str, AdmissionRow]" = {}
+    for r in adm:
+        by.setdefault(normalize(r.candidate), r)
+    out: "list[SlicePlanRow]" = []
+    for c in cells_rows:
+        if not c:
+            continue
+        items: "set[str]" = set()
+        for k in (2, 3):
+            if k < len(c):
+                items |= {normalize(x) for x in re.split(r"\s*(?:;|<br\s*/?>)\s*", c[k]) if x.strip()} | set(_row_items(c[k]))
+        named: "list[str]" = [n for n in by if n in items]
+        kept: "list[AdmissionRow]" = [by[n] for n in named if by[n].path and _edit_row(by[n])
+                                      and not (_reorg(by[n]) and _move_item(by[n])[0])]
+        out.append(SlicePlanRow(_slice_id(c[0]), c[1] if len(c) > 1 else "", tuple(named),
+                                tuple(sorted({f for r in kept for f in _row_files(r) if _is_test_path(f)})),
+                                tuple(sorted({f for r in kept if _reorg(r) for f in _row_files(r)}))))
+    return out
+
+
+def _row_files(row: AdmissionRow) -> "list[str]":
+    """입장 행 owner/path 의 파일 주소 전부(케이스 접미 뺌 · 처음 나온 차례)."""
+    out: "list[str]" = []
+    for m in _FILE_ADDR.finditer(row.owner_path.replace("`", " ")):
+        if m.group(1) not in out:
+            out.append(m.group(1))
+    return out
+
+
+def _candidate_side(folder: Path, cand_digest: str) -> "tuple[dict, dict]":
+    """후보 digest 의 (후보 스냅숏, 곁 자료) — 없거나 JSON 이 아니면 실행 불능."""
+    path, snap = _candidate_path(Path(folder), cand_digest)
+    try:
+        side: dict = json.loads(_read(_sidecar_path(path)))
+    except ValueError:
+        raise ToolError(f"후보 곁 자료 `{_sidecar_path(path).name}` 가 JSON 이 아니다") from None
+    return snap, side
+
+
+def _conf_positions(folder: Path) -> "list[tuple[G1Confirmation, int, int, int]]":
+    """이번 실행 몫 확정 줄마다 (확정, 줄 행, 그 줄이 확정한 결정 절 머리 행, 그 절 제목 수준) — 결정 절 = 그 줄 앞 가장 최근 절."""
+    lines: "list[tuple[int, str]]" = _g1_lines(Path(folder))
+    confs: "list[G1Confirmation]" = g1_confirmations(folder)
+    conf_nos: "list[int]" = [no for no, ln in lines if _is_g1_conf(ln)]
+    heads: "list[tuple[int, int, str, str]]" = _decision_heads(folder)
+    out: "list[tuple[G1Confirmation, int, int, int]]" = []
+    for c, cno in zip(confs, conf_nos):
+        h = [x for x in heads if x[0] < cno][-1]
+        out.append((c, cno, h[0], h[1]))
+    return out
+
+
+def _applied_view(folder: Path, index: int) -> "tuple[dict, list[str], list[list[str]]]":
+    """`index` 번째 확정의 반영판 — (후보 − 그 결정 절 `안 바꾼다` V 몫 스냅숏(`_expected_applied`), 입장 표 행 원문(그 V 에만 딸린 행 뺌),
+    슬라이스 계획 칸(그 V 만 가진 슬라이스 · 계획 표 밖 표의 행 뺌)). ④ 로 거절된 V 는 확정에 들지 않는다."""
+    lines: "list[tuple[int, str]]" = _g1_lines(Path(folder))
+    conf, _cno, hno, hlv = _conf_positions(folder)[index]
+    snap, side = _candidate_side(Path(folder), conf.candidate)
+    removed: "set[str]" = {v for v, d in _section_decisions(lines, hno, hlv).items() if d == "안 바꾼다"}
+    gone_rows: "set[str]" = _only_removed_rows(snap, removed)
+    adm: "list[str]" = [x for x in side.get("admission", []) if normalize(_cells(x)[0]) not in gone_rows]
+    v_slices: "dict[str, set[str]]" = {}
+    for v in snap.get("V", []):
+        v_slices.setdefault(_slice_id(v["slice"]), set()).add(v["id"])
+    gone_sl: "set[str]" = {s for s, vs in v_slices.items() if vs <= removed}
+    slices: "list[list[str]]" = [c for c in side.get("slices", []) if c and slice_branch(_slice_id(c[0])) and _slice_id(c[0]) not in gone_sl]
+    return _expected_applied(snap, removed), adm, slices
+
+
+def slice_plan(folder: Path, at: "str | None" = None) -> "list[SlicePlanRow]":
+    """계획 행(표 줄 차례) — `at` 이 없으면 지금 명세 · `at`(확정 시각)이면 그 확정의 반영판 계획(확정 계획 이력 — 지금 명세에서 지운
+    행도 찾는다 · ④ 로 거절된 V 만 가진 슬라이스는 없다). 절이 없으면 빈 목록."""
+    if at is None:
+        text: str = _read(Path(folder) / "design-spec.md")
+        return _plan_binding(_plan_rows(text), _admission(text))
+    idx: "int | None" = next((i for i, p in enumerate(_conf_positions(folder)) if p[0].at == at), None)
+    if idx is None:
+        raise ToolError(f"이번 실행 몫에 `{G1_CONFIRMED} {at}` 줄이 없다")
+    _view, adm, slices = _applied_view(Path(folder), idx)
+    return _plan_binding(slices, [AdmissionRow(_cells(x)) for x in adm])
+
+
+def confirmed_slices(folder: Path) -> "list[str]":
+    """이번 실행 확정 계획들의 슬라이스 합(처음 나온 차례) — `재승인반영` 은 지금 계획에 없어도 여기 있으면 받는다."""
+    out: "list[str]" = []
+    for p in _conf_positions(folder):
+        out += [r.slice for r in slice_plan(folder, p[0].at) if r.slice not in out]
+    return out
+
+
+class SliceDelta(NamedTuple):
+    """두 확정 반영판 사이 한 슬라이스의 차분."""
+    branch: str                          # 0T · 0C · 0F · S
+    plan_row: str                        # "" · 더함 · 바뀜(매임이 바뀜) · 낱말(매임 같고 칸 글만) · 빠짐
+    v: "tuple[str, ...]"                 # 더하거나 바뀐 V
+    v_removed: "tuple[str, ...]"         # 빠진 V(앞 슬라이스)
+    retain: "tuple[str, ...]"            # 더하거나 바뀐 retain 재조직 행 파일(옮김 행 빼고)
+    retain_removed: "tuple[str, ...]"    # 빠진 retain 재조직 행 파일
+    rows: "tuple[str, ...]"              # 더하거나 바뀐 입장 행(파일 · 케이스 · 결정 · 슬라이스 가운데 하나가 바뀜)
+    rows_removed: "tuple[str, ...]"      # 빠지거나 다른 슬라이스로 간 입장 행
+    reworded: "tuple[str, ...]"          # 낱말만 바뀐 입장 행(파일 · 케이스 · 결정 · 슬라이스 같음)
+    edits: "tuple[str, ...]"             # 더하거나 바뀐 다른 BC 편집 경로
+    edits_removed: "tuple[str, ...]"     # 빠진 다른 BC 편집 경로
+
+    @property
+    def touched(self) -> bool:
+        """그 슬라이스를 건드림 — `v_removed` 만 · 계획 행 빠짐만 · 낱말만은 건드림이 아니다."""
+        return bool(self.plan_row in ("더함", "바뀜") or self.v or self.retain or self.retain_removed or self.rows
+                    or self.rows_removed or self.edits or self.edits_removed)
+
+
+def _row_branch(row: AdmissionRow, plan: "list[SlicePlanRow]", v_of_row: "dict[str, str]") -> str:
+    """입장 행의 슬라이스 — 계획 행 칸에 매이면 그 슬라이스 · V 시험 줄이 가리키면 그 V 슬라이스 · 그 밖은 결정 갈래(옮김 · 개명 재조직 →
+    0T · 칸 개명 · 그 밖 재조직 → 0F · update · remove · 일반 retain · reuse · reject · V 밖 add → 0T)."""
+    n: str = normalize(row.candidate)
+    hit: "str | None" = next((p.slice for p in plan if n in p.rows), None)
+    if hit:
+        return hit
+    if n in v_of_row:
+        return v_of_row[n]
+    if _reorg(row):
+        if _move_item(row)[0] is not None:
+            return "0T"                                    # 옮김 행 — 0T 창만
+        item = _rename_item(row)[0]
+        if item is not None and item.get("kind") != FIELD_KIND:
+            return "0T"                                    # 케이스 · ids 개명 — 0T 가 먼저 받는다
+        return "0F"                                        # 칸 개명(arch:29 — 제품 칸과 시험을 함께) · 그 밖 재조직
+    return "0T"
+
+
+def _plain_reorg(row: AdmissionRow) -> bool:
+    """owner/path 가 있는 `retain` 재조직 행(옮김 행 빼고)."""
+    return _reorg(row) and bool(row.path) and _move_item(row)[0] is None
+
+
+def confirmation_diff(folder: Path, at: "str | None" = None) -> "dict[str, SliceDelta] | None":
+    """`G1 변경판 확정 <at>`(없으면 마지막) 줄 ↔ 바로 앞 확정 줄의 반영판 차분 → {슬라이스: SliceDelta}(차분 있는 슬라이스만) · 첫 확정이면
+    None. V · 계획 행 · retain 재조직 행 · 입장 행 · 다른 BC 편집 줄의 더함 · 바뀜 · 빠짐을 싣는다."""
+    pos = _conf_positions(folder)
+    idx: "int | None" = len(pos) - 1 if at is None else next((i for i, p in enumerate(pos) if p[0].at == at), None)
+    if idx is None or idx < 0:
+        raise ToolError(f"이번 실행 몫에 `{G1_CONFIRMED} {at or ''}` 줄이 없다")
+    if idx == 0:
+        return None
+    (osnap, oadm, osl), (nsnap, nadm, nsl) = _applied_view(Path(folder), idx - 1), _applied_view(Path(folder), idx)
+    oplan = _plan_binding(osl, [AdmissionRow(_cells(x)) for x in oadm])
+    nplan = _plan_binding(nsl, [AdmissionRow(_cells(x)) for x in nadm])
+    keys = ("plan_row", "v", "v_removed", "retain", "retain_removed", "rows", "rows_removed", "reworded", "edits", "edits_removed")
+    acc: "dict[str, dict[str, list]]" = {}
+
+    def put(sid: str, key: str, val: "object") -> None:
+        slot = acc.setdefault(sid, {k: [] for k in keys})
+        if val not in slot[key]:
+            slot[key].append(val)
+    ocell: "dict[str, list[str]]" = {_slice_id(c[0]): c for c in osl if c}
+    ncell: "dict[str, list[str]]" = {_slice_id(c[0]): c for c in nsl if c}
+    obind = {p.slice: (p.rows, p.files) for p in oplan}
+    nbind = {p.slice: (p.rows, p.files) for p in nplan}
+    for sid, c in ncell.items():
+        if sid not in ocell:
+            put(sid, "plan_row", "더함")
+        elif ocell[sid] != c:
+            put(sid, "plan_row", "바뀜" if obind.get(sid) != nbind.get(sid) else "낱말")
+    for sid in ocell:
+        if sid not in ncell:
+            put(sid, "plan_row", "빠짐")
+    ov: "dict[str, dict]" = {v["id"]: v for v in osnap.get("V", [])}
+    nv: "dict[str, dict]" = {v["id"]: v for v in nsnap.get("V", [])}
+    for vid, v in nv.items():
+        if ov.get(vid) != v:
+            put(_slice_id(v["slice"]), "v", vid)
+    for vid, v in ov.items():
+        if vid not in nv:
+            put(_slice_id(v["slice"]), "v_removed", vid)
+    ovrow = {normalize(t["row"]): _slice_id(v["slice"]) for v in osnap.get("V", []) for t in v["tests"]}
+    nvrow = {normalize(t["row"]): _slice_id(v["slice"]) for v in nsnap.get("V", []) for t in v["tests"]}
+    orow = {normalize(AdmissionRow(_cells(x)).candidate): AdmissionRow(_cells(x)) for x in oadm}
+    nrow = {normalize(AdmissionRow(_cells(x)).candidate): AdmissionRow(_cells(x)) for x in nadm}
+    for n, r in nrow.items():
+        b: str = _row_branch(r, nplan, nvrow)
+        o = orow.get(n)
+        ob: "str | None" = _row_branch(o, oplan, ovrow) if o is not None else None
+        if o is not None and o.text == r.text and ob == b:
+            continue
+        if o is not None and ob == b and (o.path, o.case, o.decision) == (r.path, r.case, r.decision):
+            put(b, "reworded", n)
+            continue
+        put(b, "rows", n)
+        if _plain_reorg(r):
+            put(b, "retain", r.path)
+        if o is not None and ob != b:
+            put(ob, "rows_removed", n)                         # type: ignore[arg-type]
+            if _plain_reorg(o):
+                put(ob, "retain_removed", o.path)              # type: ignore[arg-type]
+        elif o is not None and _plain_reorg(o) and o.path != r.path:
+            put(b, "retain_removed", o.path)
+    orow_vids: "dict[str, set[str]]" = {}
+    for v in osnap.get("V", []):
+        for t in v["tests"]:
+            orow_vids.setdefault(normalize(t["row"]), set()).add(v["id"])
+    for n, o in orow.items():
+        if n not in nrow:
+            if n in orow_vids and not orow_vids[n] & set(nv):
+                continue                                       # 빠진 V 에만 딸린 행 — 그 V 의 `v_removed` 가 이미 싣는다
+            ob = _row_branch(o, oplan, ovrow)
+            put(ob, "rows_removed", n)
+            if _plain_reorg(o):
+                put(ob, "retain_removed", o.path)
+
+    def edit_slice(e: dict, vs: "dict[str, dict]") -> str:
+        return _slice_id(vs[e["ref"]]["slice"]) if e["ref"] in vs else e["ref"]
+    oe = {json.dumps(e, ensure_ascii=False, sort_keys=True): e for e in osnap.get("other_bc_edits", [])}
+    ne = {json.dumps(e, ensure_ascii=False, sort_keys=True): e for e in nsnap.get("other_bc_edits", [])}
+    for k, e in ne.items():
+        if k not in oe:
+            put(edit_slice(e, nv), "edits", e["path"])
+    for k, e in oe.items():
+        if k not in ne and not (e["ref"] in ov and e["ref"] not in nv):   # 빠진 V 에 딸린 줄은 `v_removed` 몫
+            put(edit_slice(e, ov), "edits_removed", e["path"])
+    return {sid: SliceDelta(slice_branch(sid), (d["plan_row"] or [""])[0], *(tuple(d[k]) for k in keys[1:]))
+            for sid, d in acc.items()}
+
+
+def touched_late_slices(folder: Path, at: "str | None" = None) -> "tuple[str, ...]":
+    """확정 차분이 건드린 0F · S 슬라이스 — 비면 verify «마지막 창 결속 ≠ 확정» 의 넓힌 통과(빠진 retain · 입장 · 다른 BC 줄 포함)."""
+    diff = confirmation_diff(folder, at)
+    return tuple(sid for sid, d in (diff or {}).items() if d.touched and d.branch in ("0F", "S"))
+
+
+def carried_decisions(folder: Path) -> "list[tuple[str, str]]":
+    """앞 결정 옮김 줄이 있는 결정 절 → [(절 시각, 길)](파일 차례) — G2 배너 · verify 의 `앞 결정 옮김 k(G1 답 반영 a · 재상정 반영 b)`."""
+    out: "list[tuple[str, str]]" = []
+    at: "str | None" = None
+    for _no, ln in _g1_lines(Path(folder)):
+        if _is_g1_head(ln):
+            hm = _G1_HEAD.match(ln)
+            at = hm.group(2).strip() if hm else None
+            continue
+        cm = re.search(r"출처\s*=\s*" + re.escape(CARRY_SOURCE) + rf"\s+{_G1_TIME}\s*·\s*길\s*=\s*(" + "|".join(CARRY_PATHS)
+                       + r")\s*$", ln)
+        if cm and at and (at, cm.group(1)) not in out:
+            out.append((at, cm.group(1)))
+    return out
+
+
+def carry_tail(folder: Path) -> str:
+    """요약 꼬리 ` · 앞 결정 옮김 k(G1 답 반영 a · 재상정 반영 b)` — 옮김이 없으면 빈 글."""
+    c: "list[tuple[str, str]]" = carried_decisions(folder)
+    a: int = sum(1 for _at, p in c if p == CARRY_PATHS[0])
+    return f" · 앞 결정 옮김 {len(c)}({CARRY_PATHS[0]} {a} · {CARRY_PATHS[1]} {len(c) - a})" if c else ""
+
+
+def _plan_reds(folder: Path, spec: SpecChanges, candidate: bool) -> "list[str]":
+    """엄격 실행의 계획 표 대조 — 절과 계획 행 실재(V · 다른 BC 편집 · 편집하는 입장 행이 있는 명세, 또는 새 후보를 쓰는 때의 살아 있는 ⓐ ·
+    보탬 항목) · 슬라이스 칸 꼴 · 갈래 차례(0T → 0C → 0F → S) · S 번호 차례 · V 슬라이스가 계획에 있음. 결정 절이 아직 없는 `--candidate` 는
+    옛 판 후보가 남아 있어도 본다 — 지금 쓰는 후보가 곁 자료 결속 칸을 실어 그 후보로 시작한 실행이 엄격이다."""
+    first: bool = not _decision_heads(folder)
+    if not strict_run(folder) and not (candidate and first):
+        return []
+    plan: "list[str]" = [_slice_id(c[0]) for c in _plan_rows(spec.text)]
+    if not plan:
+        # 살아 있는 항목은 새 후보 앞에서만 본다 — `안 바꾼다` 로 행이 다 빠진 반영판(`--applied` · `--gate`)은 후보와의 대조가 본다
+        if not (spec.v or spec.edits or any(_edit_row(r) for r in spec.rows) or ((candidate or first) and scope_items(folder).live)):
+            return []
+        body, heading_reds = _heading_section(spec.text.split("\n"), "슬라이스 계획")
+        return heading_reds or ["`## 슬라이스 계획` 절" + ("이 없다" if body is None
+                                                  else "에 계획 행이 없다(머리 첫 칸이 `슬라이스` 인 표)")]
+    reds: "list[str]" = []
+    rest: "list[str]" = list(plan)
+    stray: "list[str]" = []
+    for sid in (_slice_id(c[0]) for c in _slice_rows(spec.text) if c):
+        if sid in rest:
+            rest.remove(sid)
+        elif slice_branch(sid):
+            stray.append(sid)
+    if stray:                                              # 확정 계획 이력은 곁 자료의 슬라이스 꼴 행을 읽는다(머리 줄은 곁 자료에 없다)
+        reds.append(f"`## 슬라이스 계획` 절의 계획 표(머리 첫 칸 `슬라이스`) 밖에 슬라이스 꼴 행이 있다({' · '.join(stray)}) — 그 표를 절 밖으로 "
+                    f"옮긴다")
+    rank: "dict[str, int]" = {"0T": 0, "0C": 1, "0F": 2, "S": 3}
+    prev: "str | None" = None
+    for sid in plan:
+        br: str = slice_branch(sid)
+        if not br:
+            reds.append(f"슬라이스 계획 `{sid}` 가 `0T` · `0C` · `0F`(하위 이름 가능) · `S<n>` 꼴이 아니다(반영 창은 계획 행이 아니다 — "
+                        f"`--slice <감사가 본 슬라이스> --reason …` 로 연다 · 계획 표 아닌 표는 머리 첫 칸을 `슬라이스` 로 쓰지 않는다)")
+            continue
+        if prev is not None:
+            pb: str = slice_branch(prev)
+            if rank[br] < rank[pb]:
+                reds.append(f"슬라이스 계획 줄이 갈래 차례(0T → 0C → 0F → S)가 아니다 — `{prev}` 뒤 `{sid}`")
+            elif br == pb == "S" and int(sid[1:]) <= int(prev[1:]):
+                reds.append(f"슬라이스 계획 S 줄이 번호 차례가 아니다 — `{prev}` 뒤 `{sid}`")
+        prev = sid
+    for v in spec.v:
+        if _slice_id(v.slice) not in plan:
+            reds.append(f"{v.vid} 의 슬라이스 `{_slice_id(v.slice)}` 이 `## 슬라이스 계획` 에 없다")
+    return reds
+
+
+def boost_items(folder: Path) -> "dict[str, tuple[AddedItem, tuple[str, ...]]]":
+    """이번 실행의 살아 있는 보탬 항목(`결정 = 보탬` · 재상정으로 빼지 않음) → (항목, 슬라이스 자리들) — 슬라이스 자리 = 계획 표에서 목적
+    칸이 `보탬` 으로 시작하고 그 번호를 품은 행의 슬라이스 전부(표 차례 · 없으면 빈 튜플)."""
+    removed: "set[str]" = _scope(Path(folder))[2]
+    plan: "list[SlicePlanRow]" = slice_plan(folder)
+    out: "dict[str, tuple[AddedItem, tuple[str, ...]]]" = {}
+    for bid, it in _added(Path(folder), _run_bc(Path(folder))).items():
+        if it.token != "보탬" or bid in removed:
+            continue
+        out[bid] = (it, tuple(r.slice for r in plan if re.match(r"\s*보탬\b", r.purpose)
+                              and bid in re.findall(r"\bB\d+\b", r.purpose.split("—")[0])))
+    return out
 
 
 def _row_items(cell: str) -> "list[str]":
@@ -3644,6 +4723,7 @@ def _expected_applied(cand: dict, removed: "set[str]") -> dict:
     """후보 − (안 바꾼 V 와 그 V 에만 딸린 입장 행 · 다른 BC 편집 줄) — `update_rows` · `remove_rows` 도 안 바꾼 V 에만 딸린 행만 빠진다."""
     out: dict = json.loads(json.dumps(cand, ensure_ascii=False))
     out.pop(ROWS_BINDING, None)                          # 결속 칸은 후보에만 — 지금 스냅숏에는 없다(반영 뒤 표는 바뀐다)
+    out.pop(SIDE_BINDING, None)
     out["V"] = [v for v in cand["V"] if v["id"] not in removed]
     out["other_bc_edits"] = [e for e in cand["other_bc_edits"] if e["ref"] not in removed]
     keep: "set[str]" = {normalize(t["row"]) for v in out["V"] for t in v["tests"]}
@@ -3801,8 +4881,9 @@ def _applied_reds(folder: Path, cand_path: Path, cand: dict, cand_digest: str, n
     안 바꾼 V 요지의 `불가 · 변경 미승인`(항목 · 요지 원문 그대로 · 막는 것 = 그 G1 결정 줄)과 G1 이 «부분»으로 만든 항목의
     남은 정리 행 «되돌리지 않는 이유»(빈 칸 → 채움) 뿐 → (red, G1 이 부분으로 만든 항목 수).
 
-    후보 스냅숏에 결속 칸 `resolution_rows_digest` 가 있으면 곁 자료 `rows` 의 sha256 을 다시 계산해 대조한다 — 다르면 실행 불능
-    (곁 자료를 고치지 말고 새 후보로 재상정). 칸이 없으면(옛 후보) 곁 자료를 믿거나 보충하지 않고 위 예외를 끈다."""
+    후보 스냅숏에 결속 칸 `resolution_rows_digest` 가 있으면 곁 자료 `rows` 의 sha256 을, `side_rows_digest` 가 있으면 곁 자료 입장 표 ·
+    슬라이스 계획의 sha256 을 다시 계산해 대조한다 — 다르면 실행 불능(곁 자료를 고치지 말고 새 후보로 재상정). 칸이 없으면(옛 후보)
+    곁 자료를 믿거나 보충하지 않고 위 예외를 끈다."""
     side_path: Path = _sidecar_path(cand_path)
     try:
         side: dict = json.loads(_read(side_path))
@@ -3820,6 +4901,11 @@ def _applied_reds(folder: Path, cand_path: Path, cand: dict, cand_digest: str, n
         raise ToolError(f"후보 곁 자료의 해소 판정 표가 후보 결속 {str(cand[ROWS_BINDING])[:12]} 와 다르다 — 곁 자료를 고치지 말고 "
                         f"새 후보로 재상정한다")
     removed: "set[str]" = {v for v, (d, _s, _n) in decisions.items() if d == "안 바꾼다"}
+    if SIDE_BINDING in cand:                              # 2.46.0 후보 — 곁 자료 입장 표 · 슬라이스 계획 결속
+        side_now: dict = {"admission": side.get("admission"), "slices": side.get("slices")}
+        if not isinstance(cand[SIDE_BINDING], str) or _rows_digest(side_now) != cand[SIDE_BINDING]:
+            raise ToolError(f"후보 곁 자료의 입장 표 · 슬라이스 계획이 후보 결속 {str(cand[SIDE_BINDING])[:12]} 와 다르다 — "
+                            f"곁 자료를 고치지 말고 새 후보로 재상정한다")
     unknown: "list[str]" = sorted(set(decisions) - {v["id"] for v in cand["V"]}, key=lambda k: int(k[1:]))
     if unknown:
         reds.append(f"G1 결정 줄의 {' · '.join(unknown)} 이 후보 스냅숏에 없다")
@@ -3890,7 +4976,7 @@ def _gate_changes_reds(folder: Path, spec: SpecChanges) -> "list[str]":
         if cs is not None:
             reds += _c_basis_reds(v.vid, cs, "바꾼다", decision_lines())
             continue
-        m = re.fullmatch(r"(M\d+) #(\d+)", v.basis)
+        m = re.fullmatch(r"([MB]\d+) #(\d+)", v.basis)
         r = rows.get((m.group(1), int(m.group(2)))) if m else None
         if r is None or r.verdict != CHANGE_VERDICT or v.vid not in (_v_refs(r.blocker) or []):
             reds.append(f"{v.vid} 근거 {v.basis} 가 이 V 를 가리키는 해소 판정 표 `변경` 행이 아니다")
@@ -3906,7 +4992,7 @@ def _gate_changes_reds(folder: Path, spec: SpecChanges) -> "list[str]":
         if cand_cs is not None:
             reds += _c_basis_reds(vid, cand_cs, dec, decision_lines())
             continue
-        m = re.fullmatch(r"(M\d+) #(\d+)", basis or "")
+        m = re.fullmatch(r"([MB]\d+) #(\d+)", basis or "")
         r = rows.get((m.group(1), int(m.group(2)))) if m else None
         if r is None or r.verdict != "불가" or r.category != UNAPPROVED_CATEGORY:
             reds.append(f"{vid} 는 G1 결정 `안 바꾼다` 인데 그 요지({basis or '후보에 없음'})가 `불가 · {UNAPPROVED_CATEGORY}` 가 아니다")
@@ -3917,15 +5003,29 @@ def _gate_changes_reds(folder: Path, spec: SpecChanges) -> "list[str]":
     return reds
 
 
+def _gate_applied_reds(folder: Path, now: dict, spec: SpecChanges) -> "list[str]":
+    """`--gate` 의 ⑤ 다시 — 마지막 `G1 변경 결정` 절의 후보와 지금 승인판을 `--applied` 와 같은 규칙으로 견준다(결정 줄 형식 red 는
+    `_gate_changes_reds` 가 이미 낸다 — 겹치지 않게 뺀다). 후보 파일이 없으면 그 red 도 `_gate_changes_reds` 몫이다."""
+    cand_digest, _decisions, dreds = _g1_decisions(folder)
+    if cand_digest is None:
+        return []
+    try:
+        path, cand = _candidate_path(folder, cand_digest)
+    except ToolError:
+        return []
+    reds, _partial = _applied_reds(folder, path, cand, cand_digest, now, spec)
+    return [f"⑤ 다시 — {r}" for r in reds if r not in dreds and not r.startswith(f"마지막 `{G1_DECISION_HEAD}`")]
+
+
 def _utc_stamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
-def _write_candidate(folder: Path, snap: dict, digest: str, spec: SpecChanges, rows: "list[list[str]]") -> Path:
+def _write_candidate(folder: Path, snap: dict, digest: str, rows: "list[list[str]]", side_lists: dict) -> Path:
     """후보 스냅숏 `g1/<UTC>-candidate.json` + 곁 자료 `g1/<UTC>-candidate-resolution.json`(해소 판정 표 · 입장 표 · 슬라이스
     계획 — 후보 파일과 1:1) — 둘 다 덮어쓰지 않는다(있으면 실행 불능). `snap` 은 결속 칸을 이미 담은 후보 스냅숏 · `digest` 는 그
-    전체의 digest · 곁 자료 `rows` 는 결속을 계산한 그 `rows` 그대로(여기서 칸을 뒤늦게 더하지 않는다). 입장 표 · 슬라이스 계획
-    곁 자료는 결속 밖이다."""
+    전체의 digest · 곁 자료 `rows` · 입장 표 · 슬라이스 계획(`side_lists`)은 결속을 계산한 그 값 그대로(여기서 칸을 뒤늦게 더하지
+    않는다)."""
     base: Path = folder / G1_DIR
     base.mkdir(parents=True, exist_ok=True)
     stamp: str = _utc_stamp()
@@ -3935,9 +5035,7 @@ def _write_candidate(folder: Path, snap: dict, digest: str, spec: SpecChanges, r
         path = base / f"{stamp}-{k}{CANDIDATE_SUFFIX}"
         k += 1
     side: Path = _sidecar_path(path)
-    data: dict = {"version": 1, "candidate": digest, "candidate_file": path.name,
-                  "rows": rows, "admission": [r.text for r in spec.rows],
-                  "slices": _slice_rows(spec.text)}
+    data: dict = {"version": 1, "candidate": digest, "candidate_file": path.name, "rows": rows, **side_lists}
     with path.open("x", encoding="utf-8") as fh:
         fh.write(json.dumps(snap, ensure_ascii=False, sort_keys=True, indent=1) + "\n")
     try:
@@ -3994,13 +5092,15 @@ def _collect_notes(project: Path, folder: Path, spec: SpecChanges) -> "list[str]
 def cmd_changes(project: Path, folder: Path, mode: str, applied: "Path | None", baseline: "Path | None") -> int:
     """`changes <폴더> [--candidate | --applied <후보> | --gate] [--baseline <열린 창 open 기록>]`.
 
-    `--candidate` 의 후보 스냅숏 = 지금 스냅숏 + 결속 칸 `resolution_rows_digest`(곁 자료 해소 판정 표 `rows` 의 정규 JSON sha256 —
-    도구의 무결성 칸 · 승인 후보의 내용 목록 아님) · 후보 digest 는 그 후보 스냅숏 전체로 센다. 지금 스냅숏 · `--gate` 최종 digest ·
-    공개 함수 `changes_snapshot` 에는 그 칸이 없다."""
+    `--candidate` 의 후보 스냅숏 = 지금 스냅숏 + 결속 칸 둘 `resolution_rows_digest`(곁 자료 해소 판정 표 `rows`) ·
+    `side_rows_digest`(곁 자료 입장 표 · 슬라이스 계획 `{admission, slices}`)의 정규 JSON sha256 — 도구의 무결성 칸(승인 후보의 내용
+    목록 아님) · 후보 digest 는 그 후보 스냅숏 전체로 센다. 지금 스냅숏 · `--gate` 최종 digest · 공개 함수 `changes_snapshot` 에는 그
+    칸들이 없다. `--gate` 는 `--applied` 대조를 다시 하고(⑤ 다시) 명세 sha 를 낸다."""
     spec: SpecChanges = SpecChanges(folder)
     reds: "list[str]" = list(spec.reds)
     semantic, routed = _semantic_reds(project, folder, spec, baseline)
     reds += semantic
+    reds += _plan_reds(folder, spec, mode == "candidate")
     tail: str = ""
     if mode == "gate":
         _no_standing(_scope(folder)[4], "changes --gate")
@@ -4015,12 +5115,15 @@ def cmd_changes(project: Path, folder: Path, mode: str, applied: "Path | None", 
             reds += applied_reds
             tail = f" · G1 이 부분으로 만든 항목 {partial} · 후보 {cand_digest} → 지금 {digest}"
         elif mode == "gate":
-            tail = f" · 최종 digest {digest}"
+            reds += _gate_applied_reds(folder, snap, spec)                         # ⑤ 다시(F4-205)
+            tail = f" · 최종 digest {digest} · 명세 sha {spec_sha(folder)}"
         elif not reds:
             rows: "list[list[str]]" = _resolution_cells(spec.spec)                  # ⓐ 한 번 구한 rows
-            cand_snap: dict = dict(snap, **{ROWS_BINDING: _rows_digest(rows)})       # ⓑ 결속 칸
+            side_lists: dict = {"admission": [r.text for r in spec.rows], "slices": _slice_rows(spec.text)}
+            cand_snap: dict = dict(snap, **{ROWS_BINDING: _rows_digest(rows),        # ⓑ 결속 칸
+                                            SIDE_BINDING: _rows_digest(side_lists)})
             cand_digest = snapshot_digest(cand_snap)                                # ⓒ 후보 스냅숏 전체 digest
-            path: Path = _write_candidate(folder, cand_snap, cand_digest, spec, rows)  # ⓓ 같은 rows 로 곁 자료
+            path: Path = _write_candidate(folder, cand_snap, cand_digest, rows, side_lists)  # ⓓ 같은 rows 로 곁 자료
             tail = f" · 후보 digest {cand_digest} → {path}"
     notes: "list[str]" = _collect_notes(project, folder, spec) if mode in ("candidate", "gate") else []
     for w in reds:
@@ -6439,7 +7542,7 @@ def _supplier_state(project: Path, folders: "list[Path]", scopes: "dict[str, byt
             left: "set[str]" = set()
             for sec in re.split(r"(?m)^#+\s", settled[1]):
                 if sec.startswith("ⓐ 재상정") or "ⓐ 재상정" in sec.split("\n", 1)[0]:
-                    left |= set(re.findall(r"\bM\d+\b", sec))
+                    left |= set(re.findall(r"\b[MB]\d+\b", sec))
             return f"정리(재상정 {len(left)}{' · 착륙 · 표식 없음' if settled[0] == '착륙' else ''})"
     if unread:
         return f"못 읽음({unread[0]}{f' 외 {len(unread) - 1}' if len(unread) > 1 else ''})"
@@ -6663,7 +7766,7 @@ def cmd_deps(project: Path, bc: str, out: Path, at: str) -> int:
     if at != "new" and open_line is None:
         raise ToolError(f"`--at {at}` 인데 이 실행 폴더({own if own is not None else '--out 이 .dddjango/<폴더> 밖'})에 끝나지 않은 "
                         f"실행 줄이 없다 — 새 실행이면 `--at new`")
-    g1: "tuple[str, str, str] | None" = g1_confirmed(own) if own is not None and at != "new" else None   # 없으면 G0 · 있으면 파견 직전
+    g1: "G1Confirmation | None" = g1_confirmed(own) if own is not None and at != "new" else None   # 없으면 G0 · 있으면 파견 직전
     if at == "dispatch" and g1 is None:
         raise ToolError(f"`--at dispatch` 인데 이 실행 폴더({own})에 `{G1_CONFIRMED}` 줄이 없다 — G1 전이면 `--at continue`")
     our_paths: "set[str]" = {f"application/{bc}/"} | set(lane)
@@ -7104,7 +8207,8 @@ def cmd_self_test(corpus: Corpus) -> int:
     try:
         coord: str = "\n".join(corpus.doc("commands/dddjango.md").lines)
         for mark, end, const, name in ((CATEGORY_MARK, "가운데 하나", RESOLUTION_CATEGORIES, "불가 범주"),
-                                       (RECONSIDER_MARK, "가운데 하나", RECONSIDER_TOKENS, "재상정 결정 어휘")):
+                                       (RECONSIDER_MARK, "가운데 하나", RECONSIDER_TOKENS, "재상정 결정 어휘"),
+                                       (ADDED_MARK, "가운데 하나", ADDED_TOKENS, "보탬 결정 어휘")):
             if mark not in coord:
                 reds.append(f"{name} 문면(«{mark}»)을 Coordinator 에서 찾지 못했다({corpus.platform})")
                 continue

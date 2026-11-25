@@ -62,7 +62,7 @@ FILES: "dict[str, str]" = {
     "application/demo/test/test_policy.py": "def test_rule() -> None:\n    assert True\n",
     "application/other/domain_layer/x.py": "X = 1\nY = 2\n",
 }
-# 설계 §7 `Row.fixable` · §3-2 — R2 6번 칸 «동작 불변 정리 가능» → «바뀌는 것»(닫힌 값 다섯).
+# 설계 §7 `Row.fixable` · §3-2 — R2 6번 칸 «동작 불변 정리 가능» → «바뀌는 것»(닫힌 값 여섯).
 HEADER: str = ("| 행# | 규칙 | 반대 방향 규칙 | 파일:행 | 위반 요지 | 바뀌는 것 | C<n> 과 같음 |\n"
                "|---|---|---|---|---|---|---|\n")
 P_LOC: str = "application/demo/domain_layer/policy.py:5"
@@ -621,9 +621,11 @@ def residual_ground_cases(fails: "list[str]", td: Path) -> None:
     scope("M1, M2")
     rdir: Path = _fresh_stamp(repo, folder, clear=True)
     bundle: str = (rdir / "review-ddd.md").read_text(encoding="utf-8") if (rdir / "review-ddd.md").is_file() else ""
-    expect(fails, "O2 묶음 머리에 근거 칸 판형(` — ` 앞 위치만 · 줄임 없이 · 구분 ` · `)과 예시",
+    expect(fails, "O2 묶음 머리에 근거 칸 판형(` — ` 앞 위치만 · 줄임 없이 · 구분 ` · `) · 결과 표 머리 두 줄 · 자리표시 예 줄",
            (0 if "` — ` 앞에는 저장소 루트 기준 새 위치만" in bundle and "`:16`·`15·16` 줄임 없이" in bundle
-            and "예: `M3 | 해소 | application/<bc>/domain_layer/x/x.py:12-18 · " in bundle else 9, bundle), 0)
+            and "아래 머리 두 줄을 그대로 두고 항목마다 한 행을 앞뒤 `|` 표 꼴로 쓴다" in bundle
+            and "\n| 항목 | 판정 | 근거 |\n" in bundle
+            and "\n| M<n> | 해소 | application/<bc>/domain_layer/x/x.py:12-18 · " in bundle else 9, bundle), 0)
     expect(fails, "O2 묶음 머리에 build_anchor 이후 변경 파일·원 발견·대응 경로의 실재 위치 조건",
            (0 if "` — ` 앞에는 `build_anchor` 이후 바뀐 파일(산출물 폴더 제외) 또는 이 항목의 원 발견 · 대응 경로에 속하는 "
             "지금 있는 `파일:행[-행]`만 적는다. 지워서 푼 항목도 같은 조건을 따르며, 삭제 사실과 허용 집합 밖 주변 위치는 "
@@ -736,8 +738,10 @@ def residual_ground_cases(fails: "list[str]", td: Path) -> None:
            "실행 불능", "result.json", "states·redo·solved")
     scope("M3")
     rdir = _fresh_stamp(repo, folder, clear=True)
-    expect(fails, "M3 렌즈 완전성 — 두 렌즈 항목에 ddd 만 해소 → 판단 불가(discipline 답 없음)",
-           fin(rdir, f"| M3 | 해소 | {C_LOC} — 고쳤다 |\n"), 2, "M_m=1(결정적 잔존 0 · 리뷰어 잔존 0 · 근거 판형 아님 0 · 판단 불가 1)")
+    expect(fails, "M3 렌즈 완전성 — 두 렌즈 항목에 ddd 만 해소 → 답 없음 1(discipline 결과 파일 없음 — 판단 불가와 따로)",
+           fin(rdir, f"| M3 | 해소 | {C_LOC} — 고쳤다 |\n"), 2,
+           "M_m=1(결정적 잔존 0 · 리뷰어 잔존 0 · 근거 판형 아님 0 · 판단 불가 0 · 답 없음 1)",
+           "| M3 | 답 없음(discipline: 결과 파일 없음) |", "답 없음: M3(discipline: 결과 파일 없음) — 그 렌즈 리뷰어에게")
     expect(fails, "M3 렌즈 완전성 — 같은 시각에 빠진 렌즈 답을 채워 재확정 → 해소(답 없음은 다시 판정)",
            fin(rdir, f"| M3 | 해소 | {C_LOC} — 고쳤다 |\n", f"| M3 | 해소 | {C_LOC} — 리터럴 한 곳 |\n"), 0, "M_m=0", "해소 1")
     # n4 — `잔존(일부)` 는 잔존(접두어)이라 판형 아님보다 앞서고 동결된다(리뷰 x9)
@@ -1422,6 +1426,12 @@ CH_ROW_M1: str = "| M1 | 1 | 규칙 이름 흩어짐 | 변경 | — | V1 | M1 �
 CH_ROW_M2: str = "| M2 | 1 | 예외 매핑 흩어짐 | 변경 | — | V2 | M2 — 컨트롤러 예외 매핑 정리 | — |\n"
 
 
+def _default_plan(vs: str) -> str:
+    """V 머리의 슬라이스를 번호 차례로 적은 계획 표 — 엄격 실행의 `changes` 는 `## 슬라이스 계획` 절이 있어야 초록이다(J-3)."""
+    ids: "list[str]" = sorted(set(re.findall(r"· 슬라이스 S(\d+)", vs)), key=int)
+    return PL_HEAD + "".join(f"| S{n} | 픽스처 | — | — | x |\n" for n in ids)
+
+
 class ChangesLane:
     """changes 픽스처 — 합성 저장소 · G0 ⓐ M1 · M2 · 명세(V · 입장 표 · 다른 BC 편집 · 해소 표) · 지원 기록."""
 
@@ -1434,10 +1444,12 @@ class ChangesLane:
         (self.folder / "refactor-scope.md").write_text(self.scope_base, encoding="utf-8")
         self.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2)
 
-    def spec(self, vs: str, edits: str, res_rows: str, adm: str = V_SPEC_ROWS) -> None:
+    def spec(self, vs: str, edits: str, res_rows: str, adm: str = V_SPEC_ROWS, plan: "str | None" = None) -> None:
+        """명세를 쓴다 — `plan` 을 주지 않으면 V 에서 만든 계획 표를 싣고, 빈 글이면 `## 슬라이스 계획` 절이 없는 명세다."""
         (self.folder / "design-spec.md").write_text(
             RES_BODY + "## 5. 슬라이스 0 해소 판정\n\n" + RES_HEAD + res_rows + "\n## 6. 영구 테스트 입장 표\n\n" + adm
-            + "\n## 7. 바뀌는 것 목록\n\n" + vs + "\n## 8. 다른 BC 편집 목록\n\n" + edits + "\n## 9. 끝\n", encoding="utf-8")
+            + "\n## 7. 바뀌는 것 목록\n\n" + vs + "\n## 8. 다른 BC 편집 목록\n\n" + edits
+            + (_default_plan(vs) if plan is None else plan) + "\n## 9. 끝\n", encoding="utf-8")
 
     def support(self, stamp: str = "20261004T100000Z", verdict: str = "지원", argv: str = "pytest") -> None:
         d: Path = self.folder / "behavior" / "support" / stamp
@@ -1491,25 +1503,31 @@ def changes_cases(fails: "list[str]", td: Path) -> None:
            (got[0] if snap.get("support_record") == "20261004T090000Z" and digest and f"후보 digest {digest}" in got[1]
             else 9, got[1] + json.dumps(snap, ensure_ascii=False)[:400]), 0, "red 0 · candidate")
     # B1R 수리(설계 v3.1 §1-5 6): 후보 digest 는 결속 칸 `resolution_rows_digest` 를 담은 후보 파일 전체로 검증하고, 지금 스냅숏과의
-    # 동일성 대조에서만 그 한 칸을 뺀다 · 지금 · 최종 digest 는 `snapshot_digest(changes_snapshot(…))` 로 따로 센다.
-    bare: dict = {k: v for k, v in snap.items() if k != "resolution_rows_digest"}
+    # 동일성 대조에서만 그 칸을 뺀다 · 지금 · 최종 digest 는 `snapshot_digest(changes_snapshot(…))` 로 따로 센다. F4-205 가 같은 꼴의
+    # 결속 칸 `side_rows_digest`(곁 자료 `{admission, slices}` — 입장 표 · 슬라이스 계획)를 더했다.
+    bare: dict = {k: v for k, v in snap.items() if k not in ("resolution_rows_digest", "side_rows_digest")}
     now_digest: str = ra.snapshot_digest(ra.changes_snapshot(f, lane.repo)) if snap else ""
-    side_rows: object = (json.loads(cand_files[-1].with_name(cand_files[-1].name[:-len(".json")] + "-resolution.json")
-                                    .read_text(encoding="utf-8")).get("rows") if cand_files else None)
-    rows_bind: str = hashlib.sha256(json.dumps(side_rows, ensure_ascii=False, sort_keys=True,
-                                               separators=(",", ":")).encode("utf-8")).hexdigest()
+    side_doc: dict = (json.loads(cand_files[-1].with_name(cand_files[-1].name[:-len(".json")] + "-resolution.json")
+                                 .read_text(encoding="utf-8")) if cand_files else {})
+    side_rows: object = side_doc.get("rows")
+
+    def bind_of(value: object) -> str:
+        return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+    rows_bind: str = bind_of(side_rows)
+    side_bind: str = bind_of({"admission": side_doc.get("admission"), "slices": side_doc.get("slices")})
     same: bool = (bool(snap) and ra.changes_snapshot(f, lane.repo) == bare and ra.load_candidate(f, digest) == snap
                   and now_digest == ra.snapshot_digest(bare) and snap.get("resolution_rows_digest") == rows_bind
-                  and len(rows_bind) == 64 and isinstance(side_rows, list) and len(side_rows) == 2)
+                  and len(rows_bind) == 64 and isinstance(side_rows, list) and len(side_rows) == 2
+                  and snap.get("side_rows_digest") == side_bind and len(side_doc.get("admission") or []) == 4)
     k0_run: str = hashlib.sha256(json.dumps({"argvs": [["pytest -x"]], "env": {"PYTEST_ADDOPTS": None}}, ensure_ascii=False,
                                             sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()[:12]
     k0_snap: str = hashlib.sha256(json.dumps(snap, ensure_ascii=False, sort_keys=True,
                                              separators=(",", ":")).encode("utf-8")).hexdigest()[:12]
     expect(fails, "RD-C15 공개 함수 — changes_snapshot = 후보 파일 − 결속 칸 · load_candidate(digest) = 후보 · k0 판형 칸 · k0 digest 규칙 · "
-           "결속 칸 = 곁 자료 rows 정규 JSON sha256",
+           "결속 칸 둘 = 곁 자료 rows · {admission, slices} 정규 JSON sha256",
            (0 if same and snap.get("run_definition_digest") == k0_run and digest == k0_snap
             and sorted(snap) == ["V", "linked_rows", "other_bc_edits", "remove_rows", "resolution_rows_digest", "retain_rows",
-                                 "run_definition_digest", "support_record", "update_rows", "version"]
+                                 "run_definition_digest", "side_rows_digest", "support_record", "update_rows", "version"]
             and snap["V"][0]["tests"][0]["expect_old"] == ["assert True"] and snap["V"][1]["ops"][0]["op"] == "AddField"
             and snap["V"][1]["ops"][0]["key"].startswith("demo · Call(") and snap["retain_rows"] == [
                 {"path": "application/demo/test/unit/test_policy.py", "case": None, "why": "같은 기대 그대로"}]
@@ -1564,14 +1582,16 @@ def changes_cases(fails: "list[str]", td: Path) -> None:
     expect(fails, "RD-C28 --gate 이번 실행 몫의 옛 상시 답 줄 → 실행 불능(설계 :1355)", lane.ch("--gate"), 1, "상시 답은 걷혔다")
     # g1_confirmed — 이번 실행 몫의 마지막 확정 줄 · 앞 실행 절은 보지 않는다
     scope.write_text(lane.scope_base + f"\n## G1 변경 결정 20261004-1930 · 후보 digest {digest}\n\n"   # 리뷰 B #7 — 결정 절과 결속
-                     f"- G1 변경판 확정 20261004-1940 · digest aaaaaaaaaaaa · 후보 {digest}\n"
-                     f"- G1 변경판 확정 20261004-1950 · digest bbbbbbbbbbbb · 후보 {digest}\n\n# 앞 실행\n\n"
+                     f"- G1 변경판 확정 20261004-1940 · digest aaaaaaaaaaaa · 후보 {digest} · 명세 sha {ra.spec_sha(f)}\n"
+                     f"- G1 변경판 확정 20261004-1950 · digest bbbbbbbbbbbb · 후보 {digest} · 명세 sha {ra.spec_sha(f)}\n\n# 앞 실행\n\n"
                      f"- G1 변경판 확정 20261001-0000 · digest cccccccccccc · 후보 {digest}\n", encoding="utf-8")
+    sha_c: str = ra.spec_sha(f)
     got_c = ra.g1_confirmed(f)
     scope.write_text(lane.scope_base + "\n# 앞 실행\n\n- G1 변경판 확정 20261001-0000 · digest cccccccccccc · 후보 dddddddddddd\n",
                      encoding="utf-8")
-    expect(fails, "RD-C29 g1_confirmed — 이번 실행 몫 마지막 줄 (시각, digest, 후보) · 앞 실행 절만 있으면 None",
-           (0 if got_c == ("20261004-1950", "bbbbbbbbbbbb", digest) and ra.g1_confirmed(f) is None else 9, str(got_c)), 0)
+    expect(fails, "RD-C29 g1_confirmed — 이번 실행 몫 마지막 줄 (시각, digest, 후보) · 명세 sha · 앞 실행 절만 있으면 None",
+           (0 if got_c is not None and got_c[:3] == ("20261004-1950", "bbbbbbbbbbbb", digest) and got_c.spec_sha == sha_c
+            and ra.g1_confirmed(f) is None else 9, str(got_c)), 0)
     # --baseline — 창 기준선(head + dirty0 b64)에서 «바뀌는 기대» 실재를 본다
     lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2)
     head_sha: str = _git(lane.repo, "rev-parse", "HEAD").strip()
@@ -1947,7 +1967,7 @@ class CwLane:
         (self.f / "refactor-scope.md").write_text(
             self.lane.scope_base + f"\n## G1 변경 결정 2026-10-06 09:50 · 후보 digest {c}\n\n"
             "- V2 · 결정 = 바꾼다 · 출처 = 본인 직접(0950)\n"
-            f"- G1 변경판 확정 2026-10-06 09:55 · digest {self.d} · 후보 {c}\n", encoding="utf-8")
+            f"- G1 변경판 확정 2026-10-06 09:55 · digest {self.d} · 후보 {c} · 명세 sha {ra.spec_sha(self.f)}\n", encoding="utf-8")
 
     def head(self) -> str:
         return _git(self.repo, "rev-parse", "HEAD").strip()
@@ -2242,7 +2262,7 @@ def closed_window_shared_cases(fails: "list[str]", td: Path) -> None:
         scope: Path = cw.f / "refactor-scope.md"
         scope.write_text(scope.read_text(encoding="utf-8") + f"\n## G1 변경 결정 2026-10-06 11:30 · 후보 digest {c}\n\n"
                          "- V2 · 결정 = 바꾼다 · 출처 = 본인 직접(1130)\n"
-                         f"- G1 변경판 확정 2026-10-06 11:35 · digest {cw.d} · 후보 {c}\n", encoding="utf-8")
+                         f"- G1 변경판 확정 2026-10-06 11:35 · digest {cw.d} · 후보 {c} · 명세 sha {ra.spec_sha(cw.f)}\n", encoding="utf-8")
         cw.commit({CW_POLICY: "def test_rule() -> None:\n    assert 2 == 2\n"}, "S2")
         w7: Path = cw.window(7, head_b, [_cw_close(hits={CW_RULE: {"old": ["assert 1 == 1"], "add": 0}}, at="2026-10-06T12:00:00Z")])
         check("RD-W23 닫힌 변경 창 둘(w5 V1 · V3 · w7 V4 · V5) · 창 사이 changes → 각 창 기준선 → green", cw.ch(), 0,
@@ -2512,8 +2532,8 @@ def g1_time_cases(fails: "list[str]", td: Path) -> None:
     expect(fails, "RD-T2 G1 변경 결정 절 머리에 시각 없음 → 판형 밖 실행 불능", lane.ch("--gate"), 1,
            "최신 `G1 변경 결정` 절 머리가 판형")
     head: str = f"\n## G1 변경 결정 2026-10-04 19:30 · 후보 digest {digest}\n\n"
-    scope.write_text(lane.scope_base + head + f"- G1 변경판 확정 2026-10-04 19:50 · digest {digest} · 후보 {digest}\n",
-                     encoding="utf-8")
+    scope.write_text(lane.scope_base + head + f"- G1 변경판 확정 2026-10-04 19:50 · digest {digest} · 후보 {digest} · 명세 sha "
+                     f"{ra.spec_sha(f)}\n", encoding="utf-8")
     spaced = ra.g1_confirmed(f)
     scope.write_text(lane.scope_base + head + f"- G1 변경판 확정 · digest {digest} · 후보 {digest}\n", encoding="utf-8")
     try:
@@ -2522,7 +2542,8 @@ def g1_time_cases(fails: "list[str]", td: Path) -> None:
     except RuntimeError as exc:
         bare = f"실행 불능 {exc}"
     expect(fails, "RD-T3 g1_confirmed — 공백 든 시각 → (\"2026-10-04 19:50\", d, c) · 시각 없는 최신 확정 줄 → 실행 불능(RuntimeError)",
-           (0 if spaced == ("2026-10-04 19:50", digest, digest) and "판형" in bare else 9, f"{spaced} · {bare}"), 0)
+           (0 if spaced is not None and spaced[:3] == ("2026-10-04 19:50", digest, digest) and spaced.spec_sha == ra.spec_sha(f)
+            and "판형" in bare else 9, f"{spaced} · {bare}"), 0)
 
 
 def support_rule_cases(fails: "list[str]", td: Path) -> None:
@@ -2858,7 +2879,7 @@ class ReviewLane(ChangesLane):
     """리뷰 B 사례 — 명세에 슬라이스 계획을 덧붙일 수 있는 changes 레인."""
 
     def spec_plan(self, vs: str, edits: str, res_rows: str, adm: str = V_SPEC_ROWS, plan: str = "") -> None:
-        self.spec(vs + plan, edits, res_rows, adm=adm)
+        self.spec(vs + plan, edits, res_rows, adm=adm, plan="")
 
     def candidate(self) -> "tuple[Path, str]":
         """--candidate 한 번 → 새로 생긴 후보 파일(생성 전후 파일 집합 차이 — 같은 초의 `-2` 이름도 바르게 고른다)과 digest."""
@@ -2994,7 +3015,7 @@ def review_b_cases(fails: "list[str]", td: Path) -> None:
     expect(fails, "RD-B7e 긴 펜스(````) 안 짧은 펜스(```) · 다른 종류(~~~) 안 G1 기록 → 기록 아님 → 앞의 실제 절로 green · 확정 없음"
            "(리뷰 B r2 #1 반례)", (lane.ch("--gate")[0] if ra.g1_confirmed(f) is None else 9, "long fence"), 0)
     scope.write_text(lane.scope_base + head + "- V2 · 결정 = 안 바꾼다 · 출처 = 본인 직접(0050)\n\n```\n예시\n``` 끝\n"
-                     f"- G1 변경판 확정 2026-10-05 00:55 · digest {cd} · 후보 {cd}\n", encoding="utf-8")
+                     f"- G1 변경판 확정 2026-10-05 00:55 · digest {cd} · 후보 {cd} · 명세 sha {ra.spec_sha(f)}\n", encoding="utf-8")
     try:
         ra.g1_confirmed(f)
         unclosed: str = "읽힘"
@@ -3003,11 +3024,11 @@ def review_b_cases(fails: "list[str]", td: Path) -> None:
     expect(fails, "RD-B7f 닫히지 않은 펜스(``` 끝 은 정보 문자열 — 닫힘 아님) 뒤의 G1 확정 줄 → 실행 불능(gate 도 실행 불능)",
            (lane.ch("--gate")[0] if "닫히지 않았는데" in unclosed else 9, unclosed), 1)
     scope.write_text(lane.scope_base + head + "- V2 · 결정 = 안 바꾼다 · 출처 = 본인 직접(0050)\n\n"
-                     f"    G1 변경판 확정 2026-10-05 00:55 · digest {cd} · 후보 {cd}\n", encoding="utf-8")
+                     f"    G1 변경판 확정 2026-10-05 00:55 · digest {cd} · 후보 {cd} · 명세 sha {ra.spec_sha(f)}\n", encoding="utf-8")
     expect(fails, "RD-B7g 4칸 들여 쓴 G1 확정 줄(들여쓴 코드 블록 · 목록 안 — 판독 지원 밖) → 실행 불능", lane.ch("--gate"), 1,
            "4칸 이상 들여 쓰여 있다")
     # X12 N4 — 문면 ⑥ «같은 절에»: 확정 줄이 가장 최근 결정 절 밖(다음 `#` / `##` 머리 뒤)이면 실행 불능 · `###` 이하는 절 안
-    conf_line: str = f"- G1 변경판 확정 2026-10-05 00:55 · digest {cd} · 후보 {cd}\n"
+    conf_line: str = f"- G1 변경판 확정 2026-10-05 00:55 · digest {cd} · 후보 {cd} · 명세 sha {ra.spec_sha(f)}\n"
     scope.write_text(lane.scope_base + head + "- V2 · 결정 = 안 바꾼다 · 출처 = 본인 직접(0050)\n\n## 메모\n\n" + conf_line,
                      encoding="utf-8")
     try:
@@ -3018,7 +3039,10 @@ def review_b_cases(fails: "list[str]", td: Path) -> None:
     expect(fails, "RD-B7h `## 메모` 밑 확정 줄(결정 절 밖) → 실행 불능(X12 N4)", (0 if "절" in outside and "밖이다" in outside else 9, outside), 0)
     scope.write_text(lane.scope_base + head + "- V2 · 결정 = 안 바꾼다 · 출처 = 본인 직접(0050)\n\n### 메모\n\n" + conf_line,
                      encoding="utf-8")
-    expect(fails, "RD-B7i `### 메모` 밑 확정 줄은 절 안 → 읽힘", (0 if ra.g1_confirmed(f) == ("2026-10-05 00:55", cd, cd) else 9, ""), 0)
+    in_section = ra.g1_confirmed(f)
+    expect(fails, "RD-B7i `### 메모` 밑 확정 줄은 절 안 → 읽힘 · 명세 sha",
+           (0 if in_section is not None and in_section[:3] == ("2026-10-05 00:55", cd, cd) and in_section.spec_sha == ra.spec_sha(f)
+            else 9, str(in_section)), 0)
     # 리뷰 B #5 — 반대 방향 규칙: 원 행 인용이 없으면 인용 밖 증거 칸 필수
     rlane = ReviewLane(td, "rvb5")
     rlane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1
@@ -3263,7 +3287,8 @@ def surface_area_cases(fails: "list[str]", td: Path) -> None:
     digest: str = ra.snapshot_digest(json.loads(cand.read_text(encoding="utf-8")))
     (lane.folder / "refactor-scope.md").write_text(
         lane.scope_base + f"\n## G1 변경 결정 2026-10-05 02:50 · 후보 digest {digest}\n\n- V2 · 결정 = 바꾼다 · 출처 = 본인 직접(0250)\n\n"
-        f"# 다른 장\n\n- G1 변경판 확정 2026-10-05 02:55 · digest {digest} · 후보 {digest}\n", encoding="utf-8")
+        f"# 다른 장\n\n- G1 변경판 확정 2026-10-05 02:55 · digest {digest} · 후보 {digest} · 명세 sha {ra.spec_sha(lane.folder)}\n",
+        encoding="utf-8")
     try:
         ra.g1_confirmed(lane.folder)
         level1: str = "읽힘"
@@ -3493,6 +3518,7 @@ CB_COMPOSE: "tuple[str, ...]" = ("config/api.py", "framework/ninja/pre_route_res
                                  "framework/ninja/pre_route_response_table.py")
 CB_M2_SOLVED: str = "| M2 | 1 | 예외 매핑 흩어짐 | 해소 | — | — | M2 — 컨트롤러 예외 매핑 정리 | — |\n"
 CB_TEST: str = "application/demo/test/test_thing_api.py"
+CB_S1: str = "| S1 | 경로 앞 응답 문서 V1 | 경로 앞 응답 문서 | — | test_thing_api |\n"   # 엄격 실행의 변경 창은 계획 슬라이스로 연다
 CB_DOC_API: str = ("from ninja.openapi.schema import OpenAPISchema\nfrom ninja_extra import NinjaExtraAPI\n\n"
                    "from framework.ninja.pre_route_responses import add_pre_route_responses\n\n\n"
                    "class DocumentedAPI(NinjaExtraAPI):\n    def get_openapi_schema(\n"
@@ -3623,10 +3649,20 @@ def _cb_guard(repo: Path, *args: str) -> "tuple[int, str]":
     return proc.returncode, proc.stdout + proc.stderr
 
 
+def _cb_audit(folder: Path, run_id: str, n: int) -> int:
+    """창 w<n> 의 감사 기록 1회차 — 마지막 close 가 낸 키마다 그 요구 판정 첫 값(키 수)."""
+    closed: Path = folder / "behavior" / run_id / f"w{n}-close.json"
+    last: dict = json.loads(closed.read_text(encoding="utf-8"))[-1] if closed.is_file() else {}
+    rows: "list[str]" = [f"{k} | 판정 = {w.split(' · ')[0]} | 픽스처" for d in last.get("dispositions", [])
+                         for k, w in zip(d.get("keys") or [], d.get("요구 판정") or [])]
+    (folder / f"audit-tests-w{n}-1.md").write_text(f"# 감사 기록 w{n} · 1회차\n\n" + "\n".join(rows) + "\n", encoding="utf-8")
+    return len(rows)
+
+
 def c_basis_flow_cases(fails: "list[str]", td: Path) -> None:
     """F4-173 흐름 — #63 c 빚(operation 마다 C) → V `밖 동작`(근거 C1~C3) → 다른 BC 편집 «프로젝트 합성» 세 파일 → `resolution` ·
-    `changes`(--candidate · --applied · --gate) → `G1 변경판 확정` → 변경 창(behavior_guard open · close). 검사기 빚만의 실행(ⓐ M
-    없음 · 해소 판정 표 없음)이다. 대조군: 목록 밖 대상 BC 밖 파일은 변경 창 close 가 red."""
+    `changes`(--candidate · --applied · --gate) → `G1 변경판 확정` → 변경 창(behavior_guard open `--slice S1` · close). 검사기 빚만의
+    실행(ⓐ M 없음 · 해소 판정 표 없음)이다. 대조군: 목록 밖 대상 BC 밖 파일은 변경 창 close 가 red."""
     base: "dict[str, str]" = {**DEPS_FILES, "framework/__init__.py": "", "framework/ninja/__init__.py": ""}
     repo: Path = _project(td / "cbf", base)
     folder, anchor = _res_folder(repo, [row(1, V_B9, where=C_LOC)], ["M1 | ddd-01#1 | 채택 | | "],
@@ -3638,7 +3674,7 @@ def c_basis_flow_cases(fails: "list[str]", td: Path) -> None:
     scope.write_text(scope_base, encoding="utf-8")
     spec_text: str = ("# 설계 명세 — demo\n\n## 1. 처방\n\n프로젝트에 경로 앞 응답 꼴을 둔다.\n\n## 6. 영구 테스트 입장 표\n\n"
                       + CB_ADM_ONLY + "\n## 7. 바뀌는 것 목록\n\n" + _cb_v("C1~C3", vid="V1", slice_="S1")
-                      + "\n## 8. 다른 BC 편집 목록\n\n" + _cb_edits("V1") + "\n## 9. 끝\n")
+                      + "\n## 8. 다른 BC 편집 목록\n\n" + _cb_edits("V1") + PL_HEAD + CB_S1 + "\n## 9. 끝\n")
     (folder / "design-spec.md").write_text(spec_text, encoding="utf-8")
     sup: Path = folder / "behavior" / "support" / "20261113T010000Z"
     sup.mkdir(parents=True)
@@ -3663,7 +3699,8 @@ def c_basis_flow_cases(fails: "list[str]", td: Path) -> None:
     got = ch("--gate")
     final: str = got[1].split("최종 digest ", 1)[1].split()[0] if "최종 digest " in got[1] else ""
     expect(fails, "RD-CF6 changes --gate → green + 최종 digest", (got[0] if final else 9, got[1]), 0, "red 0 · gate")
-    scope.write_text(scope_base + head + f"- G1 변경판 확정 2026-11-13 10:40 · digest {final} · 후보 {cd}\n", encoding="utf-8")
+    scope.write_text(scope_base + head + f"- G1 변경판 확정 2026-11-13 10:40 · digest {final} · 후보 {cd} · 명세 sha "
+                     f"{ra.spec_sha(folder)}\n", encoding="utf-8")
     try:
         snap: dict = ra.changes_snapshot(folder, repo)
     except RuntimeError as exc:
@@ -3672,8 +3709,11 @@ def c_basis_flow_cases(fails: "list[str]", td: Path) -> None:
     expect(fails, "RD-CF7 확정 스냅숏의 다른 BC 편집 = 프로젝트 합성 세 파일(갈래 · 연결 V1)",
            (0 if edits == sorted(CB_COMPOSE) and {(e["kind"], e["ref"]) for e in snap["other_bc_edits"]} == {("프로젝트 합성", "V1")}
             else 9, json.dumps(snap["other_bc_edits"], ensure_ascii=False)), 0)
-    opened = _cb_guard(repo, "open", str(folder), "--kind", "change", "--mode", "refactor")
-    expect(fails, "RD-CF8 변경 창 open(G1 변경판 확정 digest 결속)", opened, 0, "종류 변경", f"G1 digest {final}")
+    expect(fails, "RD-CF8a 엄격 실행 · `--slice` 없는 변경 창 open → 실행 불능",
+           _cb_guard(repo, "open", str(folder), "--kind", "change", "--mode", "refactor"), 1, "이 실행은 창마다 `--slice <슬라이스>` 를 적는다")
+    opened = _cb_guard(repo, "open", str(folder), "--kind", "change", "--mode", "refactor", "--slice", "S1")
+    expect(fails, "RD-CF8 변경 창 open(G1 변경판 확정 digest 결속 · 차례 창 S1)", opened, 0, "종류 변경", f"G1 digest {final}",
+           " · 슬라이스 S1 · 차례")
     for rel, body in {"config/api.py": CB_DOC_API,
                       "framework/ninja/pre_route_responses.py": "\"\"\"경로 앞 응답(정본 자리 — 사례 대역).\"\"\"\n",
                       "framework/ninja/pre_route_response_table.py": "PRE_ROUTE_RESPONSES: tuple[dict[str, object], ...] = ()\n",
@@ -3685,7 +3725,12 @@ def c_basis_flow_cases(fails: "list[str]", td: Path) -> None:
     closed = _cb_guard(repo, "close", str(folder))
     expect(fails, "RD-CF9 변경 창 close — 프로젝트 합성 세 파일은 다른 BC 편집 목록 안(대상 BC 밖 red 없음) · 승인 add 케이스",
            (closed[0] if "다른 BC 편집 목록 밖" not in closed[1] else 9, closed[1]), 0)
-    opened = _cb_guard(repo, "open", str(folder), "--kind", "change", "--mode", "refactor")
+    expect(fails, "RD-CF9a 앞 변경 창의 감사 키를 판정받기 전 → 다음 변경 창 open 실행 불능",
+           _cb_guard(repo, "open", str(folder), "--kind", "change", "--mode", "refactor", "--slice", "S1"), 1,
+           "앞 변경 창 w1 의 감사 키 판정이 끝나지 않았다(일치 0/1 · 누락 1")
+    _cb_audit(folder, "20261113-1000", 1)
+    opened = _cb_guard(repo, "open", str(folder), "--kind", "change", "--mode", "refactor", "--slice", "S1")
+    expect(fails, "RD-CF9b 감사 기록을 쓴 뒤 같은 슬라이스의 다음 변경 창 → open", opened, 0, "창 w2 open", " · 슬라이스 S1 · 차례")
     (repo / "framework/ninja/extra_hook.py").write_text("HOOK: int = 1\n", encoding="utf-8")
     _git(repo, "add", "-A", "framework")
     _git(repo, "commit", "-qm", "목록 밖")
@@ -3710,7 +3755,8 @@ def c_basis_reject_cases(fails: "list[str]", td: Path) -> None:
     def spec(vs: str, edits: str, adm: str) -> None:
         (folder / "design-spec.md").write_text(
             "# 설계 명세 — demo\n\n## 1. 처방\n\n프로젝트에 경로 앞 응답 꼴을 둔다.\n\n## 6. 영구 테스트 입장 표\n\n" + adm
-            + "\n## 7. 바뀌는 것 목록\n\n" + vs + "\n## 8. 다른 BC 편집 목록\n\n" + edits + "\n## 9. 끝\n", encoding="utf-8")
+            + "\n## 7. 바뀌는 것 목록\n\n" + vs + "\n## 8. 다른 BC 편집 목록\n\n" + edits + _default_plan(vs) + "\n## 9. 끝\n",
+            encoding="utf-8")
     spec(_cb_v("C1~C3", vid="V1", slice_="S1"), _cb_edits("V1"), CB_ADM_ONLY)
     sup: Path = folder / "behavior" / "support" / "20261113T020000Z"
     sup.mkdir(parents=True)
@@ -3738,6 +3784,1378 @@ def c_basis_reject_cases(fails: "list[str]", td: Path) -> None:
     spec("없음\n", "없음\n", CB_ADM_ONLY)
     expect(fails, "RD-CR5 안 바꾼 V1 에만 딸린 add 입장 행을 남긴 반영 → --applied red", ch("--applied", str(cands[-1])), 2,
            "반영 대조 다름 — 입장 표(후보 − 안 바꾼 V 에만 딸린 행 1): 남거나 바뀐 행 경로 앞 응답 문서")
+
+
+# ── F4-212 · 이웃 — 앞 `|` 없는 행 · 답 없음 · 표 문법 줄(refactor_audit 행 읽기) ─────────────────────
+RR_G: str = f"{C_LOC} — 판정을 한 곳으로 옮겼다"
+RR_R2_HEAD: str = "행# | 규칙 | 반대 방향 규칙 | 파일:행 | 위반 요지 | 바뀌는 것 | C<n> 과 같음\n"
+
+
+def row_reading_cases(fails: "list[str]", td: Path) -> None:
+    """F4-212(설계 R §4.1 · §4.5) — residual 결과 · R2 표 · verdict 는 앞 `|` 없는 행도 읽고(코드 펜스 안 · 예 줄 자리표시는 행 아님),
+    답이 없으면 `답 없음`(까닭 셋 · 같은 시각 두 번째면 판단 불가)으로 따로 센다. R2 의 못 읽은 행 꼴 줄은 실행 불능(표 문법 줄 · 인라인
+    코드 빼고) · 해소 판정 표의 앞 `|` 없는 행은 red 글에만 알린다."""
+    repo: Path = _project(td / "rr")
+    folder, anchor = _res_folder(repo, [row(n, V_B9, where=C_LOC) for n in (1, 2, 3)],
+                                 [f"M{n} | ddd-01#{n} | 채택 | | " for n in (1, 2, 3)])
+    (folder / "refactor-scope.md").write_text(
+        f"실행 · G0 승인 20260927-0300 · 모드 리팩토링 · audit 20260927-0250 · build_anchor {anchor}\n\n"
+        "- M1, M2, M3 · 결정 = ⓐ · 사유 = 픽스처 · 출처 = 본인 직접(0300)\n", encoding="utf-8")
+    thing: Path = repo / "application/demo/driving_layer/api/thing/thing_controller.py"
+    thing.write_text(thing.read_text(encoding="utf-8") + "\n# 정리\n", encoding="utf-8")
+
+    def fin(rdir: Path, text: "str | None") -> "tuple[int, str]":
+        path: Path = rdir / "result-ddd.md"
+        if text is None:
+            path.unlink(missing_ok=True)
+        else:
+            path.write_text(text, encoding="utf-8")
+        got = run(repo, "residual", str(folder), "--finalize", rdir.name)
+        result: Path = rdir / "result.md"
+        return got[0], got[1] + (result.read_text(encoding="utf-8") if result.is_file() else "")
+    three: str = "".join(f"M{n} | 해소 | {RR_G}\n" for n in (1, 2, 3))
+    for label, text in (("RR1 앞 `|` 없는 결과 행(머리 두 줄 · 지시 글 꼴 그대로) → 해소 3", "| 항목 | 판정 | 근거 |\n|---|---|---|\n" + three),
+                        ("RR2 줄 전체를 백틱으로 감싼 행 → 해소 3", "".join(f"`M{n} | 해소 | {RR_G}`\n" for n in (1, 2, 3))),
+                        ("RR2b 목록 표지 · 항목 칸 강조 → 해소 3",
+                         f"- M1 | 해소 | {RR_G}\n* **M2** | 해소 | {RR_G}\n| `M3` | 해소 | {RR_G} |\n")):
+        rdir = _fresh_stamp(repo, folder, clear=True)
+        expect(fails, label, fin(rdir, text), 0, "M_m=0(결정적 잔존 0 · 리뷰어 잔존 0 · 근거 판형 아님 0 · 판단 불가 0) · 해소 3")
+    for label, text, why in (("RR3 결과 파일 없음", None, "결과 파일 없음"), ("RR4 빈 결과 파일", "", "읽은 항목 행 0")):
+        rdir = _fresh_stamp(repo, folder, clear=True)
+        expect(fails, f"{label} → 답 없음 3 · 까닭 `{why}` · 다시 받기 안내(같은 시각)", fin(rdir, text), 2,
+               "판단 불가 0 · 답 없음 3) · 해소 0", f"| M1 | 답 없음(ddd: {why}) |",
+               f"답 없음: M1(ddd: {why}) · M2(ddd: {why}) · M3(ddd: {why}) — 그 렌즈 리뷰어에게", f"--finalize {rdir.name} 한 번 더")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    expect(fails, "RR5 다른 항목 행만 있음 → M3 `그 항목 행 없음` · M1 · M2 해소", fin(rdir, f"M1 | 해소 | {RR_G}\nM2 | 해소 | {RR_G}\n"), 2,
+           "M_m=1(결정적 잔존 0 · 리뷰어 잔존 0 · 근거 판형 아님 0 · 판단 불가 0 · 답 없음 1) · 해소 2", "답 없음: M3(ddd: 그 항목 행 없음)")
+    expect(fails, "RR5b 같은 시각에 그 행을 채워 재확정 → 해소 3(첫 답 없음은 다시 판정)", fin(rdir, three), 0, "M_m=0", "해소 3")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    first = fin(rdir, f"M1 | 해소 | {RR_G}\nM2 | 해소 | {RR_G}\n")
+    second = fin(rdir, f"M1 | 해소 | {RR_G}\nM2 | 해소 | {RR_G}\n")
+    expect(fails, "RR6 같은 시각 답 없음 두 번 → 판단 불가(1차 답 없음 1 → 2차 판단 불가 1)",
+           (second[0] if "답 없음 1)" in first[1] else 9, first[1] + second[1]), 2, "판단 불가 1) · 해소 2", "| M3 | 판단 불가 |")
+    expect(fails, "RR6b 그 뒤 해소 행을 채워도 판단 불가 유지(동결)", fin(rdir, three), 2, "판단 불가 1) · 해소 2")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    fin(rdir, f"M1 | 해소 | {RR_G}\nM2 | 해소 | {RR_G}\n")
+    old_json: Path = rdir / "result.json"
+    data: dict = json.loads(old_json.read_text(encoding="utf-8")) if old_json.is_file() else {}
+    had: bool = data.pop("noans", None) == ["M3"]
+    old_json.write_text(json.dumps(data), encoding="utf-8")
+    expect(fails, "RR7 옛 result.json(답 없음 이력 칸 없음) 같은 시각 재확정 → 첫 답 없음으로(판단 불가 아님) · 새 result.json 은 이력을 적는다",
+           (lambda g: (g[0] if had else 9, g[1]))(fin(rdir, f"M1 | 해소 | {RR_G}\nM2 | 해소 | {RR_G}\n")), 2, "답 없음 1) · 해소 2")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    expect(fails, "RR8 리뷰어가 정말 판단 불가 → 판단 불가 그대로(답 없음 아님)",
+           fin(rdir, f"M1 | 해소 | {RR_G}\nM2 | 해소 | {RR_G}\nM3 | 판단 불가 | 근거를 못 찾음\n"), 2, "판단 불가 1) · 해소 2",
+           "| M3 | 판단 불가 |")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    bundle: str = (rdir / "review-ddd.md").read_text(encoding="utf-8") if (rdir / "review-ddd.md").is_file() else ""
+    head: str = bundle.split("## 항목")[0]
+    copied = fin(rdir, head + three)
+    again = fin(rdir, head + three)
+    expect(fails, "RR13 묶음 머리(예 줄 포함)를 그대로 베끼고 진짜 행 셋 → 해소 3 · 같은 시각 2차도 해소 3(예 줄 `M<n>` 은 행이 아니다)",
+           (again[0] if copied[0] == 0 and "| M<n> | 해소 | " in head else 9, head + copied[1] + again[1]), 0, "M_m=0", "해소 3")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    expect(fails, "RR14 코드 펜스 안의 결과 꼴 줄은 행이 아니다 → M3 답 없음(그 항목 행 없음)",
+           fin(rdir, f"M1 | 해소 | {RR_G}\nM2 | 해소 | {RR_G}\n```\n| M3 | 해소 | {RR_G} |\n```\n"), 2,
+           "답 없음 1) · 해소 2", "답 없음: M3(ddd: 그 항목 행 없음)")
+    # R2 리뷰어 표 · verdict.md
+    aud: Audit = Audit(td / "rr-r2")
+
+    def r2(body: str) -> Path:
+        audit: Path = aud.make([])
+        for name, _lens, _cid in ra.Plan(audit).dispatch:
+            if name.startswith("ddd-"):
+                (audit / name).write_text(body, encoding="utf-8")
+        return audit
+    bare: str = row(1, V_B9, where=C_LOC).strip()[2:-2].strip() + "\n"                       # 앞뒤 `|` 를 뗀 번호 행
+    a9: Path = r2(RR_R2_HEAD + bare)
+    expect(fails, "RR9 R2 앞 `|` 없는 머리 · 번호 행 → check 행 1 · 통과 1", run(aud.repo, "check", str(a9)), 0, "행 1 · 통과 1")
+    a10: Path = r2(bare.split("|", 1)[1].strip() + "\n")
+    expect(fails, "RR10 R2 번호 칸 없는 앞 `|` 없는 행 꼴 줄 → 실행 불능(소리 없는 0행 아님)", run(aud.repo, "check", str(a10)), 1,
+           "ddd-01.md 에 표 행으로 읽지 못한 줄 1(앞 `|` 없음 · 번호 칸 없음)", "앞뒤 `|` 표 꼴(행# 칸 포함)로 다시 받는다(코드 재점검 아님)")
+    (a9 / "verdict.md").write_text("M1 | ddd-01#1 | 채택 |  | \n", encoding="utf-8")
+    expect(fails, "RR11 verdict.md 앞 `|` 없는 행 → 채택 1", run(aud.repo, "check-verdict", str(a9)), 0, "채택 1", "red 0")
+    for label, sep in (("`---`", "---|---|---|---|---|---|---\n"), ("`:---`", ":---|:---|:---|:---|:---|:---|:---\n")):
+        a15: Path = r2(RR_R2_HEAD + sep + bare)
+        expect(fails, f"RR15 R2 앞뒤 `|` 없는 GFM 표(머리 · 구분 줄 {label} · 번호 행) → check 행 1 · 통과 1(표 문법 줄은 못 읽은 행이 아니다)",
+               run(aud.repo, "check", str(a15)), 0, "행 1 · 통과 1")
+    a15c: Path = r2(RR_R2_HEAD.replace("행#", "번호") + "---|---|---|---|---|---|---\n" + bare)
+    expect(fails, "RR15c 머리 낱말이 다른 앞 `|` 없는 머리 줄도 다음 줄이 구분 줄이면 표 머리 → 실행 불능 아님", run(aud.repo, "check", str(a15c)), 0,
+           "행 1 · 통과 1")
+    a16: Path = r2(HEADER + row(1, V_B9, where=C_LOC) + "\n비고: 반환 타입이 `int | str | bytes | float | None | Decimal` 로 넓다.\n")
+    expect(fails, "RR16 표 아래 설명 줄의 인라인 코드 `a | b | …` → 못 읽은 행이 아니다(행 1 · 통과 1)", run(aud.repo, "check", str(a16)), 0,
+           "행 1 · 통과 1")
+    # R2 표가 코드 상자 안 — 밖에 행이 하나도 없으면 소리 없는 0행 대신 실행 불능
+    piped: str = HEADER + row(1, V_B9, where=C_LOC)
+    boxed: str = ("ddd-01.md 의 번호 행 1 이 코드 상자(코드 펜스) 안에 있고 밖에는 행이 없다 — 코드 상자 안에 있는 표는 읽지 않는다 · 그 리뷰어에게 "
+                  "코드 상자 없이 앞뒤 `|` 표 꼴로 다시 받는다(코드 재점검 아님)")
+    for label, body in (("```markdown 펜스로 감싼 표", f"```markdown\n{piped}```\n"), ("~~~ 펜스 안 앞 `|` 없는 행", f"~~~\n{RR_R2_HEAD}{bare}~~~\n"),
+                        ("밖에는 머리만 · 닫지 않은 펜스 안 행", f"{HEADER}\n```\n{piped}")):
+        expect(fails, f"RR17 R2 {label} → 실행 불능(0행 exit 0 아님)", run(aud.repo, "check", str(r2(body))), 1, boxed)
+    expect(fails, "RR17b 펜스 안은 예 줄(번호 없음)뿐 · 밖에는 머리만 → 행 0(발견 없음 그대로)",
+           run(aud.repo, "check", str(r2(HEADER + "\n```\n" + piped.replace("| 1 |", "| <행#> |") + "```\n"))), 0, "행 0 · 통과 0")
+    expect(fails, "RR17c 밖에 행이 있으면 펜스 안 예시 번호 행은 읽지 않는다(행 1 · 통과 1)",
+           run(aud.repo, "check", str(r2(piped + "\n```\n" + row(2, V_B9, where=P_LOC) + "```\n"))), 0, "행 1 · 통과 1")
+    # 해소 판정 표 — 앞 `|` 없는 행은 읽지 않고 red 글에만 알린다
+    lane = ChangesLane(td, "rr12")
+    bare_rows: str = CH_ROW_M1.strip()[2:-2] + "\n" + CH_ROW_M2.strip()[2:-2] + "\n"
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, "")
+    text: str = (lane.folder / "design-spec.md").read_text(encoding="utf-8")
+    (lane.folder / "design-spec.md").write_text(text.replace(RES_HEAD, RES_HEAD + "\n" + bare_rows), encoding="utf-8")
+    expect(fails, "RR12 해소 판정 표를 앞 `|` 없이 씀 → red 글 끝에 «— 앞 `|` 없는 행 2(표는 앞뒤 `|` 꼴로 쓴다)»(판정 무변)",
+           run(lane.repo, "resolution", str(lane.folder)), 2, "표에 행이 없다 — 앞 `|` 없는 행 2(표는 앞뒤 `|` 꼴로 쓴다)",
+           "M1 판정 없음 — 범위 안 ⓐ 항목에 판정 표 행이 없다 — 앞 `|` 없는 행 2(표는 앞뒤 `|` 꼴로 쓴다)")
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, CH_ROW_M1 + CH_ROW_M2.strip()[2:-2] + "\n")
+    expect(fails, "RR12b 한 행만 앞 `|` 없음 → M2 판정 없음 + 앞 `|` 없는 행 1", run(lane.repo, "resolution", str(lane.folder)), 2,
+           "M2 판정 없음 — 범위 안 ⓐ 항목에 판정 표 행이 없다 — 앞 `|` 없는 행 1(표는 앞뒤 `|` 꼴로 쓴다)")
+
+
+# ── 새-1 · F4-211 — 보탬 절(`## ⓐ 보탬 <시각>` · 항목 `B<n>`) ─────────────────────────────────────────
+LI_LOC: str = "application/demo/domain_layer/policy.py:9"
+LI_FIELDS: str = f"렌즈 = ddd · 위치 = {LI_LOC} · 규칙 = {V_B9} · 요지 = 규칙 함수 이름이 흩어짐 · 출처 = 본인 직접(2100)"
+LI_B1: str = f"- B1 · 결정 = 보탬 · {LI_FIELDS}\n"
+LI_ROW: str = "| B1 | 1 | 규칙 함수 이름 흩어짐(보탬) | 해소 | — | — | M1 — 규칙 함수 이름 통일 | — |\n"
+LI_ROW_V3: str = "| B1 | 1 | 규칙 함수 이름 흩어짐(보탬) | 변경 | — | V3 | M1 — 규칙 함수 이름 통일 | — |\n"
+LI_V3: str = "- V3 · 내부 약속 · 근거 B1 #1 · 슬라이스 S3\n  - 전 → 후: rule_9 이름 → rule_nine\n"
+LI_V3_OUT: str = ("- V3 · 밖 동작 · 근거 B1 #1 · 슬라이스 S3\n  - 전 → 후: 없는 thing 404 → 451\n"
+                  "  - 시험: 컨트롤러 451 응답 add(acceptance-tester) application/demo/test/test_thing_api.py::test_gone2\n"
+                  "    - 바뀌는 기대: 기대 추가 1\n  - 영향: 받는 쪽 0 · HTTP 소비 0\n")
+LI_ADM3: str = ("| 컨트롤러 451 응답 | HTTP 계약 | 매핑 오류 | 없음 | add | acceptance-tester "
+                "`application/demo/test/test_thing_api.py::test_gone2` |\n")
+
+
+def _li_added(body: str, stamp: str = "20261004-2100") -> str:
+    return f"\n## ⓐ 보탬 {stamp}\n\n{body}"
+
+
+def late_items_cases(fails: "list[str]", td: Path) -> None:
+    """보탬 문(설계 R §3.1 · §4.2 ~ §4.5) — 절 판형 · 닫힌 어휘 · 대리 불가 · 대상 BC · 규칙 결속(fail-closed) · «이번 실행 ⓐ = G0 ⓐ `M`
+    ∪ 보탬 `B` − 재상정» 으로 resolution · changes · residual 을 돈다 · 보탬은 N · M_m 밖에서 따로 센다."""
+    lane = ChangesLane(td, "late")
+    f: Path = lane.folder
+    scope: Path = f / "refactor-scope.md"
+    both: str = CH_ROW_M1 + CH_ROW_M2
+    rs = lambda *extra: run(lane.repo, "resolution", str(f), *extra)  # noqa: E731
+
+    def put(body: str, rows: str, vs: str = V1_TEXT + V2_TEXT) -> None:
+        scope.write_text(lane.scope_base + body, encoding="utf-8")
+        lane.spec(vs, EDIT_LINE, rows)
+
+    def added_of(body: str) -> "dict[str, tuple[str, str, str]] | str":
+        scope.write_text(lane.scope_base + body, encoding="utf-8")
+        try:
+            return {k: (it.token, it.stamp, it.changed) for k, it in ra._added(f, "demo").items()}
+        except RuntimeError as exc:
+            return f"실행 불능 {exc}"
+    for label, body, rows, code, needles in (
+            ("RB1 보탬 줄 + 해소 판정 표 B1 행 → green · 항목 3(보탬 1) · 렌즈 목록에 B1", _li_added(LI_B1), both + LI_ROW, 0,
+             ("항목 3(보탬 1)", "렌즈 ddd: M1 · M2 · B1", "red 0")),
+            ("RB2 보탬 줄이 있는데 표에 B1 행 없음 → red", _li_added(LI_B1), both, 2, ("B1 판정 없음 — 범위 안 ⓐ 항목에",)),
+            ("RB3 보탬 절에 없는 B2 행 → red", _li_added(LI_B1), both + LI_ROW + LI_ROW.replace("B1", "B2"), 2,
+             ("B2 범위 밖 — 이번 실행 몫 `## ⓐ 보탬` 절의 `결정 = 보탬` 항목이 아니다",)),
+            ("RB4 대리 출처 → 실행 불능", _li_added(LI_B1.replace("본인 직접(2100)", "발주자 대리(2100)")), both + LI_ROW, 1, ("대리 불가",)),
+            ("RB5 위치가 대상 BC 밖 → 실행 불능", _li_added(LI_B1.replace(LI_LOC, X_LOC)), both + LI_ROW, 1, ("가 대상 BC(demo) 밖이다",)),
+            ("RB6 `결정 = 별도 요청` + 표에 B1 행 → red 범위 밖", _li_added(LI_B1.replace("결정 = 보탬", "결정 = 별도 요청")), both + LI_ROW, 2,
+             ("B1 범위 밖",)),
+            ("RB7 결정 칸 첫 낱말 어휘 밖 → 실행 불능", _li_added(LI_B1.replace("결정 = 보탬", "결정 = 넣음")), both + LI_ROW, 1,
+             ("`넣음` 이 닫힌 어휘(보탬 · 별도 · 미룸) 밖",)),
+            ("RB8 규칙 인용이 그 절에 결속 안 됨 → red(같은 답의 정형 교정)",
+             _li_added(LI_B1.replace("애그리거트로 존재해야 한다", "아무 말이나 적었다 스무 자 넘게")), both + LI_ROW, 2,
+             ("B1 보탬 줄 규칙", "결속되지 않는다")),
+            ("RB9 보탬 절에 `M9` 번호 → 실행 불능", _li_added(LI_B1.replace("- B1 ·", "- M9 ·")), both + LI_ROW, 1,
+             ("항목 `M9` — 보탬 절 항목 번호는 `B<n>` 이다",)),
+            ("RB10 답 전 자리표시(`결정 = · …`)는 결정이 아니다 → 표 B1 은 범위 밖", _li_added("- B1 · 결정 = · 렌즈 = ddd\n"), both + LI_ROW, 2,
+             ("B1 범위 밖",)),
+            ("RB11 한 절에 같은 번호 두 줄 → 실행 불능", _li_added(LI_B1 + LI_B1), both + LI_ROW, 1, ("B1 가 둘 이상이다",)),
+            ("RB12 절 머리에 시각 없음 → 실행 불능", "\n## ⓐ 보탬\n\n" + LI_B1, both + LI_ROW, 1, ("절 머리에 시각이 없다",))):
+        put(body, rows)
+        expect(fails, label, rs(), code, *needles)
+    # 근거 `B<k> #<j>` — changes · resolution · --gate
+    put(_li_added(LI_B1), both + LI_ROW_V3, V1_TEXT + V2_TEXT + LI_V3)
+    expect(fails, "RB13 V3 근거 B1 #1 · 표 B1 `변경` 행 → changes green", lane.ch(), 0, "V 3(내부 약속 2", "red 0")
+    expect(fails, "RB13b 같은 명세 resolution → green(변경 요지 3)", rs(), 0, "변경 요지 3", "red 0")
+    lane.support()
+    glane = ReviewLane(td, "late-g")
+    glane.support()
+    gscope: Path = glane.folder / "refactor-scope.md"
+    gbase: str = glane.scope_base + _li_added(LI_B1)
+    gscope.write_text(gbase, encoding="utf-8")
+    glane.spec(V1_TEXT + V2_TEXT + LI_V3_OUT, EDIT_LINE, both + LI_ROW_V3, adm=V_SPEC_ROWS + LI_ADM3)
+    made = glane.ch("--candidate")
+    cands: "list[Path]" = sorted((glane.folder / "g1").glob("*-candidate.json"))
+    if not cands:
+        fails.append(f"RB14 · RB15 후보 준비 실패 — exit {made[0]}: {made[1][-300:]}")
+    else:
+        cd: str = ra.snapshot_digest(json.loads(cands[-1].read_text(encoding="utf-8")))
+        head: str = (f"\n## G1 변경 결정 20261004-2200 · 후보 digest {cd}\n\n- V2 · 결정 = 바꾼다 · 출처 = 본인 직접(2200)\n"
+                     "- V3 · 결정 = 바꾼다 · 출처 = 본인 직접(2200)\n")
+        gscope.write_text(gbase + head, encoding="utf-8")
+        expect(fails, "RB14 V3 근거 B1 #1 = 표 `변경` 행 → --gate green", glane.ch("--gate"), 0, "red 0 · gate")
+        glane.spec(V1_TEXT + V2_TEXT + LI_V3_OUT, EDIT_LINE, both + LI_ROW, adm=V_SPEC_ROWS + LI_ADM3)
+        expect(fails, "RB14b 표 B1 행이 `해소` 인데 V3 근거 B1 #1 → --gate red", glane.ch("--gate"), 2,
+               "V3 근거 B1 #1 가 이 V 를 가리키는 해소 판정 표 `변경` 행이 아니다")
+        keep: str = gbase + head.replace("- V3 · 결정 = 바꾼다", "- V3 · 결정 = 안 바꾼다")
+        gscope.write_text(keep, encoding="utf-8")
+        no: int = next(i for i, ln in enumerate(keep.split("\n"), 1) if ln.startswith("- V3 · 결정 = 안 바꾼다"))
+        glane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, both + LI_ROW)
+        expect(fails, "RB15 `안 바꾼다` V3 의 근거 B1 #1 요지가 `불가 · 변경 미승인` 이 아님 → --gate red", glane.ch("--gate"), 2,
+               "V3 는 G1 결정 `안 바꾼다` 인데 그 요지(B1 #1)가 `불가 · 변경 미승인` 가 아니다")
+        glane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, both + f"| B1 | 1 | 규칙 함수 이름 흩어짐(보탬) | 불가 | 변경 미승인 | refactor-scope.md:{no} — "
+                   "G1 결정 안 바꾼다 | — | — |\n")
+        expect(fails, "RB15b 그 요지를 `불가 · 변경 미승인` 으로 반영 → --gate green", glane.ch("--gate"), 0, "red 0 · gate")
+    # 재상정 · 요지 축소 — 키 `B<n>`
+    recon: str = "\n## ⓐ 재상정 20261004-2300 — 픽스처\n\n"
+    put(_li_added(LI_B1) + recon + "- B1 · 결정 = 별도 요청 · 사유 = 픽스처 · 출처 = 본인 직접(2300)\n", both)
+    expect(fails, "RB16 재상정으로 뺀 B1 → 표에 B1 행 없이 green(범위에서 빠짐)", rs("--gate"), 0, "항목 2 ·", "red 0")
+    lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE, both + LI_ROW)
+    expect(fails, "RB16b 뺀 B1 의 정리 행이 표에 남음 → --gate red", rs("--gate"), 2, "B1 전체 제외 항목의 판정 표에 정리(해소·변경) 요지가 남아 있다")
+    split: str = (LI_ROW.replace("| — |\n", "| 뺀 요지의 처방은 인자 형태만 바꾼다 |\n")
+                  + f"| B1 | 2 | 인자 형태 흩어짐 | 불가 | 편집 범위 밖 | {X_LOC} — 호출 쪽이 바뀐다 | — | — |\n")
+    reduce: str = ("- B1 · 결정 = 요지 축소 · 남긴 요지 = #1 · 뺀 요지 = #2 → 별도 요청 · 남김 근거 = 해소 판정 표 · "
+                   "출처 = 본인 직접(2300)\n")
+    put(_li_added(LI_B1) + recon + reduce, both + split)
+    expect(fails, "RB17 B1 요지 축소(남긴 #1 · 뺀 #2 = 표) → --gate green", rs("--gate"), 0, "red 0 · gate")
+    put(_li_added(LI_B1) + recon + reduce.replace("남긴 요지 = #1 · 뺀 요지 = #2", "남긴 요지 = #2 · 뺀 요지 = #1"), both + split)
+    expect(fails, "RB17b 요지 축소 번호 ≠ 표 → --gate red", rs("--gate"), 2, "B1 요지 축소 줄 번호가 표와 다르다")
+    # 보탬 절 줄은 G0 결정 줄로 새지 않는다
+    put(_li_added(f"- M5 · 결정 = ⓐ · {LI_FIELDS}\n"), both)
+    adopted: "set[str]" = ra._scope(f)[1]
+    expect(fails, "RB22 보탬 절 안 `M5 · 결정 = ⓐ` 줄은 G0 ⓐ 로 읽지 않는다(`_scope` 무변) · resolution 은 실행 불능",
+           (rs()[0] if adopted == {"M1", "M2"} else 9, str(sorted(adopted))), 1)
+    # 절 판형(처분 Y3 · Y10) — `_added`
+    for label, body, want in (
+            ("RB24 쉼표 목록 `B1, B2 · 결정 = 미룸` → 둘 다 미룸", f"- B1, B2 · 결정 = 미룸 · 위치 = {LI_LOC} · 출처 = 본인 직접(2100)\n",
+             {"B1": ("미룸", "20261004-2100", ""), "B2": ("미룸", "20261004-2100", "")}),
+            ("RB25 항목 칸 강조 `**B5**` → 보탬", f"- **B5** · 결정 = 보탬 · {LI_FIELDS}\n", {"B5": ("보탬", "20261004-2100", "")}),
+            ("RB10b 자리표시만 → 항목 없음", "- B1 · 결정 = · 렌즈 = ddd\n", {}),
+            ("RB28 `· 바꿈 <시각>` 줄이 앞 줄을 갈음(마지막 줄이 이긴다)",
+             "- B1 · 결정 = 미룸 · 출처 = 본인 직접(2100)\n" + _li_added(LI_B1.rstrip("\n") + " · 바꿈 20261004-2200\n", "20261004-2200"),
+             {"B1": ("보탬", "20261004-2200", "20261004-2200")}),
+            ("RB30 `· 바꿈 <시각>` 의 시각에 공백(`2026-10-04 22:00`) → 읽힘",
+             "- B1 · 결정 = 미룸 · 출처 = 본인 직접(2100)\n" + _li_added(LI_B1.rstrip("\n") + " · 바꿈 2026-10-04 22:00\n", "20261004-2200"),
+             {"B1": ("보탬", "20261004-2200", "2026-10-04 22:00")})):
+        got = added_of(_li_added(body))
+        expect(fails, label, (0 if got == want else 9, str(got)), 0)
+    for label, body, needle in (
+            ("RB26 절 안 항목 번호를 품은 판형 밖 줄(`- 물음: B1 …`) → 실행 불능", LI_B1 + "- 물음: B1 은 이름을 묻는다\n",
+             "항목 번호를 품은 줄이 결정 줄 판형"),
+            ("RB27 다른 절의 같은 번호(바꿈 표지 없음) → 실행 불능",
+             "- B1 · 결정 = 미룸 · 출처 = 본인 직접(2100)\n" + _li_added(LI_B1, "20261004-2200"), "B1 가 둘 이상이다"),
+            ("RB29 앞 줄 없는 바꿈 줄 → 실행 불능", LI_B1.replace("B1", "B9").rstrip("\n") + " · 바꿈 20261004-2200\n",
+             "B9 바꿈 줄인데 앞 결정 줄이 없다")):
+        got = added_of(_li_added(body))
+        expect(fails, label, (0 if isinstance(got, str) and needle in got else 9, str(got)), 0)
+    put(_li_added("- B1 · 결정 = 미룸 · 출처 = 본인 직접(2100)\n")
+        + _li_added(LI_B1.rstrip("\n") + " · 바꿈 20261004-2200\n", "20261004-2200"), both + LI_ROW)
+    expect(fails, "RB28b 답을 바꾼 B1(미룸 → 보탬)은 범위에 든다 → resolution green · 항목 3(보탬 1)", rs(), 0, "항목 3(보탬 1)", "red 0")
+    back: str = _li_added(LI_B1) + _li_added("- B1 · 결정 = 미룸 · 출처 = 본인 직접(2200) · 바꿈 20261004-2200\n", "20261004-2200")
+    put(back, both + LI_ROW)
+    expect(fails, "RB31 답을 바꾼 B1(보탬 → 미룸)은 범위 밖 → 표에 남은 B1 행 red", rs(), 2, "B1 범위 밖 — 이번 실행 몫 `## ⓐ 보탬` 절의 `결정 = 보탬` 항목이 아니다")
+    put(back, both)
+    expect(fails, "RB31b 그 행을 지우면 resolution green · 항목 2", rs(), 0, "항목 2 ·", "red 0")
+    expect(fails, "RB31c residual 안내 줄 — 바꿈으로 되돌린 보탬 1(B1)", run(lane.repo, "residual", str(f)), 2,
+           "  보탬 문 — 미룸 B1(—) · 바꿈으로 되돌린 보탬 1(B1)")
+    shutil.rmtree(f / "residual")
+    # residual — 보탬 항목은 리뷰어 확인 · 결정적 잔존을 M 과 같은 규칙으로 · M_m 밖에서 따로
+    put(_li_added(LI_B1 + "- B2 · 결정 = 별도 요청 · 위치 = application/demo/domain_layer/big.py:1 · 출처 = 본인 직접(2100)\n"
+                  "- B3 · 결정 = 미룸 · 출처 = 본인 직접(2100)\n"), both + LI_ROW)
+    note: str = "  보탬 문 — 별도 요청 B2(application/demo/domain_layer/big.py:1) · 미룸 B3(—)"
+    policy: Path = lane.repo / "application/demo/domain_layer/policy.py"
+    thing: Path = lane.repo / "application/demo/driving_layer/api/thing/thing_controller.py"
+    clean: str = policy.read_text(encoding="utf-8")
+    thing.write_text(thing.read_text(encoding="utf-8") + "\n# 정리\n", encoding="utf-8")
+    got = run(lane.repo, "residual", str(f))
+    expect(fails, "RB19 B1 위치 파일 무변 → 결정적 잔존(첫 호출 — M1 · B1 잔존 2 · M2 리뷰어 확인) · 보탬 문 처분 줄(RB21)", got, 0,
+           "결정적 잔존 2 · 리뷰어 확인 대상 1(ddd)", note)
+    rdir: Path = sorted((f / "residual").iterdir(), key=lambda p: ra._stamp_key(p.name))[-1]
+    (rdir / "result-ddd.md").write_text(f"| M2 | 해소 | {RR_G} |\n", encoding="utf-8")
+    expect(fails, "RB19b --finalize → M 은 M_m=1(결정적 잔존 1) · 보탬은 따로 `보탬 1건 잔존 1(결정적 잔존 1 …)` · exit 2 · 처분 줄",
+           run(lane.repo, "residual", str(f), "--finalize", rdir.name), 2,
+           "M_m=1(결정적 잔존 1 · 리뷰어 잔존 0 · 근거 판형 아님 0 · 판단 불가 0) · 해소 1 · 보탬 1건 잔존 1(결정적 잔존 1 · 리뷰어 잔존 0 · "
+           "근거 판형 아님 0 · 판단 불가 0) →", note)
+    recon_m: str = recon + "- M1, M2 · 결정 = 별도 요청 · 사유 = 픽스처 · 출처 = 본인 직접(2300)\n"
+    shutil.rmtree(f / "residual")
+    put(_li_added(LI_B1) + recon_m, LI_ROW)
+    expect(fails, "RB19c 남은 항목이 B1 뿐이고 결정적 잔존 → 리뷰어 확인 대상 0 요약도 M_m=0 · 보탬 1건 잔존 1 · exit 2",
+           run(lane.repo, "residual", str(f)), 2, "M_m=0(결정적 잔존 0) · 보탬 1건 잔존 1(결정적 잔존 1) · 리뷰어 확인 대상 0")
+    policy.write_text(clean + "\n# 보탬 정리\n", encoding="utf-8")
+    rdir = _fresh_stamp(lane.repo, f, clear=True)
+    bundle: str = (rdir / "review-ddd.md").read_text(encoding="utf-8") if (rdir / "review-ddd.md").is_file() else ""
+    expect(fails, "RB18 B1 위치 파일이 바뀜 → 그 줄의 렌즈(ddd) 리뷰어 확인 · 묶음 `### B1` · 보탬 항목 줄(원 행 = 보탬 줄)",
+           (0 if "### B1\n- 보탬 항목(ⓐ 보탬 20261004-2100 · 렌즈 ddd): 위치 " + LI_LOC + " · 규칙 " in bundle
+            and "요지 규칙 함수 이름이 흩어짐" in bundle else 9, bundle[-600:]), 0)
+    (rdir / "result-ddd.md").write_text("B1 | 해소 | application/demo/domain_layer/policy.py:9 — 이름 한 곳\n", encoding="utf-8")
+    expect(fails, "RB20 B1 해소(앞 `|` 없는 꼴) → M_m=0 · 해소 1 · 보탬 1건 잔존 0 · exit 0",
+           run(lane.repo, "residual", str(f), "--finalize", rdir.name), 0, "M_m=0(", "해소 1 · 보탬 1건 잔존 0(결정적 잔존 0")
+    rdir = _fresh_stamp(lane.repo, f, clear=True)
+    expect(fails, "RB20b B1 답 없음 → 보탬 쪽 `답 없음 1` 로 · M_m=0 · exit 2", run(lane.repo, "residual", str(f), "--finalize", rdir.name), 2,
+           "M_m=0(결정적 잔존 0 · 리뷰어 잔존 0 · 근거 판형 아님 0 · 판단 불가 0) · 해소 0 · 보탬 1건 잔존 1(결정적 잔존 0 · 리뷰어 잔존 0 · "
+           "근거 판형 아님 0 · 판단 불가 0 · 답 없음 1)", "답 없음: B1(ddd: 결과 파일 없음)")
+    put(_li_added(LI_B1) + recon + "- B1 · 결정 = 별도 요청 · 사유 = 픽스처 · 출처 = 본인 직접(2300)\n", both)
+    shutil.rmtree(f / "residual")
+    rdir = _fresh_stamp(lane.repo, f)
+    (rdir / "result-ddd.md").write_text(f"M1 | 해소 | application/demo/domain_layer/policy.py:9 — x\nM2 | 해소 | {RR_G}\n", encoding="utf-8")
+    expect(fails, "RB20c 재상정으로 뺀 B1 도 k 에 센다(N 과 같은 셈) — 보탬 1건 잔존 0 · 해소 2 · exit 0",
+           run(lane.repo, "residual", str(f), "--finalize", rdir.name), 0, "해소 2 · 보탬 1건 잔존 0(")
+    put(_li_added(LI_B1) + recon + reduce, both + split)
+    shutil.rmtree(f / "residual")
+    rdir = _fresh_stamp(lane.repo, f)
+    bundle = (rdir / "review-ddd.md").read_text(encoding="utf-8") if (rdir / "review-ddd.md").is_file() else ""
+    expect(fails, "RB17c 요지 축소한 B1 — residual 묶음에 남긴 · 뺀 요지 줄",
+           (0 if "- 요지 축소(재상정 20261004-2300): 남긴 요지 #1 «규칙 함수 이름 흩어짐(보탬)»" in bundle else 9, bundle[-600:]), 0)
+    # --self-test — 보탬 결정 어휘 = 규범 문면
+    import contextlib
+    import io
+    for label, tail, want, unwant in (
+            ("RB23 Coordinator 에 보탬 결정 어휘 문면 없음 → red", "", "보탬 결정 어휘 문면(«보탬 결정 칸의 첫 낱말은»)을 Coordinator 에서 찾지 못했다", "\0"),
+            ("RB23b 문면 = 상수 → 보탬 어휘 red 없음", f"{ra.ADDED_MARK} `보탬` · `별도` · `미룸` 가운데 하나다", "요약: self-test", "보탬 결정 어휘"),
+            ("RB23c 문면 어휘가 상수와 다름 → red", f"{ra.ADDED_MARK} `보탬` · `미룸` 가운데 하나다", "보탬 결정 어휘 상수 ≠ 규범 문면", "\0")):
+        corpus = ra.Corpus("claude")
+        coord = corpus.doc(COORD)
+        coord.lines = [ln.replace(ra.ADDED_MARK, "(지운 문면)") for ln in coord.lines]   # 줄 수는 그대로(블록 결속 무변)
+        coord.lines[-1] += tail
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            ra.cmd_self_test(corpus)
+        out: str = buf.getvalue()
+        expect(fails, label, (0 if want in out and unwant not in out else 9, out[-600:]), 0)
+
+
+# ── F4-205 도구 쪽 · 앞 결정 옮김 · W 소비 노출(2.46.0) ─────────────────────────────────────────────
+PL_HEAD: str = "\n## 슬라이스 계획\n\n| 슬라이스 | 목적 | 인수 행 | 내부 행 | 완료 조건 |\n|---|---|---|---|---|\n"
+PL_S1: str = "| S1 | 규칙 V1 | — | 규칙 함수 반환 기대 | test_policy |\n"
+PL_S2: str = "| S2 | 응답 V2 | 컨트롤러 404 응답 | — | test_thing_api |\n"
+PL_S3: str = "| S3 | 응답 V3 | 컨트롤러 451 응답 | — | test_thing_api |\n"
+PL_FOLLOW: str = "| 재조직 — 0F 정리 대상 | 같은 기대 그대로 | — | test_big | retain | coder `application/demo/test/test_big.py` |\n"
+PL_UPD0T: str = ("| 규칙 이름 시험 정리 | 규칙 계약 M1 | 규칙 오류 | test_policy | update | coder "
+                 "`application/demo/test/test_policy.py::test_rule_name` |\n")
+PL_ADM_V1: str = ("| 규칙 함수 반환 기대 | 규칙 계약 | 규칙 오류 | test_policy | update | coder "
+                  "`application/demo/test/test_policy.py::test_rule` |\n")
+PL_V3: str = ("- V3 · 밖 동작 · 근거 M2 #2 · 슬라이스 S3\n  - 전 → 후: 없는 thing 404 → 451\n"
+              "  - 시험: 컨트롤러 451 응답 add(acceptance-tester) application/demo/test/test_thing_api.py::test_gone2\n"
+              "    - 바뀌는 기대: 기대 추가 1\n  - 영향: 받는 쪽 0 · HTTP 소비 0\n")
+PL_RES3: str = "| M2 | 2 | 응답 꼴 둘 | 변경 | — | V3 | M2 — 컨트롤러 예외 매핑 정리 | — |\n"
+PL_EXTRA: str = "- config/api.py · 프로젝트 합성 · 0C\n"
+PL_USER: str = "- V2 · 결정 = 바꾼다 · 출처 = 본인 직접({})\n"
+PL_CARRY: str = "- V2 · 결정 = 바꾼다 · 출처 = 앞 결정 {} · 길 = {}\n"
+PL_RECON_M1: str = "\n## ⓐ 재상정 20261004-1950\n\n- M1 · 결정 = 별도 요청 · 사유 = 다음 요청 · 출처 = 본인 직접(1950)\n"
+
+
+class PlanLane(ReviewLane):
+    """G1 흐름 레인 — 슬라이스 계획이 있는 명세 · 후보 → 결정 절 → `--gate` → 확정 줄(명세 sha)을 기록에 차례로 쌓는다."""
+
+    def __init__(self, td: Path, name: str) -> None:
+        super().__init__(td, name)
+        self.support()
+        self.f: Path = self.folder
+        self.scope: Path = self.folder / "refactor-scope.md"
+        self.parts: "list[str]" = [self.scope_base]
+        self.cand: str = ""
+
+    def plan(self, vs: str = V1_TEXT + V2_TEXT, edits: str = EDIT_LINE, res: str = CH_ROW_M1 + CH_ROW_M2,
+             adm: str = V_SPEC_ROWS + PL_FOLLOW, plan: str = PL_HEAD + PL_S1 + PL_S2) -> None:
+        self.spec_plan(vs, edits, res, adm=adm, plan=plan)
+
+    def write(self) -> None:
+        self.scope.write_text("".join(self.parts), encoding="utf-8")
+
+    def decide(self, at: str, lines: str) -> Path:
+        """--candidate → `## G1 변경 결정 <at>` 절(결정 줄 `lines`) — 후보 파일 · 실패하면 빈 digest 로 이어 간다(뒤 단언이 붉다)."""
+        try:
+            path, self.cand = self.candidate()
+        except RuntimeError as exc:
+            path, self.cand = self.folder / f"(후보 없음 {exc})"[:80], "0" * 12
+        self.parts.append(f"\n## G1 변경 결정 {at} · 후보 digest {self.cand}\n\n{lines}")
+        self.write()
+        return path
+
+    def confirm(self, at: str) -> "tuple[int, str]":
+        """`--gate` → 초록이면 `G1 변경판 확정 <at>` 줄(명세 sha 칸)을 덧붙인다."""
+        got = self.ch("--gate")
+        if got[0] == 0 and "최종 digest " in got[1] and "명세 sha " in got[1]:
+            d, s = got[1].split("최종 digest ", 1)[1].split()[0], got[1].split("명세 sha ", 1)[1].split()[0]
+            self.parts.append(f"- G1 변경판 확정 {at} · digest {d} · 후보 {self.cand} · 명세 sha {s}\n")
+            self.write()
+        return got
+
+    def legacy(self, path: Path, stamp: str = "20261001T000000Z") -> "tuple[Path, str]":
+        """곁 자료 결속 칸(`side_rows_digest`)이 없는 옛 판 후보 사본 — 후보 파일 · 곁 자료를 새 이름으로 쓴다."""
+        snap: dict = json.loads(path.read_text(encoding="utf-8"))
+        snap.pop("side_rows_digest", None)
+        digest: str = ra.snapshot_digest(snap)
+        out: Path = path.with_name(f"{stamp}-candidate.json")
+        out.write_text(json.dumps(snap, ensure_ascii=False, sort_keys=True, indent=1) + "\n", encoding="utf-8")
+        side: dict = json.loads(path.with_name(path.name[:-len(".json")] + "-resolution.json").read_text(encoding="utf-8"))
+        side.update(candidate=digest, candidate_file=out.name)
+        out.with_name(out.name[:-len(".json")] + "-resolution.json").write_text(json.dumps(side, ensure_ascii=False), encoding="utf-8")
+        return out, digest
+
+
+def _tried(fn) -> object:  # noqa: ANN001
+    """공개 함수 값 — 실행 불능이면 `실행 불능 <글>`(변이가 러너를 깨뜨리지 않게)."""
+    try:
+        return fn()
+    except Exception as exc:  # noqa: BLE001 — 단언이 값으로 본다
+        return f"실행 불능 {exc}"
+
+
+def g1_binding_r_cases(fails: "list[str]", td: Path) -> None:
+    """F4-205 도구 쪽(설계 R §4.4) — `--gate` 명세 sha · ⑤ 다시 · 확정 줄 sha 칸(곁 결속 후보면 필수) · `g1_confirmations` · 후보 곁 결속
+    `side_rows_digest` · 엄격 판별 `strict_run` · 계획 표 red · 옛 판 후보 호환."""
+    lane = PlanLane(td, "rg")
+    f: Path = lane.f
+    expect(fails, "RG10 strict_run 후보 없음(G1 전) → 참", (0 if _tried(lambda: ra.strict_run(f)) is True else 9, ""), 0)
+    # 계획 표 red(엄격) — 갈래 차례 · S 번호 차례 · 칸 꼴 · V 슬라이스 실재
+    for label, plan, code, needle in (
+            ("RG11a 계획 S1 · S2 → green", PL_HEAD + PL_S1 + PL_S2, 0, "red 0"),
+            ("RG11 S2 뒤 S1 → red", PL_HEAD + PL_S2 + PL_S1, 2, "슬라이스 계획 S 줄이 번호 차례가 아니다 — `S2` 뒤 `S1`"),
+            ("RG12 S1 뒤 0T → red", PL_HEAD + PL_S1 + "| 0T | 시험 정리 | — | — | x |\n" + PL_S2, 2,
+             "슬라이스 계획 줄이 갈래 차례(0T → 0C → 0F → S)가 아니다 — `S1` 뒤 `0T`"),
+            ("RG12b 0T · 0C · 0F-a · S1 · S2 → green", PL_HEAD + "| 0T | a | — | — | x |\n| `0C` | b | — | — | x |\n| 0F-a | c | — | — | x |\n"
+             + PL_S1 + PL_S2, 0, "red 0"),
+            ("RG13 반영 창 이름 `R0T` 행 → red(반영 창은 계획 행이 아니다)", PL_HEAD + PL_S1 + PL_S2 + "| R0T | 감사 반영 | — | — | x |\n", 2,
+             "슬라이스 계획 `R0T` 가 `0T` · `0C` · `0F`(하위 이름 가능) · `S<n>` 꼴이 아니다(반영 창은 계획 행이 아니다"),
+            ("RG14 V2 의 슬라이스가 계획에 없음 → red", PL_HEAD + PL_S1, 2, "V2 의 슬라이스 `S2` 이 `## 슬라이스 계획` 에 없다"),
+            ("RG16 앞 `|` 없는 계획 행도 읽는다 → green", PL_HEAD + PL_S1.strip()[2:-2] + "\n" + PL_S2.strip()[2:-2] + "\n", 0, "red 0")):
+        lane.plan(plan=plan)
+        expect(fails, label, lane.ch(), code, needle)
+    expect(fails, "RG16b 그 명세의 slice_plan → S1 · S2", (0 if _tried(lambda: [r.slice for r in ra.slice_plan(f)]) == ["S1", "S2"] else 9, ""), 0)
+    # 계획 절 실재(엄격 · 이음 J-3 · IC-5) — 슬라이스가 필요한 실행인데 절이나 행이 없으면 red
+    no_section: str = "`## 슬라이스 계획` 절이 없다"
+    solved: str = RES_ROWS["M1"].replace("M1(+M4)", "M1") + CB_M2_SOLVED
+    for label, plan, needle in (
+            ("RG21 V 있는 명세에 `## 슬라이스 계획` 절이 없음 → red 하나", "", no_section),
+            ("RG21b 절이 둘 → red(하나여야 한다)", PL_HEAD + PL_S1 + PL_S2 + PL_HEAD, "`슬라이스 계획` 제목이 2개다(하나여야 한다)")):
+        lane.plan(plan=plan)
+        expect(fails, label, lane.ch(), 2, f"red: {needle}", " · red 1")
+    no_rows: str = "`## 슬라이스 계획` 절에 계획 행이 없다(머리 첫 칸이 `슬라이스` 인 표)"
+    other: str = "\n| 바뀌는 서명 | 쓰는 곳 | 고치는 슬라이스 |\n|---|---|---|\n| `rule_0(x)` | domain_layer/uses_base.py | S1 |\n"
+    for label, plan in (("RG21c 절은 있고 행이 없음 → red 하나", PL_HEAD), ("RG21k 머리 첫 칸이 `슬라이스` 아닌 표뿐 → red 하나", "\n## 슬라이스 계획\n" + other)):
+        lane.plan(plan=plan)
+        expect(fails, label, lane.ch(), 2, f"red: {no_rows}", " · red 1")
+    for label, edits, rows, code, needle in (
+            ("RG21d V 없음 · V 밖 update 행(0T)만 → red", "없음\n", PL_UPD0T.replace("test_rule_name", "test_rule"), 2, f"red: {no_section}"),
+            ("RG21e V 없음 · 재조직 retain 행(0F)만 → red", "없음\n", PL_FOLLOW, 2, f"red: {no_section}"),
+            ("RG21f V 없음 · 0C 다른 BC 편집만 → red", EDIT_LINE.replace("V2", "0C"), "", 2, f"red: {no_section}"),
+            ("RG21g V 없음 · 재조직 아닌 retain 행만 · 살아 있는 ⓐ 없음(모두 재상정) → green(빈 실행)", "없음\n",
+             V_SPEC_ROWS.splitlines(keepends=True)[-1], 0, "red 0")):
+        lane.plan(vs="없음\n", edits=edits, res=solved, adm=ADM_HEAD + rows, plan="")
+        lane.parts = [lane.scope_base, PL_RECON_M1.replace("- M1 ·", "- M1, M2 ·")]       # ⓐ 0 — 명세 쪽 조건만 남긴다
+        lane.write()
+        expect(fails, label, lane.ch(), code, needle, " · red 1" if code else " · red 0")
+    only_c: str = lane.scope_base.replace("- M1, M2 · 결정 = ⓐ", "- C1 · 결정 = ⓐ") + "- M1, M2 · 결정 = ⓑ · 사유 = 픽스처 · 출처 = 본인 직접(1900)\n"
+    zero_c: str = PL_HEAD + "| 0C | M1 · M2 | — | — | x |\n"
+    for label, scope_text, plan, code, needle in (
+            ("RG21h 살아 있는 ⓐ M 만(V · 편집 행 0 — 0C 만 있는 실행) · 절 없음 → red", lane.scope_base, "", 2, f"red: {no_section}"),
+            ("RG21i 같은 실행 · 절은 있고 행 0 → red", lane.scope_base, PL_HEAD, 2, f"red: {no_rows}"),
+            ("RG21j 같은 실행 · 0C 행 → green", lane.scope_base, zero_c, 0, "red 0"),
+            ("RG21l 살아 있는 ⓐ 가 검사기 빚 C 뿐 · 절 없음 → red", only_c, "", 2, f"red: {no_section}"),
+            ("RG21m 살아 있는 보탬 B 만 · 절 없음 → red", lane.scope_base + PL_RECON_M1.replace("- M1 ·", "- M1, M2 ·") + _li_added(LI_B1), "", 2,
+             f"red: {no_section}")):
+        lane.plan(vs="없음\n", edits="없음\n", res=solved, adm=ADM_HEAD, plan=plan)
+        lane.parts = [scope_text]
+        lane.write()
+        expect(fails, label, lane.ch(), code, needle, " · red 1" if code else " · red 0")
+    lane.parts = [lane.scope_base]
+    lane.write()
+    # 계획 행 = 머리 첫 칸이 `슬라이스` 인 표만
+    for label, plan, code, needle in (
+            ("RG23 둘째 표(바뀌는 서명)는 계획 행이 아니다 → green", PL_HEAD + PL_S1 + PL_S2 + other, 0, "red 0"),
+            ("RG23b 둘째 표가 앞에 와도 · 앞뒤 `|` 없는 표도 → green", "\n## 슬라이스 계획\n" + other + "\n슬라이스 | 목적 | 인수 행 | 내부 행 | 완료 조건\n"
+             "---|---|---|---|---\n" + PL_S1.strip()[2:-2] + "\n" + PL_S2.strip()[2:-2] + "\n", 0, "red 0"),
+            ("RG23h 머리 없이 적은 슬라이스 꼴 행도 읽는다 → green", "\n## 슬라이스 계획\n\n" + PL_S1.strip()[2:-2] + "\n" + PL_S2.strip()[2:-2] + "\n", 0, "red 0"),
+            ("RG23c 계획 표 밖 표에 슬라이스 꼴 행 → red(확정 계획 이력이 그 행을 읽지 않게)",
+             PL_HEAD + PL_S1 + PL_S2 + other + "| S1 | domain_layer/y.py | S1 |\n", 2,
+             "red: `## 슬라이스 계획` 절의 계획 표(머리 첫 칸 `슬라이스`) 밖에 슬라이스 꼴 행이 있다(S1)"),
+            ("RG23d 계획 표의 꼴 밖 칸 red 는 둘째 표를 쓰는 길을 가리킨다", PL_HEAD + PL_S1 + PL_S2 + "| R0T | 감사 반영 | — | — | x |\n" + other, 2,
+             "로 연다 · 계획 표 아닌 표는 머리 첫 칸을 `슬라이스` 로 쓰지 않는다)")):
+        lane.plan(plan=plan)
+        expect(fails, label, lane.ch(), code, needle, " · red 1" if code else " · red 0")
+    second = PlanLane(td, "rg-second")
+    second.plan(plan=PL_HEAD + PL_S1 + PL_S2 + other)
+    second.decide("20261004-1930", PL_USER.format("1930"))
+    expect(fails, "RG23e 둘째 표가 있는 명세 --gate → green", second.confirm("20261004-1940"), 0, "red 0 · gate")
+    got = _tried(lambda: ([r.slice for r in ra.slice_plan(second.f)], [r.slice for r in ra.slice_plan(second.f, "20261004-1940")],
+                          ra.confirmed_slices(second.f)))
+    expect(fails, "RG23f slice_plan(지금 · 확정) · confirmed_slices → S1 · S2(둘째 표 행 없음)",
+           (0 if got == (["S1", "S2"],) * 3 else 9, str(got)), 0)
+    second.plan(plan=PL_HEAD + PL_S1 + PL_S2 + other.replace("uses_base.py", "uses_other.py"))
+    expect(fails, "RG23g 확정 뒤 둘째 표를 바꾸면 --gate red(곁 자료 대조는 절의 표 행 전부)", second.ch("--gate"), 2, "⑤ 다시 — 반영 대조 다름 — 슬라이스 계획")
+    # 후보 · 확정
+    lane.plan()
+    c1path: Path = lane.decide("20261004-1930", PL_USER.format("1930"))
+    c1: str = lane.cand
+    expect(fails, "RG10b strict_run 첫 결정 절 후보에 곁 결속 → 참", (0 if _tried(lambda: ra.strict_run(f)) is True else 9, ""), 0)
+    got = lane.ch("--gate")
+    sha: str = ra.spec_sha(f)
+    expect(fails, "RG1 --gate 요약 끝 `· 최종 digest <d> · 명세 sha <12>`(명세 바이트 sha256 앞 12)",
+           (got[0] if got[1].rstrip().endswith(f"· 명세 sha {sha}") and sha == hashlib.sha256(
+               (f / "design-spec.md").read_bytes()).hexdigest()[:12] else 9, got[1]), 0, "red 0 · gate · 최종 digest ")
+    head1: str = lane.parts[-1]
+    d1: str = got[1].split("최종 digest ", 1)[1].split()[0] if "최종 digest " in got[1] else "0" * 12
+    lane.parts = [lane.scope_base, head1, f"- G1 변경판 확정 20261004-1940 · digest {d1} · 후보 {c1}\n"]
+    lane.write()
+    res = _tried(lambda: ra.g1_confirmed(f))
+    expect(fails, "RG9 곁 결속 후보로 한 확정 줄에 명세 sha 칸이 없다 → g1_confirmed 실행 불능(엄격)",
+           (0 if isinstance(res, str) and "명세 sha 칸이 없다" in res and "g1_confirmations" not in res else 9, str(res)), 0)
+    lane.parts = [lane.scope_base, head1]
+    lane.write()
+    expect(fails, "RG2 확정 줄 명세 sha 칸 → `G1Confirmation(at, digest, candidate, spec_sha)`", lane.confirm("20261004-1940"), 0, "명세 sha")
+    conf1: str = lane.parts[-1]
+    res = _tried(lambda: ra.g1_confirmed(f))
+    expect(fails, "RG2b 그 확정 줄 읽기 — 네 칸 · 앞 세 칸은 옛 꼴 그대로",
+           (0 if res == ra.G1Confirmation("20261004-1940", d1, c1, sha) and tuple(res)[:3] == ("20261004-1940", d1, c1) else 9, str(res)), 0)
+    # 확정 뒤 바뀜 — ⑤ 다시
+    spec_path: Path = f / "design-spec.md"
+    base_text: str = spec_path.read_text(encoding="utf-8")
+    for label, mutate, code, needle in (
+            ("RG4a 확정 뒤 슬라이스 계획에 0T 행 더함 → --gate red", lambda: lane.plan(plan=PL_HEAD + "| 0T | x | — | — | x |\n" + PL_S1 + PL_S2), 2,
+             "⑤ 다시 — 반영 대조 다름 — 슬라이스 계획"),
+            ("RG4b 확정 뒤 입장 표 V 밖 행 바꿈 → --gate red",
+             lambda: lane.plan(adm=V_SPEC_ROWS.replace("큰 함수 시험 그대로 | — |", "큰 함수 시험 그대로 | 큰 함수 계약 |") + PL_FOLLOW), 2,
+             "⑤ 다시 — 반영 대조 다름 — 입장 표"),
+            ("RG4c 확정 뒤 해소 판정 표 바꿈 → --gate red", lambda: lane.plan(res=CH_ROW_M1.replace("| — |\n", "| 이유 |\n") + CH_ROW_M2), 2,
+             "⑤ 다시 — 해소 판정 표 M1 #1 가 후보 뒤 바뀌었다"),
+            ("RG5 확정 뒤 V 전 → 후 바꿈 → --gate red", lambda: lane.plan(vs=V1_TEXT.replace("x → x + 1", "x → x * 2") + V2_TEXT), 2,
+             "⑤ 다시 — 반영 대조 다름 — `V`"),
+            ("RG4d 확정 뒤 처방 글만 바꿈 → --gate green(산문 — 처분 X2)",
+             lambda: spec_path.write_text(base_text.replace("한 이름 규약으로.", "한 이름 규약으로 모은다."), encoding="utf-8"), 0, "red 0 · gate"),
+            ("RG4e 확정 뒤 파일 계획 산문만 바꿈 → --gate green",
+             lambda: spec_path.write_text(base_text + "\n## 10. 파일 계획\n\napplication/demo/domain_layer/policy.py 를 고친다.\n",
+                                          encoding="utf-8"), 0, "red 0 · gate")):
+        mutate()
+        expect(fails, label, lane.ch("--gate"), code, needle)
+    p_prose, c_prose = lane.candidate()
+    expect(fails, "RG6 처방 글 · 파일 계획만 바뀐 새 후보의 digest 는 앞 후보와 같다(곁 결속에 명세 sha 없음)", (0 if c_prose == c1 else 9, c_prose), 0)
+    for extra in (p_prose, p_prose.with_name(p_prose.name[:-len(".json")] + "-resolution.json")):
+        extra.unlink()                                       # 같은 digest 의 가장 새 후보가 이기므로 아래 곁 자료 사례 앞에 지운다
+    lane.plan()
+    # 곁 자료 손 고침
+    side: Path = c1path.with_name(c1path.name[:-len(".json")] + "-resolution.json")
+    kept: bytes = side.read_bytes()
+    doc: dict = json.loads(kept)
+    doc["slices"] = [["S1", "손으로 고침"]]
+    side.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+    for label, args in (("RG7 --applied", ("--applied", str(c1path))), ("RG7b --gate", ("--gate",))):
+        expect(fails, f"{label} 곁 파일 `slices` 를 손으로 고침 → 실행 불능(곁 결속)", lane.ch(*args), 1,
+               "후보 곁 자료의 입장 표 · 슬라이스 계획이 후보 결속")
+    side.write_bytes(kept)
+    # 가운데 · 마지막 확정 줄 판형
+    lane.parts = [lane.scope_base, head1, conf1, "- G1 변경판 확정 20261004-1950 · digest zz · 후보 zz\n"]
+    lane.write()
+    res = _tried(lambda: ra.g1_confirmed(f))
+    expect(fails, "RG3 마지막 확정 줄이 판형 밖 → g1_confirmed 실행 불능(앞 줄로 내려가지 않는다)",
+           (0 if isinstance(res, str) and "최신 `G1 변경판 확정` 줄이 판형" in res else 9, str(res)), 0)
+    lane.parts += [conf1.replace("20261004-1940", "20261004-2010")]
+    lane.write()
+    many, last = _tried(lambda: ra.g1_confirmations(f)), _tried(lambda: ra.g1_confirmed(f))
+    expect(fails, "RG3b 가운데 확정 줄이 판형 밖 → g1_confirmations 실행 불능(«2번째») · g1_confirmed 는 마지막 줄 그대로",
+           (0 if isinstance(many, str) and "2번째 `G1 변경판 확정` 줄이 판형" in many and getattr(last, "at", "") == "20261004-2010"
+            else 9, f"{many} · {last}"), 0)
+    lane.parts = [lane.scope_base, head1, conf1, conf1.replace("20261004-1940", "20261004-1950")]
+    lane.write()
+    many = _tried(lambda: [c.at for c in ra.g1_confirmations(f)])
+    expect(fails, "RG3c g1_confirmations = 이번 실행 몫 확정 줄 전부(파일 차례)", (0 if many == ["20261004-1940", "20261004-1950"] else 9, str(many)), 0)
+    # 옛 판 후보(결속 칸 없음) — 확정 줄 sha 없이 읽힘 · 엄격 아님 · 계획 red 건너뜀 · --applied · --gate 는 같은 규칙
+    old = PlanLane(td, "rg-old")
+    old.plan()
+    path, _c = old.candidate()
+    opath, ocand = old.legacy(path)
+    path.unlink()
+    path.with_name(path.name[:-len(".json")] + "-resolution.json").unlink()
+    expect(fails, "RG10c strict_run 결정 절 앞 · 가장 새 후보가 옛 판 후보 → 거짓", (0 if _tried(lambda: ra.strict_run(old.f)) is False else 9, ""), 0)
+    # 결정 절 전 — 옛 판 후보가 남아 있어도 지금 쓰는 후보는 결속 칸을 실으므로 `--candidate` 는 계획을 본다(이음 J-4)
+    old.plan(plan=PL_HEAD + PL_S2 + PL_S1)
+    expect(fails, "RG22 결정 절 앞 · 남은 후보가 옛 판 · 확인만(`changes`)은 계획 red 를 건너뜀 → green", old.ch(), 0, "red 0")
+    expect(fails, "RG22b 같은 명세의 `--candidate` → 계획 red(새 후보로 시작하는 실행은 엄격)", old.ch("--candidate"), 2,
+           "슬라이스 계획 S 줄이 번호 차례가 아니다 — `S2` 뒤 `S1`")
+    old.plan(plan="")
+    expect(fails, "RG22c 계획 절이 없는 명세의 `--candidate` → red", old.ch("--candidate"), 2, f"red: {no_section}")
+    old.plan()
+    ohead: str = f"\n## G1 변경 결정 20261004-1930 · 후보 digest {ocand}\n\n" + PL_USER.format("1930")
+    old.parts = [old.scope_base, ohead]
+    old.write()
+    expect(fails, "RG10d strict_run 첫 결정 절 후보가 옛 판 후보 → 거짓", (0 if _tried(lambda: ra.strict_run(old.f)) is False else 9, ""), 0)
+    expect(fails, "RG8 옛 판 후보로 --applied → green", old.ch("--applied", str(opath)), 0, "red 0 · applied")
+    ogot = old.ch("--gate")
+    expect(fails, "RG8b 옛 판 후보로 --gate → green(최종 digest · 명세 sha)", ogot, 0, "red 0 · gate · 최종 digest")
+    od: str = ogot[1].split("최종 digest ", 1)[1].split()[0] if "최종 digest " in ogot[1] else "0" * 12
+    oconf: str = f"- G1 변경판 확정 20261004-1940 · digest {od} · 후보 {ocand}\n"
+    old.parts = [old.scope_base, ohead, oconf]
+    old.write()
+    res = _tried(lambda: ra.g1_confirmed(old.f))
+    expect(fails, "RG2c 옛 판 후보의 옛 확정 줄(sha 칸 없음) → 읽힘 · spec_sha None",
+           (0 if getattr(res, "spec_sha", "x") is None and tuple(res)[:3] == ("20261004-1940", od, ocand) else 9, str(res)), 0)  # type: ignore[arg-type]
+    old.plan(plan=PL_HEAD + PL_S2 + PL_S1)
+    expect(fails, "RG15 옛 꼴 실행(엄격 아님)은 계획 표 red 를 건너뜀 → changes green", old.ch(), 0, "red 0")
+    expect(fails, "RG15b 옛 꼴 실행은 `--candidate` 도 건너뜀(결정 절이 옛 판 후보에 선 뒤) → green", old.ch("--candidate"), 0, "red 0 · candidate")
+    old.plan(plan="")
+    expect(fails, "RG15c 옛 꼴 실행은 계획 절이 없어도 → green", old.ch(), 0, "red 0")
+    old.plan(adm=V_SPEC_ROWS.replace("큰 함수 시험 그대로 | — |", "큰 함수 시험 그대로 | 큰 함수 계약 |") + PL_FOLLOW)
+    expect(fails, "RG8c 옛 판 후보도 ⑤ 다시는 선다 → --gate red(입장 표)", old.ch("--gate"), 2, "⑤ 다시 — 반영 대조 다름 — 입장 표")
+    old.plan()
+    old.decide("20261004-2000", PL_USER.format("2000"))
+    expect(fails, "RG10e 첫 결정 절이 옛 판 후보면 뒤에 새 후보 결정 절이 서도 끝까지 거짓", (0 if _tried(lambda: ra.strict_run(old.f)) is False else 9, ""), 0)
+
+
+def carry_cases(fails: "list[str]", td: Path) -> None:
+    """앞 결정 옮김(설계 R §3.11 · §4.4 — 처분 Z1 · N1 · v3.2) — 길 둘 · `길` 칸 · 바로 앞 절 · 답 그대로 · 한 절에 길 하나 · 대조 ⓐ ~ ⓓ ·
+    재상정 반영은 뺀 항목을 지우는 반영만 · 셈 `carried_decisions` · `carry_tail`."""
+    two: str = V1_TEXT + V2_TEXT + PL_V3
+    adm3: str = V_SPEC_ROWS + PL_FOLLOW + LI_ADM3
+    plan3: str = PL_HEAD + PL_S1 + PL_S2 + PL_S3
+    res3: str = CH_ROW_M1 + CH_ROW_M2 + PL_RES3
+    # 확정 전(G1 답 반영) — 음성은 하나씩만 어긋나게
+    a = PlanLane(td, "rk-a")
+    a.plan(vs=two, adm=adm3, plan=plan3, res=res3)
+    a.decide("20261004-1930", PL_USER.format("1930") + PL_USER.format("1930").replace("V2", "V3"))
+    base: "list[str]" = list(a.parts)
+
+    def trial(lane: PlanLane, start: "list[str]", label: str, lines: str, code: int, *needles: str) -> None:
+        lane.parts = list(start)
+        lane.decide("20261004-2000", lines)
+        expect(fails, label, lane.ch("--gate"), code, *needles)
+    carry2 = lambda path="G1 답 반영", at="20261004-1930", ans="바꾼다": (  # noqa: E731
+        f"- V2 · 결정 = {ans} · 출처 = 앞 결정 {at} · 길 = {path}\n- V3 · 결정 = 바꾼다 · 출처 = 앞 결정 {at} · 길 = {path}\n")
+    closed: str = "앞 결정 옮김 줄이 `출처 = 앞 결정 <시각> · 길 = G1 답 반영 | 재상정 반영` 가 아니다"
+    trial(a, base, "RK0 같은 명세 · 길 = G1 답 반영(확정 전) → green", carry2(), 0, "red 0 · gate")
+    trial(a, base, "RK1 길 칸 없는 옮김 → red", "- V2 · 결정 = 바꾼다 · 출처 = 앞 결정 20261004-1930\n- V3 · 결정 = 바꾼다 · 출처 = 앞 결정 "
+          "20261004-1930 · 길 = G1 답 반영\n", 2, "V2 " + closed)
+    trial(a, base, "RK2 길 닫힌 어휘 밖(반송 재승인) → red", carry2("반송 재승인"), 2, "V2 " + closed)
+    trial(a, base, "RK3 출처 시각이 바로 앞 결정 절이 아님 → red", carry2(at="20261004-1900"), 2,
+          "V2 앞 결정 옮김은 바로 앞 결정 절(20261004-1930)에서만 — 출처 시각 `20261004-1900`")
+    trial(a, base, "RK4 앞 절 답을 바꿔 옮김(바꾼다 → 안 바꾼다) → red", carry2(ans="안 바꾼다"), 2,
+          "V2 앞 결정 옮김 — 앞 절 답 `바꾼다` · 이 줄 `안 바꾼다`(답은 옮길 뿐 바꾸지 않는다)")
+    trial(a, base, "RK5 한 절에 길 둘 → red", "- V2 · 결정 = 바꾼다 · 출처 = 앞 결정 20261004-1930 · 길 = G1 답 반영\n"
+          "- V3 · 결정 = 바꾼다 · 출처 = 앞 결정 20261004-1930 · 길 = 재상정 반영\n", 2, "한 결정 절에 앞 결정 옮김 길이 둘이다")
+    a.plan(vs=two.replace("x → x + 1", "x → x * 2"), adm=adm3, plan=plan3, res=res3)
+    trial(a, base, "RK6 ⓐ 옮기지 않은 내부 약속 V1 이 바뀜 → red(새 후보의 V 전부를 본다)", carry2(), 2, "새 후보의 V1 가 앞 절 후보",
+          "글자까지 같지 않다(바뀐 V 는 G1′ 배너로 묻는다)")
+    a.plan(vs=two + PL_V3.replace("V3", "V4").replace("S3", "S4").replace("#2", "#3").replace("451", "452").replace("test_gone2", "test_gone3"),
+           adm=adm3 + LI_ADM3.replace("451", "452").replace("test_gone2", "test_gone3"),
+           plan=plan3 + PL_S3.replace("S3", "S4").replace("V3", "V4").replace("451", "452"),
+           res=res3 + PL_RES3.replace("| 2 |", "| 3 |").replace("V3", "V4"))
+    trial(a, base, "RK7 ⓐ 앞 절 후보에 없던 새 V4 → red", carry2(), 2, "에 없던 V4 가 있다(새 V 는 G1′ 배너로 묻는다)")
+    a.plan(vs=two, adm=adm3, plan=plan3, res=res3, edits=EDIT_LINE + PL_EXTRA)
+    trial(a, base, "RK8 ⓑ 다른 BC 편집 줄 더함 → red", carry2(), 2, "다른 BC 편집 줄이 앞 절 후보보다 늘었거나 바뀌었다(config/api.py")
+    # 확정 뒤 — 길마다 조건
+    b = PlanLane(td, "rk-b")
+    b.plan()
+    b.decide("20261004-1930", PL_USER.format("1930"))
+    expect(fails, "RK9a C1 --gate → green", b.confirm("20261004-1940"), 0)
+    conf: "list[str]" = list(b.parts)
+    trial(b, conf, "RK9 ⓒ 길 = 재상정 반영인데 두 절 사이 `ⓐ 재상정` 결정 줄 없음 → red", PL_CARRY.format("20261004-1930", "재상정 반영"), 2,
+          "길 = 재상정 반영 인데 두 결정 절 사이에 `ⓐ 재상정` 결정 줄(전체 제외)이 없다")
+    trial(b, conf, "RK11 ⓓ 앞 절이 이미 확정됐는데 길 = G1 답 반영 → red", PL_CARRY.format("20261004-1930", "G1 답 반영"), 2,
+          "길 = G1 답 반영 인데 바로 앞 결정 절(20261004-1930)에 이미 확정 줄이 있다")
+    no_v1: str = V_SPEC_ROWS.replace(PL_ADM_V1, "") + PL_FOLLOW
+    recon_m2: str = PL_RECON_M1.replace("- M1 ·", "- M2 ·")
+    trial(b, conf + [recon_m2], "RK15 재상정 절만 있고 뺀 항목(M2) 몫이 명세에 그대로 → red", PL_CARRY.format("20261004-1930", "재상정 반영"), 2,
+          "재상정 반영 — 뺀 항목(M2)이 바로 앞 후보의 해소 판정 표 · 슬라이스 계획 · 입장 표에서 빠지지 않았다(그 밖 개정은 G1′ 배너)")
+    b.plan(vs=V2_TEXT, res=CH_ROW_M2, adm=no_v1, plan=PL_HEAD + PL_S2)
+    trial(b, conf + [recon_m2], "RK10 ⓒ 빠진 V1 의 근거(M1)가 재상정이 뺀 항목(M2) 밖 → red", PL_CARRY.format("20261004-1930", "재상정 반영"), 2,
+          "길 = 재상정 반영 — 빠진 V1 의 근거 항목 ['M1']", "해소 판정 표 `M1 #1` 가 빠졌는데 뺀 항목(M2)에 딸린 행이 아니다")
+    trial(b, conf + [PL_RECON_M1], "RK13 재상정 M1 · V1 · 딸린 행 · S1 을 지움 + 길 = 재상정 반영 → green",
+          PL_CARRY.format("20261004-1930", "재상정 반영"), 0, "red 0 · gate")
+    expect(fails, "RK14b 재상정 반영 셈 → ` · 앞 결정 옮김 1(G1 답 반영 0 · 재상정 반영 1)`",
+           (0 if ra.carry_tail(b.f) == " · 앞 결정 옮김 1(G1 답 반영 0 · 재상정 반영 1)" else 9, ra.carry_tail(b.f)), 0)
+    b.plan(vs=V2_TEXT, res=CH_ROW_M2, adm=no_v1 + PL_UPD0T, plan=PL_HEAD + PL_S2)
+    trial(b, conf + [PL_RECON_M1], "RK16 뺀 몫 + 새 입장 행 → red", PL_CARRY.format("20261004-1930", "재상정 반영"), 2,
+          "재상정 반영 — 입장 표 `규칙이름시험정리` 가 새로 섰다")
+    b.plan(vs=V2_TEXT, res=CH_ROW_M2.replace("| — |\n", "| 다른 까닭 |\n"), adm=no_v1, plan=PL_HEAD + PL_S2)
+    trial(b, conf + [PL_RECON_M1], "RK17 뺀 몫 + 딸리지 않은 해소 판정 표 행 바뀜 → red", PL_CARRY.format("20261004-1930", "재상정 반영"), 2,
+          "재상정 반영 — 해소 판정 표 `M2 #1` 가 뺀 항목(M1) 몫 밖으로 바뀌었다(G1′ 배너)")
+    text: str = "".join(conf + [PL_RECON_M1])
+    no: int = next(i for i, ln in enumerate(text.split("\n"), 1) if ln.startswith("- M1 · 결정 = 별도 요청"))
+    fixed: str = (f"| M1 | 1 | 규칙 이름 흩어짐 | 불가 | 재상정 제외 | {b.f.relative_to(b.repo).as_posix()}/refactor-scope.md:{no} — 별도 요청 "
+                  "| — | — |\n")
+    b.plan(vs=V2_TEXT, res=fixed + CH_ROW_M2, adm=no_v1, plan=PL_HEAD + PL_S2)
+    trial(b, conf + [PL_RECON_M1], "RK18 해소 판정 표 M1 행을 지우는 대신 `불가 · 재상정 제외` 로 고침 → green",
+          PL_CARRY.format("20261004-1930", "재상정 반영"), 0, "red 0 · gate")
+    expect(fails, "RK18b 그 꼴 resolution --gate → green", run(b.repo, "resolution", str(b.f), "--gate"), 0, "red 0 · gate")
+    b.plan(vs=V2_TEXT, res=fixed.replace("규칙 이름 흩어짐", "규칙 이름 흩어짐(고쳐 씀)") + CH_ROW_M2, adm=no_v1, plan=PL_HEAD + PL_S2)
+    trial(b, conf + [PL_RECON_M1], "RK19 같은 고침에 요지 원문까지 바꿈 → red", PL_CARRY.format("20261004-1930", "재상정 반영"), 2,
+          "재상정 반영 — 해소 판정 표 `M1 #1` 가 뺀 항목(M1) 몫 밖으로 바뀌었다(G1′ 배너)")
+    # 시각에 공백(`2026-10-04 19:30`) — `G1 변경 결정 <시각>` 판형과 같은 꼴
+    s = PlanLane(td, "rk-s")
+    s.plan()
+    s.decide("2026-10-04 19:30", PL_USER.format("1930"))
+    blank: "list[str]" = list(s.parts)
+    s.plan(adm=V_SPEC_ROWS.replace("큰 함수 시험 그대로 | — |", "큰 함수 시험 그대로 | 큰 함수 계약 |") + PL_FOLLOW)
+    s.decide("2026-10-04 20:00", PL_CARRY.format("2026-10-04 19:30", "G1 답 반영"))
+    expect(fails, "RK20 앞 결정 옮김 시각에 공백 → --gate green", s.ch("--gate"), 0, "red 0 · gate")
+    got = _tried(lambda: (ra.carried_decisions(s.f), ra.carry_tail(s.f)))
+    expect(fails, "RK20b 셈 · 꼬리도 공백 든 시각을 읽는다",
+           (0 if got == ([("2026-10-04 20:00", "G1 답 반영")], " · 앞 결정 옮김 1(G1 답 반영 1 · 재상정 반영 0)") else 9, str(got)), 0)
+    trial(s, blank, "RK20c 공백 든 출처 시각이 바로 앞 결정 절이 아님 → red", PL_CARRY.format("2026-10-04 19:00", "G1 답 반영"), 2,
+          "V2 앞 결정 옮김은 바로 앞 결정 절(2026-10-04 19:30)에서만 — 출처 시각 `2026-10-04 19:00`")
+    # 양성 — G1 답 반영(결정 절 뒤 · 확정 전 입장 표 nit) · 셈 꼬리
+    c = PlanLane(td, "rk-c")
+    c.plan()
+    c.decide("20261004-1930", PL_USER.format("1930"))
+    c.plan(adm=V_SPEC_ROWS.replace("큰 함수 시험 그대로 | — |", "큰 함수 시험 그대로 | 큰 함수 계약 |") + PL_FOLLOW)
+    expect(fails, "RK12a 확정 전 입장 표 nit → 앞 후보로 --gate red(⑤ 다시)", c.ch("--gate"), 2, "⑤ 다시 — 반영 대조 다름 — 입장 표")
+    path: Path = c.decide("20261004-1935", PL_CARRY.format("20261004-1930", "G1 답 반영"))
+    expect(fails, "RK12 새 후보 + 길 = G1 답 반영 → --applied green", c.ch("--applied", str(path)), 0, "red 0 · applied")
+    expect(fails, "RK12b --gate green", c.confirm("20261004-1940"), 0, "red 0 · gate")
+    carried = _tried(lambda: ra.carried_decisions(c.f))
+    expect(fails, "RK14 carried_decisions · carry_tail — 옮김 절 (시각, 길) · ` · 앞 결정 옮김 1(G1 답 반영 1 · 재상정 반영 0)`",
+           (0 if carried == [("20261004-1935", "G1 답 반영")]
+            and ra.carry_tail(c.f) == " · 앞 결정 옮김 1(G1 답 반영 1 · 재상정 반영 0)" else 9, f"{carried} {ra.carry_tail(c.f)}"), 0)
+    expect(fails, "RK14c residual 요약 꼬리(리뷰어 확인 대상 0) 에 옮김 셈", run(c.repo, "residual", str(c.f)), 2,
+           "M_m=2(결정적 잔존 2) · 앞 결정 옮김 1(G1 답 반영 1 · 재상정 반영 0) · 리뷰어 확인 대상 0")
+    thing: Path = c.repo / "application/demo/driving_layer/api/thing/thing_controller.py"
+    thing.write_text(thing.read_text(encoding="utf-8") + "\n# 정리\n", encoding="utf-8")
+    rdir: Path = _fresh_stamp(c.repo, c.f, clear=True)
+    (rdir / "result-ddd.md").write_text(f"| M2 | 해소 | {RR_G} |\n", encoding="utf-8")
+    expect(fails, "RK14d residual --finalize 요약 꼬리에 옮김 셈", run(c.repo, "residual", str(c.f), "--finalize", rdir.name), 2,
+           "· 해소 1 · 앞 결정 옮김 1(G1 답 반영 1 · 재상정 반영 0) →")
+
+
+def plan_expose_cases(fails: "list[str]", td: Path) -> None:
+    """W 소비 노출(설계 R §4.8 — 처분 X1 · X3 · Y13 · Z3) — `slice_plan` 매임 · 확정 계획 이력 · `confirmation_diff`(반영판 · 더함 · 바뀜 ·
+    빠짐 · 건드림) · `touched_late_slices` · `confirmed_slices` · `scope_items` · `slice_branch`."""
+    fake: str = "| 재조직 — V1 재료 정책 대역 | 같은 기대 그대로 — V1 서명 따라감 | — | test_policy | retain | coder `application/demo/test/fake/policy_fake.py` |\n"
+    moved: str = ("| 재조직 — 옮김 application/demo/test/test_big.py::test_big → application/demo/test/test_big_split.py | 기대 의미 그대로 — 파일 나누기 | — | "
+                  "test_big | retain | coder `application/demo/test/test_big.py` |\n")
+    lane = PlanLane(td, "rx1")
+    still: str = "".join(f"| 그대로 {d} 시험 | 기존 보호 | — | test_{d} | {d} | coder `application/demo/test/test_{d}.py::test_x` |\n"
+                         for d in ("reuse", "retain", "reject"))                 # 무편집 결정 행 — 매여도 산출이 아니다(검토 B1)
+    s1: str = PL_S1.replace("규칙 함수 반환 기대 |", "규칙 함수 반환 기대; 재조직 — V1 재료 정책 대역; 재조직 — 옮김 application/demo/test/test_big.py"
+                            "::test_big → application/demo/test/test_big_split.py; 그대로 reuse 시험; 그대로 retain 시험; 그대로 reject 시험 |")
+    s2: str = PL_S2.replace("컨트롤러 404 응답 |", "컨트롤러 404 응답 · 입장 표에 없는 글 |")
+    lane.plan(adm=V_SPEC_ROWS + fake + moved + still, plan=PL_HEAD + s1 + s2)
+    norm = ra.normalize
+    got = _tried(lambda: [tuple(r) for r in ra.slice_plan(lane.f)])
+    want: "list[tuple]" = [
+        ("S1", "규칙 V1", (norm("규칙 함수 반환 기대"), norm("재조직 — V1 재료 정책 대역"),
+                         norm("재조직 — 옮김 application/demo/test/test_big.py::test_big → application/demo/test/test_big_split.py"),
+                         *(norm(f"그대로 {d} 시험") for d in ("reuse", "retain", "reject"))),
+         ("application/demo/test/fake/policy_fake.py", "application/demo/test/test_policy.py"), ("application/demo/test/fake/policy_fake.py",)),
+        ("S2", "응답 V2", (norm("컨트롤러 404 응답"),), ("application/demo/test/test_thing_api.py",), ())]
+    expect(fails, "RX1 slice_plan 매임 — `;` 칸 · `·` 칸의 candidate 글자 같음만 · 입장 표에 없는 글은 rows 밖 · files(편집 행만 — 무편집 결정 행은 rows 에만) · "
+           "retain_files(옮김 행 빼고)",
+           (0 if got == want else 9, f"{got}\n{want}"), 0)
+    both: str = ("| 재조직 — V1 재료 둘 | 같은 기대 그대로 — V1 따라감 | — | test_policy | retain | coder `application/demo/test/fake/a_fake.py` · "
+                 "`application/demo/test/fake/b_fake.py` |\n")
+    kept2: str = ("| 그대로 쓰는 시험 둘 | 기존 보호 | — | test_big | reuse | coder `application/demo/test/test_big.py::test_big` · "
+                  "`application/demo/test/test_small.py::test_small` |\n")
+    lane.plan(adm=V_SPEC_ROWS + both + kept2,
+              plan=PL_HEAD + PL_S1.replace("규칙 함수 반환 기대 |", "규칙 함수 반환 기대; 재조직 — V1 재료 둘; 그대로 쓰는 시험 둘 |") + PL_S2)
+    got = _tried(lambda: [(r.files, r.retain_files) for r in ra.slice_plan(lane.f)][0])
+    files2: "tuple[str, ...]" = ("application/demo/test/fake/a_fake.py", "application/demo/test/fake/b_fake.py")
+    expect(fails, "RX12 owner/path 에 파일 둘인 행 → files · retain_files 에 둘 다(`reuse` 행의 두 파일은 없음)",
+           (0 if got == ((*files2, "application/demo/test/test_policy.py"), files2) else 9, str(got)), 0)
+    expect(fails, "RX5 slice_branch — 0T · 0T-a · 0C · 0F · S2 · 꼴 밖은 빈 글 · slice_id 는 강조 · 백틱 · 공백을 걷는다",
+           (0 if [ra.slice_branch(x) for x in ("0T", "0T-a", "0C", "0F", "S2", "R0T", "S", "")] == ["0T", "0T", "0C", "0F", "S", "", "", ""]
+            and ra.slice_id(" **`0T-a`** ") == "0T-a" else 9, ""), 0)
+    # 확정 차분
+    d = PlanLane(td, "rx3")
+    d.plan()
+    d.decide("20261004-1930", PL_USER.format("1930"))
+    expect(fails, "RX3a C1 --gate → green", d.confirm("20261004-1940"), 0)
+    expect(fails, "RX3 첫 확정의 confirmation_diff → None", (0 if _tried(lambda: ra.confirmation_diff(d.f)) is None else 9, ""), 0)
+    help_row: str = ("| 재조직 — V2 재료 응답 도움 | 같은 기대 그대로 — V2 응답 꼴 따라감 | — | test_thing_api | retain | acceptance-tester "
+                     "`application/demo/test/conftest.py` |\n")
+    free: str = "| 재조직 — 늦게 찾은 정리 | 같은 기대 그대로 | — | test_x | retain | coder `application/demo/test/test_late.py` |\n"
+    d.plan(vs=V1_TEXT.replace("x → x + 1", "x → x * 2") + V2_TEXT, edits=EDIT_LINE + PL_EXTRA, adm=V_SPEC_ROWS + PL_FOLLOW + help_row + free,
+           plan=PL_HEAD + PL_S1 + PL_S2.replace("| — | test_thing_api |", "| 재조직 — V2 재료 응답 도움 | test_thing_api |"))
+    d.decide("20261004-2000", PL_USER.format("2000"))
+    expect(fails, "RX3b C2(V1 글 · 새 재조직 행 둘 · 다른 BC 편집 · 사용자 답) --gate → green", d.confirm("20261004-2010"), 0)
+    diff = _tried(lambda: {k: (v.branch, v.touched, v.plan_row, v.v, v.retain, v.rows, v.edits) for k, v in ra.confirmation_diff(d.f).items()})
+    want_diff: dict = {
+        "S1": ("S", True, "", ("V1",), (), (), ()),
+        "S2": ("S", True, "바뀜", (), ("application/demo/test/conftest.py",), (norm("재조직 — V2 재료 응답 도움"),), ()),
+        "0F": ("0F", True, "", (), ("application/demo/test/test_late.py",), (norm("재조직 — 늦게 찾은 정리"),), ()),
+        "0C": ("0C", True, "", (), (), (), ("config/api.py",))}
+    expect(fails, "RX3c 둘째 확정 차분 — V 바꿈 → v · S2 plan_row 바뀜 · retain · rows · 안 매인 새 재조직 행 → 0F · 다른 BC 편집 0C → edits",
+           (0 if diff == want_diff else 9, f"{diff}\n{want_diff}"), 0)
+    expect(fails, "RX3d confirmation_diff(첫 확정 시각) → None · touched_late_slices → 0F · S 슬라이스만",
+           (0 if _tried(lambda: ra.confirmation_diff(d.f, "20261004-1940")) is None
+            and sorted(_tried(lambda: ra.touched_late_slices(d.f))) == ["0F", "S1", "S2"] else 9, str(_tried(lambda: ra.touched_late_slices(d.f)))), 0)
+    d.plan(vs=V1_TEXT, res=CH_ROW_M1 + CB_M2_SOLVED, edits="없음\n", adm=V_SPEC_ROWS.replace(
+        "| 컨트롤러 404 응답 | HTTP 계약 | 매핑 오류 | 없음 | add | acceptance-tester `application/demo/test/test_thing_api.py::test_gone` |\n", "")
+        + PL_FOLLOW, plan=PL_HEAD + PL_S1)
+    hist = _tried(lambda: ([r.slice for r in ra.slice_plan(d.f)], [r.slice for r in ra.slice_plan(d.f, "20261004-1940")],
+                           [(r.slice, r.retain_files) for r in ra.slice_plan(d.f, "20261004-2010")]))
+    expect(fails, "RX2 slice_plan(at=) 확정 계획 이력 — 지금 명세에서 지운 S2 도 · 확정마다 그 계획",
+           (0 if hist == (["S1"], ["S1", "S2"], [("S1", ()), ("S2", ("application/demo/test/conftest.py",))]) else 9, str(hist)), 0)
+    bad = _tried(lambda: ra.slice_plan(d.f, "20990101-0000"))
+    expect(fails, "RX2b 없는 확정 시각 → 실행 불능", (0 if isinstance(bad, str) and "줄이 없다" in bad else 9, str(bad)), 0)
+    # 재상정 반영 — V · 슬라이스가 빠짐
+    r = PlanLane(td, "rx8")
+    r.plan()
+    r.decide("20261004-1930", PL_USER.format("1930"))
+    r.confirm("20261004-1940")
+    r.parts.append(PL_RECON_M1)
+    r.plan(vs=V2_TEXT, res=CH_ROW_M2, adm=V_SPEC_ROWS.replace(PL_ADM_V1, "") + PL_FOLLOW, plan=PL_HEAD + PL_S2)
+    r.decide("20261004-2000", PL_CARRY.format("20261004-1930", "재상정 반영"))
+    expect(fails, "RX8a 재상정 반영 C2 --gate → green", r.confirm("20261004-2010"), 0)
+    diff = _tried(lambda: {k: (v.touched, v.plan_row, v.v_removed, v.rows_removed) for k, v in ra.confirmation_diff(r.f).items()})
+    expect(fails, "RX8 V1 · S1 · 딸린 행이 빠진 확정 → S1 touched 거짓(빠짐 · v_removed 만 · 딸린 행은 따로 안 셈) · 늦은 갈래 건드림 없음",
+           (0 if diff == {"S1": (False, "빠짐", ("V1",), ())} and _tried(lambda: ra.touched_late_slices(r.f)) == () else 9, str(diff)), 0)
+    expect(fails, "RX11 confirmed_slices — 지운 S1 도 이력에", (0 if _tried(lambda: ra.confirmed_slices(r.f)) == ["S1", "S2"] else 9, ""), 0)
+    # 반영판(④ 로 거절된 V)
+    g = PlanLane(td, "rx6")
+    g.plan()
+    g.decide("20261004-1930", PL_USER.format("1930"))
+    g.confirm("20261004-1940")
+    g.plan(vs=V1_TEXT + V2_TEXT + PL_V3, res=CH_ROW_M1 + CH_ROW_M2 + PL_RES3, adm=V_SPEC_ROWS + PL_FOLLOW + LI_ADM3,
+           plan=PL_HEAD + PL_S1 + PL_S2 + PL_S3)
+    g.decide("20261004-2000", PL_USER.format("2000") + PL_USER.format("2000").replace("V2", "V3").replace("바꾼다", "안 바꾼다"))
+    g.parts.append(f"- G1 변경판 확정 20261004-2010 · digest {'a' * 12} · 후보 {g.cand} · 명세 sha {'b' * 12}\n")
+    g.write()
+    hist = _tried(lambda: ({k: tuple(v) for k, v in ra.confirmation_diff(g.f).items()}, [p.slice for p in ra.slice_plan(g.f, "20261004-2010")]))
+    expect(fails, "RX6 반영판 — ④ 로 거절된 V3 · S3 · 딸린 행은 차분 · 확정 계획에 없다(차분 {} · 계획 S1 · S2)",
+           (0 if hist == ({}, ["S1", "S2"]) else 9, str(hist)), 0)
+    # 빠짐 · 안 매인 0T · 낱말 · 칸 개명
+    for label, kw, want2, late in (
+            ("RX7 0F retain 재조직 행 지움 → retain_removed · rows_removed · touched_late 0F", dict(adm=V_SPEC_ROWS),
+             {"0F": (True, "", ("application/demo/test/test_big.py",), (norm("재조직 — 0F 정리 대상"),), (), ())}, ("0F",)),
+            ("RX9 안 매인 0T `update` 행 더함 → 0T rows · 늦은 갈래 건드림 없음", dict(adm=V_SPEC_ROWS + PL_FOLLOW + PL_UPD0T),
+             {"0T": (True, "", (), (), (norm("규칙 이름 시험 정리"),), ())}, ()),
+            ("RX10 낱말만(계획 완료 칸 · 입장 행 둘째 칸) → touched 거짓",
+             dict(adm=V_SPEC_ROWS.replace("큰 함수 시험 그대로 | — |", "큰 함수 시험 그대로 | 큰 함수 계약 |") + PL_FOLLOW,
+                  plan=PL_HEAD + PL_S1.replace("test_policy |", "test_policy · 정적 검사 |") + PL_S2),
+             {"S1": (False, "낱말", (), (), (), ()), "0T": (False, "", (), (), (), (norm("큰 함수 시험 그대로"),))}, ()),
+            ("RX13 칸 개명 재조직 행 더함 → 0F 건드림(제품 칸과 시험을 함께)",
+             dict(adm=V_SPEC_ROWS + PL_FOLLOW + "| 재조직 — 칸 개명 application/demo/domain_layer/card.py::Card.card_id → card_key | 기대 의미 그대로 — 이름만 | "
+                  "없음(재조직) | 그 케이스 자신 | retain | coder `application/demo/test/test_policy.py` |\n"),
+             {"0F": (True, "", (), (), (norm("재조직 — 칸 개명 application/demo/domain_layer/card.py::Card.card_id → card_key"),), ())}, ("0F",))):
+        e = PlanLane(td, label.split()[0].lower())
+        e.plan()
+        e.decide("20261004-1930", PL_USER.format("1930"))
+        e.confirm("20261004-1940")
+        e.plan(**kw)
+        e.decide("20261004-2000", PL_USER.format("2000"))
+        got2 = e.confirm("20261004-2010")
+        diff = _tried(lambda: {k: (v.touched, v.plan_row, v.retain_removed, v.rows_removed, v.rows, v.reworded)
+                               for k, v in ra.confirmation_diff(e.f).items()})
+        expect(fails, label, (got2[0] if diff == want2 and _tried(lambda: ra.touched_late_slices(e.f)) == late else 9, f"{diff}\n{want2}"), 0)
+    # 항목 실재
+    s = PlanLane(td, "rx4")
+    s.parts = [s.scope_base.replace("- M1, M2 · 결정 = ⓐ", "- M1, M2, C1, C2 · 결정 = ⓐ"),
+               _li_added(LI_B1 + LI_B1.replace("B1", "B2") + "- B3 · 결정 = 미룸 · 출처 = 본인 직접(2100)\n"),
+               "\n## ⓐ 재상정 20261004-2300\n\n- M2, C2 · 결정 = 별도 요청 · 사유 = x · 출처 = 본인 직접(2300)\n"
+               "- B2 · 결정 = 별도 요청 · 사유 = x · 출처 = 본인 직접(2300)\n"]
+    s.write()
+    s.plan(plan=PL_HEAD + "| 0T | 보탬 B1 — 규칙 이름 | — | — | x |\n" + PL_S1 + PL_S2)
+    items = _tried(lambda: tuple(sorted(x) for x in (ra.scope_items(s.f).adopted, ra.scope_items(s.f).boost, ra.scope_items(s.f).removed,
+                                                      ra.scope_items(s.f).live)))
+    expect(fails, "RX4 scope_items — adopted(ⓐ M · C) · boost(보탬 B) · removed(재상정 M · B · C) · live",
+           (0 if items == (["C1", "C2", "M1", "M2"], ["B1", "B2"], ["B2", "C2", "M2"], ["B1", "C1", "M1"]) else 9, str(items)), 0)
+    boost = _tried(lambda: {k: (it.token, where) for k, (it, where) in ra.boost_items(s.f).items()})
+    expect(fails, "RX4b boost_items — 살아 있는 보탬 항목 → 슬라이스 자리들(목적 칸이 `보탬 B1` 로 시작하는 행) · 뺀 B2 · 미룸 B3 없음",
+           (0 if boost == {"B1": ("보탬", ("0T",))} else 9, str(boost)), 0)
+    s.plan(plan=PL_HEAD + "| 0T | 보탬 B1 — 규칙 이름 | — | — | x |\n| 0F-b | 보탬 B2, B1 — 시험 따라감 | — | — | x |\n" + PL_S1 + PL_S2)
+    boost = _tried(lambda: {k: where for k, (_it, where) in ra.boost_items(s.f).items()})
+    expect(fails, "RX4c 보탬 하나가 계획 행 둘에 걸침 → 그 행 전부(표 차례)", (0 if boost == {"B1": ("0T", "0F-b")} else 9, str(boost)), 0)
+    s.plan()
+    boost = _tried(lambda: {k: where for k, (_it, where) in ra.boost_items(s.f).items()})
+    expect(fails, "RX4d 목적 칸에 안 적은 보탬 → 빈 자리", (0 if boost == {"B1": ()} else 9, str(boost)), 0)
+    # 보탬 답을 바꿈 — 보탬 → 미룸 · 별도 요청은 `철회` 창의 대상(removed)
+    u = PlanLane(td, "rx14")
+    first: str = _li_added(LI_B1 + LI_B1.replace("B1", "B2") + "- B3 · 결정 = 미룸 · 출처 = 본인 직접(2100)\n")
+    later: str = _li_added("- B1 · 결정 = 미룸 · 출처 = 본인 직접(2200) · 바꿈 20261004-2200\n"
+                           "- B2 · 결정 = 별도 요청 · 출처 = 본인 직접(2200) · 바꿈 2026-10-04 22:00\n", "20261004-2200")
+    for label, parts, want_items in (
+            ("RX14 보탬 → 미룸 · 별도 요청(바꿈) → removed · live 밖 · 처음부터 미룸인 B3 은 removed 아님", [first, later],
+             ([], ["B1", "B2"], ["M1", "M2"])),
+            ("RX14b 다시 보탬으로 바꾸면 live · 한 번 더 별도 요청으로 바꿔도 removed 그대로",
+             [first, later, _li_added(LI_B1.replace("B1", "B2").rstrip("\n") + " · 바꿈 20261004-2300\n"
+                                      "- B1 · 결정 = 별도 요청 · 출처 = 본인 직접(2300) · 바꿈 20261004-2300\n", "20261004-2300")],
+             (["B2"], ["B1"], ["B2", "M1", "M2"]))):
+        u.parts = [u.scope_base, *parts]
+        u.write()
+        items = _tried(lambda: tuple(sorted(x) for x in (ra.scope_items(u.f).boost, ra.scope_items(u.f).removed, ra.scope_items(u.f).live)))
+        expect(fails, label, (0 if items == want_items else 9, str(items)), 0)
+
+
+# ── P-B1 — 닫힌 엄격 변경 창 기준선(설계 R §4.12) ──────────────────────────────────────────────────
+RW_ZT: str = "| 0T-b | 보탬 B1 — 규칙 이름 | — | — | test_policy |\n"
+RW_V3: str = PL_V3.replace("슬라이스 S3", "슬라이스 S1")
+
+
+class StrictLane(PlanLane):
+    """엄격 변경 창 — 확정 줄(명세 sha) 뒤 S1 창의 open · close 기록(장치 판형 칸)을 손으로 쓴다(허용 표는 behavior_guard `allow_table`)."""
+
+    def __init__(self, td: Path, name: str) -> None:
+        super().__init__(td, name)
+        self.run_dir: Path = self.f / "behavior" / "20261004-1900"
+        self.run_dir.mkdir(parents=True)
+        self.head_a: str = _git(self.repo, "rev-parse", "HEAD").strip()
+
+    def conf(self) -> "ra.G1Confirmation":
+        return ra.g1_confirmations(self.f)[-1]
+
+    def allow(self, at: str) -> dict:
+        """결속 확정 `at` 의 반영판 · 그 확정 계획의 S1 행으로 만든 엄격 허용 표(장치가 open 때 쓰는 꼴)."""
+        idx: int = [c.at for c in ra.g1_confirmations(self.f)].index(at)
+        row_s1 = next((r for r in ra.slice_plan(self.f, at) if r.slice == "S1"), None)
+        return _cw_guard().allow_table(ra._applied_view(self.f, idx)[0], slice="S1", plan_row=row_s1, diff=None)
+
+    def s1_code(self) -> None:
+        (self.repo / CW_POLICY).write_text("def test_rule() -> None:\n    assert 1 == 1\n", encoding="utf-8")
+        _git(self.repo, "add", "-A", "application")
+        _git(self.repo, "commit", "-qm", "S1")
+
+    def window(self, conf: "ra.G1Confirmation", allow: dict, **over: object) -> None:
+        opened: dict = {"window": 5, "kind": "change", "run": "20261004-1900", "anchor": "x", "head": self.head_a,
+                        "opened": "2026-10-06T10:00:00Z", "dirty": {}, "cases": {}, "pytest": {}, "mode": "refactor",
+                        "g1_digest": conf.digest, "g1_sha": conf.spec_sha, "slice": "S1", "reason": None, "ref": None, "allow": allow,
+                        "rebinds": [], **over}
+        opened = {k: v for k, v in opened.items() if v is not _DROP}
+        (self.run_dir / "w5-open.json").write_text(json.dumps(opened, ensure_ascii=False), encoding="utf-8")
+        (self.run_dir / "w5-close.json").write_text(json.dumps([_cw_close(hits={CW_RULE: {"old": ["assert True"], "add": 0}})],
+                                                               ensure_ascii=False), encoding="utf-8")
+
+    def late(self, vs: str = V1_TEXT + V2_TEXT, adm: str = V_SPEC_ROWS + PL_FOLLOW, s1: str = PL_S1, **kw: object) -> None:
+        """보탬 B1 절 + 명세(0T-b 보탬 행 · 해소 판정 표 B1 행) — G1′ 앞 꼴."""
+        self.parts.append(_li_added(LI_B1.replace("2100", "1100"), "20261006-1100"))
+        self.write()
+        self.plan(vs=vs, res=kw.pop("res", CH_ROW_M1 + CH_ROW_M2) + LI_ROW, adm=adm, plan=PL_HEAD + RW_ZT + s1 + PL_S2, **kw)  # type: ignore[arg-type,operator]
+
+
+_DROP: object = object()
+
+
+def strict_window_cases(fails: "list[str]", td: Path) -> None:
+    """닫힌 엄격 변경 창(open 기록에 `slice`) — 그 창이 결속한 확정(`g1_digest` · `g1_sha`)의 반영판과 그 확정 계획의 슬라이스 행으로
+    `allow_table(rebuilt, slice=…, plan_row=…, diff=…)` 을 되살려 open 허용 표와 같으면 증거로 쓴다 → S1 뒤 보탬 G1′ 이 막히지 않는다.
+    어긋나면 쓰지 않는다(옛 원문이 기준 판에 없다 red)."""
+    import inspect
+    if not {"slice", "plan_row", "diff"} <= set(inspect.signature(_cw_guard().allow_table).parameters):
+        fails.append("RW 준비 — behavior_guard.allow_table 이 엄격 호출 꼴(slice · plan_row · diff)을 모른다(장치 쪽 판이 낡았다)")
+        print("  ✗ RW 준비 — behavior_guard.allow_table 엄격 호출 꼴")
+        return
+    gone: str = "V1 시험 application/demo/test/test_policy.py::test_rule 바뀌는 기대 «assert True» 원문이 기준 판 케이스에 없다"
+
+    def strict(name: str) -> StrictLane:
+        lane = StrictLane(td, name)
+        lane.plan()
+        lane.decide("20261006-0950", PL_USER.format("0950"))
+        got = lane.confirm("20261006-0955")
+        if got[0] != 0:
+            fails.append(f"RW 준비({name}) — C1 --gate exit {got[0]}: {got[1][-300:]}")
+        return lane
+    lane = strict("rw1")
+    lane.s1_code()
+    lane.window(lane.conf(), lane.allow("20261006-0955"))
+    lane.late()
+    expect(fails, "RW1 엄격 S1 창을 닫은 뒤 보탬 B1 G1′ `changes` → 그 창 기준선으로 green", lane.ch(), 0, "red 0", "닫힌 창 기준선 1(w5)")
+    path: Path = lane.decide("20261006-1110", PL_USER.format("1110"))
+    expect(fails, "RW1b G1′ --applied → green", lane.ch("--applied", str(path)), 0, "red 0 · applied")
+    expect(fails, "RW1c G1′ --gate → green", lane.confirm("20261006-1115"), 0, "red 0 · gate")
+    lane.window(ra.g1_confirmations(lane.f)[0], dict(lane.allow("20261006-0955"), miss_retain=["application/demo/test/fake/x.py"], case_units={}))
+    expect(fails, "RW6 open 뒤에 더한 칸(`miss_retain` · `case_units`)은 대조 밖 → green", lane.ch(), 0, "red 0", "닫힌 창 기준선 1(w5)")
+    allow = lane.allow("20261006-0955")
+    lane.window(ra.g1_confirmations(lane.f)[0], dict(allow, slice_files=allow["slice_files"] + ["application/demo/test/test_extra.py"]))
+    expect(fails, "RW2 기록 허용 표가 결속 판에서 되살린 표와 다름 → 그 창을 쓰지 않는다 → red", lane.ch(), 2, gone)
+    lane.window(ra.g1_confirmations(lane.f)[0], allow, g1_sha="0" * 12)
+    expect(fails, "RW3 창 `g1_sha` 가 확정 줄 명세 sha 와 다름 → 쓰지 않는다 → red", lane.ch(), 2, gone)
+    lane.window(ra.g1_confirmations(lane.f)[0], allow)
+    expect(fails, "RW3b 같은 기록 · 맞는 `g1_sha` → green(대조 짝)", lane.ch(), 0, "red 0", "닫힌 창 기준선 1(w5)")
+    lane.window(ra.g1_confirmations(lane.f)[0], _cw_guard().allow_table(ra._applied_view(lane.f, 0)[0]), slice=_DROP, g1_sha=_DROP)
+    expect(fails, "RW7 옛 창(open 기록에 `slice` 없음)은 지금 길 그대로(슬라이스 없는 허용 표) → green", lane.ch(), 0, "red 0", "닫힌 창 기준선 1(w5)")
+    # RW4 — ④ 로 V3(같은 S1)을 뺀 확정에 결속한 창은 반영판으로 되살린다
+    r = StrictLane(td, "rw4")
+    s1_3: str = PL_S1.replace("| 규칙 V1 | — |", "| 규칙 V1 | 컨트롤러 451 응답 |")
+    r.plan(vs=V1_TEXT + V2_TEXT + RW_V3, res=CH_ROW_M1 + CH_ROW_M2 + PL_RES3, adm=V_SPEC_ROWS + PL_FOLLOW + LI_ADM3, plan=PL_HEAD + s1_3 + PL_S2)
+    r.decide("20261006-0950", PL_USER.format("0950") + PL_USER.format("0950").replace("V2", "V3").replace("바꾼다", "안 바꾼다"))
+    no: int = next(i for i, ln in enumerate("".join(r.parts).split("\n"), 1) if ln.startswith("- V3 · 결정 = 안 바꾼다"))
+    res3: str = (CH_ROW_M1 + CH_ROW_M2.replace("| — |\n", "| 남긴 정리는 인자만 바꾼다 |\n")
+                 + f"| M2 | 2 | 응답 꼴 둘 | 불가 | 변경 미승인 | refactor-scope.md:{no} — G1 결정 안 바꾼다 | — | — |\n")
+    r.plan(res=res3, adm=V_SPEC_ROWS + PL_FOLLOW, plan=PL_HEAD + PL_S1 + PL_S2)
+    expect(fails, "RW4a V3 을 뺀 반영판 C1 --gate → green", r.confirm("20261006-0955"), 0, "red 0 · gate")
+    r.s1_code()
+    r.window(r.conf(), r.allow("20261006-0955"))
+    r.late(res=res3)
+    expect(fails, "RW4 ④ 로 V3(S1)을 뺀 확정에 결속한 엄격 창 → 반영판으로 되살려 green", r.ch(), 0, "red 0", "닫힌 창 기준선 1(w5)")
+    # RW5 — rebind 뒤 close(새 확정 결속)
+    n = strict("rw5")
+    n.plan(adm=V_SPEC_ROWS + PL_FOLLOW + PL_UPD0T)
+    n.decide("20261006-1000", PL_USER.format("1000"))
+    expect(fails, "RW5a C2(0T update 행 더함 · 사용자 답) --gate → green", n.confirm("20261006-1005"), 0, "red 0 · gate")
+    n.s1_code()
+    n.window(n.conf(), n.allow("20261006-1005"), rebinds=[{"at": "2026-10-06T10:30:00Z"}])
+    n.late(adm=V_SPEC_ROWS + PL_FOLLOW + PL_UPD0T)
+    expect(fails, "RW5 rebind 로 새 확정에 결속한 뒤 닫은 엄격 창 → 새 확정의 반영판 · 계획으로 되살려 green", n.ch(), 0, "red 0", "닫힌 창 기준선 1(w5)")
+
+
+
+# ── 이음 — 진짜 refactor_audit + behavior_guard(창 기록을 손으로 쓰지 않는다) ─────────────────────────
+JN_RUN: str = "20261004-1900"
+JN_POLICY: str = ("def test_rule() -> None:\n    assert True\n\n\ndef test_rule_name() -> None:\n    assert \"rule\" in \"rule_0\"\n\n\n"
+                  "def test_rule_more() -> None:\n    assert 2 == 2\n")
+JN_ADM: str = "".join(V_SPEC_ROWS.splitlines(keepends=True)[:4])   # 머리 둘 · V1 update · V2 add
+JN_V2: str = ("- V2 · 밖 동작 · 근거 M2 #1 · 슬라이스 S2\n  - 전 → 후: 없는 thing 404 → 410\n"
+              "  - 시험: 컨트롤러 404 응답 add(acceptance-tester) application/demo/test/test_thing_api.py::test_gone\n"
+              "    - 바뀌는 기대: 기대 추가 1\n  - 영향: 받는 쪽 0 · HTTP 소비 0\n")
+JN_V3: str = ("- V3 · 내부 약속 · 근거 M1 #2 · 슬라이스 S1\n  - 전 → 후: rule_1 이 x + 1 → x + 2\n"
+              "  - 시험: 규칙 하나 더 기대 update(coder) application/demo/test/test_policy.py::test_rule_more\n"
+              "    - 바뀌는 기대: «assert 2 == 2»\n")
+JN_ADM3: str = ("| 규칙 하나 더 기대 | 규칙 계약 | 규칙 오류 | test_policy | update | coder "
+                "`application/demo/test/test_policy.py::test_rule_more` |\n")
+JN_RES3: str = "| M1 | 2 | 규칙 반환 하나 더 | 변경 | — | V3 | M1 — 규칙 함수 이름 통일 | — |\n"
+JN_MISS: str = ("| 재조직 — 규칙 하나 더 시험 | 같은 기대 그대로 | — | test_policy | retain | coder "
+                "`application/demo/test/test_policy.py` |\n")
+JN_S13: str = "| S1 | 규칙 V1 · V3 | — | 규칙 함수 반환 기대; 규칙 하나 더 기대 | test_policy |\n"
+JN_ZT: str = "| 0T-b | 규칙 이름 시험 | — | 규칙 이름 시험 정리 | test_policy |\n"
+JN_ZC: str = "| 0C-b | 보탬 B1 — 규칙 이름 | — | — | test_policy |\n"
+JN_COUNTS: "dict[str, int]" = {
+    "commands": 1, "collected": 3, "selected": 3, "calls": 3, "skips": 0, "complete": 3, "proof_ok": 3, "proof_total": 3, "reentry": 0,
+    "anchor": 0, "suspend": 0, "observer_files": 2, "observer_hits": 0, "observer_unchanged": 0, "nolist": 0, "unresolved": 0, "late": 0,
+    "hooks": 0, "M": 2, "failed": 0, "optimize": 0}
+
+
+class JoinLane(PlanLane):
+    """G1 흐름 레인 + 진짜 behavior_guard 창 — 폴더 이름에 리팩토링 표지 · 시험 파일 셋."""
+
+    def __init__(self, td: Path, name: str) -> None:
+        ReviewLane.__init__(self, td, name, {**DEPS_FILES, CW_POLICY: JN_POLICY,
+                                             "application/demo/test/test_big.py": "def test_big() -> None:\n    assert 1 == 1\n"})
+        named: Path = self.folder.with_name(f"{JN_RUN}-refactor-demo")
+        self.folder.rename(named)
+        self.folder = self.f = named
+        self.support()
+        self.scope = self.f / "refactor-scope.md"
+        self.parts = [self.scope_base]
+        self.cand = ""
+        self.run_dir: Path = self.f / "behavior" / JN_RUN
+
+    def guard(self, cmd: str, *args: str) -> "tuple[int, str]":
+        return _cb_guard(self.repo, cmd, str(self.f), *args)
+
+    def open(self, kind: str, *args: str) -> "tuple[int, str]":
+        return self.guard("open", "--kind", kind, "--mode", "refactor", *args)
+
+    def commit(self, rel: str, body: str, msg: str) -> None:
+        (self.repo / rel).write_text(body, encoding="utf-8")
+        _git(self.repo, "add", "-A", "application")
+        _git(self.repo, "commit", "-qm", msg)
+
+    def rec(self, n: int) -> dict:
+        got: Path = self.run_dir / f"w{n}-open.json"
+        return json.loads(got.read_text(encoding="utf-8")) if got.is_file() else {}
+
+    def edit_rec(self, n: int, change) -> bytes:  # noqa: ANN001
+        """w<n> open 기록을 손으로 고친다(옛 바이트를 돌려준다)."""
+        got: Path = self.run_dir / f"w{n}-open.json"
+        kept: bytes = got.read_bytes() if got.is_file() else b"{}"
+        doc: dict = json.loads(kept)
+        if doc:                                              # 변이가 창을 못 열게 했으면 고칠 기록이 없다 — 뒤 단언이 붉다
+            change(doc)
+        got.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+        return kept
+
+    def suite(self) -> None:
+        """초록 suite 기록 대역 — 마지막 확정 · 그 후보의 실행 정의 · 원점 · 지금 지문."""
+        import behavior_support  # noqa: PLC0415
+        conf = ra.g1_confirmations(self.f)[-1]
+        cand: dict = ra.load_candidate(self.f, conf.candidate)
+        fp: str = behavior_support.fingerprint(self.repo)
+        bound: dict = {"run_definition_digest": cand["run_definition_digest"], "support_record": cand["support_record"]}
+        doc: dict = {"version": 1, "run": JN_RUN, "started": "2026-10-06T14:00:00Z", "ended": "2026-10-06T14:00:09Z", **bound,
+                     "origin_record": cand["support_record"],
+                     "g1": {"at": conf.at, "digest": conf.digest, "candidate": conf.candidate, "sha": conf.spec_sha, **bound},
+                     "fingerprints": {"start": fp, "between": [fp], "end": fp},
+                     "commands": [{"argv": ["pytest", "-q"], "exit": 0, "probe_exit": 0, "outputs": 1, "workers_ready": 0,
+                                   "worker_outputs": 0, "seconds": 0.5}],
+                     "counts": JN_COUNTS, "g0_keep": [], "reasons": [], "verdict": "green"}
+        (self.run_dir / "suite-20261006T140000Z.json").write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+
+
+def join_flow_cases(fails: "list[str]", td: Path) -> None:
+    """이음(설계 W §5.2 끝 · R §8-15 · §10-7) — 창 기록을 진짜 behavior_guard 가 쓰고 refactor_audit 이 그 기록으로 G1′ 을 잰다: 엄격 S1
+    변경 창 → 보탬 B1 G1′ → `보탬` 창 · `재승인반영` 창(0T · 변경 — 차분 좁힘 · rebind) → 새 V 를 더한 G1′ → S2 → verify green. 미검출 처리
+    (V 지움 · rebind)를 거친 창도 기준선이다. 음성: open 기록의 허용 표 · 차분을 고치면 그 창을 증거로 쓰지 않는다 · 차분 밖 슬라이스는 열리지
+    않는다 · 옛 꼴 실행의 창은 슬라이스 없이 되살린다."""
+    gone: str = "V1 시험 application/demo/test/test_policy.py::test_rule 바뀌는 기대 «assert True» 원문이 기준 판 케이스에 없다"
+    lane = JoinLane(td, "jn")
+    lane.plan(vs=V1_TEXT + JN_V2, edits="없음\n", adm=JN_ADM)
+    lane.decide("20261006-0950", PL_USER.format("0950"))
+    expect(fails, "JN1 C1 --gate → green(엄격 실행)", lane.confirm("20261006-0955"), 0, "red 0 · gate")
+    expect(fails, "JN2 엄격 S1 변경 창 open", lane.open("change", "--slice", "S1"), 0, "종류 변경", " · 슬라이스 S1 · 차례")
+    text: str = JN_POLICY.replace("assert True", "assert 1 == 1")
+    lane.commit(CW_POLICY, text, "S1")
+    expect(fails, "JN3 S1 close → 감사 요청 키 1", lane.guard("close"), 0, "감사 요청 키 1", " · 슬라이스 S1")
+    expect(fails, "JN4 감사 전 다음 변경 창 → 실행 불능(앞 변경 창 감사 먼저)", lane.open("change", "--slice", "S2"), 1,
+           "앞 변경 창 w1 의 감사 키 판정이 끝나지 않았다")
+    _cb_audit(lane.f, JN_RUN, 1)
+    # 보탬 B1 · 0T update 행을 더한 G1′(C2)
+    lane.parts.append(_li_added(LI_B1.replace("2100", "1100"), "20261006-1100"))
+    lane.write()
+    res: str = CH_ROW_M1 + CH_ROW_M2 + LI_ROW
+    adm2: str = JN_ADM + PL_UPD0T
+    lane.plan(vs=V1_TEXT + JN_V2, edits="없음\n", res=res, adm=adm2, plan=PL_HEAD + JN_ZT + JN_ZC + PL_S1 + PL_S2)
+    expect(fails, "JN5 장치가 쓴 S1 창 기록을 기준선으로 — 보탬 G1′ changes → green", lane.ch(), 0, "닫힌 창 기준선 1(w1)", "red 0")
+    path: Path = lane.decide("20261006-1110", PL_USER.format("1110"))
+    expect(fails, "JN5b --applied → green", lane.ch("--applied", str(path)), 0, "red 0 · applied")
+    expect(fails, "JN5c resolution --gate(보탬 1) → green", run(lane.repo, "resolution", str(lane.f), "--gate"), 0,
+           "항목 3(보탬 1)", "red 0 · gate")
+    expect(fails, "JN5d --gate → green", lane.confirm("20261006-1115"), 0, "red 0 · gate")
+    expect(fails, "JN6 S1 뒤 까닭 없는 0C-b → 실행 불능(차례 밖)", lane.open("code", "--slice", "0C-b"), 1,
+           "차례 밖 — 슬라이스 `0C-b` 는 지난 차례다(앞 창이 닿은 차례 `S1` · w1)")
+    expect(fails, "JN7 없는 보탬 항목을 가리킴 → 실행 불능", lane.open("code", "--slice", "0C-b", "--reason", "보탬", "--ref", "B2"), 1,
+           "`--ref B2` 가 가리키는 살아 있는 보탬 항목 이 없다(B2)")
+    expect(fails, "JN7b 보탬 항목의 자리와 다른 슬라이스 → 실행 불능", lane.open("test", "--slice", "0T-b", "--reason", "보탬", "--ref", "B1"), 1,
+           "보탬 항목 B1 의 자리는 슬라이스 `0C-b` 다(지금 `0T-b`)")
+    expect(fails, "JN8 보탬 창(0C-b) open", lane.open("code", "--slice", "0C-b", "--reason", "보탬", "--ref", "B1"), 0,
+           " · 슬라이스 0C-b · 까닭 보탬(B1)")
+    policy: str = "application/demo/domain_layer/policy.py"
+    rule_2: str = "def rule_2(x: int) -> int:\n"
+    lane.commit(policy, (lane.repo / policy).read_text(encoding="utf-8").replace(rule_2, rule_2 + "    # 둘째\n"), "보탬 B1")
+    expect(fails, "JN8b 보탬 창 close → 시험 쪽 무변", lane.guard("close"), 0, "시험 쪽 무변", " · 슬라이스 0C-b")
+    c2: "tuple[str, ...]" = ("--reason", "재승인반영", "--ref", "20261006-1115")
+    expect(fails, "JN9 재승인반영 · 그 확정이 건드리지 않은 S1 → 실행 불능", lane.open("change", "--slice", "S1", *c2), 1,
+           "확정 20261006-1115 은 슬라이스 `S1` 를 건드리지 않았다")
+    expect(fails, "JN10 재승인반영 0T-b open(더한 update 행)", lane.open("test", "--slice", "0T-b", *c2), 0,
+           " · 슬라이스 0T-b · 까닭 재승인반영(20261006-1115)")
+    text = text.replace('assert "rule" in "rule_0"', 'assert "rule_0" in "rule_01"')
+    lane.commit(CW_POLICY, text, "0T-b")
+    expect(fails, "JN10b 더한 update 행 케이스의 확정 변화 → close 0 · 개별 감사", lane.guard("close"), 0, "개별 감사 1", "red 0")
+    _cb_audit(lane.f, JN_RUN, 3)
+    # V3 을 S1 에 더한 G1′(C3) → 재승인반영 변경 창 — 처방 글만 바꾼 C4 로 rebind
+    res3: str = CH_ROW_M1 + JN_RES3 + CH_ROW_M2 + LI_ROW
+    plan3: str = PL_HEAD + JN_ZT + JN_ZC + JN_S13 + PL_S2
+    lane.plan(vs=V1_TEXT + JN_V2 + JN_V3, edits="없음\n", res=res3, adm=adm2 + JN_ADM3, plan=plan3)
+    path = lane.decide("20261006-1300", PL_USER.format("1300"))
+    expect(fails, "JN11 V3 을 S1 에 더한 G1′ --applied → green", lane.ch("--applied", str(path)), 0, "닫힌 창 기준선 1(w1)", "red 0 · applied")
+    expect(fails, "JN11b --gate → green", lane.confirm("20261006-1310"), 0, "red 0 · gate")
+    c3: "tuple[str, ...]" = ("--reason", "재승인반영", "--ref", "20261006-1310")
+    expect(fails, "JN12 재승인반영 · 차분 밖 S2 → 실행 불능", lane.open("change", "--slice", "S2", *c3), 1,
+           "확정 20261006-1310 은 슬라이스 `S2` 를 건드리지 않았다")
+    expect(fails, "JN13 재승인반영 변경 창(S1) open", lane.open("change", "--slice", "S1", *c3), 0,
+           " · 슬라이스 S1 · 까닭 재승인반영(20261006-1310)")
+    got: dict = lane.rec(4).get("allow", {})
+    narrow: bool = got.get("V") == ["V3"] and list(got.get("approved_cases", {})) == [f"{CW_POLICY}::test_rule_more"]
+    expect(fails, "JN13b 허용 표 = 그 확정이 더한 V3 몫만", (0 if narrow else 9, str(got)[:400]), 0)
+    spec: Path = lane.f / "design-spec.md"
+    spec.write_text(spec.read_text(encoding="utf-8").replace("한 이름 규약으로.", "한 이름 규약으로 — 글만."), encoding="utf-8")
+    lane.decide("20261006-1330", PL_USER.format("1330"))
+    expect(fails, "JN14 처방 글만 바꾼 C4 --gate → green", lane.confirm("20261006-1340"), 0, "red 0 · gate")
+    expect(fails, "JN14b 그 확정 뒤 rebind 없이 close → 결속 digest 가 같아 판정이 선다(V3 을 아직 안 해 미검출 red)", lane.guard("close"), 2,
+           "승인 변경 미검출 — 슬라이스 S1 V3 ")
+    expect(fails, "JN14c rebind — 명세 sha 만 바뀜", lane.guard("rebind"), 0, "창 w4 rebind", " · 슬라이스 S1 · 명세 sha ", "지운 V 0")
+    time.sleep(1.1)                                          # 닫힌 창은 마지막 close 가 마지막 rebind 보다 엄격히 뒤여야 증거다(초 단위)
+    text = text.replace("assert 2 == 2", "assert 3 == 3")
+    lane.commit(CW_POLICY, text, "S1 V3")
+    expect(fails, "JN15 재승인반영 변경 창 close → 감사 요청 키 1", lane.guard("close"), 0, "감사 요청 키 1", " · 슬라이스 S1")
+    _cb_audit(lane.f, JN_RUN, 4)
+    expect(fails, "JN16 차분으로 좁힌 창 기록도 기준선 — changes → green", lane.ch(), 0, "닫힌 창 기준선 2(w1, w4)", "red 0")
+    expect(fails, "JN16b 처방 글만 바꾼 확정(C4)을 가리킨 재승인반영 → 실행 불능(차분 없음)",
+           lane.open("change", "--slice", "S1", "--reason", "재승인반영", "--ref", "20261006-1340"), 1, "확정 20261006-1340 의 차분이 없다")
+    expect(fails, "JN17 S2 변경 창 open", lane.open("change", "--slice", "S2"), 0, " · 슬라이스 S2 · 차례")
+    lane.commit("application/demo/test/test_thing_api.py", "def test_gone() -> None:\n    assert 410 == 410\n", "S2")
+    expect(fails, "JN17b S2 close", lane.guard("close"), 0, "감사 요청 키 1")
+    _cb_audit(lane.f, JN_RUN, 5)
+    lane.suite()
+    expect(fails, "JN18 verify → green(창 차례 · 슬라이스별 집행)", lane.guard("verify"), 0, "창 차례 — 차례 2 · 까닭 3(재승인반영 2 · 보탬 1)",
+           "슬라이스별 집행 S1 2/2 · S2 1/1", "요약: 동작 보존 green")
+    # 음성 — open 기록을 고치면 그 창은 증거가 아니다
+    for label, n, change, needle in (
+            ("JN19 w1 허용 표에 파일 하나 더", 1, lambda o: o["allow"]["slice_files"].append("application/demo/test/test_big.py"), gone),
+            ("JN19b w4 차분에 V1 더", 4, lambda o: o["diff"].update(v=["V1", "V3"]), "바뀌는 기대 «assert 2 == 2» 원문이 기준 판 케이스에 없다"),
+            ("JN19c w4 결속 명세 sha 를 앞 확정 것으로", 4, lambda o: o.update(g1_sha=ra.g1_confirmations(lane.f)[0].spec_sha),
+             "바뀌는 기대 «assert 2 == 2» 원문이 기준 판 케이스에 없다")):
+        kept: bytes = lane.edit_rec(n, change)
+        expect(fails, f"{label} → 그 창을 쓰지 않는다 → changes red", lane.ch(), 2, needle)
+        (lane.run_dir / f"w{n}-open.json").write_bytes(kept)
+    expect(fails, "JN19d 기록을 되돌리면 → green(대조 짝)", lane.ch(), 0, "닫힌 창 기준선 3(w1, w4, w5)", "red 0")
+    # 보탬 답을 바꿈(보탬 → 미룸) — 이미 든 몫은 `철회` 창이 되돌린다
+    undo: "tuple[str, ...]" = ("code", "--slice", "0C-b", "--reason", "철회", "--ref", "B1")
+    expect(fails, "JN26 바꾸기 전 `철회 --ref B1` → 실행 불능", lane.open(*undo), 1, "`--ref B1` 가 가리키는 ", "(B1)")
+    lane.parts.append(_li_added("- B1 · 결정 = 미룸 · 출처 = 본인 직접(1500) · 바꿈 20261006-1500\n", "20261006-1500"))
+    lane.write()
+    expect(fails, "JN26b 바꾼 뒤 `보탬 --ref B1` → 실행 불능(살아 있는 보탬 아님)", lane.open("code", "--slice", "0C-b", "--reason", "보탬", "--ref", "B1"), 1,
+           "`--ref B1` 가 가리키는 살아 있는 보탬 항목 이 없다(B1)")
+    expect(fails, "JN26c 바꾼 뒤 `철회 --ref B1` 창 open", lane.open(*undo), 0, " · 슬라이스 0C-b · 까닭 철회(B1)")
+    lane.commit(policy, (lane.repo / policy).read_text(encoding="utf-8").replace("    # 둘째\n", ""), "보탬 B1 되돌림")
+    expect(fails, "JN26d 철회 창 close → 시험 쪽 무변", lane.guard("close"), 0, "시험 쪽 무변", " · 슬라이스 0C-b")
+    # 무편집 결정 행(검토 B1) — 계획 S1 칸에 실어도 그 파일은 변경 창 산출이 아니다
+    still = JoinLane(td, "jns")
+    big: str = "application/demo/test/test_big.py"
+    rows: str = "".join(f"| 큰 함수 시험 그대로 {d} | 기존 보호 | — | test_big | {d} | coder `{big}::test_big` |\n" for d in ("reuse", "retain", "reject"))
+    cell: str = "".join(f"; 큰 함수 시험 그대로 {d}" for d in ("reuse", "retain", "reject"))
+    still.plan(vs=V1_TEXT + JN_V2, edits="없음\n", adm=JN_ADM + rows,
+               plan=PL_HEAD + PL_S1.replace("규칙 함수 반환 기대 |", f"규칙 함수 반환 기대{cell} |") + PL_S2)
+    still.decide("20261006-0950", PL_USER.format("0950"))
+    expect(fails, "JN25 `reuse` · `retain` · `reject` 행을 S1 칸에 실은 계획 --gate → green", still.confirm("20261006-0955"), 0, "red 0 · gate")
+    expect(fails, "JN25b S1 변경 창 open", still.open("change", "--slice", "S1"), 0, " · 슬라이스 S1 · 차례")
+    made: dict = still.rec(1).get("allow", {})
+    expect(fails, "JN25c 계획 산출 = 편집 행의 파일만", (0 if made.get("slice_files") == [CW_POLICY] else 9, str(made.get("slice_files"))), 0)
+    still.commit(CW_POLICY, JN_POLICY.replace("assert True", "assert 1 == 1"), "S1")
+    still.commit(big, "def test_big() -> None:\n    got = 1\n    assert got == 1\n", "무편집 행의 시험 몸 편집")
+    expect(fails, "JN25d 무편집 결정 행의 시험 편집 → close red(2.45.1 과 같음)", still.guard("close"), 2, f"{big} — 0C 검사 불합격",
+           "이 슬라이스(S1) 몫 파일이 아니다")
+    # 보탬 하나가 두 슬라이스에 걸침(검토 사소 2) — 그 자리 어느 쪽이든 `보탬` 으로 연다
+    twice = JoinLane(td, "jnt")
+    twice.plan(vs=V1_TEXT + JN_V2, edits="없음\n", adm=JN_ADM)
+    twice.decide("20261006-0950", PL_USER.format("0950"))
+    twice.confirm("20261006-0955")
+    twice.open("change", "--slice", "S1")
+    twice.commit(CW_POLICY, JN_POLICY.replace("assert True", "assert 1 == 1"), "S1")
+    twice.guard("close")
+    _cb_audit(twice.f, JN_RUN, 1)
+    twice.parts.append(_li_added(LI_B1.replace("2100", "1100"), "20261006-1100"))
+    twice.write()
+    twice.plan(vs=V1_TEXT + JN_V2, edits="없음\n", res=res, adm=JN_ADM + PL_FOLLOW,
+               plan=PL_HEAD + JN_ZC + "| 0F-b | 보탬 B1 — 시험 따라감 | — | 재조직 — 0F 정리 대상 | test_big |\n" + PL_S1 + PL_S2)
+    twice.decide("20261006-1110", PL_USER.format("1110"))
+    expect(fails, "JN27 보탬 B1 이 0C-b · 0F-b 두 행에 걸친 G1′ --gate → green", twice.confirm("20261006-1115"), 0, "red 0 · gate")
+    for label, kind, sid, code, needle in (
+            ("JN27b 첫 자리 0C-b", "code", "0C-b", 0, " · 슬라이스 0C-b · 까닭 보탬(B1)"),
+            ("JN27c 둘째 자리 0F-b", "follow", "0F-b", 0, " · 슬라이스 0F-b · 까닭 보탬(B1)"),
+            ("JN27d 자리 밖 S1", "change", "S1", 1, "보탬 항목 B1 의 자리는 슬라이스 `0C-b` · `0F-b` 다(지금 `S1`)")):
+        expect(fails, f"{label} `보탬 --ref B1` open", twice.open(kind, "--slice", sid, "--reason", "보탬", "--ref", "B1"), code, needle)
+        twice.guard("close")
+    # 미검출 처리 — 열린 S1 창에서 V3 을 지우고 그 파일의 retain 행을 더한 G1′(`--baseline`) → rebind → 그 창 기록(미검출 처리 칸)도 기준선
+    miss = JoinLane(td, "jnm")
+    only_v3: str = CH_ROW_M1 + JN_RES3 + CH_ROW_M2
+    miss.plan(vs=V1_TEXT + JN_V2 + JN_V3, edits="없음\n", res=only_v3, adm=JN_ADM + JN_ADM3, plan=PL_HEAD + JN_S13 + PL_S2)
+    miss.decide("20261006-0950", PL_USER.format("0950"))
+    miss.confirm("20261006-0955")
+    miss.open("change", "--slice", "S1")
+    miss.commit(CW_POLICY, JN_POLICY.replace("assert True", "assert 1 == 1").replace("    assert 2 == 2", "    got = 2\n    assert got == 2"), "S1")
+    expect(fails, "JN21 V3 을 집행하지 않은 S1 close → 승인 변경 미검출 red", miss.guard("close"), 2, "승인 변경 미검출 — 슬라이스 S1 V3 ")
+    base: "tuple[str, ...]" = ("--baseline", str(miss.run_dir / "w1-open.json"))
+    miss.plan(vs=V1_TEXT + JN_V2, edits="없음\n", res=only_v3.replace("변경 | — | V3 |", "해소 | — | — |"), adm=JN_ADM + JN_MISS,
+              plan=PL_HEAD + PL_S1.replace("규칙 함수 반환 기대", "규칙 함수 반환 기대; 재조직 — 규칙 하나 더 시험") + PL_S2)
+    before: "set[Path]" = set((miss.f / "g1").glob("*-candidate.json"))
+    expect(fails, "JN22 V3 을 지우고 retain 행을 더한 G1′ --candidate --baseline w1 → green", miss.ch("--candidate", *base), 0, "red 0 · candidate")
+    new: "list[Path]" = sorted(set((miss.f / "g1").glob("*-candidate.json")) - before)
+    miss.cand = ra.snapshot_digest(json.loads(new[0].read_text(encoding="utf-8"))) if new else "0" * 12
+    miss.parts.append(f"\n## G1 변경 결정 20261006-1000 · 후보 digest {miss.cand}\n\n" + PL_USER.format("1000"))
+    miss.write()
+    gate = miss.ch("--gate", *base)
+    expect(fails, "JN22b --gate --baseline w1 → green", gate, 0, "red 0 · gate")
+    if "명세 sha " in gate[1]:
+        d, s = (gate[1].split(mark, 1)[1].split()[0] for mark in ("최종 digest ", "명세 sha "))
+        miss.parts.append(f"- G1 변경판 확정 20261006-1005 · digest {d} · 후보 {miss.cand} · 명세 sha {s}\n")
+        miss.write()
+    expect(fails, "JN23 rebind — 지운 V 1 · 미검출 처리 허용 파일 1", miss.guard("rebind"), 0, "지운 V 1(V3) · 미검출 처리 허용 파일 1")
+    time.sleep(1.1)
+    expect(fails, "JN23b 그 창 close 다시 → green(감사 요청)", miss.guard("close"), 0, " · 슬라이스 S1")
+    _cb_audit(miss.f, JN_RUN, 1)
+    expect(fails, "JN24 미검출 처리 칸이 든 창 기록도 기준선 — changes → green", miss.ch(), 0, "닫힌 창 기준선 1(w1)", "red 0")
+    # 옛 꼴 실행(첫 후보가 옛 판 후보) — 슬라이스 없이(또는 적어도 대조하지 않고) 열리고, 그 창은 슬라이스 없는 허용 표로 되살린다
+    for name, extra in (("JN20", ()), ("JN20b", ("--slice", "S1"))):
+        old = JoinLane(td, name.lower())
+        old.plan(vs=V1_TEXT + JN_V2, edits="없음\n", adm=JN_ADM)
+        path, _c = old.candidate()
+        opath, ocand = old.legacy(path)
+        path.unlink()
+        path.with_name(path.name[:-len(".json")] + "-resolution.json").unlink()
+        old.parts.append(f"\n## G1 변경 결정 20261006-0950 · 후보 digest {ocand}\n\n" + PL_USER.format("0950"))
+        old.write()
+        gate = old.ch("--gate")
+        digest: str = gate[1].split("최종 digest ", 1)[1].split()[0] if "최종 digest " in gate[1] else "0" * 12
+        old.parts.append(f"- G1 변경판 확정 20261006-0955 · digest {digest} · 후보 {ocand}\n")
+        old.write()
+        expect(fails, " ".join((f"{name} 옛 꼴 실행의 변경 창 open", *extra)), old.open("change", *extra), 0, "옛 꼴 실행(슬라이스 · 까닭 대조 없음)")
+        rec: dict = old.rec(1)
+        plain: bool = "slice" not in rec and rec.get("given") == ({"slice": "S1"} if extra else None)
+        expect(fails, f"{name} open 기록에 칸 `slice` 없음(적은 값은 `given`)", (0 if plain else 9, str(sorted(rec))), 0)
+        old.commit(CW_POLICY, JN_POLICY.replace("assert True", "assert 1 == 1"), "S1")
+        expect(fails, f"{name} close → 감사 요청 키 1", old.guard("close"), 0, "감사 요청 키 1")
+        old.plan(vs=V1_TEXT + JN_V2, edits="없음\n", adm=adm2)
+        expect(fails, f"{name} 옛 꼴 창은 지금 길(슬라이스 없는 허용 표) → changes green", old.ch(), 0, "닫힌 창 기준선 1(w1)", "red 0")
+
+
+# ── 새-2 — 갈래 `framework 새 모듈` · `프로젝트 합성` 닫힌 목록 ───────────────────────────────────────
+FW_NEW: str = "framework/httpx/api_call.py"
+
+
+def framework_new_cases(fails: "list[str]", td: Path) -> None:
+    """다른 BC 편집 갈래 `framework 새 모듈`(설계 R §4.7) — 0C 만 · 트리 칸 `framework/<technology>/<module>.py` · 새 파일(앵커 판 기준) ·
+    대상 BC 밖 import 0 · R2 «바뀌는 것» 값. 0C · 0F 창 close 경계는 behavior_guard 러너 몫이다."""
+    lane = ChangesLane(td, "fw")
+    (lane.folder / "build_anchor").unlink()                  # G1 전 — 새 파일 기준 = HEAD · 작업 트리
+
+    def put(*lines: str) -> "tuple[int, str]":
+        lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE + "".join(f"- {ln}\n" for ln in lines), CH_ROW_M1 + CH_ROW_M2)
+        return lane.ch()
+
+    def commit(rel: str, body: str) -> None:
+        (lane.repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (lane.repo / rel).write_text(body, encoding="utf-8")
+        _git(lane.repo, "add", "-A", "framework")
+        _git(lane.repo, "commit", "-qm", rel)
+    expect(fails, "RF1 새 모듈 · 0C → green", put(f"{FW_NEW} · framework 새 모듈 · 0C"), 0, "다른 BC 편집 2", "red 0")
+    for label, line, needle in (
+            ("RF2 연결 `V2` → red(0C 만)", f"{FW_NEW} · framework 새 모듈 · V2", "갈래 `framework 새 모듈` 의 연결 `V2` 가 0C 가 아니다(0C 창에서만"),
+            ("RF2b 연결 `0F` → red", f"{FW_NEW} · framework 새 모듈 · 0F", "의 연결 `0F` 가 0C 가 아니다"),
+            ("RF3 capability 칸 꼴 이름(`<t>_port`) → red", "framework/httpx/httpx_port.py · framework 새 모듈 · 0C", "가 capability 칸 꼴이다"),
+            ("RF3b capability 칸 꼴 이름(`*_adapter`) → red", "framework/httpx/call_adapter.py · framework 새 모듈 · 0C", "가 capability 칸 꼴이다"),
+            ("RF4 고정 칸 `framework/test/` → red", "framework/test/api_call.py · framework 새 모듈 · 0C", "`framework/test/` 는 고정 칸이다"),
+            ("RF5 더 깊은 폴더 → red", "framework/httpx/sub/api_call.py · framework 새 모듈 · 0C", "트리 칸 `framework/<technology>/<module>.py` 꼴이 아니다")):
+        expect(fails, label, put(line), 2, needle)
+    commit("framework/ninja/old.py", "X = 1\n")
+    expect(fails, "RF6 이미 있는 framework 모듈 → red(편집 범위 밖)", put("framework/ninja/old.py · framework 새 모듈 · 0C"), 2,
+           "이미 있는 framework 모듈이다(있는 모듈 편집은 편집 범위 밖 — 이 갈래는 새 모듈만)")
+    commit("framework/cache/cache_port.py", "class CachePort: ...\n")
+    expect(fails, "RF4b capability 폴더(`*_port.py` 있음) → red", put("framework/cache/helper.py · framework 새 모듈 · 0C"), 2,
+           "`framework/cache/` 는 capability 폴더다")
+    expect(fails, "RF7 새 폴더의 `__init__.py` 도 이 갈래 → green", put(f"{FW_NEW} · framework 새 모듈 · 0C", "framework/httpx/__init__.py · framework 새 모듈 · 0C"), 0,
+           "red 0")
+    commit("framework/redis/__init__.py", "")
+    expect(fails, "RF9 이미 있는 폴더의 `__init__.py` → red", put("framework/redis/__init__.py · framework 새 모듈 · 0C"), 2, "이미 있는 패키지 파일이다")
+    (lane.repo / FW_NEW).parent.mkdir(parents=True, exist_ok=True)
+    (lane.repo / FW_NEW).write_text("def call() -> int:\n    return 1\n", encoding="utf-8")
+    other: Path = lane.repo / "application/other/domain_layer/uses.py"
+    other.write_text("from framework.httpx.api_call import call\n", encoding="utf-8")
+    expect(fails, "RF8 G1 전 작업 트리에 이미 있고 다른 BC 가 import → red 둘(있음 · 대상 BC 밖 import)", put(f"{FW_NEW} · framework 새 모듈 · 0C"), 2,
+           "이미 있는 framework 모듈이다", "대상 BC 밖이 import 한다(application/other/domain_layer/uses.py)")
+    (lane.repo / FW_NEW).unlink()
+    other.unlink()
+    # Phase 2 — 새 파일의 기준은 앵커 판
+    (lane.folder / "build_anchor").write_text(_git(lane.repo, "rev-parse", "HEAD").strip() + "\n", encoding="utf-8")
+    commit(FW_NEW, "def call() -> int:\n    return 1\n")
+    expect(fails, "RF11 앵커 뒤 0C 창이 만든 새 모듈 → changes green(기준 = 앵커 판)", put(f"{FW_NEW} · framework 새 모듈 · 0C"), 0, "red 0")
+    (lane.repo / "application/demo/domain_layer/uses.py").write_text("from framework.httpx.api_call import call\n", encoding="utf-8")
+    expect(fails, "RF11b 대상 BC 안 import 는 받는다 → green", put(f"{FW_NEW} · framework 새 모듈 · 0C"), 0, "red 0")
+    other.write_text("import framework.httpx.api_call\n", encoding="utf-8")
+    expect(fails, "RF8b 앵커 뒤에도 다른 BC 가 import 하면 → red", put(f"{FW_NEW} · framework 새 모듈 · 0C"), 2, "대상 BC 밖이 import 한다")
+    other.unlink()
+    (lane.folder / "build_anchor").write_text(_git(lane.repo, "rev-parse", "HEAD").strip() + "\n", encoding="utf-8")
+    expect(fails, "RF10 앵커 판에 있는 모듈 → red", put(f"{FW_NEW} · framework 새 모듈 · 0C"), 2, "이미 있는 framework 모듈이다")
+    aud: Audit = Audit(td / "fw-r2")
+    a: Path = aud.make([row(1, V_B9, fixable="framework 새 모듈 — 두 어댑터의 같은 호출"), row(2, V_B9, fixable="내부 약속 + framework 새 모듈")],
+                       ["M1 | ddd-01#1 | 채택 | | ", "M2 | ddd-01#2 | 채택 | | "])
+    expect(fails, "RF13 R2 «바뀌는 것» `framework 새 모듈` → 형식 경고 없음 · check-verdict 요약 `framework 2`",
+           run(aud.repo, "check-verdict", str(a)), 0, "바뀌는 것 동반 안 1 · 밖 0 · DB 0 · 다른 BC 0 · framework 2 · red 0")
+
+
+def compose_closed_cases(fails: "list[str]", td: Path) -> None:
+    """`프로젝트 합성` 닫힌 목록(설계 R §4.7 · 처분 Y17) — `<project>/urls.py` · `api.py` · `internal_api.py`(`<project>` = 저장소 뿌리 바로 아래
+    `settings.py` · `settings/` 를 가진 폴더) · 경로 앞 응답 둘 · 새 패키지일 때만 `__init__.py` 둘. RD-CF 흐름(`c_basis_flow_cases`)은 무변."""
+    lane = ChangesLane(td, "cmp")
+    (lane.folder / "build_anchor").unlink()
+
+    def put(line: str) -> "tuple[int, str]":
+        lane.spec(V1_TEXT + V2_TEXT, EDIT_LINE + f"- {line} · 프로젝트 합성 · 0C\n", CH_ROW_M1 + CH_ROW_M2)
+        return lane.ch()
+    outside: str = "가 닫힌 목록 밖 — 목록은 `<project>/urls.py` · `<project>/api.py` · `<project>/internal_api.py` · "
+    for label, line, code, needle in (
+            ("RC1 config/api.py(settings 있음) → green", "config/api.py", 0, "red 0"),
+            ("RC1b config/urls.py → green", "config/urls.py", 0, "red 0"),
+            ("RC6 config/internal_api.py → green", "config/internal_api.py", 0, "red 0"),
+            ("RC1c framework/ninja/pre_route_responses.py → green", "framework/ninja/pre_route_responses.py", 0, "red 0"),
+            ("RC2 목록 밖 framework 새 파일 → red(갈래 안내)", FW_NEW, 2, outside),
+            ("RC2b 목록 밖 프로젝트 파일 config/settings.py → red", "config/settings.py", 2, outside),
+            ("RC3 settings 없는 폴더의 urls.py → red", "scripts/urls.py", 2,
+             "`scripts/` 가 Django 프로젝트 패키지(`settings.py` · `settings/` 를 가진 저장소 뿌리 바로 아래 폴더)가 아니다"),
+            ("RC3b 뿌리 바로 아래가 아닌 폴더의 urls.py → red", "web/home/urls.py", 2, outside),
+            ("RC4 없는 framework/__init__.py(새 패키지) → green", "framework/__init__.py", 0, "red 0")):
+        expect(fails, label, put(line), code, needle)
+    (lane.repo / "framework").mkdir(exist_ok=True)
+    (lane.repo / "framework/__init__.py").write_text("", encoding="utf-8")
+    _git(lane.repo, "add", "-A", "framework")
+    _git(lane.repo, "commit", "-qm", "pkg")
+    expect(fails, "RC4b 이미 있는 framework/__init__.py → red", put("framework/__init__.py"), 2, "이미 있는 패키지 파일이다(새 패키지일 때만 이 갈래로 적는다)")
+    (lane.repo / "proj/settings").mkdir(parents=True)
+    expect(fails, "RC3c `settings/` 폴더를 가진 뿌리 바로 아래 폴더의 api.py → green", put("proj/api.py"), 0, "red 0")
+
 
 def deps_cases(fails: "list[str]", td: Path) -> None:
     """설계 §5 새 `deps` — SCC · 받는 쪽 · HTTP 간선 · 공유 표면 · 공급자 정리 상태 · 경로 단위 겹침 · 보류 · 다른 작업 트리."""
@@ -7258,6 +8676,165 @@ _S1_MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...], str], ...]" = (
     ("F4-199 소비 꼬리 기준 판 늘 지금 시험", (('fix_from: str = "열린 창 기준선" if baseline else "지금 시험"', 'fix_from: str = "지금 시험"'),),
      "closed_window_shared_cases"),
 )
+
+
+# 리팩토링 실행 수리(2.46.0 — F4-204 · 205 · 211 · 212 · 새-1 · 새-2) 변이 — (이름, ((옛 글, 새 글), …), 잡을 사례 함수들) · 모두 붉어야 한다.
+_RUN_MUTATIONS: "tuple[tuple[str, tuple[tuple[str, str], ...], str], ...]" = (
+    ("보탬 대리 출처 검사 끔(RB4)", (('        if not fields["출처"].startswith(PROXY_FREE):', "        if False:"),), "late_items_cases"),
+    ("보탬 위치 대상 BC 검사 끔(RB5)", (("                    elif bc is not None and not _in_bc(norm, bc):", "                    elif False:"),),
+     "late_items_cases"),
+    ("보탬 절 줄을 G0 결정 줄로 읽음(RB22)", (("        if in_added:\n            continue                                       # 보탬 절 줄은",
+                                       "        if False:\n            continue                                       # 보탬 절 줄은"),),
+     "late_items_cases"),
+    ("재상정 키를 `M` 만 읽음(RB16)", (('re.findall(r"\\b[MB]\\d+\\b" if in_reconsider else r"\\bM\\d+\\b", dm.group(1))',
+                               're.findall(r"\\bM\\d+\\b", dm.group(1))'),), "late_items_cases"),
+    ("ⓐ 항목에서 보탬 B 뺌(RB1)", (('    return adopted | {b for b, it in added.items() if it.token == "보탬"}, added', "    return adopted, added"),),
+     "late_items_cases"),
+    ("보탬 규칙 결속 대조 끔(RB8)", (("        if not _cite_binds(corpus_fn(), added[bid].rule):", "        if False:"),), "late_items_cases"),
+    ("residual 이 보탬 잔존을 M_m 에 섞음(RB19b)", (('    m_m: int = sum(_n(x, "M") for x in', "    m_m: int = sum(len(x) for x in"),),
+     "late_items_cases"),
+    ("보탬 쉼표 목록의 첫 번호만 읽음(RB24)", (('        bids: "list[str]" = re.findall(r"[A-Z]\\d+", dm.group(1))',
+                                    '        bids: "list[str]" = re.findall(r"[A-Z]\\d+", dm.group(1))[:1]'),), "late_items_cases"),
+    ("보탬 절 판형 밖 줄 실행 불능 끔(RB26)", (('            if re.search(r"\\b[MBC]\\d+\\b", re.sub(r"[*`]", "", ln)):', "            if False:"),),
+     "late_items_cases"),
+    ("바꿈 줄이 앞 줄을 갈음하지 않음(RB28)", (("            out[bid] = AddedItem(", "            out[bid] = out.get(bid) or AddedItem("),), "late_items_cases"),
+    ("보탬 k 에서 재상정으로 뺀 것을 뺌(RB20c)", (("    n_b: int = _added_count(added)", '    n_b: int = sum(1 for k in items if k.startswith("B"))'),),
+     "late_items_cases"),
+    ("보탬 문 처분 줄 끔(RB19)", (("    added_note: str = _added_note(added)", '    added_note: str = ""'),), "late_items_cases"),
+    ("--gate 의 ⑤ 다시 끔(RG4)", (("            reds += _gate_applied_reds(folder, snap, spec)", "            reds += []"),), "g1_binding_r_cases"),
+    ("곁 자료 입장 표 · 슬라이스 계획 결속 대조 끔(RG7)",
+     (("        if not isinstance(cand[SIDE_BINDING], str) or _rows_digest(side_now) != cand[SIDE_BINDING]:", "        if False:"),),
+     "g1_binding_r_cases"),
+    ("확정 줄 명세 sha 칸 버림(RG2)", (("G1Confirmation(m.group(1).strip(), m.group(2), m.group(3), m.group(4))",
+                              "G1Confirmation(m.group(1).strip(), m.group(2), m.group(3), None)"),), "g1_binding_r_cases"),
+    ("g1_confirmations 가 마지막 줄만(RG3)", (("(_confirmation(Path(folder), i) for i in range(n))",
+                                       "(_confirmation(Path(folder), -1) for i in range(n))"),), "g1_binding_r_cases"),
+    ("확정 줄 명세 sha 필수 끔(RG9)", (("        if SIDE_BINDING in csnap:\n            raise", "        if False:\n            raise"),),
+     "g1_binding_r_cases"),
+    ("strict_run 을 늘 참으로(RG10d)", (("        return SIDE_BINDING in _candidate_path(Path(folder), heads[0][3])[1]", "        return True"),),
+     "g1_binding_r_cases"),
+    ("계획 절 · 행 실재 대조 끔(RG21)", (("    if not plan:\n        # 살아", "    if False:\n        # 살아"),), "g1_binding_r_cases"),
+    ("계획 절 실재 대조를 V 있는 명세만(RG21d · RG21e · RG21f)",
+     (("(spec.v or spec.edits or any(_edit_row(r) for r in spec.rows) or ", "(spec.v or "),), "g1_binding_r_cases"),
+    ("계획 절 실재 대조를 명세마다(RG21g)",
+     (("        if not (spec.v or spec.edits or any(_edit_row(r) for r in spec.rows)", "        if not (True or any(_edit_row(r) for r in spec.rows)"),),
+     "g1_binding_r_cases"),
+    ("계획 절 실재 대조에서 살아 있는 항목 뺌(RG21h)", (("((candidate or first) and scope_items(folder).live)", "False"),), "g1_binding_r_cases"),
+    ("살아 있는 항목을 반영판에서도 봄(RD-CR1)", (("((candidate or first) and scope_items(folder).live)", "scope_items(folder).live"),), "c_basis_reject_cases"),
+    ("계획 절 없음 글이 절 둘 red 를 덮음(RG21b)", (("        return heading_reds or [", "        return ["),), "g1_binding_r_cases"),
+    ("결정 절 전 `--candidate` 의 계획 대조 끔(RG22b)",
+     (("    if not strict_run(folder) and not (candidate and first):", "    if not strict_run(folder):"),), "g1_binding_r_cases"),
+    ("옛 꼴 실행의 `--candidate` 도 계획 대조(RG15b)",
+     (("    if not strict_run(folder) and not (candidate and first):", "    if not strict_run(folder) and not candidate:"),), "g1_binding_r_cases"),
+    ("계획 red 가 절의 표 행 전부를 봄(RG23)",
+     (('    plan: "list[str]" = [_slice_id(c[0]) for c in _plan_rows(spec.text)]', '    plan: "list[str]" = [_slice_id(c[0]) for c in _slice_rows(spec.text)]'),),
+     "g1_binding_r_cases"),
+    ("slice_plan(지금)이 절의 표 행 전부를 봄(RG23f)",
+     (("_plan_binding(_plan_rows(text), _admission(text))", "_plan_binding(_slice_rows(text), _admission(text))"),), "g1_binding_r_cases"),
+    ("slice_plan(확정)이 곁 자료 행 전부를 봄(RG23f)", (("if c and slice_branch(_slice_id(c[0])) and _slice_id(c[0]) not in gone_sl]",
+                                           "if c and _slice_id(c[0]) not in gone_sl]"),), "g1_binding_r_cases"),
+    ("다른 표 머리를 계획 표로(RG21k)", (("            in_plan = False\n", "            in_plan = True\n"),), "g1_binding_r_cases"),
+    ("머리 없는 슬라이스 꼴 행을 안 읽음(RG23h)", (("in_plan or in_plan is None and slice_branch(", "in_plan or False and slice_branch("),), "g1_binding_r_cases"),
+    ("계획 표 밖 슬라이스 꼴 행 red 끔(RG23c)", (("        elif slice_branch(sid):\n            stray.append(sid)", "        elif False:\n            stray.append(sid)"),),
+     "g1_binding_r_cases"),
+    ("계획 산출에 무편집 결정 행도(RX1 · RX12)", (("    return row.decision in TEST_VERBS or _reorg(row)", "    return True"),), "plan_expose_cases"),
+    ("무편집 결정 행이 변경 창 산출에 듦(JN25)", (("    return row.decision in TEST_VERBS or _reorg(row)", "    return True"),), "join_flow_cases"),
+    ("재조직 retain 행을 산출에서 뺌(RX1)", (("    return row.decision in TEST_VERBS or _reorg(row)", "    return row.decision in TEST_VERBS"),), "plan_expose_cases"),
+    ("보탬 자리를 첫 행만(RX4c)", (('bid in re.findall(r"\\bB\\d+\\b", r.purpose.split("—")[0])))',
+                            'bid in re.findall(r"\\bB\\d+\\b", r.purpose.split("—")[0]))[:1])'),), "plan_expose_cases"),
+    ("바꿈으로 되돌린 보탬을 removed 에서 뺌(RX14)", ((" | {b for b, it in added.items() if it.undone}))", "))"),), "plan_expose_cases"),
+    ("되돌린 보탬 이력을 한 번만 봄(RX14b)", (('(prior.token == "보탬" or prior.undone)', 'prior.token == "보탬"'),), "plan_expose_cases"),
+    ("되돌린 보탬 안내 끔(RB31c)", (("    if undone:\n        parts.append", "    if False:\n        parts.append"),), "late_items_cases"),
+    ("`바꿈` 시각에 공백 안 받음(RB30)", (('rf"·\\s*바꿈\\s+({_G1_TIME})\\s*$"', 'r"·\\s*바꿈\\s+(\\S+)\\s*$"'),), "late_items_cases"),
+    ("앞 결정 옮김 시각에 공백 안 받음(RK20)", (('rf"\\s+({_G1_TIME})\\s*·\\s*길', 'r"\\s+(\\S+)\\s*·\\s*길'),), "carry_cases"),
+    ("앞 결정 옮김 셈이 공백 든 시각을 못 읽음(RK20b)", (('rf"\\s+{_G1_TIME}\\s*·\\s*길', 'r"\\s+\\S+\\s*·\\s*길'),), "carry_cases"),
+    ("코드 상자 안 R2 표 실행 불능 끔(RR17)", (("        if boxed and len(rows) == before:", "        if False:"),), "row_reading_cases"),
+    ("밖에 행이 있어도 코드 상자 red(RR17c)", (("        if boxed and len(rows) == before:", "        if boxed:"),), "row_reading_cases"),
+    ("계획 표 S 번호 차례 대조 끔(RG11)", (('            elif br == pb == "S" and int(sid[1:]) <= int(prev[1:]):', "            elif False:"),),
+     "g1_binding_r_cases"),
+    ("앞 결정 옮김의 V 글자 대조 끔(RK6)", (('        elif ov[v["id"]] != v:', "        elif False:"),), "carry_cases"),
+    ("앞 결정 옮김의 답 대조 끔(RK4)", (('        if out[vid][0] != prev_ans.get(vid, "없음"):', "        if False:"),), "carry_cases"),
+    ("앞 결정 옮김 ⓐ 를 옮긴 V 만으로(RK6)", (('    for v in nsnap.get("V", []):                                                   # ⓐ',
+                                     '    for v in [x for x in nsnap.get("V", []) if x["id"] in carried]:'),), "carry_cases"),
+    ("앞 결정 옮김 ⓑ 다른 BC 편집 대조 끔(RK8)", (("    if extra:\n        reds.append(f\"앞 결정 옮김", "    if False:\n        reds.append(f\"앞 결정 옮김"),),
+     "carry_cases"),
+    ("앞 결정 옮김 ⓒ 빠진 V 근거 대조 끔(RK10)", (("            if not items or not items <= cut:", "            if False:"),), "carry_cases"),
+    ("앞 결정 옮김 ⓓ 앞 절 확정 대조 끔(RK11)", (("    elif any(_is_g1_conf(ln) and prev[0] < no < start for no, ln in lines):", "    elif False:"),),
+     "carry_cases"),
+    ("앞 결정 옮김 길 칸 없어도 받음(RK1)", (('rf"\\s+({_G1_TIME})\\s*·\\s*길\\s*=\\s*(.+?)\\s*", src)', 'rf"\\s+({_G1_TIME})(?:\\s*·\\s*길\\s*=\\s*(.+?))?\\s*", src)'),
+                                  ("        if not cm or cm.group(2) not in CARRY_PATHS:", "        if not cm or cm.group(2) not in (*CARRY_PATHS, None):")),
+     "carry_cases"),
+    ("재상정 반영의 «뺀 항목만» 대조 끔(RK15)", (("        reds += _cut_only_reds(folder, prev[3], cand, cut, set(ov) - nids)", "        reds += []"),),
+     "carry_cases"),
+    ("재상정 반영에 새 행 허용(RK16)",
+     (('                reds.append(f"재상정 반영 — {label} `{k[:40]}` 가 새로 섰다(재상정 반영은 뺀 항목을 지우는 반영만 — 그 밖은 G1′ 배너)")',
+       "                dropped += 0"),), "carry_cases"),
+    ("해소 표 `불가 · 재상정 제외` 고침을 뺀 몫 밖으로(RK18)",
+     (("        return (res_tied(k, old_txt) and len(o) == len(n) == 8", "        return (False and len(o) == len(n) == 8"),), "carry_cases"),
+    ("slice_plan 매임에서 입장 표 대조 끔(RX1)", (('        named: "list[str]" = [n for n in by if n in items]',
+                                         '        named: "list[str]" = [n for n in by if n in items] + sorted(items - set(by))'),),
+     "plan_expose_cases"),
+    ("확정 계획 이력 `at` 무시(RX2)", (('    if at is None:\n        text: str = _read(Path(folder) / "design-spec.md")',
+                              '    if True:\n        text: str = _read(Path(folder) / "design-spec.md")'),), "plan_expose_cases"),
+    ("차분 안 매인 재조직 행을 0T 로(RX3c)", (('        return "0F"                                        # 칸 개명', '        return "0T"  # 칸 개명'),),
+     "plan_expose_cases"),
+    ("차분을 후보 기준으로(RX6)", (('    removed: "set[str]" = {v for v, d in _section_decisions(lines, hno, hlv).items() if d == "안 바꾼다"}',
+                            '    removed: "set[str]" = set()'),), "plan_expose_cases"),
+    ("차분 빠진 입장 행 끔(RX7)", (("    for n, o in orow.items():\n        if n not in nrow:", "    for n, o in orow.items():\n        if False:"),),
+     "plan_expose_cases"),
+    ("차분 빠진 V 에 딸린 행을 따로 셈(RX8)", (("            if n in orow_vids and not orow_vids[n] & set(nv):", "            if False:"),),
+     "plan_expose_cases"),
+    ("차분 안 매인 update 행을 0F 로(RX9)", (('    return "0T"\n\n\ndef _plain_reorg', '    return "0F"\n\n\ndef _plain_reorg'),), "plan_expose_cases"),
+    ("차분 낱말을 건드림으로(RX10)", (('        return bool(self.plan_row in ("더함", "바뀜") or', '        return bool(self.plan_row in ("더함", "바뀜", "낱말") or'),),
+     "plan_expose_cases"),
+    ("차분 칸 개명 행을 0T 로(RX13)", (('        if item is not None and item.get("kind") != FIELD_KIND:', "        if item is not None:"),),
+     "plan_expose_cases"),
+    ("엄격 창을 옛 길로 되살림(RW1)",
+     (('        if isinstance(opened.get("slice"), str):                # 엄격 변경 창', "        if False:                # 엄격 변경 창"),
+      ('        for d, c in ([] if isinstance(opened.get("slice"), str) else confirmed):', "        for d, c in confirmed:")),
+     "strict_window_cases"),
+    ("엄격 창 `g1_sha` 대조 끔(RW3)",
+     (('        if isinstance(opened.get("g1_sha"), str) and conf.spec_sha is not None and conf.spec_sha != opened["g1_sha"]:', "        if False:"),),
+     "strict_window_cases"),
+    ("엄격 창을 반영판 대신 후보로 되살림(RW4)",
+     (("            rebuilt, _adm, _sl = _applied_view(Path(folder), idx)",
+       "            rebuilt = _expected_applied(load_candidate(Path(folder), conf.candidate), set())"),), "strict_window_cases"),
+    ("엄격 창 허용 표의 open 뒤 칸까지 대조(RW6)", (("{k: v for k, v in opened.items() if k not in ALLOW_RUNTIME_KEYS})", "opened)"),),
+     "strict_window_cases"),
+    ("엄격 창을 `재승인반영` 차분 없이 되살림(JN16)",
+     (('diff=opened.get("diff") if isinstance(opened.get("diff"), dict) else None)', "diff=None)"),), "join_flow_cases"),
+    ("framework 새 모듈 연결 0C 검사 끔(RF2)", (('        elif kind == FRAMEWORK_NEW and ref != "0C":', "        elif False:"),), "framework_new_cases"),
+    ("framework 새 모듈 새 파일 검사 끔(RF6)", (('    elif mod != "__init__" and base_has(rel):', "    elif False:"),), "framework_new_cases"),
+    ("framework 새 모듈 밖 import 검사 끔(RF8)", (("    if users:\n        reds.append(f\"대상 BC 밖이", "    if False:\n        reds.append(f\"대상 BC 밖이"),),
+     "framework_new_cases"),
+    ("새 파일 기준을 앵커 판 대신 HEAD 로(RF11)", (('    rev: str = anchor or "HEAD"', '    rev: str = "HEAD"'),), "framework_new_cases"),
+    ("프로젝트 합성 닫힌 목록 끔(RC2)", (("            if why:\n                reds.append(f\"다른 BC 편집", "            if False:\n                reds.append(f\"다른 BC 편집"),),
+     "compose_closed_cases"),
+    ("프로젝트 합성 settings 폴더 검사 끔(RC3)", (('        if (pkg / "settings.py").is_file() or (pkg / "settings").is_dir():', "        if True:"),),
+     "compose_closed_cases"),
+    ("프로젝트 합성 목록에서 internal_api.py 뺌(RC6)", (('("urls.py", "api.py", "internal_api.py")', '("urls.py", "api.py")'),), "compose_closed_cases"),
+    ("residual 결과를 앞 `|` 행만 읽음(RR1)", (('_lead_rows(path.read_text(encoding="utf-8"), _ITEM_ROW_HEAD)',
+                                      '_table_rows(path.read_text(encoding="utf-8"))'),), "row_reading_cases"),
+    ("답 없음을 판단 불가로 합침(RR3)",
+     (('    unknown: "list[str]" = [m for m in pending_ids if states[m] == "판단 불가"]',
+       '    unknown: "list[str]" = [m for m in pending_ids if states[m] in ("판단 불가", "답 없음")]'),
+      ('    unanswered: "list[str]" = [m for m in pending_ids if states[m] == "답 없음"]', '    unanswered: "list[str]" = []')),
+     "row_reading_cases"),
+    ("답 없음 이력 끔(RR6)", (('                    else "판단 불가" if verdict == "답 없음" and mid in noans_before else verdict)',
+                          "                    else verdict)"),), "row_reading_cases"),
+    ("R2 못 읽은 행 실행 불능 끔(RR10)", (("        if unread:\n            raise", "        if False:\n            raise"),), "row_reading_cases"),
+    ("verdict.md 를 앞 `|` 행만 읽음(RR11)", (("_lead_rows(_read(audit / name), _M_ROW_HEAD)", "_table_rows(_read(audit / name))"),), "row_reading_cases"),
+    ("코드 펜스 안 줄도 행으로(RR14)", (('    for ln in _unfenced(text):\n        s: str = ln.strip()\n        if s.startswith("|"):',
+                              '    for ln in text.splitlines():\n        s: str = ln.strip()\n        if s.startswith("|"):'),), "row_reading_cases"),
+    ("R2 표 머리 줄을 못 읽은 행으로 셈(RR15c)", (("        if k + 1 < len(lines) and _BARE_SEP.match(lines[k + 1]):", "        if False:"),),
+     "row_reading_cases"),
+    ("R2 구분 줄을 못 읽은 행으로 셈(RR15)", (('        if not s or s.startswith("|") or _BARE_SEP.match(s):', '        if not s or s.startswith("|"):'),),
+     "row_reading_cases"),
+    ("R2 인라인 코드 안 `|` 도 셈(RR16)", (('re.sub(r"`[^`]*`", "", b)', "b"),), "row_reading_cases"),
+    ("묶음 머리 예 줄을 진짜 번호로(RR13)", (('"| M<n> | 해소 | application/<bc>/domain_layer', '"| M3 | 해소 | application/<bc>/domain_layer'),),
+     "row_reading_cases"),
+    ("해소 판정 표 앞 `|` 없는 행 알림 끔(RR12)", (("    bare: str = _bare_rows_tail(spec)", '    bare: str = ""'),), "row_reading_cases"),
+)
 MUTATION_WORKERS: int = min(8, os.cpu_count() or 2)
 
 
@@ -7283,11 +8860,11 @@ def _mutant(name: str, edits: "tuple[tuple[str, str], ...]", args: "list[str]", 
 
 
 def _mutation_test() -> int:
-    """변이를 scripts 사본에 하나씩 넣고 묶음 사례(`--only-group`) · S1 사례(`--only <함수>`)를 돈다 — 모두 붉어야 green."""
+    """변이를 scripts 사본에 하나씩 넣고 묶음 사례(`--only-group`) · S1 · 실행 수리 사례(`--only <함수>`)를 돈다 — 모두 붉어야 green."""
     src: str = TOOL.read_text(encoding="utf-8")
     jobs: "list[tuple[str, tuple[tuple[str, str], ...], list[str], str]]" = (
         [(name, edits, ["--only-group"], "FAIL — refactor_audit 묶음 사례") for name, edits in _MUTATIONS]
-        + [(name, edits, ["--only", only], "FAIL — refactor_audit 고른 사례") for name, edits, only in _S1_MUTATIONS])
+        + [(name, edits, ["--only", only], "FAIL — refactor_audit 고른 사례") for name, edits, only in (*_S1_MUTATIONS, *_RUN_MUTATIONS)])
     survived: "list[str]" = []
     with ThreadPoolExecutor(max_workers=MUTATION_WORKERS) as pool:
         for (name, _e, _a, _m), bad in zip(jobs, pool.map(lambda j: _mutant(j[0], j[1], j[2], j[3], src), jobs)):
@@ -7330,7 +8907,9 @@ def main() -> int:
         residual_moved_case(fails, td)
         residual_ground_cases(fails, td)
         residual_ground_fp_cases(fails, td)
+        row_reading_cases(fails, td)
         resolution_cases(fails, td)
+        late_items_cases(fails, td)
         e2_cases(fails, td)
         final_cases(fails, td)
         standing_cases(fails, td)
@@ -7361,6 +8940,13 @@ def main() -> int:
         c_basis_cases(fails, td)
         c_basis_flow_cases(fails, td)
         c_basis_reject_cases(fails, td)
+        g1_binding_r_cases(fails, td)
+        carry_cases(fails, td)
+        plan_expose_cases(fails, td)
+        strict_window_cases(fails, td)
+        join_flow_cases(fails, td)
+        framework_new_cases(fails, td)
+        compose_closed_cases(fails, td)
         deps_cases(fails, td)
         deps_tree_cases(fails, td)
         deps_stage_cases(fails, td)

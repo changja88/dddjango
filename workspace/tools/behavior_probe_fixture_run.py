@@ -34,6 +34,10 @@ G0 유지 접기 · 개명 G2 확인(K1 ~ K10 · 구현판 전용 · 사례 칸 
 삭제를 창 차례로 접는 `g0_keep` · 창 기록 읽기 `_g0_keep_exceptions` · 개명된 새 키의 G2 선택 `renamed_selection` 을 손으로 만든
 자료에 대고(K1 ~ K7), 장난감 pytest 로 지원 확인 → 레인 개명 커밋 → 창 기록 → suite 를 끝까지 돈다(K8 개명 대응 green · K9
 개명 케이스 skip 보고 · K10 선택 빠짐 red).
+G2 원점 확인(P1 ~ P4 · 구현판 전용 · 사례 칸 밖 · F4-204): 장난감 pytest 로 지원 확인 D0 → G1 결속 → 레인 편집(시험 옮김 · 개명) 커밋 ·
+창 기록 → 지원 확인을 다시 떠 새 G1 확정이 결속 → suite 를 끝까지 돈다 — G0 유지 · 개명 · 옮김 대조의 원점은 첫 확정의 D0 다(P1 옮김 뒤 다시 뜸
+green · 기록 origin_record D0 · P2 옮긴 자리를 안 돌게 한 뒤 다시 뜸 red · P3 개명 파일을 안 돌게 한 뒤 다시 뜸 red · P4 명령을 보탠 다시 뜸 —
+원점과 정의 digest 가 달라도 green).
 갈래(split) 사례는 커밋한 장난감의 HEAD 를 앵커로 적고 지원 확인 → G1 결속 → 레인 편집 커밋(→ 상류 승인 머지) → suite 를
 명령 진입 함수로 돈다(병렬 밖).
 부가 관측 obs(정적 규칙) = [범위 안 걸린 줄 · 실린 범위 .py 수 · 범위 밖 예보 줄 · 풀지 못한 import 이름]. 3판(2026-10-24 · F4-107)이
@@ -329,17 +333,18 @@ def _timeout_folder(engine: Engine, box: Toolbox, case, at: Path) -> "tuple[Path
     return toy, folder, rec
 
 
-def _bind_g1(folder: Path, rec: Path) -> None:
+def _bind_g1(folder: Path, rec: Path, at: str = TIMEOUT_G1_AT) -> None:
     """G1 결속 자료 — 후보 스냅숏(그 지원 기록 · 실행 정의 digest) + 이번 실행 몫의 `## G1 변경 결정 <시각> · 후보 digest <c>`
-    절 머리(밖 동작 V 0 이라 결정 줄 없음) + 그 뒤 `G1 변경판 확정 <시각> · digest <d> · 후보 <c>` 줄(k0 §4-4 · §1 G1 순서)."""
+    절 머리(밖 동작 V 0 이라 결정 줄 없음) + 그 뒤 `G1 변경판 확정 <시각> · digest <d> · 후보 <c>` 줄(k0 §4-4 · §1 G1 순서). 두 번째
+    부름은 G1′(다른 시각)이다."""
     g0 = json.loads((rec / "g0-collect.json").read_text(encoding="utf-8"))
     snap = {"version": 1, "support_record": rec.name, "run_definition_digest": g0["run_definition_digest"]}
     digest = hashlib.sha256(json.dumps(snap, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()[:12]
-    (folder / "g1").mkdir()
+    (folder / "g1").mkdir(exist_ok=True)
     (folder / "g1" / f"{rec.name}-candidate.json").write_text(json.dumps(snap, ensure_ascii=False), encoding="utf-8")
     with (folder / "refactor-scope.md").open("a", encoding="utf-8") as fh:
-        fh.write(f"\n## G1 변경 결정 {TIMEOUT_G1_AT} · 후보 digest {digest}\n\n"
-                 f"G1 변경판 확정 {TIMEOUT_G1_AT} · digest {digest} · 후보 {digest}\n")
+        fh.write(f"\n## G1 변경 결정 {at} · 후보 digest {digest}\n\n"
+                 f"G1 변경판 확정 {at} · digest {digest} · 후보 {digest}\n")
 
 
 def run_timeout(engine: Engine, box: Toolbox, case, work: Path) -> dict:
@@ -857,6 +862,97 @@ def run_g0_keep_checks(engine: Engine, cases: ModuleType) -> "list[str]":
     return problems
 
 
+PO_BIG: str = "application/order/test/test_big.py"
+PO_OTHER: str = "application/order/test/test_big_other.py"
+PO_CONF: str = "application/order/test/conftest.py"
+PO_KEEP: str = "def test_keep():\n    assert True\n"
+PO_MOVED: str = "def test_moved():\n    assert True\n\n\nclass TestGroup:\n    def test_in(self):\n        assert True\n"
+PO_MOVES: "list[dict]" = [{"path": PO_BIG, "class": None, "func": "test_moved", "to": PO_OTHER},
+                          {"path": PO_BIG, "class": "TestGroup", "func": None, "to": PO_OTHER}]
+
+
+def _origin_suite(engine: Engine, box: Toolbox, work: Path, name: str, lane: "dict[str, str]", exceptions: dict,
+                  more: "list[list[str]]") -> "tuple[int, str, dict, str, str]":
+    """G2 원점 끝까지 — 커밋한 장난감(앵커) · 지원 확인 D0 → G1 결속 → 레인 편집 커밋 · 창 기록 하나 → 지원 확인 다시(`more` = 보탠 명령) →
+    새 G1 확정이 그 기록을 결속 → suite. (exit, 출력, suite 기록, D0 이름, 다시 뜬 기록 이름)."""
+    case = box.cases._sc(f"origin-{name}", "G2 원점", "split", {**box.cases.INI, PO_BIG: PO_KEEP + "\n\n" + PO_MOVED, RN_TEST: RN_BASE},
+                         after_commit={})
+    saved_env = dict(os.environ)
+    try:
+        os.environ.clear()
+        os.environ.update(base_env())
+        toy, folder, rec = _timeout_folder(engine, box, case, work / name)
+        git = ["git", "-C", str(toy), "-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false"]
+        genv = {**os.environ, **GIT_FIXTURE_ENV}
+        head = subprocess.run([*git, "rev-parse", "HEAD"], check=True, capture_output=True, text=True, env=genv).stdout.strip()
+        (folder / "build_anchor").write_text(head + "\n", encoding="utf-8")
+        code, said = _command(engine.mod.cmd_support, folder, toy)
+        if code != 0:
+            raise RuntimeError(f"G2 원점 확인의 지원 확인 D0 이 «지원»이 아님: {said}")
+        _bind_g1(folder, rec)
+        for rel, body in lane.items():
+            (toy / rel).write_text(body, encoding="utf-8")
+        subprocess.run([*git, "add", "--", *lane], check=True, capture_output=True, env=genv)
+        subprocess.run([*git, "commit", "-q", "-m", "레인 편집"], check=True, capture_output=True, env=genv)
+        run_dir = engine.mod.bg._run_dir(folder)
+        run_dir.mkdir(parents=True, exist_ok=True)
+        (run_dir / "w1-open.json").write_text(json.dumps({"window": 1, "kind": "test", "mode": "refactor"}), encoding="utf-8")
+        (run_dir / "w1-close.json").write_text(json.dumps([{"verdict": "audit", "g0_keep_exceptions": {
+            "moved": {}, "removed": [], **exceptions}}], ensure_ascii=False), encoding="utf-8")
+        time.sleep(1.1)                                     # 지원 기록 이름은 초 단위
+        again = engine.mod.support_root(folder) / time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+        again.mkdir(parents=True)
+        argvs = [*box.argvs(case.argvs), *(box.argvs(more) if more else [])]
+        (again / "test-commands.md").write_text("".join(f"시험 명령 {n}: {shlex.join(argv)}\n출처: 픽스처(behavior_probe {case.id})\n"
+                                                        for n, argv in enumerate(argvs, 1)), encoding="utf-8")
+        code, said = _command(engine.mod.cmd_support, folder, toy)
+        if code != 0:
+            raise RuntimeError(f"G2 원점 확인의 다시 뜬 지원 확인이 «지원»이 아님: {said}")
+        _bind_g1(folder, again, "2026-10-04T11:00:00Z")
+        code, said = _command(engine.mod.cmd_suite, folder, toy)
+        return code, said, engine.mod.latest_suite_record(folder) or {}, rec.name, again.name
+    finally:
+        os.environ.clear()
+        os.environ.update(saved_env)
+
+
+def run_origin_checks(engine: Engine, cases: ModuleType) -> "list[str]":
+    """P1 ~ P4 — G2 대조 원점 = 이 실행 첫 확정의 지원 기록(F4-204 · 진짜 pytest · 진짜 refactor_audit 옛 꼴 확정 줄) — 다름 줄 목록."""
+    problems: "list[str]" = []
+    moved: "dict[str, str]" = {PO_BIG: PO_KEEP, PO_OTHER: PO_MOVED}
+    renamed: "dict[str, str]" = {RN_TEST: RN_BASE.replace("def test_old(", "def test_new(")}
+    ignore: "Callable[[str], dict[str, str]]" = lambda f: {PO_CONF: f'collect_ignore = ["{f.rpartition("/")[2]}"]\n'}  # noqa: E731
+    pick = cases.PY
+    checks = (
+        ("P1 옮김 뒤 다시 뜬 지원 확인에 결속 → green · 원점 D0", "p1", moved, {"renamed": [], "case_moved": PO_MOVES}, [], 0, ()),
+        ("P2 옮긴 자리를 안 돌게 한 뒤 다시 뜸 → red(원점 D0)", "p2", {**moved, **ignore(PO_OTHER)}, {"renamed": [], "case_moved": PO_MOVES}, [], 2,
+         (f"파일 단위: {PO_OTHER}", f"옮긴 케이스가 G2 에서 선택되지 않았다: ('{PO_OTHER}', None, 'test_moved')",
+          f"옮긴 케이스가 G2 에서 선택되지 않았다: ('{PO_OTHER}', 'TestGroup', 'test_in')")),
+        ("P3 개명 파일을 안 돌게 한 뒤 다시 뜸 → red(원점 D0)", "p3", {**renamed, **ignore(RN_TEST)},
+         {"renamed": [{"path": RN_TEST, "class": None, "old": "test_old", "new": "test_new"}]}, [], 2,
+         (f"파일 단위: {RN_TEST}", f"개명된 케이스가 G2 에서 선택되지 않았다: ('{RN_TEST}', None, 'test_new')")),
+        ("P4 명령을 보탠 다시 뜸(원점과 정의 digest 다름) → green · 원점 D0", "p4", moved, {"renamed": [], "case_moved": PO_MOVES},
+         [[pick, "-m", "pytest", PO_OTHER]], 0, ()))
+    with tempfile.TemporaryDirectory(prefix="bp-origin-") as td, tempfile.TemporaryDirectory(prefix="bp-origin-shared-") as shared:
+        box = Toolbox(cases, Path(shared))
+        work = Path(td)
+        with _stop_grace(engine, STOP_GRACE_CASE_SECONDS):
+            for label, name, lane, exceptions, more, want, needles in checks:
+                try:
+                    code, said, suite, d0, again = _origin_suite(engine, box, work, name, lane, exceptions, more)
+                except Exception:                           # noqa: BLE001 — 확인 실패를 줄로 남긴다
+                    problems.append(f"{label} 실행 실패\n    " + traceback.format_exc().strip().replace("\n", "\n    "))
+                    continue
+                keep = suite.get("g0_keep", [])
+                lost = [n for n in needles if not any(n in k for k in keep)]
+                if code != want or lost or (not needles and keep) or suite.get("origin_record") != d0 \
+                        or suite.get("support_record") != again or f"G0 원점 {d0} · 실행 정의 기록 {again}" not in said \
+                        or len(suite.get("commands", [])) != 1 + len(more):
+                    problems.append(f"{label} — exit {code}(기대 {want}) · 없는 글 {lost} · G0 유지 {keep} · 원점 {suite.get('origin_record')} "
+                                    f"(기대 {d0}) · {said.strip().splitlines()[-1:]}")
+    return problems
+
+
 def _case_insensitive_fs() -> bool:
     """임시 폴더의 파일 시스템이 대소문자를 가리지 않는가(APFS 기본)."""
     with tempfile.TemporaryDirectory(prefix="bp-fs-") as td:
@@ -992,6 +1088,10 @@ def main() -> int:
         found = run_g0_keep_checks(engine, cases)
         problems += found
         print(f"G0 유지 접기 · 개명 G2 확인 K1 ~ K10 — 다름 {len(found)}", flush=True)
+    if not engine.proto and (not args.only or "P" in args.only):
+        found = run_origin_checks(engine, cases)
+        problems += found
+        print(f"G2 원점 확인 P1 ~ P4 — 다름 {len(found)}", flush=True)
     wall = time.monotonic() - t0
     mismatches, failures, tracebacks, deviated, filled, added = [], 0, 0, 0, 0, 0
     ok_cells = {"R": 0, "N": 0, "C": 0}

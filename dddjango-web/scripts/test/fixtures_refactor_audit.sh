@@ -400,6 +400,34 @@ rm "$A/data-01.md"
 OUT=$(RAP check "$A"); E=$?
 assert "F4 다섯 렌즈 중 한 렌즈 산출 누락 = 실행 불능" 1 "리뷰어 산출 누락" - "$E" "$OUT"
 printf '| 행# | 규칙 |\n|---|---|\n' > "$A/data-01.md"
+BARE="$R §1 «공용 헬퍼는 금지다» | — | $LOC | z | 예 | — | —"
+BHEAD='행# | 규칙 | 반대 방향 규칙 | 파일:행 | 위반 요지 | 동작 불변 정리 가능 | 편집할 곳 | 같은 검사기 키'
+printf '%s\n1 | %s\n' "$BHEAD" "$BARE" > "$A/discipline-01.md"
+OUT=$(RAP check "$A"); E=$?
+assert "I1r R2 앞 | 없는 머리 · 번호 행을 읽는다" 2 "통과 12 · 인용 불일치 2 · 규칙 근거 없는 불편 1" - "$E" "$OUT"
+printf '%s\n' "$BARE" > "$A/discipline-01.md"
+OUT=$(RAP check "$A"); E=$?
+assert "I1r′ R2 번호 칸 없는 앞 | 없는 행 꼴 줄 = 실행 불능(소리 없는 0행 아님)" 1 "discipline-01.md 에 표 행으로 읽지 못한 줄 1(앞 \`|\` 없음 · 번호 칸 없음)" - "$E" "$OUT"
+printf '%s\n---|---|---|---|---|---|---|---\n1 | %s\n' "번호${BHEAD#행#}" "$BARE" > "$A/discipline-01.md"
+OUT=$(RAP check "$A"); E=$?
+assert "I1s R2 앞뒤 | 없는 GFM 머리 · 구분 줄은 못 읽은 행이 아니다" 2 "통과 12 · 인용 불일치 2" - "$E" "$OUT"
+printf '| 행# | 규칙 |\n|---|---|\n\n비고: 반환 타입이 `int | str | bytes | float | None | Decimal` 로 넓다.\n```\na | b | c | d | e | f\n```\n' > "$A/discipline-01.md"
+OUT=$(RAP check "$A"); E=$?
+assert "I1s′ 인라인 코드 · 코드 펜스 안 | 는 못 읽은 행이 아니다" 2 "통과 11 · 인용 불일치 2" "읽지 못한 줄" "$E" "$OUT"
+BOXED="discipline-01.md 의 번호 행 1 이 코드 상자(코드 펜스) 안에 있고 밖에는 행이 없다 — 코드 상자 안에 있는 표는 읽지 않는다"
+printf '```markdown\n| %s |\n|---|---|---|---|---|---|---|---|\n| 1 | %s |\n```\n' "$BHEAD" "$BARE" > "$A/discipline-01.md"
+OUT=$(RAP check "$A"); E=$?
+assert "I1t 코드 펜스로 감싼 R2 표 = 실행 불능(소리 없는 0행 아님)" 1 "$BOXED" - "$E" "$OUT"
+printf '| 행# | 규칙 |\n|---|---|\n\n~~~\n1 | %s\n~~~\n' "$BARE" > "$A/discipline-01.md"
+OUT=$(RAP check "$A"); E=$?
+assert "I1t′ 밖에는 머리만 · ~~~ 펜스 안 앞 | 없는 번호 행 = 실행 불능" 1 "$BOXED" - "$E" "$OUT"
+printf '| 행# | 규칙 |\n|---|---|\n| 1 | %s |\n```\n| 2 | %s |\n```\n' "$BARE" "$BARE" > "$A/discipline-01.md"
+OUT=$(RAP check "$A"); E=$?
+assert "I1t″ 밖에 행이 있으면 펜스 안 예시 번호 행은 읽지 않는다" 2 "통과 12 · 인용 불일치 2" "코드 상자" "$E" "$OUT"
+printf '| 행# | 규칙 |\n|---|---|\n\n```\n| <행#> | %s |\n```\n' "$BARE" > "$A/discipline-01.md"
+OUT=$(RAP check "$A"); E=$?
+assert "I1t‴ 펜스 안이 번호 없는 예 줄뿐 = 행 0 그대로" 2 "통과 11 · 인용 불일치 2" "코드 상자" "$E" "$OUT"
+printf '| 행# | 규칙 |\n|---|---|\n' > "$A/discipline-01.md"
 
 # ---------- G: check-verdict — 빼는 출구 검사
 verdict() { { echo '| M | 원 행 | 판정 | 근거 | 파일:행 |'; echo '|---|---|---|---|---|'; cat; } > "$A/verdict.md"; }
@@ -418,6 +446,10 @@ echo "$V1" | verdict
 OUT=$(RAP check-verdict "$A"); E=$?
 assert "G1 양성 출구 전부 통과 exit 0" 0 "red 0" - "$E" "$OUT"
 assert "G2 계수" 0 "채택 3 · 사용자 판단 1 · 별도 요청 3 · 제외 2 · 오탐 1 · 병합→검사기 1" - 0 "$OUT"
+echo "$V1" | sed 's/^| //; s/ |$//' > "$A/verdict.md"; rm -f "$A/verdict-log.md"
+OUT=$(RAP check-verdict "$A"); E=$?
+assert "I1v verdict.md 앞뒤 | 없는 행도 읽는다 = 같은 계수" 0 "채택 3 · 사용자 판단 1 · 별도 요청 3 · 제외 2 · 오탐 1 · 병합→검사기 1" - "$E" "$OUT"
+echo "$V1" | verdict; rm -f "$A/verdict-log.md"; RAP check-verdict "$A" >/dev/null
 LISTS=$(cat "$A/g0-lists.md")
 assert "G3 G0 목록 제외 행은 위반 인용 ↔ 제외 인용" 0 "↔ 제외 $R §1 «마커 파일은" - 0 "$LISTS"
 rm -f "$A/verdict-log.md"
@@ -525,7 +557,8 @@ assert "I2 바뀐 파일 항목 = 리뷰어 확인 묶음(M_m 미정 exit 0)" 0 
 STAMP=$(sed -n 's/.*--finalize \([^ ]*\) .*/\1/p' <<<"$OUT")
 BUNDLE=$(cat "$F/residual/$STAMP/review-ui.md" 2>/dev/null)
 assert "I2b 묶음 머리 = 근거 칸 판형(\` — \` 앞 위치만 · 줄임 없이)" 0 "\` — \` 앞에는 저장소 루트 기준 새 위치만" - 0 "$BUNDLE"
-assert "I2c 묶음 머리 web 예시(새 트리)" 0 "예: \`M3 | 해소 | web/application/<bc>/application_layer/view_model/<화면>_vm.py:15-16 — " - 0 "$BUNDLE"
+assert "I2c 묶음 머리 web 예시(새 트리) = 자리표시 표 행" 0 "| M<n> | 해소 | web/application/<bc>/application_layer/view_model/<화면>_vm.py:15-16 — " - 0 "$BUNDLE"
+assert "I2c′ 묶음 머리 = 결과 표 머리 두 줄(앞뒤 | 표 꼴)" 0 "| 항목 | 판정 | 근거 |" - 0 "$BUNDLE"
 # 같은 시각 재확정은 판형 아님·답 없음 행만 다시 본다(동결) — 사례마다 시각을 새로 연다(앞 시각 폴더를 지워 이월 없이).
 OPEN() { rm -rf "$F/residual"; local s; s=$(RA residual "$F" | sed -n 's/.*--finalize \([^ ]*\) .*/\1/p'); echo "${s:-(열리지 않음)}"; }
 FIN() { # FIN <시각> <M10 결과 행> — M9 는 판형대로 해소 · result-ui.md 를 쓰고 그 시각으로 확정(+ result.md)
@@ -540,6 +573,30 @@ assert "I3′ \`요약:\` 뒤 재기재 안내(렌즈·불량 토큰 · 같은 �
 assert "I3″ 재기재 안내의 같은 시각 --finalize" 2 "--finalize $S 한 번 더" - "$E" "$OUT"
 OUT=$(FIN "$S" "| M10 | 해소 | $HP:2 — 이유를 고쳐 적음 |"); E=$?
 assert "I3‴ 같은 시각에 판형대로 고쳐 재확정 = 해소 exit 0" 0 "M_m=0" - "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" "M10 | 해소 | $HP:2 — 고침"); E=$?
+assert "I3r1 앞 | 없는 결과 행 = 해소" 0 "M_m=0(결정적 잔존 0 · 리뷰어 잔존 0 · 근거 판형 아님 0 · 판단 불가 0) · 해소 2" - "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" "- \`M10\` | 해소 | $HP:2 — 고침"); E=$?
+assert "I3r1′ 목록 표지 · 항목 칸 백틱도 벗겨 읽는다 = 해소" 0 "해소 2" - "$E" "$OUT"
+S=$(OPEN); OUT=$(RA residual "$F" --finalize "$S"); E=$?
+assert "I3r2 결과 파일 없음 = 답 없음 2(판단 불가와 따로)" 2 "판단 불가 0 · 답 없음 2) · 해소 0" - "$E" "$OUT"
+assert "I3r2′ 답 없음 까닭 · 다시 받기 안내(같은 시각)" 2 "  답 없음: M9(ui: 결과 파일 없음) · M10(ui: 결과 파일 없음) — 그 렌즈 리뷰어에게 그 항목 행을 묶음 머리의 표 꼴로 다시 받아" - "$E" "$OUT"
+S=$(OPEN); [ -d "$F/residual/$S" ] && : > "$F/residual/$S/result-ui.md"
+OUT=$(RA residual "$F" --finalize "$S"); E=$?
+assert "I3r2″ 빈 결과 파일 = 까닭 «읽은 항목 행 0»" 2 "답 없음: M9(ui: 읽은 항목 행 0)" - "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" ''); E=$?
+assert "I3r2‴ 다른 항목 행만 = 까닭 «그 항목 행 없음» · result.md 답 없음 행" 2 "| M10 | 답 없음(ui: 그 항목 행 없음) |" - "$E" "$OUT"
+OUT=$(FIN "$S" ''); E=$?
+assert "I3r3 같은 시각 두 번째 답 없음 = 판단 불가" 2 "판단 불가 1) · 해소 1" "답 없음 1" "$E" "$OUT"
+OUT=$(FIN "$S" "| M10 | 해소 | $HP:2 — 고침 |"); E=$?
+assert "I3r3′ 그 뒤 해소 행을 채워도 판단 불가 유지(동결)" 2 "판단 불가 1) · 해소 1" - "$E" "$OUT"
+S=$(OPEN); HEADB=$(sed '/^## 항목/,$d' "$F/residual/$S/review-ui.md")
+OUT=$(FIN "$S" "$HEADB
+| M10 | 해소 | $HP:2 — 고침 |"); E=$?
+assert "I3eb 묶음 머리(예 줄 포함)를 베껴도 자리표시 M<n> 은 행이 아니다 = 해소 2" 0 "M_m=0" - "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" "\`\`\`
+| M10 | 해소 | $HP:2 — 고침 |
+\`\`\`"); E=$?
+assert "I3ec 코드 펜스 안 결과 꼴 줄은 행이 아니다 = 답 없음" 2 "답 없음: M10(ui: 그 항목 행 없음)" - "$E" "$OUT"
 S=$(OPEN); OUT=$(FIN "$S" "| M10 | 해소 | $HP:2의 정의 |"); E=$?
 assert "I3a 머리에 조사 = 판형 아님" 2 "근거 판형 아님 1" - "$E" "$OUT"
 S=$(OPEN); OUT=$(FIN "$S" "| M10 | 해소 | $HP:2 — $HP:1의 정의 한 곳 |"); E=$?
@@ -604,7 +661,8 @@ cp "$A/verdict-final.md" "$T/vf.bak"; cp "$A/discipline-01.md" "$T/d01.bak"
 printf '| 행# | 규칙 | 반대 방향 규칙 | 파일:행 | 위반 요지 | 동작 불변 정리 가능 | 편집할 곳 | 같은 검사기 키 |\n|---|---|---|---|---|---|---|---|\n| 1 | %s §1 «공용 헬퍼는 금지다» | — | %s | z | 예 | — | — |\n' "$R" "$LOC" > "$A/discipline-01.md"
 sed -i.bak 's/^| M10 | ui-01#11 |/| M10 | ui-01#11 · discipline-01#1 |/' "$A/verdict-final.md"; rm -f "$A/verdict-final.md.bak"
 S=$(OPEN); OUT=$(FIN "$S" "| M10 | 해소 | $HP:2 — 정의 한 곳 |"); E=$?
-assert "I3l 렌즈 완전성 — 두 렌즈 항목에 ui 만 해소 = 판단 불가(discipline 답 없음)" 2 "M_m=1(결정적 잔존 0 · 리뷰어 잔존 0 · 근거 판형 아님 0 · 판단 불가 1)" - "$E" "$OUT"
+assert "I3l 렌즈 완전성 — 두 렌즈 항목에 ui 만 해소 = 답 없음 1(판단 불가와 따로)" 2 "M_m=1(결정적 잔존 0 · 리뷰어 잔존 0 · 근거 판형 아님 0 · 판단 불가 0 · 답 없음 1)" - "$E" "$OUT"
+assert "I3l′ 답 없음 까닭(discipline 결과 파일 없음) · 다시 받기 안내" 2 "  답 없음: M10(discipline: 결과 파일 없음) — 그 렌즈 리뷰어에게" - "$E" "$OUT"
 DISC() { [ -d "$F/residual/$1" ] && printf '| M | 판정 | 근거 |\n|---|---|---|\n%s\n' "$2" > "$F/residual/$1/result-discipline.md"; }
 S=$(OPEN); DISC "$S" '| M10 | 해소 | 고쳤다 |'
 OUT=$(FIN "$S" '| M10 | 잔존(일부) | 남음 |'); E=$?

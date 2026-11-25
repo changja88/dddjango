@@ -741,8 +741,8 @@ djr:R-3318 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3575 a djr:Obligation ;
-    skos:prefLabel "리팩토링 모드 파견 입력 = 모드 리팩토링 · M ⓐ 목록(규칙 인용) · 적용 범위 규범 원문 · 운영 전 예외 블록 원문 · (변경 슬라이스) 밖 동작 V·딸린 update/add 행"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3575@2026-10-04> .
+    skos:prefLabel "리팩토링 모드 파견 입력 = 모드 리팩토링 · M ⓐ 목록(규칙 인용)과 보탬 항목(입장 행 근거 B 도 ⓐ 항목 근거) · 적용 범위 규범 원문 · 운영 전 예외 블록 원문 · (변경 슬라이스) 밖 동작 V·딸린 update/add 행"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3575@2026-11-25> .
 
 <https://numchida.com/ns/djr#R-3575@2026-09-27> a djr:Expression ;
     prov:specializationOf djr:R-3575 ;
@@ -753,6 +753,12 @@ djr:R-3575 a djr:Obligation ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-3575@2026-09-27> ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-3575@2026-11-25> a djr:Expression ;
+    prov:specializationOf djr:R-3575 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3575@2026-10-04> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3576 a djr:Obligation ;
     skos:prefLabel "파견 입력에 적용 범위 규범·운영 전 예외 블록이 실려 있으면 그 규범이 정한 몫과 때를 따른다(리팩토링 모드)"@ko ;
@@ -912,7 +918,7 @@ djr:R-3734 a djr:Obligation ;
     djr:order 1 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s002/b4> ;
     djr:statesNorm djr:R-3238, djr:R-3239, djr:R-3240, djr:R-3241, djr:R-3242, djr:R-3575, djr:R-3576, djr:R-3652 ;
-    djr:text "\nCoordinator가 승인된 설계 명세(G1 통과), 최소 열을 갖춘 영구 테스트 입장 표, 네 owner인 행, 관련 기존 test anchor를 준다. decision을 재분류하거나 새 후보를 test 의무로 승격하지 않는다. `pending`이나 종료 근거 없는 `remove/weaken`은 설계로 반송한다. 인수 테스트는 승인된 artifact가 있을 때만 명세의 패키지·테스트 구조에 배치한다. **프로덕션 구현 코드를 보지 않는다** — 기존 테스트와 승인 계약만 본다. 리팩토링 모드 파견이면 입력에 `모드 리팩토링` · `M<n>` ⓐ 목록(규칙 인용 포함) · 적용 범위 규범 원문 · «운영 전 예외» 블록 원문이 함께 오고, 변경 슬라이스면 그 슬라이스의 밖 동작 V(바뀌는 것 목록의 V 줄 · «바뀌는 기대» · `기대 추가 k`)와 그 V 에 딸린 `update`/`add`/`remove` 행이 온다 — `update`/`add` 행만 Red 로 만들고(`remove` 행은 그 케이스를 지운다), 옛 기대는 «바뀌는 기대»에 적힌 원소만 새 기대로 바꾼다(그 밖 기대 원소 · 케이스는 바꾸지 않고, `add` 의 새 case 는 V 가 바꾼 동작만이다). 파견 입력에 적용 범위 규범·«운영 전 예외» 블록이 실려 있으면 그 규범이 정한 몫과 때를 따른다.\n\n"@ko .
+    djr:text "\nCoordinator가 승인된 설계 명세(G1 통과), 최소 열을 갖춘 영구 테스트 입장 표, 네 owner인 행, 관련 기존 test anchor를 준다. decision을 재분류하거나 새 후보를 test 의무로 승격하지 않는다. `pending`이나 종료 근거 없는 `remove/weaken`은 설계로 반송한다. 인수 테스트는 승인된 artifact가 있을 때만 명세의 패키지·테스트 구조에 배치한다. **프로덕션 구현 코드를 보지 않는다** — 기존 테스트와 승인 계약만 본다. 리팩토링 모드 파견이면 입력에 `모드 리팩토링` · `M<n>` ⓐ 목록(규칙 인용 포함)과 보탬 항목(`ⓐ 보탬` 절 `결정 = 보탬` 줄 — 이번 실행 ⓐ 항목과 같다 · 입장 행 근거의 `B<n>` 도 ⓐ 항목 근거로 읽는다) · 적용 범위 규범 원문 · «운영 전 예외» 블록 원문이 함께 오고, 변경 슬라이스면 그 슬라이스의 밖 동작 V(바뀌는 것 목록의 V 줄 · «바뀌는 기대» · `기대 추가 k`)와 그 V 에 딸린 `update`/`add`/`remove` 행이 온다 — `update`/`add` 행만 Red 로 만들고(`remove` 행은 그 케이스를 지운다), 옛 기대는 «바뀌는 기대»에 적힌 원소만 새 기대로 바꾼다(그 밖 기대 원소 · 케이스는 바꾸지 않고, `add` 의 새 case 는 V 가 바꾼 동작만이다). 파견 입력에 적용 범위 규범·«운영 전 예외» 블록이 실려 있으면 그 규범이 정한 몫과 때를 따른다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s003> a djr:Section ;
     djr:headingSnapshot "## 산출"@ko ;

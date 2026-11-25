@@ -1373,31 +1373,48 @@ def _split_observer(reasons: "list[str]", info: dict, folder: Path, repo: Path) 
 
 
 def cmd_suite(folder: Path, repo: Path) -> int:
-    """G2 증거 실행 — G1 이 결속한 지원 기록의 실행 정의를 그대로. exit 0 green · 2 red · 1 실행 불능."""
+    """G2 증거 실행 — 마지막 G1 확정이 결속한 지원 기록의 실행 정의를 그대로 · G0 유지 · 개명 · 옮김 대조의 원점은 이 실행 첫 확정이 결속한
+    지원 기록의 수집(지원 확인을 다시 떠도 · 명령을 보태도 옮기지 않는다 — 원점의 실행 정의 digest 는 정의와 달라도 된다). 확정 줄에 명세 sha 가
+    있으면 지금 명세(승인판 digest · sha)가 그 확정과 같아야 한다. exit 0 green · 2 red · 1 실행 불능."""
     folder, repo = Path(folder), Path(repo)
     try:
         import refactor_audit as ra
         try:
-            g1 = ra.g1_confirmed(folder)
+            confirmations = ra.g1_confirmations(folder)
+            strict = ra.strict_run(folder) if confirmations else False
         except Exception as exc:  # noqa: BLE001 — 결속 줄을 못 읽으면 결속을 확인할 수 없다
             raise SupportError(f"G1 결속 기록을 읽지 못함 — {type(exc).__name__}: {exc}") from exc
-        if g1 is None:
+        if not confirmations:
             raise SupportError("G1 결속 기록 없음 — 이번 실행 몫의 `G1 변경판 확정 <시각> · digest <d> · 후보 <c>` 줄이 없다")
-        at, g1_digest, candidate = g1
-        try:
-            snap = ra.load_candidate(folder, candidate)
-        except Exception as exc:  # noqa: BLE001 — 후보 스냅숏을 못 읽으면 결속을 확인할 수 없다
-            raise SupportError(f"G1 후보 스냅숏 {candidate} 을 읽지 못함 — {type(exc).__name__}: {exc}") from exc
+        first, g1 = confirmations[0], confirmations[-1]
+        if g1.spec_sha is not None:
+            spec_digest, _spec_snap, confirmed, sha_now = bg._g1_state(folder, repo)
+            mismatch = bg._spec_mismatch(confirmed, spec_digest, sha_now)
+            if mismatch:
+                raise SupportError(mismatch)
+        elif strict:
+            raise SupportError(bg.STRICT_NO_SHA)
+        snaps = {}
+        for conf in (g1, first):                             # 실행 정의 = 마지막 확정 · 원점 = 첫 확정
+            try:
+                snaps[conf.candidate] = ra.load_candidate(folder, conf.candidate)
+            except Exception as exc:  # noqa: BLE001 — 후보 스냅숏을 못 읽으면 결속을 확인할 수 없다
+                raise SupportError(f"G1 후보 스냅숏 {conf.candidate} 을 읽지 못함 — {type(exc).__name__}: {exc}") from exc
+        snap = snaps[g1.candidate]
         rec_name, bound = snap["support_record"], snap["run_definition_digest"]
         rec_dir = support_root(folder) / rec_name
         definition = _read_json(rec_dir / "run-definition.json")
         digest = _definition_digest(definition)
         if digest != bound:
             raise SupportError(f"실행 정의 digest {digest} ≠ G1 결속 {bound}(지원 기록 {rec_name})")
-        g0 = _read_json(rec_dir / "g0-collect.json")
-        if g0.get("verdict") != "지원" or g0.get("run_definition_digest") != bound:
+        collected = _read_json(rec_dir / "g0-collect.json")
+        if collected.get("verdict") != "지원" or collected.get("run_definition_digest") != bound:
             raise SupportError(f"지원 기록 {rec_name} 이 «지원» 판정 · 같은 실행 정의가 아니다"
-                               f"(verdict {g0.get('verdict')} · digest {g0.get('run_definition_digest')})")
+                               f"(verdict {collected.get('verdict')} · digest {collected.get('run_definition_digest')})")
+        origin_name = snaps[first.candidate]["support_record"]
+        g0 = _read_json(support_root(folder) / origin_name / "g0-collect.json")   # G0 유지 · 개명 · 옮김 대조의 원점
+        if g0.get("verdict") != "지원":
+            raise SupportError(f"원점 지원 기록 {origin_name}(첫 `G1 변경판 확정` 결속)이 «지원» 판정이 아니다")
         run_dir = bg._run_dir(folder)
         run_value = bg._run_value(folder)
         windows = _g0_keep_exceptions(run_dir)
@@ -1428,9 +1445,9 @@ def cmd_suite(folder: Path, repo: Path) -> int:
     verdict = "green" if not reasons and not keep else "red"
     counts = info["counts"]
     record = {"version": 1, "run": run_value, "started": started, "ended": ended, "support_record": rec_name,
-              "run_definition_digest": digest,
-              "g1": {"at": at, "digest": g1_digest, "candidate": candidate, "run_definition_digest": bound,
-                     "support_record": rec_name},
+              "origin_record": origin_name, "run_definition_digest": digest,
+              "g1": {"at": g1.at, "digest": g1.digest, "candidate": g1.candidate, "sha": g1.spec_sha,
+                     "run_definition_digest": bound, "support_record": rec_name},
               "fingerprints": {"start": info["fp"][0], "between": info["fp"][1:], "end": end_fp},
               "commands": info["commands"], "counts": counts, "g0_keep": keep, "reasons": reasons,
               "observer_split": info.get("observer_split"), "verdict": verdict}
@@ -1450,7 +1467,8 @@ def cmd_suite(folder: Path, repo: Path) -> int:
              else f"그중 이번 실행이 바꾸지 않은 파일 {counts['observer_unchanged']}") + ") · "
           f"G0 유지 위반 {len(keep)}" + (f" · 개명 케이스 skip {counts['renamed_skip']}" if "renamed_skip" in counts else "")
           + (f" · 옮긴 케이스 skip {counts['moved_skip']}" if "moved_skip" in counts else "")
-          + f" · 사유 {len(reasons)} · 기록 suite-{stamp}.json")
+          + f" · 사유 {len(reasons)} · 기록 suite-{stamp}.json · G0 원점 {origin_name}"
+          + (f" · 실행 정의 기록 {rec_name}" if rec_name != origin_name else ""))
     return 0 if verdict == "green" else 2
 
 
