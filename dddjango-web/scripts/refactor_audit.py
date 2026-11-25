@@ -2179,7 +2179,8 @@ def cmd_residual(project: Path, folder: Path, finalize: "str | None") -> int:
         snapshot[m] = {**{p: _file_sha(project, p) for p in sorted(paths - set(held_fp))}, **held_fp}
     snapshot.update({m: prev_solved[m] for m in carried})
     (out_dir / "result.json").write_text(json.dumps({"stamp": stamp, "audit": audit_ts, "snapshot": anchor,
-                                                     "solved": snapshot, "states": states, "redo": redo, "noans": noans},
+                                                     "solved": snapshot, "states": states, "redo": redo,
+                                                     **({"noans": noans} if noans else {})},
                                                     ensure_ascii=False,
                                                     sort_keys=True) + "\n", encoding="utf-8")
     noans_tail: str = f" · 답 없음 {len(unanswered)}" if unanswered else ""
