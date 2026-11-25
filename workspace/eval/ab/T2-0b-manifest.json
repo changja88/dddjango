@@ -337,6 +337,7 @@
     "claude": {
       "checked": 80,
       "mismatch": [
+        "dddjango/.claude-plugin/plugin.json",
         "dddjango/agents/acceptance-tester.md",
         "dddjango/agents/coder.md",
         "dddjango/agents/design-architect.md",
@@ -365,11 +366,10 @@
         "codex-dddjango/skills/dddjango-design-review-db/SKILL.md",
         "codex-dddjango/skills/dddjango-design-review-ddd/SKILL.md",
         "codex-dddjango/skills/dddjango-discipline-reviewer/SKILL.md",
-        "codex-dddjango/skills/dddjango/SKILL.md",
-        "codex-dddjango/skills/implementation-django-ninja/references/final.md"
+        "codex-dddjango/skills/dddjango/SKILL.md"
       ],
       "missing": [],
-      "root": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.45.0",
+      "root": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.45.1",
       "status": "drift"
     }
   },
@@ -761,7 +761,7 @@
       "files": {
         ".agents/plugins/marketplace.json": "bc134ae724e1e23019506c756bc3d2a0e6dfdc25f7dbaf55881e7edf173457f9",
         ".claude-plugin/marketplace.json": "2ab8baa47e88eb8fd0b51644b7e1e422c6e3f194520476db4ee1b1a8a693c4c4",
-        "codex-dddjango/.codex-plugin/plugin.json": "3a52046c10c820b4f995f87413097624aada65bb6e63a0439d6a0bf6f9a99156",
+        "codex-dddjango/.codex-plugin/plugin.json": "59b1fc5327c716d9076d6efcca2ba01ab7f59b2d5a481161c98daf450a9bf9b4",
         "codex-dddjango/skills/architecture-api/SKILL.md": "9c84f2980580cf67385b1b3905693f0db364a6796903a67242698be27ac64c03",
         "codex-dddjango/skills/architecture-api/references/final.md": "dfd649ab8b4fe5b259908c302f40ffd1a574b532a65cfef365570fb7b869d650",
         "codex-dddjango/skills/architecture-db/SKILL.md": "b1560b89855acd55e0722ddd0ad7e808b4679adb899d1b75364bb4ffe8521e1d",
@@ -795,7 +795,7 @@
         "codex-dddjango/skills/implementation-django/references/final.md": "455118a85120830d2dc36bfe8f4d63efd398dca9ac711b42085767baa223f03d",
         "codex-dddjango/skills/implementation-python/SKILL.md": "0174757ef864c0072ea2dcce511ea15dc43525cd66466b656adfd4de9f0f159b",
         "codex-dddjango/skills/implementation-python/references/final.md": "1f4478a6524fee722042945a7954a997cbff78b31287cab9c098d5fe1385d004",
-        "dddjango/.claude-plugin/plugin.json": "f229442de998cc2104d8ad5699d7353d48015c81be7a7dcb4173f7bb75a52de2",
+        "dddjango/.claude-plugin/plugin.json": "644dc85c533804ef3d67dc0bddf8ef7391602cd96b79c9a8f823f129f4d7609e",
         "dddjango/agents/acceptance-tester.md": "64859431a29140026b7754e220ea6246b92a417d99d62a8c318ad4f45cecafdf",
         "dddjango/agents/coder.md": "67bb8da555694b637d082921753a4a9b16e8d36486a66ba4f818a7e7bfa2b6b1",
         "dddjango/agents/design-architect.md": "1112caabe38a940d634fd5767c590a2a9848dcb249441addded87de36fd4b4b3",
@@ -837,7 +837,7 @@
         ".agents/plugins/marketplace.json"
       ],
       "n_files": 66,
-      "tree_sha256": "e46fa26f5bb51e503bd3b78f37c11b2da2930bd7011fbaa45c1ab434de1aaed1",
+      "tree_sha256": "0e507f7fd5eea09dea7aea6b08b497f526f0ca0b90f34586739f36abe43c5bd9",
       "why": "절차서가 **부르는 것들**. 서브에이전트 정의와 규범 산문(`references/final.md`)이 여기 있다 — 그중 ninja §6.1·§6.2 와 ddd §3.2 는 파일럿 이관 대상 클러스터 그 자체다. 절차서만 동결하고 이것들을 두면 봉투만 봉인하고 내용물을 열어 둔 것이다. 산문이 런 사이에 바뀌면 세 암이 같은 규범을 상대한 것이 아니게 되고, `coder.md` 한 줄이 바뀌면 처치와 무관하게 산출물이 달라진다."
     },
     "preregistration": {
@@ -854,7 +854,7 @@
     "protocol": {
       "files": {
         "Makefile": "154397353c7db19abd7f811cc493960f486a8cf207805c10e8679f671a16c6fa",
-        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "7d0014b59e417426e6898c92057c21aa11c4100ed9ae7dfb64437fdb81813b38",
+        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "8a602b8b67946c9e06604cccd212a23b39af6b7e3a9b19e9e434ee2d3bfe4f70",
         "workspace/plan/2026-08-12-bc-rebuild-protocol.md": "a39ba66e58cb8bde5ad8f84d630b6fd9b04300f7130d4bbc2d149751c2f6c492",
         "workspace/plan/templates/request-template.md": "531bb5c0e9b147d51665981bc3218aa027ddc4170101ea920ecc8a87f7018fe4",
         "workspace/tools/openapi_shape.py": "ea564e3b0ce0550352935b7a572f93dfae404f1a1d24f0fd9d4acf6dc4bc4932",
@@ -869,7 +869,7 @@
         "workspace/design/2026-08-20-ontology-t2-0b-design.md"
       ],
       "n_files": 6,
-      "tree_sha256": "988ab894519fc7e6bce29fcb13a87087a2528fb090e90ba50393caf710deeab2",
+      "tree_sha256": "bd9f21187d1b6eefe5525fbbbc9cdbe65abd29cbbec159612a34b87ea8b41cda",
       "why": "**전이 의존** — 발주문이 «그대로 따르라»고 가리키는 판형과, 인수 판정이 부르는 도구와, 게이트를 배선하는 Makefile. 이 중 하나만 바뀌어도 모델이 받는 요청문·허용 범위·STOP 규약·shape 합격 여부·실런 진입 조건이 바뀐다. 그런데 대조는 글롭에 든 것만 재전개하므로, 봉인 밖이면 그 변경은 드리프트가 아니었다(레인 AU 발견 4)."
     },
     "queries": {
@@ -980,8 +980,8 @@
     "n_files": 50
   },
   "plugin_versions": {
-    "claude": "2.45.1",
-    "codex": "2.45.1"
+    "claude": "2.46.0",
+    "codex": "2.46.0"
   },
   "schema": "t2-0b-manifest/1",
   "schemas": {
@@ -1004,13 +1004,13 @@
   "script_trees": {
     "cache-claude": "4203593ad7405dbbff61142c0321f3a4147a96ed5708d571650d171c0ddecb45",
     "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.45.1/scripts",
-    "cache-codex": "c7f52aec2530fd605b1096a4c934dbb3c115c9fd021e1b5c7235a8e5be14582e",
-    "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.45.0/skills/dddjango/scripts",
+    "cache-codex": "4203593ad7405dbbff61142c0321f3a4147a96ed5708d571650d171c0ddecb45",
+    "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.45.1/skills/dddjango/scripts",
     "source-claude": "2b1798d247064b674e4903f8b5cf7dca35bf09f9bf0015618bc7864c53352ac3",
     "source-codex": "2b1798d247064b674e4903f8b5cf7dca35bf09f9bf0015618bc7864c53352ac3"
   },
-  "sealed_commit": "54b1fbe58e6b4145e90476581106fa114811e5cd",
-  "self_sha256": "925909de946acd453ab3075fe1ceed26f969b10e1a2264c09f76ead4bd797c7c",
+  "sealed_commit": "0ac54aacf5fa4621ac70a123701b962b03cdeb8e",
+  "self_sha256": "8d89bcce4732086da31734e37238ad16898437779f8c61b75c1654abd9417f6a",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [
